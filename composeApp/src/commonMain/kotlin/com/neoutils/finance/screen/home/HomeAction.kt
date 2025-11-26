@@ -1,4 +1,4 @@
-package com.neoutils.finance.home
+package com.neoutils.finance.screen.home
 
 sealed class HomeAction {
     data class Navigate(

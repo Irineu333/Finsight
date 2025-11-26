@@ -1,4 +1,4 @@
-package com.neoutils.finance.transactions
+package com.neoutils.finance.screen.transactions
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

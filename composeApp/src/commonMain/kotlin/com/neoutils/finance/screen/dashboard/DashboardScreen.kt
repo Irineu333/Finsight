@@ -1,4 +1,4 @@
-package com.neoutils.finance.dashboard
+package com.neoutils.finance.screen.dashboard
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

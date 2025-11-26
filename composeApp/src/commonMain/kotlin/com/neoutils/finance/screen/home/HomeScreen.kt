@@ -1,17 +1,22 @@
-package com.neoutils.finance.home
+package com.neoutils.finance.screen.home
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.neoutils.finance.dashboard.DashboardScreen
-import com.neoutils.finance.transactions.TransactionsScreen
+import com.neoutils.finance.component.AddTransactionModal
+import com.neoutils.finance.manager.ModalManager
+import com.neoutils.finance.screen.dashboard.DashboardScreen
+import com.neoutils.finance.screen.transactions.TransactionsScreen
+
 
 @Composable
 fun HomeScreen() = Surface {
 
     val navController = rememberNavController()
+    val modal = remember { ModalManager() }
 
     NavHost(
         navController = navController,
@@ -20,7 +25,11 @@ fun HomeScreen() = Surface {
         composable<HomeRoute.Dashboard> {
             DashboardScreen(
                 onAddTransaction = {
-                    TODO("open add transaction model")
+                    modal.show(
+                        AddTransactionModal(
+                            onSave = {}
+                        )
+                    )
                 }
             )
         }
@@ -29,4 +38,6 @@ fun HomeScreen() = Surface {
             TransactionsScreen()
         }
     }
+
+    modal.Content()
 }

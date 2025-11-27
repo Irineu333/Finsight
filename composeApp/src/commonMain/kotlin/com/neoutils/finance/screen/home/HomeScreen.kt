@@ -11,7 +11,6 @@ import com.neoutils.finance.manager.ModalManager
 import com.neoutils.finance.screen.dashboard.DashboardScreen
 import com.neoutils.finance.screen.transactions.TransactionsScreen
 
-
 @Composable
 fun HomeScreen() = Surface {
 

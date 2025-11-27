@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.component.BalanceCard
-import com.neoutils.finance.component.IncomeExpenseCards
+import com.neoutils.finance.component.BalanceCardConfig
+import com.neoutils.finance.component.MonthSelector
 import com.neoutils.finance.component.TransactionCard
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -39,6 +40,16 @@ fun DashboardScreen(
                     contentDescription = null,
                 )
             }
+        },
+        topBar = {
+            MonthSelector(
+                selectedYearMonth = uiState.selectedYearMonth,
+                onPreviousMonth = viewModel::selectPreviousMonth,
+                onNextMonth = viewModel::selectNextMonth,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            )
         }
     ) { paddingValues ->
         LazyColumn(
@@ -48,28 +59,43 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(16.dp),
         ) {
-            item {
-                BalanceCard(balance = uiState.balance.balance)
-            }
 
             item {
-                IncomeExpenseCards(
-                    modifier = Modifier.padding(top = 8.dp),
-                    income = uiState.balance.income,
-                    expense = uiState.balance.expense
+                BalanceCard(
+                    balance = uiState.balance.balance,
+                    modifier = Modifier.fillMaxWidth() ,
                 )
             }
 
             item {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BalanceCard(
+                        balance = uiState.balance.income,
+                        modifier = Modifier.weight(1f),
+                        config = BalanceCardConfig.Income
+                    )
+
+                    BalanceCard(
+                        balance = uiState.balance.expense,
+                        modifier = Modifier.weight(1f),
+                        config = BalanceCardConfig.Expense
+                    )
+                }
+            }
+
+            item {
+                Row(
                     modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recentes",
+                        text = "Transações",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -88,7 +114,12 @@ fun DashboardScreen(
                 items = uiState.recents,
                 key = { it.id },
             ) { transaction ->
-                TransactionCard(transaction = transaction)
+                TransactionCard(
+                    transaction = transaction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem()
+                )
             }
         }
     }

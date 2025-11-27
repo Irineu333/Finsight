@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.component.BalanceCard
+import com.neoutils.finance.component.IncomeExpenseCards
 import com.neoutils.finance.component.TransactionCard
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -23,7 +25,7 @@ fun DashboardScreen(
     onAddTransaction: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
-    val transactions by viewModel.recentTransactions.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         floatingActionButton = {
@@ -42,22 +44,33 @@ fun DashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
+                .padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(16.dp),
         ) {
+            item {
+                BalanceCard(balance = uiState.balance.balance)
+            }
+
+            item {
+                IncomeExpenseCards(
+                    modifier = Modifier.padding(top = 8.dp),
+                    income = uiState.balance.income,
+                    expense = uiState.balance.expense
+                )
+            }
 
             item {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Transações Recentes",
-                        fontSize = 20.sp,
+                        text = "Recentes",
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
 
@@ -72,7 +85,7 @@ fun DashboardScreen(
             }
 
             items(
-                items = transactions,
+                items = uiState.recents,
                 key = { it.id },
             ) { transaction ->
                 TransactionCard(transaction = transaction)

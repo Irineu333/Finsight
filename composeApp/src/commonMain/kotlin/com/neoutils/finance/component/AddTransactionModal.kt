@@ -15,11 +15,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import org.koin.compose.koinInject
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
@@ -27,9 +31,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AddTransactionModal(
-    private val onSave: (Transaction) -> Unit,
-) : Modal {
+class AddTransactionModal : Modal {
 
     private val dateFormat = LocalDate.Format {
         byUnicodePattern("dd/MM/yyyy")
@@ -38,7 +40,9 @@ class AddTransactionModal(
     @Composable
     override fun Content() {
 
+        val repository = koinInject<TransactionRepository>()
         val manager = LocalModalManager.current
+        val scope = rememberCoroutineScope()
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -55,10 +59,10 @@ class AddTransactionModal(
                     .padding(bottom = 32.dp)
             ) {
 
-                var type by remember { mutableStateOf(Transaction.Type.INCOME) }
+                var type by remember { mutableStateOf(TransactionEntry.Type.INCOME) }
                 val amount = rememberTextFieldState()
                 val description = rememberTextFieldState()
-                val date = rememberTextFieldState(initialText = dateFormat.format(currentDate()))
+                val date = rememberTextFieldState(dateFormat.format(currentDate()))
 
                 TypeToggle(
                     selectedType = type,
@@ -131,16 +135,23 @@ class AddTransactionModal(
 
                 Button(
                     onClick = {
-                        onSave(
-                            Transaction(
-                                type = type,
-                                amount = parseMoneyToDouble(amount.text.toString()),
-                                description = description.text.toString().ifEmpty { null },
-                                date = dateFormat.parse(date.text.toString()),
+                        scope.launch {
+                            repository.insert(
+                                TransactionEntry(
+                                    type = type,
+                                    amount = parseMoneyToDouble(amount.text.toString()),
+                                    description = description.text.toString(),
+                                    date = dateFormat.parse(date.text.toString()),
+                                )
                             )
-                        )
-                        manager.dismiss()
+                            manager.dismiss()
+                        }
                     },
+                    enabled = showSaveButton(
+                        amount = amount.text.toString(),
+                        description = description.text.toString(),
+                        date = date.text.toString(),
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -154,26 +165,41 @@ class AddTransactionModal(
         }
     }
 
+    private fun showSaveButton(
+        amount: String,
+        date: String,
+        description: String,
+    ): Boolean {
+
+        if (amount.isEmpty()) return false
+
+        if (date.isEmpty()) return false
+
+        if (description.isEmpty()) return false
+
+        return true
+    }
+
     @Composable
     fun TypeToggle(
-        selectedType: Transaction.Type,
-        onTypeSelected: (Transaction.Type) -> Unit
+        selectedType: TransactionEntry.Type,
+        onTypeSelected: (TransactionEntry.Type) -> Unit
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
+            onClick = { onTypeSelected(TransactionEntry.Type.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.EXPENSE -> {
+                TransactionEntry.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Expense,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.INCOME -> {
+                TransactionEntry.Type.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -190,17 +216,17 @@ class AddTransactionModal(
         }
 
         Button(
-            onClick = { onTypeSelected(Transaction.Type.INCOME) },
+            onClick = { onTypeSelected(TransactionEntry.Type.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.INCOME -> {
+                TransactionEntry.Type.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Income,
                         contentColor = Color.White
                     )
                 }
 
-                Transaction.Type.EXPENSE -> {
+                TransactionEntry.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -229,17 +255,5 @@ class AddTransactionModal(
             .trim()
 
         return digitsOnly.toDoubleOrNull() ?: 0.0
-    }
-
-    data class Transaction(
-        val type: Type,
-        val amount: Double,
-        val description: String?,
-        val date: LocalDate,
-    ) {
-        enum class Type {
-            EXPENSE,
-            INCOME
-        }
     }
 }

@@ -24,11 +24,7 @@ fun HomeScreen() = Surface {
         composable<HomeRoute.Dashboard> {
             DashboardScreen(
                 onAddTransaction = {
-                    modal.show(
-                        AddTransactionModal(
-                            onSave = {}
-                        )
-                    )
+                    modal.show(AddTransactionModal())
                 }
             )
         }

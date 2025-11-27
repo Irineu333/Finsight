@@ -30,6 +30,7 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = Surface3,
     onSurfaceVariant = TextLight1,
 
+    surfaceContainer = Surface2,
     surfaceContainerLow = Surface2,
     surfaceContainerHighest = Surface3,
 

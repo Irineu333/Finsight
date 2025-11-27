@@ -2,17 +2,10 @@
 
 package com.neoutils.finance.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -20,22 +13,9 @@ import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.then
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.twotone.CalendarToday
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -46,6 +26,10 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
 import com.neoutils.finance.manager.ModalManager
+import com.neoutils.finance.ui.theme.Expense
+import com.neoutils.finance.ui.theme.ExpenseCardBackground
+import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.TextLight2
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -71,16 +55,10 @@ class AddTransactionModal(
             onDismissRequest = {
                 manager.dismiss()
             },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            dragHandle = {
-                BottomSheetDefaults.DragHandle(
-                    color = Color(0xFF2D4A42)
-                )
-            },
-            containerColor = Color(0xFF1E3A33),
-            contentColor = Color.White
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
         ) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,6 +70,7 @@ class AddTransactionModal(
                 val amount = rememberTextFieldState()
                 val description = rememberTextFieldState()
                 var selectedDate by remember { mutableStateOf(currentDate()) }
+
                 val modal = remember { ModalManager() }
 
                 TypeToggle(
@@ -106,20 +85,8 @@ class AddTransactionModal(
                 TextField(
                     state = amount,
                     label = {
-                        Text(
-                            text = "Amount",
-                            color = Color.White,
-                        )
+                        Text(text = "Amount")
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2D4A42),
-                        unfocusedBorderColor = Color(0xFF2D4A42),
-                        focusedContainerColor = Color(0xFF2D4A42),
-                        unfocusedContainerColor = Color(0xFF2D4A42),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
                     inputTransformation = MoneyInputTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -131,22 +98,10 @@ class AddTransactionModal(
                 TextField(
                     state = description,
                     label = {
-                        Text(
-                            text = "Description",
-                            color = Color.White,
-                        )
+                        Text(text = "Description")
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2D4A42),
-                        unfocusedBorderColor = Color(0xFF2D4A42),
-                        focusedContainerColor = Color(0xFF2D4A42),
-                        unfocusedContainerColor = Color(0xFF2D4A42),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     lineLimits = TextFieldLineLimits.SingleLine,
                 )
 
@@ -160,9 +115,9 @@ class AddTransactionModal(
                         .pointerInput(selectedDate) {
                             awaitEachGesture {
                                 awaitFirstDown(pass = PointerEventPass.Initial)
-                                val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
-
-                                if (upEvent != null) {
+                                waitForUpOrCancellation(
+                                    pass = PointerEventPass.Initial
+                                )?.let {
                                     modal.show(
                                         DatePickerModal(
                                             initialDate = selectedDate,
@@ -175,30 +130,14 @@ class AddTransactionModal(
                             }
                         },
                     readOnly = true,
-                    enabled = false,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF2D4A42),
-                        unfocusedBorderColor = Color(0xFF2D4A42),
-                        focusedContainerColor = Color(0xFF2D4A42),
-                        unfocusedContainerColor = Color(0xFF2D4A42),
-                        disabledContainerColor = Color(0xFF2D4A42),
-                        disabledBorderColor = Color(0xFF2D4A42),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        disabledTextColor = Color.White,
-                        cursorColor = Color.White
-                    ),
                     label = {
-                        Text(
-                            text = "Date",
-                            color = Color.White,
-                        )
+                        Text(text = "Date")
                     },
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Default.CalendarToday,
+                            imageVector = Icons.TwoTone.CalendarToday,
                             contentDescription = null,
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     },
                     shape = RoundedCornerShape(12.dp),
@@ -221,10 +160,6 @@ class AddTransactionModal(
                         manager.dismiss()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50),
-                        contentColor = Color.White
-                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
@@ -250,13 +185,21 @@ class AddTransactionModal(
         Button(
             onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = when (selectedType) {
-                    Transaction.Type.EXPENSE -> Color(0xFFE53E3E)
-                    Transaction.Type.INCOME -> Color(0xFF2D4A42)
-                },
-                contentColor = Color.White
-            ),
+            colors = when (selectedType) {
+                Transaction.Type.EXPENSE -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = Expense,
+                        contentColor = Color.White
+                    )
+                }
+
+                Transaction.Type.INCOME -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
@@ -269,13 +212,21 @@ class AddTransactionModal(
         Button(
             onClick = { onTypeSelected(Transaction.Type.INCOME) },
             modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = when (selectedType) {
-                    Transaction.Type.EXPENSE -> Color(0xFF2D4A42)
-                    Transaction.Type.INCOME -> Color(0xFF4CAF50)
-                },
-                contentColor = Color.White
-            ),
+            colors = when (selectedType) {
+                Transaction.Type.INCOME -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = Income,
+                        contentColor = Color.White
+                    )
+                }
+
+                Transaction.Type.EXPENSE -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(

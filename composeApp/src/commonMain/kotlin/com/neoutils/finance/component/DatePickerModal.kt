@@ -7,13 +7,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
 import kotlinx.datetime.LocalDate
@@ -52,11 +52,7 @@ class DatePickerModal(
                         }
                         manager.dismiss()
                     },
-                    enabled = confirmEnabled,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50),
-                        contentColor = Color.White
-                    )
+                    enabled = confirmEnabled
                 ) {
                     Text("OK")
                 }
@@ -65,13 +61,9 @@ class DatePickerModal(
                 Button(
                     onClick = {
                         manager.dismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2D4A42),
-                        contentColor = Color.White
-                    )
+                    }
                 ) {
-                    Text("Cancel")
+                    Text("Cancelar")
                 }
             }
         ) {

@@ -99,7 +99,7 @@ class AddTransactionModal : Modal {
                 OutlinedTextField(
                     state = title,
                     label = {
-                        Text(text = "Title")
+                        Text(text = "Título")
                     },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -116,7 +116,7 @@ class AddTransactionModal : Modal {
                 OutlinedTextField(
                     state = amount,
                     label = {
-                        Text(text = "Amount")
+                        Text(text = "Valor")
                     },
                     inputTransformation = MoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -135,7 +135,7 @@ class AddTransactionModal : Modal {
                 OutlinedTextField(
                     state = date,
                     label = {
-                        Text(text = "Date")
+                        Text(text = "Data")
                     },
                     inputTransformation = DateInputTransformation(),
                     keyboardOptions = KeyboardOptions(

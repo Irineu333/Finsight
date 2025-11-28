@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.screen.transactions.BalanceOverview
+import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
@@ -91,6 +92,14 @@ fun SummaryCard(
                 amount = balanceOverview.expense,
                 color = Expense
             )
+
+            if (balanceOverview.adjustment != 0.0) {
+                SummaryRow(
+                    label = "Ajustes",
+                    amount = balanceOverview.adjustment,
+                    color = Adjustment
+                )
+            }
 
             HorizontalDivider()
 

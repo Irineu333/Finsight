@@ -26,6 +26,7 @@ data class BalanceOverview(
     val initialBalance: Double = 0.0,
     val income: Double = 0.0,
     val expense: Double = 0.0,
+    val adjustment: Double = 0.0,
     val finalBalance: Double = 0.0
 )
 
@@ -89,6 +90,7 @@ class TransactionsViewModel(
                 initialBalance = initialBalance,
                 income = income,
                 expense = expense,
+                adjustment = adjustment,
                 finalBalance = finalBalance
             ),
             selectedYearMonth = yearMonth

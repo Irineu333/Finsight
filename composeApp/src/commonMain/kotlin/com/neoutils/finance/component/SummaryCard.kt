@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,6 +19,41 @@ import com.neoutils.finance.screen.transactions.BalanceOverview
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
+
+data class SummaryRowConfig(
+    val labelStyle: TextStyle,
+    val amountStyle: TextStyle
+) {
+    companion object {
+        val Default
+            @Composable
+            get() = SummaryRowConfig(
+                labelStyle = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = TextLight1
+                ),
+                amountStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+
+        val Total
+            @Composable
+            get() = SummaryRowConfig(
+                labelStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface
+                ),
+                amountStyle = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+    }
+}
 
 @Composable
 fun SummaryCard(
@@ -61,7 +97,7 @@ fun SummaryCard(
                 label = "Saldo Final",
                 amount = balanceOverview.finalBalance,
                 color = colorScheme.onSurface,
-                isTotal = true
+                config = SummaryRowConfig.Total
             )
         }
     }
@@ -73,7 +109,7 @@ private fun SummaryRow(
     amount: Double,
     color: Color,
     modifier: Modifier = Modifier,
-    isTotal: Boolean = false
+    config: SummaryRowConfig = SummaryRowConfig.Default
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -82,16 +118,12 @@ private fun SummaryRow(
     ) {
         Text(
             text = label,
-            fontSize = if (isTotal) 18.sp else 16.sp,
-            fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isTotal) colorScheme.onSurface else TextLight1
+            style = config.labelStyle
         )
 
         Text(
             text = "R$ %.2f".format(amount),
-            fontSize = if (isTotal) 20.sp else 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
+            style = config.amountStyle.copy(color = color)
         )
     }
 }

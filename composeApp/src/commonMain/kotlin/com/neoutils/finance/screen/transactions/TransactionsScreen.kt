@@ -5,9 +5,6 @@ package com.neoutils.finance.screen.transactions
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -17,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.*
-import com.neoutils.finance.manager.LocalModalManager
+import com.neoutils.finance.extension.MonthNamesPortuguese
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,55 +28,48 @@ private val sectionDateFormat = LocalDate.Format {
 
 @Composable
 fun TransactionsScreen(
-    onNavigateBack: () -> Unit = {},
+    contentPadding: PaddingValues = PaddingValues(0.dp),
     viewModel: TransactionsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     TransactionsContent(
         uiState = uiState,
-        onNavigateBack = onNavigateBack,
+        contentPadding = contentPadding,
+        selectPreviousMonth = viewModel::selectPreviousMonth,
+        selectNextMonth = viewModel::selectNextMonth,
     )
 }
 
 @Composable
 private fun TransactionsContent(
-    onNavigateBack: () -> Unit = {},
+    selectPreviousMonth: () -> Unit = {},
+    selectNextMonth: () -> Unit = {},
+    contentPadding: PaddingValues,
     uiState: TransactionsUiState,
 ) {
-    val modalManager = LocalModalManager.current
-
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Transactions") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null
-                        )
-                    }
-                }
+            MonthSelector(
+                selectedYearMonth = uiState.selectedYearMonth,
+                onPreviousMonth = selectPreviousMonth,
+                onNextMonth = selectNextMonth,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { modalManager.show(AddTransactionModal()) },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                )
-            }
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = contentPadding.calculateBottomPadding() + 16.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 

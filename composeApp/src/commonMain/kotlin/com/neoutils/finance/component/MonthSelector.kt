@@ -13,26 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.screen.dashboard.YearMonth
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format.MonthNames
+import com.neoutils.finance.extension.MonthNamesPortuguese
+import kotlinx.datetime.YearMonth
 
-val MonthNamesPortuguese = MonthNames(
-    january = "Janeiro",
-    february = "Fevereiro",
-    march = "Março",
-    april = "Abril",
-    may = "Maio",
-    june = "Junho",
-    july = "Julho",
-    august = "Agosto",
-    september = "Setembro",
-    october = "Outubro",
-    november = "Novembro",
-    december = "Dezembro"
-)
-
-private val monthFormat = LocalDate.Format {
+private val yearMonthFormat = YearMonth.Format {
     monthName(MonthNamesPortuguese)
     chars(" ")
     year()
@@ -57,7 +41,7 @@ fun MonthSelector(
     }
 
     Text(
-        text = monthFormat.format(selectedYearMonth.date),
+        text = yearMonthFormat.format(selectedYearMonth),
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold,
     )

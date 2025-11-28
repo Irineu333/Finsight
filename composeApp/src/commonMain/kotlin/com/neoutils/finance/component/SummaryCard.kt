@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,12 @@ fun SummaryCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            SummaryRow(
+                label = "Saldo Inicial",
+                amount = balanceOverview.initialBalance,
+                color = colorScheme.onSurface
+            )
+
             SummaryRow(
                 label = "Entradas",
                 amount = balanceOverview.income,
@@ -64,9 +71,9 @@ fun SummaryCard(
 private fun SummaryRow(
     label: String,
     amount: Double,
-    color: androidx.compose.ui.graphics.Color,
-    isTotal: Boolean = false,
-    modifier: Modifier = Modifier
+    color: Color,
+    modifier: Modifier = Modifier,
+    isTotal: Boolean = false
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),

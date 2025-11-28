@@ -2,14 +2,11 @@ package com.neoutils.finance.screen.home
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.neoutils.finance.component.AddTransactionModal
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.ModalManager
+import com.neoutils.finance.manager.ModalManagerHost
 import com.neoutils.finance.screen.dashboard.DashboardScreen
 import com.neoutils.finance.screen.transactions.TransactionsScreen
 
@@ -17,11 +14,9 @@ import com.neoutils.finance.screen.transactions.TransactionsScreen
 fun HomeScreen() = Surface {
 
     val navController = rememberNavController()
-    val modalManager = remember { ModalManager() }
 
-    CompositionLocalProvider(
-        LocalModalManager provides modalManager
-    ) {
+    ModalManagerHost { modalManager ->
+
         NavHost(
             navController = navController,
             startDestination = HomeRoute.Dashboard
@@ -39,11 +34,11 @@ fun HomeScreen() = Surface {
 
             composable<HomeRoute.Transactions> {
                 TransactionsScreen(
-                    onNavigateBack = { navController.navigateUp() }
+                    onNavigateBack = {
+                        navController.navigateUp()
+                    }
                 )
             }
         }
-
-        modalManager.Content()
     }
 }

@@ -36,6 +36,17 @@ fun TransactionsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    TransactionsContent(
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+    )
+}
+
+@Composable
+private fun TransactionsContent(
+    onNavigateBack: () -> Unit = {},
+    uiState: TransactionsUiState,
+) {
     val modalManager = LocalModalManager.current
 
     Scaffold(
@@ -79,9 +90,7 @@ fun TransactionsScreen(
                 )
             }
 
-            val groupedTransactions = viewModel.groupTransactionsByDate(uiState.transactions)
-
-            groupedTransactions.forEach { (date, transactions) ->
+            uiState.transactions.forEach { (date, transactions) ->
                 item {
                     Text(
                         text = sectionDateFormat.format(date),

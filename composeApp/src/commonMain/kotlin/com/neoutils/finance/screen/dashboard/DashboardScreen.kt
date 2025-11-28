@@ -29,97 +29,112 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddTransaction,
-                containerColor = Color(0xFF4CAF50),
-                contentColor = Color.White,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                )
-            }
-        },
-        topBar = {
-            MonthSelector(
-                selectedYearMonth = uiState.selectedYearMonth,
-                onPreviousMonth = viewModel::selectPreviousMonth,
-                onNextMonth = viewModel::selectNextMonth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+    DashboardContent(
+        uiState = uiState,
+        onAddTransaction = onAddTransaction,
+        onSeeAllTransactions = onSeeAllTransactions,
+        selectNextMonth = viewModel::selectNextMonth,
+        selectPreviousMonth = viewModel::selectPreviousMonth,
+    )
+}
+
+@Composable
+private fun DashboardContent(
+    onSeeAllTransactions: () -> Unit,
+    onAddTransaction: () -> Unit,
+    selectPreviousMonth: () -> Unit,
+    selectNextMonth: () -> Unit,
+    uiState: DashboardUiState
+) = Scaffold(
+    floatingActionButton = {
+        FloatingActionButton(
+            onClick = onAddTransaction,
+            containerColor = Color(0xFF4CAF50),
+            contentColor = Color.White,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
             )
         }
-    ) { paddingValues ->
-        LazyColumn(
+    },
+    topBar = {
+        MonthSelector(
+            selectedYearMonth = uiState.selectedYearMonth,
+            onPreviousMonth = selectPreviousMonth,
+            onNextMonth = selectNextMonth,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp),
-        ) {
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+    }
+) { paddingValues ->
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp),
+    ) {
 
-            item {
+        item {
+            BalanceCard(
+                balance = uiState.balance.balance,
+                modifier = Modifier.fillMaxWidth() ,
+            )
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 BalanceCard(
-                    balance = uiState.balance.balance,
-                    modifier = Modifier.fillMaxWidth() ,
+                    balance = uiState.balance.income,
+                    modifier = Modifier.weight(1f),
+                    config = BalanceCardConfig.Income
+                )
+
+                BalanceCard(
+                    balance = uiState.balance.expense,
+                    modifier = Modifier.weight(1f),
+                    config = BalanceCardConfig.Expense
                 )
             }
+        }
 
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    BalanceCard(
-                        balance = uiState.balance.income,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Income
-                    )
-
-                    BalanceCard(
-                        balance = uiState.balance.expense,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Expense
-                    )
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Transações",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                    TextButton(
-                        onClick = onSeeAllTransactions
-                    ) {
-                        Text(text = "Ver Tudo")
-                    }
-                }
-            }
-
-            items(
-                items = uiState.recents,
-                key = { it.id },
-            ) { transaction ->
-                TransactionCard(
-                    transaction = transaction,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Transações",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                 )
+
+                TextButton(
+                    onClick = onSeeAllTransactions
+                ) {
+                    Text(text = "Ver Tudo")
+                }
             }
+        }
+
+        items(
+            items = uiState.recents,
+            key = { it.id },
+        ) { transaction ->
+            TransactionCard(
+                transaction = transaction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem()
+            )
         }
     }
 }

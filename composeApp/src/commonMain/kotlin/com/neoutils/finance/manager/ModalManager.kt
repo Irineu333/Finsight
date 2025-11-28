@@ -3,10 +3,8 @@ package com.neoutils.finance.manager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 
 val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManager provided") }
 
@@ -25,6 +23,19 @@ class ModalManager {
 
     fun dismiss() {
         modalState.removeAt(modalState.lastIndex)
+    }
+}
+
+@Composable
+fun ModalManagerHost(content: @Composable (ModalManager) -> Unit) {
+
+    val modalManager = remember { ModalManager() }
+
+    CompositionLocalProvider(
+        LocalModalManager provides modalManager,
+    ) {
+        content(modalManager)
+        modalManager.Content()
     }
 }
 

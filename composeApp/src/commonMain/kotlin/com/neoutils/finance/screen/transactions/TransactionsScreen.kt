@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.*
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.manager.LocalModalManager
+import com.neoutils.finance.modal.EditBalanceModal
 import com.neoutils.finance.modal.ViewTransactionModal
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -40,6 +41,7 @@ fun TransactionsScreen(
         contentPadding = contentPadding,
         selectPreviousMonth = viewModel::selectPreviousMonth,
         selectNextMonth = viewModel::selectNextMonth,
+        onAdjustBalance = viewModel::adjustBalance,
     )
 }
 
@@ -49,9 +51,10 @@ private fun TransactionsContent(
     selectNextMonth: () -> Unit = {},
     contentPadding: PaddingValues,
     uiState: TransactionsUiState,
+    onAdjustBalance: (Double) -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
-    
+
     Scaffold(
         topBar = {
             MonthSelector(
@@ -80,7 +83,17 @@ private fun TransactionsContent(
             item {
                 SummaryCard(
                     balanceOverview = uiState.balanceOverview,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    onEditBalance = {
+                        modalManager.show(
+                            EditBalanceModal(
+                                currentBalance = uiState.balanceOverview.finalBalance,
+                                onConfirm = onAdjustBalance
+                            )
+                        )
+                    }.takeUnless {
+                        uiState.isFutureMonth
+                    }
                 )
             }
 
@@ -108,6 +121,7 @@ private fun TransactionsContent(
                                         com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
                                     )
                                 }
+
                                 else -> {
                                     modalManager.show(
                                         ViewTransactionModal(transaction)

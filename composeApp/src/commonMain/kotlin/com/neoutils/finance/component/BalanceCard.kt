@@ -1,10 +1,14 @@
 package com.neoutils.finance.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ModeEdit
+import androidx.compose.material.icons.twotone.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -140,26 +144,32 @@ fun BalanceCard(
                     style = config.titleStyle,
                 )
             }
-
-            if (onEditClick != null) {
-                IconButton(
-                    onClick = onEditClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.padding(2.dp)
-                    )
-                }
-            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = balance.toMoneyFormat(),
-            style = config.style,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = if (onEditClick != null) {
+                Modifier.clickable { onEditClick() }
+            } else {
+                Modifier
+            }
+        ) {
+            Text(
+                text = balance.toMoneyFormat(),
+                style = config.style,
+            )
+
+            if (onEditClick != null) {
+                Icon(
+                    imageVector = Icons.Rounded.ModeEdit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = config.style.color.copy(alpha = 0.5f),
+                )
+            }
+        }
     }
 }

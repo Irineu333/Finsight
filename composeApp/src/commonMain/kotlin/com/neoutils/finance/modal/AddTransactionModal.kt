@@ -80,6 +80,22 @@ class AddTransactionModal : Modal {
 
         val currentBalance by remember { derivedStateOf { calculateBalance(allTransactions) } }
 
+        var type by remember { mutableStateOf(TransactionEntry.Type.EXPENSE) }
+        val amount = rememberTextFieldState()
+        val title = rememberTextFieldState()
+        val date = rememberTextFieldState(dateFormat.format(currentDate()))
+
+        val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
+
+        val isInsufficientBalance by remember {
+            derivedStateOf {
+                when (type) {
+                    TransactionEntry.Type.EXPENSE -> expenseAmount > currentBalance
+                    else -> false
+                }
+            }
+        }
+
         ModalBottomSheet(
             onDismissRequest = {
                 manager.dismiss()
@@ -94,22 +110,6 @@ class AddTransactionModal : Modal {
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
             ) {
-
-                var type by remember { mutableStateOf(TransactionEntry.Type.EXPENSE) }
-                val amount = rememberTextFieldState()
-                val title = rememberTextFieldState()
-                val date = rememberTextFieldState(dateFormat.format(currentDate()))
-
-                val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
-
-                val isInsufficientBalance by remember {
-                    derivedStateOf {
-                        when (type) {
-                            TransactionEntry.Type.EXPENSE -> expenseAmount > currentBalance
-                            else -> false
-                        }
-                    }
-                }
 
                 TypeToggle(
                     selectedType = type,

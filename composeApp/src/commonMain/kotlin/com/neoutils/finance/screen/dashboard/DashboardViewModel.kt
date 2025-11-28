@@ -87,6 +87,7 @@ class DashboardViewModel(
             }
 
             val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
             val existingAdjustment = repository.getTransactionByTypeAndDate(
                 type = TransactionEntry.Type.ADJUSTMENT,
                 date = today

@@ -1,12 +1,13 @@
 package com.neoutils.finance.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.rounded.ModeEdit
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +61,8 @@ data class SummaryRowConfig(
 @Composable
 fun SummaryCard(
     balanceOverview: BalanceOverview,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditBalance: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -107,7 +109,8 @@ fun SummaryCard(
                 label = "Saldo Final",
                 amount = balanceOverview.finalBalance,
                 color = colorScheme.onSurface,
-                config = SummaryRowConfig.Total
+                config = SummaryRowConfig.Total,
+                onEditClick = onEditBalance
             )
         }
     }
@@ -119,6 +122,7 @@ private fun SummaryRow(
     amount: Double,
     color: Color,
     modifier: Modifier = Modifier,
+    onEditClick: (() -> Unit)? = null,
     config: SummaryRowConfig = SummaryRowConfig.Default
 ) {
     Row(
@@ -126,14 +130,33 @@ private fun SummaryRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         Text(
             text = label,
             style = config.labelStyle
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = if (onEditClick != null) {
+                Modifier.clickable { onEditClick() }
+            } else {
+                Modifier
+            }
+        ) {
+           if (onEditClick != null) {
+               Icon(
+                   imageVector = Icons.Rounded.ModeEdit,
+                   contentDescription = null,
+                   tint = color.copy(alpha = 0.5f),
+                   modifier = Modifier.size(16.dp)
+               )
+            }
 
-        Text(
-            text = amount.toMoneyFormat(),
-            style = config.amountStyle.copy(color = color)
-        )
+            Text(
+                text = amount.toMoneyFormat(),
+                style = config.amountStyle.copy(color = color)
+            )
+        }
     }
 }

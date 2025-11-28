@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
+import kotlinx.datetime.number
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -34,7 +36,13 @@ data class TransactionsUiState(
     val transactions: Map<LocalDate, List<TransactionEntry>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth()
-)
+) {
+    val currentMonth = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .date.yearMonth
+
+    val isFutureMonth = selectedYearMonth > currentMonth
+}
 
 private fun Instant.toYearMonth(): YearMonth {
     return toLocalDateTime(TimeZone.currentSystemDefault()).let {
@@ -107,5 +115,61 @@ class TransactionsViewModel(
 
     fun selectNextMonth() {
         selectedYearMonth.value = selectedYearMonth.value.plusMonth()
+    }
+
+    fun adjustBalance(targetBalance: Double) {
+        viewModelScope.launch {
+            val currentMonth = Clock.System.now().toYearMonth()
+            val selectedMonth = selectedYearMonth.value
+
+            if (selectedMonth > currentMonth) {
+                return@launch
+            }
+
+            val currentFinalBalance = uiState.value.balanceOverview.finalBalance
+            val difference = targetBalance - currentFinalBalance
+
+            if (difference == 0.0) {
+                return@launch
+            }
+
+            val adjustmentDate = if (selectedMonth == currentMonth) {
+                Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            } else {
+                val firstDayOfNextMonth = LocalDate(selectedMonth.year, selectedMonth.month, 1)
+                    .let { 
+                        if (selectedMonth.month.ordinal == 11) { // Dezembro
+                            LocalDate(selectedMonth.year + 1, kotlinx.datetime.Month.JANUARY, 1)
+                        } else {
+                            LocalDate(selectedMonth.year, kotlinx.datetime.Month.entries[selectedMonth.month.ordinal + 1], 1)
+                        }
+                    }
+                LocalDate.fromEpochDays(firstDayOfNextMonth.toEpochDays() - 1)
+            }
+
+            val existingAdjustment = repository.getTransactionByTypeAndDate(
+                type = TransactionEntry.Type.ADJUSTMENT,
+                date = adjustmentDate
+            )
+
+            if (existingAdjustment != null) {
+                val newAmount = existingAdjustment.amount + difference
+
+                if (newAmount == 0.0) {
+                    repository.delete(existingAdjustment)
+                } else {
+                    repository.update(existingAdjustment.copy(amount = newAmount))
+                }
+            } else {
+                repository.insert(
+                    TransactionEntry(
+                        type = TransactionEntry.Type.ADJUSTMENT,
+                        amount = difference,
+                        description = "Ajuste de Saldo",
+                        date = adjustmentDate
+                    )
+                )
+            }
+        }
     }
 }

@@ -1,19 +1,36 @@
 package com.neoutils.finance.modal
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.rounded.TrendingDown
+import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.MoneyInputTransformation
+import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.theme.Expense
+import com.neoutils.finance.ui.theme.Income
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +49,18 @@ class EditBalanceModal(
 
         val balanceState = rememberTextFieldState(formatMoney(initialCents))
 
+        val newBalance by remember {
+            derivedStateOf {
+                parseMoneyToDouble(balanceState.text.toString())
+            }
+        }
+
+        val adjustment by remember {
+            derivedStateOf {
+                newBalance - currentBalance
+            }
+        }
+
         ModalBottomSheet(
             onDismissRequest = { manager.dismiss() },
             sheetState = rememberModalBottomSheetState(
@@ -42,55 +71,138 @@ class EditBalanceModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "Editar Saldo",
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Text(
-                    text = "Informe o saldo real da sua conta:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+                AnimatedContent(
+                    targetState = adjustment,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                ) { adjustment ->
+                    if (adjustment != 0.0) {
+                        Adjustment(
+                            adjustment = adjustment,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxWidth())
+                    }
+                }
 
                 OutlinedTextField(
                     state = balanceState,
-                    label = { Text("Saldo Real") },
                     inputTransformation = MoneyInputTransformation(),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
+                    textStyle = TextStyle(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = colorScheme.surfaceContainerHighest,
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-                Button(
-                    onClick = {
-                        scope.launch {
-                            val newBalance = parseMoneyToDouble(balanceState.text.toString())
-                            onConfirm(newBalance)
-                            manager.dismiss()
-                        }
-                    },
-                    enabled = balanceState.text.isNotBlank(),
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = "Confirmar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    OutlinedButton(
+                        onClick = { manager.dismiss() },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Cancelar",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                onConfirm(newBalance)
+                                manager.dismiss()
+                            }
+                        },
+                        enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Salvar",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun Adjustment(
+        adjustment: Double,
+        modifier: Modifier = Modifier
+    ) = Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (adjustment > 0) {
+                Income.copy(alpha = 0.1f)
+            } else {
+                Expense.copy(alpha = 0.1f)
+            },
+            contentColor = Color.White,
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = if (adjustment > 0) {
+                        Icons.Default.ArrowUpward
+                    } else {
+                        Icons.Default.ArrowDownward
+                    },
+                    contentDescription = null,
+                    tint = if (adjustment > 0) Income else Expense,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = if (adjustment > 0) "Entrada" else "Saída",
+                    fontSize = 16.sp,
+                )
+            }
+
+            Text(
+                text = "${if (adjustment > 0) "+" else ""}${adjustment.toMoneyFormat()}",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (adjustment > 0) Income else Expense
+            )
         }
     }
 

@@ -20,6 +20,7 @@ import com.neoutils.finance.component.BalanceCardConfig
 import com.neoutils.finance.modal.EditBalanceModal
 import com.neoutils.finance.modal.ViewTransactionModal
 import com.neoutils.finance.component.TransactionCard
+import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.manager.LocalModalManager
 import kotlinx.datetime.YearMonth
@@ -147,11 +148,12 @@ private fun DashboardContent(
                     .animateItem(),
                 onClick = {
                     when (transaction.type) {
-                        com.neoutils.finance.data.TransactionEntry.Type.ADJUSTMENT -> {
+                        TransactionEntry.Type.ADJUSTMENT -> {
                             modalManager.show(
                                 com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
                             )
                         }
+
                         else -> {
                             modalManager.show(
                                 ViewTransactionModal(transaction)

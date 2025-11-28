@@ -5,6 +5,7 @@ package com.neoutils.finance.component
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.extension.toMoneyFormatWithSign
+import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import kotlinx.datetime.LocalDate
@@ -53,6 +57,7 @@ fun TransactionCard(
             color = when (transaction.type) {
                 TransactionEntry.Type.INCOME -> Income.copy(alpha = 0.2f)
                 TransactionEntry.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
+                TransactionEntry.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
             },
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.size(48.dp)
@@ -62,11 +67,15 @@ fun TransactionCard(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Icon(
-                    imageVector = Icons.Default.ShoppingCart,
+                    imageVector = when (transaction.type) {
+                        TransactionEntry.Type.ADJUSTMENT -> Icons.Default.Edit
+                        else -> Icons.Default.ShoppingCart
+                    },
                     contentDescription = null,
                     tint = when (transaction.type) {
                         TransactionEntry.Type.INCOME -> Income
                         TransactionEntry.Type.EXPENSE -> Expense
+                        TransactionEntry.Type.ADJUSTMENT -> Adjustment
                     },
                     modifier = Modifier.size(24.dp)
                 )
@@ -90,14 +99,16 @@ fun TransactionCard(
 
         Text(
             text = when (transaction.type) {
-                TransactionEntry.Type.INCOME -> "+R$ %.2f".format(transaction.amount)
-                TransactionEntry.Type.EXPENSE -> "-R$ %.2f".format(transaction.amount)
+                TransactionEntry.Type.INCOME -> transaction.amount.toMoneyFormatWithSign()
+                TransactionEntry.Type.EXPENSE -> (-transaction.amount).toMoneyFormatWithSign()
+                TransactionEntry.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = when (transaction.type) {
                 TransactionEntry.Type.INCOME -> Income
                 TransactionEntry.Type.EXPENSE -> Expense
+                TransactionEntry.Type.ADJUSTMENT -> Adjustment
             }
         )
     }

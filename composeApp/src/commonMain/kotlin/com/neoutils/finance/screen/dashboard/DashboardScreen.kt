@@ -17,8 +17,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.component.BalanceCard
 import com.neoutils.finance.component.BalanceCardConfig
+import com.neoutils.finance.component.EditBalanceModal
 import com.neoutils.finance.component.TransactionCard
 import com.neoutils.finance.extension.MonthNamesPortuguese
+import com.neoutils.finance.manager.LocalModalManager
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -31,23 +33,32 @@ private val yearMonthFormat = YearMonth.Format {
 @Composable
 fun DashboardScreen(
     onSeeAllTransactions: () -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(0.dp),
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val modalManager = LocalModalManager.current
 
     DashboardContent(
         uiState = uiState,
         onSeeAllTransactions = onSeeAllTransactions,
-        contentPadding = contentPadding
+        onEditBalance = {
+            modalManager.show(
+                EditBalanceModal(
+                    currentBalance = uiState.balance.balance,
+                    onConfirm = { targetBalance ->
+                        viewModel.adjustBalance(targetBalance)
+                    }
+                )
+            )
+        }
     )
 }
 
 @Composable
 private fun DashboardContent(
     onSeeAllTransactions: () -> Unit,
-    contentPadding: PaddingValues,
-    uiState: DashboardUiState
+    uiState: DashboardUiState,
+    onEditBalance: () -> Unit
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -69,7 +80,7 @@ private fun DashboardContent(
             start = 16.dp,
             end = 16.dp,
             top = 8.dp,
-            bottom = contentPadding.calculateBottomPadding() + 16.dp,
+            bottom = 16.dp,
         ),
     ) {
 
@@ -77,6 +88,7 @@ private fun DashboardContent(
             BalanceCard(
                 balance = uiState.balance.balance,
                 modifier = Modifier.fillMaxWidth(),
+                onEditClick = onEditBalance
             )
         }
 

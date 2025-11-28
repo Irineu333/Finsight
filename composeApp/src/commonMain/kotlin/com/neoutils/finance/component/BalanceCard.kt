@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.Text
@@ -20,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 
@@ -96,7 +99,8 @@ data class BalanceCardConfig(
 fun BalanceCard(
     balance: Double,
     modifier: Modifier = Modifier,
-    config: BalanceCardConfig = BalanceCardConfig.Default
+    config: BalanceCardConfig = BalanceCardConfig.Default,
+    onEditClick: (() -> Unit)? = null
 ) = Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(
@@ -109,33 +113,52 @@ fun BalanceCard(
             .fillMaxSize()
             .padding(config.padding)
     ) {
-        if (config.icon != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                 Icon(
-                    imageVector = config.icon,
-                    contentDescription = null,
-                    tint = config.titleStyle.color,
-                    modifier = Modifier.size(16.dp)
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (config.icon != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                     Icon(
+                        imageVector = config.icon,
+                        contentDescription = null,
+                        tint = config.titleStyle.color,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = config.title,
+                        style = config.titleStyle,
+                    )
+                }
+            } else {
                 Text(
                     text = config.title,
                     style = config.titleStyle,
                 )
             }
-        } else {
-            Text(
-                text = config.title,
-                style = config.titleStyle,
-            )
+
+            if (onEditClick != null) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.padding(2.dp)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "R$ %.2f".format(balance),
+            text = balance.toMoneyFormat(),
             style = config.style,
         )
     }

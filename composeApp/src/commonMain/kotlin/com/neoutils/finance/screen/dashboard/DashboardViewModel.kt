@@ -9,6 +9,8 @@ import com.neoutils.finance.data.TransactionRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
@@ -36,7 +38,7 @@ private fun Instant.toYearMonth(): YearMonth {
 }
 
 class DashboardViewModel(
-    repository: TransactionRepository
+    private val repository: TransactionRepository
 ) : ViewModel() {
 
     val uiState = repository
@@ -56,12 +58,16 @@ class DashboardViewModel(
                 .filter { it.type == TransactionEntry.Type.EXPENSE }
                 .sumOf { it.amount }
 
+            val adjustment = filteredTransactions
+                .filter { it.type == TransactionEntry.Type.ADJUSTMENT }
+                .sumOf { it.amount }
+
             DashboardUiState(
                 recents = filteredTransactions.take(3),
                 balance = BalanceStats(
                     income = income,
                     expense = expense,
-                    balance = income - expense
+                    balance = income - expense + adjustment
                 ),
                 currentMonth = currentMonth
             )
@@ -70,4 +76,40 @@ class DashboardViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = DashboardUiState()
         )
+
+    fun adjustBalance(targetBalance: Double) {
+        viewModelScope.launch {
+            val currentBalance = uiState.value.balance.balance
+            val difference = targetBalance - currentBalance
+
+            if (difference == 0.0) {
+                return@launch
+            }
+
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val existingAdjustment = repository.getTransactionByTypeAndDate(
+                type = TransactionEntry.Type.ADJUSTMENT,
+                date = today
+            )
+
+            if (existingAdjustment != null) {
+                val newAmount = existingAdjustment.amount + difference
+
+                if (newAmount == 0.0) {
+                    repository.delete(existingAdjustment)
+                } else {
+                    val updatedAdjustment = existingAdjustment.copy(amount = newAmount)
+                    repository.update(updatedAdjustment)
+                }
+            } else {
+                val newAdjustment = TransactionEntry(
+                    type = TransactionEntry.Type.ADJUSTMENT,
+                    amount = difference,
+                    description = "Ajuste de Saldo",
+                    date = today
+                )
+                repository.insert(newAdjustment)
+            }
+        }
+    }
 }

@@ -17,6 +17,7 @@ data class TransactionEntry(
 ) {
     enum class Type {
         EXPENSE,
-        INCOME
+        INCOME,
+        ADJUSTMENT
     }
 }

@@ -14,10 +14,12 @@ val Primary2 = Color(0xFF059669)
 // Income/Expense colors
 val Income = Color(0xFF10B981)
 val Expense = Color(0xFFEF4444)
+val Adjustment = Color(0xFFF59E0B)
 
 // Card backgrounds
 val IncomeCardBackground = Color(0xFF1E3A33)
 val ExpenseCardBackground = Color(0xFF3A1E1E)
+val AdjustmentCardBackground = Color(0xFF3A2E1E)
 
 // Text colors
 val TextLight1 = Color(0xFF94A3B8)

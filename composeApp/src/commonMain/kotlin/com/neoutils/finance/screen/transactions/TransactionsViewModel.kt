@@ -63,6 +63,7 @@ class TransactionsViewModel(
             when (transaction.type) {
                 TransactionEntry.Type.INCOME -> transaction.amount
                 TransactionEntry.Type.EXPENSE -> -transaction.amount
+                TransactionEntry.Type.ADJUSTMENT -> transaction.amount
             }
         }
 
@@ -74,7 +75,11 @@ class TransactionsViewModel(
             .filter { it.type == TransactionEntry.Type.EXPENSE }
             .sumOf { it.amount }
 
-        val finalBalance = initialBalance + income - expense
+        val adjustment = filteredTransactions
+            .filter { it.type == TransactionEntry.Type.ADJUSTMENT }
+            .sumOf { it.amount }
+
+        val finalBalance = initialBalance + income - expense + adjustment
 
         TransactionsUiState(
             transactions = filteredTransactions

@@ -199,7 +199,7 @@ class AddTransactionModal : Modal {
                     )
                 }
 
-                TransactionEntry.Type.INCOME -> {
+                TransactionEntry.Type.INCOME, TransactionEntry.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -226,7 +226,7 @@ class AddTransactionModal : Modal {
                     )
                 }
 
-                TransactionEntry.Type.EXPENSE -> {
+                TransactionEntry.Type.EXPENSE, TransactionEntry.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant

@@ -15,6 +15,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.screen.transactions.BalanceOverview
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -122,7 +123,7 @@ private fun SummaryRow(
         )
 
         Text(
-            text = "R$ %.2f".format(amount),
+            text = amount.toMoneyFormat(),
             style = config.amountStyle.copy(color = color)
         )
     }

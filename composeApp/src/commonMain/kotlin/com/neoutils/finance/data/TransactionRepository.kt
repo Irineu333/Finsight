@@ -1,6 +1,7 @@
 package com.neoutils.finance.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
 
 class TransactionRepository(
     private val dao: TransactionDao
@@ -28,6 +29,10 @@ class TransactionRepository(
 
     fun getTransactionsByType(type: TransactionEntry.Type): Flow<List<TransactionEntry>> {
         return dao.getTransactionsByType(type)
+    }
+
+    suspend fun getTransactionByTypeAndDate(type: TransactionEntry.Type, date: LocalDate): TransactionEntry? {
+        return dao.getTransactionByTypeAndDate(type, date)
     }
 
     suspend fun deleteAll() {

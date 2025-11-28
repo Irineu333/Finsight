@@ -1,9 +1,11 @@
 package com.neoutils.finance.screen.home
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -50,21 +52,19 @@ fun HomeScreen() = Surface {
         ) { paddingValues ->
             NavHost(
                 navController = navController,
-                startDestination = HomeRoute.Dashboard
+                startDestination = HomeRoute.Dashboard,
+                modifier = Modifier.padding(paddingValues)
             ) {
                 composable<HomeRoute.Dashboard> {
                     DashboardScreen(
                         onSeeAllTransactions = {
                             navController.navigate(HomeRoute.Transactions)
                         },
-                        contentPadding = paddingValues
                     )
                 }
 
                 composable<HomeRoute.Transactions> {
-                    TransactionsScreen(
-                        contentPadding = paddingValues
-                    )
+                    TransactionsScreen()
                 }
             }
         }

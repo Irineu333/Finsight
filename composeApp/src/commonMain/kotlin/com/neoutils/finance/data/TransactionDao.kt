@@ -28,6 +28,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY date DESC")
     fun getTransactionsByType(type: TransactionEntry.Type): Flow<List<TransactionEntry>>
 
+    @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
+    suspend fun getTransactionByTypeAndDate(type: TransactionEntry.Type, date: kotlinx.datetime.LocalDate): TransactionEntry?
+
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
 }

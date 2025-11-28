@@ -5,6 +5,7 @@ import com.neoutils.finance.data.TransactionDao
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.data.getRoomDatabase
 import com.neoutils.finance.screen.dashboard.DashboardViewModel
+import com.neoutils.finance.screen.transactions.TransactionsViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -20,6 +21,10 @@ val databaseModule = module {
 
     viewModel {
         DashboardViewModel(repository = get())
+    }
+
+    viewModel {
+        TransactionsViewModel(repository = get())
     }
 }
 

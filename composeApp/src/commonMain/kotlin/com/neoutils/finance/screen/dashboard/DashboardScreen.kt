@@ -24,6 +24,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun DashboardScreen(
     onAddTransaction: () -> Unit = {},
+    onSeeAllTransactions: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,9 +102,7 @@ fun DashboardScreen(
                     )
 
                     TextButton(
-                        onClick = {
-                            // TODO: open transactions screen
-                        }
+                        onClick = onSeeAllTransactions
                     ) {
                         Text(text = "Ver Tudo")
                     }

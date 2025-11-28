@@ -1,8 +1,8 @@
 package com.neoutils.finance.component
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
@@ -15,11 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.screen.dashboard.YearMonth
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.Month
 import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.Padding
 
-private val MonthNamesPortuguese = MonthNames(
+val MonthNamesPortuguese = MonthNames(
     january = "Janeiro",
     february = "Fevereiro",
     march = "Março",

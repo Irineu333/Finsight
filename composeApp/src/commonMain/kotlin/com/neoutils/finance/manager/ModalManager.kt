@@ -20,11 +20,7 @@ class ModalManager {
 
     @Composable
     fun Content() {
-        CompositionLocalProvider(
-            LocalModalManager provides this
-        ) {
-            modalState.forEach { it.Content() }
-        }
+        modalState.forEach { it.Content() }
     }
 
     fun dismiss() {

@@ -37,8 +37,10 @@ private val dateFormat = LocalDate.Format {
 @Composable
 fun TransactionCard(
     transaction: TransactionEntry,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) = Card(
+    onClick = onClick,
     modifier = modifier,
     colors = CardDefaults.cardColors(
         containerColor = colorScheme.surfaceContainer,

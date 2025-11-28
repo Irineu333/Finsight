@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.*
 import com.neoutils.finance.extension.MonthNamesPortuguese
+import com.neoutils.finance.manager.LocalModalManager
+import com.neoutils.finance.modal.ViewTransactionModal
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -48,6 +50,8 @@ private fun TransactionsContent(
     contentPadding: PaddingValues,
     uiState: TransactionsUiState,
 ) {
+    val modalManager = LocalModalManager.current
+    
     Scaffold(
         topBar = {
             MonthSelector(
@@ -96,7 +100,21 @@ private fun TransactionsContent(
                 ) { transaction ->
                     TransactionCard(
                         transaction = transaction,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            when (transaction.type) {
+                                com.neoutils.finance.data.TransactionEntry.Type.ADJUSTMENT -> {
+                                    modalManager.show(
+                                        com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
+                                    )
+                                }
+                                else -> {
+                                    modalManager.show(
+                                        ViewTransactionModal(transaction)
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
             }

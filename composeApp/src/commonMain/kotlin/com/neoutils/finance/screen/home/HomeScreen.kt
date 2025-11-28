@@ -10,7 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.neoutils.finance.component.AddTransactionModal
+import com.neoutils.finance.modal.AddTransactionModal
 import com.neoutils.finance.component.BottomNavigationBar
 import com.neoutils.finance.component.NavigationItem
 import com.neoutils.finance.manager.ModalManagerHost

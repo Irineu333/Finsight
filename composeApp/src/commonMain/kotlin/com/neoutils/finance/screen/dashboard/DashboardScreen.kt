@@ -17,7 +17,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.component.BalanceCard
 import com.neoutils.finance.component.BalanceCardConfig
-import com.neoutils.finance.component.EditBalanceModal
+import com.neoutils.finance.modal.EditBalanceModal
+import com.neoutils.finance.modal.ViewTransactionModal
 import com.neoutils.finance.component.TransactionCard
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.manager.LocalModalManager
@@ -41,6 +42,7 @@ fun DashboardScreen(
     DashboardContent(
         uiState = uiState,
         onSeeAllTransactions = onSeeAllTransactions,
+        modalManager = modalManager,
         onEditBalance = {
             modalManager.show(
                 EditBalanceModal(
@@ -58,6 +60,7 @@ fun DashboardScreen(
 private fun DashboardContent(
     onSeeAllTransactions: () -> Unit,
     uiState: DashboardUiState,
+    modalManager: com.neoutils.finance.manager.ModalManager,
     onEditBalance: () -> Unit
 ) = Scaffold(
     topBar = {
@@ -141,7 +144,21 @@ private fun DashboardContent(
                 transaction = transaction,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .animateItem()
+                    .animateItem(),
+                onClick = {
+                    when (transaction.type) {
+                        com.neoutils.finance.data.TransactionEntry.Type.ADJUSTMENT -> {
+                            modalManager.show(
+                                com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
+                            )
+                        }
+                        else -> {
+                            modalManager.show(
+                                ViewTransactionModal(transaction)
+                            )
+                        }
+                    }
+                }
             )
         }
     }

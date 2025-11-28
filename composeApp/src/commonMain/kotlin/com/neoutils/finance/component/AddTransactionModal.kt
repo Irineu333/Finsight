@@ -4,6 +4,7 @@ package com.neoutils.finance.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
@@ -13,6 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.TransactionEntry
@@ -37,12 +41,20 @@ class AddTransactionModal : Modal {
         byUnicodePattern("dd/MM/yyyy")
     }
 
+    private val insufficientBalance = @Composable {
+        Text("Saldo insuficiente")
+    }
+
     @Composable
     override fun Content() {
 
         val repository = koinInject<TransactionRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
+
+        val allTransactions by repository.getAllTransactions().collectAsState(initial = emptyList())
+
+        val currentBalance by remember { derivedStateOf { calculateBalance(allTransactions) } }
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -61,8 +73,19 @@ class AddTransactionModal : Modal {
 
                 var type by remember { mutableStateOf(TransactionEntry.Type.INCOME) }
                 val amount = rememberTextFieldState()
-                val description = rememberTextFieldState()
+                val title = rememberTextFieldState()
                 val date = rememberTextFieldState(dateFormat.format(currentDate()))
+
+                val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
+
+                val isInsufficientBalance by remember {
+                    derivedStateOf {
+                        when (type) {
+                            TransactionEntry.Type.EXPENSE -> expenseAmount > currentBalance
+                            else -> false
+                        }
+                    }
+                }
 
                 TypeToggle(
                     selectedType = type,
@@ -74,11 +97,15 @@ class AddTransactionModal : Modal {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    state = amount,
+                    state = title,
                     label = {
-                        Text(text = "Amount")
+                        Text(text = "Title")
                     },
-                    inputTransformation = MoneyInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier.fillMaxWidth(),
@@ -87,12 +114,19 @@ class AddTransactionModal : Modal {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    state = description,
+                    state = amount,
                     label = {
-                        Text(text = "Description")
+                        Text(text = "Amount")
                     },
+                    inputTransformation = MoneyInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
+                    isError = isInsufficientBalance,
+                    supportingText = insufficientBalance.takeIf { isInsufficientBalance },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -104,6 +138,10 @@ class AddTransactionModal : Modal {
                         Text(text = "Date")
                     },
                     inputTransformation = DateInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
                     trailingIcon = {
                         IconButton(
                             onClick = {
@@ -140,7 +178,7 @@ class AddTransactionModal : Modal {
                                 TransactionEntry(
                                     type = type,
                                     amount = parseMoneyToDouble(amount.text.toString()),
-                                    description = description.text.toString(),
+                                    description = title.text.toString(),
                                     date = dateFormat.parse(date.text.toString()),
                                 )
                             )
@@ -149,8 +187,9 @@ class AddTransactionModal : Modal {
                     },
                     enabled = showSaveButton(
                         amount = amount.text.toString(),
-                        description = description.text.toString(),
+                        title = title.text.toString(),
                         date = date.text.toString(),
+                        isInsufficientBalance = isInsufficientBalance
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -168,16 +207,29 @@ class AddTransactionModal : Modal {
     private fun showSaveButton(
         amount: String,
         date: String,
-        description: String,
+        title: String,
+        isInsufficientBalance: Boolean
     ): Boolean {
 
         if (amount.isEmpty()) return false
 
         if (date.isEmpty()) return false
 
-        if (description.isEmpty()) return false
+        if (title.isEmpty()) return false
+
+        if (isInsufficientBalance) return false
 
         return true
+    }
+
+    private fun calculateBalance(transactions: List<TransactionEntry>): Double {
+        return transactions.sumOf { transaction ->
+            when (transaction.type) {
+                TransactionEntry.Type.INCOME -> transaction.amount
+                TransactionEntry.Type.EXPENSE -> -transaction.amount
+                TransactionEntry.Type.ADJUSTMENT -> transaction.amount
+            }
+        }
     }
 
     @Composable

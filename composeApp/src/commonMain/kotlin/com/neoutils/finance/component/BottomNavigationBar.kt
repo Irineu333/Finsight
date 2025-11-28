@@ -12,6 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.IncomeCardBackground
+import com.neoutils.finance.ui.theme.Primary1
 
 enum class NavigationItem(
     val icon: ImageVector,
@@ -48,9 +51,9 @@ fun BottomNavigationBar(
                     },
                     label = { Text(item.label) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4CAF50),
-                        selectedTextColor = Color(0xFF4CAF50),
-                        indicatorColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
+                        selectedIconColor = Primary1,
+                        selectedTextColor = Primary1,
+                        indicatorColor = Primary1.copy(alpha = 0.1f)
                     ),
                     modifier = Modifier.weight(1f)
                 )
@@ -59,7 +62,6 @@ fun BottomNavigationBar(
 
         FloatingActionButton(
             onClick = onAddClick,
-            containerColor = Color(0xFF4CAF50),
             contentColor = Color.White,
             modifier = Modifier
                 .align(Alignment.TopCenter)

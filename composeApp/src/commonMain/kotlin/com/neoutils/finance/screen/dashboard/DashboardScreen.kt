@@ -120,7 +120,7 @@ private fun DashboardContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Transações",
+                    text = "Recentes",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                 )

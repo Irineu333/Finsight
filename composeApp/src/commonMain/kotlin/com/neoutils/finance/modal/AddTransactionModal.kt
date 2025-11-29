@@ -66,10 +66,6 @@ class AddTransactionModal : Modal {
         byUnicodePattern("dd/MM/yyyy")
     }
 
-    private val insufficientBalance = @Composable {
-        Text("Saldo insuficiente")
-    }
-
     @Composable
     override fun Content() {
 
@@ -77,31 +73,10 @@ class AddTransactionModal : Modal {
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
-        val allTransactions by repository.getAllTransactions().collectAsState(initial = emptyList())
-
-        val currentBalance by remember { derivedStateOf { calculateBalance(allTransactions) } }
-
         var type by remember { mutableStateOf(TransactionEntry.Type.EXPENSE) }
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(dateFormat.format(currentDate()))
-
-        val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
-
-        val isInsufficientBalance by remember {
-            derivedStateOf {
-                when (type) {
-                    TransactionEntry.Type.EXPENSE -> expenseAmount > currentBalance
-                    else -> false
-                }
-            }
-        }
-
-        val isAmountError by remember {
-            derivedStateOf {
-                amount.text.isNotEmpty() && isInsufficientBalance
-            }
-        }
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -156,8 +131,6 @@ class AddTransactionModal : Modal {
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    isError = isAmountError ,
-                    supportingText = insufficientBalance.takeIf { isAmountError },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -220,7 +193,6 @@ class AddTransactionModal : Modal {
                         amount = amount.text.toString(),
                         title = title.text.toString(),
                         date = date.text.toString(),
-                        isInsufficientBalance = isInsufficientBalance
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -239,7 +211,6 @@ class AddTransactionModal : Modal {
         amount: String,
         date: String,
         title: String,
-        isInsufficientBalance: Boolean
     ): Boolean {
 
         if (amount.isEmpty()) return false
@@ -249,8 +220,6 @@ class AddTransactionModal : Modal {
         if (date.isEmpty()) return false
 
         if (title.isEmpty()) return false
-
-        if (isInsufficientBalance) return false
 
         return true
     }

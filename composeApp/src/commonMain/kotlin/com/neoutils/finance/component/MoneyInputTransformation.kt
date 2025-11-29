@@ -8,15 +8,25 @@ import androidx.compose.foundation.text.input.placeCursorAtEnd
 class MoneyInputTransformation : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
-
-        val digitsOnly = asCharSequence().filter { it.isDigit() }.toString()
+        val text = asCharSequence().toString()
+        
+        // Check if the value should be negative
+        val isNegative = text.startsWith("-")
+        
+        // Extract only digits
+        val digitsOnly = text.filter { it.isDigit() }.toString()
 
         if (digitsOnly.isEmpty()) {
             delete(0, length)
             return
         }
 
-        val cents = digitsOnly.toLongOrNull() ?: 0L
+        var cents = digitsOnly.toLongOrNull() ?: 0L
+        
+        // Apply negative sign if needed
+        if (isNegative) {
+            cents = -cents
+        }
 
         val formatted = formatMoney(cents)
 
@@ -26,8 +36,11 @@ class MoneyInputTransformation : InputTransformation {
     }
 
     private fun formatMoney(cents: Long): String {
-        val reais = cents / 100
-        val centavos = cents % 100
+        val isNegative = cents < 0
+        val absoluteCents = kotlin.math.abs(cents)
+        
+        val reais = absoluteCents / 100
+        val centavos = absoluteCents % 100
 
         val reaisFormatted = reais.toString()
             .reversed()
@@ -35,6 +48,8 @@ class MoneyInputTransformation : InputTransformation {
             .joinToString(".")
             .reversed()
 
-        return "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        
+        return if (isNegative) "-$formatted" else formatted
     }
 }

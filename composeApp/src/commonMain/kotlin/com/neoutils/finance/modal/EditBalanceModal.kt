@@ -40,7 +40,7 @@ class EditBalanceModal(
     private val onConfirm: (Double) -> Unit
 ) : Modal {
 
-    private val initialCents = ((currentBalance.takeUnless { it < 0 } ?: 0.0) * 100).toLong()
+    private val initialCents = (currentBalance * 100).toLong()
 
     @Composable
     override fun Content() {
@@ -216,8 +216,11 @@ class EditBalanceModal(
     }
 
     private fun formatMoney(cents: Long): String {
-        val reais = cents / 100
-        val centavos = cents % 100
+        val isNegative = cents < 0
+        val absoluteCents = kotlin.math.abs(cents)
+        
+        val reais = absoluteCents / 100
+        val centavos = absoluteCents % 100
 
         val reaisFormatted = reais.toString()
             .reversed()
@@ -225,16 +228,23 @@ class EditBalanceModal(
             .joinToString(".")
             .reversed()
 
-        return "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        
+        return if (isNegative) "-$formatted" else formatted
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {
+        val isNegative = formatted.startsWith("-")
+        
         val digitsOnly = formatted
+            .replace("-", "")
             .replace("R$", "")
             .replace(".", "")
             .replace(",", ".")
             .trim()
 
-        return digitsOnly.toDoubleOrNull() ?: 0.0
+        val value = digitsOnly.toDoubleOrNull() ?: 0.0
+        
+        return if (isNegative) -value else value
     }
 }

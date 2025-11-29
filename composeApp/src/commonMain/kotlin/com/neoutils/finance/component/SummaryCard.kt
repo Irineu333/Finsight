@@ -1,5 +1,9 @@
 package com.neoutils.finance.component
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +14,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,35 +47,47 @@ fun SummaryCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SummaryRow(
-                label = "Saldo Inicial",
-                amount = balanceOverview.initialBalance,
-                color = colorScheme.onSurface,
-                onEditClick = onEditInitialBalance,
-                signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
-            )
+            AnimatedContent(
+                targetState = balanceOverview,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                }
+            ) { balanceOverview ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SummaryRow(
+                        label = "Saldo Inicial",
+                        amount = balanceOverview.initialBalance,
+                        color = colorScheme.onSurface,
+                        onEditClick = onEditInitialBalance,
+                        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+                    )
 
-            SummaryRow(
-                label = "Entradas",
-                amount = balanceOverview.income,
-                color = Income,
-                signDisplay = SignDisplay.ALWAYS_POSITIVE
-            )
+                    SummaryRow(
+                        label = "Entradas",
+                        amount = balanceOverview.income,
+                        color = Income,
+                        signDisplay = SignDisplay.ALWAYS_POSITIVE
+                    )
 
-            SummaryRow(
-                label = "Despesas",
-                amount = balanceOverview.expense,
-                color = Expense,
-                signDisplay = SignDisplay.ALWAYS_NEGATIVE
-            )
+                    SummaryRow(
+                        label = "Despesas",
+                        amount = balanceOverview.expense,
+                        color = Expense,
+                        signDisplay = SignDisplay.ALWAYS_NEGATIVE
+                    )
 
-            if (balanceOverview.adjustment != 0.0) {
-                SummaryRow(
-                    label = "Ajustes",
-                    amount = balanceOverview.adjustment,
-                    color = Adjustment,
-                    signDisplay = SignDisplay.SHOW_ALWAYS
-                )
+                    if (balanceOverview.adjustment != 0.0) {
+                        SummaryRow(
+                            label = "Ajustes",
+                            amount = balanceOverview.adjustment,
+                            color = Adjustment,
+                            signDisplay = SignDisplay.SHOW_ALWAYS
+                        )
+                    }
+                }
             }
 
             HorizontalDivider()
@@ -111,19 +128,23 @@ private fun SummaryRow(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = if (onEditClick != null) {
-                Modifier.clickable { onEditClick() }
-            } else {
-                Modifier
-            }
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .then(
+                    if (onEditClick != null) {
+                        Modifier.clickable { onEditClick() }
+                    } else {
+                        Modifier
+                    }
+                )
         ) {
-           if (onEditClick != null) {
-               Icon(
-                   imageVector = Icons.Rounded.ModeEdit,
-                   contentDescription = null,
-                   tint = color.copy(alpha = 0.5f),
-                   modifier = Modifier.size(16.dp)
-               )
+            if (onEditClick != null) {
+                Icon(
+                    imageVector = Icons.Rounded.ModeEdit,
+                    contentDescription = null,
+                    tint = color.copy(alpha = 0.5f),
+                    modifier = Modifier.size(16.dp)
+                )
             }
 
             val formattedAmount = when (signDisplay) {
@@ -136,6 +157,7 @@ private fun SummaryRow(
                         else -> amount.toMoneyFormat()
                     }
                 }
+
                 SignDisplay.SHOW_ONLY_NEGATIVE -> {
                     if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
                 }

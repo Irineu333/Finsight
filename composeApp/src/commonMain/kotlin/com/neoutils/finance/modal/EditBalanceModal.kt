@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
@@ -28,6 +29,7 @@ import com.neoutils.finance.component.MoneyInputTransformation
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import kotlinx.coroutines.launch
@@ -108,6 +110,12 @@ class EditBalanceModal(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = colorScheme.surfaceContainerHighest,
                         unfocusedContainerColor = colorScheme.surfaceContainerHighest,
+                        focusedBorderColor = Adjustment,
+                        cursorColor = Adjustment,
+                        selectionColors = TextSelectionColors(
+                            handleColor = Adjustment,
+                            backgroundColor = Adjustment.copy(alpha = 0.4f)
+                        )
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -139,7 +147,10 @@ class EditBalanceModal(
                         },
                         enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Adjustment
+                        ),
                     ) {
                         Text(
                             text = "Salvar",

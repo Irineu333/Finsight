@@ -120,7 +120,9 @@ private fun TransactionsContent(
                         text = sectionDateFormat.format(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .animateItem()
                     )
                 }
 
@@ -130,7 +132,9 @@ private fun TransactionsContent(
                 ) { transaction ->
                     TransactionCard(
                         transaction = transaction,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
                         onClick = {
                             when (transaction.type) {
                                 TransactionEntry.Type.ADJUSTMENT -> {

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.neoutils.finance.screen.home
 
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import com.neoutils.finance.component.NavigationItem
 import com.neoutils.finance.manager.ModalManagerHost
 import com.neoutils.finance.screen.dashboard.DashboardScreen
 import com.neoutils.finance.screen.transactions.TransactionsScreen
+import kotlinx.serialization.ExperimentalSerializationApi
 
 @Composable
 fun HomeScreen() = Surface {
@@ -24,9 +27,9 @@ fun HomeScreen() = Surface {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
 
     val currentRoute = currentBackStackEntry?.destination?.route
-    val selectedItem = when {
-        currentRoute?.contains("Dashboard") == true -> NavigationItem.Dashboard
-        currentRoute?.contains("Transactions") == true -> NavigationItem.Transactions
+    val selectedItem = when (currentRoute) {
+        HomeRoute.Dashboard.serializer().descriptor.serialName -> NavigationItem.Dashboard
+        HomeRoute.Transactions.serializer().descriptor.serialName -> NavigationItem.Transactions
         else -> NavigationItem.Dashboard
     }
 
@@ -57,7 +60,7 @@ fun HomeScreen() = Surface {
             ) {
                 composable<HomeRoute.Dashboard> {
                     DashboardScreen(
-                        onSeeAllTransactions = {
+                        openTransactions = {
                             navController.navigate(HomeRoute.Transactions)
                         },
                     )

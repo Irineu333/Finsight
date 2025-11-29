@@ -16,14 +16,6 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.IncomeCardBackground
 import com.neoutils.finance.ui.theme.Primary1
 
-enum class NavigationItem(
-    val icon: ImageVector,
-    val label: String
-) {
-    Dashboard(Icons.Default.Dashboard, "Dashboard"),
-    Transactions(Icons.Default.Receipt, "Transações")
-}
-
 @Composable
 fun BottomNavigationBar(
     selectedItem: NavigationItem,
@@ -75,4 +67,12 @@ fun BottomNavigationBar(
             )
         }
     }
+}
+
+enum class NavigationItem(
+    val icon: ImageVector,
+    val label: String
+) {
+    Dashboard(Icons.Default.Dashboard, "Dashboard"),
+    Transactions(Icons.Default.Receipt, "Transações")
 }

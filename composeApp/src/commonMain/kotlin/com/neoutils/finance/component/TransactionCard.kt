@@ -101,8 +101,8 @@ fun TransactionCard(
 
         Text(
             text = when (transaction.type) {
-                TransactionEntry.Type.INCOME -> transaction.amount.toMoneyFormatWithSign()
-                TransactionEntry.Type.EXPENSE -> (-transaction.amount).toMoneyFormatWithSign()
+                TransactionEntry.Type.INCOME -> transaction.amount.toMoneyFormat()
+                TransactionEntry.Type.EXPENSE -> "-${transaction.amount.toMoneyFormat()}"
                 TransactionEntry.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
             },
             fontSize = 16.sp,

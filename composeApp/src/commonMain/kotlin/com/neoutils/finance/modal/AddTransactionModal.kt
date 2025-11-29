@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
 
 package com.neoutils.finance.modal
 
@@ -52,6 +52,7 @@ import com.neoutils.finance.ui.theme.Income
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
@@ -194,7 +195,7 @@ class AddTransactionModal : Modal {
                             )
                         }
                     },
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -222,7 +223,7 @@ class AddTransactionModal : Modal {
                         isInsufficientBalance = isInsufficientBalance
                     ),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Salvar",
@@ -290,7 +291,7 @@ class AddTransactionModal : Modal {
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Despesa",
@@ -317,7 +318,7 @@ class AddTransactionModal : Modal {
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Receita",

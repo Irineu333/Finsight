@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -17,58 +16,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.screen.transactions.BalanceOverview
+import com.neoutils.finance.screen.transactions.TransactionsUiState
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
 
-enum class SignDisplay {
-    ALWAYS_POSITIVE,    // Receitas: sempre +
-    ALWAYS_NEGATIVE,    // Despesas: sempre -
-    SHOW_ALWAYS,        // Ajustes: + ou -
-    SHOW_ONLY_NEGATIVE  // Saldo: apenas se negativo
-}
-
-
-data class SummaryRowConfig(
-    val labelStyle: TextStyle,
-    val amountStyle: TextStyle
-) {
-    companion object {
-        val Default
-            @Composable
-            get() = SummaryRowConfig(
-                labelStyle = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = TextLight1
-                ),
-                amountStyle = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-        val Total
-            @Composable
-            get() = SummaryRowConfig(
-                labelStyle = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
-                ),
-                amountStyle = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-    }
-}
-
 @Composable
 fun SummaryCard(
-    balanceOverview: BalanceOverview,
+    balanceOverview: TransactionsUiState.BalanceOverview,
     modifier: Modifier = Modifier,
     onEditBalance: (() -> Unit)? = null,
     onEditInitialBalance: (() -> Unit)? = null
@@ -131,6 +87,7 @@ fun SummaryCard(
     }
 }
 
+
 @Composable
 private fun SummaryRow(
     label: String,
@@ -189,5 +146,47 @@ private fun SummaryRow(
                 style = config.amountStyle.copy(color = color)
             )
         }
+    }
+}
+
+enum class SignDisplay {
+    ALWAYS_POSITIVE,
+    ALWAYS_NEGATIVE,
+    SHOW_ALWAYS,
+    SHOW_ONLY_NEGATIVE
+}
+
+data class SummaryRowConfig(
+    val labelStyle: TextStyle,
+    val amountStyle: TextStyle
+) {
+    companion object {
+        val Default
+            @Composable
+            get() = SummaryRowConfig(
+                labelStyle = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = TextLight1
+                ),
+                amountStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+
+        val Total
+            @Composable
+            get() = SummaryRowConfig(
+                labelStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface
+                ),
+                amountStyle = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
     }
 }

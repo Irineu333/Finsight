@@ -8,10 +8,4 @@ sealed class HomeRoute {
 
     @Serializable
     data object Transactions : HomeRoute()
-
-    @Serializable
-    data object Budgets : HomeRoute()
-
-    @Serializable
-    data object Settings : HomeRoute()
 }

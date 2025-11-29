@@ -8,10 +8,8 @@ import androidx.compose.foundation.text.input.placeCursorAtEnd
 class DateInputTransformation : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
-        // Remove tudo que não é dígito
         val digitsOnly = asCharSequence().filter { it.isDigit() }.toString()
 
-        // Limita a 8 dígitos (DDMMYYYY)
         val limited = digitsOnly.take(8)
 
         if (limited.isEmpty()) {
@@ -19,13 +17,10 @@ class DateInputTransformation : InputTransformation {
             return
         }
 
-        // Formata como DD/MM/YYYY
         val formatted = formatDate(limited)
 
-        // Substitui o conteúdo
         replace(0, length, formatted)
 
-        // Coloca o cursor no final
         placeCursorAtEnd()
     }
 

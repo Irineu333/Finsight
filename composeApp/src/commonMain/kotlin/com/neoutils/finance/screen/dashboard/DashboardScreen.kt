@@ -23,6 +23,7 @@ import com.neoutils.finance.component.TransactionCard
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.manager.LocalModalManager
+import com.neoutils.finance.manager.ModalManager
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -34,7 +35,7 @@ private val yearMonthFormat = YearMonth.Format {
 
 @Composable
 fun DashboardScreen(
-    onSeeAllTransactions: () -> Unit = {},
+    openTransactions: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,14 +43,16 @@ fun DashboardScreen(
 
     DashboardContent(
         uiState = uiState,
-        onSeeAllTransactions = onSeeAllTransactions,
+        onSeeAllTransactions = openTransactions,
         modalManager = modalManager,
-        onEditBalance = {
+        openEditBalance = {
             modalManager.show(
                 EditBalanceModal(
                     currentBalance = uiState.balance.balance,
                     onConfirm = { targetBalance ->
-                        viewModel.adjustBalance(targetBalance)
+                        viewModel.onAction(
+                            DashboardAction.AdjustBalance(targetBalance)
+                        )
                     }
                 )
             )
@@ -61,13 +64,13 @@ fun DashboardScreen(
 private fun DashboardContent(
     onSeeAllTransactions: () -> Unit,
     uiState: DashboardUiState,
-    modalManager: com.neoutils.finance.manager.ModalManager,
-    onEditBalance: () -> Unit
+    modalManager: ModalManager,
+    openEditBalance: () -> Unit
 ) = Scaffold(
     topBar = {
         TopAppBar(
             title = {
-                Text(text = yearMonthFormat.format(uiState.currentMonth))
+                Text(text = yearMonthFormat.format(uiState.yearMonth))
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = colorScheme.background,
@@ -92,7 +95,7 @@ private fun DashboardContent(
             BalanceCard(
                 balance = uiState.balance.balance,
                 modifier = Modifier.fillMaxWidth(),
-                onEditClick = onEditBalance
+                onEditClick = openEditBalance
             )
         }
 

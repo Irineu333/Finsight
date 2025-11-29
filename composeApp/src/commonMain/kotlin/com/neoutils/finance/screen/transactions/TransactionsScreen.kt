@@ -14,9 +14,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.*
+import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.modal.EditBalanceModal
+import com.neoutils.finance.modal.ViewAdjustmentModal
 import com.neoutils.finance.modal.ViewTransactionModal
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -31,29 +33,20 @@ private val sectionDateFormat = LocalDate.Format {
 
 @Composable
 fun TransactionsScreen(
-    contentPadding: PaddingValues = PaddingValues(0.dp),
     viewModel: TransactionsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     TransactionsContent(
         uiState = uiState,
-        contentPadding = contentPadding,
-        selectPreviousMonth = viewModel::selectPreviousMonth,
-        selectNextMonth = viewModel::selectNextMonth,
-        onAdjustBalance = viewModel::adjustBalance,
-        onAdjustInitialBalance = viewModel::adjustInitialBalance,
+        onAction = viewModel::onAction,
     )
 }
 
 @Composable
 private fun TransactionsContent(
-    selectPreviousMonth: () -> Unit = {},
-    selectNextMonth: () -> Unit = {},
-    contentPadding: PaddingValues,
     uiState: TransactionsUiState,
-    onAdjustBalance: (Double) -> Unit = {},
-    onAdjustInitialBalance: (Double) -> Unit = {},
+    onAction: (TransactionsAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
 
@@ -61,8 +54,12 @@ private fun TransactionsContent(
         topBar = {
             MonthSelector(
                 selectedYearMonth = uiState.selectedYearMonth,
-                onPreviousMonth = selectPreviousMonth,
-                onNextMonth = selectNextMonth,
+                onPreviousMonth = {
+                    onAction(TransactionsAction.PreviousMonth)
+                },
+                onNextMonth = {
+                    onAction(TransactionsAction.NextMonth)
+                },
                 modifier = Modifier
                     .padding(vertical = 8.dp)
                     .fillMaxWidth()
@@ -77,7 +74,7 @@ private fun TransactionsContent(
                 start = 16.dp,
                 end = 16.dp,
                 top = 16.dp,
-                bottom = contentPadding.calculateBottomPadding() + 16.dp
+                bottom = 16.dp
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -90,7 +87,11 @@ private fun TransactionsContent(
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.finalBalance,
-                                onConfirm = onAdjustBalance
+                                onConfirm = {
+                                    onAction(
+                                        TransactionsAction.AdjustBalance(it)
+                                    )
+                                }
                             )
                         )
                     }.takeUnless {
@@ -100,7 +101,11 @@ private fun TransactionsContent(
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.initialBalance,
-                                onConfirm = onAdjustInitialBalance
+                                onConfirm = {
+                                    onAction(
+                                        TransactionsAction.AdjustInitialBalance(it)
+                                    )
+                                }
                             )
                         )
                     }.takeUnless {
@@ -128,9 +133,9 @@ private fun TransactionsContent(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             when (transaction.type) {
-                                com.neoutils.finance.data.TransactionEntry.Type.ADJUSTMENT -> {
+                                TransactionEntry.Type.ADJUSTMENT -> {
                                     modalManager.show(
-                                        com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
+                                        ViewAdjustmentModal(transaction)
                                     )
                                 }
 

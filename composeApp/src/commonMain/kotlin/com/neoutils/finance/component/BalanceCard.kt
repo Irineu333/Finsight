@@ -30,75 +30,6 @@ import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 
-data class BalanceCardConfig(
-    val icon: ImageVector?,
-    val title: String,
-    val style: TextStyle,
-    val titleStyle: TextStyle,
-    val padding: PaddingValues,
-    val container: Color,
-    val shape: Shape
-) {
-    companion object {
-        val Default
-            @Composable
-            get() = BalanceCardConfig(
-                title = "Saldo Atual",
-                style = TextStyle(
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                ),
-                titleStyle = TextStyle(
-                    fontSize = 16.sp,
-                    color = colorScheme.onSurfaceVariant
-                ),
-                padding = PaddingValues(24.dp),
-                container = colorScheme.surfaceContainer,
-                shape = shapes.large,
-                icon = null,
-            )
-
-        val Income
-            @Composable
-            get() = BalanceCardConfig(
-                icon = Icons.Default.ArrowUpward,
-                title = "Receitas",
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                ),
-                titleStyle = TextStyle(
-                    fontSize = 14.sp,
-                    color = IncomeColor
-                ),
-                padding = PaddingValues(16.dp),
-                container = IncomeColor.copy(alpha = 0.15f),
-                shape = shapes.large
-            )
-
-        val Expense
-            @Composable
-            get() = BalanceCardConfig(
-                icon = Icons.Default.ArrowDownward,
-                title = "Despesas",
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                ),
-                titleStyle = TextStyle(
-                    fontSize = 14.sp,
-                    color = ExpenseColor
-                ),
-                padding = PaddingValues(16.dp),
-                container = ExpenseColor.copy(alpha = 0.15f),
-                shape = shapes.large
-            )
-    }
-}
-
 @Composable
 fun BalanceCard(
     balance: Double,
@@ -171,5 +102,74 @@ fun BalanceCard(
                 )
             }
         }
+    }
+}
+
+data class BalanceCardConfig(
+    val icon: ImageVector?,
+    val title: String,
+    val style: TextStyle,
+    val titleStyle: TextStyle,
+    val padding: PaddingValues,
+    val container: Color,
+    val shape: Shape
+) {
+    companion object {
+        val Default
+            @Composable
+            get() = BalanceCardConfig(
+                title = "Saldo Atual",
+                style = TextStyle(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 16.sp,
+                    color = colorScheme.onSurfaceVariant
+                ),
+                padding = PaddingValues(24.dp),
+                container = colorScheme.surfaceContainer,
+                shape = shapes.large,
+                icon = null,
+            )
+
+        val Income
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowUpward,
+                title = "Receitas",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = IncomeColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = IncomeColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val Expense
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowDownward,
+                title = "Despesas",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = ExpenseColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = ExpenseColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
     }
 }

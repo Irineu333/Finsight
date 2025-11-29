@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
+import com.neoutils.finance.usecase.AdjustBalanceUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val adjustBalanceUseCase: AdjustBalanceUseCase
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -109,44 +111,19 @@ class TransactionsViewModel(
 
         if (selectedMonth > currentMonth) return@launch
 
-        val currentFinalBalance = uiState.value.balanceOverview.finalBalance
-
-        if (targetBalance == currentFinalBalance) return@launch
-
-        val adjustmentDate = if (selectedMonth == currentMonth) {
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-        } else {
-            selectedMonth.lastDay
-        }
-
-        val existingAdjustment = repository.getTransactionByTypeAndDate(
-            type = TransactionEntry.Type.ADJUSTMENT,
-            date = adjustmentDate
-        )
-
-        val difference = targetBalance - currentFinalBalance
-
-        if (existingAdjustment == null) {
-            repository.insert(
-                TransactionEntry(
-                    type = TransactionEntry.Type.ADJUSTMENT,
-                    amount = difference,
-                    description = "Ajuste de Saldo",
-                    date = adjustmentDate
-                )
+        if (selectedMonth == currentMonth) {
+            adjustBalanceUseCase(
+                currentBalance = uiState.value.balanceOverview.finalBalance,
+                targetBalance = targetBalance,
+                adjustmentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
             )
             return@launch
         }
 
-        val newAmount = existingAdjustment.amount + difference
-
-        if (newAmount == 0.0) {
-            repository.delete(existingAdjustment)
-            return@launch
-        }
-
-        repository.update(
-            existingAdjustment.copy(amount = newAmount)
+        adjustBalanceUseCase(
+            currentBalance = uiState.value.balanceOverview.finalBalance,
+            targetBalance = targetBalance,
+            adjustmentDate = selectedMonth.lastDay
         )
     }
 
@@ -156,39 +133,10 @@ class TransactionsViewModel(
 
         if (selectedMonth > currentMonth) return@launch
 
-        val currentInitialBalance = uiState.value.balanceOverview.initialBalance
-
-        if (targetInitialBalance == currentInitialBalance) return@launch
-
-        val adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
-
-        val existingAdjustment = repository.getTransactionByTypeAndDate(
-            type = TransactionEntry.Type.ADJUSTMENT,
-            date = adjustmentDate,
+        adjustBalanceUseCase(
+            currentBalance = uiState.value.balanceOverview.initialBalance,
+            targetBalance = targetInitialBalance,
+            adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
         )
-
-        val difference = targetInitialBalance - currentInitialBalance
-
-        if (existingAdjustment == null) {
-            repository.insert(
-                TransactionEntry(
-                    type = TransactionEntry.Type.ADJUSTMENT,
-                    amount = difference,
-                    description = "Ajuste de Saldo",
-                    date = adjustmentDate
-                )
-            )
-            return@launch
-        }
-
-        val newAmount = existingAdjustment.amount + difference
-
-        if (newAmount == 0.0) {
-            repository.delete(existingAdjustment)
-
-            return@launch
-        }
-
-        repository.update(existingAdjustment.copy(amount = newAmount))
     }
 }

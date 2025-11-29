@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
+import com.neoutils.finance.usecase.AdjustBalanceUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -18,7 +19,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
-    private val repository: TransactionRepository
+    private val repository: TransactionRepository,
+    private val adjustBalanceUseCase: AdjustBalanceUseCase
 ) : ViewModel() {
 
     private val currentMonth get() = Clock.System.now().toYearMonth()
@@ -66,39 +68,10 @@ class DashboardViewModel(
     }
 
     private fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
-        val currentBalance = uiState.value.balance.balance
-        val difference = targetBalance - currentBalance
-
-        if (difference == 0.0) return@launch
-
-        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-        val existingAdjustment = repository.getTransactionByTypeAndDate(
-            type = TransactionEntry.Type.ADJUSTMENT,
-            date = today
-        )
-
-        if (existingAdjustment == null) {
-            repository.insert(
-                TransactionEntry(
-                    type = TransactionEntry.Type.ADJUSTMENT,
-                    amount = difference,
-                    description = "Ajuste de Saldo",
-                    date = today
-                )
-            )
-            return@launch
-        }
-
-        val newAmount = existingAdjustment.amount + difference
-
-        if (newAmount == 0.0) {
-            repository.delete(existingAdjustment)
-            return@launch
-        }
-
-        repository.update(
-            existingAdjustment.copy(amount = newAmount)
+        adjustBalanceUseCase(
+            currentBalance = uiState.value.balance.balance,
+            targetBalance = targetBalance,
+            adjustmentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         )
     }
 }

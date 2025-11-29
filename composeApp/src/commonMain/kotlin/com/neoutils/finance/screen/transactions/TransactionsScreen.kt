@@ -42,6 +42,7 @@ fun TransactionsScreen(
         selectPreviousMonth = viewModel::selectPreviousMonth,
         selectNextMonth = viewModel::selectNextMonth,
         onAdjustBalance = viewModel::adjustBalance,
+        onAdjustInitialBalance = viewModel::adjustInitialBalance,
     )
 }
 
@@ -52,6 +53,7 @@ private fun TransactionsContent(
     contentPadding: PaddingValues,
     uiState: TransactionsUiState,
     onAdjustBalance: (Double) -> Unit = {},
+    onAdjustInitialBalance: (Double) -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
 
@@ -89,6 +91,16 @@ private fun TransactionsContent(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.finalBalance,
                                 onConfirm = onAdjustBalance
+                            )
+                        )
+                    }.takeUnless {
+                        uiState.isFutureMonth
+                    },
+                    onEditInitialBalance = {
+                        modalManager.show(
+                            EditBalanceModal(
+                                currentBalance = uiState.balanceOverview.initialBalance,
+                                onConfirm = onAdjustInitialBalance
                             )
                         )
                     }.takeUnless {

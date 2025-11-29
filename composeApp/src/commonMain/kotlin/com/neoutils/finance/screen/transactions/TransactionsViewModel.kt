@@ -172,4 +172,53 @@ class TransactionsViewModel(
             }
         }
     }
+
+    fun adjustInitialBalance(targetInitialBalance: Double) {
+        viewModelScope.launch {
+            val currentMonth = Clock.System.now().toYearMonth()
+            val selectedMonth = selectedYearMonth.value
+
+            // Permite editar saldo inicial de qualquer mês <= atual
+            if (selectedMonth > currentMonth) {
+                return@launch
+            }
+
+            val currentInitialBalance = uiState.value.balanceOverview.initialBalance
+            val difference = targetInitialBalance - currentInitialBalance
+
+            if (difference == 0.0) {
+                return@launch
+            }
+
+            // Ajuste é lançado no último dia do mês anterior
+            val adjustmentDate = run {
+                val firstDayOfSelectedMonth = LocalDate(selectedMonth.year, selectedMonth.month, 1)
+                LocalDate.fromEpochDays(firstDayOfSelectedMonth.toEpochDays() - 1)
+            }
+
+            val existingAdjustment = repository.getTransactionByTypeAndDate(
+                type = TransactionEntry.Type.ADJUSTMENT,
+                date = adjustmentDate
+            )
+
+            if (existingAdjustment != null) {
+                val newAmount = existingAdjustment.amount + difference
+
+                if (newAmount == 0.0) {
+                    repository.delete(existingAdjustment)
+                } else {
+                    repository.update(existingAdjustment.copy(amount = newAmount))
+                }
+            } else {
+                repository.insert(
+                    TransactionEntry(
+                        type = TransactionEntry.Type.ADJUSTMENT,
+                        amount = difference,
+                        description = "Ajuste de Saldo",
+                        date = adjustmentDate
+                    )
+                )
+            }
+        }
+    }
 }

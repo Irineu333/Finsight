@@ -96,6 +96,12 @@ class AddTransactionModal : Modal {
             }
         }
 
+        val isAmountError by remember {
+            derivedStateOf {
+                amount.text.isNotEmpty() && isInsufficientBalance
+            }
+        }
+
         ModalBottomSheet(
             onDismissRequest = {
                 manager.dismiss()
@@ -149,8 +155,8 @@ class AddTransactionModal : Modal {
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    isError = isInsufficientBalance,
-                    supportingText = insufficientBalance.takeIf { isInsufficientBalance },
+                    isError = isAmountError ,
+                    supportingText = insufficientBalance.takeIf { isAmountError },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -236,6 +242,8 @@ class AddTransactionModal : Modal {
     ): Boolean {
 
         if (amount.isEmpty()) return false
+
+        if (parseMoneyToDouble(amount) == 0.0) return false
 
         if (date.isEmpty()) return false
 

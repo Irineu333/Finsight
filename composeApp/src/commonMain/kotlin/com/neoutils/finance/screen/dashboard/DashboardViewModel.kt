@@ -50,6 +50,16 @@ class DashboardViewModel(
                 transaction.date.yearMonth == currentMonth
             }
 
+            val previousMonthsBalance = allTransactions
+                .filter { transaction -> transaction.date.yearMonth < currentMonth }
+                .sumOf { transaction ->
+                    when (transaction.type) {
+                        TransactionEntry.Type.INCOME -> transaction.amount
+                        TransactionEntry.Type.EXPENSE -> -transaction.amount
+                        TransactionEntry.Type.ADJUSTMENT -> transaction.amount
+                    }
+                }
+
             val income = filteredTransactions
                 .filter { it.type == TransactionEntry.Type.INCOME }
                 .sumOf { it.amount }
@@ -67,7 +77,7 @@ class DashboardViewModel(
                 balance = BalanceStats(
                     income = income,
                     expense = expense,
-                    balance = income - expense + adjustment
+                    balance = previousMonthsBalance + income - expense + adjustment
                 ),
                 currentMonth = currentMonth
             )

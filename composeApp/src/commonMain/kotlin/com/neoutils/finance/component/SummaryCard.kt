@@ -23,6 +23,14 @@ import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
 
+enum class SignDisplay {
+    ALWAYS_POSITIVE,    // Receitas: sempre +
+    ALWAYS_NEGATIVE,    // Despesas: sempre -
+    SHOW_ALWAYS,        // Ajustes: + ou -
+    SHOW_ONLY_NEGATIVE  // Saldo: apenas se negativo
+}
+
+
 data class SummaryRowConfig(
     val labelStyle: TextStyle,
     val amountStyle: TextStyle
@@ -62,7 +70,8 @@ data class SummaryRowConfig(
 fun SummaryCard(
     balanceOverview: BalanceOverview,
     modifier: Modifier = Modifier,
-    onEditBalance: (() -> Unit)? = null
+    onEditBalance: (() -> Unit)? = null,
+    onEditInitialBalance: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -80,26 +89,31 @@ fun SummaryCard(
             SummaryRow(
                 label = "Saldo Inicial",
                 amount = balanceOverview.initialBalance,
-                color = colorScheme.onSurface
+                color = colorScheme.onSurface,
+                onEditClick = onEditInitialBalance,
+                signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
             )
 
             SummaryRow(
                 label = "Entradas",
                 amount = balanceOverview.income,
-                color = Income
+                color = Income,
+                signDisplay = SignDisplay.ALWAYS_POSITIVE
             )
 
             SummaryRow(
                 label = "Despesas",
                 amount = balanceOverview.expense,
-                color = Expense
+                color = Expense,
+                signDisplay = SignDisplay.ALWAYS_NEGATIVE
             )
 
             if (balanceOverview.adjustment != 0.0) {
                 SummaryRow(
                     label = "Ajustes",
                     amount = balanceOverview.adjustment,
-                    color = Adjustment
+                    color = Adjustment,
+                    signDisplay = SignDisplay.SHOW_ALWAYS
                 )
             }
 
@@ -110,7 +124,8 @@ fun SummaryCard(
                 amount = balanceOverview.finalBalance,
                 color = colorScheme.onSurface,
                 config = SummaryRowConfig.Total,
-                onEditClick = onEditBalance
+                onEditClick = onEditBalance,
+                signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
             )
         }
     }
@@ -123,7 +138,8 @@ private fun SummaryRow(
     color: Color,
     modifier: Modifier = Modifier,
     onEditClick: (() -> Unit)? = null,
-    config: SummaryRowConfig = SummaryRowConfig.Default
+    config: SummaryRowConfig = SummaryRowConfig.Default,
+    signDisplay: SignDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -153,8 +169,23 @@ private fun SummaryRow(
                )
             }
 
+            val formattedAmount = when (signDisplay) {
+                SignDisplay.ALWAYS_POSITIVE -> "+${amount.toMoneyFormat()}"
+                SignDisplay.ALWAYS_NEGATIVE -> "-${amount.toMoneyFormat()}"
+                SignDisplay.SHOW_ALWAYS -> {
+                    when {
+                        amount > 0 -> "+${amount.toMoneyFormat()}"
+                        amount < 0 -> amount.toMoneyFormat() // já tem o sinal negativo
+                        else -> amount.toMoneyFormat()
+                    }
+                }
+                SignDisplay.SHOW_ONLY_NEGATIVE -> {
+                    if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
+                }
+            }
+
             Text(
-                text = amount.toMoneyFormat(),
+                text = formattedAmount,
                 style = config.amountStyle.copy(color = color)
             )
         }

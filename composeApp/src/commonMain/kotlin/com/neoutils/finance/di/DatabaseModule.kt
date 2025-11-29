@@ -7,6 +7,8 @@ import com.neoutils.finance.data.getRoomDatabase
 import com.neoutils.finance.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.screen.transactions.TransactionsViewModel
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -21,18 +23,24 @@ val databaseModule = module {
     }
 
     factory { AdjustBalanceUseCase(get()) }
+    factory { CalculateBalanceUseCase() }
+    factory { CalculateTransactionStatsUseCase() }
 
     viewModel {
         DashboardViewModel(
             repository = get(),
-            adjustBalanceUseCase = get()
+            adjustBalanceUseCase = get(),
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get()
         )
     }
 
     viewModel {
         TransactionsViewModel(
             repository = get(),
-            adjustBalanceUseCase = get()
+            adjustBalanceUseCase = get(),
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get()
         )
     }
 }

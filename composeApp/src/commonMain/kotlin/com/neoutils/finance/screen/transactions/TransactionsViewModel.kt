@@ -4,10 +4,11 @@ package com.neoutils.finance.screen.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,55 +27,39 @@ import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
     private val repository: TransactionRepository,
-    private val adjustBalanceUseCase: AdjustBalanceUseCase
+    private val adjustBalanceUseCase: AdjustBalanceUseCase,
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val transactions = combine(
+    val uiState: StateFlow<TransactionsUiState> = combine(
         repository.getAllTransactions(),
         selectedYearMonth
     ) { transactions, yearMonth ->
-        transactions.filter { transaction ->
-            transaction.date.yearMonth <= yearMonth
-        }
-    }
 
-    val uiState: StateFlow<TransactionsUiState> = combine(
-        transactions,
-        selectedYearMonth
-    ) { transactions, yearMonth ->
-
-        val previousTransactions = transactions.filter { transaction ->
-            transaction.date.yearMonth < yearMonth
-        }
-
-        val currentTransactions = transactions.filter { transaction ->
-            transaction.date.yearMonth == yearMonth
-        }
+        val stats = calculateTransactionStatsUseCase(
+            transactions = transactions,
+            forYearMonth = yearMonth
+        )
 
         TransactionsUiState(
-            transactions = currentTransactions
+            transactions = stats.transactions
                 .sortedByDescending { it.date }
                 .groupBy { it.date },
             balanceOverview = TransactionsUiState.BalanceOverview(
-                income = currentTransactions.filter { it.type.isIncome }.sumOf { it.amount },
-                expense = currentTransactions.filter { it.type.isExpense }.sumOf { it.amount },
-                adjustment = currentTransactions.filter { it.type.isAdjustment }.sumOf { it.amount },
-                initialBalance = previousTransactions.sumOf { transaction ->
-                    when (transaction.type) {
-                        TransactionEntry.Type.INCOME -> transaction.amount
-                        TransactionEntry.Type.EXPENSE -> -transaction.amount
-                        TransactionEntry.Type.ADJUSTMENT -> transaction.amount
-                    }
-                },
-                finalBalance = transactions.sumOf { transaction ->
-                    when (transaction.type) {
-                        TransactionEntry.Type.INCOME -> transaction.amount
-                        TransactionEntry.Type.EXPENSE -> -transaction.amount
-                        TransactionEntry.Type.ADJUSTMENT -> transaction.amount
-                    }
-                }
+                income = stats.income,
+                expense = stats.expense,
+                adjustment = stats.adjustment,
+                initialBalance = calculateBalanceUseCase(
+                    transactions = transactions,
+                    upToYearMonth = yearMonth.minusMonth(),
+                ),
+                finalBalance = calculateBalanceUseCase(
+                    transactions = transactions,
+                    upToYearMonth = yearMonth
+                )
             ),
             selectedYearMonth = yearMonth,
         )

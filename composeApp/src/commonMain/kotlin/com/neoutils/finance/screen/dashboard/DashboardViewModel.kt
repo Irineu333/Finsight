@@ -4,10 +4,11 @@ package com.neoutils.finance.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -20,7 +21,9 @@ import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
     private val repository: TransactionRepository,
-    private val adjustBalanceUseCase: AdjustBalanceUseCase
+    private val adjustBalanceUseCase: AdjustBalanceUseCase,
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
 
     private val currentMonth get() = Clock.System.now().toYearMonth()
@@ -28,28 +31,21 @@ class DashboardViewModel(
     val uiState = repository
         .getAllTransactions()
         .map { transactions ->
-            transactions.filter { transaction ->
-                transaction.date.yearMonth <= currentMonth
-            }
-        }
-        .map { transactions ->
 
-            val currentTransactions = transactions.filter { transaction ->
-                transaction.date.yearMonth == currentMonth
-            }
+            val stats = calculateTransactionStatsUseCase(
+                transactions = transactions,
+                forYearMonth = currentMonth
+            )
 
             DashboardUiState(
-                recents = currentTransactions.take(3),
+                recents = stats.transactions.take(3),
                 balance = DashboardUiState.BalanceStats(
-                    income = currentTransactions.filter { it.type.isIncome }.sumOf { it.amount },
-                    expense = currentTransactions.filter { it.type.isExpense }.sumOf { it.amount },
-                    balance = transactions.sumOf { transaction ->
-                        when (transaction.type) {
-                            TransactionEntry.Type.INCOME -> transaction.amount
-                            TransactionEntry.Type.EXPENSE -> -transaction.amount
-                            TransactionEntry.Type.ADJUSTMENT -> transaction.amount
-                        }
-                    }
+                    income = stats.income,
+                    expense = stats.expense,
+                    balance = calculateBalanceUseCase(
+                        transactions = transactions,
+                        upToYearMonth = currentMonth,
+                    )
                 ),
                 yearMonth = currentMonth
             )

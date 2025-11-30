@@ -21,6 +21,7 @@ data class TransactionsUiState(
         .toLocalDateTime(TimeZone.currentSystemDefault())
         .date.yearMonth
 
+    val isCurrentMonth = selectedYearMonth == currentMonth
     val isFutureMonth = selectedYearMonth > currentMonth
 
     data class BalanceOverview(

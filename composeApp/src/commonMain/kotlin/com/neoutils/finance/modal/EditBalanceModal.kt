@@ -26,21 +26,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.MoneyInputTransformation
+import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.manager.LocalModalManager
 import com.neoutils.finance.manager.Modal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.TextLight1
 import kotlinx.coroutines.launch
+import kotlinx.datetime.YearMonth
+
+enum class BalanceEditType(val title: String) {
+    CURRENT("Editar Saldo Atual"),
+    FINAL("Editar Saldo Final"),
+    INITIAL("Editar Saldo Inicial")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditBalanceModal(
     private val currentBalance: Double,
+    private val type: BalanceEditType = BalanceEditType.FINAL,
+    private val targetMonth: YearMonth? = null,
     private val onConfirm: (Double) -> Unit
 ) : Modal {
 
     private val initialCents = (currentBalance * 100).toLong()
+
+    private val yearMonthFormat = YearMonth.Format {
+        monthName(MonthNamesPortuguese)
+        chars(" de ")
+        year()
+    }
 
     @Composable
     override fun Content() {
@@ -75,10 +92,19 @@ class EditBalanceModal(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Editar Saldo",
+                    text = type.title,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
+
+                if (targetMonth != null) {
+                    Text(
+                        text = yearMonthFormat.format(targetMonth),
+                        fontSize = 14.sp,
+                        color = TextLight1,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

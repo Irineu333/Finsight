@@ -31,6 +31,7 @@ import com.neoutils.finance.ui.theme.TextLight1
 fun SummaryCard(
     balanceOverview: TransactionsUiState.BalanceOverview,
     modifier: Modifier = Modifier,
+    isCurrentMonth: Boolean = false,
     onEditBalance: (() -> Unit)? = null,
     onEditInitialBalance: (() -> Unit)? = null
 ) {
@@ -93,7 +94,7 @@ fun SummaryCard(
             HorizontalDivider()
 
             SummaryRow(
-                label = "Saldo Final",
+                label = if (isCurrentMonth) "Saldo Atual" else "Saldo Final",
                 amount = balanceOverview.finalBalance,
                 color = colorScheme.onSurface,
                 config = SummaryRowConfig.Total,

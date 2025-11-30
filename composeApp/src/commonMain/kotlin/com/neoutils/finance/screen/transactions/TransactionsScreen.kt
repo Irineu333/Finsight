@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.component.*
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.MonthNamesPortuguese
+import kotlinx.datetime.YearMonth
 import com.neoutils.finance.manager.LocalModalManager
+import com.neoutils.finance.modal.BalanceEditType
 import com.neoutils.finance.modal.EditBalanceModal
 import com.neoutils.finance.modal.ViewAdjustmentModal
 import com.neoutils.finance.modal.ViewTransactionModal
@@ -83,10 +85,13 @@ private fun TransactionsContent(
                 SummaryCard(
                     balanceOverview = uiState.balanceOverview,
                     modifier = Modifier.fillMaxWidth(),
+                    isCurrentMonth = uiState.isCurrentMonth,
                     onEditBalance = {
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.finalBalance,
+                                type = if (uiState.isCurrentMonth) BalanceEditType.CURRENT else BalanceEditType.FINAL,
+                                targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
                                 onConfirm = {
                                     onAction(
                                         TransactionsAction.AdjustBalance(it)
@@ -101,6 +106,8 @@ private fun TransactionsContent(
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.initialBalance,
+                                type = BalanceEditType.INITIAL,
+                                targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
                                 onConfirm = {
                                     onAction(
                                         TransactionsAction.AdjustInitialBalance(it)

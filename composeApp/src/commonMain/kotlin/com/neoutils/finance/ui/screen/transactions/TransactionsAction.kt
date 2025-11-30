@@ -1,4 +1,4 @@
-package com.neoutils.finance.screen.transactions
+package com.neoutils.finance.ui.screen.transactions
 
 sealed class TransactionsAction {
     data class AdjustInitialBalance(

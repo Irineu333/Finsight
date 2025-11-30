@@ -1,4 +1,4 @@
-package com.neoutils.finance.component
+package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

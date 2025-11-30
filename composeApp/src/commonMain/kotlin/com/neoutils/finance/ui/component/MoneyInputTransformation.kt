@@ -1,9 +1,10 @@
-package com.neoutils.finance.component
+package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
+import kotlin.math.abs
 
 class MoneyInputTransformation : InputTransformation {
 
@@ -37,7 +38,7 @@ class MoneyInputTransformation : InputTransformation {
 
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
-        val absoluteCents = kotlin.math.abs(cents)
+        val absoluteCents = abs(cents)
         
         val reais = absoluteCents / 100
         val centavos = absoluteCents % 100

@@ -1,4 +1,4 @@
-package com.neoutils.finance.manager
+package com.neoutils.finance.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

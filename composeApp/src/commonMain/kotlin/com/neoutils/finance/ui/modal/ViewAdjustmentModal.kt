@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class)
 
-package com.neoutils.finance.modal
+package com.neoutils.finance.ui.modal
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Adjustment
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats

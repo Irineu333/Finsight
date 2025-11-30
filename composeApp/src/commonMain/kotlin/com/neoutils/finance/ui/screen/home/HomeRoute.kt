@@ -1,4 +1,4 @@
-package com.neoutils.finance.screen.home
+package com.neoutils.finance.ui.screen.home
 
 import kotlinx.serialization.Serializable
 

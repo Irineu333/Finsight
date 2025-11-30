@@ -1,7 +1,6 @@
-package com.neoutils.finance.modal
+package com.neoutils.finance.ui.modal
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -13,8 +12,6 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.rounded.TrendingDown
-import androidx.compose.material.icons.rounded.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
@@ -25,17 +22,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.component.MoneyInputTransformation
+import com.neoutils.finance.ui.component.MoneyInputTransformation
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
+import kotlin.math.abs
 
 enum class BalanceEditType(val title: String) {
     CURRENT("Editar Saldo Atual"),
@@ -243,7 +241,7 @@ class EditBalanceModal(
 
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
-        val absoluteCents = kotlin.math.abs(cents)
+        val absoluteCents = abs(cents)
         
         val reais = absoluteCents / 100
         val centavos = absoluteCents % 100

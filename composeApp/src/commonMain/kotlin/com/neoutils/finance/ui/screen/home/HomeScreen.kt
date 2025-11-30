@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package com.neoutils.finance.screen.home
+package com.neoutils.finance.ui.screen.home
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -12,12 +12,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.neoutils.finance.modal.AddTransactionModal
-import com.neoutils.finance.component.BottomNavigationBar
-import com.neoutils.finance.component.NavigationItem
-import com.neoutils.finance.manager.ModalManagerHost
-import com.neoutils.finance.screen.dashboard.DashboardScreen
-import com.neoutils.finance.screen.transactions.TransactionsScreen
+import com.neoutils.finance.ui.modal.AddTransactionModal
+import com.neoutils.finance.ui.component.BottomNavigationBar
+import com.neoutils.finance.ui.component.NavigationItem
+import com.neoutils.finance.ui.component.ModalManagerHost
+import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
+import com.neoutils.finance.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 
 @Composable

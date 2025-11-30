@@ -4,8 +4,8 @@ import com.neoutils.finance.data.AppDatabase
 import com.neoutils.finance.data.TransactionDao
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.data.getRoomDatabase
-import com.neoutils.finance.screen.dashboard.DashboardViewModel
-import com.neoutils.finance.screen.transactions.TransactionsViewModel
+import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
+import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase

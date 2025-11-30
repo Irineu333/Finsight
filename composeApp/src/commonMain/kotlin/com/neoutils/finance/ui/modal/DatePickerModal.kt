@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 
-package com.neoutils.finance.modal
+package com.neoutils.finance.ui.modal
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.Modal
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn

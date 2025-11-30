@@ -1,4 +1,4 @@
-package com.neoutils.finance.screen.dashboard
+package com.neoutils.finance.ui.screen.dashboard
 
 sealed class DashboardAction {
     data class AdjustBalance(

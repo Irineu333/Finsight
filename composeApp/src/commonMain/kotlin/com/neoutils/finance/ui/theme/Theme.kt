@@ -1,14 +1,9 @@
 package com.neoutils.finance.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.ModalManager
 
 private val DarkColorScheme = darkColorScheme(
     primary = Primary1,

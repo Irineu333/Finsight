@@ -1,4 +1,4 @@
-package com.neoutils.finance.component
+package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -12,8 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.neoutils.finance.ui.theme.Income
-import com.neoutils.finance.ui.theme.IncomeCardBackground
 import com.neoutils.finance.ui.theme.Primary1
 
 @Composable

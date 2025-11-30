@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finance.screen.dashboard
+package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,15 +15,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finance.component.BalanceCard
-import com.neoutils.finance.component.BalanceCardConfig
-import com.neoutils.finance.modal.EditBalanceModal
-import com.neoutils.finance.modal.ViewTransactionModal
-import com.neoutils.finance.component.TransactionCard
+import com.neoutils.finance.ui.component.BalanceCard
+import com.neoutils.finance.ui.component.BalanceCardConfig
+import com.neoutils.finance.ui.modal.EditBalanceModal
+import com.neoutils.finance.ui.modal.ViewTransactionModal
+import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.MonthNamesPortuguese
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.ModalManager
+import com.neoutils.finance.ui.modal.ViewAdjustmentModal
+import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -153,7 +154,7 @@ private fun DashboardContent(
                     when (transaction.type) {
                         TransactionEntry.Type.ADJUSTMENT -> {
                             modalManager.show(
-                                com.neoutils.finance.modal.ViewAdjustmentModal(transaction)
+                                ViewAdjustmentModal(transaction)
                             )
                         }
 

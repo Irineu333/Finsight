@@ -1,4 +1,4 @@
-package com.neoutils.finance.component
+package com.neoutils.finance.ui.component
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.screen.transactions.TransactionsUiState
+import com.neoutils.finance.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income

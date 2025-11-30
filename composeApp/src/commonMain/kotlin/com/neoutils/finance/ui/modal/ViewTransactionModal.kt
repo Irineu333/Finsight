@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class)
 
-package com.neoutils.finance.modal
+package com.neoutils.finance.ui.modal
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -10,17 +10,15 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.manager.LocalModalManager
-import com.neoutils.finance.manager.Modal
+import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -29,7 +27,6 @@ import com.neoutils.finance.ui.theme.Info
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
-import org.koin.compose.koinInject
 
 class ViewTransactionModal(
     private val transaction: TransactionEntry

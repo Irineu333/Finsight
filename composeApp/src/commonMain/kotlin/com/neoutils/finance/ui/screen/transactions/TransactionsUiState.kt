@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.screen.transactions
+package com.neoutils.finance.ui.screen.transactions
 
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.toYearMonth

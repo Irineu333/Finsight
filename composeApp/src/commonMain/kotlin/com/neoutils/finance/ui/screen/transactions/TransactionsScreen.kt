@@ -140,6 +140,7 @@ private fun TransactionsContent(
                 ) { transaction ->
                     TransactionCard(
                         transaction = transaction,
+                        category = null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem(),

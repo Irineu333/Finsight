@@ -205,33 +205,6 @@ class AddTransactionModal : Modal {
         }
     }
 
-    private fun showSaveButton(
-        amount: String,
-        date: String,
-        title: String,
-    ): Boolean {
-
-        if (amount.isEmpty()) return false
-
-        if (parseMoneyToDouble(amount) == 0.0) return false
-
-        if (date.isEmpty()) return false
-
-        if (title.isEmpty()) return false
-
-        return true
-    }
-
-    private fun calculateBalance(transactions: List<TransactionEntry>): Double {
-        return transactions.sumOf { transaction ->
-            when (transaction.type) {
-                TransactionEntry.Type.INCOME -> transaction.amount
-                TransactionEntry.Type.EXPENSE -> -transaction.amount
-                TransactionEntry.Type.ADJUSTMENT -> transaction.amount
-            }
-        }
-    }
-
     @Composable
     fun TypeToggle(
         selectedType: TransactionEntry.Type,
@@ -293,6 +266,23 @@ class AddTransactionModal : Modal {
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+
+    private fun showSaveButton(
+        amount: String,
+        date: String,
+        title: String,
+    ): Boolean {
+
+        if (amount.isEmpty()) return false
+
+        if (parseMoneyToDouble(amount) == 0.0) return false
+
+        if (date.isEmpty()) return false
+
+        if (title.isEmpty()) return false
+
+        return true
     }
 
     private fun currentDate(): LocalDate {

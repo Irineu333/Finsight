@@ -1,5 +1,11 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.neoutils.finance.ui.component
 
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -27,14 +33,14 @@ class ModalManager {
 }
 
 @Composable
-fun ModalManagerHost(content: @Composable (ModalManager) -> Unit) {
+fun ModalManagerHost(content: @Composable () -> Unit) {
 
     val modalManager = remember { ModalManager() }
 
     CompositionLocalProvider(
         LocalModalManager provides modalManager,
     ) {
-        content(modalManager)
+        content()
         modalManager.Content()
     }
 }
@@ -42,4 +48,25 @@ fun ModalManagerHost(content: @Composable (ModalManager) -> Unit) {
 interface Modal {
     @Composable
     fun Content()
+}
+
+interface ModalBottomSheet : Modal {
+    @Composable
+    override fun Content() {
+        
+        val manager = LocalModalManager.current
+
+        ModalBottomSheet(
+            onDismissRequest = {
+                manager.dismiss()
+            },
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
+            content = { BottomSheet() }
+        )
+    }
+
+    @Composable
+    fun ColumnScope.BottomSheet()
 }

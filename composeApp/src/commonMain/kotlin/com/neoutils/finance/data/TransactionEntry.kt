@@ -1,12 +1,21 @@
 package com.neoutils.finance.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
-import androidx.room.TypeConverters
 import kotlinx.datetime.LocalDate
 
-@Entity(tableName = "transactions")
+@Entity(
+    tableName = "transactions",
+    foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["id"],
+            childColumns = ["categoryId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ]
+)
 data class TransactionEntry(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -14,6 +23,7 @@ data class TransactionEntry(
     val amount: Double,
     val description: String,
     val date: LocalDate,
+    val categoryId: Long? = null
 ) {
     enum class Type {
         EXPENSE,

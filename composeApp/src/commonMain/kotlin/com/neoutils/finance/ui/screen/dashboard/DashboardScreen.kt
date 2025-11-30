@@ -5,6 +5,8 @@ package com.neoutils.finance.ui.screen.dashboard
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ private val yearMonthFormat = YearMonth.Format {
 @Composable
 fun DashboardScreen(
     openTransactions: () -> Unit = {},
+    openCategories: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,6 +48,7 @@ fun DashboardScreen(
     DashboardContent(
         uiState = uiState,
         onSeeAllTransactions = openTransactions,
+        onOpenCategories = openCategories,
         modalManager = modalManager,
         openEditBalance = {
             modalManager.show(
@@ -64,6 +68,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardContent(
     onSeeAllTransactions: () -> Unit,
+    onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     openEditBalance: () -> Unit
@@ -119,24 +124,26 @@ private fun DashboardContent(
             }
         }
 
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Recentes",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                TextButton(
-                    onClick = onSeeAllTransactions
+        if (uiState.recents.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Ver Tudo")
+                    Text(
+                        text = "Recentes",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    TextButton(
+                        onClick = onSeeAllTransactions
+                    ) {
+                        Text(text = "Ver Tudo")
+                    }
                 }
             }
         }
@@ -147,6 +154,7 @@ private fun DashboardContent(
         ) { transaction ->
             TransactionCard(
                 transaction = transaction,
+                category = null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateItem(),
@@ -166,6 +174,32 @@ private fun DashboardContent(
                     }
                 }
             )
+        }
+
+        item {
+            Card(
+                onClick = onOpenCategories,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier.padding(top = 24.dp),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Categorias",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
         }
     }
 }

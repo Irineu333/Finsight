@@ -36,3 +36,6 @@ val Success = Color(0xFF10B981)
 val Error = Color(0xFFEF4444)
 val Warning = Color(0xFFF59E0B)
 val Info = Color(0xFF3B82F6)
+
+// Category color
+val CategoryColor = Color(0xFF3B82F6)

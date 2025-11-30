@@ -9,3 +9,12 @@ sealed class HomeRoute {
     @Serializable
     data object Transactions : HomeRoute()
 }
+
+sealed class AppRoute {
+
+    @Serializable
+    data object Home : AppRoute()
+
+    @Serializable
+    data object Categories : AppRoute()
+}

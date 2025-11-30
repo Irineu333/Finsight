@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,9 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.data.Category
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
+import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -37,8 +40,9 @@ private val dateFormat = LocalDate.Format {
 @Composable
 fun TransactionCard(
     transaction: TransactionEntry,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    category: Category?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) = Card(
     onClick = onClick,
     modifier = modifier,
@@ -69,9 +73,12 @@ fun TransactionCard(
                 modifier = Modifier.fillMaxSize()
             ) {
                 Icon(
-                    imageVector = when (transaction.type) {
+                    imageVector = category?.let {
+                        CategoryIcon.fromKey(category.key).icon
+                    } ?: when (transaction.type) {
+                        TransactionEntry.Type.INCOME -> Icons.Default.ShoppingCart
+                        TransactionEntry.Type.EXPENSE -> Icons.Default.Receipt
                         TransactionEntry.Type.ADJUSTMENT -> Icons.Default.Edit
-                        else -> Icons.Default.ShoppingCart
                     },
                     contentDescription = null,
                     tint = when (transaction.type) {

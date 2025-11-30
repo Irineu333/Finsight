@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CategoriesViewModel(
-    private val repository: CategoryRepository,
     private val getCategoriesUseCase: GetCategoriesUseCase
 ) : ViewModel() {
 

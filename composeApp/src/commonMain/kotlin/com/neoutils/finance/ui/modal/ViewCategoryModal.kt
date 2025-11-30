@@ -36,10 +36,14 @@ class ViewCategoryModal(
     private val category: Category
 ) : Modal {
 
+    private val key = category.id.toString()
+
     @Composable
     override fun Content() {
         val manager = LocalModalManager.current
-        val viewModel: ViewCategoryViewModel = koinViewModel { parametersOf(category) }
+
+        val viewModel: ViewCategoryViewModel = koinViewModel(key = key) { parametersOf(category) }
+
         val uiState by viewModel.uiState.collectAsState()
 
         ModalBottomSheet(

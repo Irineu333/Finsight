@@ -57,7 +57,6 @@ val databaseModule = module {
 
     viewModel {
         CategoriesViewModel(
-            repository = get(),
             getCategoriesUseCase = get()
         )
     }

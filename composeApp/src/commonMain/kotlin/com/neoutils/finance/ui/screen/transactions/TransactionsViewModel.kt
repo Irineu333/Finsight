@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
@@ -26,6 +27,7 @@ import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
     private val repository: TransactionRepository,
+    private val categoryRepository: CategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
@@ -35,8 +37,9 @@ class TransactionsViewModel(
 
     val uiState: StateFlow<TransactionsUiState> = combine(
         repository.getAllTransactions(),
+        categoryRepository.getAllCategories(),
         selectedYearMonth
-    ) { transactions, yearMonth ->
+    ) { transactions, categories, yearMonth ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -61,6 +64,7 @@ class TransactionsViewModel(
                 )
             ),
             selectedYearMonth = yearMonth,
+            categories = categories.associateBy { it.id }
         )
     }.stateIn(
         scope = viewModelScope,

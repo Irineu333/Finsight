@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -43,8 +44,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.ui.component.DateInputTransformation
 import com.neoutils.finance.ui.component.MoneyInputTransformation
+import com.neoutils.finance.data.Category
+import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Expense
@@ -72,6 +76,7 @@ class EditTransactionModal(
     @Composable
     override fun Content() {
         val repository = koinInject<TransactionRepository>()
+        val categoryRepository = koinInject<CategoryRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
@@ -96,6 +101,14 @@ class EditTransactionModal(
         val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
         val title = rememberTextFieldState(transaction.description)
         val date = rememberTextFieldState(dateFormat.format(transaction.date))
+
+        var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
+
+        LaunchedEffect(transaction.categoryId) {
+            selectedCategory = transaction.categoryId?.let {
+                categoryRepository.getCategoryById(it)
+            }
+        }
 
         val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
 
@@ -153,6 +166,19 @@ class EditTransactionModal(
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CategorySelector(
+                    selectedCategory = selectedCategory,
+                    categoryType = when(type) {
+                        TransactionEntry.Type.INCOME -> Category.CategoryType.INCOME
+                        TransactionEntry.Type.EXPENSE -> Category.CategoryType.EXPENSE
+                        else -> error("Invalid type")
+                    },
+                    onCategorySelected = { selectedCategory = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -225,6 +251,7 @@ class EditTransactionModal(
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     description = title.text.toString(),
                                     date = dateFormat.parse(date.text.toString()),
+                                    categoryId = selectedCategory?.id
                                 )
                             )
 

@@ -38,6 +38,7 @@ val databaseModule = module {
     viewModel {
         DashboardViewModel(
             repository = get(),
+            categoryRepository = get(),
             adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get()
@@ -47,6 +48,7 @@ val databaseModule = module {
     viewModel {
         TransactionsViewModel(
             repository = get(),
+            categoryRepository = get(),
             adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get()
@@ -57,6 +59,13 @@ val databaseModule = module {
         CategoriesViewModel(
             repository = get(),
             getCategoriesUseCase = get()
+        )
+    }
+
+    viewModel { parameters ->
+        com.neoutils.finance.ui.modal.ViewCategoryViewModel(
+            category = parameters.get(),
+            repository = get()
         )
     }
 }

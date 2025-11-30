@@ -154,7 +154,7 @@ private fun DashboardContent(
         ) { transaction ->
             TransactionCard(
                 transaction = transaction,
-                category = null,
+                category = transaction.categoryId?.let { uiState.categories[it] },
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateItem(),

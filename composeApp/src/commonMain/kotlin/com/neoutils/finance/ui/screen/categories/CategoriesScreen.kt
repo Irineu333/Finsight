@@ -22,6 +22,7 @@ import com.neoutils.finance.data.Category
 import com.neoutils.finance.ui.component.CategoryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.AddCategoryModal
+import com.neoutils.finance.ui.modal.ViewCategoryModal
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -33,7 +34,6 @@ fun CategoriesScreen(
 
     CategoriesContent(
         uiState = uiState,
-        onAction = viewModel::onAction,
         onNavigateBack = onNavigateBack
     )
 }
@@ -41,7 +41,6 @@ fun CategoriesScreen(
 @Composable
 private fun CategoriesContent(
     uiState: CategoriesUiState,
-    onAction: (CategoriesAction) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
@@ -108,7 +107,7 @@ private fun CategoriesContent(
                 CategoryCard(
                     category = category,
                     onClick = {
-                        onAction(CategoriesAction.EditCategory(category))
+                        modalManager.show(ViewCategoryModal(category))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -134,7 +133,7 @@ private fun CategoriesContent(
                 CategoryCard(
                     category = category,
                     onClick = {
-                        onAction(CategoriesAction.EditCategory(category))
+                        modalManager.show(ViewCategoryModal(category))
                     },
                     modifier = Modifier
                         .fillMaxWidth()

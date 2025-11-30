@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,8 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.ui.component.DateInputTransformation
 import com.neoutils.finance.ui.component.MoneyInputTransformation
+import com.neoutils.finance.data.Category
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Expense
@@ -75,6 +78,7 @@ class AddTransactionModal : Modal {
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(dateFormat.format(currentDate()))
+        var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -113,6 +117,15 @@ class AddTransactionModal : Modal {
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
                     modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                CategorySelector(
+                    selectedCategory = selectedCategory,
+                    categoryType = if (type.isIncome) Category.CategoryType.INCOME else Category.CategoryType.EXPENSE,
+                    onCategorySelected = { selectedCategory = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -182,6 +195,7 @@ class AddTransactionModal : Modal {
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     description = title.text.toString(),
                                     date = dateFormat.parse(date.text.toString()),
+                                    categoryId = selectedCategory?.id
                                 )
                             )
                             manager.dismiss()

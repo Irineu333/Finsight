@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -49,21 +52,31 @@ class ViewAdjustmentModal(
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
             ) {
-                Text(
-                    text = "Ajuste de Saldo",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Adjustment
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AdjustmentIconBox()
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.width(16.dp))
 
-                Text(
-                    text = transaction.description,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                    Column {
+                        Text(
+                            text = "Ajuste de Saldo",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Adjustment
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = transaction.description,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onSurface
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -84,16 +97,16 @@ class ViewAdjustmentModal(
 
                 OutlinedButton(
                     onClick = {
-                        manager.show(DeleteConfirmationModal(transaction))
+                        manager.show(DeleteTransactionModal(transaction))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
+                        contentColor = colorScheme.error,
                     ),
                     border = BorderStroke(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.error,
+                        color = colorScheme.error,
                     )
                 ) {
                     Icon(
@@ -113,10 +126,31 @@ class ViewAdjustmentModal(
     }
 
     @Composable
+    private fun AdjustmentIconBox() {
+        Surface(
+            color = Adjustment.copy(alpha = 0.2f),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.size(64.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    tint = Adjustment,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+    }
+
+    @Composable
     private fun DetailRow(
         label: String,
         value: String,
-        valueColor: Color = MaterialTheme.colorScheme.onSurface
+        valueColor: Color = colorScheme.onSurface
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -125,7 +159,7 @@ class ViewAdjustmentModal(
             Text(
                 text = label,
                 fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,

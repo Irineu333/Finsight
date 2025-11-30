@@ -27,20 +27,4 @@ class CategoriesViewModel(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = CategoriesUiState()
         )
-
-    fun onAction(action: CategoriesAction) {
-        when (action) {
-            is CategoriesAction.DeleteCategory -> deleteCategory(action.category)
-            is CategoriesAction.AddCategory -> {
-                // TODO: implement add category modal/navigation
-            }
-            is CategoriesAction.EditCategory -> {
-                // TODO: implement edit category modal/navigation
-            }
-        }
-    }
-
-    private fun deleteCategory(category: Category) = viewModelScope.launch {
-        repository.delete(category)
-    }
 }

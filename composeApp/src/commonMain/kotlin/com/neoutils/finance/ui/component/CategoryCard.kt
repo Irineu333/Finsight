@@ -2,8 +2,6 @@ package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -12,9 +10,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.Category
-import com.neoutils.finance.ui.icons.CategoryIcon
-import com.neoutils.finance.ui.theme.Expense
-import com.neoutils.finance.ui.theme.Income
 
 @Composable
 fun CategoryCard(
@@ -22,8 +17,6 @@ fun CategoryCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-    val categoryColor = if (category.type.isIncome) Income else Expense
-
     Card(
         onClick = onClick,
         modifier = modifier,
@@ -40,23 +33,12 @@ fun CategoryCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                color = categoryColor.copy(alpha = 0.2f),
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        imageVector = CategoryIcon.fromKey(category.key).icon,
-                        contentDescription = null,
-                        tint = categoryColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+            CategoryIconBox(
+                category = category,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(12.dp),
+                modifier = Modifier.size(48.dp),
+            )
 
             Text(
                 text = category.name,

@@ -21,20 +21,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.data.Category
+import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
-class DeleteConfirmationModal(
-    private val transaction: TransactionEntry
+class DeleteCategoryModal(
+    private val category: Category
 ) : Modal {
 
     @Composable
     override fun Content() {
-        val repository = koinInject<TransactionRepository>()
+        val repository = koinInject<CategoryRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
@@ -53,7 +53,7 @@ class DeleteConfirmationModal(
                     .padding(bottom = 32.dp)
             ) {
                 Text(
-                    text = "Excluir Transação",
+                    text = "Excluir Categoria",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -62,7 +62,7 @@ class DeleteConfirmationModal(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.",
+                    text = "Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas.",
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -72,7 +72,7 @@ class DeleteConfirmationModal(
                 Button(
                     onClick = {
                         scope.launch {
-                            repository.delete(transaction)
+                            repository.delete(category)
                             manager.dismiss()
                             manager.dismiss()
                         }

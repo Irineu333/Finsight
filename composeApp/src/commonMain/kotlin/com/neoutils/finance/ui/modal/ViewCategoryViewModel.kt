@@ -5,6 +5,7 @@ package com.neoutils.finance.ui.modal
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.data.Category
+import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,21 +22,24 @@ import kotlin.time.ExperimentalTime
 
 class ViewCategoryViewModel(
     private val category: Category,
+    private val categoryRepository: CategoryRepository,
     private val repository: TransactionRepository
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
     val uiState: StateFlow<ViewCategoryUiState> = combine(
+        categoryRepository.observeCategoryById(category.id),
         repository.getAllTransactions(),
         selectedYearMonth
-    ) { transactions, yearMonth ->
+    ) { observedCategory, transactions, yearMonth ->
+        val currentCategory = observedCategory ?: category
         val transactionsForMonth = transactions.filter {
-            it.categoryId == category.id && it.date.yearMonth == yearMonth
+            it.categoryId == currentCategory.id && it.date.yearMonth == yearMonth
         }
 
         ViewCategoryUiState(
-            category = category,
+            category = currentCategory,
             selectedYearMonth = yearMonth,
             totalAmount = transactionsForMonth.sumOf { it.amount },
             transactionCount = transactionsForMonth.size

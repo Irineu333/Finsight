@@ -42,7 +42,7 @@ class ViewCategoryModal(
     override fun Content() {
         val manager = LocalModalManager.current
 
-        val viewModel: ViewCategoryViewModel = koinViewModel(key = key) { parametersOf(category) }
+        val viewModel = koinViewModel<ViewCategoryViewModel>(key = key) { parametersOf(category) }
 
         val uiState by viewModel.uiState.collectAsState()
 
@@ -92,7 +92,7 @@ class ViewCategoryModal(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CategoryIconBox(
-                        category = category,
+                        category = uiState.category,
                         modifier = Modifier.size(64.dp),
                         contentPadding = PaddingValues(16.dp),
                         shape = RoundedCornerShape(16.dp)
@@ -102,16 +102,16 @@ class ViewCategoryModal(
 
                     Column {
                         Text(
-                            text = if (category.type.isIncome) "Receita" else "Despesa",
+                            text = if (uiState.category.type.isIncome) "Receita" else "Despesa",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (category.type.isIncome) Income else Expense
+                            color = if (uiState.category.type.isIncome) Income else Expense
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = category.name,
+                            text = uiState.category.name,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface
@@ -122,9 +122,9 @@ class ViewCategoryModal(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 DetailRow(
-                    label = if (category.type.isIncome) "Total Recebido" else "Total Gasto",
+                    label = if (uiState.category.type.isIncome) "Total Recebido" else "Total Gasto",
                     value = uiState.totalAmount.toMoneyFormat(),
-                    valueColor = if (category.type.isIncome) Income else Expense
+                    valueColor = if (uiState.category.type.isIncome) Income else Expense
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -142,7 +142,7 @@ class ViewCategoryModal(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            manager.show(DeleteCategoryModal(category))
+                            manager.show(DeleteCategoryModal(uiState.category))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
@@ -169,7 +169,7 @@ class ViewCategoryModal(
 
                     OutlinedButton(
                         onClick = {
-                            manager.show(EditCategoryModal(category))
+                            manager.show(EditCategoryModal(uiState.category))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),

@@ -17,6 +17,10 @@ class CategoryRepository(
         return dao.getCategoryById(id)
     }
 
+    fun observeCategoryById(id: Long): Flow<Category?> {
+        return dao.observeCategoryById(id)
+    }
+
     suspend fun insert(category: Category) {
         dao.insert(category)
     }

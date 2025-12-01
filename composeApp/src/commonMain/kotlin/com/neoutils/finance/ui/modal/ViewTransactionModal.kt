@@ -12,16 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
@@ -34,7 +31,8 @@ import com.neoutils.finance.ui.theme.Info
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class ViewTransactionModal(
     private val transaction: TransactionEntry
@@ -44,22 +42,15 @@ class ViewTransactionModal(
         byUnicodePattern("dd/MM/yyyy")
     }
 
+    private val key = transaction.id.toString()
+
     @Composable
     override fun Content() {
         val manager = LocalModalManager.current
-        val categoryRepository = koinInject<CategoryRepository>()
 
-        val category by categoryRepository
-            .getAllCategories()
-            .collectAsState(initial = emptyList())
+        val viewModel = koinViewModel<ViewTransactionViewModel>(key = key) { parametersOf(transaction) }
 
-        val transactionCategory by remember {
-            derivedStateOf {
-                transaction.categoryId?.let { categoryId ->
-                    category.find { it.id == categoryId }
-                }
-            }
-        }
+        val uiState by viewModel.uiState.collectAsState()
 
         ModalBottomSheet(
             onDismissRequest = {
@@ -78,7 +69,7 @@ class ViewTransactionModal(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    transactionCategory?.let {
+                    uiState.category?.let {
                         CategoryIconBox(
                             category = it,
                             modifier = Modifier.size(64.dp),
@@ -91,14 +82,14 @@ class ViewTransactionModal(
 
                     Column {
                         Text(
-                            text = when (transaction.type) {
+                            text = when (uiState.transaction.type) {
                                 TransactionEntry.Type.INCOME -> "Receita"
                                 TransactionEntry.Type.EXPENSE -> "Despesa"
                                 TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
                             },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = when (transaction.type) {
+                            color = when (uiState.transaction.type) {
                                 TransactionEntry.Type.INCOME -> Income
                                 TransactionEntry.Type.EXPENSE -> Expense
                                 TransactionEntry.Type.ADJUSTMENT -> Adjustment
@@ -107,7 +98,7 @@ class ViewTransactionModal(
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = transaction.description,
+                            text = uiState.transaction.description,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface
@@ -119,8 +110,8 @@ class ViewTransactionModal(
 
                 DetailRow(
                     label = "Valor",
-                    value = transaction.amount.toMoneyFormat(),
-                    valueColor = when (transaction.type) {
+                    value = uiState.transaction.amount.toMoneyFormat(),
+                    valueColor = when (uiState.transaction.type) {
                         TransactionEntry.Type.INCOME -> Income
                         TransactionEntry.Type.EXPENSE -> Expense
                         TransactionEntry.Type.ADJUSTMENT -> Adjustment
@@ -131,7 +122,7 @@ class ViewTransactionModal(
 
                 DetailRow(
                     label = "Data",
-                    value = dateFormat.format(transaction.date)
+                    value = dateFormat.format(uiState.transaction.date)
                 )
 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -142,7 +133,7 @@ class ViewTransactionModal(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            manager.show(DeleteTransactionModal(transaction))
+                            manager.show(DeleteTransactionModal(uiState.transaction))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
@@ -169,7 +160,7 @@ class ViewTransactionModal(
 
                     OutlinedButton(
                         onClick = {
-                            manager.show(EditTransactionModal(transaction))
+                            manager.show(EditTransactionModal(uiState.transaction))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),

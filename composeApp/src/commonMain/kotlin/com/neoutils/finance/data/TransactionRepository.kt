@@ -27,6 +27,10 @@ class TransactionRepository(
         return dao.getTransactionById(id)
     }
 
+    fun observeTransactionById(id: Long): Flow<TransactionEntry?> {
+        return dao.observeTransactionById(id)
+    }
+
     fun getTransactionsByType(type: TransactionEntry.Type): Flow<List<TransactionEntry>> {
         return dao.getTransactionsByType(type)
     }

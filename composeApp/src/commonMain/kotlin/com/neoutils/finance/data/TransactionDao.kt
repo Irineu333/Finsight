@@ -25,6 +25,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): TransactionEntry?
 
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    fun observeTransactionById(id: Long): Flow<TransactionEntry?>
+
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY date DESC")
     fun getTransactionsByType(type: TransactionEntry.Type): Flow<List<TransactionEntry>>
 

@@ -74,7 +74,7 @@ fun SummaryCard(
                     )
 
                     SummaryRow(
-                        label = "Despesas",
+                        label = "Saídas",
                         amount = balanceOverview.expense,
                         color = Expense,
                         signDisplay = SignDisplay.ALWAYS_NEGATIVE

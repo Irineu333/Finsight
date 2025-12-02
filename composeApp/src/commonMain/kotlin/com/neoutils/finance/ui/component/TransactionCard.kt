@@ -95,7 +95,7 @@ fun TransactionCard(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = transaction.title ?: category?.name ?: "Sem descrição",
+                text = getTitle(transaction, category),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
             )
@@ -109,7 +109,7 @@ fun TransactionCard(
         Text(
             text = when (transaction.type) {
                 Transaction.Type.INCOME -> transaction.amount.toMoneyFormat()
-                Transaction.Type.EXPENSE -> "-${transaction.amount.toMoneyFormat()}"
+                Transaction.Type.EXPENSE -> transaction.amount.toMoneyFormat()
                 Transaction.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
             },
             fontSize = 16.sp,
@@ -122,3 +122,8 @@ fun TransactionCard(
         )
     }
 }
+
+private fun getTitle(
+    transaction: Transaction,
+    category: Category?
+) = (transaction.title ?: category?.name) ?: "Título"

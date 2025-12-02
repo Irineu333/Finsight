@@ -20,7 +20,7 @@ import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
-import com.neoutils.finance.ui.modal.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard

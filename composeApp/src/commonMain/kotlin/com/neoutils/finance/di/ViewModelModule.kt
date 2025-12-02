@@ -2,8 +2,8 @@ package com.neoutils.finance.di
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.modal.ViewCategoryViewModel
-import com.neoutils.finance.ui.modal.ViewTransactionViewModel
+import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
+import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel

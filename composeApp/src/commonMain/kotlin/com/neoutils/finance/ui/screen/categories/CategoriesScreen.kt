@@ -10,9 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,7 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.CategoryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.AddCategoryModal
-import com.neoutils.finance.ui.modal.ViewCategoryModal
+import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable

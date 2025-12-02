@@ -1,6 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.viewCategory
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -19,36 +19,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
-import com.neoutils.finance.ui.theme.Adjustment
+import com.neoutils.finance.ui.component.MonthSelector
+import com.neoutils.finance.ui.modal.DeleteCategoryModal
+import com.neoutils.finance.ui.modal.EditCategoryModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.ExperimentalTime
 
-class ViewTransactionModal(
-    private val transaction: Transaction
+class ViewCategoryModal(
+    private val category: Category
 ) : Modal {
 
-    private val dateFormat = LocalDate.Format {
-        byUnicodePattern("dd/MM/yyyy")
-    }
-
-    private val key = transaction.id.toString()
+    private val key = category.id.toString()
 
     @Composable
     override fun Content() {
         val manager = LocalModalManager.current
 
-        val viewModel = koinViewModel<ViewTransactionViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<ViewCategoryViewModel>(key = key) { parametersOf(category) }
 
         val uiState by viewModel.uiState.collectAsState()
 
@@ -59,6 +55,20 @@ class ViewTransactionModal(
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
+            dragHandle = {
+                Surface(
+                    modifier = Modifier.padding(top = 22.dp),
+                    color = colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.extraLarge,
+                ) {
+                    Box(
+                        Modifier.size(
+                            width = 32.dp,
+                            height = 4.dp
+                        )
+                    )
+                }
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -66,39 +76,44 @@ class ViewTransactionModal(
                     .padding(horizontal = 24.dp)
                     .padding(bottom = 32.dp)
             ) {
+
+                MonthSelector(
+                    selectedYearMonth = uiState.selectedYearMonth,
+                    onPreviousMonth = {
+                        viewModel.onAction(ViewCategoryAction.PreviousMonth)
+                    },
+                    onNextMonth = {
+                        viewModel.onAction(ViewCategoryAction.NextMonth)
+                    },
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth()
+                )
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    uiState.category?.let {
-                        CategoryIconBox(
-                            category = it,
-                            modifier = Modifier.size(64.dp),
-                            contentPadding = PaddingValues(16.dp),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                    }
+                    CategoryIconBox(
+                        category = uiState.category,
+                        modifier = Modifier.size(64.dp),
+                        contentPadding = PaddingValues(16.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    )
 
                     Spacer(Modifier.width(16.dp))
 
                     Column {
                         Text(
-                            text = when (uiState.transaction.type) {
-                                Transaction.Type.INCOME -> "Receita"
-                                Transaction.Type.EXPENSE -> "Despesa"
-                                Transaction.Type.ADJUSTMENT -> "Ajuste"
-                            },
+                            text = if (uiState.category.type.isIncome) "Receita" else "Despesa",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = when (uiState.transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                            }
+                            color = if (uiState.category.type.isIncome) Income else Expense
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
+
                         Text(
-                            text = uiState.transaction.title ?: uiState.category?.name ?: "Sem descrição",
+                            text = uiState.category.name,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface
@@ -109,20 +124,16 @@ class ViewTransactionModal(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 DetailRow(
-                    label = "Valor",
-                    value = uiState.transaction.amount.toMoneyFormat(),
-                    valueColor = when (uiState.transaction.type) {
-                        Transaction.Type.INCOME -> Income
-                        Transaction.Type.EXPENSE -> Expense
-                        Transaction.Type.ADJUSTMENT -> Adjustment
-                    }
+                    label = if (uiState.category.type.isIncome) "Total Recebido" else "Total Gasto",
+                    value = uiState.totalAmount.toMoneyFormat(),
+                    valueColor = if (uiState.category.type.isIncome) Income else Expense
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DetailRow(
-                    label = "Data",
-                    value = dateFormat.format(uiState.transaction.date)
+                    label = "Transações no Mês",
+                    value = uiState.transactionCount.toString()
                 )
 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -133,7 +144,7 @@ class ViewTransactionModal(
                 ) {
                     OutlinedButton(
                         onClick = {
-                            manager.show(DeleteTransactionModal(uiState.transaction))
+                            manager.show(DeleteCategoryModal(uiState.category))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
@@ -160,7 +171,7 @@ class ViewTransactionModal(
 
                     OutlinedButton(
                         onClick = {
-                            manager.show(EditTransactionModal(uiState.transaction))
+                            manager.show(EditCategoryModal(uiState.category))
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),

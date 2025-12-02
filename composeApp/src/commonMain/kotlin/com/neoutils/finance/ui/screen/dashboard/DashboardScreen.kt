@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.BalanceCard
 import com.neoutils.finance.ui.component.BalanceCardConfig
 import com.neoutils.finance.ui.modal.EditBalanceModal
-import com.neoutils.finance.ui.modal.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.yearMonthFormat

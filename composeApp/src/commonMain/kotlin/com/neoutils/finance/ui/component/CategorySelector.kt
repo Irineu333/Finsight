@@ -29,7 +29,6 @@ fun CategorySelector(
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     var expanded by remember { mutableStateOf(false) }
-    val categoryColor = if (categoryType.isIncome) Income else Expense
 
     ExposedDropdownMenuBox(
         expanded = expanded,

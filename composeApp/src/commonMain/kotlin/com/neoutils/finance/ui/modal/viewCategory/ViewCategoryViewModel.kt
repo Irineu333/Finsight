@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.viewCategory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,10 +10,9 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
@@ -28,18 +27,18 @@ class ViewCategoryViewModel(
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    val uiState: StateFlow<ViewCategoryUiState> = combine(
-        categoryRepository.observeCategoryById(category.id),
+    val uiState = combine(
+        categoryRepository.observeCategoryById(category.id).filterNotNull(),
         repository.getAllTransactions(),
         selectedYearMonth
-    ) { observedCategory, transactions, yearMonth ->
-        val currentCategory = observedCategory ?: category
+    ) { category, transactions, yearMonth ->
+
         val transactionsForMonth = transactions.filter {
-            it.categoryId == currentCategory.id && it.date.yearMonth == yearMonth
+            it.categoryId == category.id && it.date.yearMonth == yearMonth
         }
 
         ViewCategoryUiState(
-            category = currentCategory,
+            category = category,
             selectedYearMonth = yearMonth,
             totalAmount = transactionsForMonth.sumOf { it.amount },
             transactionCount = transactionsForMonth.size
@@ -60,16 +59,4 @@ class ViewCategoryViewModel(
             }
         }
     }
-}
-
-data class ViewCategoryUiState(
-    val category: Category,
-    val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
-    val totalAmount: Double = 0.0,
-    val transactionCount: Int = 0
-)
-
-sealed class ViewCategoryAction {
-    data object NextMonth : ViewCategoryAction()
-    data object PreviousMonth : ViewCategoryAction()
 }

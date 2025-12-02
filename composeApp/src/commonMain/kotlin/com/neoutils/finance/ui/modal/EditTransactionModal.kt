@@ -27,8 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +56,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import org.koin.compose.koinInject
-import kotlin.collections.sumOf
 import kotlin.time.ExperimentalTime
 
 class EditTransactionModal(
@@ -69,10 +66,6 @@ class EditTransactionModal(
         byUnicodePattern("dd/MM/yyyy")
     }
 
-    private val insufficientBalance = @Composable {
-        Text("Saldo insuficiente")
-    }
-
     @Composable
     override fun Content() {
         val repository = koinInject<ITransactionRepository>()
@@ -80,23 +73,7 @@ class EditTransactionModal(
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
-        val allTransactions by repository.getAllTransactions().collectAsState(initial = emptyList())
-
-        val currentBalance by remember {
-            derivedStateOf {
-                calculateBalance(allTransactions.filter { it.id != transaction.id })
-            }
-        }
-
-        var type by remember {
-            mutableStateOf(
-                if (transaction.type == Transaction.Type.ADJUSTMENT) {
-                    Transaction.Type.EXPENSE
-                } else {
-                    transaction.type
-                }
-            )
-        }
+        var type by remember { mutableStateOf(transaction.type) }
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
         val title = rememberTextFieldState(transaction.title.orEmpty())
@@ -107,17 +84,6 @@ class EditTransactionModal(
         LaunchedEffect(transaction.categoryId) {
             selectedCategory = transaction.categoryId?.let {
                 categoryRepository.getCategoryById(it)
-            }
-        }
-
-        val expenseAmount by remember { derivedStateOf { parseMoneyToDouble(amount.text.toString()) } }
-
-        val isInsufficientBalance by remember {
-            derivedStateOf {
-                when (type) {
-                    Transaction.Type.EXPENSE -> expenseAmount > currentBalance
-                    else -> false
-                }
             }
         }
 
@@ -195,8 +161,6 @@ class EditTransactionModal(
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    isError = isInsufficientBalance,
-                    supportingText = insufficientBalance.takeIf { isInsufficientBalance },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -262,7 +226,6 @@ class EditTransactionModal(
                         amount = amount.text.toString(),
                         title = title.text.toString(),
                         date = date.text.toString(),
-                        isInsufficientBalance = isInsufficientBalance,
                         hasCategory = selectedCategory != null
                     ),
                     modifier = Modifier.fillMaxWidth(),
@@ -282,24 +245,12 @@ class EditTransactionModal(
         amount: String,
         date: String,
         title: String,
-        isInsufficientBalance: Boolean,
         hasCategory: Boolean
     ): Boolean {
         if (amount.isEmpty()) return false
         if (date.isEmpty()) return false
         if (title.isEmpty() && !hasCategory) return false
-        if (isInsufficientBalance) return false
         return true
-    }
-
-    private fun calculateBalance(transactions: List<Transaction>): Double {
-        return transactions.sumOf { transaction ->
-            when (transaction.type) {
-                Transaction.Type.INCOME -> transaction.amount
-                Transaction.Type.EXPENSE -> -transaction.amount
-                Transaction.Type.ADJUSTMENT -> transaction.amount
-            }
-        }
     }
 
     @Composable

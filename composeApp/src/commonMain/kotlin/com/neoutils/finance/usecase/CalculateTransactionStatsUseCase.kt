@@ -8,9 +8,14 @@ class CalculateTransactionStatsUseCase {
     operator fun invoke(
         transactions: List<TransactionEntry>,
         forYearMonth: YearMonth,
+        categoryId: Long? = null,
+        type: TransactionEntry.Type? = null
     ): TransactionStats {
-        val monthTransactions = transactions.filter { it.date.yearMonth == forYearMonth }
-        
+        val monthTransactions = transactions
+            .filter { it.date.yearMonth == forYearMonth }
+            .filter { categoryId == null || it.categoryId == categoryId }
+            .filter { type == null || it.type == type }
+
         return TransactionStats(
             income = monthTransactions.filter { it.type.isIncome }.sumOf { it.amount },
             expense = monthTransactions.filter { it.type.isExpense }.sumOf { it.amount },

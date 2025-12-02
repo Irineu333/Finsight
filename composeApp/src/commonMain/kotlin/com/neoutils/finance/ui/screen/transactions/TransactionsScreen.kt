@@ -4,11 +4,12 @@ package com.neoutils.finance.ui.screen.transactions
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -122,6 +123,14 @@ private fun TransactionsContent(
                 )
             }
 
+            item {
+                FiltersRow(
+                    uiState = uiState,
+                    onAction = onAction,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             uiState.transactions.forEach { (date, transactions) ->
                 item {
                     Text(
@@ -162,6 +171,142 @@ private fun TransactionsContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FiltersRow(
+    uiState: TransactionsUiState,
+    onAction: (TransactionsAction) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            CategoryFilterChip(
+                selectedCategoryId = uiState.selectedCategoryId,
+                categories = uiState.availableCategories,
+                onAction = onAction
+            )
+        }
+
+        item {
+            TypeFilterChip(
+                selectedType = uiState.selectedType,
+                onAction = onAction
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterChip(
+    selectedCategoryId: Long?,
+    categories: List<com.neoutils.finance.data.Category>,
+    onAction: (TransactionsAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedCategory = selectedCategoryId?.let { id ->
+        categories.find { it.id == id }
+    }
+
+    FilterChip(
+        selected = selectedCategoryId != null,
+        onClick = { expanded = true },
+        label = {
+            Text(selectedCategory?.name ?: "Categoria")
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
+        }
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Todas") },
+            onClick = {
+                onAction(TransactionsAction.SelectCategory(null))
+                expanded = false
+            }
+        )
+
+        categories.forEach { category ->
+            DropdownMenuItem(
+                text = { Text(category.name) },
+                onClick = {
+                    onAction(TransactionsAction.SelectCategory(category.id))
+                    expanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TypeFilterChip(
+    selectedType: TransactionEntry.Type?,
+    onAction: (TransactionsAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    FilterChip(
+        selected = selectedType != null,
+        onClick = { expanded = true },
+        label = {
+            Text(
+                when (selectedType) {
+                    TransactionEntry.Type.INCOME -> "Entrada"
+                    TransactionEntry.Type.EXPENSE -> "Despesa"
+                    TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
+                    null -> "Tipo"
+                }
+            )
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
+        }
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Todos") },
+            onClick = {
+                onAction(TransactionsAction.SelectType(null))
+                expanded = false
+            }
+        )
+
+        TransactionEntry.Type.entries.forEach { type ->
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        when (type) {
+                            TransactionEntry.Type.INCOME -> "Entrada"
+                            TransactionEntry.Type.EXPENSE -> "Despesa"
+                            TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
+                        }
+                    )
+                },
+                onClick = {
+                    onAction(TransactionsAction.SelectType(type))
+                    expanded = false
+                }
+            )
         }
     }
 }

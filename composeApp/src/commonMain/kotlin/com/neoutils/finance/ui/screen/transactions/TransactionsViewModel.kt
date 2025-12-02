@@ -5,6 +5,7 @@ package com.neoutils.finance.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.data.CategoryRepository
+import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.data.TransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
@@ -34,16 +35,22 @@ class TransactionsViewModel(
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
+    private val selectedCategoryId = MutableStateFlow<Long?>(null)
+    private val selectedType = MutableStateFlow<TransactionEntry.Type?>(null)
 
     val uiState: StateFlow<TransactionsUiState> = combine(
         repository.getAllTransactions(),
         categoryRepository.getAllCategories(),
-        selectedYearMonth
-    ) { transactions, categories, yearMonth ->
+        selectedYearMonth,
+        selectedCategoryId,
+        selectedType
+    ) { transactions, categories, yearMonth, categoryId, type ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
-            forYearMonth = yearMonth
+            forYearMonth = yearMonth,
+            categoryId = categoryId,
+            type = type
         )
 
         TransactionsUiState(
@@ -64,7 +71,9 @@ class TransactionsViewModel(
                 )
             ),
             selectedYearMonth = yearMonth,
-            categories = categories.associateBy { it.id }
+            categories = categories.associateBy { it.id },
+            selectedCategoryId = categoryId,
+            selectedType = type
         )
     }.stateIn(
         scope = viewModelScope,
@@ -89,6 +98,14 @@ class TransactionsViewModel(
 
             TransactionsAction.PreviousMonth -> {
                 selectedYearMonth.value = selectedYearMonth.value.minusMonth()
+            }
+
+            is TransactionsAction.SelectCategory -> {
+                selectedCategoryId.value = action.categoryId
+            }
+
+            is TransactionsAction.SelectType -> {
+                selectedType.value = action.type
             }
         }
     }

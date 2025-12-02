@@ -38,7 +38,7 @@ private val yearMonthFormat = YearMonth.Format {
 
 @Composable
 fun DashboardScreen(
-    openTransactions: () -> Unit = {},
+    openTransactions: (filterType: Transaction.Type?) -> Unit = {},
     openCategories: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
@@ -47,7 +47,8 @@ fun DashboardScreen(
 
     DashboardContent(
         uiState = uiState,
-        onSeeAllTransactions = openTransactions,
+        onSeeAllTransactions = { openTransactions(null) },
+        onOpenTransactionsWithFilter = openTransactions,
         onOpenCategories = openCategories,
         modalManager = modalManager,
         openEditBalance = {
@@ -68,6 +69,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardContent(
     onSeeAllTransactions: () -> Unit,
+    onOpenTransactionsWithFilter: (Transaction.Type?) -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
@@ -113,13 +115,15 @@ private fun DashboardContent(
                 BalanceCard(
                     balance = uiState.balance.income,
                     modifier = Modifier.weight(1f),
-                    config = BalanceCardConfig.Income
+                    config = BalanceCardConfig.Income,
+                    onClick = { onOpenTransactionsWithFilter(Transaction.Type.INCOME) }
                 )
 
                 BalanceCard(
                     balance = uiState.balance.expense,
                     modifier = Modifier.weight(1f),
-                    config = BalanceCardConfig.Expense
+                    config = BalanceCardConfig.Expense,
+                    onClick = { onOpenTransactionsWithFilter(Transaction.Type.EXPENSE) }
                 )
             }
         }

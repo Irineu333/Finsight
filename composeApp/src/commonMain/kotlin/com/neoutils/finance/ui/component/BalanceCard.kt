@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
@@ -33,9 +34,18 @@ fun BalanceCard(
     balance: Double,
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
-    onEditClick: (() -> Unit)? = null
+    onEditClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) = Card(
-    modifier = modifier,
+    modifier = modifier.then(
+        if (onClick != null) {
+            Modifier
+                .clip(config.shape)
+                .clickable { onClick() }
+        } else {
+            Modifier
+        }
+    ),
     colors = CardDefaults.cardColors(
         containerColor = config.container
     ),
@@ -44,7 +54,7 @@ fun BalanceCard(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(config.padding)
+            .padding(config.padding),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

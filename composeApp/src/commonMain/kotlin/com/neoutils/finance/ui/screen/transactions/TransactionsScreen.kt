@@ -37,9 +37,16 @@ private val sectionDateFormat = LocalDate.Format {
 
 @Composable
 fun TransactionsScreen(
+    initialFilterType: Transaction.Type? = null,
     viewModel: TransactionsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(initialFilterType) {
+        if (initialFilterType != null) {
+            viewModel.setInitialFilter(initialFilterType)
+        }
+    }
 
     TransactionsContent(
         uiState = uiState,

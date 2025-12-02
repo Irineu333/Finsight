@@ -1,5 +1,6 @@
 package com.neoutils.finance.ui.screen.home
 
+import com.neoutils.finance.domain.model.Transaction
 import kotlinx.serialization.Serializable
 
 sealed class HomeRoute {
@@ -7,7 +8,9 @@ sealed class HomeRoute {
     data object Dashboard : HomeRoute()
 
     @Serializable
-    data object Transactions : HomeRoute()
+    data class Transactions(
+        val filterType: Transaction.Type? = null
+    ) : HomeRoute()
 }
 
 sealed class AppRoute {

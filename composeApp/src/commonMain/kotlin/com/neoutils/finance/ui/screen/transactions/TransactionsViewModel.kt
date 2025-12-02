@@ -38,6 +38,10 @@ class TransactionsViewModel(
     private val selectedCategoryId = MutableStateFlow<Long?>(null)
     private val selectedType = MutableStateFlow<Transaction.Type?>(null)
 
+    fun setInitialFilter(type: Transaction.Type?) {
+        selectedType.value = type
+    }
+
     val uiState: StateFlow<TransactionsUiState> = combine(
         repository.getAllTransactions(),
         categoryRepository.getAllCategories(),

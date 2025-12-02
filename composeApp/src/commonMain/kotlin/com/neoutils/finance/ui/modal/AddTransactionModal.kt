@@ -193,7 +193,7 @@ class AddTransactionModal : Modal {
                                 TransactionEntry(
                                     type = type,
                                     amount = parseMoneyToDouble(amount.text.toString()),
-                                    description = title.text.toString(),
+                                    title = title.text.toString().ifBlank { null },
                                     date = dateFormat.parse(date.text.toString()),
                                     categoryId = selectedCategory?.id
                                 )
@@ -205,6 +205,7 @@ class AddTransactionModal : Modal {
                         amount = amount.text.toString(),
                         title = title.text.toString(),
                         date = date.text.toString(),
+                        hasCategory = selectedCategory != null
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -286,6 +287,7 @@ class AddTransactionModal : Modal {
         amount: String,
         date: String,
         title: String,
+        hasCategory: Boolean
     ): Boolean {
 
         if (amount.isEmpty()) return false
@@ -294,7 +296,7 @@ class AddTransactionModal : Modal {
 
         if (date.isEmpty()) return false
 
-        if (title.isEmpty()) return false
+        if (title.isEmpty() && !hasCategory) return false
 
         return true
     }

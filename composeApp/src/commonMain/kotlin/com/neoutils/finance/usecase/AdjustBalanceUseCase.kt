@@ -27,7 +27,7 @@ class AdjustBalanceUseCase(
                 TransactionEntry(
                     type = TransactionEntry.Type.ADJUSTMENT,
                     amount = difference,
-                    description = "Ajuste de Saldo",
+                    title = "Ajuste de Saldo",
                     date = adjustmentDate
                 )
             )

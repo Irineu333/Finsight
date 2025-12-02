@@ -98,7 +98,7 @@ class ViewTransactionModal(
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = uiState.transaction.description,
+                            text = uiState.transaction.title ?: uiState.category?.name ?: "Sem descrição",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface

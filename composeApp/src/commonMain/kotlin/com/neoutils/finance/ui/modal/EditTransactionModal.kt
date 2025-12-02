@@ -99,7 +99,7 @@ class EditTransactionModal(
         }
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
-        val title = rememberTextFieldState(transaction.description)
+        val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dateFormat.format(transaction.date))
 
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
@@ -249,7 +249,7 @@ class EditTransactionModal(
                                 transaction.copy(
                                     type = type,
                                     amount = parseMoneyToDouble(amount.text.toString()),
-                                    description = title.text.toString(),
+                                    title = title.text.toString().ifBlank { null },
                                     date = dateFormat.parse(date.text.toString()),
                                     categoryId = selectedCategory?.id
                                 )
@@ -262,7 +262,8 @@ class EditTransactionModal(
                         amount = amount.text.toString(),
                         title = title.text.toString(),
                         date = date.text.toString(),
-                        isInsufficientBalance = isInsufficientBalance
+                        isInsufficientBalance = isInsufficientBalance,
+                        hasCategory = selectedCategory != null
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -281,11 +282,12 @@ class EditTransactionModal(
         amount: String,
         date: String,
         title: String,
-        isInsufficientBalance: Boolean
+        isInsufficientBalance: Boolean,
+        hasCategory: Boolean
     ): Boolean {
         if (amount.isEmpty()) return false
         if (date.isEmpty()) return false
-        if (title.isEmpty()) return false
+        if (title.isEmpty() && !hasCategory) return false
         if (isInsufficientBalance) return false
         return true
     }

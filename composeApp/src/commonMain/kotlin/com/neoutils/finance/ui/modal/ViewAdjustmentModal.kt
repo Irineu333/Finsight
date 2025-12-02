@@ -70,7 +70,7 @@ class ViewAdjustmentModal(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = transaction.description,
+                            text = transaction.title ?: "Ajuste de saldo",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface

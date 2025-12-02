@@ -95,7 +95,7 @@ fun TransactionCard(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = transaction.description,
+                text = transaction.title ?: category?.name ?: "Sem descrição",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
             )

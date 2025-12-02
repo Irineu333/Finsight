@@ -21,7 +21,7 @@ data class TransactionEntry(
     val id: Long = 0,
     val type: Type,
     val amount: Double,
-    val description: String,
+    val title: String?,
     val date: LocalDate,
     val categoryId: Long? = null
 ) {

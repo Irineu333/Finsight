@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.BalanceEditType
@@ -155,7 +155,7 @@ private fun TransactionsContent(
                             .animateItem(),
                         onClick = {
                             when (transaction.type) {
-                                TransactionEntry.Type.ADJUSTMENT -> {
+                                Transaction.Type.ADJUSTMENT -> {
                                     modalManager.show(
                                         ViewAdjustmentModal(transaction)
                                     )
@@ -205,7 +205,7 @@ private fun FiltersRow(
 @Composable
 private fun CategoryFilterChip(
     selectedCategoryId: Long?,
-    categories: List<com.neoutils.finance.data.Category>,
+    categories: List<com.neoutils.finance.domain.model.Category>,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -253,7 +253,7 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: TransactionEntry.Type?,
+    selectedType: Transaction.Type?,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -264,9 +264,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    TransactionEntry.Type.INCOME -> "Entrada"
-                    TransactionEntry.Type.EXPENSE -> "Despesa"
-                    TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
+                    Transaction.Type.INCOME -> "Entrada"
+                    Transaction.Type.EXPENSE -> "Despesa"
+                    Transaction.Type.ADJUSTMENT -> "Ajuste"
                     null -> "Tipo"
                 }
             )
@@ -291,14 +291,14 @@ private fun TypeFilterChip(
             }
         )
 
-        TransactionEntry.Type.entries.forEach { type ->
+        Transaction.Type.entries.forEach { type ->
             DropdownMenuItem(
                 text = {
                     Text(
                         when (type) {
-                            TransactionEntry.Type.INCOME -> "Entrada"
-                            TransactionEntry.Type.EXPENSE -> "Despesa"
-                            TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
+                            Transaction.Type.INCOME -> "Entrada"
+                            Transaction.Type.EXPENSE -> "Despesa"
+                            Transaction.Type.ADJUSTMENT -> "Ajuste"
                         }
                     )
                 },

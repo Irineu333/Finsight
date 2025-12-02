@@ -2,8 +2,8 @@
 
 package com.neoutils.finance.ui.screen.transactions
 
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -14,12 +14,12 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 data class TransactionsUiState(
-    val transactions: Map<LocalDate, List<TransactionEntry>> = emptyMap(),
+    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val categories: Map<Long, Category> = emptyMap(),
     val selectedCategoryId: Long? = null,
-    val selectedType: TransactionEntry.Type? = null
+    val selectedType: Transaction.Type? = null
 ) {
     val currentMonth = Clock.System.now()
         .toLocalDateTime(TimeZone.currentSystemDefault())

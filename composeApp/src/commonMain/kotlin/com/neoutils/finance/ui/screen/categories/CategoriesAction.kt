@@ -1,6 +1,6 @@
 package com.neoutils.finance.ui.screen.categories
 
-import com.neoutils.finance.data.Category
+import com.neoutils.finance.domain.model.Category
 
 sealed interface CategoriesAction {
     data object AddCategory : CategoriesAction

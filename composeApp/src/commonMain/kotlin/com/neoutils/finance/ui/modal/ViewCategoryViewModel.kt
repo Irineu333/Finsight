@@ -4,9 +4,9 @@ package com.neoutils.finance.ui.modal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,8 +22,8 @@ import kotlin.time.ExperimentalTime
 
 class ViewCategoryViewModel(
     private val category: Category,
-    private val categoryRepository: CategoryRepository,
-    private val repository: TransactionRepository
+    private val categoryRepository: ICategoryRepository,
+    private val repository: ITransactionRepository
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())

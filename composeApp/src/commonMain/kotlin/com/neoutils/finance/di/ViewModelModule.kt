@@ -1,7 +1,7 @@
 package com.neoutils.finance.di
 
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.modal.ViewCategoryViewModel
 import com.neoutils.finance.ui.modal.ViewTransactionViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
@@ -19,7 +19,7 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { (transaction: TransactionEntry) ->
+    viewModel { (transaction: Transaction) ->
         ViewTransactionViewModel(
             transaction = transaction,
             transactionRepository = get(),

@@ -4,20 +4,20 @@ package com.neoutils.finance.ui.modal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.CategoryRepository
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.ExperimentalTime
-import com.neoutils.finance.data.Category
+import com.neoutils.finance.domain.model.Category
 
 class ViewTransactionViewModel(
-    private val transaction: TransactionEntry,
-    private val transactionRepository: TransactionRepository,
-    private val categoryRepository: CategoryRepository
+    private val transaction: Transaction,
+    private val transactionRepository: ITransactionRepository,
+    private val categoryRepository: ICategoryRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<ViewTransactionUiState> = combine(
@@ -41,6 +41,6 @@ class ViewTransactionViewModel(
 }
 
 data class ViewTransactionUiState(
-    val transaction: TransactionEntry,
+    val transaction: Transaction,
     val category: Category? = null
 )

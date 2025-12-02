@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalTime::class)
 
 package com.neoutils.finance.ui.modal
 
@@ -20,8 +20,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.icons.CategoryIcon
@@ -30,6 +30,8 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.usecase.GetCategoriesUseCase
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class AddCategoryModal(
     private val initialType: Category.CategoryType = Category.CategoryType.EXPENSE
@@ -42,7 +44,7 @@ class AddCategoryModal(
     @Composable
     override fun ColumnScope.BottomSheet() {
 
-        val repository = koinInject<CategoryRepository>()
+        val repository = koinInject<ICategoryRepository>()
         val getCategoriesUseCase = koinInject<GetCategoriesUseCase>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
@@ -126,7 +128,8 @@ class AddCategoryModal(
                                 Category(
                                     name = name.text.toString(),
                                     key = selectedIcon.key,
-                                    type = selectedType
+                                    type = selectedType,
+                                    createdAt = Clock.System.now().toEpochMilliseconds()
                                 )
                             )
                             manager.dismiss()

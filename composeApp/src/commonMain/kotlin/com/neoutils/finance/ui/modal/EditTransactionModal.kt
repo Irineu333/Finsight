@@ -44,10 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.ui.component.DateInputTransformation
 import com.neoutils.finance.ui.component.MoneyInputTransformation
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
@@ -62,7 +62,7 @@ import kotlin.collections.sumOf
 import kotlin.time.ExperimentalTime
 
 class EditTransactionModal(
-    private val transaction: TransactionEntry,
+    private val transaction: Transaction,
 ) : Modal {
 
     private val dateFormat = LocalDate.Format {
@@ -75,8 +75,8 @@ class EditTransactionModal(
 
     @Composable
     override fun Content() {
-        val repository = koinInject<TransactionRepository>()
-        val categoryRepository = koinInject<CategoryRepository>()
+        val repository = koinInject<ITransactionRepository>()
+        val categoryRepository = koinInject<ICategoryRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
@@ -90,8 +90,8 @@ class EditTransactionModal(
 
         var type by remember {
             mutableStateOf(
-                if (transaction.type == TransactionEntry.Type.ADJUSTMENT) {
-                    TransactionEntry.Type.EXPENSE
+                if (transaction.type == Transaction.Type.ADJUSTMENT) {
+                    Transaction.Type.EXPENSE
                 } else {
                     transaction.type
                 }
@@ -115,7 +115,7 @@ class EditTransactionModal(
         val isInsufficientBalance by remember {
             derivedStateOf {
                 when (type) {
-                    TransactionEntry.Type.EXPENSE -> expenseAmount > currentBalance
+                    Transaction.Type.EXPENSE -> expenseAmount > currentBalance
                     else -> false
                 }
             }
@@ -173,8 +173,8 @@ class EditTransactionModal(
                 CategorySelector(
                     selectedCategory = selectedCategory,
                     categoryType = when(type) {
-                        TransactionEntry.Type.INCOME -> Category.CategoryType.INCOME
-                        TransactionEntry.Type.EXPENSE -> Category.CategoryType.EXPENSE
+                        Transaction.Type.INCOME -> Category.CategoryType.INCOME
+                        Transaction.Type.EXPENSE -> Category.CategoryType.EXPENSE
                         else -> error("Invalid type")
                     },
                     onCategorySelected = { selectedCategory = it },
@@ -292,36 +292,36 @@ class EditTransactionModal(
         return true
     }
 
-    private fun calculateBalance(transactions: List<TransactionEntry>): Double {
+    private fun calculateBalance(transactions: List<Transaction>): Double {
         return transactions.sumOf { transaction ->
             when (transaction.type) {
-                TransactionEntry.Type.INCOME -> transaction.amount
-                TransactionEntry.Type.EXPENSE -> -transaction.amount
-                TransactionEntry.Type.ADJUSTMENT -> transaction.amount
+                Transaction.Type.INCOME -> transaction.amount
+                Transaction.Type.EXPENSE -> -transaction.amount
+                Transaction.Type.ADJUSTMENT -> transaction.amount
             }
         }
     }
 
     @Composable
     fun TypeToggle(
-        selectedType: TransactionEntry.Type,
-        onTypeSelected: (TransactionEntry.Type) -> Unit
+        selectedType: Transaction.Type,
+        onTypeSelected: (Transaction.Type) -> Unit
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { onTypeSelected(TransactionEntry.Type.EXPENSE) },
+            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                TransactionEntry.Type.EXPENSE -> {
+                Transaction.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Expense,
                         contentColor = Color.White
                     )
                 }
 
-                TransactionEntry.Type.INCOME, TransactionEntry.Type.ADJUSTMENT -> {
+                Transaction.Type.INCOME, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -338,17 +338,17 @@ class EditTransactionModal(
         }
 
         Button(
-            onClick = { onTypeSelected(TransactionEntry.Type.INCOME) },
+            onClick = { onTypeSelected(Transaction.Type.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                TransactionEntry.Type.INCOME -> {
+                Transaction.Type.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Income,
                         contentColor = Color.White
                     )
                 }
 
-                TransactionEntry.Type.EXPENSE, TransactionEntry.Type.ADJUSTMENT -> {
+                Transaction.Type.EXPENSE, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant

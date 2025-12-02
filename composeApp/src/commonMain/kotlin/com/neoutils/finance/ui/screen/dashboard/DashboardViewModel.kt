@@ -4,8 +4,8 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.CategoryRepository
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.usecase.CalculateBalanceUseCase
@@ -20,8 +20,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
-    private val repository: TransactionRepository,
-    private val categoryRepository: CategoryRepository,
+    private val repository: ITransactionRepository,
+    private val categoryRepository: ICategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase

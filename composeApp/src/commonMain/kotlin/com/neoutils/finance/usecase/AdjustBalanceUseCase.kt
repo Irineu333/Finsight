@@ -1,11 +1,11 @@
 package com.neoutils.finance.usecase
 
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
 class AdjustBalanceUseCase(
-    private val repository: TransactionRepository
+    private val repository: ITransactionRepository
 ) {
     suspend operator fun invoke(
         currentBalance: Double,
@@ -16,7 +16,7 @@ class AdjustBalanceUseCase(
         if (targetBalance == currentBalance) return
 
         val existingAdjustment = repository.getTransactionByTypeAndDate(
-            type = TransactionEntry.Type.ADJUSTMENT,
+            type = Transaction.Type.ADJUSTMENT,
             date = adjustmentDate
         )
 
@@ -24,8 +24,8 @@ class AdjustBalanceUseCase(
 
         if (existingAdjustment == null) {
             repository.insert(
-                TransactionEntry(
-                    type = TransactionEntry.Type.ADJUSTMENT,
+                Transaction(
+                    type = Transaction.Type.ADJUSTMENT,
                     amount = difference,
                     title = "Ajuste de Saldo",
                     date = adjustmentDate

@@ -4,9 +4,9 @@ package com.neoutils.finance.ui.screen.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.CategoryRepository
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.usecase.CalculateBalanceUseCase
@@ -27,8 +27,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val repository: TransactionRepository,
-    private val categoryRepository: CategoryRepository,
+    private val repository: ITransactionRepository,
+    private val categoryRepository: ICategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
@@ -36,7 +36,7 @@ class TransactionsViewModel(
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
     private val selectedCategoryId = MutableStateFlow<Long?>(null)
-    private val selectedType = MutableStateFlow<TransactionEntry.Type?>(null)
+    private val selectedType = MutableStateFlow<Transaction.Type?>(null)
 
     val uiState: StateFlow<TransactionsUiState> = combine(
         repository.getAllTransactions(),

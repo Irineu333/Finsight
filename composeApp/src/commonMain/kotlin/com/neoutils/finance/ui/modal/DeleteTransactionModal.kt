@@ -21,20 +21,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.TransactionEntry
-import com.neoutils.finance.data.TransactionRepository
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 class DeleteTransactionModal(
-    private val transaction: TransactionEntry
+    private val transaction: Transaction
 ) : Modal {
 
     @Composable
     override fun Content() {
-        val repository = koinInject<TransactionRepository>()
+        val repository = koinInject<ITransactionRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 

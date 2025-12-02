@@ -9,14 +9,14 @@ import kotlinx.datetime.LocalDate
     tableName = "transactions",
     foreignKeys = [
         ForeignKey(
-            entity = Category::class,
+            entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
             onDelete = ForeignKey.SET_NULL
         )
     ]
 )
-data class TransactionEntry(
+data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val type: Type,

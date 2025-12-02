@@ -2,8 +2,6 @@ package com.neoutils.finance.ui.screen.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
 import com.neoutils.finance.usecase.GetCategoriesUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

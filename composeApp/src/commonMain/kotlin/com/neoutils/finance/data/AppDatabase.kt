@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [TransactionEntry::class, Category::class],
+    entities = [TransactionEntity::class, CategoryEntity::class],
     version = 2,
     exportSchema = true
 )

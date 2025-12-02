@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.Category
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager

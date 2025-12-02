@@ -1,15 +1,15 @@
 package com.neoutils.finance.usecase
 
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
 class CalculateTransactionStatsUseCase {
     operator fun invoke(
-        transactions: List<TransactionEntry>,
+        transactions: List<Transaction>,
         forYearMonth: YearMonth,
         categoryId: Long? = null,
-        type: TransactionEntry.Type? = null
+        type: Transaction.Type? = null
     ): TransactionStats {
         val monthTransactions = transactions
             .filter { it.date.yearMonth == forYearMonth }
@@ -28,6 +28,6 @@ class CalculateTransactionStatsUseCase {
         val income: Double,
         val expense: Double,
         val adjustment: Double,
-        val transactions: List<TransactionEntry>
+        val transactions: List<Transaction>
     )
 }

@@ -1,6 +1,6 @@
 package com.neoutils.finance.ui.screen.transactions
 
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 
 sealed class TransactionsAction {
     data class AdjustInitialBalance(
@@ -15,5 +15,5 @@ sealed class TransactionsAction {
     data object NextMonth : TransactionsAction()
 
     data class SelectCategory(val categoryId: Long?) : TransactionsAction()
-    data class SelectType(val type: TransactionEntry.Type?) : TransactionsAction()
+    data class SelectType(val type: Transaction.Type?) : TransactionsAction()
 }

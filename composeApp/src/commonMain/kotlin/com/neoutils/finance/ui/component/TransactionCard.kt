@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.icons.CategoryIcon
@@ -39,7 +39,7 @@ private val dateFormat = LocalDate.Format {
 
 @Composable
 fun TransactionCard(
-    transaction: TransactionEntry,
+    transaction: Transaction,
     category: Category?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -61,9 +61,9 @@ fun TransactionCard(
     ) {
         Surface(
             color = when (transaction.type) {
-                TransactionEntry.Type.INCOME -> Income.copy(alpha = 0.2f)
-                TransactionEntry.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
-                TransactionEntry.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
+                Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
+                Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
+                Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
             },
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.size(48.dp)
@@ -76,15 +76,15 @@ fun TransactionCard(
                     imageVector = category?.let {
                         CategoryIcon.fromKey(category.key).icon
                     } ?: when (transaction.type) {
-                        TransactionEntry.Type.INCOME -> Icons.Default.ShoppingCart
-                        TransactionEntry.Type.EXPENSE -> Icons.Default.Receipt
-                        TransactionEntry.Type.ADJUSTMENT -> Icons.Default.Edit
+                        Transaction.Type.INCOME -> Icons.Default.ShoppingCart
+                        Transaction.Type.EXPENSE -> Icons.Default.Receipt
+                        Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
                     },
                     contentDescription = null,
                     tint = when (transaction.type) {
-                        TransactionEntry.Type.INCOME -> Income
-                        TransactionEntry.Type.EXPENSE -> Expense
-                        TransactionEntry.Type.ADJUSTMENT -> Adjustment
+                        Transaction.Type.INCOME -> Income
+                        Transaction.Type.EXPENSE -> Expense
+                        Transaction.Type.ADJUSTMENT -> Adjustment
                     },
                     modifier = Modifier.size(24.dp)
                 )
@@ -108,16 +108,16 @@ fun TransactionCard(
 
         Text(
             text = when (transaction.type) {
-                TransactionEntry.Type.INCOME -> transaction.amount.toMoneyFormat()
-                TransactionEntry.Type.EXPENSE -> "-${transaction.amount.toMoneyFormat()}"
-                TransactionEntry.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
+                Transaction.Type.INCOME -> transaction.amount.toMoneyFormat()
+                Transaction.Type.EXPENSE -> "-${transaction.amount.toMoneyFormat()}"
+                Transaction.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = when (transaction.type) {
-                TransactionEntry.Type.INCOME -> Income
-                TransactionEntry.Type.EXPENSE -> Expense
-                TransactionEntry.Type.ADJUSTMENT -> Adjustment
+                Transaction.Type.INCOME -> Income
+                Transaction.Type.EXPENSE -> Expense
+                Transaction.Type.ADJUSTMENT -> Adjustment
             }
         )
     }

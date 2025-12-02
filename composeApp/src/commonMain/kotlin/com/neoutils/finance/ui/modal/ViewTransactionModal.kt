@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -35,7 +35,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewTransactionModal(
-    private val transaction: TransactionEntry
+    private val transaction: Transaction
 ) : Modal {
 
     private val dateFormat = LocalDate.Format {
@@ -83,16 +83,16 @@ class ViewTransactionModal(
                     Column {
                         Text(
                             text = when (uiState.transaction.type) {
-                                TransactionEntry.Type.INCOME -> "Receita"
-                                TransactionEntry.Type.EXPENSE -> "Despesa"
-                                TransactionEntry.Type.ADJUSTMENT -> "Ajuste"
+                                Transaction.Type.INCOME -> "Receita"
+                                Transaction.Type.EXPENSE -> "Despesa"
+                                Transaction.Type.ADJUSTMENT -> "Ajuste"
                             },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = when (uiState.transaction.type) {
-                                TransactionEntry.Type.INCOME -> Income
-                                TransactionEntry.Type.EXPENSE -> Expense
-                                TransactionEntry.Type.ADJUSTMENT -> Adjustment
+                                Transaction.Type.INCOME -> Income
+                                Transaction.Type.EXPENSE -> Expense
+                                Transaction.Type.ADJUSTMENT -> Adjustment
                             }
                         )
 
@@ -112,9 +112,9 @@ class ViewTransactionModal(
                     label = "Valor",
                     value = uiState.transaction.amount.toMoneyFormat(),
                     valueColor = when (uiState.transaction.type) {
-                        TransactionEntry.Type.INCOME -> Income
-                        TransactionEntry.Type.EXPENSE -> Expense
-                        TransactionEntry.Type.ADJUSTMENT -> Adjustment
+                        Transaction.Type.INCOME -> Income
+                        Transaction.Type.EXPENSE -> Expense
+                        Transaction.Type.ADJUSTMENT -> Adjustment
                     }
                 )
 

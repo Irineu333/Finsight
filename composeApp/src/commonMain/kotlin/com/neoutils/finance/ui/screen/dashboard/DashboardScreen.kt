@@ -22,7 +22,7 @@ import com.neoutils.finance.ui.component.BalanceCardConfig
 import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -160,7 +160,7 @@ private fun DashboardContent(
                     .animateItem(),
                 onClick = {
                     when (transaction.type) {
-                        TransactionEntry.Type.ADJUSTMENT -> {
+                        Transaction.Type.ADJUSTMENT -> {
                             modalManager.show(
                                 ViewAdjustmentModal(transaction)
                             )

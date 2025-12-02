@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import com.neoutils.finance.data.Category
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income

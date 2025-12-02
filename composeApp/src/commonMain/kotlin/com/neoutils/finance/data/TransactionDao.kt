@@ -11,28 +11,28 @@ import kotlinx.coroutines.flow.Flow
 interface TransactionDao {
 
     @Insert
-    suspend fun insert(transaction: TransactionEntry): Long
+    suspend fun insert(transaction: TransactionEntity): Long
 
     @Update
-    suspend fun update(transaction: TransactionEntry)
+    suspend fun update(transaction: TransactionEntity)
 
     @Delete
-    suspend fun delete(transaction: TransactionEntry)
+    suspend fun delete(transaction: TransactionEntity)
 
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
-    fun getAllTransactions(): Flow<List<TransactionEntry>>
+    fun getAllTransactions(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE id = :id")
-    suspend fun getTransactionById(id: Long): TransactionEntry?
+    suspend fun getTransactionById(id: Long): TransactionEntity?
 
     @Query("SELECT * FROM transactions WHERE id = :id")
-    fun observeTransactionById(id: Long): Flow<TransactionEntry?>
+    fun observeTransactionById(id: Long): Flow<TransactionEntity?>
 
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY date DESC")
-    fun getTransactionsByType(type: TransactionEntry.Type): Flow<List<TransactionEntry>>
+    fun getTransactionsByType(type: TransactionEntity.Type): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
-    suspend fun getTransactionByTypeAndDate(type: TransactionEntry.Type, date: kotlinx.datetime.LocalDate): TransactionEntry?
+    suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: kotlinx.datetime.LocalDate): TransactionEntity?
 
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()

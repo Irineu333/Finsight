@@ -8,7 +8,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @Entity(tableName = "categories")
-data class Category(
+data class CategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,

@@ -1,11 +1,11 @@
 package com.neoutils.finance.usecase
 
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 
 class GetCategoriesUseCase(
-    private val repository: CategoryRepository
+    private val repository: ICategoryRepository
 ) {
     operator fun invoke(type: Category.CategoryType? = null): Flow<List<Category>> {
         return if (type != null) {

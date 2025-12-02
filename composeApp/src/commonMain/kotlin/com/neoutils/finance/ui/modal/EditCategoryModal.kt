@@ -19,8 +19,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.Category
-import com.neoutils.finance.data.CategoryRepository
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.icons.CategoryIcon
@@ -40,7 +40,7 @@ class EditCategoryModal(
 
     @Composable
     override fun Content() {
-        val repository = koinInject<CategoryRepository>()
+        val repository = koinInject<ICategoryRepository>()
         val getCategoriesUseCase = koinInject<GetCategoriesUseCase>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()

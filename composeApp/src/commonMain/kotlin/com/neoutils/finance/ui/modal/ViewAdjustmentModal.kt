@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.data.TransactionEntry
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -28,7 +28,7 @@ import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 
 class ViewAdjustmentModal(
-    private val transaction: TransactionEntry
+    private val transaction: Transaction
 ) : Modal {
 
     private val dateFormat = LocalDate.Format {

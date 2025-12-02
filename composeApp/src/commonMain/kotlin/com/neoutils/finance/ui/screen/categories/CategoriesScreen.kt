@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finance.data.Category
 import com.neoutils.finance.ui.component.CategoryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.AddCategoryModal

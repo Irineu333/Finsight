@@ -39,11 +39,13 @@ val viewModelModule = module {
 
     viewModel {
         TransactionsViewModel(
-            repository = get(),
+            category = getOrNull(),
+            transaction = getOrNull(),
+            transactionRepository = get(),
             categoryRepository = get(),
             adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get()
+            calculateTransactionStatsUseCase = get(),
         )
     }
 

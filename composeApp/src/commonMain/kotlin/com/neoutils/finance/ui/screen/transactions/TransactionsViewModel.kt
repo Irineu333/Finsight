@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.transactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
@@ -13,7 +14,6 @@ import com.neoutils.finance.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -27,34 +27,34 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val repository: ITransactionRepository,
+    private val transaction: Transaction.Type?,
+    private val category: Category?,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
 
+    private val dateTime get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
-    private val selectedCategoryId = MutableStateFlow<Long?>(null)
-    private val selectedType = MutableStateFlow<Transaction.Type?>(null)
+    private val selectedCategory = MutableStateFlow(category)
+    private val selectedType = MutableStateFlow(transaction)
 
-    fun setInitialFilter(type: Transaction.Type?) {
-        selectedType.value = type
-    }
-
-    val uiState: StateFlow<TransactionsUiState> = combine(
-        repository.getAllTransactions(),
+    val uiState = combine(
+        transactionRepository.getAllTransactions(),
         categoryRepository.getAllCategories(),
         selectedYearMonth,
-        selectedCategoryId,
+        selectedCategory,
         selectedType
-    ) { transactions, categories, yearMonth, categoryId, type ->
+    ) { transactions, categories, yearMonth, category, type ->
 
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactions,
+            transactions = transactions
+                .filter(category)
+                .filter(type),
             forYearMonth = yearMonth,
-            categoryId = categoryId,
-            type = type
         )
 
         TransactionsUiState(
@@ -76,7 +76,7 @@ class TransactionsViewModel(
             ),
             selectedYearMonth = yearMonth,
             categories = categories.associateBy { it.id },
-            selectedCategoryId = categoryId,
+            selectedCategoryId = category?.id,
             selectedType = type
         )
     }.stateIn(
@@ -85,7 +85,7 @@ class TransactionsViewModel(
         initialValue = TransactionsUiState()
     )
 
-    fun onAction(action: TransactionsAction) {
+    fun onAction(action: TransactionsAction) = viewModelScope.launch {
         when (action) {
             is TransactionsAction.AdjustBalance -> {
                 adjustBalance(action.target)
@@ -105,7 +105,9 @@ class TransactionsViewModel(
             }
 
             is TransactionsAction.SelectCategory -> {
-                selectedCategoryId.value = action.categoryId
+                selectedCategory.value = action.categoryId?.let {
+                    categoryRepository.getCategoryById(it)
+                }
             }
 
             is TransactionsAction.SelectType -> {
@@ -124,7 +126,7 @@ class TransactionsViewModel(
             adjustBalanceUseCase(
                 currentBalance = uiState.value.balanceOverview.finalBalance,
                 targetBalance = targetBalance,
-                adjustmentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+                adjustmentDate = dateTime.date,
             )
             return@launch
         }
@@ -148,4 +150,14 @@ class TransactionsViewModel(
             adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
         )
     }
+}
+
+private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+    if (category == null) return this
+    return filter { it.categoryId == category.id }
+}
+
+private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+    if (type == null) return this
+    return filter { it.type == type }
 }

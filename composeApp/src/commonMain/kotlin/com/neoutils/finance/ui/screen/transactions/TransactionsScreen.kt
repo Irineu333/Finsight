@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.modal.BalanceEditType
 import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.ViewTransactionModal
@@ -30,6 +30,7 @@ import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
 
 private val sectionDateFormat = LocalDate.Format {
@@ -40,16 +41,10 @@ private val sectionDateFormat = LocalDate.Format {
 
 @Composable
 fun TransactionsScreen(
-    initialFilterType: Transaction.Type? = null,
-    viewModel: TransactionsViewModel = koinViewModel(),
+    categoryType: Transaction.Type? = null,
+    viewModel: TransactionsViewModel = koinViewModel { parametersOf(categoryType) },
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(initialFilterType) {
-        if (initialFilterType != null) {
-            viewModel.setInitialFilter(initialFilterType)
-        }
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     TransactionsContent(
         uiState = uiState,
@@ -102,7 +97,11 @@ private fun TransactionsContent(
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.finalBalance,
-                                type = if (uiState.isCurrentMonth) BalanceEditType.CURRENT else BalanceEditType.FINAL,
+                                type = if (uiState.isCurrentMonth) {
+                                    EditBalanceModal.Type.CURRENT
+                                } else {
+                                    EditBalanceModal.Type.FINAL
+                                },
                                 targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
                                 onConfirm = {
                                     onAction(
@@ -118,7 +117,7 @@ private fun TransactionsContent(
                         modalManager.show(
                             EditBalanceModal(
                                 currentBalance = uiState.balanceOverview.initialBalance,
-                                type = BalanceEditType.INITIAL,
+                                type =  EditBalanceModal.Type.INITIAL,
                                 targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
                                 onConfirm = {
                                     onAction(

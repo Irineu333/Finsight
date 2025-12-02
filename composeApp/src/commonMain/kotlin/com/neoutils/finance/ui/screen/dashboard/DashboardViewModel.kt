@@ -28,6 +28,7 @@ class DashboardViewModel(
 ) : ViewModel() {
 
     private val currentMonth get() = Clock.System.now().toYearMonth()
+    private val dateTime get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
     val uiState = combine(
         repository.getAllTransactions(),
@@ -70,7 +71,7 @@ class DashboardViewModel(
         adjustBalanceUseCase(
             currentBalance = uiState.value.balance.balance,
             targetBalance = targetBalance,
-            adjustmentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            adjustmentDate = dateTime.date
         )
     }
 }

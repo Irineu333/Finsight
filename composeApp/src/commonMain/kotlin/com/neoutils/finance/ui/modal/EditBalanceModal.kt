@@ -22,11 +22,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.ui.component.MoneyInputTransformation
-import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.MoneyInputTransformation
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -35,27 +35,16 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 import kotlin.math.abs
 
-enum class BalanceEditType(val title: String) {
-    CURRENT("Editar Saldo Atual"),
-    FINAL("Editar Saldo Final"),
-    INITIAL("Editar Saldo Inicial")
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditBalanceModal(
-    private val currentBalance: Double,
-    private val type: BalanceEditType = BalanceEditType.FINAL,
+    private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
+    private val currentBalance: Double,
     private val onConfirm: (Double) -> Unit
 ) : Modal {
 
     private val initialCents = (currentBalance * 100).toLong()
-
-    private val yearMonthFormat = YearMonth.Format {
-        monthName(MonthNamesPortuguese)
-        chars(" de ")
-        year()
-    }
 
     @Composable
     override fun Content() {
@@ -242,7 +231,7 @@ class EditBalanceModal(
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
         val absoluteCents = abs(cents)
-        
+
         val reais = absoluteCents / 100
         val centavos = absoluteCents % 100
 
@@ -253,13 +242,13 @@ class EditBalanceModal(
             .reversed()
 
         val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
-        
+
         return if (isNegative) "-$formatted" else formatted
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {
         val isNegative = formatted.startsWith("-")
-        
+
         val digitsOnly = formatted
             .replace("-", "")
             .replace("R$", "")
@@ -268,7 +257,13 @@ class EditBalanceModal(
             .trim()
 
         val value = digitsOnly.toDoubleOrNull() ?: 0.0
-        
+
         return if (isNegative) -value else value
+    }
+
+    enum class Type(val title: String) {
+        CURRENT("Editar Saldo Atual"),
+        FINAL("Editar Saldo Final"),
+        INITIAL("Editar Saldo Inicial")
     }
 }

@@ -23,18 +23,11 @@ import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.MonthNamesPortuguese
+import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalManager
-import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
-
-private val yearMonthFormat = YearMonth.Format {
-    monthName(MonthNamesPortuguese)
-    chars(" ")
-    year()
-}
 
 @Composable
 fun DashboardScreen(

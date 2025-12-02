@@ -144,7 +144,7 @@ fun HomeScreen(
             ) { backStackEntry ->
                 val route = backStackEntry.toRoute<HomeRoute.Transactions>()
 
-                TransactionsScreen(initialFilterType = route.filterType)
+                TransactionsScreen(categoryType = route.filterType)
             }
         }
     }

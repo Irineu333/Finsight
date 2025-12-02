@@ -13,14 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.extension.MonthNamesPortuguese
+import com.neoutils.finance.extension.yearMonthFormat
 import kotlinx.datetime.YearMonth
-
-private val yearMonthFormat = YearMonth.Format {
-    monthName(MonthNamesPortuguese)
-    chars(" ")
-    year()
-}
 
 @Composable
 fun MonthSelector(

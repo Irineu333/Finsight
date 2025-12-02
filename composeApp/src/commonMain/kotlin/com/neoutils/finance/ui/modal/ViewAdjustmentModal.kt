@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.data.TransactionEntry
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.Modal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -82,7 +83,7 @@ class ViewAdjustmentModal(
 
                 DetailRow(
                     label = "Valor Ajustado",
-                    value = transaction.amount.toMoneyFormat(),
+                    value = transaction.amount.toMoneyFormatWithSign(),
                     valueColor = Adjustment
                 )
 

@@ -8,7 +8,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,7 +28,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Adjustment
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -29,99 +36,90 @@ import kotlinx.datetime.format.byUnicodePattern
 
 class ViewAdjustmentModal(
     private val transaction: Transaction
-) : Modal {
+) : ModalBottomSheet {
 
     private val dateFormat = LocalDate.Format {
         byUnicodePattern("dd/MM/yyyy")
     }
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
 
-        ModalBottomSheet(
-            onDismissRequest = {
-                manager.dismiss()
-            },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AdjustmentIconBox()
+                AdjustmentIconBox()
 
-                    Spacer(Modifier.width(16.dp))
+                Spacer(Modifier.width(16.dp))
 
-                    Column {
-                        Text(
-                            text = "Ajuste de Saldo",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Adjustment
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = transaction.title ?: "Ajuste de saldo",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                DetailRow(
-                    label = "Valor Ajustado",
-                    value = transaction.amount.toMoneyFormatWithSign(),
-                    valueColor = Adjustment
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                DetailRow(
-                    label = "Data",
-                    value = dateFormat.format(transaction.date)
-                )
-
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        manager.show(DeleteTransactionModal(transaction))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = colorScheme.error,
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
+                Column {
                     Text(
-                        text = "Excluir Ajuste",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "Ajuste de Saldo",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Adjustment
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = transaction.title ?: "Ajuste de saldo",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            DetailRow(
+                label = "Valor Ajustado",
+                value = transaction.amount.toMoneyFormatWithSign(),
+                valueColor = Adjustment
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DetailRow(
+                label = "Data",
+                value = dateFormat.format(transaction.date)
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            OutlinedButton(
+                onClick = {
+                    manager.show(DeleteTransactionModal(transaction))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.error,
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = colorScheme.error,
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Excluir Ajuste",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }

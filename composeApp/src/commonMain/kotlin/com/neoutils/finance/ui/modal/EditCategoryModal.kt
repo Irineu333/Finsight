@@ -10,7 +10,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -32,14 +39,14 @@ import org.koin.compose.koinInject
 
 class EditCategoryModal(
     private val category: Category
-) : Modal {
+) : ModalBottomSheet {
 
     private val duplicatedNameError = @Composable {
         Text("Nome duplicado")
     }
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
         val repository = koinInject<ICategoryRepository>()
         val getCategoriesUseCase = koinInject<GetCategoriesUseCase>()
         val manager = LocalModalManager.current
@@ -55,86 +62,79 @@ class EditCategoryModal(
         val isDuplicateName by remember {
             derivedStateOf {
                 existingCategories.any {
-                    it.id != category.id && 
+                    it.id != category.id &&
                     it.name.equals(name.text.toString().trim(), ignoreCase = true)
                 }
             }
         }
 
-        ModalBottomSheet(
-            onDismissRequest = { manager.dismiss() },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Text(
+                text = "Editar Categoria",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            OutlinedTextField(
+                state = name,
+                label = {
+                    Text(text = "Nome")
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Done
+                ),
+                isError = isDuplicateName,
+                supportingText = duplicatedNameError.takeIf { isDuplicateName },
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Text(
+                text = "Ícone",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            IconGrid(
+                icons = CategoryIcon.entries,
+                selectedIcon = selectedIcon,
+                selectedType = selectedType,
+                onIconSelected = { selectedIcon = it }
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        repository.update(
+                            category.copy(
+                                name = name.text.toString().trim(),
+                                key = selectedIcon.key
+                            )
+                        )
+                        manager.dismiss()
+                    }
+                },
+                enabled = name.text.isNotBlank() && !isDuplicateName,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Editar Categoria",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "Salvar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
-
-                OutlinedTextField(
-                    state = name,
-                    label = {
-                        Text(text = "Nome")
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
-                    ),
-                    isError = isDuplicateName,
-                    supportingText = duplicatedNameError.takeIf { isDuplicateName },
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Text(
-                    text = "Ícone",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-
-                IconGrid(
-                    icons = CategoryIcon.entries,
-                    selectedIcon = selectedIcon,
-                    selectedType = selectedType,
-                    onIconSelected = { selectedIcon = it }
-                )
-
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            repository.update(
-                                category.copy(
-                                    name = name.text.toString().trim(),
-                                    key = selectedIcon.key
-                                )
-                            )
-                            manager.dismiss()
-                        }
-                    },
-                    enabled = name.text.isNotBlank() && !isDuplicateName,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "Salvar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
     }

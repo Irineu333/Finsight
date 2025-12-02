@@ -8,7 +8,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,7 +29,7 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.modal.DeleteCategoryModal
 import com.neoutils.finance.ui.modal.EditCategoryModal
@@ -36,165 +42,142 @@ import kotlin.time.ExperimentalTime
 
 class ViewCategoryModal(
     private val category: Category
-) : Modal {
+) : ModalBottomSheet {
 
     private val key = category.id.toString()
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
 
         val viewModel = koinViewModel<ViewCategoryViewModel>(key = key) { parametersOf(category) }
 
         val uiState by viewModel.uiState.collectAsState()
 
-        ModalBottomSheet(
-            onDismissRequest = {
-                manager.dismiss()
-            },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
-            dragHandle = {
-                Surface(
-                    modifier = Modifier.padding(top = 22.dp),
-                    color = colorScheme.surfaceVariant,
-                    shape = MaterialTheme.shapes.extraLarge,
-                ) {
-                    Box(
-                        Modifier.size(
-                            width = 32.dp,
-                            height = 4.dp
-                        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
+        ) {
+
+            MonthSelector(
+                selectedYearMonth = uiState.selectedYearMonth,
+                onPreviousMonth = {
+                    viewModel.onAction(ViewCategoryAction.PreviousMonth)
+                },
+                onNextMonth = {
+                    viewModel.onAction(ViewCategoryAction.NextMonth)
+                },
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CategoryIconBox(
+                    category = uiState.category,
+                    modifier = Modifier.size(64.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    shape = RoundedCornerShape(16.dp)
+                )
+
+                Spacer(Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = if (uiState.category.type.isIncome) "Receita" else "Despesa",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (uiState.category.type.isIncome) Income else Expense
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = uiState.category.name,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface
                     )
                 }
             }
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            DetailRow(
+                label = if (uiState.category.type.isIncome) "Total Recebido" else "Total Gasto",
+                value = uiState.totalAmount.toMoneyFormat(),
+                valueColor = if (uiState.category.type.isIncome) Income else Expense
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DetailRow(
+                label = "Transações no Mês",
+                value = uiState.transactionCount.toString()
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
-                MonthSelector(
-                    selectedYearMonth = uiState.selectedYearMonth,
-                    onPreviousMonth = {
-                        viewModel.onAction(ViewCategoryAction.PreviousMonth)
+                OutlinedButton(
+                    onClick = {
+                        manager.show(DeleteCategoryModal(uiState.category))
                     },
-                    onNextMonth = {
-                        viewModel.onAction(ViewCategoryAction.NextMonth)
-                    },
-                    modifier = Modifier
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth()
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CategoryIconBox(
-                        category = uiState.category,
-                        modifier = Modifier.size(64.dp),
-                        contentPadding = PaddingValues(16.dp),
-                        shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.error,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = colorScheme.error,
                     )
-
-                    Spacer(Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = if (uiState.category.type.isIncome) "Receita" else "Despesa",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (uiState.category.type.isIncome) Income else Expense
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = uiState.category.name,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface
-                        )
-                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Excluir",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                DetailRow(
-                    label = if (uiState.category.type.isIncome) "Total Recebido" else "Total Gasto",
-                    value = uiState.totalAmount.toMoneyFormat(),
-                    valueColor = if (uiState.category.type.isIncome) Income else Expense
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                DetailRow(
-                    label = "Transações no Mês",
-                    value = uiState.transactionCount.toString()
-                )
-
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                OutlinedButton(
+                    onClick = {
+                        manager.show(EditCategoryModal(uiState.category))
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Info,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Info,
+                    )
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            manager.show(DeleteCategoryModal(uiState.category))
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.error,
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = colorScheme.error,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Excluir",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            manager.show(EditCategoryModal(uiState.category))
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Info,
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = Info,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Editar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Editar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

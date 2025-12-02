@@ -8,7 +8,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,7 +28,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DeleteTransactionModal
 import com.neoutils.finance.ui.modal.EditTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -38,7 +43,7 @@ import org.koin.core.parameter.parametersOf
 
 class ViewTransactionModal(
     private val transaction: Transaction
-) : Modal {
+) : ModalBottomSheet {
 
     private val dateFormat = LocalDate.Format {
         byUnicodePattern("dd/MM/yyyy")
@@ -47,27 +52,19 @@ class ViewTransactionModal(
     private val key = transaction.id.toString()
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
 
         val viewModel = koinViewModel<ViewTransactionViewModel>(key = key) { parametersOf(transaction) }
 
         val uiState by viewModel.uiState.collectAsState()
 
-        ModalBottomSheet(
-            onDismissRequest = {
-                manager.dismiss()
-            },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
-            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -189,7 +186,6 @@ class ViewTransactionModal(
                 }
             }
         }
-    }
 
     @Composable
     private fun DetailRow(

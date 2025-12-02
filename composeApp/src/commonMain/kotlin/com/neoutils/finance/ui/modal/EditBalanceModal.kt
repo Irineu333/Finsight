@@ -12,7 +12,17 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.component.MoneyInputTransformation
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
@@ -35,19 +45,18 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 import kotlin.math.abs
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 class EditBalanceModal(
     private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
     private val currentBalance: Double,
     private val onConfirm: (Double) -> Unit
-) : Modal {
+) : ModalBottomSheet {
 
     private val initialCents = (currentBalance * 100).toLong()
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
@@ -65,112 +74,105 @@ class EditBalanceModal(
             }
         }
 
-        ModalBottomSheet(
-            onDismissRequest = { manager.dismiss() },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = type.title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+            Text(
+                text = type.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
 
-                if (targetMonth != null) {
+            if (targetMonth != null) {
+                Text(
+                    text = yearMonthFormat.format(targetMonth),
+                    fontSize = 14.sp,
+                    color = TextLight1,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            AnimatedContent(
+                targetState = adjustment,
+                transitionSpec = {
+                    fadeIn() togetherWith fadeOut()
+                },
+            ) { adjustment ->
+                if (adjustment != 0.0) {
+                    Adjustment(
+                        adjustment = adjustment,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth())
+                }
+            }
+
+            OutlinedTextField(
+                state = balanceState,
+                inputTransformation = MoneyInputTransformation(),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                textStyle = TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = colorScheme.surfaceContainerHighest,
+                    focusedBorderColor = Adjustment,
+                    cursorColor = Adjustment,
+                    selectionColors = TextSelectionColors(
+                        handleColor = Adjustment,
+                        backgroundColor = Adjustment.copy(alpha = 0.4f)
+                    )
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { manager.dismiss() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Text(
-                        text = yearMonthFormat.format(targetMonth),
-                        fontSize = 14.sp,
-                        color = TextLight1,
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = "Cancelar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                AnimatedContent(
-                    targetState = adjustment,
-                    transitionSpec = {
-                        fadeIn() togetherWith fadeOut()
+                Button(
+                    onClick = {
+                        scope.launch {
+                            onConfirm(newBalance)
+                            manager.dismiss()
+                        }
                     },
-                ) { adjustment ->
-                    if (adjustment != 0.0) {
-                        Adjustment(
-                            adjustment = adjustment,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth())
-                    }
-                }
-
-                OutlinedTextField(
-                    state = balanceState,
-                    inputTransformation = MoneyInputTransformation(),
+                    enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
+                    modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    textStyle = TextStyle(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Adjustment
                     ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = colorScheme.surfaceContainerHighest,
-                        unfocusedContainerColor = colorScheme.surfaceContainerHighest,
-                        focusedBorderColor = Adjustment,
-                        cursorColor = Adjustment,
-                        selectionColors = TextSelectionColors(
-                            handleColor = Adjustment,
-                            backgroundColor = Adjustment.copy(alpha = 0.4f)
-                        )
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = { manager.dismiss() },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Cancelar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                onConfirm(newBalance)
-                                manager.dismiss()
-                            }
-                        },
-                        enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Adjustment
-                        ),
-                    ) {
-                        Text(
-                            text = "Salvar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(
+                        text = "Salvar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

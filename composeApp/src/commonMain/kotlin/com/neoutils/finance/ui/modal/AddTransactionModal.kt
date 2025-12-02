@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.modal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,10 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,7 +46,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.Modal
+import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import kotlinx.coroutines.launch
@@ -57,18 +56,17 @@ import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
-import kotlin.collections.sumOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AddTransactionModal : Modal {
+class AddTransactionModal : ModalBottomSheet {
 
     private val dateFormat = LocalDate.Format {
         byUnicodePattern("dd/MM/yyyy")
     }
 
     @Composable
-    override fun Content() {
+    override fun ColumnScope.BottomSheetContent() {
 
         val repository = koinInject<ITransactionRepository>()
         val manager = LocalModalManager.current
@@ -80,20 +78,12 @@ class AddTransactionModal : Modal {
         val date = rememberTextFieldState(dateFormat.format(currentDate()))
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
 
-        ModalBottomSheet(
-            onDismissRequest = {
-                manager.dismiss()
-            },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp)
-            ) {
 
                 TypeToggle(
                     selectedType = type,
@@ -218,7 +208,6 @@ class AddTransactionModal : Modal {
                 }
             }
         }
-    }
 
     @Composable
     fun TypeToggle(

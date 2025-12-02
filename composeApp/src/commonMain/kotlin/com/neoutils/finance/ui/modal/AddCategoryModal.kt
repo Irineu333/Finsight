@@ -42,7 +42,7 @@ class AddCategoryModal(
     }
 
     @Composable
-    override fun ColumnScope.BottomSheet() {
+    override fun ColumnScope.BottomSheetContent() {
 
         val repository = koinInject<ICategoryRepository>()
         val getCategoriesUseCase = koinInject<GetCategoriesUseCase>()
@@ -64,87 +64,80 @@ class AddCategoryModal(
             }
         }
 
-        ModalBottomSheet(
-            onDismissRequest = { manager.dismiss() },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            Text(
+                text = "Nova Categoria",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            TypeToggle(
+                selectedType = selectedType,
+                onTypeSelected = { selectedType = it }
+            )
+
+            OutlinedTextField(
+                state = name,
+                label = {
+                    Text(text = "Nome")
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Done
+                ),
+                isError = isDuplicateName,
+                supportingText = duplicatedNameError.takeIf { isDuplicateName },
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Text(
+                text = "Ícone",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+
+            IconGrid(
+                icons = CategoryIcon.entries,
+                selectedIcon = selectedIcon,
+                selectedType = selectedType,
+                onIconSelected = { selectedIcon = it }
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        repository.insert(
+                            Category(
+                                name = name.text.toString(),
+                                key = selectedIcon.key,
+                                type = selectedType,
+                                createdAt = Clock.System.now().toEpochMilliseconds()
+                            )
+                        )
+                        manager.dismiss()
+                    }
+                },
+                enabled = name.text.isNotBlank() && !isDuplicateName,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Nova Categoria",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "Salvar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
-
-                TypeToggle(
-                    selectedType = selectedType,
-                    onTypeSelected = { selectedType = it }
-                )
-
-                OutlinedTextField(
-                    state = name,
-                    label = {
-                        Text(text = "Nome")
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
-                    ),
-                    isError = isDuplicateName,
-                    supportingText = duplicatedNameError.takeIf { isDuplicateName },
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Text(
-                    text = "Ícone",
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-
-                IconGrid(
-                    icons = CategoryIcon.entries,
-                    selectedIcon = selectedIcon,
-                    selectedType = selectedType,
-                    onIconSelected = { selectedIcon = it }
-                )
-
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            repository.insert(
-                                Category(
-                                    name = name.text.toString(),
-                                    key = selectedIcon.key,
-                                    type = selectedType,
-                                    createdAt = Clock.System.now().toEpochMilliseconds()
-                                )
-                            )
-                            manager.dismiss()
-                        }
-                    },
-                    enabled = name.text.isNotBlank() && !isDuplicateName,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "Salvar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
     }

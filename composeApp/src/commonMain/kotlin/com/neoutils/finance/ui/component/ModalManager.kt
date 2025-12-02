@@ -53,7 +53,7 @@ interface Modal {
 interface ModalBottomSheet : Modal {
     @Composable
     override fun Content() {
-        
+
         val manager = LocalModalManager.current
 
         ModalBottomSheet(
@@ -63,10 +63,10 @@ interface ModalBottomSheet : Modal {
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
-            content = { BottomSheet() }
+            content = { BottomSheetContent() }
         )
     }
 
     @Composable
-    fun ColumnScope.BottomSheet()
+    fun ColumnScope.BottomSheetContent()
 }

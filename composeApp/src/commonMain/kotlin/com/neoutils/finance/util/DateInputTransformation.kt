@@ -1,4 +1,4 @@
-package com.neoutils.finance.ui.component
+package com.neoutils.finance.util
 
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
@@ -8,7 +8,7 @@ import androidx.compose.foundation.text.input.placeCursorAtEnd
 class DateInputTransformation : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
-        val digitsOnly = asCharSequence().filter { it.isDigit() }.toString()
+        val digitsOnly = asCharSequence().filter { it.isDigit() }
 
         val limited = digitsOnly.take(8)
 
@@ -17,7 +17,7 @@ class DateInputTransformation : InputTransformation {
             return
         }
 
-        val formatted = formatDate(limited)
+        val formatted = formatDate(limited.toString())
 
         replace(0, length, formatted)
 

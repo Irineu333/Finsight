@@ -39,8 +39,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.ui.component.DateInputTransformation
-import com.neoutils.finance.ui.component.MoneyInputTransformation
+import com.neoutils.finance.util.DateInputTransformation
+import com.neoutils.finance.util.MoneyInputTransformation
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.model.Transaction

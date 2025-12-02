@@ -1,9 +1,9 @@
 package com.neoutils.finance.di
 
-import com.neoutils.finance.usecase.AdjustBalanceUseCase
-import com.neoutils.finance.usecase.CalculateBalanceUseCase
-import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
-import com.neoutils.finance.usecase.GetCategoriesUseCase
+import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {

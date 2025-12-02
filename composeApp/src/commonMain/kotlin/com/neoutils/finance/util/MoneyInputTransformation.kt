@@ -1,4 +1,4 @@
-package com.neoutils.finance.ui.component
+package com.neoutils.finance.util
 
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
@@ -10,12 +10,10 @@ class MoneyInputTransformation : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
         val text = asCharSequence().toString()
-        
-        // Check if the value should be negative
+
         val isNegative = text.startsWith("-")
-        
-        // Extract only digits
-        val digitsOnly = text.filter { it.isDigit() }.toString()
+
+        val digitsOnly = text.filter { it.isDigit() }
 
         if (digitsOnly.isEmpty()) {
             delete(0, length)
@@ -23,8 +21,7 @@ class MoneyInputTransformation : InputTransformation {
         }
 
         var cents = digitsOnly.toLongOrNull() ?: 0L
-        
-        // Apply negative sign if needed
+
         if (isNegative) {
             cents = -cents
         }
@@ -39,7 +36,7 @@ class MoneyInputTransformation : InputTransformation {
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
         val absoluteCents = abs(cents)
-        
+
         val reais = absoluteCents / 100
         val centavos = absoluteCents % 100
 
@@ -50,7 +47,7 @@ class MoneyInputTransformation : InputTransformation {
             .reversed()
 
         val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
-        
+
         return if (isNegative) "-$formatted" else formatted
     }
 }

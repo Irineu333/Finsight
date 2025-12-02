@@ -36,7 +36,7 @@ import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.component.MoneyInputTransformation
+import com.neoutils.finance.util.MoneyInputTransformation
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income

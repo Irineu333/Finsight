@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.usecase.AdjustBalanceUseCase
-import com.neoutils.finance.usecase.CalculateBalanceUseCase
-import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn

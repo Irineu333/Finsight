@@ -1,4 +1,4 @@
-package com.neoutils.finance.usecase
+package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository

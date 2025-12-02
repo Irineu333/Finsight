@@ -12,9 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.ui.theme.Expense
-import com.neoutils.finance.ui.theme.Income
-import com.neoutils.finance.usecase.GetCategoriesUseCase
+import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import org.koin.compose.koinInject
 
 @Composable

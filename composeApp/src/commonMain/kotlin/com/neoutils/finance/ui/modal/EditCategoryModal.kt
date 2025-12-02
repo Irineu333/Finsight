@@ -33,7 +33,7 @@ import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
-import com.neoutils.finance.usecase.GetCategoriesUseCase
+import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 

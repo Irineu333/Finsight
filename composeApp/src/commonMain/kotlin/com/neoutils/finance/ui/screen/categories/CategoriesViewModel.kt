@@ -2,12 +2,11 @@ package com.neoutils.finance.ui.screen.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.usecase.GetCategoriesUseCase
+import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class CategoriesViewModel(
     private val getCategoriesUseCase: GetCategoriesUseCase

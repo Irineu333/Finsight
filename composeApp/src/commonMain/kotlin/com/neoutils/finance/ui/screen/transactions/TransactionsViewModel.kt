@@ -9,9 +9,9 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.usecase.AdjustBalanceUseCase
-import com.neoutils.finance.usecase.CalculateBalanceUseCase
-import com.neoutils.finance.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine

@@ -9,8 +9,9 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.ExperimentalTime
 
@@ -20,11 +21,22 @@ class ViewTransactionViewModel(
     private val categoryRepository: ICategoryRepository
 ) : ViewModel() {
 
-    val uiState = combine(
-        transactionRepository.observeTransactionById(transaction.id).filterNotNull(),
-        categoryRepository.observeCategoryById(transaction.id)
-    ) { transaction, category ->
+    private val categoryFlow = flow {
+        if (transaction.categoryId != null) {
+            emitAll(categoryRepository.observeCategoryById(transaction.categoryId))
+        } else {
+            emit(null)
+        }
+    }
 
+    private val transactionFlow = transactionRepository
+        .observeTransactionById(transaction.id)
+        .filterNotNull()
+
+    val uiState = combine(
+        transactionFlow,
+        categoryFlow,
+    ) { transaction, category ->
         ViewTransactionUiState(
             transaction = transaction,
             category = category,

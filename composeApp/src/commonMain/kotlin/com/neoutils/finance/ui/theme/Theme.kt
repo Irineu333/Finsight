@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 private val DarkColorScheme = darkColorScheme(
     primary = Primary1,
     onPrimary = Color.White,
-    primaryContainer = Primary2,
+    primaryContainer = Primary1,
     onPrimaryContainer = Color.White,
 
     secondary = Income,

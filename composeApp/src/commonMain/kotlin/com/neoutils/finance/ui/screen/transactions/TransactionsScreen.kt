@@ -24,6 +24,9 @@ import com.neoutils.finance.ui.modal.ViewTransactionModal
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.theme.Expense as ExpenseColor
+import com.neoutils.finance.ui.theme.Income as IncomeColor
+import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -220,6 +223,13 @@ private fun CategoryFilterChip(
         categories.find { it.id == id }
     }
 
+    val chipColor = selectedCategory?.let { category ->
+        when (category.type) {
+            com.neoutils.finance.domain.model.Category.CategoryType.INCOME -> IncomeColor
+            com.neoutils.finance.domain.model.Category.CategoryType.EXPENSE -> ExpenseColor
+        }
+    }
+
     FilterChip(
         selected = selectedCategoryId != null,
         onClick = { expanded = true },
@@ -231,7 +241,14 @@ private fun CategoryFilterChip(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null
             )
-        }
+        },
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color
+            )
+        } ?: FilterChipDefaults.filterChipColors()
     )
 
     DropdownMenu(
@@ -265,6 +282,13 @@ private fun TypeFilterChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    val chipColor = when (selectedType) {
+        Transaction.Type.INCOME -> IncomeColor
+        Transaction.Type.EXPENSE -> ExpenseColor
+        Transaction.Type.ADJUSTMENT -> AdjustmentColor
+        null -> null
+    }
+
     FilterChip(
         selected = selectedType != null,
         onClick = { expanded = true },
@@ -283,7 +307,14 @@ private fun TypeFilterChip(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null
             )
-        }
+        },
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color
+            )
+        } ?: FilterChipDefaults.filterChipColors()
     )
 
     DropdownMenu(

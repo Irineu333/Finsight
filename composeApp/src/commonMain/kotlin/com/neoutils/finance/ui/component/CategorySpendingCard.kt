@@ -1,0 +1,116 @@
+package com.neoutils.finance.ui.component
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.CategorySpending
+import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.ui.theme.Expense
+import com.neoutils.finance.ui.theme.Income
+
+@Composable
+fun CategorySpendingCard(
+    categorySpending: List<CategorySpending>,
+    categories: Map<Long, Category>,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Gastos por Categoria",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            categorySpending.forEach { spending ->
+                categories[spending.categoryId]?.let {
+                    CategorySpendingItem(
+                        category = it,
+                        spending = spending
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategorySpendingItem(
+    category: Category,
+    spending: CategorySpending
+) {
+    Row(
+        modifier = Modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        CategoryIconBox(
+            category = category,
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.aspectRatio(1f),
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = category.name,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+
+                Text(
+                    text = spending.amount.toMoneyFormat(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            LinearProgressIndicator(
+                progress = { (spending.percentage / 100).toFloat() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = when (category.type) {
+                    Category.CategoryType.INCOME -> Income
+                    Category.CategoryType.EXPENSE -> Expense
+                },
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                strokeCap = StrokeCap.Round,
+                drawStopIndicator = {}
+            )
+        }
+    }
+}

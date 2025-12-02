@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.BalanceCard
 import com.neoutils.finance.ui.component.BalanceCardConfig
+import com.neoutils.finance.ui.component.CategorySpendingCard
 import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
@@ -40,8 +41,7 @@ fun DashboardScreen(
 
     DashboardContent(
         uiState = uiState,
-        onSeeAllTransactions = { openTransactions(null) },
-        onOpenTransactionsWithFilter = openTransactions,
+        openTransactions = openTransactions,
         onOpenCategories = openCategories,
         modalManager = modalManager,
         openEditBalance = {
@@ -61,12 +61,11 @@ fun DashboardScreen(
 
 @Composable
 private fun DashboardContent(
-    onSeeAllTransactions: () -> Unit,
-    onOpenTransactionsWithFilter: (Transaction.Type?) -> Unit,
+    openTransactions: (Transaction.Type?) -> Unit,
+    openEditBalance: () -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
-    modalManager: ModalManager,
-    openEditBalance: () -> Unit
+    modalManager: ModalManager
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -109,14 +108,26 @@ private fun DashboardContent(
                     balance = uiState.balance.income,
                     modifier = Modifier.weight(1f),
                     config = BalanceCardConfig.Income,
-                    onClick = { onOpenTransactionsWithFilter(Transaction.Type.INCOME) }
+                    onClick = { openTransactions(Transaction.Type.INCOME) }
                 )
 
                 BalanceCard(
                     balance = uiState.balance.expense,
                     modifier = Modifier.weight(1f),
                     config = BalanceCardConfig.Expense,
-                    onClick = { onOpenTransactionsWithFilter(Transaction.Type.EXPENSE) }
+                    onClick = { openTransactions(Transaction.Type.EXPENSE) }
+                )
+            }
+        }
+
+        if (uiState.categorySpending.isNotEmpty()) {
+            item {
+                CategorySpendingCard(
+                    categorySpending = uiState.categorySpending,
+                    categories = uiState.categories,
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth()
                 )
             }
         }
@@ -137,7 +148,7 @@ private fun DashboardContent(
                     )
 
                     TextButton(
-                        onClick = onSeeAllTransactions
+                        onClick = { openTransactions(null) }
                     ) {
                         Text(text = "Ver Tudo")
                     }

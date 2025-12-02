@@ -24,7 +24,8 @@ class DashboardViewModel(
     private val categoryRepository: ICategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
+    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
+    private val calculateCategorySpendingUseCase: com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 ) : ViewModel() {
 
     private val currentMonth get() = Clock.System.now().toYearMonth()
@@ -40,6 +41,11 @@ class DashboardViewModel(
             forYearMonth = currentMonth
         )
 
+        val categorySpending = calculateCategorySpendingUseCase(
+            transactions = transactions,
+            forYearMonth = currentMonth
+        )
+
         DashboardUiState(
             recents = stats.transactions.take(3),
             balance = DashboardUiState.BalanceStats(
@@ -51,7 +57,8 @@ class DashboardViewModel(
                 )
             ),
             yearMonth = currentMonth,
-            categories = categories.associateBy { it.id }
+            categories = categories.associateBy { it.id },
+            categorySpending = categorySpending.take(3),
         )
         }.stateIn(
             scope = viewModelScope,

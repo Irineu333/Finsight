@@ -33,7 +33,8 @@ val viewModelModule = module {
             categoryRepository = get(),
             adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get()
+            calculateTransactionStatsUseCase = get(),
+            calculateCategorySpendingUseCase = get()
         )
     }
 

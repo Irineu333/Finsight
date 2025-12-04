@@ -1,8 +1,8 @@
 package com.neoutils.finance.di
 
 import com.neoutils.finance.data.AppDatabase
-import com.neoutils.finance.data.CategoryDao
-import com.neoutils.finance.data.TransactionDao
+import com.neoutils.finance.data.database.CategoryDao
+import com.neoutils.finance.data.database.TransactionDao
 import com.neoutils.finance.data.getRoomDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.module

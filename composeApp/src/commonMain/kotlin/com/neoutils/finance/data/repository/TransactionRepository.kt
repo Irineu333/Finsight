@@ -1,7 +1,7 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.data.repository
 
-import com.neoutils.finance.data.mapper.toDomain
-import com.neoutils.finance.data.mapper.toEntity
+import com.neoutils.finance.data.database.TransactionDao
+import com.neoutils.finance.data.mapper.TransactionMapper
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
@@ -12,18 +12,19 @@ import kotlinx.datetime.LocalDate
 class TransactionRepository(
     private val dao: TransactionDao,
     private val categoryRepository: ICategoryRepository,
+    private val mapper: TransactionMapper = TransactionMapper(),
 ) : ITransactionRepository {
 
     override suspend fun insert(transaction: Transaction): Long {
-        return dao.insert(transaction.toEntity())
+        return dao.insert(mapper.toEntity(transaction))
     }
 
     override suspend fun update(transaction: Transaction) {
-        dao.update(transaction.toEntity())
+        dao.update(mapper.toEntity(transaction))
     }
 
     override suspend fun delete(transaction: Transaction) {
-        dao.delete(transaction.toEntity())
+        dao.delete(mapper.toEntity(transaction))
     }
 
     override fun getAllTransactions(): Flow<List<Transaction>> {
@@ -32,7 +33,8 @@ class TransactionRepository(
             categoryRepository.getAllCategories()
         ) { transactions, categories ->
             transactions.map { transaction ->
-                transaction.toDomain(
+                mapper.toDomain(
+                    entity = transaction,
                     category = categories.find {
                         it.id == transaction.categoryId
                     }
@@ -48,7 +50,7 @@ class TransactionRepository(
             categoryRepository.getCategoryById(it)
         }
 
-        return transaction.toDomain(category)
+        return mapper.toDomain(transaction, category)
     }
 
     override fun observeTransactionById(id: Long): Flow<Transaction?> {
@@ -56,17 +58,20 @@ class TransactionRepository(
             dao.observeTransactionById(id),
             categoryRepository.observeCategoryById(id)
         ) { transaction, category ->
-            transaction?.toDomain(category)
+            transaction?.let {
+                mapper.toDomain(it, category)
+            }
         }
     }
 
     override fun getTransactionsByType(type: Transaction.Type): Flow<List<Transaction>> {
         return combine(
-            dao.getTransactionsByType(type.toEntity()),
+            dao.getTransactionsByType(mapper.toEntity(type)),
             categoryRepository.getAllCategories(),
         ) { transactions, categories ->
             transactions.map { transaction ->
-                transaction.toDomain(
+                mapper.toDomain(
+                    entity = transaction,
                     category = categories.find {
                         it.id == transaction.categoryId
                     }
@@ -75,14 +80,17 @@ class TransactionRepository(
         }
     }
 
-    override suspend fun getTransactionByTypeAndDate(type: Transaction.Type, date: LocalDate): Transaction? {
-        val transaction = dao.getTransactionByTypeAndDate(type.toEntity(), date) ?: return null
+    override suspend fun getTransactionByTypeAndDate(
+        type: Transaction.Type,
+        date: LocalDate
+    ): Transaction? {
+        val transaction = dao.getTransactionByTypeAndDate(mapper.toEntity(type), date) ?: return null
 
         val category = transaction.categoryId?.let {
             categoryRepository.getCategoryById(it)
         }
 
-        return transaction.toDomain(category)
+        return mapper.toDomain(transaction, category)
     }
 
     override suspend fun deleteAll() {

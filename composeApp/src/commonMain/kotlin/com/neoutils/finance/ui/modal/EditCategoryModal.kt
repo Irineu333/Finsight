@@ -143,7 +143,7 @@ class EditCategoryModal(
     private fun IconGrid(
         icons: List<CategoryIcon>,
         selectedIcon: CategoryIcon,
-        selectedType: Category.CategoryType,
+        selectedType: Category.Type,
         onIconSelected: (CategoryIcon) -> Unit
     ) {
         val categoryColor = if (selectedType.isIncome) Income else Expense

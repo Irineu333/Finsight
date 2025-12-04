@@ -99,8 +99,8 @@ private fun CategorySpendingItem(
                     .fillMaxWidth()
                     .height(8.dp),
                 color = when (spending.category.type) {
-                    Category.CategoryType.INCOME -> Income
-                    Category.CategoryType.EXPENSE -> Expense
+                    Category.Type.INCOME -> Income
+                    Category.Type.EXPENSE -> Expense
                 },
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,

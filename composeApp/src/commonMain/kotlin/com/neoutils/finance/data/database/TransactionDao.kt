@@ -1,11 +1,13 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.data.database
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.neoutils.finance.data.entity.TransactionEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
 
 @Dao
 interface TransactionDao {
@@ -32,7 +34,7 @@ interface TransactionDao {
     fun getTransactionsByType(type: TransactionEntity.Type): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
-    suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: kotlinx.datetime.LocalDate): TransactionEntity?
+    suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: LocalDate): TransactionEntity?
 
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()

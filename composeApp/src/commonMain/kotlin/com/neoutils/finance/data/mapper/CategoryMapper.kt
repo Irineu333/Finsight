@@ -1,38 +1,48 @@
 package com.neoutils.finance.data.mapper
 
-import com.neoutils.finance.data.CategoryEntity
+import com.neoutils.finance.data.entity.CategoryEntity
 import com.neoutils.finance.domain.model.Category
 
-fun CategoryEntity.toDomain(): Category {
-    return Category(
-        id = id,
-        name = name,
-        key = key,
-        type = type.toDomain(),
-        createdAt = createdAt
-    )
-}
-
-fun Category.toEntity(): CategoryEntity {
-    return CategoryEntity(
-        id = id,
-        name = name,
-        key = key,
-        type = type.toEntity(),
-        createdAt = createdAt
-    )
-}
-
-fun CategoryEntity.CategoryType.toDomain(): Category.CategoryType {
-    return when (this) {
-        CategoryEntity.CategoryType.INCOME -> Category.CategoryType.INCOME
-        CategoryEntity.CategoryType.EXPENSE -> Category.CategoryType.EXPENSE
+class CategoryMapper {
+    fun toDomain(
+        entity: CategoryEntity
+    ): Category {
+        return Category(
+            id = entity.id,
+            name = entity.name,
+            key = entity.key,
+            type = toDomain(entity.type),
+            createdAt = entity.createdAt
+        )
     }
-}
 
-fun Category.CategoryType.toEntity(): CategoryEntity.CategoryType {
-    return when (this) {
-        Category.CategoryType.INCOME -> CategoryEntity.CategoryType.INCOME
-        Category.CategoryType.EXPENSE -> CategoryEntity.CategoryType.EXPENSE
+    fun toDomain(
+        type: CategoryEntity.Type
+    ): Category.Type {
+        return when (type) {
+            CategoryEntity.Type.INCOME -> Category.Type.INCOME
+            CategoryEntity.Type.EXPENSE -> Category.Type.EXPENSE
+        }
+    }
+
+    fun toEntity(
+        domain: Category
+    ): CategoryEntity {
+        return CategoryEntity(
+            id = domain.id,
+            name = domain.name,
+            key = domain.key,
+            type = toEntity(domain.type),
+            createdAt = domain.createdAt
+        )
+    }
+
+    fun toEntity(
+        type: Category.Type
+    ): CategoryEntity.Type {
+        return when (type) {
+            Category.Type.INCOME -> CategoryEntity.Type.INCOME
+            Category.Type.EXPENSE -> CategoryEntity.Type.EXPENSE
+        }
     }
 }

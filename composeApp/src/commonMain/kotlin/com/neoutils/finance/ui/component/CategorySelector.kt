@@ -18,7 +18,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CategorySelector(
     selectedCategory: Category?,
-    categoryType: Category.CategoryType,
+    categoryType: Category.Type,
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
     getCategoriesUseCase: GetCategoriesUseCase = koinInject()

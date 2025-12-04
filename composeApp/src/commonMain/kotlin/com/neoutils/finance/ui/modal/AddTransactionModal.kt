@@ -112,7 +112,7 @@ class AddTransactionModal : ModalBottomSheet {
 
                 CategorySelector(
                     selectedCategory = selectedCategory,
-                    categoryType = if (type.isIncome) Category.CategoryType.INCOME else Category.CategoryType.EXPENSE,
+                    categoryType = if (type.isIncome) Category.Type.INCOME else Category.Type.EXPENSE,
                     onCategorySelected = { selectedCategory = it },
                     modifier = Modifier.fillMaxWidth()
                 )

@@ -34,7 +34,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class AddCategoryModal(
-    private val initialType: Category.CategoryType = Category.CategoryType.EXPENSE
+    private val initialType: Category.Type = Category.Type.EXPENSE
 ) : ModalBottomSheet {
 
     private val duplicatedNameError = @Composable {
@@ -144,24 +144,24 @@ class AddCategoryModal(
 
     @Composable
     private fun TypeToggle(
-        selectedType: Category.CategoryType,
-        onTypeSelected: (Category.CategoryType) -> Unit
+        selectedType: Category.Type,
+        onTypeSelected: (Category.Type) -> Unit
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Button(
-            onClick = { onTypeSelected(Category.CategoryType.EXPENSE) },
+            onClick = { onTypeSelected(Category.Type.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Category.CategoryType.EXPENSE -> {
+                Category.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Expense,
                         contentColor = Color.White
                     )
                 }
 
-                Category.CategoryType.INCOME -> {
+                Category.Type.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -178,17 +178,17 @@ class AddCategoryModal(
         }
 
         Button(
-            onClick = { onTypeSelected(Category.CategoryType.INCOME) },
+            onClick = { onTypeSelected(Category.Type.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Category.CategoryType.INCOME -> {
+                Category.Type.INCOME -> {
                     ButtonDefaults.buttonColors(
                         containerColor = Income,
                         contentColor = Color.White
                     )
                 }
 
-                Category.CategoryType.EXPENSE -> {
+                Category.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         contentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -209,7 +209,7 @@ class AddCategoryModal(
     private fun IconGrid(
         icons: List<CategoryIcon>,
         selectedIcon: CategoryIcon,
-        selectedType: Category.CategoryType,
+        selectedType: Category.Type,
         onIconSelected: (CategoryIcon) -> Unit
     ) {
         val categoryColor = if (selectedType.isIncome) Income else Expense

@@ -6,7 +6,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.icons.CategoryIcon
@@ -22,8 +21,8 @@ fun CategoryIconBox(
 ) {
     Surface(
         color = when (category.type) {
-            Category.CategoryType.INCOME -> Income
-            Category.CategoryType.EXPENSE -> Expense
+            Category.Type.INCOME -> Income
+            Category.Type.EXPENSE -> Expense
         }.copy(alpha = 0.2f),
         shape = shape,
         modifier = modifier,
@@ -32,8 +31,8 @@ fun CategoryIconBox(
             imageVector = CategoryIcon.fromKey(category.key).icon,
             contentDescription = null,
             tint = when (category.type) {
-                Category.CategoryType.INCOME -> Income
-                Category.CategoryType.EXPENSE -> Expense
+                Category.Type.INCOME -> Income
+                Category.Type.EXPENSE -> Expense
             },
             modifier = Modifier.padding(contentPadding)
         )

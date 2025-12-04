@@ -1,10 +1,11 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.data.database
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.neoutils.finance.data.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -13,7 +14,7 @@ interface CategoryDao {
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE type = :type ORDER BY createdAt ASC")
-    fun getCategoriesByType(type: CategoryEntity.CategoryType): Flow<List<CategoryEntity>>
+    fun getCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategoryById(id: Long): CategoryEntity?

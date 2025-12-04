@@ -236,8 +236,8 @@ private fun CategoryFilterChip(
 
     val chipColor = selectedCategory?.let { category ->
         when (category.type) {
-            Category.CategoryType.INCOME -> IncomeColor
-            Category.CategoryType.EXPENSE -> ExpenseColor
+            Category.Type.INCOME -> IncomeColor
+            Category.Type.EXPENSE -> ExpenseColor
         }
     }
 

@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.CategorySelector
@@ -127,8 +126,8 @@ class EditTransactionModal(
                 CategorySelector(
                     selectedCategory = selectedCategory,
                     categoryType = when(type) {
-                        Transaction.Type.INCOME -> Category.CategoryType.INCOME
-                        Transaction.Type.EXPENSE -> Category.CategoryType.EXPENSE
+                        Transaction.Type.INCOME -> Category.Type.INCOME
+                        Transaction.Type.EXPENSE -> Category.Type.EXPENSE
                         else -> error("Invalid type")
                     },
                     onCategorySelected = { selectedCategory = it },

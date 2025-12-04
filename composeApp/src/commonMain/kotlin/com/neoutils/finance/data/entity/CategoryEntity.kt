@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.data
+package com.neoutils.finance.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -13,10 +13,10 @@ data class CategoryEntity(
     val id: Long = 0,
     val name: String,
     val key: String,
-    val type: CategoryType,
+    val type: Type,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
-    enum class CategoryType {
+    enum class Type {
         INCOME,
         EXPENSE;
 

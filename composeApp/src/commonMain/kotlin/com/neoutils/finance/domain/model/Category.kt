@@ -4,10 +4,10 @@ data class Category(
     val id: Long = 0,
     val name: String,
     val key: String,
-    val type: CategoryType,
+    val type: Type,
     val createdAt: Long
 ) {
-    enum class CategoryType {
+    enum class Type {
         INCOME,
         EXPENSE;
 

@@ -48,11 +48,11 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.util.DateFormats
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -60,9 +60,7 @@ import kotlin.time.ExperimentalTime
 
 class AddTransactionModal : ModalBottomSheet {
 
-    private val dateFormat = LocalDate.Format {
-        byUnicodePattern("dd/MM/yyyy")
-    }
+    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -74,7 +72,7 @@ class AddTransactionModal : ModalBottomSheet {
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
-        val date = rememberTextFieldState(dateFormat.format(currentDate()))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
 
         Column(
@@ -151,10 +149,10 @@ class AddTransactionModal : ModalBottomSheet {
                             onClick = {
                                 manager.show(
                                     DatePickerModal(
-                                        initialDate = dateFormat.parse(date.text.toString()),
+                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
                                         onDateSelected = { selectedDate ->
                                             date.edit {
-                                                replace(0, length, dateFormat.format(selectedDate))
+                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
                                             }
                                         }
                                     )
@@ -183,7 +181,7 @@ class AddTransactionModal : ModalBottomSheet {
                                     type = type,
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     title = title.text.toString().ifBlank { null },
-                                    date = dateFormat.parse(date.text.toString()),
+                                    date = formats.dayMonthYear.parse(date.text.toString()),
                                     category = selectedCategory,
                                 )
                             )

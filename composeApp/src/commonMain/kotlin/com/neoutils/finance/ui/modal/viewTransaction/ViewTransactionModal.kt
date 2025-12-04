@@ -35,9 +35,8 @@ import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
-import kotlinx.datetime.LocalDate
+import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -45,9 +44,7 @@ class ViewTransactionModal(
     private val transaction: Transaction
 ) : ModalBottomSheet {
 
-    private val dateFormat = LocalDate.Format {
-        byUnicodePattern("dd/MM/yyyy")
-    }
+    private val formats = DateFormats()
 
     private val key = transaction.id.toString()
 
@@ -121,7 +118,7 @@ class ViewTransactionModal(
 
                 DetailRow(
                     label = "Data",
-                    value = dateFormat.format(uiState.transaction.date)
+                    value = formats.dayMonthYear.format(uiState.transaction.date)
                 )
 
                 HorizontalDivider(Modifier.padding(vertical = 16.dp))

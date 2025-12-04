@@ -29,12 +29,10 @@ class ViewTransactionViewModel(
         }
     }
 
-    private val transactionFlow = transactionRepository
-        .observeTransactionById(transaction.id)
-        .filterNotNull()
-
     val uiState = combine(
-        transactionFlow,
+        transactionRepository
+            .observeTransactionById(transaction.id)
+            .filterNotNull(),
         categoryFlow,
     ) { transaction, category ->
         ViewTransactionUiState(

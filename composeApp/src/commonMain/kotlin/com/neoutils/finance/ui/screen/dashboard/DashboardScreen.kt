@@ -24,11 +24,13 @@ import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
+
+private val formats = DateFormats()
 
 @Composable
 fun DashboardScreen(
@@ -70,7 +72,7 @@ private fun DashboardContent(
     topBar = {
         TopAppBar(
             title = {
-                Text(text = yearMonthFormat.format(uiState.yearMonth))
+                Text(text = formats.yearMonth.format(uiState.yearMonth))
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = colorScheme.background,

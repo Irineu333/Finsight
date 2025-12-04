@@ -33,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.extension.yearMonthFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.util.MoneyInputTransformation
@@ -41,6 +40,7 @@ import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
+import com.neoutils.finance.util.DateFormats
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 import kotlin.math.abs
@@ -54,6 +54,8 @@ class EditBalanceModal(
 ) : ModalBottomSheet {
 
     private val initialCents = (currentBalance * 100).toLong()
+
+    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -89,7 +91,7 @@ class EditBalanceModal(
 
             if (targetMonth != null) {
                 Text(
-                    text = yearMonthFormat.format(targetMonth),
+                    text = formats.yearMonth.format(targetMonth),
                     fontSize = 14.sp,
                     color = TextLight1,
                     modifier = Modifier.padding(top = 4.dp)

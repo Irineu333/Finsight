@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,25 +24,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Adjustment
-import kotlinx.datetime.LocalDate
+import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
 
 class ViewAdjustmentModal(
     private val transaction: Transaction
 ) : ModalBottomSheet {
 
-    private val dateFormat = LocalDate.Format {
-        byUnicodePattern("dd/MM/yyyy")
-    }
+    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+
         val manager = LocalModalManager.current
 
         Column(
@@ -90,7 +86,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = "Data",
-                value = dateFormat.format(transaction.date)
+                value = formats.dayMonthYear.format(transaction.date)
             )
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))

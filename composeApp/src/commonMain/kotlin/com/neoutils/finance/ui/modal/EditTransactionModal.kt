@@ -49,10 +49,9 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.util.DateFormats
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import kotlinx.datetime.format.byUnicodePattern
 import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
 
@@ -60,9 +59,7 @@ class EditTransactionModal(
     private val transaction: Transaction,
 ) : ModalBottomSheet {
 
-    private val dateFormat = LocalDate.Format {
-        byUnicodePattern("dd/MM/yyyy")
-    }
+    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -74,7 +71,7 @@ class EditTransactionModal(
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
         val title = rememberTextFieldState(transaction.title.orEmpty())
-        val date = rememberTextFieldState(dateFormat.format(transaction.date))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
 
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
 
@@ -168,10 +165,10 @@ class EditTransactionModal(
                             onClick = {
                                 manager.show(
                                     DatePickerModal(
-                                        initialDate = dateFormat.parse(date.text.toString()),
+                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
                                         onDateSelected = { selectedDate ->
                                             date.edit {
-                                                replace(0, length, dateFormat.format(selectedDate))
+                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
                                             }
                                         }
                                     )
@@ -201,7 +198,7 @@ class EditTransactionModal(
                                     type = type,
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     title = title.text.toString().ifBlank { null },
-                                    date = dateFormat.parse(date.text.toString()),
+                                    date = formats.dayMonthYear.parse(date.text.toString()),
                                     category = selectedCategory,
                                 )
                             )

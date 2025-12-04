@@ -24,31 +24,16 @@ import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
 
-private val DayOfWeekNamesPortuguese = DayOfWeekNames(
-    sunday = "Domingo",
-    monday = "Segunda-feira",
-    tuesday = "Terça-feira",
-    wednesday = "Quarta-feira",
-    thursday = "Quinta-feira",
-    friday = "Sexta-feira",
-    saturday = "Sábado"
-)
-
-private val sectionDateFormat = LocalDate.Format {
-    day()
-    chars(", ")
-    dayOfWeek(DayOfWeekNamesPortuguese)
-}
+private val formats = DateFormats()
 
 @Composable
 fun TransactionsScreen(
@@ -154,7 +139,7 @@ private fun TransactionsContent(
             uiState.transactions.forEach { (date, transactions) ->
                 item {
                     Text(
-                        text = sectionDateFormat.format(date),
+                        text = formats.dayOfWeek.format(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier

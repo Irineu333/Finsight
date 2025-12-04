@@ -30,7 +30,6 @@ val viewModelModule = module {
     viewModel {
         DashboardViewModel(
             repository = get(),
-            categoryRepository = get(),
             adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),

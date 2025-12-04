@@ -9,9 +9,11 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -21,20 +23,18 @@ import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
     private val repository: ITransactionRepository,
-    private val categoryRepository: ICategoryRepository,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
-    private val calculateCategorySpendingUseCase: com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
+    private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
 ) : ViewModel() {
 
-    private val currentMonth get() = Clock.System.now().toYearMonth()
-    private val dateTime get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    private val timeZone get() = TimeZone.currentSystemDefault()
+    private val instant get() = Clock.System.now()
+    private val currentMonth get() = instant.toYearMonth()
+    private val dateTime get() = instant.toLocalDateTime(timeZone)
 
-    val uiState = combine(
-        repository.getAllTransactions(),
-        categoryRepository.getAllCategories()
-    ) { transactions, categories ->
+    val uiState = repository.getAllTransactions().map { transactions ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -57,14 +57,13 @@ class DashboardViewModel(
                 )
             ),
             yearMonth = currentMonth,
-            categories = categories.associateBy { it.id },
             categorySpending = categorySpending.take(3),
         )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = DashboardUiState()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DashboardUiState()
+    )
 
     fun onAction(action: DashboardAction) {
         when (action) {

@@ -7,10 +7,15 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import org.koin.dsl.module
 
 val repositoryModule = module {
-    single<ITransactionRepository> {
-        TransactionRepository(dao = get())
-    }
+
     single<ICategoryRepository> {
         CategoryRepository(dao = get())
+    }
+
+    single<ITransactionRepository> {
+        TransactionRepository(
+            dao = get(),
+            categoryRepository = get(),
+        )
     }
 }

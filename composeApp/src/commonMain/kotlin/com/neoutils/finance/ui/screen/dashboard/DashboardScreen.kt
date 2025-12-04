@@ -124,7 +124,6 @@ private fun DashboardContent(
             item {
                 CategorySpendingCard(
                     categorySpending = uiState.categorySpending,
-                    categories = uiState.categories,
                     modifier = Modifier
                         .padding(top = 16.dp)
                         .fillMaxWidth()
@@ -162,7 +161,7 @@ private fun DashboardContent(
         ) { transaction ->
             TransactionCard(
                 transaction = transaction,
-                category = transaction.categoryId?.let { uiState.categories[it] },
+                category = transaction.category,
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateItem(),

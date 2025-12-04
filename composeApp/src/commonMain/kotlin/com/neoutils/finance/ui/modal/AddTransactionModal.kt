@@ -184,7 +184,7 @@ class AddTransactionModal : ModalBottomSheet {
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     title = title.text.toString().ifBlank { null },
                                     date = dateFormat.parse(date.text.toString()),
-                                    categoryId = selectedCategory?.id
+                                    category = selectedCategory,
                                 )
                             )
                             manager.dismiss()

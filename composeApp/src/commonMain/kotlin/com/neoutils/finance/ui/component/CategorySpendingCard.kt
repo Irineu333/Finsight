@@ -19,7 +19,6 @@ import com.neoutils.finance.ui.theme.Income
 @Composable
 fun CategorySpendingCard(
     categorySpending: List<CategorySpending>,
-    categories: Map<Long, Category>,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -43,12 +42,9 @@ fun CategorySpendingCard(
             )
 
             categorySpending.forEach { spending ->
-                categories[spending.categoryId]?.let {
-                    CategorySpendingItem(
-                        category = it,
-                        spending = spending
-                    )
-                }
+                CategorySpendingItem(
+                    spending = spending
+                )
             }
         }
     }
@@ -56,7 +52,6 @@ fun CategorySpendingCard(
 
 @Composable
 private fun CategorySpendingItem(
-    category: Category,
     spending: CategorySpending
 ) {
     Row(
@@ -68,7 +63,7 @@ private fun CategorySpendingItem(
     ) {
 
         CategoryIconBox(
-            category = category,
+            category = spending.category,
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(8.dp),
             modifier = Modifier.aspectRatio(1f),
@@ -86,7 +81,7 @@ private fun CategorySpendingItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = category.name,
+                    text = spending.category.name,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -103,7 +98,7 @@ private fun CategorySpendingItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = when (category.type) {
+                color = when (spending.category.type) {
                     Category.CategoryType.INCOME -> Income
                     Category.CategoryType.EXPENSE -> Expense
                 },

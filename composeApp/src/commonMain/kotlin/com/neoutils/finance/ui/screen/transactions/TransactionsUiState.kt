@@ -17,8 +17,8 @@ data class TransactionsUiState(
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
-    val categories: Map<Long, Category> = emptyMap(),
-    val selectedCategoryId: Long? = null,
+    val selectedCategory: Category? = null,
+    val categories: List<Category> = listOf(),
     val selectedType: Transaction.Type? = null
 ) {
     val currentMonth = Clock.System.now()
@@ -27,12 +27,6 @@ data class TransactionsUiState(
 
     val isCurrentMonth = selectedYearMonth == currentMonth
     val isFutureMonth = selectedYearMonth > currentMonth
-
-    val availableCategories: List<Category>
-        get() = categories.values.toList()
-
-    val hasActiveFilters: Boolean
-        get() = selectedCategoryId != null || selectedType != null
 
     data class BalanceOverview(
         val initialBalance: Double = 0.0,

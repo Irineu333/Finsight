@@ -1,16 +1,19 @@
 package com.neoutils.finance.data.mapper
 
 import com.neoutils.finance.data.TransactionEntity
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 
-fun TransactionEntity.toDomain(): Transaction {
+fun TransactionEntity.toDomain(
+    category: Category?
+): Transaction {
     return Transaction(
         id = id,
         type = type.toDomain(),
         amount = amount,
         title = title,
         date = date,
-        categoryId = categoryId
+        category = category,
     )
 }
 
@@ -21,7 +24,7 @@ fun Transaction.toEntity(): TransactionEntity {
         amount = amount,
         title = title,
         date = date,
-        categoryId = categoryId
+        categoryId = category?.id
     )
 }
 

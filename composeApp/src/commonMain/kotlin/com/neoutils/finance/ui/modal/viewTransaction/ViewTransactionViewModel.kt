@@ -22,8 +22,8 @@ class ViewTransactionViewModel(
 ) : ViewModel() {
 
     private val categoryFlow = flow {
-        if (transaction.categoryId != null) {
-            emitAll(categoryRepository.observeCategoryById(transaction.categoryId))
+        if (transaction.category != null) {
+            emitAll(categoryRepository.observeCategoryById(transaction.category.id))
         } else {
             emit(null)
         }

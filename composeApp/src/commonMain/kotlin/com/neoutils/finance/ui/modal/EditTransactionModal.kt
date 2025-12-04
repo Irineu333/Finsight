@@ -68,7 +68,6 @@ class EditTransactionModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val repository = koinInject<ITransactionRepository>()
-        val categoryRepository = koinInject<ICategoryRepository>()
         val manager = LocalModalManager.current
         val scope = rememberCoroutineScope()
 
@@ -80,10 +79,8 @@ class EditTransactionModal(
 
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
 
-        LaunchedEffect(transaction.categoryId) {
-            selectedCategory = transaction.categoryId?.let {
-                categoryRepository.getCategoryById(it)
-            }
+        LaunchedEffect(transaction.category) {
+            selectedCategory = transaction.category
         }
 
         Column(
@@ -206,7 +203,7 @@ class EditTransactionModal(
                                     amount = parseMoneyToDouble(amount.text.toString()),
                                     title = title.text.toString().ifBlank { null },
                                     date = dateFormat.parse(date.text.toString()),
-                                    categoryId = selectedCategory?.id
+                                    category = selectedCategory,
                                 )
                             )
 

@@ -75,9 +75,9 @@ class TransactionsViewModel(
                 )
             ),
             selectedYearMonth = yearMonth,
-            categories = categories.associateBy { it.id },
-            selectedCategoryId = category?.id,
-            selectedType = type
+            categories = categories,
+            selectedCategory = category,
+            selectedType = type,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -105,9 +105,7 @@ class TransactionsViewModel(
             }
 
             is TransactionsAction.SelectCategory -> {
-                selectedCategory.value = action.categoryId?.let {
-                    categoryRepository.getCategoryById(it)
-                }
+                selectedCategory.value = action.category
             }
 
             is TransactionsAction.SelectType -> {
@@ -152,12 +150,16 @@ class TransactionsViewModel(
     }
 }
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+private fun List<Transaction>.filter(
+    category: Category?
+): List<Transaction> {
     if (category == null) return this
-    return filter { it.categoryId == category.id }
+    return filter { it.category?.id == category.id }
 }
 
-private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+private fun List<Transaction>.filter(
+    type: Transaction.Type?
+): List<Transaction> {
     if (type == null) return this
     return filter { it.type == type }
 }

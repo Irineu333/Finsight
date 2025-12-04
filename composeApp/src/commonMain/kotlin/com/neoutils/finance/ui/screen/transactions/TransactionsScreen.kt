@@ -15,8 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.MonthNamesPortuguese
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
@@ -169,7 +169,7 @@ private fun TransactionsContent(
                 ) { transaction ->
                     TransactionCard(
                         transaction = transaction,
-                        category = transaction.categoryId?.let { uiState.categories[it] },
+                        category = transaction.category,
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem(),
@@ -201,47 +201,48 @@ private fun FiltersRow(
     onAction: (TransactionsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyRow(
+    LazyRow (
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
-            CategoryFilterChip(
-                selectedCategoryId = uiState.selectedCategoryId,
-                categories = uiState.availableCategories,
-                onAction = onAction
-            )
+            Box {
+                CategoryFilterChip(
+                    selectedCategory = uiState.selectedCategory,
+                    categories = uiState.categories,
+                    onAction = onAction
+                )
+            }
         }
 
         item {
-            TypeFilterChip(
-                selectedType = uiState.selectedType,
-                onAction = onAction
-            )
+            Box {
+                TypeFilterChip(
+                    selectedType = uiState.selectedType,
+                    onAction = onAction
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun CategoryFilterChip(
-    selectedCategoryId: Long?,
-    categories: List<com.neoutils.finance.domain.model.Category>,
+    selectedCategory: Category?,
+    categories: List<Category>,
     onAction: (TransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedCategory = selectedCategoryId?.let { id ->
-        categories.find { it.id == id }
-    }
 
     val chipColor = selectedCategory?.let { category ->
         when (category.type) {
-            com.neoutils.finance.domain.model.Category.CategoryType.INCOME -> IncomeColor
-            com.neoutils.finance.domain.model.Category.CategoryType.EXPENSE -> ExpenseColor
+            Category.CategoryType.INCOME -> IncomeColor
+            Category.CategoryType.EXPENSE -> ExpenseColor
         }
     }
 
     FilterChip(
-        selected = selectedCategoryId != null,
+        selected = selectedCategory != null,
         onClick = { expanded = true },
         label = {
             Text(selectedCategory?.name ?: "Categoria")
@@ -277,7 +278,7 @@ private fun CategoryFilterChip(
             DropdownMenuItem(
                 text = { Text(category.name) },
                 onClick = {
-                    onAction(TransactionsAction.SelectCategory(category.id))
+                    onAction(TransactionsAction.SelectCategory(category))
                     expanded = false
                 }
             )

@@ -1,6 +1,6 @@
-package com.neoutils.finance.data.mapper
+package com.neoutils.finance.database.mapper
 
-import com.neoutils.finance.data.entity.CategoryEntity
+import com.neoutils.finance.database.entity.CategoryEntity
 import com.neoutils.finance.domain.model.Category
 
 class CategoryMapper {

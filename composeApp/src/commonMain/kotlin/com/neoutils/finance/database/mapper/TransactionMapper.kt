@@ -1,6 +1,6 @@
-package com.neoutils.finance.data.mapper
+package com.neoutils.finance.database.mapper
 
-import com.neoutils.finance.data.entity.TransactionEntity
+import com.neoutils.finance.database.entity.TransactionEntity
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 

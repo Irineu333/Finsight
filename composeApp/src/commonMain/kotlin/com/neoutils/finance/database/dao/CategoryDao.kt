@@ -1,11 +1,11 @@
-package com.neoutils.finance.data.database
+package com.neoutils.finance.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.neoutils.finance.data.entity.CategoryEntity
+import com.neoutils.finance.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

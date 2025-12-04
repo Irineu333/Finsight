@@ -1,7 +1,7 @@
-package com.neoutils.finance.data.repository
+package com.neoutils.finance.database.repository
 
-import com.neoutils.finance.data.database.CategoryDao
-import com.neoutils.finance.data.mapper.CategoryMapper
+import com.neoutils.finance.database.dao.CategoryDao
+import com.neoutils.finance.database.mapper.CategoryMapper
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow

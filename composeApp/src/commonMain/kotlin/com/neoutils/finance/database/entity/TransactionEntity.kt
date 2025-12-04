@@ -1,4 +1,4 @@
-package com.neoutils.finance.data.entity
+package com.neoutils.finance.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

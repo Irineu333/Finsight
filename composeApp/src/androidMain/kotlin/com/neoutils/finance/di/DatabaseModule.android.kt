@@ -1,6 +1,6 @@
 package com.neoutils.finance.di
 
-import com.neoutils.finance.data.getDatabaseBuilder
+import com.neoutils.finance.database.getDatabaseBuilder
 import org.koin.dsl.module
 
 actual val databasePlatformModule = module {

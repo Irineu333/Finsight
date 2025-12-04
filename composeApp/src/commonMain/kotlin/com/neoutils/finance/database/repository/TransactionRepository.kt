@@ -1,7 +1,7 @@
-package com.neoutils.finance.data.repository
+package com.neoutils.finance.database.repository
 
-import com.neoutils.finance.data.database.TransactionDao
-import com.neoutils.finance.data.mapper.TransactionMapper
+import com.neoutils.finance.database.dao.TransactionDao
+import com.neoutils.finance.database.mapper.TransactionMapper
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository

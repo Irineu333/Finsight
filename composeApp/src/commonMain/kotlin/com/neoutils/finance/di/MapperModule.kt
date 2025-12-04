@@ -1,7 +1,7 @@
 package com.neoutils.finance.di
 
-import com.neoutils.finance.data.mapper.CategoryMapper
-import com.neoutils.finance.data.mapper.TransactionMapper
+import com.neoutils.finance.database.mapper.CategoryMapper
+import com.neoutils.finance.database.mapper.TransactionMapper
 import org.koin.dsl.module
 
 val mapperModule = module {

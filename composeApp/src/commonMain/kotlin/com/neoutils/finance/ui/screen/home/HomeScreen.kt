@@ -8,52 +8,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.core.bundle.Bundle
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import androidx.savedstate.SavedState
-import androidx.savedstate.read
-import androidx.savedstate.write
 import com.neoutils.finance.ui.modal.AddTransactionModal
 import com.neoutils.finance.ui.component.BottomNavigationBar
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.NavigationItem
 import com.neoutils.finance.ui.component.ModalManagerHost
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.util.TransactionTypeNavType
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finance.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
-
-class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = true) {
-    override fun put(
-        bundle: SavedState,
-        key: String,
-        value: Transaction.Type?
-    ) {
-        bundle.write {
-            if (value != null) {
-                putString(key, value.name)
-            }
-        }
-    }
-
-    override fun get(
-        bundle: SavedState,
-        key: String
-    ): Transaction.Type {
-        return bundle.read { Transaction.Type.valueOf(getString(key)) }
-    }
-
-    override fun parseValue(value: String): Transaction.Type {
-        return Transaction.Type.valueOf(value)
-    }
-}
 
 @Composable
 fun AppNavHost() = Surface {

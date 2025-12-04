@@ -1,12 +1,12 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.neoutils.finance.data.database.CategoryDao
-import com.neoutils.finance.data.database.TransactionDao
-import com.neoutils.finance.data.entity.CategoryEntity
-import com.neoutils.finance.data.entity.TransactionEntity
+import com.neoutils.finance.database.dao.CategoryDao
+import com.neoutils.finance.database.dao.TransactionDao
+import com.neoutils.finance.database.entity.CategoryEntity
+import com.neoutils.finance.database.entity.TransactionEntity
 
 @Database(
     entities = [TransactionEntity::class, CategoryEntity::class],

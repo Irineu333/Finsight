@@ -1,4 +1,4 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.database
 
 import androidx.room.TypeConverter
 import kotlinx.datetime.LocalDate

@@ -1,4 +1,4 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.database
 
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver

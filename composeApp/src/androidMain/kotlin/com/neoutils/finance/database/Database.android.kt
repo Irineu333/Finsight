@@ -1,4 +1,4 @@
-package com.neoutils.finance.data
+package com.neoutils.finance.database
 
 import android.content.Context
 import androidx.room.Room

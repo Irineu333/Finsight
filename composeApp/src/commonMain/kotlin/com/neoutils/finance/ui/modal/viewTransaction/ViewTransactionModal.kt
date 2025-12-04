@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class)
+@file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class, ExperimentalUuidApi::class)
 
 package com.neoutils.finance.ui.modal.viewTransaction
 
@@ -39,14 +39,16 @@ import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ViewTransactionModal(
     private val transaction: Transaction
 ) : ModalBottomSheet {
 
-    private val formats = DateFormats()
+    override val key = Uuid.random().toString()
 
-    private val key = transaction.id.toString()
+    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {

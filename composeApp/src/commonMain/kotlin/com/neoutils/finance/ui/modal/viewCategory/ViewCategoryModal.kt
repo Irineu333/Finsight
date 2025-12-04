@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalUuidApi::class)
 
 package com.neoutils.finance.ui.modal.viewCategory
 
@@ -39,12 +39,14 @@ import com.neoutils.finance.ui.theme.Info
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class ViewCategoryModal(
     private val category: Category
 ) : ModalBottomSheet {
 
-    private val key = category.id.toString()
+    override val key = Uuid.random().toString()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {

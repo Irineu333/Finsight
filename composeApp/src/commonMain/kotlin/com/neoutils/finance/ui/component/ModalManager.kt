@@ -46,6 +46,10 @@ fun ModalManagerHost(content: @Composable () -> Unit) {
 }
 
 interface Modal {
+
+    val key: String
+        get() = ""
+
     @Composable
     fun Content()
 }

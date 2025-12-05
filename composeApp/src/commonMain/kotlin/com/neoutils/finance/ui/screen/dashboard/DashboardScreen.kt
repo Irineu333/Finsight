@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.BalanceCard
 import com.neoutils.finance.ui.component.BalanceCardConfig
 import com.neoutils.finance.ui.component.CategorySpendingCard
-import com.neoutils.finance.ui.modal.EditBalanceModal
+import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
@@ -50,11 +50,6 @@ fun DashboardScreen(
             modalManager.show(
                 EditBalanceModal(
                     currentBalance = uiState.balance.balance,
-                    onConfirm = { targetBalance ->
-                        viewModel.onAction(
-                            DashboardAction.AdjustBalance(targetBalance)
-                        )
-                    }
                 )
             )
         }

@@ -6,6 +6,8 @@ import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
+import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
+import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
@@ -36,7 +38,6 @@ val viewModelModule = module {
     viewModel {
         DashboardViewModel(
             repository = get(),
-            adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get()
@@ -49,7 +50,6 @@ val viewModelModule = module {
             transaction = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
-            adjustBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
         )
@@ -108,6 +108,17 @@ val viewModelModule = module {
         DeleteCategoryViewModel(
             category = category,
             repository = get(),
+            modalManager = get()
+        )
+    }
+
+    // Balance Modal
+    viewModel { (type: EditBalanceModal.Type, targetMonth: kotlinx.datetime.YearMonth?, currentBalance: Double) ->
+        EditBalanceViewModel(
+            type = type,
+            targetMonth = targetMonth,
+            currentBalance = currentBalance,
+            adjustBalanceUseCase = get(),
             modalManager = get()
         )
     }

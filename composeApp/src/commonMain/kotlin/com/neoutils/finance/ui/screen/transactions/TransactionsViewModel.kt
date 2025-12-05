@@ -31,7 +31,6 @@ class TransactionsViewModel(
     private val category: Category?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
-    private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
@@ -87,15 +86,6 @@ class TransactionsViewModel(
 
     fun onAction(action: TransactionsAction) = viewModelScope.launch {
         when (action) {
-            is TransactionsAction.AdjustBalance -> {
-                adjustBalance(action.target)
-
-            }
-
-            is TransactionsAction.AdjustInitialBalance -> {
-                adjustInitialBalance(action.target)
-            }
-
             TransactionsAction.NextMonth -> {
                 selectedYearMonth.value = selectedYearMonth.value.plusMonth()
             }
@@ -112,41 +102,6 @@ class TransactionsViewModel(
                 selectedType.value = action.type
             }
         }
-    }
-
-    private fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
-        val currentMonth = Clock.System.now().toYearMonth()
-        val selectedMonth = selectedYearMonth.value
-
-        if (selectedMonth > currentMonth) return@launch
-
-        if (selectedMonth == currentMonth) {
-            adjustBalanceUseCase(
-                currentBalance = uiState.value.balanceOverview.finalBalance,
-                targetBalance = targetBalance,
-                adjustmentDate = dateTime.date,
-            )
-            return@launch
-        }
-
-        adjustBalanceUseCase(
-            currentBalance = uiState.value.balanceOverview.finalBalance,
-            targetBalance = targetBalance,
-            adjustmentDate = selectedMonth.lastDay
-        )
-    }
-
-    private fun adjustInitialBalance(targetInitialBalance: Double) = viewModelScope.launch {
-        val currentMonth = Clock.System.now().toYearMonth()
-        val selectedMonth = selectedYearMonth.value
-
-        if (selectedMonth > currentMonth) return@launch
-
-        adjustBalanceUseCase(
-            currentBalance = uiState.value.balanceOverview.initialBalance,
-            targetBalance = targetInitialBalance,
-            adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
-        )
     }
 }
 

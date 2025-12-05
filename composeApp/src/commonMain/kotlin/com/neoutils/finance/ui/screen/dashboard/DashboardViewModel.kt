@@ -23,7 +23,6 @@ import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
     private val repository: ITransactionRepository,
-    private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
@@ -65,19 +64,4 @@ class DashboardViewModel(
         initialValue = DashboardUiState()
     )
 
-    fun onAction(action: DashboardAction) {
-        when (action) {
-            is DashboardAction.AdjustBalance -> {
-                adjustBalance(action.target)
-            }
-        }
-    }
-
-    private fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
-        adjustBalanceUseCase(
-            currentBalance = uiState.value.balance.balance,
-            targetBalance = targetBalance,
-            adjustmentDate = dateTime.date
-        )
-    }
 }

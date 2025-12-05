@@ -1,10 +1,19 @@
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.editBalance
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -19,12 +28,15 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,14 +47,15 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.util.MoneyInputTransformation
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
 import com.neoutils.finance.util.DateFormats
-import kotlinx.coroutines.launch
+import com.neoutils.finance.util.MoneyInputTransformation
 import kotlinx.datetime.YearMonth
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +63,6 @@ class EditBalanceModal(
     private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
     private val currentBalance: Double,
-    private val onConfirm: (Double) -> Unit
 ) : ModalBottomSheet {
 
     private val initialCents = (currentBalance * 100).toLong()
@@ -59,8 +71,11 @@ class EditBalanceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val viewModel = koinViewModel<EditBalanceViewModel>(key = key) {
+            parametersOf(type, targetMonth, currentBalance)
+        }
+
         val manager = LocalModalManager.current
-        val scope = rememberCoroutineScope()
 
         val balanceState = rememberTextFieldState(formatMoney(initialCents))
 
@@ -126,8 +141,8 @@ class EditBalanceModal(
                     fontWeight = FontWeight.Bold,
                 ),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colorScheme.surfaceContainerHighest,
-                    unfocusedContainerColor = colorScheme.surfaceContainerHighest,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     focusedBorderColor = Adjustment,
                     cursorColor = Adjustment,
                     selectionColors = TextSelectionColors(
@@ -147,7 +162,7 @@ class EditBalanceModal(
                 OutlinedButton(
                     onClick = { manager.dismiss() },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Cancelar",
@@ -158,14 +173,11 @@ class EditBalanceModal(
 
                 Button(
                     onClick = {
-                        scope.launch {
-                            onConfirm(newBalance)
-                            manager.dismiss()
-                        }
+                        viewModel.adjustBalance(newBalance)
                     },
                     enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Adjustment
                     ),
@@ -194,7 +206,7 @@ class EditBalanceModal(
             },
             contentColor = Color.White,
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier

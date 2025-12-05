@@ -18,7 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.modal.EditBalanceModal
+import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.MonthSelector
@@ -99,11 +99,6 @@ private fun TransactionsContent(
                                     EditBalanceModal.Type.FINAL
                                 },
                                 targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
-                                onConfirm = {
-                                    onAction(
-                                        TransactionsAction.AdjustBalance(it)
-                                    )
-                                }
                             )
                         )
                     }.takeUnless {
@@ -115,11 +110,6 @@ private fun TransactionsContent(
                                 currentBalance = uiState.balanceOverview.initialBalance,
                                 type =  EditBalanceModal.Type.INITIAL,
                                 targetMonth = uiState.selectedYearMonth.takeUnless { uiState.isCurrentMonth },
-                                onConfirm = {
-                                    onAction(
-                                        TransactionsAction.AdjustInitialBalance(it)
-                                    )
-                                }
                             )
                         )
                     }.takeUnless {

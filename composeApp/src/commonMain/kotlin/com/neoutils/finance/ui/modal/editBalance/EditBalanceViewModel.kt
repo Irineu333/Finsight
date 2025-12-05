@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
@@ -20,7 +19,6 @@ import kotlin.time.ExperimentalTime
 class EditBalanceViewModel(
     private val type: EditBalanceModal.Type,
     private val targetMonth: YearMonth?,
-    private val currentBalance: Double,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
@@ -39,7 +37,6 @@ class EditBalanceViewModel(
 
     private suspend fun adjustCurrentBalance(targetBalance: Double) {
         adjustBalanceUseCase(
-            currentBalance = currentBalance,
             targetBalance = targetBalance,
             adjustmentDate = dateTime.date
         )
@@ -57,7 +54,6 @@ class EditBalanceViewModel(
         }
 
         adjustBalanceUseCase(
-            currentBalance = currentBalance,
             targetBalance = targetBalance,
             adjustmentDate = adjustmentDate
         )
@@ -69,7 +65,6 @@ class EditBalanceViewModel(
         if (selectedMonth > currentMonth) return
 
         adjustBalanceUseCase(
-            currentBalance = currentBalance,
             targetBalance = targetBalance,
             adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
         )

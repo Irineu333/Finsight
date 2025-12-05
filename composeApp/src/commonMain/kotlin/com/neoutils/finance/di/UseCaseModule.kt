@@ -8,8 +8,8 @@ import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
-    factory { AdjustBalanceUseCase(get()) }
-    factory { CalculateBalanceUseCase() }
+    factory { AdjustBalanceUseCase(get(), get()) }
+    factory { CalculateBalanceUseCase(get()) }
     factory { CalculateTransactionStatsUseCase() }
     factory { CalculateCategorySpendingUseCase() }
     factory { GetCategoriesUseCase(get()) }

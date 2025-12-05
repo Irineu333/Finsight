@@ -24,6 +24,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     fun getAllTransactions(): Flow<List<TransactionEntity>>
 
+    @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
+    suspend fun getAllTransactionsDirect(): List<TransactionEntity>
+
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): TransactionEntity?
 

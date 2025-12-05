@@ -9,7 +9,6 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.toLocalDateTime
@@ -42,7 +39,7 @@ class TransactionsViewModel(
     private val selectedType = MutableStateFlow(transaction)
 
     val uiState = combine(
-        transactionRepository.getAllTransactions(),
+        transactionRepository.observeAllTransactions(),
         categoryRepository.getAllCategories(),
         selectedYearMonth,
         selectedCategory,
@@ -65,12 +62,12 @@ class TransactionsViewModel(
                 expense = stats.expense,
                 adjustment = stats.adjustment,
                 initialBalance = calculateBalanceUseCase(
+                    target = yearMonth.minusMonth(),
                     transactions = transactions,
-                    upToYearMonth = yearMonth.minusMonth(),
                 ),
                 finalBalance = calculateBalanceUseCase(
+                    target = yearMonth,
                     transactions = transactions,
-                    upToYearMonth = yearMonth
                 )
             ),
             selectedYearMonth = yearMonth,

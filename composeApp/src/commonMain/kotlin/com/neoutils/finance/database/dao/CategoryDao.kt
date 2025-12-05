@@ -13,6 +13,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY createdAt ASC")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories ORDER BY createdAt ASC")
+    suspend fun getAllCategoriesDirect(): List<CategoryEntity>
+
     @Query("SELECT * FROM categories WHERE type = :type ORDER BY createdAt ASC")
     fun getCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
 

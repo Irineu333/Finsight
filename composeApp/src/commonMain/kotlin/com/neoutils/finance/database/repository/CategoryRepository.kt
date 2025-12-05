@@ -17,6 +17,10 @@ class CategoryRepository(
         }
     }
 
+    override suspend fun getAllCategoriesDirect(): List<Category> {
+        return dao.getAllCategoriesDirect().map { mapper.toDomain(it) }
+    }
+
     override fun getCategoriesByType(type: Category.Type): Flow<List<Category>> {
         return dao.getCategoriesByType(
             mapper.toEntity(type)

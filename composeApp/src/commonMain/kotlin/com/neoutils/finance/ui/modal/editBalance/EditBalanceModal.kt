@@ -72,7 +72,7 @@ class EditBalanceModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditBalanceViewModel>(key = key) {
-            parametersOf(type, targetMonth, currentBalance)
+            parametersOf(type, targetMonth)
         }
 
         val manager = LocalModalManager.current

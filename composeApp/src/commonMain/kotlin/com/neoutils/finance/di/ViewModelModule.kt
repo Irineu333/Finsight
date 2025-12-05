@@ -1,13 +1,10 @@
 package com.neoutils.finance.di
 
-import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
@@ -19,17 +16,17 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    viewModel { (category: Category) ->
+    viewModel {
         ViewCategoryViewModel(
-            category = category,
+            category = it.get(),
             categoryRepository = get(),
             repository = get()
         )
     }
 
-    viewModel { (transaction: Transaction) ->
+    viewModel {
         ViewTransactionViewModel(
-            transaction = transaction,
+            transaction = it.get(),
             transactionRepository = get(),
             categoryRepository = get()
         )
@@ -61,7 +58,6 @@ val viewModelModule = module {
         )
     }
 
-    // Transaction Modals
     viewModel {
         AddTransactionViewModel(
             repository = get(),
@@ -69,55 +65,52 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { (transaction: Transaction) ->
+    viewModel {
         EditTransactionViewModel(
-            transaction = transaction,
+            transaction = it.get(),
             repository = get(),
             modalManager = get()
         )
     }
 
-    viewModel { (transaction: Transaction) ->
+    viewModel {
         DeleteTransactionViewModel(
-            transaction = transaction,
+            transaction = it.get(),
             repository = get(),
             modalManager = get()
         )
     }
 
-    // Category Modals
-    viewModel { (type: Category.Type) ->
+    viewModel {
         AddCategoryViewModel(
-            initialType = type,
+            initialType = it.get(),
             repository = get(),
             getCategoriesUseCase = get(),
             modalManager = get()
         )
     }
 
-    viewModel { (category: Category) ->
+    viewModel {
         EditCategoryViewModel(
-            category = category,
+            category = it.get(),
             repository = get(),
             getCategoriesUseCase = get(),
             modalManager = get()
         )
     }
 
-    viewModel { (category: Category) ->
+    viewModel {
         DeleteCategoryViewModel(
-            category = category,
+            category = it.get(),
             repository = get(),
             modalManager = get()
         )
     }
 
-    // Balance Modal
-    viewModel { (type: EditBalanceModal.Type, targetMonth: kotlinx.datetime.YearMonth?, currentBalance: Double) ->
+    viewModel {
         EditBalanceViewModel(
-            type = type,
-            targetMonth = targetMonth,
-            currentBalance = currentBalance,
+            type = it.get(),
+            targetMonth = it.getOrNull(),
             adjustBalanceUseCase = get(),
             modalManager = get()
         )

@@ -29,7 +29,7 @@ class ViewCategoryViewModel(
 
     val uiState = combine(
         categoryRepository.observeCategoryById(category.id).filterNotNull(),
-        repository.getAllTransactions(),
+        repository.observeAllTransactions(),
         selectedYearMonth
     ) { category, transactions, yearMonth ->
 

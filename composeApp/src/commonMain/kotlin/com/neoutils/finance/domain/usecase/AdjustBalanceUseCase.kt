@@ -2,16 +2,21 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
 
 class AdjustBalanceUseCase(
-    private val repository: ITransactionRepository
+    private val repository: ITransactionRepository,
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
 ) {
     suspend operator fun invoke(
-        currentBalance: Double,
         targetBalance: Double,
         adjustmentDate: LocalDate
     ) {
+        val currentBalance = calculateBalanceUseCase(
+            target = adjustmentDate.yearMonth,
+        )
 
         if (targetBalance == currentBalance) return
 

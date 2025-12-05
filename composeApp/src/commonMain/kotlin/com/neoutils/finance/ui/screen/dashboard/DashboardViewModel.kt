@@ -4,18 +4,14 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -33,7 +29,7 @@ class DashboardViewModel(
     private val currentMonth get() = instant.toYearMonth()
     private val dateTime get() = instant.toLocalDateTime(timeZone)
 
-    val uiState = repository.getAllTransactions().map { transactions ->
+    val uiState = repository.observeAllTransactions().map { transactions ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -51,8 +47,8 @@ class DashboardViewModel(
                 income = stats.income,
                 expense = stats.expense,
                 balance = calculateBalanceUseCase(
+                    target = currentMonth,
                     transactions = transactions,
-                    upToYearMonth = currentMonth,
                 )
             ),
             yearMonth = currentMonth,

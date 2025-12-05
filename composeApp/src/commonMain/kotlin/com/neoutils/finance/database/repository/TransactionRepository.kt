@@ -27,7 +27,7 @@ class TransactionRepository(
         dao.delete(mapper.toEntity(transaction))
     }
 
-    override fun getAllTransactions(): Flow<List<Transaction>> {
+    override fun observeAllTransactions(): Flow<List<Transaction>> {
         return combine(
             dao.getAllTransactions(),
             categoryRepository.getAllCategories()
@@ -40,6 +40,20 @@ class TransactionRepository(
                     }
                 )
             }
+        }
+    }
+
+    override suspend fun getAllTransactions(): List<Transaction> {
+        val transactions = dao.getAllTransactionsDirect()
+        val categories = categoryRepository.getAllCategoriesDirect()
+        
+        return transactions.map { transaction ->
+            mapper.toDomain(
+                entity = transaction,
+                category = categories.find {
+                    it.id == transaction.categoryId
+                }
+            )
         }
     }
 

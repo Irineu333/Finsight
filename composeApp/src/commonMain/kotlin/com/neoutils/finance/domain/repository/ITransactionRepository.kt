@@ -8,7 +8,8 @@ interface ITransactionRepository {
     suspend fun insert(transaction: Transaction): Long
     suspend fun update(transaction: Transaction)
     suspend fun delete(transaction: Transaction)
-    fun getAllTransactions(): Flow<List<Transaction>>
+    fun observeAllTransactions(): Flow<List<Transaction>>
+    suspend fun getAllTransactions(): List<Transaction>
     suspend fun getTransactionById(id: Long): Transaction?
     fun observeTransactionById(id: Long): Flow<Transaction?>
     fun getTransactionsByType(type: Transaction.Type): Flow<List<Transaction>>

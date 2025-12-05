@@ -83,7 +83,7 @@ class ViewTransactionModal(
                     modifier = Modifier.size(64.dp),
                 ) {
                     Icon(
-                        imageVector = uiState.category?.let {
+                        imageVector = uiState.transaction.category?.let {
                             CategoryIcon.fromKey(it.key).icon
                         } ?: when (transaction.type) {
                             Transaction.Type.INCOME -> Icons.Default.ShoppingCart

@@ -12,38 +12,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.ExperimentalTime
 
 class ViewTransactionViewModel(
     private val transaction: Transaction,
     private val transactionRepository: ITransactionRepository,
-    private val categoryRepository: ICategoryRepository
 ) : ViewModel() {
 
-    private val categoryFlow = flow {
-        if (transaction.category != null) {
-            emitAll(categoryRepository.observeCategoryById(transaction.category.id))
-        } else {
-            emit(null)
-        }
-    }
-
-    val uiState = combine(
-        transactionRepository
-            .observeTransactionById(transaction.id)
-            .filterNotNull(),
-        categoryFlow,
-    ) { transaction, category ->
-        ViewTransactionUiState(
-            transaction = transaction,
-            category = category,
+    val uiState = transactionRepository
+        .observeTransactionById(transaction.id)
+        .filterNotNull().map { transaction ->
+            ViewTransactionUiState(transaction = transaction)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ViewTransactionUiState(
+                transaction = transaction
+            )
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ViewTransactionUiState(
-            transaction = transaction
-        )
-    )
 }

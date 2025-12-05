@@ -28,7 +28,6 @@ val viewModelModule = module {
         ViewTransactionViewModel(
             transaction = it.get(),
             transactionRepository = get(),
-            categoryRepository = get()
         )
     }
 

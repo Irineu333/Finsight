@@ -10,22 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
-import org.koin.compose.koinInject
 
 @Composable
 fun CategorySelector(
     selectedCategory: Category?,
-    categoryType: Category.Type,
+    categories: List<Category>,
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
-    getCategoriesUseCase: GetCategoriesUseCase = koinInject()
 ) {
-    val categories by getCategoriesUseCase(categoryType)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
@@ -69,6 +62,19 @@ fun CategorySelector(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Nenhuma",
+                        fontSize = 14.sp
+                    )
+                },
+                onClick = {
+                    onCategorySelected(null)
+                    expanded = false
+                }
+            )
+
             categories.forEach { category ->
                 DropdownMenuItem(
                     text = {

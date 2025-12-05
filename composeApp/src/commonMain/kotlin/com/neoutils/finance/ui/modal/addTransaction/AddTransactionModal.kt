@@ -24,6 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +65,7 @@ class AddTransactionModal : ModalBottomSheet {
 
         val viewModel = koinViewModel<AddTransactionViewModel>(key = key)
         val manager = LocalModalManager.current
+        val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
         val amount = rememberTextFieldState()
@@ -105,7 +108,7 @@ class AddTransactionModal : ModalBottomSheet {
 
             CategorySelector(
                 selectedCategory = selectedCategory,
-                categoryType = if (type.isIncome) Category.Type.INCOME else Category.Type.EXPENSE,
+                categories = if (type.isIncome) uiState.incomeCategories else uiState.expenseCategories,
                 onCategorySelected = { selectedCategory = it },
                 modifier = Modifier.fillMaxWidth()
             )

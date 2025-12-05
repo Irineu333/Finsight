@@ -59,15 +59,16 @@ val viewModelModule = module {
 
     viewModel {
         AddTransactionViewModel(
-            repository = get(),
+            transactionRepository = get(),
+            categoryRepository = get(),
             modalManager = get()
         )
     }
 
     viewModel {
         EditTransactionViewModel(
-            transaction = it.get(),
-            repository = get(),
+            transactionRepository = get(),
+            categoryRepository = get(),
             modalManager = get()
         )
     }

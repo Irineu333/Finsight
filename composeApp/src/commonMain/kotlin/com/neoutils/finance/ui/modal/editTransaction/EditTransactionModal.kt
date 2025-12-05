@@ -1,32 +1,14 @@
 package com.neoutils.finance.ui.modal.editTransaction
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +41,7 @@ class EditTransactionModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditTransactionViewModel>(key = key) { parametersOf(transaction) }
         val manager = LocalModalManager.current
+        val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(transaction.type) }
 
@@ -115,10 +98,10 @@ class EditTransactionModal(
 
             CategorySelector(
                 selectedCategory = selectedCategory,
-                categoryType = when (type) {
-                    Transaction.Type.INCOME -> Category.Type.INCOME
-                    Transaction.Type.EXPENSE -> Category.Type.EXPENSE
-                    else -> error("Invalid type")
+                categories = when (type) {
+                    Transaction.Type.INCOME -> uiState.incomeCategories
+                    Transaction.Type.EXPENSE -> uiState.expenseCategories
+                    else -> emptyList()
                 },
                 onCategorySelected = { selectedCategory = it },
                 modifier = Modifier.fillMaxWidth()
@@ -136,7 +119,7 @@ class EditTransactionModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -175,7 +158,7 @@ class EditTransactionModal(
                         )
                     }
                 },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -185,7 +168,7 @@ class EditTransactionModal(
             Button(
                 onClick = {
                     viewModel.updateTransaction(
-                        updatedTransaction = transaction.copy(
+                        transaction = transaction.copy(
                             type = type,
                             amount = parseMoneyToDouble(amount.text.toString()),
                             title = title.text.toString().ifBlank { null },
@@ -201,7 +184,7 @@ class EditTransactionModal(
                     hasCategory = selectedCategory != null
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Salvar",
@@ -210,7 +193,7 @@ class EditTransactionModal(
                 )
             }
         }
-        }
+    }
 
     private fun showSaveButton(
         amount: String,

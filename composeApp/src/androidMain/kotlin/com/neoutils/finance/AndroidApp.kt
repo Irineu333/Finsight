@@ -4,6 +4,7 @@ import android.app.Application
 import com.neoutils.finance.di.databaseModule
 import com.neoutils.finance.di.mapperModule
 import com.neoutils.finance.di.repositoryModule
+import com.neoutils.finance.di.uiModule
 import com.neoutils.finance.di.useCaseModules
 import com.neoutils.finance.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
@@ -24,6 +25,7 @@ class AndroidApp : Application() {
                 repositoryModule,
                 useCaseModules,
                 viewModelModule,
+                uiModule,
             )
         }
     }

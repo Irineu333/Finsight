@@ -31,8 +31,8 @@ import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.component.MonthSelector
-import com.neoutils.finance.ui.modal.DeleteCategoryModal
-import com.neoutils.finance.ui.modal.EditCategoryModal
+import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryModal
+import com.neoutils.finance.ui.modal.editCategory.EditCategoryModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info

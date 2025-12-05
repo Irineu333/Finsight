@@ -13,7 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.neoutils.finance.ui.modal.AddTransactionModal
+import com.neoutils.finance.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finance.ui.component.BottomNavigationBar
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.NavigationItem

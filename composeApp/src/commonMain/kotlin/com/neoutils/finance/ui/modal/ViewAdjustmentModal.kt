@@ -27,6 +27,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats

@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, FormatStringsInDatetimeFormats::class)
-
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.editTransaction
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,21 +35,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.util.DateInputTransformation
-import com.neoutils.finance.util.MoneyInputTransformation
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
-import kotlinx.coroutines.launch
-import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import org.koin.compose.koinInject
-import kotlin.time.ExperimentalTime
+import com.neoutils.finance.util.DateInputTransformation
+import com.neoutils.finance.util.MoneyInputTransformation
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class EditTransactionModal(
     private val transaction: Transaction,
@@ -63,9 +57,8 @@ class EditTransactionModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val repository = koinInject<ITransactionRepository>()
+        val viewModel = koinViewModel<EditTransactionViewModel>(key = key) { parametersOf(transaction) }
         val manager = LocalModalManager.current
-        val scope = rememberCoroutineScope()
 
         var type by remember { mutableStateOf(transaction.type) }
 
@@ -85,143 +78,138 @@ class EditTransactionModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-                Text(
-                    text = "Editar Transação",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            Text(
+                text = "Editar Transação",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                TypeToggle(
-                    selectedType = type,
-                    onTypeSelected = {
-                        type = it
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    state = title,
-                    label = {
-                        Text(text = "Título")
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                CategorySelector(
-                    selectedCategory = selectedCategory,
-                    categoryType = when(type) {
-                        Transaction.Type.INCOME -> Category.Type.INCOME
-                        Transaction.Type.EXPENSE -> Category.Type.EXPENSE
-                        else -> error("Invalid type")
-                    },
-                    onCategorySelected = { selectedCategory = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    state = amount,
-                    label = {
-                        Text(text = "Valor")
-                    },
-                    inputTransformation = MoneyInputTransformation(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    state = date,
-                    label = {
-                        Text(text = "Data")
-                    },
-                    inputTransformation = DateInputTransformation(),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    ),
-                    trailingIcon = {
-                        IconButton(
-                            onClick = {
-                                manager.show(
-                                    DatePickerModal(
-                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                        onDateSelected = { selectedDate ->
-                                            date.edit {
-                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
-                                            }
-                                        }
-                                    )
-                                )
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.TwoTone.CalendarToday,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        scope.launch {
-
-                            repository.update(
-                                transaction.copy(
-                                    type = type,
-                                    amount = parseMoneyToDouble(amount.text.toString()),
-                                    title = title.text.toString().ifBlank { null },
-                                    date = formats.dayMonthYear.parse(date.text.toString()),
-                                    category = selectedCategory,
-                                )
-                            )
-
-                            manager.dismiss()
-                        }
-                    },
-                    enabled = showSaveButton(
-                        amount = amount.text.toString(),
-                        title = title.text.toString(),
-                        date = date.text.toString(),
-                        hasCategory = selectedCategory != null
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "Salvar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            TypeToggle(
+                selectedType = type,
+                onTypeSelected = {
+                    type = it
                 }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                state = title,
+                label = {
+                    Text(text = "Título")
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            CategorySelector(
+                selectedCategory = selectedCategory,
+                categoryType = when (type) {
+                    Transaction.Type.INCOME -> Category.Type.INCOME
+                    Transaction.Type.EXPENSE -> Category.Type.EXPENSE
+                    else -> error("Invalid type")
+                },
+                onCategorySelected = { selectedCategory = it },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                state = amount,
+                label = {
+                    Text(text = "Valor")
+                },
+                inputTransformation = MoneyInputTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                state = date,
+                label = {
+                    Text(text = "Data")
+                },
+                inputTransformation = DateInputTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            manager.show(
+                                DatePickerModal(
+                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    onDateSelected = { selectedDate ->
+                                        date.edit {
+                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                        }
+                                    }
+                                )
+                            )
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.CalendarToday,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    viewModel.updateTransaction(
+                        updatedTransaction = transaction.copy(
+                            type = type,
+                            amount = parseMoneyToDouble(amount.text.toString()),
+                            title = title.text.toString().ifBlank { null },
+                            date = formats.dayMonthYear.parse(date.text.toString()),
+                            category = selectedCategory,
+                        )
+                    )
+                },
+                enabled = showSaveButton(
+                    amount = amount.text.toString(),
+                    title = title.text.toString(),
+                    date = date.text.toString(),
+                    hasCategory = selectedCategory != null
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Salvar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
+        }
         }
 
     private fun showSaveButton(
@@ -262,7 +250,7 @@ class EditTransactionModal(
                     )
                 }
             },
-            shape = RoundedCornerShape(12.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Despesa",
@@ -289,7 +277,7 @@ class EditTransactionModal(
                     )
                 }
             },
-            shape = RoundedCornerShape(12.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Receita",

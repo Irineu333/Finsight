@@ -11,6 +11,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import org.koin.compose.koinInject
 
 val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManager provided") }
 
@@ -30,12 +31,16 @@ class ModalManager {
     fun dismiss() {
         modalState.removeAt(modalState.lastIndex)
     }
+
+    fun dismissAll() {
+        modalState.clear()
+    }
 }
 
 @Composable
 fun ModalManagerHost(content: @Composable () -> Unit) {
 
-    val modalManager = remember { ModalManager() }
+    val modalManager = koinInject<ModalManager>()
 
     CompositionLocalProvider(
         LocalModalManager provides modalManager,

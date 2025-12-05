@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.deleteCategory
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -11,21 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class DeleteCategoryModal(
     private val category: Category
@@ -33,9 +27,7 @@ class DeleteCategoryModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val repository = koinInject<ICategoryRepository>()
-        val manager = LocalModalManager.current
-        val scope = rememberCoroutineScope()
+        val viewModel = koinViewModel<DeleteCategoryViewModel>(key = key) { parametersOf(category) }
 
         Column(
             modifier = Modifier
@@ -62,11 +54,7 @@ class DeleteCategoryModal(
 
             Button(
                 onClick = {
-                    scope.launch {
-                        repository.delete(category)
-                        manager.dismiss()
-                        manager.dismiss()
-                    }
+                    viewModel.deleteCategory()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

@@ -29,8 +29,8 @@ import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.modal.DeleteTransactionModal
-import com.neoutils.finance.ui.modal.EditTransactionModal
+import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
+import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income

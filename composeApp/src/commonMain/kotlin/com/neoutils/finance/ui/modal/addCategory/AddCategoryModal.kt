@@ -1,17 +1,39 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.addCategory
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,15 +43,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
-import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -44,17 +63,13 @@ class AddCategoryModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val repository = koinInject<ICategoryRepository>()
-        val getCategoriesUseCase = koinInject<GetCategoriesUseCase>()
-        val manager = LocalModalManager.current
-        val scope = rememberCoroutineScope()
+        val viewModel = koinViewModel<AddCategoryViewModel>(key = key) { parametersOf(initialType) }
 
         val name = rememberTextFieldState()
         var selectedIcon by remember { mutableStateOf(CategoryIcon.SHOPPING_CART) }
         var selectedType by remember { mutableStateOf(initialType) }
 
-        val existingCategories by getCategoriesUseCase(selectedType)
-            .collectAsState(initial = emptyList())
+        val existingCategories by viewModel.existingCategories.collectAsState()
 
         val isDuplicateName by remember {
             derivedStateOf {
@@ -117,21 +132,18 @@ class AddCategoryModal(
 
             Button(
                 onClick = {
-                    scope.launch {
-                        repository.insert(
-                            Category(
-                                name = name.text.toString(),
-                                key = selectedIcon.key,
-                                type = selectedType,
-                                createdAt = Clock.System.now().toEpochMilliseconds()
-                            )
+                    viewModel.addCategory(
+                        category = Category(
+                            name = name.text.toString(),
+                            key = selectedIcon.key,
+                            type = selectedType,
+                            createdAt = Clock.System.now().toEpochMilliseconds()
                         )
-                        manager.dismiss()
-                    }
+                    )
                 },
                 enabled = name.text.isNotBlank() && !isDuplicateName,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Salvar",
@@ -168,7 +180,7 @@ class AddCategoryModal(
                     )
                 }
             },
-            shape = RoundedCornerShape(12.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Despesa",
@@ -195,7 +207,7 @@ class AddCategoryModal(
                     )
                 }
             },
-            shape = RoundedCornerShape(12.dp)
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Receita",
@@ -224,7 +236,7 @@ class AddCategoryModal(
                 Surface(
                     onClick = { onIconSelected(icon) },
                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .size(64.dp)
                         .then(
@@ -232,9 +244,9 @@ class AddCategoryModal(
                                 Modifier.border(
                                     width = 2.dp,
                                     color = categoryColor,
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                                 )
-                            } else Modifier
+                            } else Modifier.Companion
                         )
                 ) {
                     Box(

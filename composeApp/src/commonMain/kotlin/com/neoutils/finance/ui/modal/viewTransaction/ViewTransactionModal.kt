@@ -8,10 +8,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -20,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,6 +33,8 @@ import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import androidx.compose.material3.Surface
+import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -64,127 +70,147 @@ class ViewTransactionModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    color = when (transaction.type) {
+                        Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
+                        Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
+                        Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.size(64.dp),
                 ) {
-                    uiState.category?.let {
-                        CategoryIconBox(
-                            category = it,
-                            modifier = Modifier.size(64.dp),
-                            contentPadding = PaddingValues(16.dp),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                    }
-
-                    Spacer(Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = when (uiState.transaction.type) {
-                                Transaction.Type.INCOME -> "Receita"
-                                Transaction.Type.EXPENSE -> "Despesa"
-                                Transaction.Type.ADJUSTMENT -> "Ajuste"
-                            },
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = when (uiState.transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                            }
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = uiState.title,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface
-                        )
-                    }
+                    Icon(
+                        imageVector = uiState.category?.let {
+                            CategoryIcon.fromKey(it.key).icon
+                        } ?: when (transaction.type) {
+                            Transaction.Type.INCOME -> Icons.Default.ShoppingCart
+                            Transaction.Type.EXPENSE -> Icons.Default.Receipt
+                            Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
+                        },
+                        contentDescription = null,
+                        tint = when (transaction.type) {
+                            Transaction.Type.INCOME -> Income
+                            Transaction.Type.EXPENSE -> Expense
+                            Transaction.Type.ADJUSTMENT -> Adjustment
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.width(16.dp))
 
-                DetailRow(
-                    label = "Valor",
-                    value = uiState.transaction.amount.toMoneyFormat(),
-                    valueColor = when (uiState.transaction.type) {
-                        Transaction.Type.INCOME -> Income
-                        Transaction.Type.EXPENSE -> Expense
-                        Transaction.Type.ADJUSTMENT -> Adjustment
-                    }
-                )
+                Column {
+                    Text(
+                        text = when (uiState.transaction.type) {
+                            Transaction.Type.INCOME -> "Receita"
+                            Transaction.Type.EXPENSE -> "Despesa"
+                            Transaction.Type.ADJUSTMENT -> "Ajuste"
+                        },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = when (uiState.transaction.type) {
+                            Transaction.Type.INCOME -> Income
+                            Transaction.Type.EXPENSE -> Expense
+                            Transaction.Type.ADJUSTMENT -> Adjustment
+                        }
+                    )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = uiState.title,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface
+                    )
+                }
+            }
 
-                DetailRow(
-                    label = "Data",
-                    value = formats.dayMonthYear.format(uiState.transaction.date)
-                )
+            Spacer(modifier = Modifier.height(16.dp))
 
-                HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            DetailRow(
+                label = "Valor",
+                value = uiState.transaction.amount.toMoneyFormat(),
+                valueColor = when (uiState.transaction.type) {
+                    Transaction.Type.INCOME -> Income
+                    Transaction.Type.EXPENSE -> Expense
+                    Transaction.Type.ADJUSTMENT -> Adjustment
+                }
+            )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DetailRow(
+                label = "Data",
+                value = formats.dayMonthYear.format(uiState.transaction.date)
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        manager.show(DeleteTransactionModal(uiState.transaction))
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.error,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = colorScheme.error,
+                    )
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            manager.show(DeleteTransactionModal(uiState.transaction))
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.error,
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = colorScheme.error,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Excluir",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Excluir",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
-                    OutlinedButton(
-                        onClick = {
-                            manager.show(EditTransactionModal(uiState.transaction))
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Info,
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = Info,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Editar",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                OutlinedButton(
+                    onClick = {
+                        manager.show(EditTransactionModal(uiState.transaction))
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Info,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Info,
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Editar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+    }
 
     @Composable
     private fun DetailRow(

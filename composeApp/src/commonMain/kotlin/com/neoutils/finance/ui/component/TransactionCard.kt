@@ -29,13 +29,12 @@ import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.byUnicodePattern
 
-private val dateFormat = LocalDate.Format {
-    byUnicodePattern("dd/MM/yyyy")
-}
+private val formats = DateFormats()
 
 @Composable
 fun TransactionCard(
@@ -100,7 +99,7 @@ fun TransactionCard(
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = dateFormat.format(transaction.date),
+                text = formats.dayMonthYear.format(transaction.date),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant
             )

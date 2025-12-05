@@ -32,8 +32,6 @@ class TransactionsViewModel(
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
 
-    private val dateTime get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
     private val selectedCategory = MutableStateFlow(category)
     private val selectedType = MutableStateFlow(transaction)

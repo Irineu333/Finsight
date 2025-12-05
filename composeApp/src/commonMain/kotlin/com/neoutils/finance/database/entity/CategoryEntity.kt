@@ -18,12 +18,6 @@ data class CategoryEntity(
 ) {
     enum class Type {
         INCOME,
-        EXPENSE;
-
-        val isIncome: Boolean
-            get() = this == INCOME
-
-        val isExpense: Boolean
-            get() = this == EXPENSE
+        EXPENSE
     }
 }

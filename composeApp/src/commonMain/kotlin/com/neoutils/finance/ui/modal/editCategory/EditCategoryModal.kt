@@ -1,35 +1,16 @@
 package com.neoutils.finance.ui.modal.editCategory
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -130,7 +111,7 @@ class EditCategoryModal(
                 },
                 enabled = name.text.isNotBlank() && !isDuplicateName,
                 modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Salvar",
@@ -159,8 +140,8 @@ class EditCategoryModal(
                 val isSelected = icon == selectedIcon
                 Surface(
                     onClick = { onIconSelected(icon) },
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                    color = colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .size(64.dp)
                         .then(
@@ -168,7 +149,7 @@ class EditCategoryModal(
                                 Modifier.border(
                                     width = 2.dp,
                                     color = categoryColor,
-                                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(12.dp)
                                 )
                             } else Modifier.Companion
                         )
@@ -180,7 +161,7 @@ class EditCategoryModal(
                         Icon(
                             imageVector = icon.icon,
                             contentDescription = icon.name,
-                            tint = if (isSelected) categoryColor else MaterialTheme.colorScheme.onSurface,
+                            tint = if (isSelected) categoryColor else colorScheme.onSurface,
                             modifier = Modifier.size(28.dp)
                         )
                     }

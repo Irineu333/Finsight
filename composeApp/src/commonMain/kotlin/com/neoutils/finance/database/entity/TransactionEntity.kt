@@ -28,15 +28,6 @@ data class TransactionEntity(
     enum class Type {
         EXPENSE,
         INCOME,
-        ADJUSTMENT;
-
-        val isExpense: Boolean
-            get() = this == EXPENSE
-
-        val isIncome: Boolean
-            get() = this == INCOME
-
-        val isAdjustment: Boolean
-            get() = this == ADJUSTMENT
+        ADJUSTMENT
     }
 }

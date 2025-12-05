@@ -21,6 +21,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -108,7 +109,11 @@ class AddTransactionModal : ModalBottomSheet {
 
             CategorySelector(
                 selectedCategory = selectedCategory,
-                categories = if (type.isIncome) uiState.incomeCategories else uiState.expenseCategories,
+                categories = when (type) {
+                    Transaction.Type.INCOME -> uiState.incomeCategories
+                    Transaction.Type.EXPENSE -> uiState.expenseCategories
+                    else -> listOf()
+                },
                 onCategorySelected = { selectedCategory = it },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -125,7 +130,7 @@ class AddTransactionModal : ModalBottomSheet {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -160,11 +165,11 @@ class AddTransactionModal : ModalBottomSheet {
                         Icon(
                             imageVector = Icons.TwoTone.CalendarToday,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = colorScheme.primary,
                         )
                     }
                 },
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -190,7 +195,7 @@ class AddTransactionModal : ModalBottomSheet {
                     hasCategory = selectedCategory != null
                 ),
                 modifier = Modifier.fillMaxWidth(),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Salvar",
@@ -199,7 +204,7 @@ class AddTransactionModal : ModalBottomSheet {
                 )
             }
         }
-        }
+    }
 
     @Composable
     fun TypeToggle(
@@ -222,12 +227,12 @@ class AddTransactionModal : ModalBottomSheet {
 
                 Transaction.Type.INCOME, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = colorScheme.surfaceContainerHighest,
+                        contentColor = colorScheme.onSurfaceVariant
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Despesa",
@@ -249,12 +254,12 @@ class AddTransactionModal : ModalBottomSheet {
 
                 Transaction.Type.EXPENSE, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = colorScheme.surfaceContainerHighest,
+                        contentColor = colorScheme.onSurfaceVariant
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Receita",

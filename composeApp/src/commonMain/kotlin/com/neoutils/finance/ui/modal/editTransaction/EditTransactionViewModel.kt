@@ -24,7 +24,8 @@ class EditTransactionViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    val uiState: StateFlow<EditTransactionUiState> = categoryRepository.getAllCategories()
+    val uiState = categoryRepository
+        .getAllCategories()
         .map { categories ->
             EditTransactionUiState(
                 incomeCategories = categories.filter { it.type == Category.Type.INCOME },

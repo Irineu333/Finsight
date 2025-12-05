@@ -24,10 +24,8 @@ class DashboardViewModel(
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
 ) : ViewModel() {
 
-    private val timeZone get() = TimeZone.currentSystemDefault()
     private val instant get() = Clock.System.now()
     private val currentMonth get() = instant.toYearMonth()
-    private val dateTime get() = instant.toLocalDateTime(timeZone)
 
     val uiState = repository.observeAllTransactions().map { transactions ->
 
@@ -57,7 +55,6 @@ class DashboardViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DashboardUiState()
+        initialValue = DashboardUiState(),
     )
-
 }

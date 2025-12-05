@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -65,7 +66,7 @@ class EditTransactionModal(
                 text = "Editar Transação",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -154,7 +155,7 @@ class EditTransactionModal(
                         Icon(
                             imageVector = Icons.TwoTone.CalendarToday,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = colorScheme.primary,
                         )
                     }
                 },
@@ -228,8 +229,8 @@ class EditTransactionModal(
 
                 Transaction.Type.INCOME, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = colorScheme.surfaceContainerHighest,
+                        contentColor = colorScheme.onSurfaceVariant
                     )
                 }
             },
@@ -255,8 +256,8 @@ class EditTransactionModal(
 
                 Transaction.Type.EXPENSE, Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        containerColor = colorScheme.surfaceContainerHighest,
+                        contentColor = colorScheme.onSurfaceVariant
                     )
                 }
             },

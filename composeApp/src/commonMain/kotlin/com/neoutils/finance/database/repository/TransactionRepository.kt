@@ -30,7 +30,7 @@ class TransactionRepository(
 
     override fun observeAllTransactions(): Flow<List<Transaction>> {
         return combine(
-            dao.getAllTransactions(),
+            dao.observeAllTransactions(),
             categoryRepository.getAllCategories().map { categories ->
                 categories.associateBy { it.id }
             }
@@ -45,7 +45,7 @@ class TransactionRepository(
     }
 
     override suspend fun getAllTransactions(): List<Transaction> {
-        val transactions = dao.getAllTransactionsDirect()
+        val transactions = dao.getAllTransactions()
         val categories = categoryRepository.getAllCategoriesDirect().associateBy { it.id }
 
         return transactions.map { transaction ->

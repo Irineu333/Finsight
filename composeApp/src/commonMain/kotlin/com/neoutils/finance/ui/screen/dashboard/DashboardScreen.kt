@@ -27,6 +27,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -124,6 +125,12 @@ private fun DashboardContent(
                     modifier = Modifier
                         .padding(top = 16.dp)
                         .fillMaxWidth()
+                        .animateItem(),
+                    onCategoryClick = { category ->
+                        modalManager.show(
+                            ViewCategoryModal(category)
+                        )
+                    }
                 )
             }
         }

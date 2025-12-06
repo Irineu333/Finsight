@@ -41,9 +41,7 @@ import kotlin.uuid.Uuid
 
 class ViewTransactionModal(
     private val transaction: Transaction
-) : ModalBottomSheet {
-
-    override val key = Uuid.random().toString()
+) : ModalBottomSheet() {
 
     private val formats = DateFormats()
 

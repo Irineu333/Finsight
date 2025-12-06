@@ -57,7 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AddTransactionModal : ModalBottomSheet {
+class AddTransactionModal : ModalBottomSheet() {
 
     private val formats = DateFormats()
 

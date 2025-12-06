@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 
 package com.neoutils.finance.ui.component
 
@@ -12,6 +12,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import org.koin.compose.koinInject
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManager provided") }
 
@@ -50,16 +52,15 @@ fun ModalManagerHost(content: @Composable () -> Unit) {
     }
 }
 
-interface Modal {
+abstract class Modal {
 
-    val key: String
-        get() = ""
+    val key = Uuid.random().toString()
 
     @Composable
-    fun Content()
+    abstract fun Content()
 }
 
-interface ModalBottomSheet : Modal {
+abstract class ModalBottomSheet : Modal() {
     @Composable
     override fun Content() {
 
@@ -77,5 +78,5 @@ interface ModalBottomSheet : Modal {
     }
 
     @Composable
-    fun ColumnScope.BottomSheetContent()
+    abstract fun ColumnScope.BottomSheetContent()
 }

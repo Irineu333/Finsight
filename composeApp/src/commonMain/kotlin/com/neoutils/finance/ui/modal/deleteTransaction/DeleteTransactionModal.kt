@@ -18,7 +18,7 @@ import org.koin.core.parameter.parametersOf
 
 class DeleteTransactionModal(
     private val transaction: Transaction
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {

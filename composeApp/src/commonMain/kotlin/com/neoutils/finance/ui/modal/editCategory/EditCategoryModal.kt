@@ -28,7 +28,7 @@ import org.koin.core.parameter.parametersOf
 
 class EditCategoryModal(
     private val category: Category
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     private val duplicatedNameError = @Composable {
         Text("Nome duplicado")

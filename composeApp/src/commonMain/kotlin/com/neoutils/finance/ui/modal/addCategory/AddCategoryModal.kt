@@ -33,7 +33,7 @@ import kotlin.time.ExperimentalTime
 
 class AddCategoryModal(
     private val initialType: Category.Type = Category.Type.EXPENSE
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     private val duplicatedNameError = @Composable {
         Text("Nome duplicado")

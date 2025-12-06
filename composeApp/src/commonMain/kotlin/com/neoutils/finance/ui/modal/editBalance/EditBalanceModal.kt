@@ -44,7 +44,7 @@ class EditBalanceModal(
     private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
     private val currentBalance: Double,
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     private val initialCents = (currentBalance * 100).toLong()
 

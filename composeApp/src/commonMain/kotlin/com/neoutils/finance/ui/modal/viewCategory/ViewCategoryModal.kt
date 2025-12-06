@@ -38,9 +38,7 @@ import kotlin.uuid.Uuid
 
 class ViewCategoryModal(
     private val category: Category
-) : ModalBottomSheet {
-
-    override val key = Uuid.random().toString()
+) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {

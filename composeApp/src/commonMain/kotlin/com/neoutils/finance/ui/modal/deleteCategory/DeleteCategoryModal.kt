@@ -18,7 +18,7 @@ import org.koin.core.parameter.parametersOf
 
 class DeleteCategoryModal(
     private val category: Category
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {

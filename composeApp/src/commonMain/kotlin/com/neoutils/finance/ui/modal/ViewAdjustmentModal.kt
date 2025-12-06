@@ -34,7 +34,7 @@ import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 
 class ViewAdjustmentModal(
     private val transaction: Transaction
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     private val formats = DateFormats()
 

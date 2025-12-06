@@ -24,7 +24,7 @@ import kotlin.time.Instant
 class DatePickerModal(
     private val initialDate: LocalDate,
     private val onDateSelected: (LocalDate) -> Unit,
-) : Modal {
+) : Modal() {
 
     @Composable
     override fun Content() {

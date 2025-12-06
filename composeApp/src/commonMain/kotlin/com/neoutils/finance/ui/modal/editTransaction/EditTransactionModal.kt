@@ -34,7 +34,7 @@ import org.koin.core.parameter.parametersOf
 
 class EditTransactionModal(
     private val transaction: Transaction,
-) : ModalBottomSheet {
+) : ModalBottomSheet() {
 
     private val formats = DateFormats()
 

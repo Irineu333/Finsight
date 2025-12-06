@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.di
 
+import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
@@ -14,6 +17,8 @@ import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 val viewModelModule = module {
     viewModel {
@@ -110,8 +115,10 @@ val viewModelModule = module {
     viewModel {
         EditBalanceViewModel(
             type = it.get(),
-            targetMonth = it.getOrNull(),
+            targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
             adjustBalanceUseCase = get(),
+            adjustFinalBalanceUseCase = get(),
+            adjustInitialBalanceUseCase = get(),
             modalManager = get()
         )
     }

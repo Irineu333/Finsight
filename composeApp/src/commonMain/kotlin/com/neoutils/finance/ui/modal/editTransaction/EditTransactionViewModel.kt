@@ -8,15 +8,9 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-data class EditTransactionUiState(
-    val incomeCategories: List<Category> = emptyList(),
-    val expenseCategories: List<Category> = emptyList(),
-)
 
 class EditTransactionViewModel(
     private val transactionRepository: ITransactionRepository,

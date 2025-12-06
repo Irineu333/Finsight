@@ -5,68 +5,52 @@ package com.neoutils.finance.ui.modal.editBalance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.domain.usecase.AdjustFinalBalanceUseCase
+import com.neoutils.finance.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class EditBalanceViewModel(
     private val type: EditBalanceModal.Type,
-    private val targetMonth: YearMonth?,
+    private val targetMonth: YearMonth,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
+    private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
+    private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    private val dateTime get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-    private val currentMonth get() = Clock.System.now().toYearMonth()
+    private val timZone get() = TimeZone.currentSystemDefault()
+    private val currentDateTime get() = Clock.System.now().toLocalDateTime(timZone)
 
     fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
         when (type) {
-            EditBalanceModal.Type.CURRENT -> adjustCurrentBalance(targetBalance)
-            EditBalanceModal.Type.FINAL -> adjustFinalBalance(targetBalance)
-            EditBalanceModal.Type.INITIAL -> adjustInitialBalance(targetBalance)
+            EditBalanceModal.Type.CURRENT -> {
+                adjustBalanceUseCase(
+                    targetBalance = targetBalance,
+                    adjustmentDate = currentDateTime.date
+                )
+            }
+
+            EditBalanceModal.Type.FINAL -> {
+                adjustFinalBalanceUseCase(
+                    targetBalance = targetBalance,
+                    targetMonth = targetMonth
+                )
+            }
+
+            EditBalanceModal.Type.INITIAL -> {
+                adjustInitialBalanceUseCase(
+                    targetBalance = targetBalance,
+                    targetMonth = targetMonth
+                )
+            }
         }
         modalManager.dismiss()
-    }
-
-    private suspend fun adjustCurrentBalance(targetBalance: Double) {
-        adjustBalanceUseCase(
-            targetBalance = targetBalance,
-            adjustmentDate = dateTime.date
-        )
-    }
-
-    private suspend fun adjustFinalBalance(targetBalance: Double) {
-        val selectedMonth = targetMonth ?: currentMonth
-
-        if (selectedMonth > currentMonth) return
-
-        val adjustmentDate = if (selectedMonth == currentMonth) {
-            dateTime.date
-        } else {
-            selectedMonth.lastDay
-        }
-
-        adjustBalanceUseCase(
-            targetBalance = targetBalance,
-            adjustmentDate = adjustmentDate
-        )
-    }
-
-    private suspend fun adjustInitialBalance(targetBalance: Double) {
-        val selectedMonth = targetMonth ?: currentMonth
-
-        if (selectedMonth > currentMonth) return
-
-        adjustBalanceUseCase(
-            targetBalance = targetBalance,
-            adjustmentDate = selectedMonth.minus(1, DateTimeUnit.MONTH).lastDay
-        )
     }
 }

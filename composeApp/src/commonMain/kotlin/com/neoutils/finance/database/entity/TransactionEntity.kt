@@ -23,11 +23,17 @@ data class TransactionEntity(
     val amount: Double,
     val title: String?,
     val date: LocalDate,
-    val categoryId: Long? = null
+    val categoryId: Long? = null,
+    val target: Target = Target.ACCOUNT
 ) {
     enum class Type {
         EXPENSE,
         INCOME,
         ADJUSTMENT
+    }
+
+    enum class Target {
+        ACCOUNT,
+        CREDIT_CARD
     }
 }

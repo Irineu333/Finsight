@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.ui.modal.addTransaction
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -42,6 +43,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.component.TargetSelector
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -67,6 +69,7 @@ class AddTransactionModal : ModalBottomSheet() {
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
+        var target by remember { mutableStateOf(Transaction.Target.ACCOUNT) }
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
@@ -102,6 +105,16 @@ class AddTransactionModal : ModalBottomSheet() {
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            AnimatedVisibility(type.isExpense) {
+                TargetSelector(
+                    selectedTarget = target,
+                    onTargetSelected = { target = it },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -183,6 +196,7 @@ class AddTransactionModal : ModalBottomSheet() {
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
                             category = selectedCategory,
+                            target = if (type.isExpense) target else Transaction.Target.ACCOUNT
                         )
                     )
                 },

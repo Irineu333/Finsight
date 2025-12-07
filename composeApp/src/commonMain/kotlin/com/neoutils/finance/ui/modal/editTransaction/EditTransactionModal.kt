@@ -1,5 +1,6 @@
 package com.neoutils.finance.ui.modal.editTransaction
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,6 +24,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.component.TargetSelector
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -45,6 +47,7 @@ class EditTransactionModal(
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(transaction.type) }
+        var target by remember { mutableStateOf(transaction.target) }
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
         val title = rememberTextFieldState(transaction.title.orEmpty())
@@ -94,6 +97,16 @@ class EditTransactionModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            AnimatedVisibility(type.isExpense) {
+                TargetSelector(
+                    selectedTarget = target,
+                    onTargetSelected = { target = it },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -175,6 +188,7 @@ class EditTransactionModal(
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
                             category = selectedCategory,
+                            target = if (type.isExpense) target else Transaction.Target.ACCOUNT
                         )
                     )
                 },

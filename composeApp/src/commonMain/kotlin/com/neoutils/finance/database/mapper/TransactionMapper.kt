@@ -16,6 +16,7 @@ class TransactionMapper {
             title = entity.title,
             date = entity.date,
             category = category,
+            target = toDomain(entity.target)
         )
     }
 
@@ -28,7 +29,8 @@ class TransactionMapper {
             amount = domain.amount,
             title = domain.title,
             date = domain.date,
-            categoryId = domain.category?.id
+            categoryId = domain.category?.id,
+            target = toEntity(domain.target)
         )
     }
 
@@ -49,6 +51,24 @@ class TransactionMapper {
             Transaction.Type.EXPENSE -> TransactionEntity.Type.EXPENSE
             Transaction.Type.INCOME -> TransactionEntity.Type.INCOME
             Transaction.Type.ADJUSTMENT -> TransactionEntity.Type.ADJUSTMENT
+        }
+    }
+
+    fun toDomain(
+        target: TransactionEntity.Target
+    ): Transaction.Target {
+        return when (target) {
+            TransactionEntity.Target.ACCOUNT -> Transaction.Target.ACCOUNT
+            TransactionEntity.Target.CREDIT_CARD -> Transaction.Target.CREDIT_CARD
+        }
+    }
+
+    fun toEntity(
+        target: Transaction.Target
+    ): TransactionEntity.Target {
+        return when (target) {
+            Transaction.Target.ACCOUNT -> TransactionEntity.Target.ACCOUNT
+            Transaction.Target.CREDIT_CARD -> TransactionEntity.Target.CREDIT_CARD
         }
     }
 }

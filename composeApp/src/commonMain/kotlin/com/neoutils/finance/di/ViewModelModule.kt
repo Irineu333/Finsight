@@ -9,6 +9,7 @@ import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
+import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.payBill.PayBillViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
@@ -40,10 +41,12 @@ val viewModelModule = module {
     viewModel {
         DashboardViewModel(
             repository = get(),
+            preferencesRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
-            calculateCreditCardBillUseCase = get()
+            calculateCreditCardBillUseCase = get(),
+            creditCardBillUiMapper = get()
         )
     }
 
@@ -130,6 +133,14 @@ val viewModelModule = module {
     viewModel {
         PayBillViewModel(
             payBillUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        EditCreditCardLimitViewModel(
+            getCreditCardLimitUseCase = get(),
+            setCreditCardLimitUseCase = get(),
             modalManager = get()
         )
     }

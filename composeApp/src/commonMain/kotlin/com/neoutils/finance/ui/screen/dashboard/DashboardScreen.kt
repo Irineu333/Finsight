@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.BalanceCard
 import com.neoutils.finance.ui.component.BalanceCardConfig
 import com.neoutils.finance.ui.component.CategorySpendingCard
+import com.neoutils.finance.ui.component.CreditCardBillCard
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
@@ -58,14 +59,19 @@ fun DashboardScreen(
             modalManager.show(
                 EditBalanceModal(
                     type = EditBalanceModal.Type.CREDIT_CARD,
-                    currentBalance = uiState.creditCardBill,
+                    currentBalance = uiState.creditCardBillAmount,
                 )
+            )
+        },
+        openEditCreditCardLimit = {
+            modalManager.show(
+                com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal()
             )
         },
         openPayBill = {
             modalManager.show(
                 com.neoutils.finance.ui.modal.payBill.PayBillModal(
-                    currentBillAmount = uiState.creditCardBill
+                    currentBillAmount = uiState.creditCardBillAmount
                 )
             )
         }
@@ -77,6 +83,7 @@ private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     openEditBalance: () -> Unit,
     openEditCreditCardBill: () -> Unit,
+    openEditCreditCardLimit: () -> Unit,
     openPayBill: () -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
@@ -137,14 +144,14 @@ private fun DashboardContent(
         }
 
         item {
-            BalanceCard(
-                balance = uiState.creditCardBill,
-                config = BalanceCardConfig.CreditCard,
+            CreditCardBillCard(
+                uiModel = uiState.creditCardBill,
                 modifier = Modifier
                     .padding(top = 16.dp)
                     .fillMaxWidth(),
                 onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) },
-                onEditClick = openEditCreditCardBill,
+                onEditBill = openEditCreditCardBill,
+                onEditLimit = openEditCreditCardLimit,
                 onPayClick = openPayBill
             )
         }

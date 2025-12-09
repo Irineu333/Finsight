@@ -15,7 +15,6 @@ class CalculateCreditCardBillUseCase {
         return transactions
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isCreditCard }
-            .filter { it.type.isExpense }
             .sumOf { it.amount }
     }
 }

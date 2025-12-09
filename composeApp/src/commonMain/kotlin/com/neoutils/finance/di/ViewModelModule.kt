@@ -121,6 +121,7 @@ val viewModelModule = module {
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
+            adjustCreditCardBillUseCase = get(),
             modalManager = get()
         )
     }

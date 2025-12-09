@@ -90,6 +90,17 @@ class ViewAdjustmentModal(
                 value = formats.dayMonthYear.format(transaction.date)
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DetailRow(
+                label = "Tipo",
+                value = when (transaction.target) {
+                    Transaction.Target.ACCOUNT -> "Conta"
+                    Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                    Transaction.Target.INVOICE_PAYMENT -> "Pagamento de Fatura"
+                }
+            )
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             OutlinedButton(

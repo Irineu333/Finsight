@@ -5,6 +5,7 @@ package com.neoutils.finance.ui.modal.editBalance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finance.domain.usecase.AdjustCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finance.extension.toYearMonth
@@ -22,6 +23,7 @@ class EditBalanceViewModel(
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
+    private val adjustCreditCardBillUseCase: AdjustCreditCardBillUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -48,6 +50,13 @@ class EditBalanceViewModel(
                 adjustInitialBalanceUseCase(
                     targetBalance = targetBalance,
                     targetMonth = targetMonth
+                )
+            }
+
+            EditBalanceModal.Type.CREDIT_CARD -> {
+                adjustCreditCardBillUseCase(
+                    targetBill = targetBalance,
+                    adjustmentDate = currentDateTime.date
                 )
             }
         }

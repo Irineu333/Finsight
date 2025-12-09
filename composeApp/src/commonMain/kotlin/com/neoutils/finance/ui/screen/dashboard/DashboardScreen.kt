@@ -53,6 +53,14 @@ fun DashboardScreen(
                     currentBalance = uiState.balance.balance,
                 )
             )
+        },
+        openEditCreditCardBill = {
+            modalManager.show(
+                EditBalanceModal(
+                    type = EditBalanceModal.Type.CREDIT_CARD,
+                    currentBalance = uiState.creditCardBill,
+                )
+            )
         }
     )
 }
@@ -61,6 +69,7 @@ fun DashboardScreen(
 private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     openEditBalance: () -> Unit,
+    openEditCreditCardBill: () -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager
@@ -127,7 +136,8 @@ private fun DashboardContent(
                     modifier = Modifier
                         .padding(top = 16.dp)
                         .fillMaxWidth(),
-                    onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) }
+                    onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) },
+                    onEditClick = openEditCreditCardBill
                 )
             }
         }

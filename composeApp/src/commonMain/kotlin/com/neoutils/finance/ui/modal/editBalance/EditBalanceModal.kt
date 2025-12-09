@@ -12,7 +12,9 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -26,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Adjustment
@@ -38,6 +41,7 @@ import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditBalanceModal(
@@ -105,6 +109,7 @@ class EditBalanceModal(
                 if (adjustment != 0.0) {
                     Adjustment(
                         adjustment = adjustment,
+                        type = type,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 } else {
@@ -176,52 +181,69 @@ class EditBalanceModal(
     @Composable
     private fun Adjustment(
         adjustment: Double,
+        type: Type,
         modifier: Modifier = Modifier
-    ) = Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (adjustment > 0) {
-                Income.copy(alpha = 0.1f)
-            } else {
-                Expense.copy(alpha = 0.1f)
-            },
-            contentColor = Color.White,
-        ),
-        shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        val adjustmentType = when (type) {
+            Type.CREDIT_CARD -> {
+                if (adjustment < 0) {
+                    AdjustmentType.CREDIT_CARD_PAYMENT
+                } else {
+                    AdjustmentType.CREDIT_CARD_EXPENSE
+                }
+            }
+            else -> {
+                if (adjustment > 0) {
+                    AdjustmentType.INCOME
+                } else {
+                    AdjustmentType.EXPENSE
+                }
+            }
+        }
+
+        val color = adjustmentType.color()
+
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = color.copy(alpha = 0.1f),
+                contentColor = Color.White,
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = if (adjustment > 0) {
-                        Icons.Default.ArrowUpward
-                    } else {
-                        Icons.Default.ArrowDownward
-                    },
-                    contentDescription = null,
-                    tint = if (adjustment > 0) Income else Expense,
-                    modifier = Modifier.size(20.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = adjustmentType.icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = adjustmentType.label,
+                        fontSize = 16.sp,
+                    )
+                }
+
                 Text(
-                    text = if (adjustment > 0) "Entrada" else "Saída",
-                    fontSize = 16.sp,
+                    text = when(type) {
+                        Type.CREDIT_CARD -> adjustment.unaryMinus().toMoneyFormatWithSign()
+                        else -> adjustment.toMoneyFormatWithSign()
+                    },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = color
                 )
             }
-
-            Text(
-                text = "${if (adjustment > 0) "+" else ""}${adjustment.toMoneyFormat()}",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (adjustment > 0) Income else Expense
-            )
         }
     }
 
@@ -261,6 +283,34 @@ class EditBalanceModal(
     enum class Type(val title: String) {
         CURRENT("Editar Saldo Atual"),
         FINAL("Editar Saldo Final"),
-        INITIAL("Editar Saldo Inicial")
+        INITIAL("Editar Saldo Inicial"),
+        CREDIT_CARD("Editar Fatura do Cartão")
+    }
+
+    enum class AdjustmentType(
+        val label: String,
+        val icon: ImageVector,
+        val color: @Composable () -> Color
+    ) {
+        EXPENSE(
+            label = "Gastou",
+            icon = Icons.Default.ArrowDownward,
+            color = { Expense }
+        ),
+        INCOME(
+            label = "Recebeu",
+            icon = Icons.Default.ArrowUpward,
+            color = { Income }
+        ),
+        CREDIT_CARD_EXPENSE(
+            label = "Gastou",
+            icon = Icons.Default.ArrowDownward,
+            color = { Expense }
+        ),
+        CREDIT_CARD_PAYMENT(
+            label = "Pagou",
+            icon = Icons.Default.CreditCard,
+            color = { Income }
+        )
     }
 }

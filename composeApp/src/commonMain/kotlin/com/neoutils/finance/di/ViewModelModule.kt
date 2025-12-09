@@ -41,14 +41,16 @@ val viewModelModule = module {
             repository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
-            calculateCategorySpendingUseCase = get()
+            calculateCategorySpendingUseCase = get(),
+            calculateCreditCardBillUseCase = get()
         )
     }
 
     viewModel {
         TransactionsViewModel(
-            category = getOrNull(),
             transaction = getOrNull(),
+            category = getOrNull(),
+            target = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
             calculateBalanceUseCase = get(),

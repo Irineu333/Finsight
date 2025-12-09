@@ -19,7 +19,8 @@ data class TransactionsUiState(
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
-    val selectedType: Transaction.Type? = null
+    val selectedType: Transaction.Type? = null,
+    val selectedTarget: Transaction.Target? = null
 ) {
     val currentMonth = Clock.System.now()
         .toLocalDateTime(TimeZone.currentSystemDefault())

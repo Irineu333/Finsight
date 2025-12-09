@@ -38,7 +38,8 @@ private val formats = DateFormats()
 @Composable
 fun TransactionsScreen(
     categoryType: Transaction.Type? = null,
-    viewModel: TransactionsViewModel = koinViewModel { parametersOf(categoryType) },
+    target: Transaction.Target? = null,
+    viewModel: TransactionsViewModel = koinViewModel { parametersOf(categoryType, null, target) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -198,6 +199,15 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item {
+            Box {
+                TargetFilterChip(
+                    selectedTarget = uiState.selectedTarget,
+                    onAction = onAction
+                )
+            }
+        }
     }
 }
 
@@ -328,6 +338,64 @@ private fun TypeFilterChip(
                 },
                 onClick = {
                     onAction(TransactionsAction.SelectType(type))
+                    expanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun TargetFilterChip(
+    selectedTarget: Transaction.Target?,
+    onAction: (TransactionsAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    FilterChip(
+        selected = selectedTarget != null,
+        onClick = { expanded = true },
+        label = {
+            Text(
+                when (selectedTarget) {
+                    Transaction.Target.ACCOUNT -> "Conta"
+                    Transaction.Target.CREDIT_CARD -> "Cartão"
+                    null -> "Conta"
+                }
+            )
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
+        }
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text("Todas") },
+            onClick = {
+                onAction(TransactionsAction.SelectTarget(null))
+                expanded = false
+            }
+        )
+
+        Transaction.Target.entries.forEach { target ->
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        when (target) {
+                            Transaction.Target.ACCOUNT -> "Conta"
+                            Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                        }
+                    )
+                },
+                onClick = {
+                    onAction(TransactionsAction.SelectTarget(target))
                     expanded = false
                 }
             )

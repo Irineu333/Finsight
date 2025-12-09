@@ -35,7 +35,7 @@ private val formats = DateFormats()
 
 @Composable
 fun DashboardScreen(
-    openTransactions: (filterType: Transaction.Type?) -> Unit = {},
+    openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
     openCategories: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
@@ -59,7 +59,7 @@ fun DashboardScreen(
 
 @Composable
 private fun DashboardContent(
-    openTransactions: (Transaction.Type?) -> Unit,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     openEditBalance: () -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
@@ -93,7 +93,8 @@ private fun DashboardContent(
             BalanceCard(
                 balance = uiState.balance.balance,
                 modifier = Modifier.fillMaxWidth(),
-                onEditClick = openEditBalance
+                onEditClick = openEditBalance,
+                onClick = { openTransactions(null, Transaction.Target.ACCOUNT) }
             )
         }
 
@@ -106,14 +107,27 @@ private fun DashboardContent(
                     balance = uiState.balance.income,
                     modifier = Modifier.weight(1f),
                     config = BalanceCardConfig.Income,
-                    onClick = { openTransactions(Transaction.Type.INCOME) }
+                    onClick = { openTransactions(Transaction.Type.INCOME, null) }
                 )
 
                 BalanceCard(
                     balance = uiState.balance.expense,
                     modifier = Modifier.weight(1f),
                     config = BalanceCardConfig.Expense,
-                    onClick = { openTransactions(Transaction.Type.EXPENSE) }
+                    onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
+                )
+            }
+        }
+
+        if (uiState.creditCardBill > 0) {
+            item {
+                BalanceCard(
+                    balance = uiState.creditCardBill,
+                    config = BalanceCardConfig.CreditCard,
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth(),
+                    onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) }
                 )
             }
         }
@@ -151,7 +165,7 @@ private fun DashboardContent(
                     )
 
                     TextButton(
-                        onClick = { openTransactions(null) }
+                        onClick = { openTransactions(null, null) }
                     ) {
                         Text(text = "Ver Tudo")
                     }

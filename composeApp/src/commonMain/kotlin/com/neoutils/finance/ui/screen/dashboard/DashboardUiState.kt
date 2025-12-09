@@ -13,7 +13,8 @@ data class DashboardUiState(
     val recents: List<Transaction> = emptyList(),
     val balance: BalanceStats = BalanceStats(),
     val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
-    val categorySpending: List<CategorySpending> = emptyList()
+    val categorySpending: List<CategorySpending> = emptyList(),
+    val creditCardBill: Double = 0.0
 ) {
     data class BalanceStats(
         val income: Double = 0.0,

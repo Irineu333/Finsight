@@ -9,7 +9,8 @@ sealed class HomeRoute {
 
     @Serializable
     data class Transactions(
-        val filterType: Transaction.Type? = null
+        val filterType: Transaction.Type? = null,
+        val filterTarget: Transaction.Target? = null
     ) : HomeRoute()
 }
 

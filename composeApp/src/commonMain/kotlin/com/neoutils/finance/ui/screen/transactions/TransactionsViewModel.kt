@@ -26,6 +26,7 @@ import kotlin.time.ExperimentalTime
 class TransactionsViewModel(
     private val transaction: Transaction.Type?,
     private val category: Category?,
+    private val target: Transaction.Target?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
@@ -33,21 +34,27 @@ class TransactionsViewModel(
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
-    private val selectedCategory = MutableStateFlow(category)
-    private val selectedType = MutableStateFlow(transaction)
+
+    private val filters = MutableStateFlow(
+        TransactionsFilters(
+            category = category,
+            type = transaction,
+            target = target
+        )
+    )
 
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
         categoryRepository.getAllCategories(),
         selectedYearMonth,
-        selectedCategory,
-        selectedType
-    ) { transactions, categories, yearMonth, category, type ->
+        filters
+    ) { transactions, categories, yearMonth, filters ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions
-                .filter(category)
-                .filter(type),
+                .filter(filters.category)
+                .filter(filters.type)
+                .filter(filters.target),
             forYearMonth = yearMonth,
         )
 
@@ -70,8 +77,9 @@ class TransactionsViewModel(
             ),
             selectedYearMonth = yearMonth,
             categories = categories,
-            selectedCategory = category,
-            selectedType = type,
+            selectedCategory = filters.category,
+            selectedType = filters.type,
+            selectedTarget = filters.target
         )
     }.stateIn(
         scope = viewModelScope,
@@ -90,11 +98,15 @@ class TransactionsViewModel(
             }
 
             is TransactionsAction.SelectCategory -> {
-                selectedCategory.value = action.category
+                filters.value = filters.value.copy(category = action.category)
             }
 
             is TransactionsAction.SelectType -> {
-                selectedType.value = action.type
+                filters.value = filters.value.copy(type = action.type)
+            }
+
+            is TransactionsAction.SelectTarget -> {
+                filters.value = filters.value.copy(target = action.target)
             }
         }
     }
@@ -112,4 +124,11 @@ private fun List<Transaction>.filter(
 ): List<Transaction> {
     if (type == null) return this
     return filter { it.type == type }
+}
+
+private fun List<Transaction>.filter(
+    target: Transaction.Target?
+): List<Transaction> {
+    if (target == null) return this
+    return filter { it.target == target }
 }

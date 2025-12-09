@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -181,6 +182,25 @@ data class BalanceCardConfig(
                 ),
                 padding = PaddingValues(16.dp),
                 container = ExpenseColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val CreditCard
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.CreditCard,
+                title = "Fatura Atual",
+                style = TextStyle(
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = colorScheme.onSurfaceVariant
+                ),
+                padding = PaddingValues(20.dp),
+                container = colorScheme.surfaceContainer,
                 shape = shapes.large
             )
     }

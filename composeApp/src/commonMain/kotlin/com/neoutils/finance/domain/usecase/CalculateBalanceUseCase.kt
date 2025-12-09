@@ -20,6 +20,7 @@ class CalculateBalanceUseCase(
     ): Double {
         return transactions
             .filter { it.date.yearMonth <= target }
+            .filter { it.target.isAccount }
             .sumOf { transaction ->
                 when (transaction.type) {
                     Transaction.Type.INCOME -> transaction.amount

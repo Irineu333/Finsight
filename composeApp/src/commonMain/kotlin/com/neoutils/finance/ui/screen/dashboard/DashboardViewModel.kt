@@ -8,6 +8,7 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
+import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -22,6 +23,7 @@ class DashboardViewModel(
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
+    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
 ) : ViewModel() {
 
     private val instant get() = Clock.System.now()
@@ -51,6 +53,10 @@ class DashboardViewModel(
             ),
             yearMonth = currentMonth,
             categorySpending = categorySpending.take(3),
+            creditCardBill = calculateCreditCardBillUseCase(
+                target = currentMonth,
+                transactions = transactions
+            )
         )
     }.stateIn(
         scope = viewModelScope,

@@ -19,6 +19,7 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.NavigationItem
 import com.neoutils.finance.ui.component.ModalManagerHost
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.util.TransactionTargetNavType
 import com.neoutils.finance.util.TransactionTypeNavType
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
@@ -101,8 +102,13 @@ fun HomeScreen(
         ) {
             composable<HomeRoute.Dashboard> {
                 DashboardScreen(
-                    openTransactions = { filterType ->
-                        navController.navigate(HomeRoute.Transactions(filterType))
+                    openTransactions = { filterType, filterTarget ->
+                        navController.navigate(
+                            HomeRoute.Transactions(
+                                filterType = filterType,
+                                filterTarget = filterTarget
+                            )
+                        )
                     },
                     openCategories = openCategories,
                 )
@@ -110,12 +116,16 @@ fun HomeScreen(
 
             composable<HomeRoute.Transactions>(
                 typeMap = mapOf(
-                    typeOf<Transaction.Type?>() to TransactionTypeNavType()
+                    typeOf<Transaction.Type?>() to TransactionTypeNavType(),
+                    typeOf<Transaction.Target?>() to TransactionTargetNavType()
                 )
             ) { backStackEntry ->
                 val route = backStackEntry.toRoute<HomeRoute.Transactions>()
 
-                TransactionsScreen(categoryType = route.filterType)
+                TransactionsScreen(
+                    categoryType = route.filterType,
+                    target = route.filterTarget
+                )
             }
         }
     }

@@ -138,6 +138,17 @@ class ViewTransactionModal(
                 value = formats.dayMonthYear.format(uiState.transaction.date)
             )
 
+            if (uiState.transaction.type.isExpense) {
+                DetailRow(
+                    label = "Origem",
+                    value = when (uiState.transaction.target) {
+                        Transaction.Target.ACCOUNT -> "Conta"
+                        Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                    },
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             Row(
@@ -205,10 +216,11 @@ class ViewTransactionModal(
     private fun DetailRow(
         label: String,
         value: String,
+        modifier: Modifier = Modifier,
         valueColor: Color = colorScheme.onSurface
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(

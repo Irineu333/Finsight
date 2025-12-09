@@ -61,6 +61,13 @@ fun DashboardScreen(
                     currentBalance = uiState.creditCardBill,
                 )
             )
+        },
+        openPayBill = {
+            modalManager.show(
+                com.neoutils.finance.ui.modal.payBill.PayBillModal(
+                    currentBillAmount = uiState.creditCardBill
+                )
+            )
         }
     )
 }
@@ -70,6 +77,7 @@ private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     openEditBalance: () -> Unit,
     openEditCreditCardBill: () -> Unit,
+    openPayBill: () -> Unit,
     onOpenCategories: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager
@@ -128,18 +136,17 @@ private fun DashboardContent(
             }
         }
 
-        if (uiState.creditCardBill > 0) {
-            item {
-                BalanceCard(
-                    balance = uiState.creditCardBill,
-                    config = BalanceCardConfig.CreditCard,
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .fillMaxWidth(),
-                    onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) },
-                    onEditClick = openEditCreditCardBill
-                )
-            }
+        item {
+            BalanceCard(
+                balance = uiState.creditCardBill,
+                config = BalanceCardConfig.CreditCard,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth(),
+                onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) },
+                onEditClick = openEditCreditCardBill,
+                onPayClick = openPayBill
+            )
         }
 
         if (uiState.categorySpending.isNotEmpty()) {

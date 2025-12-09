@@ -9,6 +9,7 @@ import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
+import com.neoutils.finance.domain.usecase.PayCreditCardBillUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -21,4 +22,5 @@ val useCaseModules = module {
     factory { CalculateTransactionStatsUseCase() }
     factory { CalculateCategorySpendingUseCase() }
     factory { GetCategoriesUseCase(get()) }
+    factory { PayCreditCardBillUseCase(get()) }
 }

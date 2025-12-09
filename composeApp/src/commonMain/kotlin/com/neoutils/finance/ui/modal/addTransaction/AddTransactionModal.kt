@@ -237,7 +237,9 @@ class AddTransactionModal : ModalBottomSheet() {
                     )
                 }
 
-                Transaction.Type.INCOME, Transaction.Type.ADJUSTMENT -> {
+                Transaction.Type.INCOME,
+                Transaction.Type.ADJUSTMENT,
+                Transaction.Type.INVOICE_PAYMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -264,7 +266,9 @@ class AddTransactionModal : ModalBottomSheet() {
                     )
                 }
 
-                Transaction.Type.EXPENSE, Transaction.Type.ADJUSTMENT -> {
+                Transaction.Type.EXPENSE,
+                Transaction.Type.ADJUSTMENT,
+                Transaction.Type.INVOICE_PAYMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant

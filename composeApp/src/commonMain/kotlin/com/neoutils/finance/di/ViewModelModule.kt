@@ -10,6 +10,7 @@ import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewMode
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
+import com.neoutils.finance.ui.modal.payBill.PayBillViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
@@ -122,6 +123,13 @@ val viewModelModule = module {
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
             adjustCreditCardBillUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        PayBillViewModel(
+            payBillUseCase = get(),
             modalManager = get()
         )
     }

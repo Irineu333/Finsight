@@ -29,11 +29,13 @@ data class TransactionEntity(
     enum class Type {
         EXPENSE,
         INCOME,
-        ADJUSTMENT
+        ADJUSTMENT,
+        BILL_PAYMENT
     }
 
     enum class Target {
         ACCOUNT,
-        CREDIT_CARD
+        CREDIT_CARD,
+        INVOICE_PAYMENT
     }
 }

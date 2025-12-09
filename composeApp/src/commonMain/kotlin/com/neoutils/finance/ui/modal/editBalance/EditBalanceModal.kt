@@ -192,6 +192,7 @@ class EditBalanceModal(
                     AdjustmentType.CREDIT_CARD_EXPENSE
                 }
             }
+
             else -> {
                 if (adjustment > 0) {
                     AdjustmentType.INCOME
@@ -235,10 +236,7 @@ class EditBalanceModal(
                 }
 
                 Text(
-                    text = when(type) {
-                        Type.CREDIT_CARD -> adjustment.unaryMinus().toMoneyFormatWithSign()
-                        else -> adjustment.toMoneyFormatWithSign()
-                    },
+                    text = adjustment.toMoneyFormatWithSign(),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = color

@@ -28,6 +28,7 @@ import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finance.ui.theme.InvoicePayment as BillPaymentColor
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -282,6 +283,7 @@ private fun TypeFilterChip(
         Transaction.Type.INCOME -> IncomeColor
         Transaction.Type.EXPENSE -> ExpenseColor
         Transaction.Type.ADJUSTMENT -> AdjustmentColor
+        Transaction.Type.INVOICE_PAYMENT -> BillPaymentColor
         null -> null
     }
 
@@ -294,6 +296,7 @@ private fun TypeFilterChip(
                     Transaction.Type.INCOME -> "Entrada"
                     Transaction.Type.EXPENSE -> "Despesa"
                     Transaction.Type.ADJUSTMENT -> "Ajuste"
+                    Transaction.Type.INVOICE_PAYMENT -> "Pagamento"
                     null -> "Tipo"
                 }
             )
@@ -333,6 +336,7 @@ private fun TypeFilterChip(
                             Transaction.Type.INCOME -> "Entrada"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
+                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento"
                         }
                     )
                 },
@@ -360,6 +364,7 @@ private fun TargetFilterChip(
                 when (selectedTarget) {
                     Transaction.Target.ACCOUNT -> "Conta"
                     Transaction.Target.CREDIT_CARD -> "Cartão"
+                    Transaction.Target.INVOICE_PAYMENT -> "Ambas"
                     null -> "Conta"
                 }
             )
@@ -391,6 +396,7 @@ private fun TargetFilterChip(
                         when (target) {
                             Transaction.Target.ACCOUNT -> "Conta"
                             Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                            Transaction.Target.INVOICE_PAYMENT -> "Ambas"
                         }
                     )
                 },

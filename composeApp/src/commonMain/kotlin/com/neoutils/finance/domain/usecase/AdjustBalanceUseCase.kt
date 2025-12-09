@@ -23,7 +23,7 @@ class AdjustBalanceUseCase(
         val existingAdjustment = repository.getTransactionByTypeAndDate(
             type = Transaction.Type.ADJUSTMENT,
             date = adjustmentDate
-        )
+        )?.takeIf { it.target.isAccount }
 
         val difference = targetBalance - currentBalance
 

@@ -29,6 +29,7 @@ import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
+import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
@@ -37,7 +38,6 @@ import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class ViewTransactionModal(
     private val transaction: Transaction
@@ -67,6 +67,7 @@ class ViewTransactionModal(
                         Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
                         Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
                         Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
+                        Transaction.Type.INVOICE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
                     },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.size(64.dp),
@@ -78,12 +79,14 @@ class ViewTransactionModal(
                             Transaction.Type.INCOME -> Icons.Default.ShoppingCart
                             Transaction.Type.EXPENSE -> Icons.Default.Receipt
                             Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
+                            Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Receipt
                         },
                         contentDescription = null,
                         tint = when (transaction.type) {
                             Transaction.Type.INCOME -> Income
                             Transaction.Type.EXPENSE -> Expense
                             Transaction.Type.ADJUSTMENT -> Adjustment
+                            Transaction.Type.INVOICE_PAYMENT -> InvoicePayment
                         },
                         modifier = Modifier
                             .fillMaxSize()
@@ -99,6 +102,7 @@ class ViewTransactionModal(
                             Transaction.Type.INCOME -> "Receita"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
+                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
@@ -106,6 +110,7 @@ class ViewTransactionModal(
                             Transaction.Type.INCOME -> Income
                             Transaction.Type.EXPENSE -> Expense
                             Transaction.Type.ADJUSTMENT -> Adjustment
+                            Transaction.Type.INVOICE_PAYMENT -> InvoicePayment
                         }
                     )
 
@@ -128,6 +133,7 @@ class ViewTransactionModal(
                     Transaction.Type.INCOME -> Income
                     Transaction.Type.EXPENSE -> Expense
                     Transaction.Type.ADJUSTMENT -> Adjustment
+                    Transaction.Type.INVOICE_PAYMENT -> InvoicePayment
                 }
             )
 
@@ -144,6 +150,7 @@ class ViewTransactionModal(
                     value = when (uiState.transaction.target) {
                         Transaction.Target.ACCOUNT -> "Conta"
                         Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                        Transaction.Target.INVOICE_PAYMENT -> "Ambas"
                     },
                     modifier = Modifier.padding(top = 8.dp)
                 )

@@ -14,6 +14,7 @@ val Primary1 = Color(0xFF0D9A8E) // Teal - Success/Primary actions
 val Income = Color(0xFF22C55E) // Vibrant lime green - Receitas
 val Expense = Color(0xFFEF4444) // Vibrant red - Despesas
 val Adjustment = Color(0xFFF59E0B) // Amber - Ajustes
+val InvoicePayment = Color(0xFF8B5CF6) // Purple - Pagamento de Fatura
 
 // Card backgrounds
 val IncomeCardBackground = Color(0xFF1E3A2E) // Dark lime-green tint

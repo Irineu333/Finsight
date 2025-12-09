@@ -1,5 +1,6 @@
 package com.neoutils.finance.ui.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,12 +9,14 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.rounded.ModeEdit
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,6 +39,7 @@ fun BalanceCard(
     modifier: Modifier = Modifier,
     config: BalanceCardConfig = BalanceCardConfig.Default,
     onEditClick: (() -> Unit)? = null,
+    onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) = Card(
     modifier = modifier.then(
@@ -67,12 +71,13 @@ fun BalanceCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                     Icon(
+                    Icon(
                         imageVector = config.icon,
                         contentDescription = null,
                         tint = config.titleStyle.color,
                         modifier = Modifier.size(16.dp)
                     )
+
                     Text(
                         text = config.title,
                         style = config.titleStyle,
@@ -112,6 +117,28 @@ fun BalanceCard(
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                     tint = config.style.color.copy(alpha = 0.5f),
+                )
+            }
+        }
+
+        if (onPayClick != null) {
+            OutlinedButton(
+                onClick = onPayClick,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.primary
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = colorScheme.primary.copy(alpha = 0.5f)
+                )
+            ) {
+                Text(
+                    text = "Pagar Fatura",
+                    fontSize = 14.sp
                 )
             }
         }

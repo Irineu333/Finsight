@@ -119,7 +119,7 @@ private fun DashboardContent(
                 balance = uiState.balance.balance,
                 modifier = Modifier.fillMaxWidth(),
                 onEditClick = openEditBalance,
-                onClick = { openTransactions(null, Transaction.Target.ACCOUNT) }
+                onClick = null,
             )
         }
 
@@ -150,7 +150,7 @@ private fun DashboardContent(
                 modifier = Modifier
                     .padding(top = 16.dp)
                     .fillMaxWidth(),
-                onClick = { openTransactions(null, Transaction.Target.CREDIT_CARD) },
+                onClick = null,
                 onEditBill = openEditCreditCardBill,
                 onEditLimit = openEditCreditCardLimit,
                 onPayClick = openPayBill

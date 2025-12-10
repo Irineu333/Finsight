@@ -2,6 +2,9 @@
 
 package com.neoutils.finance.ui.modal.addCategory
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,6 +13,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
@@ -47,6 +53,7 @@ class AddCategoryModal(
         val name = rememberTextFieldState()
         var selectedIcon by remember { mutableStateOf(CategoryIcon.SHOPPING_CART) }
         var selectedType by remember { mutableStateOf(initialType) }
+        var isIconGridExpanded by remember { mutableStateOf(false) }
 
         val existingCategories by viewModel.existingCategories.collectAsState()
 
@@ -104,10 +111,12 @@ class AddCategoryModal(
                 icons = CategoryIcon.entries,
                 selectedIcon = selectedIcon,
                 selectedType = selectedType,
-                onIconSelected = { selectedIcon = it }
+                isExpanded = isIconGridExpanded,
+                onIconSelected = { selectedIcon = it },
+                onToggleExpand = { isIconGridExpanded = !isIconGridExpanded }
             )
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            HorizontalDivider()
 
             Button(
                 onClick = {
@@ -201,48 +210,81 @@ class AddCategoryModal(
         icons: List<CategoryIcon>,
         selectedIcon: CategoryIcon,
         selectedType: Category.Type,
-        onIconSelected: (CategoryIcon) -> Unit
+        isExpanded: Boolean,
+        onIconSelected: (CategoryIcon) -> Unit,
+        onToggleExpand: () -> Unit
     ) {
         val categoryColor = when (selectedType) {
             Category.Type.INCOME -> Income
             Category.Type.EXPENSE -> Expense
         }
 
-        FlowRow(
+        val visibleIcons = if (isExpanded) icons else icons.take(12)
+        val hiddenCount = icons.size - 12
+
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            icons.forEach { icon ->
-                val isSelected = icon == selectedIcon
-                Surface(
-                    onClick = { onIconSelected(icon) },
-                    color = colorScheme.surfaceContainerHighest,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .size(64.dp)
-                        .then(
-                            if (isSelected) {
-                                Modifier.border(
-                                    width = 2.dp,
-                                    color = categoryColor,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                            } else Modifier
-                        )
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                visibleIcons.forEach { icon ->
+                    val isSelected = icon == selectedIcon
+                    Surface(
+                        onClick = { onIconSelected(icon) },
+                        color = colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .then(
+                                if (isSelected) {
+                                    Modifier.border(
+                                        width = 2.dp,
+                                        color = categoryColor,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                } else Modifier
+                            )
                     ) {
-                        Icon(
-                            imageVector = icon.icon,
-                            contentDescription = icon.name,
-                            tint = if (isSelected) categoryColor else colorScheme.onSurface,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = icon.icon,
+                                contentDescription = icon.name,
+                                tint = if (isSelected) categoryColor else colorScheme.onSurface,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
                 }
+            }
+
+            OutlinedButton(
+                onClick = onToggleExpand,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.onSurfaceVariant
+                )
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = if (isExpanded) "Ver menos" else "Ver mais ($hiddenCount)",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }

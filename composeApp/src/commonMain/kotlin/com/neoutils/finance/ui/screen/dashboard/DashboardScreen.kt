@@ -98,7 +98,8 @@ private fun DashboardContent(
                 containerColor = colorScheme.background,
             ),
         )
-    }
+    },
+    contentWindowInsets = WindowInsets()
 ) { paddingValues ->
     LazyColumn(
         modifier = Modifier

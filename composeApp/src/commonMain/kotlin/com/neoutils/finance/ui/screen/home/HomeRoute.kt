@@ -21,4 +21,7 @@ sealed class AppRoute {
 
     @Serializable
     data object Categories : AppRoute()
+
+    @Serializable
+    data object CreditCards : AppRoute()
 }

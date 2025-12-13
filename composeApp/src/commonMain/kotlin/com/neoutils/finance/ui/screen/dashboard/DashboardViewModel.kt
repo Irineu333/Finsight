@@ -4,7 +4,7 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finance.data.repository.PreferencesRepository
+import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
@@ -19,8 +19,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
-    private val repository: ITransactionRepository,
-    private val preferencesRepository: PreferencesRepository,
+    private val transactionRepository: ITransactionRepository,
+    private val creditCardRepository: ICreditCardRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
@@ -32,9 +32,9 @@ class DashboardViewModel(
     private val currentMonth get() = instant.toYearMonth()
 
     val uiState = combine(
-        repository.observeAllTransactions(),
-        preferencesRepository.observeCreditCardLimit()
-    ) { transactions, creditCardLimit ->
+        transactionRepository.observeAllTransactions(),
+        creditCardRepository.getAllCreditCards()
+    ) { transactions, creditCards ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -46,10 +46,21 @@ class DashboardViewModel(
             forYearMonth = currentMonth
         )
 
-        val invoiceAmount = calculateCreditCardBillUseCase(
-            target = currentMonth,
-            transactions = transactions
-        )
+        val creditCardsWithBills = creditCards.map { creditCard ->
+            val billAmount = calculateCreditCardBillUseCase(
+                creditCardId = creditCard.id,
+                target = currentMonth,
+                transactions = transactions
+            )
+            CreditCardWithBill(
+                creditCard = creditCard,
+                billUi = creditCardBillUiMapper.toUi(
+                    bill = billAmount,
+                    limit = creditCard.limit
+                ),
+                billAmount = billAmount
+            )
+        }
 
         DashboardUiState(
             recents = stats.transactions.take(3),
@@ -63,11 +74,7 @@ class DashboardViewModel(
             ),
             yearMonth = currentMonth,
             categorySpending = categorySpending.take(3),
-            creditCardBill = creditCardBillUiMapper.toUi(
-                bill = invoiceAmount,
-                limit = creditCardLimit
-            ),
-            creditCardBillAmount = invoiceAmount
+            creditCards = creditCardsWithBills.take(3),
         )
     }.stateIn(
         scope = viewModelScope,

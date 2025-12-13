@@ -16,7 +16,8 @@ class TransactionMapper {
             title = entity.title,
             date = entity.date,
             category = category,
-            target = toDomain(entity.target)
+            target = toDomain(entity.target),
+            creditCardId = entity.creditCardId
         )
     }
 
@@ -30,7 +31,8 @@ class TransactionMapper {
             title = domain.title,
             date = domain.date,
             categoryId = domain.category?.id,
-            target = toEntity(domain.target)
+            target = toEntity(domain.target),
+            creditCardId = domain.creditCardId
         )
     }
 
@@ -76,3 +78,4 @@ class TransactionMapper {
         }
     }
 }
+

@@ -4,17 +4,23 @@ package com.neoutils.finance.di
 
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
+import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
+import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
+import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.payBill.PayBillViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
+import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
+import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardViewModel
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
+import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
@@ -32,16 +38,24 @@ val viewModelModule = module {
     }
 
     viewModel {
+        ViewAdjustmentViewModel(
+            transaction = it.get(),
+            creditCardRepository = get()
+        )
+    }
+
+    viewModel {
         ViewTransactionViewModel(
             transaction = it.get(),
             transactionRepository = get(),
+            creditCardRepository = get()
         )
     }
 
     viewModel {
         DashboardViewModel(
-            repository = get(),
-            preferencesRepository = get(),
+            transactionRepository = get(),
+            creditCardRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
@@ -69,9 +83,19 @@ val viewModelModule = module {
     }
 
     viewModel {
+        CreditCardsViewModel(
+            creditCardRepository = get(),
+            transactionRepository = get(),
+            calculateCreditCardBillUseCase = get(),
+            creditCardBillUiMapper = get()
+        )
+    }
+
+    viewModel {
         AddTransactionViewModel(
             transactionRepository = get(),
             categoryRepository = get(),
+            creditCardRepository = get(),
             modalManager = get()
         )
     }
@@ -102,6 +126,31 @@ val viewModelModule = module {
     }
 
     viewModel {
+        AddCreditCardViewModel(
+            addCreditCardUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        ViewCreditCardViewModel(
+            creditCard = it.get(),
+            initialBillAmount = it.get(),
+            creditCardRepository = get(),
+            transactionRepository = get(),
+            calculateCreditCardBillUseCase = get()
+        )
+    }
+
+    viewModel {
+        DeleteCreditCardViewModel(
+            creditCard = it.get(),
+            deleteCreditCardUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
         EditCategoryViewModel(
             category = it.get(),
             repository = get(),
@@ -122,6 +171,7 @@ val viewModelModule = module {
         EditBalanceViewModel(
             type = it.get(),
             targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
+            creditCardId = it.getOrNull(),
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
@@ -132,6 +182,7 @@ val viewModelModule = module {
 
     viewModel {
         PayBillViewModel(
+            creditCardId = it.get(),
             payBillUseCase = get(),
             modalManager = get()
         )
@@ -139,8 +190,18 @@ val viewModelModule = module {
 
     viewModel {
         EditCreditCardLimitViewModel(
-            getCreditCardLimitUseCase = get(),
-            setCreditCardLimitUseCase = get(),
+            creditCardId = it.get(),
+            creditCardRepository = get(),
+            transactionRepository = get(),
+            calculateCreditCardBillUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        EditCreditCardNameViewModel(
+            creditCardId = it.get(),
+            creditCardRepository = get(),
             modalManager = get()
         )
     }

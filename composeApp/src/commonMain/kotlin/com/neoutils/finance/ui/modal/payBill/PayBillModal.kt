@@ -38,10 +38,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class PayBillModal(
+    private val creditCardId: Long,
     private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
@@ -49,7 +51,7 @@ class PayBillModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<PayBillViewModel>(key = key)
+        val viewModel = koinViewModel<PayBillViewModel>(key = key) { parametersOf(creditCardId) }
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(currentBillAmount))

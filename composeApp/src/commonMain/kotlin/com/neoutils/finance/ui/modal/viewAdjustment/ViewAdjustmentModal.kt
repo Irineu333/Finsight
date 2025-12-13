@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, FormatStringsInDatetimeFormats::class)
 
-package com.neoutils.finance.ui.modal
+package com.neoutils.finance.ui.modal.viewAdjustment
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -17,12 +17,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -31,6 +33,8 @@ import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
     private val transaction: Transaction
@@ -42,6 +46,8 @@ class ViewAdjustmentModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewAdjustmentViewModel>(key = key) { parametersOf(transaction) }
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(
             modifier = Modifier
@@ -58,7 +64,7 @@ class ViewAdjustmentModal(
 
                 Column {
                     Text(
-                        text = "Ajuste de Saldo",
+                        text = if (uiState.transaction.target.isCreditCard) "Ajuste de Fatura" else "Ajuste de Saldo",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Adjustment
@@ -67,7 +73,7 @@ class ViewAdjustmentModal(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = transaction.title ?: "Ajuste de saldo",
+                        text = uiState.transaction.title ?: "Ajuste de saldo",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface
@@ -79,7 +85,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = "Valor Ajustado",
-                value = transaction.amount.toMoneyFormatWithSign(),
+                value = uiState.transaction.amount.toMoneyFormatWithSign(),
                 valueColor = Adjustment
             )
 
@@ -87,25 +93,34 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = "Data",
-                value = formats.dayMonthYear.format(transaction.date)
+                value = formats.dayMonthYear.format(uiState.transaction.date)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
                 label = "Tipo",
-                value = when (transaction.target) {
+                value = when (uiState.transaction.target) {
                     Transaction.Target.ACCOUNT -> "Conta"
                     Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
                     Transaction.Target.INVOICE_PAYMENT -> "Pagamento de Fatura"
                 }
             )
 
+            uiState.creditCardName?.let { cardName ->
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DetailRow(
+                    label = "Cartão",
+                    value = cardName,
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             OutlinedButton(
                 onClick = {
-                    manager.show(DeleteTransactionModal(transaction))
+                    manager.show(DeleteTransactionModal(uiState.transaction))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

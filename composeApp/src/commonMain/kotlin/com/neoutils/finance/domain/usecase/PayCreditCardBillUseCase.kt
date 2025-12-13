@@ -8,6 +8,7 @@ class PayCreditCardBillUseCase(
     private val repository: ITransactionRepository
 ) {
     suspend operator fun invoke(
+        creditCardId: Long,
         amount: Double,
         date: LocalDate
     ) {
@@ -19,9 +20,11 @@ class PayCreditCardBillUseCase(
             title = "Pagamento de Fatura",
             date = date,
             category = null,
-            target = Transaction.Target.INVOICE_PAYMENT
+            target = Transaction.Target.INVOICE_PAYMENT,
+            creditCardId = creditCardId
         )
 
         repository.insert(transaction)
     }
 }
+

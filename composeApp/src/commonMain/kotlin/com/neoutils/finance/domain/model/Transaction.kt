@@ -9,7 +9,8 @@ data class Transaction(
     val title: String?,
     val date: LocalDate,
     val category: Category? = null,
-    val target: Target = Target.ACCOUNT
+    val target: Target = Target.ACCOUNT,
+    val creditCardId: Long? = null
 ) {
     enum class Type {
         EXPENSE,

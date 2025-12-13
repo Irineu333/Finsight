@@ -19,11 +19,11 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
-import com.neoutils.finance.ui.modal.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
@@ -71,7 +71,8 @@ private fun TransactionsContent(
                     .padding(vertical = 8.dp)
                     .fillMaxWidth()
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(),
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

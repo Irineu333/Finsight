@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -25,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
@@ -48,6 +51,7 @@ class EditBalanceModal(
     private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
     private val currentBalance: Double,
+    private val creditCardId: Long? = null,
 ) : ModalBottomSheet() {
 
     private val initialCents = (currentBalance * 100).toLong()
@@ -57,11 +61,8 @@ class EditBalanceModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditBalanceViewModel>(key = key) {
-            parametersOf(type, targetMonth)
+            parametersOf(type, targetMonth, creditCardId)
         }
-
-        val manager = LocalModalManager.current
-
         val balanceState = rememberTextFieldState(formatMoney(initialCents))
 
         val newBalance by remember {
@@ -98,7 +99,7 @@ class EditBalanceModal(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             AnimatedContent(
                 targetState = adjustment,
@@ -126,54 +127,31 @@ class EditBalanceModal(
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                 ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = colorScheme.surfaceContainerHighest,
-                    unfocusedContainerColor = colorScheme.surfaceContainerHighest,
-                    focusedBorderColor = Adjustment,
-                    cursorColor = Adjustment,
-                    selectionColors = TextSelectionColors(
-                        handleColor = Adjustment,
-                        backgroundColor = Adjustment.copy(alpha = 0.4f)
-                    )
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
+            Button(
+                onClick = {
+                    viewModel.adjustBalance(newBalance)
+                },
+                enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Adjustment
+                ),
             ) {
-                OutlinedButton(
-                    onClick = { manager.dismiss() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "Cancelar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Button(
-                    onClick = {
-                        viewModel.adjustBalance(newBalance)
-                    },
-                    enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Adjustment
-                    ),
-                ) {
-                    Text(
-                        text = "Salvar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = "Salvar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

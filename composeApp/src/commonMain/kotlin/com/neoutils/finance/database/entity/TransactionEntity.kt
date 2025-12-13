@@ -13,6 +13,12 @@ import kotlinx.datetime.LocalDate
             parentColumns = ["id"],
             childColumns = ["categoryId"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = CreditCardEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["creditCardId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ]
 )
@@ -24,7 +30,8 @@ data class TransactionEntity(
     val title: String?,
     val date: LocalDate,
     val categoryId: Long? = null,
-    val target: Target = Target.ACCOUNT
+    val target: Target = Target.ACCOUNT,
+    val creditCardId: Long? = null
 ) {
     enum class Type {
         EXPENSE,
@@ -39,3 +46,4 @@ data class TransactionEntity(
         INVOICE_PAYMENT
     }
 }
+

@@ -9,12 +9,14 @@ import kotlin.time.ExperimentalTime
 
 class CalculateCreditCardBillUseCase {
     operator fun invoke(
+        creditCardId: Long,
         target: YearMonth,
         transactions: List<Transaction>
     ): Double {
         return transactions
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isCreditCard }
+            .filter { it.creditCardId == creditCardId }
             .sumOf { it.amount }
     }
 }

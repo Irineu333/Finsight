@@ -34,6 +34,7 @@ data class TransactionsUiState(
         val income: Double = 0.0,
         val expense: Double = 0.0,
         val adjustment: Double = 0.0,
+        val invoicePayment: Double = 0.0,
         val finalBalance: Double = 0.0
     )
 }

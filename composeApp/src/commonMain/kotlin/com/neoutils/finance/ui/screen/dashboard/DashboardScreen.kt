@@ -2,9 +2,13 @@
 
 package com.neoutils.finance.ui.screen.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material3.*
@@ -25,10 +29,13 @@ import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.modal.ViewAdjustmentModal
+import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
+import com.neoutils.finance.ui.modal.payBill.PayBillModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
+import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
 import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -38,6 +45,7 @@ private val formats = DateFormats()
 fun DashboardScreen(
     openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
     openCategories: () -> Unit = {},
+    openCreditCards: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -47,31 +55,12 @@ fun DashboardScreen(
         uiState = uiState,
         openTransactions = openTransactions,
         onOpenCategories = openCategories,
+        onOpenCreditCards = openCreditCards,
         modalManager = modalManager,
         openEditBalance = {
             modalManager.show(
                 EditBalanceModal(
                     currentBalance = uiState.balance.balance,
-                )
-            )
-        },
-        openEditCreditCardBill = {
-            modalManager.show(
-                EditBalanceModal(
-                    type = EditBalanceModal.Type.CREDIT_CARD,
-                    currentBalance = uiState.creditCardBillAmount,
-                )
-            )
-        },
-        openEditCreditCardLimit = {
-            modalManager.show(
-                com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal()
-            )
-        },
-        openPayBill = {
-            modalManager.show(
-                com.neoutils.finance.ui.modal.payBill.PayBillModal(
-                    currentBillAmount = uiState.creditCardBillAmount
                 )
             )
         }
@@ -82,10 +71,8 @@ fun DashboardScreen(
 private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     openEditBalance: () -> Unit,
-    openEditCreditCardBill: () -> Unit,
-    openEditCreditCardLimit: () -> Unit,
-    openPayBill: () -> Unit,
     onOpenCategories: () -> Unit,
+    onOpenCreditCards: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager
 ) = Scaffold(
@@ -107,8 +94,6 @@ private fun DashboardContent(
             .padding(paddingValues),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
-            start = 16.dp,
-            end = 16.dp,
             top = 8.dp,
             bottom = 16.dp,
         ),
@@ -117,7 +102,9 @@ private fun DashboardContent(
         item {
             BalanceCard(
                 balance = uiState.balance.balance,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 onEditClick = openEditBalance,
                 onClick = null,
             )
@@ -125,7 +112,9 @@ private fun DashboardContent(
 
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BalanceCard(
@@ -144,17 +133,109 @@ private fun DashboardContent(
             }
         }
 
-        item {
-            CreditCardBillCard(
-                uiModel = uiState.creditCardBill,
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .fillMaxWidth(),
-                onClick = null,
-                onEditBill = openEditCreditCardBill,
-                onEditLimit = openEditCreditCardLimit,
-                onPayClick = openPayBill
-            )
+        if (uiState.creditCards.isNotEmpty()) {
+
+            item {
+                val pagerState = rememberPagerState(
+                    pageCount = { uiState.creditCards.size }
+                )
+
+                Column(Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Cartões de Crédito",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+
+                        TextButton(
+                            onClick = onOpenCreditCards
+                        ) {
+                            Text(text = "Ver Todos")
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp
+                        ),
+                        pageSpacing = 8.dp
+                    ) { page ->
+                        val cardWithBill = uiState.creditCards[page]
+                        CreditCardBillCard(
+                            uiModel = cardWithBill.billUi,
+                            cardName = cardWithBill.creditCard.name,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                modalManager.show(
+                                    ViewCreditCardModal(
+                                        creditCard = cardWithBill.creditCard,
+                                        billAmount = cardWithBill.billAmount
+                                    )
+                                )
+                            },
+                            onEditBill = {
+                                modalManager.show(
+                                    EditBalanceModal(
+                                        type = EditBalanceModal.Type.CREDIT_CARD,
+                                        currentBalance = cardWithBill.billAmount,
+                                        creditCardId = cardWithBill.creditCard.id
+                                    )
+                                )
+                            },
+                            onEditLimit = {
+                                modalManager.show(
+                                    EditCreditCardLimitModal(
+                                        creditCardId = cardWithBill.creditCard.id
+                                    )
+                                )
+                            },
+                            onPayClick = {
+                                modalManager.show(
+                                    PayBillModal(
+                                        creditCardId = cardWithBill.creditCard.id,
+                                        currentBillAmount = cardWithBill.billAmount
+                                    )
+                                )
+                            }
+                        )
+                    }
+
+                    if (uiState.creditCards.size > 1) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            repeat(uiState.creditCards.size) { index ->
+                                val isSelected = pagerState.currentPage == index
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .size(if (isSelected) 8.dp else 6.dp)
+                                        .background(
+                                            color = if (isSelected) colorScheme.primary else colorScheme.outline,
+                                            shape = CircleShape
+                                        )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         if (uiState.categorySpending.isNotEmpty()) {
@@ -163,6 +244,7 @@ private fun DashboardContent(
                     categorySpending = uiState.categorySpending,
                     modifier = Modifier
                         .padding(top = 16.dp)
+                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .animateItem(),
                     onCategoryClick = { category ->
@@ -179,7 +261,8 @@ private fun DashboardContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -198,14 +281,12 @@ private fun DashboardContent(
             }
         }
 
-        items(
-            items = uiState.recents,
-            key = { it.id },
-        ) { transaction ->
+        items(items = uiState.recents) { transaction ->
             TransactionCard(
                 transaction = transaction,
                 category = transaction.category,
                 modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .fillMaxWidth()
                     .animateItem(),
                 onClick = {
@@ -233,7 +314,10 @@ private fun DashboardContent(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
                 ),
-                modifier = Modifier.padding(top = 24.dp),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 24.dp)
+                    .fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -241,6 +325,35 @@ private fun DashboardContent(
                 ) {
                     Text(
                         text = "Categorias",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                onClick = onOpenCreditCards,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Cartões de Crédito",
                         modifier = Modifier.weight(1f),
                     )
                     Icon(

@@ -35,20 +35,27 @@ fun CategorySpendingCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+                .padding(vertical = 16.dp)
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = "Gastos por Categoria",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             categorySpending.forEach { spending ->
                 CategorySpendingItem(
                     spending = spending,
-                    onClick = { onCategoryClick(spending.category) }
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clickable(
+                            onClick = {
+                                onCategoryClick(spending.category)
+                            }
+                        )
                 )
             }
         }
@@ -58,14 +65,12 @@ fun CategorySpendingCard(
 @Composable
 private fun CategorySpendingItem(
     spending: CategorySpending,
-    onClick: () -> Unit = {}
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .height(IntrinsicSize.Min)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -22,6 +22,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.util.TransactionTargetNavType
 import com.neoutils.finance.util.TransactionTypeNavType
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
+import com.neoutils.finance.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finance.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -42,12 +43,23 @@ fun AppNavHost() = Surface {
                 HomeScreen(
                     openCategories = {
                         navController.navigate(AppRoute.Categories)
+                    },
+                    openCreditCards = {
+                        navController.navigate(AppRoute.CreditCards)
                     }
                 )
             }
 
             composable<AppRoute.Categories> {
                 CategoriesScreen(
+                    onNavigateBack = {
+                        navController.navigateUp()
+                    }
+                )
+            }
+
+            composable<AppRoute.CreditCards> {
+                CreditCardsScreen(
                     onNavigateBack = {
                         navController.navigateUp()
                     }
@@ -60,6 +72,7 @@ fun AppNavHost() = Surface {
 @Composable
 fun HomeScreen(
     openCategories: () -> Unit = {},
+    openCreditCards: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -111,6 +124,7 @@ fun HomeScreen(
                         )
                     },
                     openCategories = openCategories,
+                    openCreditCards = openCreditCards,
                 )
             }
 
@@ -130,3 +144,4 @@ fun HomeScreen(
         }
     }
 }
+

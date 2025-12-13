@@ -38,6 +38,7 @@ import com.neoutils.finance.ui.model.CreditCardBillUi
 fun CreditCardBillCard(
     uiModel: CreditCardBillUi,
     modifier: Modifier = Modifier,
+    cardName: String? = null,
     onClick: (() -> Unit)? = null,
     onEditBill: (() -> Unit)? = null,
     onEditLimit: (() -> Unit)? = null,
@@ -80,7 +81,7 @@ fun CreditCardBillCard(
                     )
 
                     Text(
-                        text = "Cartão de Crédito",
+                        text = cardName ?: "Cartão de Crédito",
                         fontSize = 14.sp,
                         color = colorScheme.onSurfaceVariant
                     )

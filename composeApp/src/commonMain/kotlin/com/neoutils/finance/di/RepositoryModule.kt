@@ -2,9 +2,12 @@ package com.neoutils.finance.di
 
 import com.neoutils.finance.data.repository.PreferencesRepository
 import com.neoutils.finance.data.repository.PreferencesRepositoryImpl
+import com.neoutils.finance.database.AppDatabase
 import com.neoutils.finance.database.repository.CategoryRepository
+import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.database.repository.TransactionRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.russhwolf.settings.Settings
 import org.koin.dsl.module
@@ -19,6 +22,13 @@ val repositoryModule = module {
         CategoryRepository(
             dao = get(),
             mapper = get(),
+        )
+    }
+
+    single<ICreditCardRepository> {
+        CreditCardRepository(
+            dao = get<AppDatabase>().creditCardDao(),
+            mapper = get()
         )
     }
 

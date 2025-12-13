@@ -13,10 +13,12 @@ class AdjustCreditCardBillUseCase(
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase
 ) {
     suspend operator fun invoke(
+        creditCardId: Long,
         targetBill: Double,
         adjustmentDate: LocalDate
     ) {
         val currentBill = calculateCreditCardBillUseCase(
+            creditCardId = creditCardId,
             target = adjustmentDate.yearMonth,
             transactions = repository.getAllTransactions()
         )
@@ -26,7 +28,7 @@ class AdjustCreditCardBillUseCase(
         val existingAdjustment = repository.getTransactionByTypeAndDate(
             type = Transaction.Type.ADJUSTMENT,
             date = adjustmentDate
-        )?.takeIf { it.target.isCreditCard }
+        )?.takeIf { it.target.isCreditCard && it.creditCardId == creditCardId }
 
         val difference = targetBill - currentBill
 
@@ -37,7 +39,8 @@ class AdjustCreditCardBillUseCase(
                     amount = difference,
                     title = "Ajuste de Fatura",
                     date = adjustmentDate,
-                    target = Transaction.Target.CREDIT_CARD
+                    target = Transaction.Target.CREDIT_CARD,
+                    creditCardId = creditCardId
                 )
             )
             return
@@ -55,3 +58,4 @@ class AdjustCreditCardBillUseCase(
         )
     }
 }
+

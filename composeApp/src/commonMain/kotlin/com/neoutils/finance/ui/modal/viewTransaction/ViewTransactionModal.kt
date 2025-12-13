@@ -156,6 +156,14 @@ class ViewTransactionModal(
                 )
             }
 
+            uiState.creditCardName?.let { cardName ->
+                DetailRow(
+                    label = "Cartão",
+                    value = cardName,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             Row(

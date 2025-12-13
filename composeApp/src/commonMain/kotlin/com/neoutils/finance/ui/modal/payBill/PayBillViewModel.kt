@@ -11,6 +11,7 @@ import kotlinx.datetime.LocalDate
 import kotlin.time.ExperimentalTime
 
 class PayBillViewModel(
+    private val creditCardId: Long,
     private val payBillUseCase: PayCreditCardBillUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
@@ -21,6 +22,7 @@ class PayBillViewModel(
     ) {
         viewModelScope.launch {
             payBillUseCase(
+                creditCardId = creditCardId,
                 amount = amount,
                 date = date
             )
@@ -28,3 +30,4 @@ class PayBillViewModel(
         }
     }
 }
+

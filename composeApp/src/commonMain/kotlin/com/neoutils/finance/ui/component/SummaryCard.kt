@@ -25,6 +25,7 @@ import com.neoutils.finance.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.TextLight1
 
 @Composable
@@ -79,6 +80,14 @@ fun SummaryCard(
                         color = Expense,
                         signDisplay = SignDisplay.ALWAYS_NEGATIVE
                     )
+
+                    if (balanceOverview.invoicePayment != 0.0) {
+                        SummaryRow(
+                            label = "Faturas",
+                            amount = balanceOverview.invoicePayment,
+                            color = InvoicePayment,
+                        )
+                    }
 
                     if (balanceOverview.adjustment != 0.0) {
                         SummaryRow(

@@ -66,6 +66,7 @@ class TransactionsViewModel(
                 income = stats.income,
                 expense = stats.expense,
                 adjustment = stats.adjustment,
+                invoicePayment = stats.invoicePayment,
                 initialBalance = calculateBalanceUseCase(
                     target = yearMonth.minusMonth(),
                     transactions = transactions,

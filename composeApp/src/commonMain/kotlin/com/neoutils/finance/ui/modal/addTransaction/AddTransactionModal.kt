@@ -39,8 +39,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.CategorySelector
+import com.neoutils.finance.ui.component.CreditCardSelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.component.TargetSelector
@@ -74,6 +76,7 @@ class AddTransactionModal : ModalBottomSheet() {
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
+        var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
 
         Column(
             modifier = Modifier
@@ -110,6 +113,19 @@ class AddTransactionModal : ModalBottomSheet() {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+
+            AnimatedVisibility(
+                visible = type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.creditCards.isNotEmpty()
+            ) {
+                CreditCardSelector(
+                    creditCards = uiState.creditCards,
+                    selectedCreditCard = selectedCreditCard,
+                    onCreditCardSelected = { selectedCreditCard = it },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -189,6 +205,11 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
+                    val transactionTarget = if (type.isExpense) target else Transaction.Target.ACCOUNT
+                    val creditCardId = if (transactionTarget == Transaction.Target.CREDIT_CARD) {
+                        selectedCreditCard?.id
+                    } else null
+
                     viewModel.addTransaction(
                         transaction = Transaction(
                             type = type,
@@ -196,7 +217,8 @@ class AddTransactionModal : ModalBottomSheet() {
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
                             category = selectedCategory,
-                            target = if (type.isExpense) target else Transaction.Target.ACCOUNT
+                            target = transactionTarget,
+                            creditCardId = creditCardId
                         )
                     )
                 },
@@ -204,7 +226,11 @@ class AddTransactionModal : ModalBottomSheet() {
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
-                    hasCategory = selectedCategory != null
+                    hasCategory = selectedCategory != null,
+                    target = target,
+                    hasCreditCard = selectedCreditCard != null,
+                    isExpense = type.isExpense,
+                    hasCreditCards = uiState.creditCards.isNotEmpty()
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -289,7 +315,11 @@ class AddTransactionModal : ModalBottomSheet() {
         amount: String,
         date: String,
         title: String,
-        hasCategory: Boolean
+        hasCategory: Boolean,
+        target: Transaction.Target,
+        hasCreditCard: Boolean,
+        isExpense: Boolean,
+        hasCreditCards: Boolean
     ): Boolean {
 
         if (amount.isEmpty()) return false
@@ -299,6 +329,10 @@ class AddTransactionModal : ModalBottomSheet() {
         if (date.isEmpty()) return false
 
         if (title.isEmpty() && !hasCategory) return false
+
+        if (isExpense && target == Transaction.Target.CREDIT_CARD && hasCreditCards && !hasCreditCard) {
+            return false
+        }
 
         return true
     }

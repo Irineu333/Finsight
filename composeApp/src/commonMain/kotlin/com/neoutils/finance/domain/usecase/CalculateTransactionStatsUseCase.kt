@@ -21,6 +21,9 @@ class CalculateTransactionStatsUseCase {
             adjustment = monthTransactions
                 .filter { it.type.isAdjustment }
                 .sumOf { it.amount },
+            invoicePayment = monthTransactions
+                .filter { it.type.isInvoicePayment }
+                .sumOf { it.amount },
             transactions = monthTransactions,
         )
     }
@@ -29,6 +32,7 @@ class CalculateTransactionStatsUseCase {
         val income: Double,
         val expense: Double,
         val adjustment: Double,
+        val invoicePayment: Double,
         val transactions: List<Transaction>
     )
 }

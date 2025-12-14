@@ -26,6 +26,10 @@ fun TargetSelector(
     selectedTarget: Transaction.Target,
     onTargetSelected: (Transaction.Target) -> Unit,
     modifier: Modifier = Modifier,
+    availableTargets: List<Transaction.Target> = listOf(
+        Transaction.Target.ACCOUNT,
+        Transaction.Target.CREDIT_CARD
+    )
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -59,31 +63,24 @@ fun TargetSelector(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = "Conta",
-                        fontSize = 14.sp
-                    )
-                },
-                onClick = {
-                    onTargetSelected(Transaction.Target.ACCOUNT)
-                    expanded = false
-                }
-            )
-
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = "Cartão de Crédito",
-                        fontSize = 14.sp
-                    )
-                },
-                onClick = {
-                    onTargetSelected(Transaction.Target.CREDIT_CARD)
-                    expanded = false
-                }
-            )
+            availableTargets.forEach { target ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = when (target) {
+                                Transaction.Target.ACCOUNT -> "Conta"
+                                Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                                Transaction.Target.INVOICE_PAYMENT -> "Ambas"
+                            },
+                            fontSize = 14.sp
+                        )
+                    },
+                    onClick = {
+                        onTargetSelected(target)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

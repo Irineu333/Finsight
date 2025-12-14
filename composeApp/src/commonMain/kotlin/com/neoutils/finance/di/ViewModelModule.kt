@@ -104,6 +104,7 @@ val viewModelModule = module {
         EditTransactionViewModel(
             transactionRepository = get(),
             categoryRepository = get(),
+            creditCardRepository = get(),
             modalManager = get()
         )
     }

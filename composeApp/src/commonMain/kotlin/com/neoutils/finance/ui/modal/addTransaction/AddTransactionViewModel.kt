@@ -37,6 +37,10 @@ class AddTransactionViewModel(
     fun addTransaction(
         transaction: Transaction
     ) = viewModelScope.launch {
+        if (transaction.target == Transaction.Target.CREDIT_CARD && transaction.creditCardId == null) {
+            return@launch
+        }
+        
         transactionRepository.insert(transaction)
         modalManager.dismiss()
     }

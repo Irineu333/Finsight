@@ -25,7 +25,9 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +80,23 @@ class AddTransactionModal : ModalBottomSheet() {
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
         var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
 
+        val availableTargets by remember {
+            derivedStateOf {
+                if (uiState.creditCards.isEmpty()) {
+                    listOf(Transaction.Target.ACCOUNT)
+                } else {
+                    listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
+                }
+            }
+        }
+
+        LaunchedEffect(uiState.creditCards.isEmpty()) {
+            if (uiState.creditCards.isEmpty() && target == Transaction.Target.CREDIT_CARD) {
+                target = Transaction.Target.ACCOUNT
+                selectedCreditCard = null
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -109,10 +128,11 @@ class AddTransactionModal : ModalBottomSheet() {
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            AnimatedVisibility(type.isExpense) {
+            AnimatedVisibility(type.isExpense && uiState.creditCards.isNotEmpty()) {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
+                    availableTargets = availableTargets,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -330,8 +350,9 @@ class AddTransactionModal : ModalBottomSheet() {
 
         if (title.isEmpty() && !hasCategory) return false
 
-        if (isExpense && target == Transaction.Target.CREDIT_CARD && hasCreditCards && !hasCreditCard) {
-            return false
+        if (isExpense && target == Transaction.Target.CREDIT_CARD) {
+            if (!hasCreditCards) return false
+            if (!hasCreditCard) return false
         }
 
         return true

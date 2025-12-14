@@ -131,5 +131,16 @@ private fun List<Transaction>.filter(
     target: Transaction.Target?
 ): List<Transaction> {
     if (target == null) return this
-    return filter { it.target == target }
+    return filter { transaction ->
+        when (target) {
+            Transaction.Target.ACCOUNT -> 
+                transaction.target == Transaction.Target.ACCOUNT || 
+                transaction.target == Transaction.Target.INVOICE_PAYMENT
+            Transaction.Target.CREDIT_CARD -> 
+                transaction.target == Transaction.Target.CREDIT_CARD || 
+                transaction.target == Transaction.Target.INVOICE_PAYMENT
+            Transaction.Target.INVOICE_PAYMENT -> 
+                transaction.target == Transaction.Target.INVOICE_PAYMENT
+        }
+    }
 }

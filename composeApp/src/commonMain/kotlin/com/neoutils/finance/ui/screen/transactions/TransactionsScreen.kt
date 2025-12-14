@@ -365,7 +365,7 @@ private fun TargetFilterChip(
                 when (selectedTarget) {
                     Transaction.Target.ACCOUNT -> "Conta"
                     Transaction.Target.CREDIT_CARD -> "Cartão"
-                    Transaction.Target.INVOICE_PAYMENT -> "Ambas"
+                    Transaction.Target.INVOICE_PAYMENT -> "Conta"
                     null -> "Conta"
                 }
             )
@@ -390,22 +390,20 @@ private fun TargetFilterChip(
             }
         )
 
-        Transaction.Target.entries.forEach { target ->
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        when (target) {
-                            Transaction.Target.ACCOUNT -> "Conta"
-                            Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                            Transaction.Target.INVOICE_PAYMENT -> "Ambas"
-                        }
-                    )
-                },
-                onClick = {
-                    onAction(TransactionsAction.SelectTarget(target))
-                    expanded = false
-                }
-            )
-        }
+        DropdownMenuItem(
+            text = { Text("Conta") },
+            onClick = {
+                onAction(TransactionsAction.SelectTarget(Transaction.Target.ACCOUNT))
+                expanded = false
+            }
+        )
+
+        DropdownMenuItem(
+            text = { Text("Cartão de Crédito") },
+            onClick = {
+                onAction(TransactionsAction.SelectTarget(Transaction.Target.CREDIT_CARD))
+                expanded = false
+            }
+        )
     }
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.CreditCardSelector
@@ -54,10 +55,9 @@ class EditTransactionModal(
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
-        var selectedCreditCard by remember { mutableStateOf(transaction.creditCardId?.let { id ->
-            uiState.creditCards.find { it.id == id }
-        }) }
+        var selectedCategory by remember(type) { mutableStateOf(transaction.category) }
+
+        var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
 
         val availableTargets by remember {
             derivedStateOf {
@@ -69,15 +69,10 @@ class EditTransactionModal(
             }
         }
 
-        LaunchedEffect(uiState.creditCards.isEmpty()) {
-            if (uiState.creditCards.isEmpty() && target == Transaction.Target.CREDIT_CARD) {
-                target = Transaction.Target.ACCOUNT
-                selectedCreditCard = null
+        LaunchedEffect(uiState.creditCards) {
+            selectedCreditCard = transaction.creditCardId?.let { id ->
+                uiState.creditCards.find { it.id == id }
             }
-        }
-
-        LaunchedEffect(transaction.category) {
-            selectedCategory = transaction.category
         }
 
         Column(
@@ -119,7 +114,7 @@ class EditTransactionModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            AnimatedVisibility(type.isExpense && uiState.creditCards.isNotEmpty()) {
+            AnimatedVisibility(type.isExpense) {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
@@ -131,7 +126,8 @@ class EditTransactionModal(
             }
 
             AnimatedVisibility(
-                visible = type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.creditCards.isNotEmpty()
+                type.isExpense &&
+                        target == Transaction.Target.CREDIT_CARD
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,

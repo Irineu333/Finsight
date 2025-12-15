@@ -11,15 +11,24 @@ class CalculateTransactionStatsUseCase {
     ): TransactionStats {
         val monthTransactions = transactions.filter { it.date.yearMonth == forYearMonth }
 
+        val expense = monthTransactions.filter { it.type.isExpense }
+        val adjustment = monthTransactions.filter { it.type.isAdjustment }
+
         return TransactionStats(
             income = monthTransactions
                 .filter { it.type.isIncome }
                 .sumOf { it.amount },
-            expense = monthTransactions
-                .filter { it.type.isExpense }
+            accountExpense = expense
+                .filter { it.target.isAccount }
                 .sumOf { it.amount },
-            adjustment = monthTransactions
-                .filter { it.type.isAdjustment }
+            creditCardExpense = expense
+                .filter { it.target.isCreditCard }
+                .sumOf { it.amount },
+            accountAdjustment = adjustment
+                .filter { it.target.isAccount }
+                .sumOf { it.amount },
+            creditCardAdjustment = adjustment
+                .filter { it.target.isCreditCard }
                 .sumOf { it.amount },
             invoicePayment = monthTransactions
                 .filter { it.type.isInvoicePayment }
@@ -30,9 +39,13 @@ class CalculateTransactionStatsUseCase {
 
     data class TransactionStats(
         val income: Double,
-        val expense: Double,
-        val adjustment: Double,
+        val accountExpense: Double,
+        val creditCardExpense: Double,
+        val accountAdjustment: Double,
+        val creditCardAdjustment: Double,
         val invoicePayment: Double,
         val transactions: List<Transaction>
-    )
+    ) {
+        val expense = accountExpense + creditCardExpense
+    }
 }

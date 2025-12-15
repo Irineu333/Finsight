@@ -32,9 +32,14 @@ data class TransactionsUiState(
     data class BalanceOverview(
         val initialBalance: Double = 0.0,
         val income: Double = 0.0,
-        val expense: Double = 0.0,
-        val adjustment: Double = 0.0,
+        val accountExpense: Double = 0.0,
+        val creditCardExpense: Double = 0.0,
+        val accountAdjustment: Double = 0.0,
+        val creditCardAdjustment: Double = 0.0,
         val invoicePayment: Double = 0.0,
         val finalBalance: Double = 0.0
-    )
+    ) {
+        val mustShowInvoicePayment = invoicePayment != 0.0
+        val mustShowAccountAdjustment = accountAdjustment != 0.0
+    }
 }

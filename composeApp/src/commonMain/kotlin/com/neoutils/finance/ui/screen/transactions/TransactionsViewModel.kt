@@ -64,8 +64,10 @@ class TransactionsViewModel(
                 .groupBy { it.date },
             balanceOverview = TransactionsUiState.BalanceOverview(
                 income = stats.income,
-                expense = stats.expense,
-                adjustment = stats.adjustment,
+                accountExpense = stats.accountExpense,
+                creditCardExpense = stats.creditCardExpense,
+                accountAdjustment = stats.accountAdjustment,
+                creditCardAdjustment = stats.creditCardAdjustment,
                 invoicePayment = stats.invoicePayment,
                 initialBalance = calculateBalanceUseCase(
                     target = yearMonth.minusMonth(),

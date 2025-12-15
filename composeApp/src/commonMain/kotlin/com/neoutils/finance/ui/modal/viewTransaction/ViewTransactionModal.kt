@@ -27,6 +27,7 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.icons.CategoryIcon
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
+import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.InvoicePayment
@@ -150,7 +151,7 @@ class ViewTransactionModal(
                     value = when (uiState.transaction.target) {
                         Transaction.Target.ACCOUNT -> "Conta"
                         Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                        Transaction.Target.INVOICE_PAYMENT -> "Ambas"
+                        else -> error("Invalid type")
                     },
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -174,7 +175,11 @@ class ViewTransactionModal(
                     onClick = {
                         manager.show(DeleteTransactionModal(uiState.transaction))
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = if (uiState.transaction.type == Transaction.Type.ADJUSTMENT) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.weight(1f)
+                    },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = colorScheme.error,
@@ -197,31 +202,37 @@ class ViewTransactionModal(
                     )
                 }
 
-                OutlinedButton(
-                    onClick = {
-                        manager.show(EditTransactionModal(uiState.transaction))
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Info,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = Info,
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "Editar",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                if (uiState.transaction.type != Transaction.Type.ADJUSTMENT) {
+                    OutlinedButton(
+                        onClick = {
+                            val modal = when (uiState.transaction.type) {
+                                Transaction.Type.INVOICE_PAYMENT -> EditInvoicePaymentModal(uiState.transaction)
+                                else -> EditTransactionModal(uiState.transaction)
+                            }
+                            manager.show(modal)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Info,
+                        ),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = Info,
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Editar",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

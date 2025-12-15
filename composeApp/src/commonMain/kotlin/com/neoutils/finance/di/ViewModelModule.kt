@@ -13,6 +13,7 @@ import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameViewModel
+import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.payBill.PayBillViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
@@ -203,6 +204,14 @@ val viewModelModule = module {
         EditCreditCardNameViewModel(
             creditCardId = it.get(),
             creditCardRepository = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        EditInvoicePaymentViewModel(
+            transaction = it.get(),
+            transactionRepository = get(),
             modalManager = get()
         )
     }

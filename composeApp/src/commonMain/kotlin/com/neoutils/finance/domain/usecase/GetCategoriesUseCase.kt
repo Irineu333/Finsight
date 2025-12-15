@@ -11,7 +11,7 @@ class GetCategoriesUseCase(
         return if (type != null) {
             repository.getCategoriesByType(type)
         } else {
-            repository.getAllCategories()
+            repository.observeAllCategories()
         }
     }
 }

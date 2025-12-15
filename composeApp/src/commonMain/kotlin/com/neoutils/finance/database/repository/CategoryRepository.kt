@@ -11,13 +11,13 @@ class CategoryRepository(
     private val dao: CategoryDao,
     private val mapper: CategoryMapper,
 ) : ICategoryRepository {
-    override fun getAllCategories(): Flow<List<Category>> {
+    override fun observeAllCategories(): Flow<List<Category>> {
         return dao.getAllCategories().map { entities ->
             entities.map { mapper.toDomain(it) }
         }
     }
 
-    override suspend fun getAllCategoriesDirect(): List<Category> {
+    override suspend fun getAllCategories(): List<Category> {
         return dao.getAllCategoriesDirect().map { mapper.toDomain(it) }
     }
 

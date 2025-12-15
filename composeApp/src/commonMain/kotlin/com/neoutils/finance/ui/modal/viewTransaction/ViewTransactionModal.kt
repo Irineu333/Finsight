@@ -157,10 +157,10 @@ class ViewTransactionModal(
                 )
             }
 
-            uiState.creditCardName?.let { cardName ->
+            uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
                     label = "Cartão",
-                    value = cardName,
+                    value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

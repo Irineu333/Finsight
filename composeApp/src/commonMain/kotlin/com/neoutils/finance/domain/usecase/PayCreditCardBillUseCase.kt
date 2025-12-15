@@ -1,11 +1,14 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
 class PayCreditCardBillUseCase(
-    private val repository: ITransactionRepository
+    private val repository: ITransactionRepository,
+    private val creditCardRepository: ICreditCardRepository,
 ) {
     suspend operator fun invoke(
         creditCardId: Long,
@@ -21,7 +24,7 @@ class PayCreditCardBillUseCase(
             date = date,
             category = null,
             target = Transaction.Target.INVOICE_PAYMENT,
-            creditCardId = creditCardId
+            creditCard = creditCardRepository.getCreditCardById(creditCardId),
         )
 
         repository.insert(transaction)

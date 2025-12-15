@@ -25,7 +25,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -220,20 +219,15 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
-                    val transactionTarget = if (type.isExpense) target else Transaction.Target.ACCOUNT
-                    val creditCardId = if (transactionTarget == Transaction.Target.CREDIT_CARD) {
-                        selectedCreditCard?.id
-                    } else null
-
                     viewModel.addTransaction(
                         transaction = Transaction(
                             type = type,
                             amount = parseMoneyToDouble(amount.text.toString()),
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
-                            category = selectedCategory,
-                            target = transactionTarget,
-                            creditCardId = creditCardId
+                            category = selectedCategory?.takeIf { it.type.isAccept(type) },
+                            target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
+                            creditCard = selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
                         )
                     )
                 },
@@ -323,6 +317,13 @@ class AddTransactionModal : ModalBottomSheet() {
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
+        }
+    }
+
+    private fun Category.Type.isAccept(type: Transaction.Type): Boolean {
+        return when (this) {
+            Category.Type.EXPENSE -> type.isExpense
+            Category.Type.INCOME -> type.isIncome
         }
     }
 

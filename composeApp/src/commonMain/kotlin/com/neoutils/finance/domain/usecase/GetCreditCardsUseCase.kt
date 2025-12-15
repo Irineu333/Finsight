@@ -7,5 +7,5 @@ import kotlinx.coroutines.flow.Flow
 class GetCreditCardsUseCase(
     private val repository: ICreditCardRepository
 ) {
-    operator fun invoke(): Flow<List<CreditCard>> = repository.getAllCreditCards()
+    operator fun invoke(): Flow<List<CreditCard>> = repository.observeAllCreditCards()
 }

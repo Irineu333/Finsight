@@ -16,10 +16,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -45,7 +43,7 @@ class TransactionsViewModel(
 
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
-        categoryRepository.getAllCategories(),
+        categoryRepository.observeAllCategories(),
         selectedYearMonth,
         filters
     ) { transactions, categories, yearMonth, filters ->

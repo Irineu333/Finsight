@@ -2,12 +2,14 @@ package com.neoutils.finance.database.mapper
 
 import com.neoutils.finance.database.entity.TransactionEntity
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
 
 class TransactionMapper {
     fun toDomain(
         entity: TransactionEntity,
-        category: Category?
+        category: Category?,
+        creditCard: CreditCard?
     ): Transaction {
         return Transaction(
             id = entity.id,
@@ -17,7 +19,7 @@ class TransactionMapper {
             date = entity.date,
             category = category,
             target = toDomain(entity.target),
-            creditCardId = entity.creditCardId
+            creditCard = creditCard,
         )
     }
 
@@ -32,7 +34,7 @@ class TransactionMapper {
             date = domain.date,
             categoryId = domain.category?.id,
             target = toEntity(domain.target),
-            creditCardId = domain.creditCardId
+            creditCardId = domain.creditCard?.id,
         )
     }
 

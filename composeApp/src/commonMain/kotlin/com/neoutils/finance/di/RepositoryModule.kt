@@ -36,6 +36,8 @@ val repositoryModule = module {
         TransactionRepository(
             dao = get(),
             categoryRepository = get(),
+            creditCardRepository = get(),
+            mapper = get(),
         )
     }
 }

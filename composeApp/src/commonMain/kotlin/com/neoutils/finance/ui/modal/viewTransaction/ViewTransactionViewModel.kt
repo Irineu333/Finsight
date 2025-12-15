@@ -11,31 +11,28 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.ExperimentalTime
 
 class ViewTransactionViewModel(
     private val transaction: Transaction,
     private val transactionRepository: ITransactionRepository,
-    private val creditCardRepository: ICreditCardRepository
 ) : ViewModel() {
 
     private val transactionFlow = transactionRepository
         .observeTransactionById(transaction.id)
         .filterNotNull()
 
-    private val creditCardFlow = transaction.creditCardId?.let {
-        creditCardRepository.observeCreditCardById(it)
-    } ?: flowOf(null)
-
-    val uiState = combine(transactionFlow, creditCardFlow) { transaction, creditCard ->
+    val uiState = transactionFlow.map { transaction ->
         ViewTransactionUiState(
             transaction = transaction,
-            creditCardName = creditCard?.name
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ViewTransactionUiState(transaction = transaction)
+        initialValue = ViewTransactionUiState(
+            transaction = transaction
+        )
     )
 }

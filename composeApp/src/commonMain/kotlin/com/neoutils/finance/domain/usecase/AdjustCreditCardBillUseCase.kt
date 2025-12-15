@@ -2,7 +2,9 @@
 
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
@@ -10,7 +12,8 @@ import kotlin.time.ExperimentalTime
 
 class AdjustCreditCardBillUseCase(
     private val repository: ITransactionRepository,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase
+    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
+    private val creditCardRepository: ICreditCardRepository,
 ) {
     suspend operator fun invoke(
         creditCardId: Long,
@@ -28,7 +31,7 @@ class AdjustCreditCardBillUseCase(
         val existingAdjustment = repository.getTransactionByTypeAndDate(
             type = Transaction.Type.ADJUSTMENT,
             date = adjustmentDate
-        )?.takeIf { it.target.isCreditCard && it.creditCardId == creditCardId }
+        )?.takeIf { it.target.isCreditCard && it.creditCard?.id == creditCardId }
 
         val difference = targetBill - currentBill
 
@@ -40,7 +43,7 @@ class AdjustCreditCardBillUseCase(
                     title = "Ajuste de Fatura",
                     date = adjustmentDate,
                     target = Transaction.Target.CREDIT_CARD,
-                    creditCardId = creditCardId
+                    creditCard = creditCardRepository.getCreditCardById(creditCardId),
                 )
             )
             return

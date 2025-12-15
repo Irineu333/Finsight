@@ -25,7 +25,7 @@ class CreditCardsViewModel(
     private val currentMonth get() = Clock.System.now().toYearMonth()
 
     val uiState = combine(
-        creditCardRepository.getAllCreditCards(),
+        creditCardRepository.observeAllCreditCards(),
         transactionRepository.observeAllTransactions()
     ) { creditCards, transactions ->
         CreditCardsUiState(

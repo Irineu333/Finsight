@@ -33,7 +33,7 @@ class DashboardViewModel(
 
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
-        creditCardRepository.getAllCreditCards()
+        creditCardRepository.observeAllCreditCards()
     ) { transactions, creditCards ->
 
         val stats = calculateTransactionStatsUseCase(

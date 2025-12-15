@@ -4,8 +4,8 @@ import com.neoutils.finance.domain.model.Category
 import kotlinx.coroutines.flow.Flow
 
 interface ICategoryRepository {
-    fun getAllCategories(): Flow<List<Category>>
-    suspend fun getAllCategoriesDirect(): List<Category>
+    fun observeAllCategories(): Flow<List<Category>>
+    suspend fun getAllCategories(): List<Category>
     fun getCategoriesByType(type: Category.Type): Flow<List<Category>>
     suspend fun getCategoryById(id: Long): Category?
     fun observeCategoryById(id: Long): Flow<Category?>

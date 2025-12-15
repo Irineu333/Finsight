@@ -107,12 +107,13 @@ class ViewAdjustmentModal(
                 }
             )
 
-            uiState.creditCardName?.let { cardName ->
-                Spacer(modifier = Modifier.height(8.dp))
-
+            uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
                     label = "Cartão",
-                    value = cardName,
+                    value = creditCard.name,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
                 )
             }
 
@@ -172,10 +173,11 @@ class ViewAdjustmentModal(
     private fun DetailRow(
         label: String,
         value: String,
+        modifier: Modifier = Modifier,
         valueColor: Color = colorScheme.onSurface
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(

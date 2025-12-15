@@ -12,10 +12,14 @@ class CreditCardRepository(
     private val mapper: CreditCardMapper
 ) : ICreditCardRepository {
 
-    override fun getAllCreditCards(): Flow<List<CreditCard>> {
+    override fun observeAllCreditCards(): Flow<List<CreditCard>> {
         return dao.getAllCreditCards().map { entities ->
             entities.map { mapper.toDomain(it) }
         }
+    }
+
+    override suspend fun getAllCreditCards(): List<CreditCard> {
+        return dao.getAllCreditCardsList().map { mapper.toDomain(it) }
     }
 
     override suspend fun getCreditCardById(id: Long): CreditCard? {

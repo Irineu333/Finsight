@@ -20,8 +20,8 @@ class AddTransactionViewModel(
 ) : ViewModel() {
 
     val uiState = combine(
-        categoryRepository.getAllCategories(),
-        creditCardRepository.getAllCreditCards()
+        categoryRepository.observeAllCategories(),
+        creditCardRepository.observeAllCreditCards()
     ) { categories, creditCards ->
         AddTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
@@ -37,10 +37,9 @@ class AddTransactionViewModel(
     fun addTransaction(
         transaction: Transaction
     ) = viewModelScope.launch {
-        if (transaction.target == Transaction.Target.CREDIT_CARD && transaction.creditCardId == null) {
-            return@launch
-        }
-        
+
+        if (transaction.target.isCreditCard && transaction.creditCard == null) return@launch
+
         transactionRepository.insert(transaction)
         modalManager.dismiss()
     }

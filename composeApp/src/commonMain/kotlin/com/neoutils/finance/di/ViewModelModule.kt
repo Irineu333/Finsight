@@ -41,7 +41,7 @@ val viewModelModule = module {
     viewModel {
         ViewAdjustmentViewModel(
             transaction = it.get(),
-            creditCardRepository = get()
+            transactionRepository = get()
         )
     }
 
@@ -49,7 +49,6 @@ val viewModelModule = module {
         ViewTransactionViewModel(
             transaction = it.get(),
             transactionRepository = get(),
-            creditCardRepository = get()
         )
     }
 

@@ -18,7 +18,7 @@ import org.koin.dsl.module
 
 val useCaseModules = module {
     factory { AdjustBalanceUseCase(get(), get()) }
-    factory { AdjustCreditCardBillUseCase(get(), get()) }
+    factory { AdjustCreditCardBillUseCase(get(), get(), get()) }
     factory { AdjustFinalBalanceUseCase(get()) }
     factory { AdjustInitialBalanceUseCase(get()) }
     factory { CalculateBalanceUseCase(get()) }
@@ -30,5 +30,5 @@ val useCaseModules = module {
     factory { AddCreditCardUseCase(get()) }
     factory { UpdateCreditCardUseCase(get()) }
     factory { DeleteCreditCardUseCase(get()) }
-    factory { PayCreditCardBillUseCase(get()) }
+    factory { PayCreditCardBillUseCase(get(), get()) }
 }

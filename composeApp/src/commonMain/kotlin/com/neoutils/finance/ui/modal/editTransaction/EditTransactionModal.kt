@@ -57,7 +57,7 @@ class EditTransactionModal(
 
         var selectedCategory by remember(type) { mutableStateOf(transaction.category) }
 
-        var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
+        var selectedCreditCard by remember { mutableStateOf(transaction.creditCard) }
 
         val availableTargets by remember {
             derivedStateOf {
@@ -66,12 +66,6 @@ class EditTransactionModal(
                 } else {
                     listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
                 }
-            }
-        }
-
-        LaunchedEffect(uiState.creditCards) {
-            selectedCreditCard = transaction.creditCardId?.let { id ->
-                uiState.creditCards.find { it.id == id }
             }
         }
 
@@ -212,20 +206,15 @@ class EditTransactionModal(
 
             Button(
                 onClick = {
-                    val transactionTarget = if (type.isExpense) target else Transaction.Target.ACCOUNT
-                    val creditCardId = if (transactionTarget == Transaction.Target.CREDIT_CARD) {
-                        selectedCreditCard?.id
-                    } else null
-
                     viewModel.updateTransaction(
                         transaction = transaction.copy(
                             type = type,
                             amount = parseMoneyToDouble(amount.text.toString()),
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
-                            category = selectedCategory,
-                            target = transactionTarget,
-                            creditCardId = creditCardId
+                            category = selectedCategory?.takeIf { it.type.isAccept(type) },
+                            target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
+                            creditCard = selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
                         )
                     )
                 },
@@ -245,18 +234,6 @@ class EditTransactionModal(
                 )
             }
         }
-    }
-
-    private fun showSaveButton(
-        amount: String,
-        date: String,
-        title: String,
-        hasCategory: Boolean
-    ): Boolean {
-        if (amount.isEmpty()) return false
-        if (date.isEmpty()) return false
-        if (title.isEmpty() && !hasCategory) return false
-        return true
     }
 
     @Composable
@@ -324,6 +301,25 @@ class EditTransactionModal(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+
+    private fun Category.Type.isAccept(type: Transaction.Type): Boolean {
+        return when (this) {
+            Category.Type.EXPENSE -> type.isExpense
+            Category.Type.INCOME -> type.isIncome
+        }
+    }
+
+    private fun showSaveButton(
+        amount: String,
+        date: String,
+        title: String,
+        hasCategory: Boolean
+    ): Boolean {
+        if (amount.isEmpty()) return false
+        if (date.isEmpty()) return false
+        if (title.isEmpty() && !hasCategory) return false
+        return true
     }
 
     private fun formatMoneyFromDouble(value: Double): String {

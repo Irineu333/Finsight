@@ -25,11 +25,8 @@ import com.neoutils.finance.domain.model.Transaction
 fun TargetSelector(
     selectedTarget: Transaction.Target,
     onTargetSelected: (Transaction.Target) -> Unit,
-    modifier: Modifier = Modifier,
-    availableTargets: List<Transaction.Target> = listOf(
-        Transaction.Target.ACCOUNT,
-        Transaction.Target.CREDIT_CARD
-    )
+    availableTargets: List<Transaction.Target>,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 

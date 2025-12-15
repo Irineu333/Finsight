@@ -74,9 +74,11 @@ class AddTransactionModal : ModalBottomSheet() {
 
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
         var target by remember { mutableStateOf(Transaction.Target.ACCOUNT) }
+
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
+
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
         var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
 
@@ -87,13 +89,6 @@ class AddTransactionModal : ModalBottomSheet() {
                 } else {
                     listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
                 }
-            }
-        }
-
-        LaunchedEffect(uiState.creditCards.isEmpty()) {
-            if (uiState.creditCards.isEmpty() && target == Transaction.Target.CREDIT_CARD) {
-                target = Transaction.Target.ACCOUNT
-                selectedCreditCard = null
             }
         }
 
@@ -128,7 +123,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            AnimatedVisibility(type.isExpense && uiState.creditCards.isNotEmpty()) {
+            AnimatedVisibility(type.isExpense) {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
@@ -140,7 +135,7 @@ class AddTransactionModal : ModalBottomSheet() {
             }
 
             AnimatedVisibility(
-                visible = type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.creditCards.isNotEmpty()
+                type.isExpense && target == Transaction.Target.CREDIT_CARD
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,

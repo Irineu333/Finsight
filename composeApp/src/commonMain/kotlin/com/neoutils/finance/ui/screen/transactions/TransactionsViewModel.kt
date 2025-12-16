@@ -49,15 +49,15 @@ class TransactionsViewModel(
     ) { transactions, categories, yearMonth, filters ->
 
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactions
-                .filter(filters.category)
-                .filter(filters.type)
-                .filter(filters.target),
+            transactions = transactions,
             forYearMonth = yearMonth,
         )
 
         TransactionsUiState(
             transactions = stats.transactions
+                .filter(filters.category)
+                .filter(filters.type)
+                .filter(filters.target)
                 .sortedByDescending { it.date }
                 .groupBy { it.date },
             balanceOverview = TransactionsUiState.BalanceOverview(

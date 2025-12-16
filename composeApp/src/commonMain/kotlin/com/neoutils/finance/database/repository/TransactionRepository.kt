@@ -5,6 +5,7 @@ import com.neoutils.finance.database.mapper.TransactionMapper
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -15,6 +16,7 @@ class TransactionRepository(
     private val dao: TransactionDao,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val invoiceRepository: IInvoiceRepository,
     private val mapper: TransactionMapper,
 ) : ITransactionRepository {
 
@@ -45,6 +47,7 @@ class TransactionRepository(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
+                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
                 )
             }
         }
@@ -60,6 +63,7 @@ class TransactionRepository(
                 entity = transaction,
                 category = categories[transaction.categoryId],
                 creditCard = creditCards[transaction.creditCardId],
+                invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
             )
         }
     }
@@ -75,6 +79,9 @@ class TransactionRepository(
             creditCard = transaction.creditCardId?.let {
                 creditCardRepository.getCreditCardById(it)
             },
+            invoice = transaction.invoiceId?.let {
+                invoiceRepository.getById(it)
+            }
         )
     }
 
@@ -93,6 +100,7 @@ class TransactionRepository(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
+                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
                 )
             }
         }
@@ -113,6 +121,7 @@ class TransactionRepository(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
+                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
                 )
             }
         }
@@ -131,6 +140,9 @@ class TransactionRepository(
             },
             creditCard = transaction.creditCardId?.let {
                 creditCardRepository.getCreditCardById(it)
+            },
+            invoice = transaction.invoiceId?.let {
+                invoiceRepository.getById(it)
             }
         )
     }

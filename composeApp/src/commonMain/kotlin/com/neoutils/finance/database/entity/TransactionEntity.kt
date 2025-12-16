@@ -2,6 +2,7 @@ package com.neoutils.finance.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.datetime.LocalDate
 
@@ -19,7 +20,18 @@ import kotlinx.datetime.LocalDate
             parentColumns = ["id"],
             childColumns = ["creditCardId"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = InvoiceEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["invoiceId"],
+            onDelete = ForeignKey.SET_NULL
         )
+    ],
+    indices = [
+        Index(value = ["categoryId"]),
+        Index(value = ["creditCardId"]),
+        Index(value = ["invoiceId"])
     ]
 )
 data class TransactionEntity(
@@ -31,7 +43,8 @@ data class TransactionEntity(
     val date: LocalDate,
     val categoryId: Long? = null,
     val target: Target = Target.ACCOUNT,
-    val creditCardId: Long? = null
+    val creditCardId: Long? = null,
+    val invoiceId: Long? = null
 ) {
     enum class Type {
         EXPENSE,
@@ -46,4 +59,3 @@ data class TransactionEntity(
         INVOICE_PAYMENT
     }
 }
-

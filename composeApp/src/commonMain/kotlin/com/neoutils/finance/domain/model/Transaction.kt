@@ -10,7 +10,8 @@ data class Transaction(
     val date: LocalDate,
     val category: Category? = null,
     val target: Target = Target.ACCOUNT,
-    val creditCard: CreditCard? = null
+    val creditCard: CreditCard? = null,
+    val invoice: Invoice? = null
 ) {
     enum class Type {
         EXPENSE,

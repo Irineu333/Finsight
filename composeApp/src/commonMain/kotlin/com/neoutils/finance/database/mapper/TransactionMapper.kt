@@ -3,13 +3,15 @@ package com.neoutils.finance.database.mapper
 import com.neoutils.finance.database.entity.TransactionEntity
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 
 class TransactionMapper {
     fun toDomain(
         entity: TransactionEntity,
         category: Category?,
-        creditCard: CreditCard?
+        creditCard: CreditCard?,
+        invoice: Invoice?
     ): Transaction {
         return Transaction(
             id = entity.id,
@@ -20,6 +22,7 @@ class TransactionMapper {
             category = category,
             target = toDomain(entity.target),
             creditCard = creditCard,
+            invoice = invoice
         )
     }
 
@@ -35,6 +38,7 @@ class TransactionMapper {
             categoryId = domain.category?.id,
             target = toEntity(domain.target),
             creditCardId = domain.creditCard?.id,
+            invoiceId = domain.invoice?.id
         )
     }
 
@@ -80,4 +84,3 @@ class TransactionMapper {
         }
     }
 }
-

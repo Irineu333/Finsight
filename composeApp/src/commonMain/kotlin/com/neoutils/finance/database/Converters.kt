@@ -2,6 +2,7 @@ package com.neoutils.finance.database
 
 import androidx.room.TypeConverter
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 
 class Converters {
 
@@ -13,5 +14,15 @@ class Converters {
     @TypeConverter
     fun toLocalDate(dateString: String): LocalDate {
         return LocalDate.parse(dateString)
+    }
+
+    @TypeConverter
+    fun fromYearMonth(yearMonth: YearMonth): String {
+        return yearMonth.toString()
+    }
+
+    @TypeConverter
+    fun toYearMonth(value: String): YearMonth {
+        return YearMonth.parse(value)
     }
 }

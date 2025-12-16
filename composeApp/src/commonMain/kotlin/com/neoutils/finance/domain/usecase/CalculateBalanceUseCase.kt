@@ -26,7 +26,8 @@ class CalculateBalanceUseCase(
                     Transaction.Type.INCOME -> transaction.amount
                     Transaction.Type.EXPENSE -> -transaction.amount
                     Transaction.Type.ADJUSTMENT -> transaction.amount
-                    Transaction.Type.INVOICE_PAYMENT -> transaction.amount
+                    Transaction.Type.INVOICE_PAYMENT,
+                    Transaction.Type.ADVANCE_PAYMENT -> transaction.amount
                 }
             }
     }

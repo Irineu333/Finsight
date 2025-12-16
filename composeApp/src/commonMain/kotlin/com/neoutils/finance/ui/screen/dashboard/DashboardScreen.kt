@@ -29,15 +29,21 @@ import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
 import com.neoutils.finance.ui.modal.payBill.PayBillModal
+import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
+import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
 import com.neoutils.finance.util.DateFormats
+import com.neoutils.finance.extension.toYearMonth
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private val formats = DateFormats()
 
@@ -172,6 +178,13 @@ private fun DashboardContent(
                         pageSpacing = 8.dp
                     ) { page ->
                         val cardWithBill = uiState.creditCards[page]
+                        val invoice = cardWithBill.currentInvoice
+                        val invoiceStatus = invoice?.status
+
+                        @OptIn(ExperimentalTime::class)
+                        val currentMonth = Clock.System.now().toYearMonth()
+                        val isInClosingMonth = invoice?.let { currentMonth >= it.closingMonth } ?: false
+
                         CreditCardBillCard(
                             uiModel = cardWithBill.billUi,
                             cardName = cardWithBill.creditCard.name,
@@ -184,15 +197,19 @@ private fun DashboardContent(
                                     )
                                 )
                             },
-                            onEditBill = {
-                                modalManager.show(
-                                    EditBalanceModal(
-                                        type = EditBalanceModal.Type.CREDIT_CARD,
-                                        currentBalance = cardWithBill.billAmount,
-                                        creditCardId = cardWithBill.creditCard.id
-                                    )
-                                )
-                            },
+                            onEditBill = if (invoiceStatus == Invoice.Status.OPEN) {
+                                {
+                                    invoice?.let {
+                                        modalManager.show(
+                                            EditBalanceModal(
+                                                type = EditBalanceModal.Type.CREDIT_CARD,
+                                                currentBalance = cardWithBill.billAmount,
+                                                invoiceId = it.id
+                                            )
+                                        )
+                                    }
+                                }
+                            } else null,
                             onEditLimit = {
                                 modalManager.show(
                                     EditCreditCardLimitModal(
@@ -200,13 +217,49 @@ private fun DashboardContent(
                                     )
                                 )
                             },
-                            onPayClick = {
-                                modalManager.show(
-                                    PayBillModal(
-                                        creditCardId = cardWithBill.creditCard.id,
-                                        currentBillAmount = cardWithBill.billAmount
-                                    )
-                                )
+                            // Fechar Fatura - apenas no mês de fechamento e fatura OPEN
+                            onCloseClick = if (invoiceStatus == Invoice.Status.OPEN && isInClosingMonth) {
+                                {
+                                    invoice?.let {
+                                        modalManager.show(CloseInvoiceModal(it))
+                                    }
+                                }
+                            } else null,
+                            // Pagar/Antecipar - baseado no status
+                            onPayClick = when (invoiceStatus) {
+                                Invoice.Status.OPEN -> {
+                                    // Antecipar Pagamento
+                                    {
+                                        invoice?.let {
+                                            modalManager.show(
+                                                AdvancePaymentModal(
+                                                    invoice = it,
+                                                    currentBillAmount = cardWithBill.billAmount
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                Invoice.Status.CLOSED -> {
+                                    // Pagar Fatura
+                                    {
+                                        invoice?.let {
+                                            modalManager.show(
+                                                PayBillModal(
+                                                    invoice = it,
+                                                    currentBillAmount = cardWithBill.billAmount
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                                else -> null
+                            },
+                            showPayButton = invoiceStatus == Invoice.Status.OPEN || invoiceStatus == Invoice.Status.CLOSED,
+                            payButtonText = when (invoiceStatus) {
+                                Invoice.Status.OPEN -> "Antecipar Pagamento"
+                                Invoice.Status.CLOSED -> "Pagar Fatura"
+                                else -> ""
                             }
                         )
                     }

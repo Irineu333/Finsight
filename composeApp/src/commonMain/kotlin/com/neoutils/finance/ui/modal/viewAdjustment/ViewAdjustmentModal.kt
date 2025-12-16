@@ -115,6 +115,17 @@ class ViewAdjustmentModal(
                         .padding(top = 8.dp)
                         .fillMaxWidth()
                 )
+            } ?: run {
+                if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
+                    DetailRow(
+                        label = "Cartão",
+                        value = "(Excluído)",
+                        valueColor = colorScheme.error,
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
             }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))

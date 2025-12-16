@@ -20,7 +20,7 @@ import kotlin.time.ExperimentalTime
 class EditBalanceViewModel(
     private val type: EditBalanceModal.Type,
     private val targetMonth: YearMonth,
-    private val creditCardId: Long?,
+    private val invoiceId: Long?,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
@@ -55,9 +55,9 @@ class EditBalanceViewModel(
             }
 
             EditBalanceModal.Type.CREDIT_CARD -> {
-                if (creditCardId != null) {
+                if (invoiceId != null) {
                     adjustCreditCardBillUseCase(
-                        creditCardId = creditCardId,
+                        invoiceId = invoiceId,
                         targetBill = targetBalance,
                         adjustmentDate = currentDateTime.date
                     )
@@ -67,4 +67,3 @@ class EditBalanceViewModel(
         modalManager.dismiss()
     }
 }
-

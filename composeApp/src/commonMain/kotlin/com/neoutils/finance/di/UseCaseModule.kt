@@ -15,13 +15,16 @@ import com.neoutils.finance.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import com.neoutils.finance.domain.usecase.GetCreditCardsUseCase
 import com.neoutils.finance.domain.usecase.GetInvoiceForTransactionUseCase
+import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
 import com.neoutils.finance.domain.usecase.PayCreditCardBillUseCase
+import com.neoutils.finance.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finance.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
     factory { AdjustBalanceUseCase(get(), get()) }
-    factory { AdjustCreditCardBillUseCase(get(), get(), get()) }
+    factory { AdjustCreditCardBillUseCase(get(), get(), get(), get()) }
     factory { AdjustFinalBalanceUseCase(get()) }
     factory { AdjustInitialBalanceUseCase(get()) }
     factory { CalculateBalanceUseCase(get()) }
@@ -33,8 +36,11 @@ val useCaseModules = module {
     factory { AddCreditCardUseCase(get()) }
     factory { UpdateCreditCardUseCase(get()) }
     factory { DeleteCreditCardUseCase(get()) }
-    factory { PayCreditCardBillUseCase(get(), get()) }
+    factory { PayCreditCardBillUseCase(get(), get(), get(), get()) }
     factory { CreateInvoiceUseCase(get()) }
     factory { GetInvoiceForTransactionUseCase(get()) }
-    factory { CloseInvoiceUseCase(get()) }
+    factory { CloseInvoiceUseCase(get(), get(), get()) }
+    factory { PayInvoiceUseCase(get()) }
+    factory { GetOrCreateCurrentInvoiceUseCase(get(), get()) }
+    factory { ReopenInvoiceUseCase(get()) }
 }

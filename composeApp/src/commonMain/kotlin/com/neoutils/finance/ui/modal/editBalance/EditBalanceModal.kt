@@ -51,7 +51,7 @@ class EditBalanceModal(
     private val type: Type = Type.FINAL,
     private val targetMonth: YearMonth? = null,
     private val currentBalance: Double,
-    private val creditCardId: Long? = null,
+    private val invoiceId: Long? = null,
 ) : ModalBottomSheet() {
 
     private val initialCents = (currentBalance * 100).toLong()
@@ -61,7 +61,7 @@ class EditBalanceModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditBalanceViewModel>(key = key) {
-            parametersOf(type, targetMonth, creditCardId)
+            parametersOf(type, targetMonth, invoiceId)
         }
         val balanceState = rememberTextFieldState(formatMoney(initialCents))
 

@@ -42,7 +42,10 @@ fun CreditCardBillCard(
     onClick: (() -> Unit)? = null,
     onEditBill: (() -> Unit)? = null,
     onEditLimit: (() -> Unit)? = null,
-    onPayClick: (() -> Unit)? = null
+    onCloseClick: (() -> Unit)? = null,
+    onPayClick: (() -> Unit)? = null,
+    showPayButton: Boolean = true, 
+    payButtonText: String = "Pagar Fatura"
 ) {
     Card(
         modifier = modifier.then(
@@ -85,6 +88,23 @@ fun CreditCardBillCard(
                         fontSize = 14.sp,
                         color = colorScheme.onSurfaceVariant
                     )
+                }
+
+                if (uiModel.statusLabel.isNotEmpty()) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = uiModel.statusColor.copy(alpha = 0.15f),
+                            contentColor = uiModel.statusColor
+                        ),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = uiModel.statusLabel,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
 
@@ -197,8 +217,30 @@ fun CreditCardBillCard(
                 )
             }
 
-            if (onPayClick != null) {
+            if (onCloseClick != null) {
                 Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onCloseClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFFFA726)
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Color(0xFFFFA726).copy(alpha = 0.5f)
+                    )
+                ) {
+                    Text(
+                        text = "Fechar Fatura",
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            if (showPayButton && onPayClick != null) {
+                Spacer(modifier = Modifier.height(if (onCloseClick != null) 8.dp else 12.dp))
 
                 OutlinedButton(
                     onClick = onPayClick,
@@ -213,7 +255,7 @@ fun CreditCardBillCard(
                     )
                 ) {
                     Text(
-                        text = "Pagar Fatura",
+                        text = payButtonText,
                         fontSize = 14.sp
                     )
                 }

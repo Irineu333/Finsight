@@ -33,9 +33,16 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
+import com.neoutils.finance.extension.toLocalDate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class EditTransactionModal(
     private val transaction: Transaction,
 ) : ModalBottomSheet() {
@@ -67,6 +74,14 @@ class EditTransactionModal(
                     listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
                 }
             }
+        }
+
+        // Limites de data baseados na fatura (se transação de cartão)
+        val invoice = transaction.invoice
+        val minDate = invoice?.openingMonth?.toLocalDate()
+        val maxDate = invoice?.closingMonth?.toLocalDate()?.let { closing ->
+            val today = currentDate()
+            if (today < closing) today else closing
         }
 
         Column(
@@ -181,6 +196,8 @@ class EditTransactionModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    minDate = minDate,
+                                    maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))
@@ -222,7 +239,9 @@ class EditTransactionModal(
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
-                    hasCategory = selectedCategory != null
+                    hasCategory = selectedCategory != null,
+                    minDate = minDate,
+                    maxDate = maxDate
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -257,7 +276,8 @@ class EditTransactionModal(
 
                 Transaction.Type.INCOME,
                 Transaction.Type.ADJUSTMENT,
-                Transaction.Type.INVOICE_PAYMENT -> {
+                Transaction.Type.INVOICE_PAYMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -286,7 +306,8 @@ class EditTransactionModal(
 
                 Transaction.Type.EXPENSE,
                 Transaction.Type.ADJUSTMENT,
-                Transaction.Type.INVOICE_PAYMENT -> {
+                Transaction.Type.INVOICE_PAYMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -314,12 +335,24 @@ class EditTransactionModal(
         amount: String,
         date: String,
         title: String,
-        hasCategory: Boolean
+        hasCategory: Boolean,
+        minDate: LocalDate?,
+        maxDate: LocalDate?
     ): Boolean {
         if (amount.isEmpty()) return false
         if (date.isEmpty()) return false
         if (title.isEmpty() && !hasCategory) return false
+        
+        // Validar data dentro do período da fatura
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
+        if (minDate != null && parsedDate < minDate) return false
+        if (maxDate != null && parsedDate > maxDate) return false
+        
         return true
+    }
+
+    private fun currentDate(): LocalDate {
+        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
 
     private fun formatMoneyFromDouble(value: Double): String {

@@ -28,12 +28,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.extension.toLastDayOfMonth
+import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
-import com.neoutils.finance.util.MoneyInputTransformation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -43,7 +45,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class PayBillModal(
-    private val creditCardId: Long,
+    private val invoice: Invoice,
     private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
@@ -51,10 +53,19 @@ class PayBillModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<PayBillViewModel>(key = key) { parametersOf(creditCardId) }
+        val viewModel = koinViewModel<PayBillViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
-        val amount = rememberTextFieldState(formatMoneyFromDouble(currentBillAmount))
+        // Valor fixo - pagamento total da fatura
+        val amount = formatMoneyFromDouble(currentBillAmount)
+        
+        // Limites de data: mês de fechamento da fatura
+        val minDate = invoice.closingMonth.toLocalDate()
+        val maxDate = invoice.closingMonth.toLastDayOfMonth().let { lastDay ->
+            val today = currentDate()
+            if (today < lastDay) today else lastDay
+        }
+        
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
 
         Column(
@@ -68,21 +79,27 @@ class PayBillModal(
                 text = "Pagar Fatura",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "O pagamento será do valor total da fatura.",
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
+            // Campo de valor - somente leitura
             OutlinedTextField(
-                state = amount,
+                value = amount,
+                onValueChange = { },
                 label = {
-                    Text(text = "Valor")
+                    Text(text = "Valor da Fatura")
                 },
-                inputTransformation = MoneyInputTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
+                readOnly = true,
+                enabled = false,
                 shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -91,7 +108,7 @@ class PayBillModal(
             OutlinedTextField(
                 state = date,
                 label = {
-                    Text(text = "Data")
+                    Text(text = "Data do Pagamento")
                 },
                 inputTransformation = DateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -104,6 +121,8 @@ class PayBillModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    minDate = minDate,
+                                    maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))
@@ -130,13 +149,14 @@ class PayBillModal(
             Button(
                 onClick = {
                     viewModel.payBill(
-                        amount = parseMoneyToDouble(amount.text.toString()),
+                        amount = currentBillAmount,
                         date = formats.dayMonthYear.parse(date.text.toString())
                     )
                 },
                 enabled = isValidPayment(
-                    amount = amount.text.toString(),
-                    date = date.text.toString()
+                    date = date.text.toString(),
+                    minDate = minDate,
+                    maxDate = maxDate
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -151,27 +171,21 @@ class PayBillModal(
     }
 
     private fun isValidPayment(
-        amount: String,
-        date: String
+        date: String,
+        minDate: LocalDate,
+        maxDate: LocalDate
     ): Boolean {
-        if (amount.isEmpty()) return false
-        if (parseMoneyToDouble(amount) <= 0.0) return false
         if (date.isEmpty()) return false
+        if (currentBillAmount < 0.0) return false
+        
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
+        if (parsedDate < minDate || parsedDate > maxDate) return false
+        
         return true
     }
 
     private fun currentDate(): LocalDate {
         return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly = formatted
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
     }
 
     private fun formatMoneyFromDouble(value: Double): String {
@@ -181,3 +195,5 @@ class PayBillModal(
         return "R$ %d,%02d".format(reais, centavos)
     }
 }
+
+

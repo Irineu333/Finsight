@@ -31,6 +31,7 @@ class InvoiceMapper {
         return when (this) {
             InvoiceEntity.Status.OPEN -> Invoice.Status.OPEN
             InvoiceEntity.Status.CLOSED -> Invoice.Status.CLOSED
+            InvoiceEntity.Status.PAID -> Invoice.Status.PAID
         }
     }
 
@@ -38,6 +39,7 @@ class InvoiceMapper {
         return when (this) {
             Invoice.Status.OPEN -> InvoiceEntity.Status.OPEN
             Invoice.Status.CLOSED -> InvoiceEntity.Status.CLOSED
+            Invoice.Status.PAID -> InvoiceEntity.Status.PAID
         }
     }
 }

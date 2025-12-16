@@ -56,10 +56,12 @@ val viewModelModule = module {
         DashboardViewModel(
             transactionRepository = get(),
             creditCardRepository = get(),
+            invoiceRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
             calculateCreditCardBillUseCase = get(),
+            getOrCreateCurrentInvoiceUseCase = get(),
             creditCardBillUiMapper = get()
         )
     }
@@ -87,6 +89,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             transactionRepository = get(),
             calculateCreditCardBillUseCase = get(),
+            getOrCreateCurrentInvoiceUseCase = get(),
             creditCardBillUiMapper = get()
         )
     }
@@ -96,6 +99,8 @@ val viewModelModule = module {
             transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
+            invoiceRepository = get(),
+            getOrCreateCurrentInvoiceUseCase = get(),
             modalManager = get()
         )
     }
@@ -139,7 +144,10 @@ val viewModelModule = module {
             initialBillAmount = it.get(),
             creditCardRepository = get(),
             transactionRepository = get(),
-            calculateCreditCardBillUseCase = get()
+            calculateCreditCardBillUseCase = get(),
+            getOrCreateCurrentInvoiceUseCase = get(),
+            closeInvoiceUseCase = get(),
+            payInvoiceUseCase = get()
         )
     }
 
@@ -172,7 +180,7 @@ val viewModelModule = module {
         EditBalanceViewModel(
             type = it.get(),
             targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
-            creditCardId = it.getOrNull(),
+            invoiceId = it.getOrNull(),
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
@@ -183,8 +191,9 @@ val viewModelModule = module {
 
     viewModel {
         PayBillViewModel(
-            creditCardId = it.get(),
+            invoiceId = it.get(),
             payBillUseCase = get(),
+            payInvoiceUseCase = get(),
             modalManager = get()
         )
     }
@@ -195,6 +204,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             transactionRepository = get(),
             calculateCreditCardBillUseCase = get(),
+            getOrCreateCurrentInvoiceUseCase = get(),
             modalManager = get()
         )
     }
@@ -211,6 +221,30 @@ val viewModelModule = module {
         EditInvoicePaymentViewModel(
             transaction = it.get(),
             transactionRepository = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel(
+            invoiceId = it.get(),
+            closeInvoiceUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel(
+            invoiceId = it.get(),
+            payCreditCardBillUseCase = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel(
+            invoiceId = it.get(),
+            reopenInvoiceUseCase = get(),
             modalManager = get()
         )
     }

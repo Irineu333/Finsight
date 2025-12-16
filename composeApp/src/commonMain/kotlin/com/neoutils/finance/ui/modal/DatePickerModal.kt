@@ -6,6 +6,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -24,12 +25,24 @@ import kotlin.time.Instant
 class DatePickerModal(
     private val initialDate: LocalDate,
     private val onDateSelected: (LocalDate) -> Unit,
+    private val minDate: LocalDate? = null,
+    private val maxDate: LocalDate? = null,
 ) : Modal() {
 
     @Composable
     override fun Content() {
+        val selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val date = millisToLocalDate(utcTimeMillis)
+                val afterMin = minDate?.let { date >= it } ?: true
+                val beforeMax = maxDate?.let { date <= it } ?: true
+                return afterMin && beforeMax
+            }
+        }
+
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = localDateToMillis(initialDate)
+            initialSelectedDateMillis = localDateToMillis(initialDate),
+            selectableDates = selectableDates
         )
 
         val confirmEnabled by remember {

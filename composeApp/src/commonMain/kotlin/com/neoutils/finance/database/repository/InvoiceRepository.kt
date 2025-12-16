@@ -13,6 +13,12 @@ class InvoiceRepository(
     private val mapper: InvoiceMapper
 ) : IInvoiceRepository {
 
+    override fun observeAllInvoices(): Flow<List<Invoice>> {
+        return dao.observeAllInvoices().map { entities ->
+            entities.map { mapper.toDomain(it) }
+        }
+    }
+
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> {
         return dao.observeInvoicesByCreditCard(creditCardId).map { entities ->
             entities.map { mapper.toDomain(it) }
@@ -27,6 +33,10 @@ class InvoiceRepository(
 
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
         return dao.getOpenInvoice(creditCardId)?.let { mapper.toDomain(it) }
+    }
+
+    override suspend fun getLatestUnpaidInvoice(creditCardId: Long): Invoice? {
+        return dao.getLatestUnpaidInvoice(creditCardId)?.let { mapper.toDomain(it) }
     }
 
     override suspend fun getInvoiceForMonth(creditCardId: Long, month: YearMonth): Invoice? {

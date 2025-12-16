@@ -5,12 +5,14 @@ package com.neoutils.finance.ui.screen.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
 import com.neoutils.finance.ui.mapper.CreditCardBillUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -21,10 +23,12 @@ import kotlin.time.ExperimentalTime
 class DashboardViewModel(
     private val transactionRepository: ITransactionRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val invoiceRepository: IInvoiceRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
+    private val getOrCreateCurrentInvoiceUseCase: GetOrCreateCurrentInvoiceUseCase,
     private val creditCardBillUiMapper: CreditCardBillUiMapper,
 ) : ViewModel() {
 
@@ -33,8 +37,9 @@ class DashboardViewModel(
 
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
-        creditCardRepository.observeAllCreditCards()
-    ) { transactions, creditCards ->
+        creditCardRepository.observeAllCreditCards(),
+        invoiceRepository.observeAllInvoices()
+    ) { transactions, creditCards, _ ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -46,19 +51,22 @@ class DashboardViewModel(
             forYearMonth = currentMonth
         )
 
-        val creditCardsWithBills = creditCards.map { creditCard ->
+        val creditCardsWithBills = creditCards.mapNotNull { creditCard ->
+            val invoice = getOrCreateCurrentInvoiceUseCase(creditCard.id)
+                ?: return@mapNotNull null  // Cartão foi deletado
             val billAmount = calculateCreditCardBillUseCase(
-                creditCardId = creditCard.id,
-                target = currentMonth,
+                invoiceId = invoice.id,
                 transactions = transactions
             )
             CreditCardWithBill(
                 creditCard = creditCard,
                 billUi = creditCardBillUiMapper.toUi(
                     bill = billAmount,
-                    limit = creditCard.limit
+                    limit = creditCard.limit,
+                    invoiceStatus = invoice.status
                 ),
-                billAmount = billAmount
+                billAmount = billAmount,
+                currentInvoice = invoice
             )
         }
 

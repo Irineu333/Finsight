@@ -11,11 +11,17 @@ import kotlinx.datetime.YearMonth
 @Dao
 interface InvoiceDao {
 
+    @Query("SELECT * FROM invoices ORDER BY openingMonth DESC")
+    fun observeAllInvoices(): Flow<List<InvoiceEntity>>
+
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId ORDER BY openingMonth DESC")
     fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<InvoiceEntity>>
 
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status = 'OPEN' LIMIT 1")
     suspend fun getOpenInvoice(creditCardId: Long): InvoiceEntity?
+
+    @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status != 'PAID' ORDER BY openingMonth DESC LIMIT 1")
+    suspend fun getLatestUnpaidInvoice(creditCardId: Long): InvoiceEntity?
 
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND :month >= openingMonth AND :month <= closingMonth LIMIT 1")
     suspend fun getInvoiceForMonth(creditCardId: Long, month: YearMonth): InvoiceEntity?

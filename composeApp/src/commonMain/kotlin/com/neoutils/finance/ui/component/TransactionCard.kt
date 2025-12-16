@@ -62,7 +62,8 @@ fun TransactionCard(
                 Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
                 Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
                 Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
-                Transaction.Type.INVOICE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
+                Transaction.Type.INVOICE_PAYMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
             },
             shape = MaterialTheme.shapes.medium,
             modifier = Modifier.size(48.dp)
@@ -78,14 +79,16 @@ fun TransactionCard(
                         Transaction.Type.INCOME -> Icons.Default.ShoppingCart
                         Transaction.Type.EXPENSE -> Icons.Default.Receipt
                         Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
-                        Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Receipt
+                        Transaction.Type.INVOICE_PAYMENT,
+                        Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.Receipt
                     },
                     contentDescription = null,
                     tint = when (transaction.type) {
                         Transaction.Type.INCOME -> Income
                         Transaction.Type.EXPENSE -> Expense
                         Transaction.Type.ADJUSTMENT -> Adjustment
-                        Transaction.Type.INVOICE_PAYMENT -> InvoicePayment
+                        Transaction.Type.INVOICE_PAYMENT,
+                        Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
                     },
                     modifier = Modifier.size(24.dp)
                 )
@@ -112,7 +115,8 @@ fun TransactionCard(
                 Transaction.Type.INCOME -> transaction.amount.toMoneyFormat()
                 Transaction.Type.EXPENSE -> transaction.amount.toMoneyFormat()
                 Transaction.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
-                Transaction.Type.INVOICE_PAYMENT -> transaction.amount.toMoneyFormatWithSign()
+                Transaction.Type.INVOICE_PAYMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> transaction.amount.toMoneyFormatWithSign()
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
@@ -120,7 +124,8 @@ fun TransactionCard(
                 Transaction.Type.INCOME -> Income
                 Transaction.Type.EXPENSE -> Expense
                 Transaction.Type.ADJUSTMENT -> Adjustment
-                Transaction.Type.INVOICE_PAYMENT -> InvoicePayment
+                Transaction.Type.INVOICE_PAYMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
             }
         )
     }

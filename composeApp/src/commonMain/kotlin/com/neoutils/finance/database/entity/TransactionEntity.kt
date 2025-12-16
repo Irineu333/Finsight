@@ -50,7 +50,8 @@ data class TransactionEntity(
         EXPENSE,
         INCOME,
         ADJUSTMENT,
-        BILL_PAYMENT
+        BILL_PAYMENT,
+        ADVANCE_PAYMENT
     }
 
     enum class Target {

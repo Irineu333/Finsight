@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import com.neoutils.finance.domain.model.CategorySpending
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.model.CreditCardBillUi
@@ -28,5 +29,6 @@ data class DashboardUiState(
 data class CreditCardWithBill(
     val creditCard: CreditCard,
     val billUi: CreditCardBillUi,
-    val billAmount: Double
+    val billAmount: Double,
+    val currentInvoice: Invoice? = null
 )

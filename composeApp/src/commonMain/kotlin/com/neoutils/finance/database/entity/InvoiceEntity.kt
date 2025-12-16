@@ -37,6 +37,7 @@ data class InvoiceEntity(
 ) {
     enum class Status {
         OPEN,
-        CLOSED
+        CLOSED,
+        PAID
     }
 }

@@ -17,12 +17,14 @@ data class Transaction(
         EXPENSE,
         INCOME,
         ADJUSTMENT,
-        INVOICE_PAYMENT;
+        INVOICE_PAYMENT,
+        ADVANCE_PAYMENT;
 
         val isExpense: Boolean get() = this == EXPENSE
         val isIncome: Boolean get() = this == INCOME
         val isAdjustment: Boolean get() = this == ADJUSTMENT
         val isInvoicePayment: Boolean get() = this == INVOICE_PAYMENT
+        val isAdvancePayment: Boolean get() = this == ADVANCE_PAYMENT
     }
 
     enum class Target {

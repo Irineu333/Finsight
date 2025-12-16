@@ -7,14 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
-import com.neoutils.finance.extension.toYearMonth
+import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class EditCreditCardLimitViewModel(
@@ -22,10 +21,9 @@ class EditCreditCardLimitViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val transactionRepository: ITransactionRepository,
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
+    private val getOrCreateCurrentInvoiceUseCase: GetOrCreateCurrentInvoiceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
-
-    private val currentMonth get() = Clock.System.now().toYearMonth()
 
     private val _uiState = MutableStateFlow(EditCreditCardLimitUiState())
     val uiState: StateFlow<EditCreditCardLimitUiState> = _uiState.asStateFlow()
@@ -42,10 +40,15 @@ class EditCreditCardLimitViewModel(
                 return@launch
             }
 
+            val invoice = getOrCreateCurrentInvoiceUseCase(creditCardId)
+            if (invoice == null) {
+                modalManager.dismiss()
+                return@launch
+            }
+            
             val transactions = transactionRepository.observeAllTransactions().first()
             val billAmount = calculateCreditCardBillUseCase(
-                creditCardId = creditCardId,
-                target = currentMonth,
+                invoiceId = invoice.id,
                 transactions = transactions
             )
 
@@ -73,3 +76,4 @@ data class EditCreditCardLimitUiState(
     val currentBill: Double = 0.0,
     val isLoading: Boolean = true
 )
+

@@ -1,28 +1,26 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.yearMonth
-import kotlin.time.ExperimentalTime
 
 class AdjustCreditCardBillUseCase(
     private val repository: ITransactionRepository,
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
     private val creditCardRepository: ICreditCardRepository,
+    private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
-        creditCardId: Long,
+        invoiceId: Long,
         targetBill: Double,
         adjustmentDate: LocalDate
     ) {
+        val invoice = invoiceRepository.getById(invoiceId) ?: return
+
         val currentBill = calculateCreditCardBillUseCase(
-            creditCardId = creditCardId,
-            target = adjustmentDate.yearMonth,
+            invoiceId = invoiceId,
             transactions = repository.getAllTransactions()
         )
 
@@ -31,7 +29,7 @@ class AdjustCreditCardBillUseCase(
         val existingAdjustment = repository.getTransactionByTypeAndDate(
             type = Transaction.Type.ADJUSTMENT,
             date = adjustmentDate
-        )?.takeIf { it.target.isCreditCard && it.creditCard?.id == creditCardId }
+        )?.takeIf { it.invoice?.id == invoiceId }
 
         val difference = targetBill - currentBill
 
@@ -43,7 +41,8 @@ class AdjustCreditCardBillUseCase(
                     title = "Ajuste de Fatura",
                     date = adjustmentDate,
                     target = Transaction.Target.CREDIT_CARD,
-                    creditCard = creditCardRepository.getCreditCardById(creditCardId),
+                    creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),
+                    invoice = invoice
                 )
             )
             return
@@ -61,4 +60,3 @@ class AdjustCreditCardBillUseCase(
         )
     }
 }
-

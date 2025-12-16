@@ -14,9 +14,10 @@ data class Invoice(
     val status: Status,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
-    enum class Status {
-        OPEN,
-        CLOSED
+    enum class Status(val label: String) {
+        OPEN("Aberta"),
+        CLOSED("Fechada"),
+        PAID("Paga")
     }
 
     init {
@@ -25,3 +26,4 @@ data class Invoice(
         }
     }
 }
+

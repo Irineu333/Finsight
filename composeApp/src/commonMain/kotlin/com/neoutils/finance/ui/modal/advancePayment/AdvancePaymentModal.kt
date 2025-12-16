@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal.editInvoicePayment
+package com.neoutils.finance.ui.modal.advancePayment
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,7 +28,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.extension.toLastDayOfMonth
 import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
@@ -44,26 +45,26 @@ import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class EditInvoicePaymentModal(
-    private val transaction: Transaction
+class AdvancePaymentModal(
+    private val invoice: Invoice,
+    private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditInvoicePaymentViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<AdvancePaymentViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
-        val amount = rememberTextFieldState(formatMoneyFromDouble(-transaction.amount))
-        val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
+        val amount = rememberTextFieldState()
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
 
-        // Limites de data baseados na fatura
-        val invoice = transaction.invoice
-        val minDate = invoice?.openingMonth?.toLocalDate()
-        val maxDate = invoice?.closingMonth?.toLocalDate()?.let { closing ->
+        // Limites: dentro do período da fatura (abertura até fechamento)
+        val minDate = invoice.openingMonth.toLocalDate()
+        val maxDate = invoice.closingMonth.toLastDayOfMonth().let { lastDayOfClosing ->
             val today = currentDate()
-            if (today < closing) today else closing
+            if (today < lastDayOfClosing) today else lastDayOfClosing
         }
 
         Column(
@@ -74,9 +75,16 @@ class EditInvoicePaymentModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Editar Pagamento de Fatura",
+                text = "Antecipar Pagamento",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Text(
+                text = "Pague parte da fatura antes do fechamento.",
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
@@ -140,7 +148,7 @@ class EditInvoicePaymentModal(
 
             Button(
                 onClick = {
-                    viewModel.updateInvoicePayment(
+                    viewModel.advancePayment(
                         amount = parseMoneyToDouble(amount.text.toString()),
                         date = formats.dayMonthYear.parse(date.text.toString())
                     )
@@ -155,7 +163,7 @@ class EditInvoicePaymentModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = "Antecipar Pagamento",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -166,16 +174,16 @@ class EditInvoicePaymentModal(
     private fun isValidPayment(
         amount: String,
         date: String,
-        minDate: LocalDate?,
-        maxDate: LocalDate?
+        minDate: LocalDate,
+        maxDate: LocalDate
     ): Boolean {
         if (amount.isEmpty()) return false
-        if (parseMoneyToDouble(amount) <= 0.0) return false
+        val parsedAmount = parseMoneyToDouble(amount)
+        if (parsedAmount <= 0.0) return false
+        if (parsedAmount > currentBillAmount) return false  // Não permitir antecipação acima da fatura
         if (date.isEmpty()) return false
         val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-        if (minDate != null && parsedDate < minDate) return false
-        if (maxDate != null && parsedDate > maxDate) return false
-        return true
+        return parsedDate >= minDate && parsedDate <= maxDate
     }
 
     private fun currentDate(): LocalDate {
@@ -191,12 +199,4 @@ class EditInvoicePaymentModal(
 
         return digitsOnly.toDoubleOrNull() ?: 0.0
     }
-
-    private fun formatMoneyFromDouble(value: Double): String {
-        val intValue = (value * 100).toInt()
-        val reais = intValue / 100
-        val centavos = intValue % 100
-        return "R$ %d,%02d".format(reais, centavos)
-    }
 }
-

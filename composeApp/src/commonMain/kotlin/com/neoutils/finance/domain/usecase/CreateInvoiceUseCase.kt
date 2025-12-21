@@ -18,17 +18,17 @@ class CreateInvoiceUseCase(
             )
         }
 
-        val existingByOpening = invoiceRepository.getByOpeningMonth(creditCardId, openingMonth)
-        if (existingByOpening != null) {
-            return Result.failure(
-                IllegalStateException("An invoice with this opening month already exists")
-            )
+        val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
+        val overlappingInvoice = existingInvoices.find { existing ->
+            openingMonth < existing.closingMonth && closingMonth > existing.openingMonth
         }
 
-        val existingByClosing = invoiceRepository.getByClosingMonth(creditCardId, closingMonth)
-        if (existingByClosing != null) {
+        if (overlappingInvoice != null) {
             return Result.failure(
-                IllegalStateException("An invoice with this closing month already exists")
+                IllegalStateException(
+                    "Invoice period overlaps with existing invoice " +
+                    "(${overlappingInvoice.openingMonth} to ${overlappingInvoice.closingMonth})"
+                )
             )
         }
 

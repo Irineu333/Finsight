@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
-import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
+import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ class EditCreditCardLimitViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val transactionRepository: ITransactionRepository,
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
-    private val getOrCreateCurrentInvoiceUseCase: GetOrCreateCurrentInvoiceUseCase,
+    private val getCurrentInvoiceUseCase: GetCurrentInvoiceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -40,7 +40,7 @@ class EditCreditCardLimitViewModel(
                 return@launch
             }
 
-            val invoice = getOrCreateCurrentInvoiceUseCase(creditCardId)
+            val invoice = getCurrentInvoiceUseCase(creditCardId)
             if (invoice == null) {
                 modalManager.dismiss()
                 return@launch

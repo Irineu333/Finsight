@@ -11,22 +11,25 @@ import kotlinx.datetime.plus
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class GetOrCreateCurrentInvoiceUseCase(
+class CreateCurrentInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository
 ) {
     suspend operator fun invoke(creditCardId: Long): Invoice? {
-        // Verificar se o cartão ainda existe antes de criar fatura
         creditCardRepository.getCreditCardById(creditCardId) ?: return null
 
         val currentMonth = Clock.System.now().toYearMonth()
+        val nextMonth = currentMonth.plus(1, DateTimeUnit.MONTH)
 
-        val unpaidInvoice = invoiceRepository.getLatestUnpaidInvoice(creditCardId)
-        if (unpaidInvoice != null) {
-            return unpaidInvoice
+        val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
+        val overlappingInvoice = existingInvoices.find { existing ->
+            currentMonth < existing.closingMonth && nextMonth > existing.openingMonth
         }
 
-        val nextMonth = currentMonth.plus(1, DateTimeUnit.MONTH)
+        if (overlappingInvoice != null) {
+            return overlappingInvoice
+        }
+
         val newInvoice = Invoice(
             creditCardId = creditCardId,
             openingMonth = currentMonth,
@@ -38,4 +41,3 @@ class GetOrCreateCurrentInvoiceUseCase(
         return newInvoice.copy(id = id)
     }
 }
-

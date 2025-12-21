@@ -10,12 +10,14 @@ import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.domain.usecase.CloseInvoiceUseCase
+import com.neoutils.finance.domain.usecase.CreateCurrentInvoiceUseCase
 import com.neoutils.finance.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finance.domain.usecase.GetCategoriesUseCase
 import com.neoutils.finance.domain.usecase.GetCreditCardsUseCase
+import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
 import com.neoutils.finance.domain.usecase.GetInvoiceForTransactionUseCase
-import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
+import com.neoutils.finance.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finance.domain.usecase.PayCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finance.domain.usecase.ReopenInvoiceUseCase
@@ -39,8 +41,10 @@ val useCaseModules = module {
     factory { PayCreditCardBillUseCase(get(), get(), get(), get()) }
     factory { CreateInvoiceUseCase(get()) }
     factory { GetInvoiceForTransactionUseCase(get()) }
-    factory { CloseInvoiceUseCase(get(), get(), get()) }
-    factory { PayInvoiceUseCase(get()) }
-    factory { GetOrCreateCurrentInvoiceUseCase(get(), get()) }
+    factory { CloseInvoiceUseCase(get(), get(), get(), get()) }
+    factory { PayInvoiceUseCase(get(), get()) }
+    factory { GetCurrentInvoiceUseCase(get()) }
+    factory { CreateCurrentInvoiceUseCase(get(), get()) }
     factory { ReopenInvoiceUseCase(get()) }
+    factory { OpenInvoiceUseCase(get(), get()) }
 }

@@ -19,3 +19,4 @@ captures
 node_modules/
 /composeApp/schemas/*
 /CLAUDE.md
+/.agent/rules/code-style-guide.md

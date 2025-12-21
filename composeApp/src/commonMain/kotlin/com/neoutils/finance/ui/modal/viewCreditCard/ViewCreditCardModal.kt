@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
@@ -17,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,62 +25,60 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
+import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
 import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameModal
+import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
 import com.neoutils.finance.ui.modal.payBill.PayBillModal
-import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
-import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
-import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.util.DateFormats
-import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
-class ViewCreditCardModal(
-    private val creditCard: CreditCard,
-    private val billAmount: Double
-) : ModalBottomSheet() {
+class ViewCreditCardModal(private val creditCard: CreditCard, private val billAmount: Double) :
+    ModalBottomSheet() {
 
     private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewCreditCardViewModel>(key = key) {
-            parametersOf(creditCard, billAmount)
-        }
+        val viewModel =
+            koinViewModel<ViewCreditCardViewModel>(key = key) {
+                parametersOf(creditCard, billAmount)
+            }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+            modifier =
+                Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        modalManager.show(
-                            EditCreditCardNameModal(
-                                creditCardId = uiState.creditCard.id,
-                                currentName = uiState.creditCard.name
+                modifier =
+                    Modifier.clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            modalManager.show(
+                                EditCreditCardNameModal(
+                                    creditCardId = uiState.creditCard.id,
+                                    currentName = uiState.creditCard.name
+                                )
                             )
-                        )
-                    }
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = uiState.creditCard.name,
@@ -107,17 +105,19 @@ class ViewCreditCardModal(
             uiState.currentInvoice?.let { invoice ->
                 Spacer(modifier = Modifier.height(12.dp))
 
-                val statusColor = when (invoice.status) {
-                    Invoice.Status.OPEN -> Color(0xFFFFA726)
-                    Invoice.Status.CLOSED -> Color(0xFFEF5350)
-                    Invoice.Status.PAID -> Color(0xFF66BB6A)
-                }
+                val statusColor =
+                    when (invoice.status) {
+                        Invoice.Status.OPEN -> Color(0xFFFFA726)
+                        Invoice.Status.CLOSED -> Color(0xFFEF5350)
+                        Invoice.Status.PAID -> Color(0xFF66BB6A)
+                    }
 
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = statusColor.copy(alpha = 0.15f),
-                        contentColor = statusColor
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = statusColor.copy(alpha = 0.15f),
+                            contentColor = statusColor
+                        ),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
@@ -140,10 +140,7 @@ class ViewCreditCardModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(
-                label = "Limite",
-                value = uiState.creditCard.limit.toMoneyFormat()
-            )
+            DetailRow(label = "Limite", value = uiState.creditCard.limit.toMoneyFormat())
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -164,9 +161,7 @@ class ViewCreditCardModal(
             }
 
             HorizontalDivider(
-                modifier = Modifier.padding(
-                    vertical = 16.dp
-                ),
+                modifier = Modifier.padding(vertical = 16.dp),
             )
 
             // Actions
@@ -175,18 +170,18 @@ class ViewCreditCardModal(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
-                    onClick = {
-                        modalManager.show(DeleteCreditCardModal(uiState.creditCard))
-                    },
+                    onClick = { modalManager.show(DeleteCreditCardModal(uiState.creditCard)) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Expense,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = Expense.copy(alpha = 0.5f),
-                    ),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = Expense,
+                        ),
+                    border =
+                        BorderStroke(
+                            width = 1.dp,
+                            color = Expense.copy(alpha = 0.5f),
+                        ),
                     contentPadding = PaddingValues(12.dp),
                 ) {
                     Icon(
@@ -195,30 +190,26 @@ class ViewCreditCardModal(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "Excluir",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text(text = "Excluir", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
 
                 OutlinedButton(
                     onClick = {
                         modalManager.show(
-                            EditCreditCardLimitModal(
-                                creditCardId = uiState.creditCard.id
-                            )
+                            EditCreditCardLimitModal(creditCardId = uiState.creditCard.id)
                         )
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Info,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = Info.copy(alpha = 0.5f),
-                    ),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor = Info,
+                        ),
+                    border =
+                        BorderStroke(
+                            width = 1.dp,
+                            color = Info.copy(alpha = 0.5f),
+                        ),
                     contentPadding = PaddingValues(12.dp),
                 ) {
                     Icon(
@@ -227,11 +218,7 @@ class ViewCreditCardModal(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "Limite",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = "Limite", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -247,15 +234,18 @@ class ViewCreditCardModal(
                         // Fechar Fatura - apenas no mês de fechamento
                         if (isInClosingMonth) {
                             OutlinedButton(
-                                onClick = {
-                                    modalManager.show(CloseInvoiceModal(invoice))
-                                },
+                                onClick = { modalManager.show(CloseInvoiceModal(invoice)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFFFFA726)
-                                ),
-                                border = BorderStroke(1.dp, Color(0xFFFFA726).copy(alpha = 0.5f)),
+                                colors =
+                                    ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFFFFA726)
+                                    ),
+                                border =
+                                    BorderStroke(
+                                        1.dp,
+                                        Color(0xFFFFA726).copy(alpha = 0.5f)
+                                    ),
                                 contentPadding = PaddingValues(12.dp),
                             ) {
                                 Icon(
@@ -286,9 +276,10 @@ class ViewCreditCardModal(
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = colorScheme.primary
-                            ),
+                            colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                    contentColor = colorScheme.primary
+                                ),
                             border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.5f)),
                             contentPadding = PaddingValues(12.dp),
                         ) {
@@ -338,14 +329,13 @@ class ViewCreditCardModal(
 
                         // Reabrir Fatura - apenas quando fechada
                         OutlinedButton(
-                            onClick = {
-                                modalManager.show(ReopenInvoiceModal(invoice.id))
-                            },
+                            onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFFFA726)
-                            ),
+                            colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFFFFA726)
+                                ),
                             border = BorderStroke(1.dp, Color(0xFFFFA726).copy(alpha = 0.5f)),
                             contentPadding = PaddingValues(12.dp),
                         ) {
@@ -368,6 +358,29 @@ class ViewCreditCardModal(
                     }
                 }
             }
+                ?: run {
+                    // Sem fatura - mostrar botão para abrir
+                    Button(
+                        onClick = {
+                            modalManager.show(OpenInvoiceModal(uiState.creditCard.id))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreditCard,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Abrir Fatura",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
         }
     }
 
@@ -383,17 +396,8 @@ class ViewCreditCardModal(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = label,
-                fontSize = 16.sp,
-                color = colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = valueColor
-            )
+            Text(text = label, fontSize = 16.sp, color = colorScheme.onSurfaceVariant)
+            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = valueColor)
         }
     }
 }

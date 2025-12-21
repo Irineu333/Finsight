@@ -10,13 +10,15 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class CloseInvoiceUseCase(
-    private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase
+        private val invoiceRepository: IInvoiceRepository,
+        private val transactionRepository: ITransactionRepository,
+        private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
+        private val createCurrentInvoiceUseCase: CreateCurrentInvoiceUseCase
 ) {
-    suspend operator fun invoke(invoiceId: Long): Result<Unit> {
-        val invoice = invoiceRepository.getById(invoiceId)
-            ?: return Result.failure(IllegalArgumentException("Invoice not found"))
+    suspend operator fun invoke(invoiceId: Long, closedAt: Long): Result<Unit> {
+        val invoice =
+                invoiceRepository.getById(invoiceId)
+                        ?: return Result.failure(IllegalArgumentException("Invoice not found"))
 
         if (invoice.status == Invoice.Status.PAID) {
             return Result.failure(IllegalStateException("Cannot close a paid invoice"))
@@ -29,7 +31,7 @@ class CloseInvoiceUseCase(
         val currentMonth = Clock.System.now().toYearMonth()
         if (currentMonth < invoice.closingMonth) {
             return Result.failure(
-                IllegalStateException("Cannot close invoice before the closing month")
+                    IllegalStateException("Cannot close invoice before the closing month")
             )
         }
 
@@ -40,19 +42,29 @@ class CloseInvoiceUseCase(
         // Não permitir fechamento se valor negativo
         if (billAmount < 0) {
             return Result.failure(
-                IllegalStateException("Cannot close invoice with negative balance (R$ %.2f). Please adjust the transactions first.".format(billAmount))
+                    IllegalStateException(
+                            "Cannot close invoice with negative balance (R$ %.2f). Please adjust the transactions first.".format(
+                                    billAmount
+                            )
+                    )
             )
         }
 
-        // Se valor é zero, marcar como PAID diretamente
+        // Se valor é zero, marcar como PAID diretamente e criar próxima fatura
         if (billAmount == 0.0) {
-            invoiceRepository.update(invoice.copy(status = Invoice.Status.PAID))
+            invoiceRepository.update(
+                    invoice.copy(
+                            status = Invoice.Status.PAID,
+                            closedAt = closedAt,
+                            paidAt = closedAt
+                    )
+            )
+            createCurrentInvoiceUseCase(invoice.creditCardId)
             return Result.success(Unit)
         }
 
         // Valor > 0: fechar normalmente (aguardando pagamento)
-        invoiceRepository.update(invoice.copy(status = Invoice.Status.CLOSED))
+        invoiceRepository.update(invoice.copy(status = Invoice.Status.CLOSED, closedAt = closedAt))
         return Result.success(Unit)
     }
 }
-

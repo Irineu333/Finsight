@@ -1,19 +1,24 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.ui.modal.closeInvoice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 class CloseInvoiceViewModel(
-    private val invoiceId: Long,
-    private val closeInvoiceUseCase: CloseInvoiceUseCase,
-    private val modalManager: ModalManager
+        private val invoiceId: Long,
+        private val closeInvoiceUseCase: CloseInvoiceUseCase,
+        private val modalManager: ModalManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CloseInvoiceUiState())
@@ -23,22 +28,21 @@ class CloseInvoiceViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            closeInvoiceUseCase(invoiceId).fold(
-                onSuccess = {
-                    modalManager.dismissAll()
-                },
-                onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = it.message
+            val closedAt =
+                    closingDate
+                            .atStartOfDayIn(TimeZone.currentSystemDefault())
+                            .toEpochMilliseconds()
+
+            closeInvoiceUseCase(invoiceId, closedAt)
+                    .fold(
+                            onSuccess = { modalManager.dismissAll() },
+                            onFailure = {
+                                _uiState.value =
+                                        _uiState.value.copy(isLoading = false, error = it.message)
+                            }
                     )
-                }
-            )
         }
     }
 }
 
-data class CloseInvoiceUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
+data class CloseInvoiceUiState(val isLoading: Boolean = false, val error: String? = null)

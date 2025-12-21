@@ -36,73 +36,71 @@ import com.neoutils.finance.ui.model.CreditCardBillUi
 
 @Composable
 fun CreditCardBillCard(
-    uiModel: CreditCardBillUi,
-    modifier: Modifier = Modifier,
-    cardName: String? = null,
-    onClick: (() -> Unit)? = null,
-    onEditBill: (() -> Unit)? = null,
-    onEditLimit: (() -> Unit)? = null,
-    onCloseClick: (() -> Unit)? = null,
-    onPayClick: (() -> Unit)? = null,
-    showPayButton: Boolean = true, 
-    payButtonText: String = "Pagar Fatura"
+        uiModel: CreditCardBillUi,
+        modifier: Modifier = Modifier,
+        cardName: String? = null,
+        onClick: (() -> Unit)? = null,
+        onEditBill: (() -> Unit)? = null,
+        onEditLimit: (() -> Unit)? = null,
+        onCloseClick: (() -> Unit)? = null,
+        onPayClick: (() -> Unit)? = null,
+        onOpenInvoice: (() -> Unit)? = null,
+        showPayButton: Boolean = true,
+        payButtonText: String = "Pagar Fatura"
 ) {
     Card(
-        modifier = modifier.then(
-            if (onClick != null) {
-                Modifier
-                    .clip(shapes.large)
-                    .clickable { onClick() }
-            } else {
-                Modifier
-            }
-        ),
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer
-        ),
-        shape = shapes.large,
+            modifier =
+                    modifier.then(
+                            if (onClick != null) {
+                                Modifier.clip(shapes.large).clickable { onClick() }
+                            } else {
+                                Modifier
+                            }
+                    ),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
+            shape = shapes.large,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
+                modifier = Modifier.fillMaxSize().padding(20.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CreditCard,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
+                            imageVector = Icons.Default.CreditCard,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                     )
 
                     Text(
-                        text = cardName ?: "Cartão de Crédito",
-                        fontSize = 14.sp,
-                        color = colorScheme.onSurfaceVariant
+                            text = cardName ?: "Cartão de Crédito",
+                            fontSize = 14.sp,
+                            color = colorScheme.onSurfaceVariant
                     )
                 }
 
                 if (uiModel.statusLabel.isNotEmpty()) {
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = uiModel.statusColor.copy(alpha = 0.15f),
-                            contentColor = uiModel.statusColor
-                        ),
-                        shape = RoundedCornerShape(4.dp)
+                            colors =
+                                    CardDefaults.cardColors(
+                                            containerColor =
+                                                    uiModel.statusColor.copy(alpha = 0.15f),
+                                            contentColor = uiModel.statusColor
+                                    ),
+                            shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = uiModel.statusLabel,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = uiModel.statusLabel,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -111,43 +109,43 @@ fun CreditCardBillCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
                     Text(
-                        text = "Fatura Atual",
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant
+                            text = "Fatura Atual",
+                            fontSize = 12.sp,
+                            color = colorScheme.onSurfaceVariant
                     )
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .then(
-                                if (onEditBill != null) {
-                                    Modifier.clickable { onEditBill() }
-                                } else {
-                                    Modifier
-                                }
-                            )
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier =
+                                    Modifier.clip(RoundedCornerShape(4.dp))
+                                            .then(
+                                                    if (onEditBill != null) {
+                                                        Modifier.clickable { onEditBill() }
+                                                    } else {
+                                                        Modifier
+                                                    }
+                                            )
                     ) {
                         Text(
-                            text = uiModel.bill,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface
+                                text = uiModel.bill,
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onSurface
                         )
 
                         if (onEditBill != null) {
                             Icon(
-                                imageVector = Icons.Rounded.ModeEdit,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = colorScheme.onSurface.copy(alpha = 0.5f),
+                                    imageVector = Icons.Rounded.ModeEdit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = colorScheme.onSurface.copy(alpha = 0.5f),
                             )
                         }
                     }
@@ -157,45 +155,43 @@ fun CreditCardBillCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
             ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Limite Disponível",
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant
+                            text = "Limite Disponível",
+                            fontSize = 12.sp,
+                            color = colorScheme.onSurfaceVariant
                     )
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .then(
-                                if (onEditLimit != null) {
-                                    Modifier.clickable { onEditLimit() }
-                                } else {
-                                    Modifier
-                                }
-                            )
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier =
+                                    Modifier.clip(RoundedCornerShape(4.dp))
+                                            .then(
+                                                    if (onEditLimit != null) {
+                                                        Modifier.clickable { onEditLimit() }
+                                                    } else {
+                                                        Modifier
+                                                    }
+                                            )
                     ) {
                         Text(
-                            text = uiModel.availableLimit,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface
+                                text = uiModel.availableLimit,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colorScheme.onSurface
                         )
 
                         if (onEditLimit != null) {
                             Icon(
-                                imageVector = Icons.Rounded.ModeEdit,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = colorScheme.onSurface.copy(alpha = 0.5f),
+                                    imageVector = Icons.Rounded.ModeEdit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = colorScheme.onSurface.copy(alpha = 0.5f),
                             )
                         }
                     }
@@ -206,14 +202,12 @@ fun CreditCardBillCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LinearProgressIndicator(
-                    progress = { uiModel.usagePercentage.toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.surfaceContainerHighest,
-                    drawStopIndicator = {}
+                        progress = { uiModel.usagePercentage.toFloat() },
+                        modifier =
+                                Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                        color = colorScheme.primary,
+                        trackColor = colorScheme.surfaceContainerHighest,
+                        drawStopIndicator = {}
                 )
             }
 
@@ -221,44 +215,57 @@ fun CreditCardBillCard(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedButton(
-                    onClick = onCloseClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFFFA726)
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = Color(0xFFFFA726).copy(alpha = 0.5f)
-                    )
-                ) {
-                    Text(
-                        text = "Fechar Fatura",
-                        fontSize = 14.sp
-                    )
-                }
+                        onClick = onCloseClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color(0xFFFFA726)
+                                ),
+                        border =
+                                BorderStroke(
+                                        width = 1.dp,
+                                        color = Color(0xFFFFA726).copy(alpha = 0.5f)
+                                )
+                ) { Text(text = "Fechar Fatura", fontSize = 14.sp) }
             }
 
             if (showPayButton && onPayClick != null) {
                 Spacer(modifier = Modifier.height(if (onCloseClick != null) 8.dp else 12.dp))
 
                 OutlinedButton(
-                    onClick = onPayClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.primary
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = colorScheme.primary.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Text(
-                        text = payButtonText,
-                        fontSize = 14.sp
-                    )
-                }
+                        onClick = onPayClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                        contentColor = colorScheme.primary
+                                ),
+                        border =
+                                BorderStroke(
+                                        width = 1.dp,
+                                        color = colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                ) { Text(text = payButtonText, fontSize = 14.sp) }
+            }
+
+            if (onOpenInvoice != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                        onClick = onOpenInvoice,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                        contentColor = colorScheme.primary
+                                ),
+                        border =
+                                BorderStroke(
+                                        width = 1.dp,
+                                        color = colorScheme.primary.copy(alpha = 0.5f)
+                                )
+                ) { Text(text = "Abrir Fatura", fontSize = 14.sp) }
             }
         }
     }

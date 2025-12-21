@@ -7,23 +7,27 @@ class InvoiceMapper {
 
     fun toDomain(entity: InvoiceEntity): Invoice {
         return Invoice(
-            id = entity.id,
-            creditCardId = entity.creditCardId,
-            openingMonth = entity.openingMonth,
-            closingMonth = entity.closingMonth,
-            status = entity.status.toDomain(),
-            createdAt = entity.createdAt
+                id = entity.id,
+                creditCardId = entity.creditCardId,
+                openingMonth = entity.openingMonth,
+                closingMonth = entity.closingMonth,
+                status = entity.status.toDomain(),
+                createdAt = entity.createdAt,
+                closedAt = entity.closedAt,
+                paidAt = entity.paidAt
         )
     }
 
     fun toEntity(domain: Invoice): InvoiceEntity {
         return InvoiceEntity(
-            id = domain.id,
-            creditCardId = domain.creditCardId,
-            openingMonth = domain.openingMonth,
-            closingMonth = domain.closingMonth,
-            status = domain.status.toEntity(),
-            createdAt = domain.createdAt
+                id = domain.id,
+                creditCardId = domain.creditCardId,
+                openingMonth = domain.openingMonth,
+                closingMonth = domain.closingMonth,
+                status = domain.status.toEntity(),
+                createdAt = domain.createdAt,
+                closedAt = domain.closedAt,
+                paidAt = domain.paidAt
         )
     }
 

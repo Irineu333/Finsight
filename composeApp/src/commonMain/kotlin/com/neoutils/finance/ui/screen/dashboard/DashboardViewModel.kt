@@ -12,7 +12,7 @@ import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
-import com.neoutils.finance.domain.usecase.GetOrCreateCurrentInvoiceUseCase
+import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
 import com.neoutils.finance.ui.mapper.CreditCardBillUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -28,7 +28,7 @@ class DashboardViewModel(
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
-    private val getOrCreateCurrentInvoiceUseCase: GetOrCreateCurrentInvoiceUseCase,
+    private val getCurrentInvoiceUseCase: GetCurrentInvoiceUseCase,
     private val creditCardBillUiMapper: CreditCardBillUiMapper,
 ) : ViewModel() {
 
@@ -51,19 +51,21 @@ class DashboardViewModel(
             forYearMonth = currentMonth
         )
 
-        val creditCardsWithBills = creditCards.mapNotNull { creditCard ->
-            val invoice = getOrCreateCurrentInvoiceUseCase(creditCard.id)
-                ?: return@mapNotNull null  // Cartão foi deletado
-            val billAmount = calculateCreditCardBillUseCase(
-                invoiceId = invoice.id,
-                transactions = transactions
-            )
+        val creditCardsWithBills = creditCards.map { creditCard ->
+            val invoice = getCurrentInvoiceUseCase(creditCard.id)
+            val billAmount = invoice?.let {
+                calculateCreditCardBillUseCase(
+                    invoiceId = it.id,
+                    transactions = transactions
+                )
+            } ?: 0.0
+
             CreditCardWithBill(
                 creditCard = creditCard,
                 billUi = creditCardBillUiMapper.toUi(
                     bill = billAmount,
                     limit = creditCard.limit,
-                    invoiceStatus = invoice.status
+                    invoiceStatus = invoice?.status
                 ),
                 billAmount = billAmount,
                 currentInvoice = invoice

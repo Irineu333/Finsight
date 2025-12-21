@@ -6,9 +6,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.YearMonth
 
 @Entity(
     tableName = "invoices",
@@ -27,13 +27,14 @@ import kotlin.time.ExperimentalTime
     ]
 )
 data class InvoiceEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val creditCardId: Long,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val status: Status,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val closedAt: Long? = null,
+    val paidAt: Long? = null
 ) {
     enum class Status {
         OPEN,

@@ -12,7 +12,9 @@ data class Invoice(
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val status: Status,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val closedAt: Long? = null,
+    val paidAt: Long? = null
 ) {
     enum class Status(val label: String) {
         OPEN("Aberta"),

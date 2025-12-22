@@ -2,22 +2,24 @@ package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.ui.icons.CategoryIcon
+import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 
 @Composable
 fun CategoryIconBox(
     category: Category,
-    shape: Shape,
-    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+    contentPadding: PaddingValues = PaddingValues(12.dp),
 ) {
     Surface(
         color = when (category.type) {
@@ -28,7 +30,7 @@ fun CategoryIconBox(
         modifier = modifier,
     ) {
         Icon(
-            imageVector = CategoryIcon.fromKey(category.key).icon,
+            painter = category.icon(),
             contentDescription = null,
             tint = when (category.type) {
                 Category.Type.INCOME -> Income

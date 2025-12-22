@@ -12,7 +12,7 @@ data class CategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val key: String,
+    val iconKey: String,
     val type: Type,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {

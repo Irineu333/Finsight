@@ -9,7 +9,7 @@ class GetCategoriesUseCase(
 ) {
     operator fun invoke(type: Category.Type? = null): Flow<List<Category>> {
         return if (type != null) {
-            repository.getCategoriesByType(type)
+            repository.observeCategoriesByType(type)
         } else {
             repository.observeAllCategories()
         }

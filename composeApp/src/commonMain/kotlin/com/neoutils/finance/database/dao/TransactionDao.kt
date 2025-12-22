@@ -34,7 +34,7 @@ interface TransactionDao {
     fun observeTransactionById(id: Long): Flow<TransactionEntity?>
 
     @Query("SELECT * FROM transactions WHERE type = :type ORDER BY date DESC")
-    fun getTransactionsByType(type: TransactionEntity.Type): Flow<List<TransactionEntity>>
+    fun observeTransactionsByType(type: TransactionEntity.Type): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
     suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: LocalDate): TransactionEntity?

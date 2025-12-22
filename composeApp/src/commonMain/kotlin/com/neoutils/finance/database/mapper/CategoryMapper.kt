@@ -2,6 +2,7 @@ package com.neoutils.finance.database.mapper
 
 import com.neoutils.finance.database.entity.CategoryEntity
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.ui.icons.CategoryLazyIcon
 
 class CategoryMapper {
     fun toDomain(
@@ -10,7 +11,7 @@ class CategoryMapper {
         return Category(
             id = entity.id,
             name = entity.name,
-            key = entity.key,
+            icon = CategoryLazyIcon(entity.iconKey),
             type = toDomain(entity.type),
             createdAt = entity.createdAt
         )
@@ -31,7 +32,7 @@ class CategoryMapper {
         return CategoryEntity(
             id = domain.id,
             name = domain.name,
-            key = domain.key,
+            iconKey = domain.icon.key,
             type = toEntity(domain.type),
             createdAt = domain.createdAt
         )

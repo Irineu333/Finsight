@@ -17,7 +17,7 @@ class AdjustCreditCardBillUseCase(
         targetBill: Double,
         adjustmentDate: LocalDate
     ) {
-        val invoice = invoiceRepository.getById(invoiceId) ?: return
+        val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return
 
         val currentBill = calculateCreditCardBillUseCase(
             invoiceId = invoiceId,

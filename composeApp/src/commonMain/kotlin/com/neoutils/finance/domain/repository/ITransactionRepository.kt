@@ -12,7 +12,7 @@ interface ITransactionRepository {
     suspend fun getAllTransactions(): List<Transaction>
     suspend fun getTransactionById(id: Long): Transaction?
     fun observeTransactionById(id: Long): Flow<Transaction?>
-    fun getTransactionsByType(type: Transaction.Type): Flow<List<Transaction>>
+    fun observeTransactionsByType(type: Transaction.Type): Flow<List<Transaction>>
     suspend fun getTransactionByTypeAndDate(type: Transaction.Type, date: LocalDate): Transaction?
     suspend fun deleteAll()
 }

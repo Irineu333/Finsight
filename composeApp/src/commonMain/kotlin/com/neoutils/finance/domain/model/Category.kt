@@ -1,9 +1,11 @@
 package com.neoutils.finance.domain.model
 
+import com.neoutils.finance.ui.icons.CategoryLazyIcon
+
 data class Category(
     val id: Long = 0,
     val name: String,
-    val key: String,
+    val icon: CategoryLazyIcon,
     val type: Type,
     val createdAt: Long
 ) {

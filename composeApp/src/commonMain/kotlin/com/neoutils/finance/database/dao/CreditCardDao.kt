@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CreditCardDao {
     @Query("SELECT * FROM credit_cards ORDER BY createdAt ASC")
-    fun getAllCreditCards(): Flow<List<CreditCardEntity>>
+    fun observeAllCreditCards(): Flow<List<CreditCardEntity>>
 
     @Query("SELECT * FROM credit_cards ORDER BY createdAt ASC")
     suspend fun getAllCreditCardsList(): List<CreditCardEntity>

@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY createdAt ASC")
-    fun getAllCategories(): Flow<List<CategoryEntity>>
+    fun observeAllCategories(): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories ORDER BY createdAt ASC")
-    suspend fun getAllCategoriesDirect(): List<CategoryEntity>
+    suspend fun getAllCategories(): List<CategoryEntity>
 
     @Query("SELECT * FROM categories WHERE type = :type ORDER BY createdAt ASC")
-    fun getCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
+    fun observeCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategoryById(id: Long): CategoryEntity?

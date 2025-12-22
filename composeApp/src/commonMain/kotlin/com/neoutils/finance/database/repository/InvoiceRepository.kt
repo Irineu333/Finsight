@@ -35,6 +35,10 @@ class InvoiceRepository(
         }
     }
 
+    override suspend fun getAllInvoices(): List<Invoice> {
+        return dao.getAllInvoices().map { mapper.toDomain(it) }
+    }
+
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
         return dao.getOpenInvoice(creditCardId)?.let { mapper.toDomain(it) }
     }
@@ -55,7 +59,7 @@ class InvoiceRepository(
         return dao.getByClosingMonth(creditCardId, closingMonth)?.let { mapper.toDomain(it) }
     }
 
-    override suspend fun getById(id: Long): Invoice? {
+    override suspend fun getInvoiceById(id: Long): Invoice? {
         return dao.getById(id)?.let { mapper.toDomain(it) }
     }
 

@@ -9,9 +9,9 @@ import kotlin.time.ExperimentalTime
 
 @Entity(tableName = "credit_cards")
 data class CreditCardEntity(
-        @PrimaryKey(autoGenerate = true) val id: Long = 0,
-        val name: String,
-        val limit: Double,
-        val closingDay: Int? = null,
-        val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val limit: Double,
+    val closingDay: Int? = null,
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 )

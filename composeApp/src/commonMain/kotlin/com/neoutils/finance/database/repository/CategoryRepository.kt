@@ -12,17 +12,17 @@ class CategoryRepository(
     private val mapper: CategoryMapper,
 ) : ICategoryRepository {
     override fun observeAllCategories(): Flow<List<Category>> {
-        return dao.getAllCategories().map { entities ->
+        return dao.observeAllCategories().map { entities ->
             entities.map { mapper.toDomain(it) }
         }
     }
 
     override suspend fun getAllCategories(): List<Category> {
-        return dao.getAllCategoriesDirect().map { mapper.toDomain(it) }
+        return dao.getAllCategories().map { mapper.toDomain(it) }
     }
 
-    override fun getCategoriesByType(type: Category.Type): Flow<List<Category>> {
-        return dao.getCategoriesByType(
+    override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> {
+        return dao.observeCategoriesByType(
             mapper.toEntity(type)
         ).map { entities ->
             entities.map { mapper.toDomain(it) }

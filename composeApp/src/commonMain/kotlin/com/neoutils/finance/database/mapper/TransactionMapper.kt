@@ -49,7 +49,7 @@ class TransactionMapper {
             TransactionEntity.Type.EXPENSE -> Transaction.Type.EXPENSE
             TransactionEntity.Type.INCOME -> Transaction.Type.INCOME
             TransactionEntity.Type.ADJUSTMENT -> Transaction.Type.ADJUSTMENT
-            TransactionEntity.Type.BILL_PAYMENT -> Transaction.Type.INVOICE_PAYMENT
+            TransactionEntity.Type.INVOICE_PAYMENT -> Transaction.Type.INVOICE_PAYMENT
             TransactionEntity.Type.ADVANCE_PAYMENT -> Transaction.Type.ADVANCE_PAYMENT
         }
     }
@@ -61,7 +61,7 @@ class TransactionMapper {
             Transaction.Type.EXPENSE -> TransactionEntity.Type.EXPENSE
             Transaction.Type.INCOME -> TransactionEntity.Type.INCOME
             Transaction.Type.ADJUSTMENT -> TransactionEntity.Type.ADJUSTMENT
-            Transaction.Type.INVOICE_PAYMENT -> TransactionEntity.Type.BILL_PAYMENT
+            Transaction.Type.INVOICE_PAYMENT -> TransactionEntity.Type.INVOICE_PAYMENT
             Transaction.Type.ADVANCE_PAYMENT -> TransactionEntity.Type.ADVANCE_PAYMENT
         }
     }

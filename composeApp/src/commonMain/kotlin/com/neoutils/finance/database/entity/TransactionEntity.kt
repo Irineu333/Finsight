@@ -50,7 +50,7 @@ data class TransactionEntity(
         EXPENSE,
         INCOME,
         ADJUSTMENT,
-        BILL_PAYMENT,
+        INVOICE_PAYMENT,
         ADVANCE_PAYMENT
     }
 

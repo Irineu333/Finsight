@@ -13,7 +13,7 @@ class CreditCardRepository(
 ) : ICreditCardRepository {
 
     override fun observeAllCreditCards(): Flow<List<CreditCard>> {
-        return dao.getAllCreditCards().map { entities ->
+        return dao.observeAllCreditCards().map { entities ->
             entities.map { mapper.toDomain(it) }
         }
     }

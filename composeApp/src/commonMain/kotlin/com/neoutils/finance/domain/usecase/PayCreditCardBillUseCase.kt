@@ -21,7 +21,7 @@ class PayCreditCardBillUseCase(
     ) {
         require(amount > 0) { "Payment amount must be positive" }
 
-        val invoice = invoiceRepository.getById(invoiceId) ?: return
+        val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return
 
         // Validar que o valor não excede a fatura
         val transactions = repository.getAllTransactions()

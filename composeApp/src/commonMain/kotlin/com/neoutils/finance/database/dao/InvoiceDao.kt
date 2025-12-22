@@ -14,6 +14,9 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices ORDER BY openingMonth DESC")
     fun observeAllInvoices(): Flow<List<InvoiceEntity>>
 
+    @Query("SELECT * FROM invoices ORDER BY openingMonth DESC")
+    suspend fun getAllInvoices(): List<InvoiceEntity>
+
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId ORDER BY openingMonth DESC")
     fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<InvoiceEntity>>
 

@@ -20,18 +20,6 @@ class TransactionRepository(
     private val mapper: TransactionMapper,
 ) : ITransactionRepository {
 
-    override suspend fun insert(transaction: Transaction): Long {
-        return dao.insert(mapper.toEntity(transaction))
-    }
-
-    override suspend fun update(transaction: Transaction) {
-        dao.update(mapper.toEntity(transaction))
-    }
-
-    override suspend fun delete(transaction: Transaction) {
-        dao.delete(mapper.toEntity(transaction))
-    }
-
     override fun observeAllTransactions(): Flow<List<Transaction>> {
         return combine(
             dao.observeAllTransactions(),
@@ -40,14 +28,17 @@ class TransactionRepository(
             },
             creditCardRepository.observeAllCreditCards().map { creditCards ->
                 creditCards.associateBy { it.id }
-            }
-        ) { transactions, categories, creditCards ->
+            },
+            invoiceRepository.observeAllInvoices().map { invoices ->
+                invoices.associateBy { it.id }
+            },
+        ) { transactions, categories, creditCards, invoices ->
             transactions.map { transaction ->
                 mapper.toDomain(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
-                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
+                    invoice = invoices[transaction.invoiceId],
                 )
             }
         }
@@ -57,13 +48,14 @@ class TransactionRepository(
         val transactions = dao.getAllTransactions()
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
+        val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
 
         return transactions.map { transaction ->
             mapper.toDomain(
                 entity = transaction,
                 category = categories[transaction.categoryId],
                 creditCard = creditCards[transaction.creditCardId],
-                invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
+                invoice = invoices[transaction.invoiceId],
             )
         }
     }
@@ -80,8 +72,8 @@ class TransactionRepository(
                 creditCardRepository.getCreditCardById(it)
             },
             invoice = transaction.invoiceId?.let {
-                invoiceRepository.getById(it)
-            }
+                invoiceRepository.getInvoiceById(it)
+            },
         )
     }
 
@@ -93,35 +85,41 @@ class TransactionRepository(
             },
             creditCardRepository.observeAllCreditCards().map { creditCards ->
                 creditCards.associateBy { it.id }
-            }
-        ) { transaction, categories, creditCards ->
+            },
+            invoiceRepository.observeAllInvoices().map { invoices ->
+                invoices.associateBy { it.id }
+            },
+        ) { transaction, categories, creditCards, invoices ->
             transaction?.let { transaction ->
                 mapper.toDomain(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
-                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
+                    invoice = invoices[transaction.invoiceId],
                 )
             }
         }
     }
 
-    override fun getTransactionsByType(type: Transaction.Type): Flow<List<Transaction>> {
+    override fun observeTransactionsByType(type: Transaction.Type): Flow<List<Transaction>> {
         return combine(
-            dao.getTransactionsByType(mapper.toEntity(type)),
+            dao.observeTransactionsByType(mapper.toEntity(type)),
             categoryRepository.observeAllCategories().map { categories ->
                 categories.associateBy { it.id }
             },
             creditCardRepository.observeAllCreditCards().map { creditCards ->
                 creditCards.associateBy { it.id }
-            }
-        ) { transactions, categories, creditCards ->
+            },
+            invoiceRepository.observeAllInvoices().map { invoices ->
+                invoices.associateBy { it.id }
+            },
+        ) { transactions, categories, creditCards, invoices ->
             transactions.map { transaction ->
                 mapper.toDomain(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
-                    invoice = transaction.invoiceId?.let { invoiceRepository.getById(it) }
+                    invoice = invoices[transaction.invoiceId],
                 )
             }
         }
@@ -142,9 +140,21 @@ class TransactionRepository(
                 creditCardRepository.getCreditCardById(it)
             },
             invoice = transaction.invoiceId?.let {
-                invoiceRepository.getById(it)
+                invoiceRepository.getInvoiceById(it)
             }
         )
+    }
+
+    override suspend fun insert(transaction: Transaction): Long {
+        return dao.insert(mapper.toEntity(transaction))
+    }
+
+    override suspend fun update(transaction: Transaction) {
+        dao.update(mapper.toEntity(transaction))
+    }
+
+    override suspend fun delete(transaction: Transaction) {
+        dao.delete(mapper.toEntity(transaction))
     }
 
     override suspend fun deleteAll() {

@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.icons.CategoryIcon
+import com.neoutils.finance.ui.icons.CategoryLazyIcon
+import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import org.koin.compose.viewmodel.koinViewModel
@@ -123,7 +124,7 @@ class AddCategoryModal(
                     viewModel.addCategory(
                         category = Category(
                             name = name.text.toString(),
-                            key = selectedIcon.key,
+                            icon = CategoryLazyIcon(selectedIcon.key),
                             type = selectedType,
                             createdAt = Clock.System.now().toEpochMilliseconds()
                         )

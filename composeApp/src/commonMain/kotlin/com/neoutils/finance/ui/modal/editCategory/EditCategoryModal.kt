@@ -26,14 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.icons.CategoryIcon
+import com.neoutils.finance.ui.icons.CategoryLazyIcon
+import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class EditCategoryModal(
-    private val category: Category
+    private val category: Category,
 ) : ModalBottomSheet() {
 
     private val duplicatedNameError = @Composable {
@@ -45,7 +46,7 @@ class EditCategoryModal(
         val viewModel = koinViewModel<EditCategoryViewModel>(key = key) { parametersOf(category) }
 
         val name = rememberTextFieldState(category.name)
-        var selectedIcon by remember { mutableStateOf(CategoryIcon.fromKey(category.key)) }
+        var selectedIcon by remember { mutableStateOf(CategoryIcon.fromKey(category.icon.key)) }
         val selectedType = category.type
         var isIconGridExpanded by remember { mutableStateOf(false) }
 
@@ -114,7 +115,7 @@ class EditCategoryModal(
                     viewModel.updateCategory(
                         updatedCategory = category.copy(
                             name = name.text.toString().trim(),
-                            key = selectedIcon.key
+                            icon = CategoryLazyIcon(selectedIcon.key)
                         )
                     )
                 },

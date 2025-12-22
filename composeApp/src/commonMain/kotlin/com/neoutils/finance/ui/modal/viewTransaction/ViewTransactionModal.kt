@@ -26,7 +26,8 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.icons.CategoryIcon
+import com.neoutils.finance.ui.icons.CategoryLazyIcon
+import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
@@ -75,28 +76,44 @@ class ViewTransactionModal(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.size(64.dp),
                 ) {
-                    Icon(
-                        imageVector = uiState.transaction.category?.let {
-                            CategoryIcon.fromKey(it.key).icon
-                        } ?: when (transaction.type) {
-                            Transaction.Type.INCOME -> Icons.Default.ShoppingCart
-                            Transaction.Type.EXPENSE -> Icons.Default.Receipt
-                            Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.Receipt
-                        },
-                        contentDescription = null,
-                        tint = when (transaction.type) {
-                            Transaction.Type.INCOME -> Income
-                            Transaction.Type.EXPENSE -> Expense
-                            Transaction.Type.ADJUSTMENT -> Adjustment
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
-                    )
+
+                    uiState.transaction.category?.let { category ->
+                        Icon(
+                            painter = category.icon(),
+                            contentDescription = null,
+                            tint = when (transaction.type) {
+                                Transaction.Type.INCOME -> Income
+                                Transaction.Type.EXPENSE -> Expense
+                                Transaction.Type.ADJUSTMENT -> Adjustment
+                                Transaction.Type.INVOICE_PAYMENT,
+                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        )
+                    } ?: run {
+                        Icon(
+                            imageVector = when (transaction.type) {
+                                Transaction.Type.INCOME -> Icons.Default.ShoppingCart
+                                Transaction.Type.EXPENSE -> Icons.Default.Receipt
+                                Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
+                                Transaction.Type.INVOICE_PAYMENT,
+                                Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.Receipt
+                            },
+                            contentDescription = null,
+                            tint = when (transaction.type) {
+                                Transaction.Type.INCOME -> Income
+                                Transaction.Type.EXPENSE -> Expense
+                                Transaction.Type.ADJUSTMENT -> Adjustment
+                                Transaction.Type.INVOICE_PAYMENT,
+                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        )
+                    }
                 }
 
                 Spacer(Modifier.width(16.dp))

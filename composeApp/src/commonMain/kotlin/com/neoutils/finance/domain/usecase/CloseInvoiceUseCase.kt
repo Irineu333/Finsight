@@ -17,7 +17,7 @@ class CloseInvoiceUseCase(
 ) {
     suspend operator fun invoke(invoiceId: Long, closedAt: Long): Result<Unit> {
         val invoice =
-                invoiceRepository.getById(invoiceId)
+                invoiceRepository.getInvoiceById(invoiceId)
                         ?: return Result.failure(IllegalArgumentException("Invoice not found"))
 
         if (invoice.status == Invoice.Status.PAID) {

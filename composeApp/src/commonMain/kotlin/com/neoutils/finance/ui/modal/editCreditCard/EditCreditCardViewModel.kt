@@ -55,17 +55,20 @@ class EditCreditCardViewModel(
                     EditCreditCardUiState(
                             currentName = creditCard.name,
                             currentLimit = creditCard.limit,
+                            currentClosingDay = creditCard.closingDay,
                             currentBill = billAmount,
                             isLoading = false
                     )
         }
     }
 
-    fun save(name: String, limit: Double) {
+    fun save(name: String, limit: Double, closingDay: Int?) {
         viewModelScope.launch {
             val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             if (creditCard != null) {
-                creditCardRepository.update(creditCard.copy(name = name.trim(), limit = limit))
+                creditCardRepository.update(
+                        creditCard.copy(name = name.trim(), limit = limit, closingDay = closingDay)
+                )
             }
             modalManager.dismiss()
         }
@@ -75,6 +78,7 @@ class EditCreditCardViewModel(
 data class EditCreditCardUiState(
         val currentName: String = "",
         val currentLimit: Double = 0.0,
+        val currentClosingDay: Int? = null,
         val currentBill: Double = 0.0,
         val isLoading: Boolean = true
 )

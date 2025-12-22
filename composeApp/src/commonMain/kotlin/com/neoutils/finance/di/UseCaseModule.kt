@@ -35,7 +35,7 @@ val useCaseModules = module {
     factory { CalculateCategorySpendingUseCase() }
     factory { GetCategoriesUseCase(get()) }
     factory { GetCreditCardsUseCase(get()) }
-    factory { AddCreditCardUseCase(get()) }
+    factory { AddCreditCardUseCase(get(), get()) }
     factory { UpdateCreditCardUseCase(get()) }
     factory { DeleteCreditCardUseCase(get()) }
     factory { PayCreditCardBillUseCase(get(), get(), get(), get()) }

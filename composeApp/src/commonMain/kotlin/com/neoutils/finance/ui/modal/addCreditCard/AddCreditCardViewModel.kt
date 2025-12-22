@@ -7,13 +7,13 @@ import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class AddCreditCardViewModel(
-    private val addCreditCardUseCase: AddCreditCardUseCase,
-    private val modalManager: ModalManager
+        private val addCreditCardUseCase: AddCreditCardUseCase,
+        private val modalManager: ModalManager
 ) : ViewModel() {
 
-    fun addCreditCard(name: String, limit: Double) {
+    fun addCreditCard(name: String, limit: Double, closingDay: Int?) {
         viewModelScope.launch {
-            addCreditCardUseCase(name, limit)
+            addCreditCardUseCase(name, limit, closingDay)
             modalManager.dismiss()
         }
     }

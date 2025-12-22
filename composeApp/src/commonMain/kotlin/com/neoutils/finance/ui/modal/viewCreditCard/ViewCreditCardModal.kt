@@ -1,7 +1,6 @@
 package com.neoutils.finance.ui.modal.viewCreditCard
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,8 +29,7 @@ import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
-import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
-import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameModal
+import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
 import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
 import com.neoutils.finance.ui.modal.payBill.PayBillModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
@@ -65,35 +62,12 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier =
-                    Modifier.clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            modalManager.show(
-                                EditCreditCardNameModal(
-                                    creditCardId = uiState.creditCard.id,
-                                    currentName = uiState.creditCard.name
-                                )
-                            )
-                        }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = uiState.creditCard.name,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = uiState.creditCard.name,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onSurface
+            )
 
             Text(
                 text = "Cartão de Crédito",
@@ -156,7 +130,7 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                 DetailRow(
                     label = "Fechamento",
                     value = formats.yearMonth.format(invoice.closingMonth),
-                    modifier = Modifier.padding(top = 26.dp)
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
 
@@ -196,7 +170,7 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                 OutlinedButton(
                     onClick = {
                         modalManager.show(
-                            EditCreditCardLimitModal(creditCardId = uiState.creditCard.id)
+                            EditCreditCardModal(creditCardId = uiState.creditCard.id)
                         )
                     },
                     modifier = Modifier.weight(1f),
@@ -218,7 +192,7 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "Limite", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Editar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -357,30 +331,29 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         // Fatura quitada - nenhum botão de ação
                     }
                 }
-            }
-                ?: run {
-                    // Sem fatura - mostrar botão para abrir
-                    Button(
-                        onClick = {
-                            modalManager.show(OpenInvoiceModal(uiState.creditCard.id))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(12.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CreditCard,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Abrir Fatura",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+            } ?: run {
+                // Sem fatura - mostrar botão para abrir
+                Button(
+                    onClick = {
+                        modalManager.show(OpenInvoiceModal(uiState.creditCard.id))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CreditCard,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Abrir Fatura",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+            }
         }
     }
 

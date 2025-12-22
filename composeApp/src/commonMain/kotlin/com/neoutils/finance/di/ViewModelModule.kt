@@ -192,6 +192,17 @@ val viewModelModule = module {
     }
 
     viewModel {
+        com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel(
+                creditCardId = it.get(),
+                creditCardRepository = get(),
+                transactionRepository = get(),
+                calculateCreditCardBillUseCase = get(),
+                getCurrentInvoiceUseCase = get(),
+                modalManager = get()
+        )
+    }
+
+    viewModel {
         EditInvoicePaymentViewModel(
                 transaction = it.get(),
                 transactionRepository = get(),

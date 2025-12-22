@@ -39,6 +39,21 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
     suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: LocalDate): TransactionEntity?
 
+    @Query("""
+        SELECT * FROM transactions
+        WHERE (:type IS NULL OR type = :type)
+          AND (:target IS NULL OR target = :target)
+          AND (:date IS NULL OR date = :date)
+          AND (:invoiceId IS NULL OR invoiceId = :invoiceId)
+        ORDER BY date DESC, id DESC
+    """)
+    suspend fun getTransactionsBy(
+        type: TransactionEntity.Type?,
+        target: TransactionEntity.Target?,
+        date: LocalDate?,
+        invoiceId: Long?,
+    ): List<TransactionEntity>
+
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
 }

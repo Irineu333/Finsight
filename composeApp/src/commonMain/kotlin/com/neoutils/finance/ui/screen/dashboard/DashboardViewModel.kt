@@ -10,9 +10,8 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
-import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
+import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
-import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
 import com.neoutils.finance.ui.mapper.CreditCardBillUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -27,8 +26,7 @@ class DashboardViewModel(
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
-    private val getCurrentInvoiceUseCase: GetCurrentInvoiceUseCase,
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val creditCardBillUiMapper: CreditCardBillUiMapper,
 ) : ViewModel() {
 
@@ -52,9 +50,9 @@ class DashboardViewModel(
         )
 
         val creditCardsWithBills = creditCards.map { creditCard ->
-            val invoice = getCurrentInvoiceUseCase(creditCard.id)
+            val invoice = invoiceRepository.getLatestUnpaidInvoice(creditCard.id)
             val billAmount = invoice?.let {
-                calculateCreditCardBillUseCase(
+                calculateInvoiceUseCase(
                     invoiceId = it.id,
                     transactions = transactions
                 )

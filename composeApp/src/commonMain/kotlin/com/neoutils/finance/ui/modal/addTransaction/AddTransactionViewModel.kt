@@ -8,7 +8,6 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -20,7 +19,6 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val getCurrentInvoiceUseCase: GetCurrentInvoiceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -50,7 +48,7 @@ class AddTransactionViewModel(
         if (transaction.target.isCreditCard && transaction.creditCard == null) return@launch
 
         val transactionWithInvoice = if (transaction.target.isCreditCard && transaction.creditCard != null) {
-            val invoice = getCurrentInvoiceUseCase(transaction.creditCard.id)
+            val invoice = invoiceRepository.getLatestUnpaidInvoice(transaction.creditCard.id)
                 ?: return@launch
 
             if (invoice.status != Invoice.Status.OPEN) {

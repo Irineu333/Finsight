@@ -55,7 +55,6 @@ class CloseInvoiceModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<CloseInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
-        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         // Data inicial: primeiro dia do mês de fechamento
         val defaultDate = invoice.closingMonth.toLocalDate()

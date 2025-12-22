@@ -6,6 +6,7 @@ import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minus
+import kotlinx.datetime.minusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -24,7 +25,7 @@ class AdjustInitialBalanceUseCase(
 
         adjustBalanceUseCase(
             targetBalance = targetBalance,
-            adjustmentDate = targetMonth.minus(1, DateTimeUnit.MONTH).lastDay
+            adjustmentDate = targetMonth.minusMonth().lastDay
         )
     }
 }

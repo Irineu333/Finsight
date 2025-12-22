@@ -1,31 +1,38 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.PayInvoiceErrors
+import com.neoutils.finance.domain.exception.PayInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
+import kotlinx.datetime.LocalDate
+
+private val errors = PayInvoiceErrors()
 
 class PayInvoiceUseCase(
-        private val invoiceRepository: IInvoiceRepository,
-        private val createCurrentInvoiceUseCase: CreateCurrentInvoiceUseCase
+    private val invoiceRepository: IInvoiceRepository,
+    private val createInvoiceUseCase: CreateInvoiceUseCase
 ) {
-    suspend operator fun invoke(invoiceId: Long, paidAt: Long): Result<Unit> {
-        val invoice =
-                invoiceRepository.getInvoiceById(invoiceId)
-                        ?: return Result.failure(IllegalArgumentException("Invoice not found"))
+    suspend operator fun invoke(
+        invoiceId: Long,
+        paidAt: LocalDate,
+    ): Result<Invoice> {
 
-        if (invoice.status == Invoice.Status.PAID) {
-            return Result.failure(IllegalStateException("Invoice is already paid"))
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+            ?: return Result.failure(PayInvoiceException(errors.invoiceNotFound))
+
+        if (invoice.status != Invoice.Status.CLOSED) {
+            return Result.failure(PayInvoiceException(errors.cannotPayOpenInvoice))
         }
 
-        if (invoice.status == Invoice.Status.OPEN) {
-            return Result.failure(
-                    IllegalStateException("Cannot pay an open invoice. Close it first.")
-            )
-        }
+        val paidInvoice = invoice.copy(
+            status = Invoice.Status.PAID,
+            paidAt = paidAt.toEpochDays(),
+        )
 
-        invoiceRepository.update(invoice.copy(status = Invoice.Status.PAID, paidAt = paidAt))
+        invoiceRepository.update(paidInvoice)
 
-        createCurrentInvoiceUseCase(invoice.creditCardId)
+        createInvoiceUseCase(invoice.creditCardId)
 
-        return Result.success(Unit)
+        return Result.success(paidInvoice)
     }
 }

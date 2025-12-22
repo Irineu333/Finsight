@@ -12,9 +12,10 @@ class ReopenInvoiceViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    fun reopenInvoice() {
-        viewModelScope.launch {
-            reopenInvoiceUseCase(invoiceId)
+    fun reopenInvoice() = viewModelScope.launch {
+        reopenInvoiceUseCase(
+            invoiceId = invoiceId,
+        ).onSuccess {
             modalManager.dismissAll()
         }
     }

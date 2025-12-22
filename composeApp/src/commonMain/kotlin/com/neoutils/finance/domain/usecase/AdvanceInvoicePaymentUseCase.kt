@@ -1,48 +1,51 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
+import com.neoutils.finance.domain.exception.PayCreditCardBillException
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
-class PayCreditCardBillUseCase(
+private val errors = PayInvoicePaymentErrors()
+
+class AdvanceInvoicePaymentUseCase(
     private val repository: ITransactionRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
     suspend operator fun invoke(
         invoiceId: Long,
         amount: Double,
         date: LocalDate,
-        type: Transaction.Type = Transaction.Type.INVOICE_PAYMENT,
-        title: String = "Pagamento de Fatura"
-    ) {
-        require(amount > 0) { "Payment amount must be positive" }
+    ): Result<Transaction> {
+        if (amount <= 0) {
+            return Result.failure(PayCreditCardBillException(errors.negativeAmount))
+        }
 
-        val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+            ?: return Result.failure(PayCreditCardBillException(errors.invoiceNotFound))
 
-        // Validar que o valor não excede a fatura
-        val transactions = repository.getAllTransactions()
-        val currentBillAmount = calculateCreditCardBillUseCase(invoiceId, transactions)
-        require(amount <= currentBillAmount) { 
-            "Payment amount (R$ %.2f) cannot exceed invoice bill (R$ %.2f)".format(amount, currentBillAmount) 
+        val currentBillAmount = calculateInvoiceUseCase(invoiceId)
+
+        if (amount > currentBillAmount) {
+            return Result.failure(PayCreditCardBillException(errors.amountExceedsInvoice))
         }
 
         val transaction = Transaction(
-            type = type,
-            amount = -amount,
-            title = title,
-            date = date,
             category = null,
+            title = null,
+            type = Transaction.Type.ADVANCE_PAYMENT,
+            amount = -amount,
+            date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),
             invoice = invoice
         )
 
         repository.insert(transaction)
+        return Result.success(transaction)
     }
 }
-
-

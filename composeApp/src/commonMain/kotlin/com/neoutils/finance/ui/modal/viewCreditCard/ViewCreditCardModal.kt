@@ -31,7 +31,7 @@ import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
 import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
-import com.neoutils.finance.ui.modal.payBill.PayBillModal
+import com.neoutils.finance.ui.modal.payBill.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -276,7 +276,7 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         Button(
                             onClick = {
                                 modalManager.show(
-                                    PayBillModal(
+                                    PayInvoiceModal(
                                         invoice = invoice,
                                         currentBillAmount = uiState.billAmount
                                     )

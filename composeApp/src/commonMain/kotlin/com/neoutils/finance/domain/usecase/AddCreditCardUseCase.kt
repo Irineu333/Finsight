@@ -2,51 +2,71 @@
 
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.RegisterCreditCardErrors
+import com.neoutils.finance.domain.exception.RegisterCreditCardException
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.extension.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.YearMonth
-import kotlinx.datetime.minus
+import kotlinx.datetime.minusMonth
 import kotlinx.datetime.toLocalDateTime
 
+private val errors = RegisterCreditCardErrors()
+
 class AddCreditCardUseCase(
-        private val repository: ICreditCardRepository,
-        private val openInvoiceUseCase: OpenInvoiceUseCase
+    private val repository: ICreditCardRepository,
+    private val openInvoiceUseCase: OpenInvoiceUseCase,
 ) {
-    suspend operator fun invoke(name: String, limit: Double, closingDay: Int? = null): Long {
-        require(name.isNotBlank()) { "Credit card name cannot be blank" }
-        require(limit >= 0) { "Credit card limit must be non-negative" }
-        require(closingDay == null || closingDay in 1..28) {
-            "Closing day must be between 1 and 28"
+    suspend operator fun invoke(
+        creditCard: CreditCardForm
+    ): Result<CreditCard> {
+
+        if (creditCard.name.isBlank()) {
+            return Result.failure(RegisterCreditCardException(errors.emptyName))
         }
 
-        val creditCard =
-                CreditCard(
-                        name = name,
-                        limit = limit,
-                        closingDay = closingDay,
-                        createdAt = Clock.System.now().toEpochMilliseconds()
-                )
-
-        val creditCardId = repository.insert(creditCard)
-
-        if (closingDay != null) {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val today = now.date.day
-
-            val openingMonth =
-                    if (today < closingDay) {
-                        YearMonth(now.year, now.month).minus(1, DateTimeUnit.MONTH)
-                    } else {
-                        YearMonth(now.year, now.month)
-                    }
-
-            openInvoiceUseCase(creditCardId, openingMonth)
+        if (creditCard.limit < 0) {
+            return Result.failure(RegisterCreditCardException(errors.negativeLimit))
         }
 
-        return creditCardId
+        if (creditCard.closingDay != null && creditCard.closingDay !in 1..28) {
+            return Result.failure(
+                RegisterCreditCardException(errors.invalidClosingDay)
+            )
+        }
+
+        val creditCard = CreditCard(
+            name = creditCard.name,
+            limit = creditCard.limit,
+            closingDay = creditCard.closingDay,
+            createdAt = Clock.System.now().toEpochMilliseconds()
+        )
+
+        repository.insert(creditCard)
+
+        if (creditCard.closingDay == null) {
+            return Result.success(creditCard)
+        }
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+        if (now.day < creditCard.closingDay) {
+            openInvoiceUseCase(
+                creditCardId = creditCard.id,
+                openingMonth = now.yearMonth.minusMonth()
+            )
+
+            return Result.success(creditCard)
+        }
+
+        openInvoiceUseCase(
+            creditCardId = creditCard.id,
+            openingMonth = now.yearMonth
+        )
+
+        return Result.success(creditCard)
     }
 }

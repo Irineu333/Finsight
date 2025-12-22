@@ -6,39 +6,38 @@ import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
-class AdjustCreditCardBillUseCase(
+class AdjustInvoiceUseCase(
     private val repository: ITransactionRepository,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
         invoiceId: Long,
-        targetBill: Double,
+        target: Double,
         adjustmentDate: LocalDate
     ) {
         val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return
 
-        val currentBill = calculateCreditCardBillUseCase(
-            invoiceId = invoiceId,
-            transactions = repository.getAllTransactions()
-        )
+        val currentInvoice = calculateInvoiceUseCase(invoiceId = invoiceId)
 
-        if (targetBill == currentBill) return
+        if (target == currentInvoice) return
 
-        val existingAdjustment = repository.getTransactionByTypeAndDate(
+        val existingAdjustment = repository.getTransactionsBy(
             type = Transaction.Type.ADJUSTMENT,
+            target = Transaction.Target.CREDIT_CARD,
+            invoiceId = invoiceId,
             date = adjustmentDate
-        )?.takeIf { it.invoice?.id == invoiceId }
+        ).firstOrNull()
 
-        val difference = targetBill - currentBill
+        val difference = target - currentInvoice
 
         if (existingAdjustment == null) {
             repository.insert(
                 Transaction(
+                    title = null,
                     type = Transaction.Type.ADJUSTMENT,
                     amount = difference,
-                    title = "Ajuste de Fatura",
                     date = adjustmentDate,
                     target = Transaction.Target.CREDIT_CARD,
                     creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),

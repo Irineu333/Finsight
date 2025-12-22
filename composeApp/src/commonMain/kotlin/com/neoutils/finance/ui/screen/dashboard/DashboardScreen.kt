@@ -36,7 +36,7 @@ import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
 import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
-import com.neoutils.finance.ui.modal.payBill.PayBillModal
+import com.neoutils.finance.ui.modal.payBill.PayInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
@@ -248,7 +248,7 @@ private fun DashboardContent(
                                                         {
                                                             invoice?.let {
                                                                 modalManager.show(
-                                                                        PayBillModal(
+                                                                        PayInvoiceModal(
                                                                                 invoice = it,
                                                                                 currentBillAmount =
                                                                                         cardWithBill

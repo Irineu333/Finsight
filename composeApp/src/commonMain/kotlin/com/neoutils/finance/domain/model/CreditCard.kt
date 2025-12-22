@@ -2,19 +2,31 @@
 
 package com.neoutils.finance.domain.model
 
+import com.neoutils.finance.domain.errors.RegisterCreditCardErrors
+import com.neoutils.finance.domain.exception.RegisterCreditCardException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private val creditCardErrors = RegisterCreditCardErrors()
+
 data class CreditCard(
-        val id: Long = 0,
-        val name: String,
-        val limit: Double,
-        val closingDay: Int? = null,
-        val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val id: Long = 0,
+    val name: String,
+    val limit: Double,
+    val closingDay: Int? = null,
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
     init {
-        require(closingDay == null || closingDay in 1..28) {
-            "Closing day must be between 1 and 28"
+        if (name.isBlank()) {
+            throw RegisterCreditCardException(creditCardErrors.emptyName)
+        }
+
+        if (limit < 0) {
+            throw RegisterCreditCardException(creditCardErrors.negativeLimit)
+        }
+
+        if (closingDay != null && closingDay !in 1..28) {
+            throw RegisterCreditCardException(creditCardErrors.invalidClosingDay)
         }
     }
 }

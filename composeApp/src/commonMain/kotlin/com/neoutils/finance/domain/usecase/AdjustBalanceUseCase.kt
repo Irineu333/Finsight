@@ -2,7 +2,6 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
@@ -20,19 +19,21 @@ class AdjustBalanceUseCase(
 
         if (targetBalance == currentBalance) return
 
-        val existingAdjustment = repository.getTransactionByTypeAndDate(
+        val existingAdjustment = repository.getTransactionsBy(
             type = Transaction.Type.ADJUSTMENT,
-            date = adjustmentDate
-        )?.takeIf { it.target.isAccount }
+            target = Transaction.Target.ACCOUNT,
+            date = adjustmentDate,
+            invoiceId = null,
+        ).firstOrNull()
 
         val difference = targetBalance - currentBalance
 
         if (existingAdjustment == null) {
             repository.insert(
                 Transaction(
+                    title = null,
                     type = Transaction.Type.ADJUSTMENT,
                     amount = difference,
-                    title = "Ajuste de Saldo",
                     date = adjustmentDate
                 )
             )

@@ -1,45 +1,54 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.CreateInvoiceErrors
+import com.neoutils.finance.domain.exception.CreateInvoiceException
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import kotlinx.datetime.YearMonth
+import com.neoutils.finance.extension.toYearMonth
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.plus
+import kotlinx.datetime.plusMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+private val errors = CreateInvoiceErrors()
 
 class CreateInvoiceUseCase(
-    private val invoiceRepository: IInvoiceRepository
+    private val invoiceRepository: IInvoiceRepository,
+    private val creditCardRepository: ICreditCardRepository
 ) {
-    suspend operator fun invoke(
-        creditCardId: Long,
-        openingMonth: YearMonth,
-        closingMonth: YearMonth
-    ): Result<Invoice> {
-        if (closingMonth <= openingMonth) {
-            return Result.failure(
-                IllegalArgumentException("Closing month must be after opening month")
-            )
-        }
+    private val currentMonth get() = Clock.System.now().toYearMonth()
+    private val nextMonth get() = currentMonth.plusMonth()
+
+    suspend operator fun invoke(creditCardId: Long): Result<Invoice> {
+
+        creditCardRepository.getCreditCardById(creditCardId)
+            ?: return Result.failure(CreateInvoiceException(errors.creditCardNotFound))
 
         val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
+
         val overlappingInvoice = existingInvoices.find { existing ->
-            openingMonth < existing.closingMonth && closingMonth > existing.openingMonth
+            currentMonth < existing.closingMonth && nextMonth > existing.openingMonth
         }
 
         if (overlappingInvoice != null) {
-            return Result.failure(
-                IllegalStateException(
-                    "Invoice period overlaps with existing invoice " +
-                    "(${overlappingInvoice.openingMonth} to ${overlappingInvoice.closingMonth})"
-                )
-            )
+            return Result.success(overlappingInvoice)
         }
 
-        val invoice = Invoice(
+        val newInvoice = Invoice(
             creditCardId = creditCardId,
-            openingMonth = openingMonth,
-            closingMonth = closingMonth,
-            status = Invoice.Status.OPEN
+            openingMonth = currentMonth,
+            closingMonth = nextMonth,
+            status = Invoice.Status.OPEN,
         )
 
-        val id = invoiceRepository.insert(invoice)
-        return Result.success(invoice.copy(id = id))
+        return Result.success(
+            newInvoice.copy(
+                id = invoiceRepository.insert(newInvoice)
+            )
+        )
     }
 }

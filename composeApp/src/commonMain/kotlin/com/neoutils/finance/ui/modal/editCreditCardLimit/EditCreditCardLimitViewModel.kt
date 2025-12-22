@@ -5,23 +5,23 @@ package com.neoutils.finance.ui.modal.editCreditCardLimit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.domain.usecase.CalculateCreditCardBillUseCase
-import com.neoutils.finance.domain.usecase.GetCurrentInvoiceUseCase
+import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 class EditCreditCardLimitViewModel(
     private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
-    private val transactionRepository: ITransactionRepository,
-    private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
-    private val getCurrentInvoiceUseCase: GetCurrentInvoiceUseCase,
+    private val invoiceRepository: IInvoiceRepository,
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val updateCreditCardUseCase: UpdateCreditCardUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -40,16 +40,14 @@ class EditCreditCardLimitViewModel(
                 return@launch
             }
 
-            val invoice = getCurrentInvoiceUseCase(creditCardId)
+            val invoice = invoiceRepository.getLatestUnpaidInvoice(creditCardId)
             if (invoice == null) {
                 modalManager.dismiss()
                 return@launch
             }
-            
-            val transactions = transactionRepository.observeAllTransactions().first()
-            val billAmount = calculateCreditCardBillUseCase(
+
+            val billAmount = calculateInvoiceUseCase(
                 invoiceId = invoice.id,
-                transactions = transactions
             )
 
             _uiState.value = EditCreditCardLimitUiState(
@@ -60,12 +58,10 @@ class EditCreditCardLimitViewModel(
         }
     }
 
-    fun saveLimit(limit: Double) {
-        viewModelScope.launch {
-            val creditCard = creditCardRepository.getCreditCardById(creditCardId)
-            if (creditCard != null) {
-                creditCardRepository.update(creditCard.copy(limit = limit))
-            }
+    fun saveLimit(limit: Double) = viewModelScope.launch {
+        updateCreditCardUseCase(creditCardId) {
+            it.copy(limit = limit)
+        }.onSuccess {
             modalManager.dismiss()
         }
     }

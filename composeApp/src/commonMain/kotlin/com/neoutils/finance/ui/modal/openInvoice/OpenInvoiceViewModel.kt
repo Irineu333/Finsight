@@ -8,14 +8,19 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 
 class OpenInvoiceViewModel(
-        private val creditCardId: Long,
-        private val openInvoiceUseCase: OpenInvoiceUseCase,
-        private val modalManager: ModalManager
+    private val creditCardId: Long,
+    private val openInvoiceUseCase: OpenInvoiceUseCase,
+    private val modalManager: ModalManager
 ) : ViewModel() {
 
     fun openInvoice(openingMonth: YearMonth) {
         viewModelScope.launch {
-            openInvoiceUseCase(creditCardId, openingMonth).onSuccess { modalManager.dismiss() }
+            openInvoiceUseCase(
+                creditCardId,
+                openingMonth
+            ).onSuccess {
+                modalManager.dismiss()
+            }
         }
     }
 }

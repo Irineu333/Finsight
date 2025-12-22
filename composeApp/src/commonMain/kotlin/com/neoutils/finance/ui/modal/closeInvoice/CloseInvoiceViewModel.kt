@@ -16,33 +16,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 
 class CloseInvoiceViewModel(
-        private val invoiceId: Long,
-        private val closeInvoiceUseCase: CloseInvoiceUseCase,
-        private val modalManager: ModalManager
+    private val invoiceId: Long,
+    private val closeInvoiceUseCase: CloseInvoiceUseCase,
+    private val modalManager: ModalManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CloseInvoiceUiState())
-    val uiState: StateFlow<CloseInvoiceUiState> = _uiState.asStateFlow()
-
-    fun closeInvoice(closingDate: LocalDate) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val closedAt =
-                    closingDate
-                            .atStartOfDayIn(TimeZone.currentSystemDefault())
-                            .toEpochMilliseconds()
-
-            closeInvoiceUseCase(invoiceId, closedAt)
-                    .fold(
-                            onSuccess = { modalManager.dismissAll() },
-                            onFailure = {
-                                _uiState.value =
-                                        _uiState.value.copy(isLoading = false, error = it.message)
-                            }
-                    )
+    fun closeInvoice(closingDate: LocalDate) =  viewModelScope.launch {
+        closeInvoiceUseCase(
+            invoiceId,
+            closingDate
+        ).onSuccess {
+            modalManager.dismissAll()
         }
     }
 }
-
-data class CloseInvoiceUiState(val isLoading: Boolean = false, val error: String? = null)

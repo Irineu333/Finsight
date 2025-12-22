@@ -14,8 +14,6 @@ class CalculateCategorySpendingUseCase {
             it.type.isExpense && it.date.yearMonth == forYearMonth && it.category != null
         }
 
-        if (expenseTransactions.isEmpty()) return listOf()
-
         val totalExpense = expenseTransactions.sumOf { it.amount }
 
         return expenseTransactions
@@ -25,7 +23,10 @@ class CalculateCategorySpendingUseCase {
                 CategorySpending(
                     category = category,
                     amount = amount,
-                    percentage = if (totalExpense > 0) (amount / totalExpense) * 100 else 0.0
+                    percentage = when {
+                        totalExpense > 0 -> (amount / totalExpense) * 100
+                        else -> 0.0
+                    },
                 )
             }
             .sortedByDescending { it.amount }

@@ -3,8 +3,6 @@
 package com.neoutils.finance.ui.modal.addCategory
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -56,7 +54,7 @@ class AddCategoryModal(
         var selectedType by remember { mutableStateOf(initialType) }
         var isIconGridExpanded by remember { mutableStateOf(false) }
 
-        val existingCategories by viewModel.existingCategories.collectAsState()
+        val existingCategories by viewModel.categories.collectAsState()
 
         val isDuplicateName by remember {
             derivedStateOf {

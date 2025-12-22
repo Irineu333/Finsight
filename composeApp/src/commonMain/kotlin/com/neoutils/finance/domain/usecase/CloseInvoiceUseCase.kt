@@ -2,69 +2,64 @@
 
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.CloseInvoiceErrors
+import com.neoutils.finance.domain.exception.CloseInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
+import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private val errors = CloseInvoiceErrors()
+
 class CloseInvoiceUseCase(
-        private val invoiceRepository: IInvoiceRepository,
-        private val transactionRepository: ITransactionRepository,
-        private val calculateCreditCardBillUseCase: CalculateCreditCardBillUseCase,
-        private val createCurrentInvoiceUseCase: CreateCurrentInvoiceUseCase
+    private val invoiceRepository: IInvoiceRepository,
+    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val payInvoiceUseCase: PayInvoiceUseCase,
 ) {
-    suspend operator fun invoke(invoiceId: Long, closedAt: Long): Result<Unit> {
-        val invoice =
-                invoiceRepository.getInvoiceById(invoiceId)
-                        ?: return Result.failure(IllegalArgumentException("Invoice not found"))
+    suspend operator fun invoke(
+        invoiceId: Long,
+        closedAt: LocalDate
+    ): Result<Invoice> {
+
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+            ?: return Result.failure(CloseInvoiceException(errors.invoiceNotFound))
 
         if (invoice.status == Invoice.Status.PAID) {
-            return Result.failure(IllegalStateException("Cannot close a paid invoice"))
+            return Result.failure(CloseInvoiceException(errors.cannotClosePaidInvoice))
         }
 
         if (invoice.status == Invoice.Status.CLOSED) {
-            return Result.failure(IllegalStateException("Invoice is already closed"))
+            return Result.failure(CloseInvoiceException(errors.invoiceAlreadyClosed))
         }
 
         val currentMonth = Clock.System.now().toYearMonth()
+
         if (currentMonth < invoice.closingMonth) {
-            return Result.failure(
-                    IllegalStateException("Cannot close invoice before the closing month")
+            return Result.failure(CloseInvoiceException(errors.cannotCloseBeforeClosingMonth))
+        }
+
+        val invoiceAmount = calculateInvoiceUseCase(invoiceId)
+
+        if (invoiceAmount < 0) {
+            return Result.failure(CloseInvoiceException(errors.negativeBalance))
+        }
+
+        if (invoiceAmount == 0.0) {
+            return payInvoiceUseCase(
+                invoiceId = invoiceId,
+                paidAt = closedAt,
             )
         }
 
-        // Calcular valor atual da fatura
-        val transactions = transactionRepository.getAllTransactions()
-        val billAmount = calculateCreditCardBillUseCase(invoiceId, transactions)
+        val closedInvoice = invoice.copy(
+            status = Invoice.Status.CLOSED,
+            closedAt = closedAt.toEpochDays(),
+        )
 
-        // Não permitir fechamento se valor negativo
-        if (billAmount < 0) {
-            return Result.failure(
-                    IllegalStateException(
-                            "Cannot close invoice with negative balance (R$ %.2f). Please adjust the transactions first.".format(
-                                    billAmount
-                            )
-                    )
-            )
-        }
+        invoiceRepository.update(closedInvoice)
 
-        // Se valor é zero, marcar como PAID diretamente e criar próxima fatura
-        if (billAmount == 0.0) {
-            invoiceRepository.update(
-                    invoice.copy(
-                            status = Invoice.Status.PAID,
-                            closedAt = closedAt,
-                            paidAt = closedAt
-                    )
-            )
-            createCurrentInvoiceUseCase(invoice.creditCardId)
-            return Result.success(Unit)
-        }
-
-        // Valor > 0: fechar normalmente (aguardando pagamento)
-        invoiceRepository.update(invoice.copy(status = Invoice.Status.CLOSED, closedAt = closedAt))
-        return Result.success(Unit)
+        return Result.success(closedInvoice)
     }
 }

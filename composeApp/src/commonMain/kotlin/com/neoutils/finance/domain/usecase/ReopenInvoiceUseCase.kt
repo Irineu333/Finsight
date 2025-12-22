@@ -1,23 +1,34 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.ReopenInvoiceErrors
+import com.neoutils.finance.domain.exception.ReopenInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 
-class ReopenInvoiceUseCase(private val invoiceRepository: IInvoiceRepository) {
-    suspend operator fun invoke(invoiceId: Long): Result<Unit> {
-        val invoice =
-                invoiceRepository.getInvoiceById(invoiceId)
-                        ?: return Result.failure(IllegalArgumentException("Invoice not found"))
+private val errors = ReopenInvoiceErrors()
+
+class ReopenInvoiceUseCase(
+    private val invoiceRepository: IInvoiceRepository
+) {
+    suspend operator fun invoke(invoiceId: Long): Result<Invoice> {
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+            ?: return Result.failure(ReopenInvoiceException(errors.invoiceNotFound))
 
         if (invoice.status == Invoice.Status.OPEN) {
-            return Result.failure(IllegalStateException("Invoice is already open"))
+            return Result.failure(ReopenInvoiceException(errors.invoiceAlreadyOpen))
         }
 
         if (invoice.status == Invoice.Status.PAID) {
-            return Result.failure(IllegalStateException("Cannot reopen a paid invoice"))
+            return Result.failure(ReopenInvoiceException(errors.cannotReopenPaidInvoice))
         }
 
-        invoiceRepository.update(invoice.copy(status = Invoice.Status.OPEN, closedAt = null))
-        return Result.success(Unit)
+        val openedInvoice = invoice.copy(
+            status = Invoice.Status.OPEN,
+            closedAt = null
+        )
+
+        invoiceRepository.update(openedInvoice)
+
+        return Result.success(openedInvoice)
     }
 }

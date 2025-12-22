@@ -6,16 +6,21 @@ import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
+import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel
+import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
+import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
-import com.neoutils.finance.ui.modal.payBill.PayBillViewModel
+import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceViewModel
+import com.neoutils.finance.ui.modal.payBill.PayInvoiceViewModel
+import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardViewModel
@@ -31,214 +36,229 @@ import org.koin.dsl.module
 
 val viewModelModule = module {
     viewModel {
-        ViewCategoryViewModel(category = it.get(), categoryRepository = get(), repository = get())
+        ViewCategoryViewModel(
+            category = it.get(),
+            categoryRepository = get(),
+            repository = get()
+        )
     }
 
-    viewModel { ViewAdjustmentViewModel(transaction = it.get(), transactionRepository = get()) }
+    viewModel {
+        ViewAdjustmentViewModel(
+            transaction = it.get(),
+            transactionRepository = get()
+        )
+    }
 
     viewModel {
         ViewTransactionViewModel(
-                transaction = it.get(),
-                transactionRepository = get(),
+            transaction = it.get(),
+            transactionRepository = get(),
         )
     }
 
     viewModel {
         DashboardViewModel(
-                transactionRepository = get(),
-                creditCardRepository = get(),
-                invoiceRepository = get(),
-                calculateBalanceUseCase = get(),
-                calculateTransactionStatsUseCase = get(),
-                calculateCategorySpendingUseCase = get(),
-                calculateCreditCardBillUseCase = get(),
-                getCurrentInvoiceUseCase = get(),
-                creditCardBillUiMapper = get()
+            transactionRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get(),
+            calculateCategorySpendingUseCase = get(),
+            calculateInvoiceUseCase = get(),
+            creditCardBillUiMapper = get()
         )
     }
 
     viewModel {
         TransactionsViewModel(
-                transaction = getOrNull(),
-                category = getOrNull(),
-                target = getOrNull(),
-                transactionRepository = get(),
-                categoryRepository = get(),
-                calculateBalanceUseCase = get(),
-                calculateTransactionStatsUseCase = get(),
+            transaction = getOrNull(),
+            category = getOrNull(),
+            target = getOrNull(),
+            transactionRepository = get(),
+            categoryRepository = get(),
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get(),
         )
     }
 
-    viewModel { CategoriesViewModel(getCategoriesUseCase = get()) }
+    viewModel { CategoriesViewModel(repository = get()) }
 
     viewModel {
         CreditCardsViewModel(
-                creditCardRepository = get(),
-                transactionRepository = get(),
-                calculateCreditCardBillUseCase = get(),
-                getCurrentInvoiceUseCase = get(),
-                creditCardBillUiMapper = get()
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            transactionRepository = get(),
+            calculateInvoiceUseCase = get(),
+            creditCardBillUiMapper = get()
         )
     }
 
     viewModel {
         AddTransactionViewModel(
-                transactionRepository = get(),
-                categoryRepository = get(),
-                creditCardRepository = get(),
-                invoiceRepository = get(),
-                getCurrentInvoiceUseCase = get(),
-                modalManager = get()
+            transactionRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
         EditTransactionViewModel(
-                transactionRepository = get(),
-                categoryRepository = get(),
-                creditCardRepository = get(),
-                modalManager = get()
+            transactionRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        DeleteTransactionViewModel(transaction = it.get(), repository = get(), modalManager = get())
+        DeleteTransactionViewModel(
+            transaction = it.get(),
+            repository = get(),
+            modalManager = get()
+        )
     }
 
     viewModel {
         AddCategoryViewModel(
-                initialType = it.get(),
-                repository = get(),
-                getCategoriesUseCase = get(),
-                modalManager = get()
+            initialType = it.get(),
+            repository = get(),
+            modalManager = get()
         )
     }
 
-    viewModel { AddCreditCardViewModel(addCreditCardUseCase = get(), modalManager = get()) }
+    viewModel {
+        AddCreditCardViewModel(
+            addCreditCardUseCase = get(),
+            modalManager = get()
+        )
+    }
 
     viewModel {
         ViewCreditCardViewModel(
-                creditCard = it.get(),
-                initialBillAmount = it.get(),
-                creditCardRepository = get(),
-                transactionRepository = get(),
-                calculateCreditCardBillUseCase = get(),
-                getCurrentInvoiceUseCase = get(),
-                closeInvoiceUseCase = get(),
-                payInvoiceUseCase = get()
+            creditCard = it.get(),
+            initialBillAmount = it.get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
         )
     }
 
     viewModel {
         DeleteCreditCardViewModel(
-                creditCard = it.get(),
-                deleteCreditCardUseCase = get(),
-                modalManager = get()
+            creditCard = it.get(),
+            modalManager = get(),
+            creditCardRepository = get(),
         )
     }
 
     viewModel {
         EditCategoryViewModel(
-                category = it.get(),
-                repository = get(),
-                getCategoriesUseCase = get(),
-                modalManager = get()
+            category = it.get(),
+            repository = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        DeleteCategoryViewModel(category = it.get(), repository = get(), modalManager = get())
+        DeleteCategoryViewModel(
+            category = it.get(),
+            repository = get(),
+            modalManager = get()
+        )
     }
 
     viewModel {
         EditBalanceViewModel(
-                type = it.get(),
-                targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
-                invoiceId = it.getOrNull(),
-                adjustBalanceUseCase = get(),
-                adjustFinalBalanceUseCase = get(),
-                adjustInitialBalanceUseCase = get(),
-                adjustCreditCardBillUseCase = get(),
-                modalManager = get()
+            type = it.get(),
+            targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
+            invoiceId = it.getOrNull(),
+            adjustBalanceUseCase = get(),
+            adjustFinalBalanceUseCase = get(),
+            adjustInitialBalanceUseCase = get(),
+            adjustInvoiceUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        PayBillViewModel(
-                invoiceId = it.get(),
-                payBillUseCase = get(),
-                payInvoiceUseCase = get(),
-                modalManager = get()
+        PayInvoiceViewModel(
+            invoiceId = it.get(),
+            payInvoiceUseCase = get(),
+            payInvoicePaymentUseCase = get(),
+            calculateInvoiceUseCase = get(),
+            modalManager = get(),
         )
     }
 
     viewModel {
         EditCreditCardLimitViewModel(
-                creditCardId = it.get(),
-                creditCardRepository = get(),
-                transactionRepository = get(),
-                calculateCreditCardBillUseCase = get(),
-                getCurrentInvoiceUseCase = get(),
-                modalManager = get()
+            creditCardId = it.get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+            updateCreditCardUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
         EditCreditCardNameViewModel(
-                creditCardId = it.get(),
-                creditCardRepository = get(),
-                modalManager = get()
+            creditCardId = it.get(),
+            updateCreditCardUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel(
-                creditCardId = it.get(),
-                creditCardRepository = get(),
-                transactionRepository = get(),
-                calculateCreditCardBillUseCase = get(),
-                getCurrentInvoiceUseCase = get(),
-                modalManager = get()
+        EditCreditCardViewModel(
+            creditCardId = it.get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
         EditInvoicePaymentViewModel(
-                transaction = it.get(),
-                transactionRepository = get(),
-                modalManager = get()
+            transaction = it.get(),
+            transactionRepository = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel(
-                invoiceId = it.get(),
-                closeInvoiceUseCase = get(),
-                modalManager = get()
+        CloseInvoiceViewModel(
+            invoiceId = it.get(),
+            closeInvoiceUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel(
-                invoiceId = it.get(),
-                payCreditCardBillUseCase = get(),
-                modalManager = get()
+        AdvancePaymentViewModel(
+            invoiceId = it.get(),
+            advanceInvoicePaymentUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel(
-                invoiceId = it.get(),
-                reopenInvoiceUseCase = get(),
-                modalManager = get()
+        ReopenInvoiceViewModel(
+            invoiceId = it.get(),
+            reopenInvoiceUseCase = get(),
+            modalManager = get()
         )
     }
 
     viewModel {
-        com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceViewModel(
-                creditCardId = it.get(),
-                openInvoiceUseCase = get(),
-                modalManager = get()
+        OpenInvoiceViewModel(
+            creditCardId = it.get(),
+            openInvoiceUseCase = get(),
+            modalManager = get()
         )
     }
 }

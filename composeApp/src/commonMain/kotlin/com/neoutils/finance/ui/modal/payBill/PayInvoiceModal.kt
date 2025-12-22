@@ -44,7 +44,7 @@ import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class PayBillModal(
+class PayInvoiceModal(
     private val invoice: Invoice,
     private val currentBillAmount: Double
 ) : ModalBottomSheet() {
@@ -53,10 +53,9 @@ class PayBillModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<PayBillViewModel>(key = key) { parametersOf(invoice.id) }
+        val viewModel = koinViewModel<PayInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
-        // Valor fixo - pagamento total da fatura
         val amount = formatMoneyFromDouble(currentBillAmount)
         
         // Limites de data: mês de fechamento da fatura
@@ -148,8 +147,7 @@ class PayBillModal(
 
             Button(
                 onClick = {
-                    viewModel.payBill(
-                        amount = currentBillAmount,
+                    viewModel.payInvoice(
                         date = formats.dayMonthYear.parse(date.text.toString())
                     )
                 },

@@ -145,6 +145,36 @@ class TransactionRepository(
         )
     }
 
+    override suspend fun getTransactionsBy(
+        type: Transaction.Type?,
+        target: Transaction.Target?,
+        date: LocalDate?,
+        invoiceId: Long?
+    ): List<Transaction> {
+
+        val transactions = dao.getTransactionsBy(
+            type = type?.let { mapper.toEntity(it) },
+            target = target?.let { mapper.toEntity(it) },
+            date = date,
+            invoiceId = invoiceId,
+        )
+
+        return transactions.map { transaction ->
+            mapper.toDomain(
+                entity = transaction,
+                category = transaction.categoryId?.let {
+                    categoryRepository.getCategoryById(it)
+                },
+                creditCard = transaction.creditCardId?.let {
+                    creditCardRepository.getCreditCardById(it)
+                },
+                invoice = transaction.invoiceId?.let {
+                    invoiceRepository.getInvoiceById(it)
+                },
+            )
+        }
+    }
+
     override suspend fun insert(transaction: Transaction): Long {
         return dao.insert(mapper.toEntity(transaction))
     }

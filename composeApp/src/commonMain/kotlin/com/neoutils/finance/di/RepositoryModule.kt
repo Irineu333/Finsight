@@ -33,7 +33,8 @@ val repositoryModule = module {
     single<IInvoiceRepository> {
         InvoiceRepository(
             dao = get(),
-            mapper = get()
+            mapper = get(),
+            creditCardRepository = get(),
         )
     }
 

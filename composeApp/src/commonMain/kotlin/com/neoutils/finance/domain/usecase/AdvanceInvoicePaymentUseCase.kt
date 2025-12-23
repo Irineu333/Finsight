@@ -12,7 +12,6 @@ private val errors = PayInvoicePaymentErrors()
 
 class AdvanceInvoicePaymentUseCase(
     private val repository: ITransactionRepository,
-    private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
@@ -41,7 +40,7 @@ class AdvanceInvoicePaymentUseCase(
             amount = -amount,
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
-            creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),
+            creditCard = invoice.creditCard,
             invoice = invoice
         )
 

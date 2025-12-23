@@ -7,7 +7,7 @@ import kotlinx.datetime.YearMonth
 interface IInvoiceRepository {
     fun observeAllInvoices(): Flow<List<Invoice>>
     fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>>
-    fun observeById(id: Long): Flow<Invoice?>
+    fun observeInvoiceById(invoiceId: Long): Flow<Invoice?>
     suspend fun getAllInvoices(): List<Invoice>
     suspend fun getAllInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getOpenInvoice(creditCardId: Long): Invoice?

@@ -42,7 +42,7 @@ interface InvoiceDao {
     suspend fun getById(id: Long): InvoiceEntity?
 
     @Query("SELECT * FROM invoices WHERE id = :id")
-    fun observeById(id: Long): Flow<InvoiceEntity?>
+    fun observeInvoiceById(id: Long): Flow<InvoiceEntity?>
 
     @Insert
     suspend fun insert(invoice: InvoiceEntity): Long

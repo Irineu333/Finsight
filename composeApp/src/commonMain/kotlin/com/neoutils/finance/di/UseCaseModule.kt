@@ -31,7 +31,6 @@ val useCaseModules = module {
         AdjustInvoiceUseCase(
             repository = get(),
             calculateInvoiceUseCase = get(),
-            creditCardRepository = get(),
             invoiceRepository = get(),
         )
     }
@@ -86,7 +85,6 @@ val useCaseModules = module {
     factory {
         AdvanceInvoicePaymentUseCase(
             repository = get(),
-            creditCardRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
         )

@@ -31,7 +31,7 @@ class PayInvoiceUseCase(
 
         invoiceRepository.update(paidInvoice)
 
-        createInvoiceUseCase(invoice.creditCardId)
+        createInvoiceUseCase(invoice.creditCard.id)
 
         return Result.success(paidInvoice)
     }

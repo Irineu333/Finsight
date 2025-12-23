@@ -1,14 +1,18 @@
 package com.neoutils.finance.database.mapper
 
 import com.neoutils.finance.database.entity.InvoiceEntity
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 
 class InvoiceMapper {
 
-    fun toDomain(entity: InvoiceEntity): Invoice {
+    fun toDomain(
+        entity: InvoiceEntity,
+        creditCard: CreditCard
+    ): Invoice {
         return Invoice(
             id = entity.id,
-            creditCardId = entity.creditCardId,
+            creditCard = creditCard,
             openingMonth = entity.openingMonth,
             closingMonth = entity.closingMonth,
             status = entity.status.toDomain(),
@@ -21,7 +25,7 @@ class InvoiceMapper {
     fun toEntity(domain: Invoice): InvoiceEntity {
         return InvoiceEntity(
             id = domain.id,
-            creditCardId = domain.creditCardId,
+            creditCardId = domain.creditCard.id,
             openingMonth = domain.openingMonth,
             closingMonth = domain.closingMonth,
             status = domain.status.toEntity(),

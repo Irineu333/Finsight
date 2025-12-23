@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalDate
 class AdjustInvoiceUseCase(
     private val repository: ITransactionRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
-    private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
@@ -40,7 +39,7 @@ class AdjustInvoiceUseCase(
                     amount = difference,
                     date = adjustmentDate,
                     target = Transaction.Target.CREDIT_CARD,
-                    creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),
+                    creditCard = invoice.creditCard,
                     invoice = invoice
                 )
             )

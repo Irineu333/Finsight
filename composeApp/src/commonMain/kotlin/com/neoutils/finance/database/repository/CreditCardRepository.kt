@@ -26,8 +26,8 @@ class CreditCardRepository(
         return dao.getCreditCardById(id)?.let { mapper.toDomain(it) }
     }
 
-    override fun observeCreditCardById(id: Long): Flow<CreditCard?> {
-        return dao.observeCreditCardById(id).map { entity ->
+    override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> {
+        return dao.observeCreditCardById(creditCardId).map { entity ->
             entity?.let { mapper.toDomain(it) }
         }
     }

@@ -20,58 +20,70 @@ class TransactionRepository(
     private val mapper: TransactionMapper,
 ) : ITransactionRepository {
 
+    private val categoriesFlow = categoryRepository
+        .observeAllCategories()
+        .map { categories ->
+            categories.associateBy { it.id }
+        }
+
+    private val creditCardsFlow = creditCardRepository
+        .observeAllCreditCards()
+        .map { creditCards ->
+            creditCards.associateBy { it.id }
+        }
+
+    private val invoicesFlow = invoiceRepository
+        .observeAllInvoices()
+        .map { invoices ->
+            invoices.associateBy { it.id }
+        }
+
     override fun observeAllTransactions(): Flow<List<Transaction>> {
         return combine(
             dao.observeAllTransactions(),
-            categoryRepository.observeAllCategories().map { categories ->
-                categories.associateBy { it.id }
-            },
-            creditCardRepository.observeAllCreditCards().map { creditCards ->
-                creditCards.associateBy { it.id }
-            },
-            invoiceRepository.observeAllInvoices().map { invoices ->
-                invoices.associateBy { it.id }
-            },
-        ) { transactions, categories, creditCards, invoices ->
-            transactions.map { transaction ->
+            categoriesFlow,
+            creditCardsFlow,
+            invoicesFlow,
+        ) { entities, categories, creditCards, invoices ->
+            entities.map { entity ->
                 mapper.toDomain(
-                    entity = transaction,
-                    category = categories[transaction.categoryId],
-                    creditCard = creditCards[transaction.creditCardId],
-                    invoice = invoices[transaction.invoiceId],
+                    entity = entity,
+                    category = categories[entity.categoryId],
+                    creditCard = creditCards[entity.creditCardId],
+                    invoice = invoices[entity.invoiceId],
                 )
             }
         }
     }
 
     override suspend fun getAllTransactions(): List<Transaction> {
-        val transactions = dao.getAllTransactions()
+        val entities = dao.getAllTransactions()
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
 
-        return transactions.map { transaction ->
+        return entities.map { entity ->
             mapper.toDomain(
-                entity = transaction,
-                category = categories[transaction.categoryId],
-                creditCard = creditCards[transaction.creditCardId],
-                invoice = invoices[transaction.invoiceId],
+                entity = entity,
+                category = categories[entity.categoryId],
+                creditCard = creditCards[entity.creditCardId],
+                invoice = invoices[entity.invoiceId],
             )
         }
     }
 
     override suspend fun getTransactionById(id: Long): Transaction? {
-        val transaction = dao.getTransactionById(id) ?: return null
+        val entity = dao.getTransactionById(id) ?: return null
 
         return mapper.toDomain(
-            entity = transaction,
-            category = transaction.categoryId?.let {
+            entity = entity,
+            category = entity.categoryId?.let {
                 categoryRepository.getCategoryById(it)
             },
-            creditCard = transaction.creditCardId?.let {
+            creditCard = entity.creditCardId?.let {
                 creditCardRepository.getCreditCardById(it)
             },
-            invoice = transaction.invoiceId?.let {
+            invoice = entity.invoiceId?.let {
                 invoiceRepository.getInvoiceById(it)
             },
         )

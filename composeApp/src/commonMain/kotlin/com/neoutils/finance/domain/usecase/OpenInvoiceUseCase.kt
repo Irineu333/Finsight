@@ -20,7 +20,7 @@ class OpenInvoiceUseCase(
     private val creditCardRepository: ICreditCardRepository
 ) {
     suspend operator fun invoke(creditCardId: Long, openingMonth: YearMonth): Result<Invoice> {
-        creditCardRepository.getCreditCardById(creditCardId)
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             ?: return Result.failure(OpenInvoiceException(errors.creditCardNotFound))
 
         val closingMonth = openingMonth.plusMonth()
@@ -38,7 +38,7 @@ class OpenInvoiceUseCase(
         }
 
         val invoice = Invoice(
-            creditCardId = creditCardId,
+            creditCard = creditCard,
             openingMonth = openingMonth,
             closingMonth = closingMonth,
             status = Invoice.Status.OPEN

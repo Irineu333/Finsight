@@ -8,7 +8,7 @@ import kotlin.time.ExperimentalTime
 
 data class Invoice(
     val id: Long = 0,
-    val creditCardId: Long,
+    val creditCard: CreditCard,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val status: Status,

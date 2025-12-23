@@ -25,7 +25,7 @@ class CreateInvoiceUseCase(
 
     suspend operator fun invoke(creditCardId: Long): Result<Invoice> {
 
-        creditCardRepository.getCreditCardById(creditCardId)
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             ?: return Result.failure(CreateInvoiceException(errors.creditCardNotFound))
 
         val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
@@ -39,7 +39,7 @@ class CreateInvoiceUseCase(
         }
 
         val newInvoice = Invoice(
-            creditCardId = creditCardId,
+            creditCard = creditCard,
             openingMonth = currentMonth,
             closingMonth = nextMonth,
             status = Invoice.Status.OPEN,

@@ -42,7 +42,7 @@ class PayInvoicePaymentUseCase(
             amount = -currentBillAmount,
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
-            creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId),
+            creditCard = invoice.creditCard,
             invoice = invoice
         )
 

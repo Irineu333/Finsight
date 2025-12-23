@@ -3,6 +3,7 @@
 package com.neoutils.finance.di
 
 import com.neoutils.finance.extension.toYearMonth
+import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
@@ -15,11 +16,10 @@ import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
-import com.neoutils.finance.ui.modal.editCreditCardName.EditCreditCardNameViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceViewModel
-import com.neoutils.finance.ui.modal.payBill.PayInvoiceViewModel
+import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
@@ -35,11 +35,14 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
+
+    single { ModalManager() }
+
     viewModel {
         ViewCategoryViewModel(
             category = it.get(),
             categoryRepository = get(),
-            repository = get()
+            transactionRepository = get()
         )
     }
 
@@ -65,8 +68,7 @@ val viewModelModule = module {
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
-            calculateInvoiceUseCase = get(),
-            creditCardBillUiMapper = get()
+            invoiceUiMapper = get()
         )
     }
 
@@ -82,33 +84,33 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { CategoriesViewModel(repository = get()) }
+    viewModel { CategoriesViewModel(categoryRepository = get()) }
 
     viewModel {
         CreditCardsViewModel(
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
-            calculateInvoiceUseCase = get(),
-            creditCardBillUiMapper = get()
+            invoiceUiMapper = get()
         )
     }
 
     viewModel {
         AddTransactionViewModel(
-            transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            addTransactionUseCase = get(),
             modalManager = get()
         )
     }
 
     viewModel {
         EditTransactionViewModel(
+            transaction = it.get(),
             transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
+            invoiceRepository = get(),
             modalManager = get()
         )
     }
@@ -139,9 +141,9 @@ val viewModelModule = module {
     viewModel {
         ViewCreditCardViewModel(
             creditCard = it.get(),
-            initialBillAmount = it.get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            transactionRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
@@ -149,8 +151,8 @@ val viewModelModule = module {
     viewModel {
         DeleteCreditCardViewModel(
             creditCard = it.get(),
-            modalManager = get(),
             creditCardRepository = get(),
+            modalManager = get(),
         )
     }
 
@@ -205,20 +207,10 @@ val viewModelModule = module {
     }
 
     viewModel {
-        EditCreditCardNameViewModel(
-            creditCardId = it.get(),
-            updateCreditCardUseCase = get(),
-            modalManager = get()
-        )
-    }
-
-    viewModel {
         EditCreditCardViewModel(
             creditCardId = it.get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            calculateInvoiceUseCase = get(),
-            modalManager = get()
+            updateCreditCardUseCase = get(),
+            modalManager = get(),
         )
     }
 

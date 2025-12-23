@@ -43,34 +43,34 @@ private fun CategoriesContent(
     val modalManager = LocalModalManager.current
 
     Scaffold(
-    topBar = {
-        TopAppBar(
-            title = {
-                Text(text = "Categorias")
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
-                    )
-                }
-            },
-        )
-    },
-    floatingActionButton = {
-        FloatingActionButton(
-            onClick = {
-                modalManager.show(AddCategoryModal())
-            },
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(text = "Categorias")
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    modalManager.show(AddCategoryModal())
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null
+                )
+            }
         }
-    }
-) { paddingValues ->
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()

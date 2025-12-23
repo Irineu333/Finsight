@@ -56,11 +56,9 @@ class CloseInvoiceModal(
         val viewModel = koinViewModel<CloseInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
-        // Data inicial: primeiro dia do mês de fechamento
         val defaultDate = invoice.closingMonth.toLocalDate()
         val date = rememberTextFieldState(formats.dayMonthYear.format(defaultDate))
 
-        // Limites: primeiro dia do mês de fechamento até hoje
         val minDate = invoice.closingMonth.toLocalDate()
         val maxDate = currentDate()
 
@@ -155,8 +153,10 @@ class CloseInvoiceModal(
         maxDate: LocalDate
     ): Boolean {
         if (date.isEmpty()) return false
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-        return parsedDate >= minDate && parsedDate <= maxDate
+
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+
+        return parsedDate in minDate..maxDate
     }
 
     private fun currentDate(): LocalDate {

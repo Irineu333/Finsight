@@ -14,7 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finance.ui.component.CreditCardBillCard
+import com.neoutils.finance.ui.component.CreditCardUI
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardModal
 import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
@@ -84,18 +84,16 @@ private fun CreditCardsContent(
             items(
                 items = uiState.creditCards,
                 key = { it.creditCard.id }
-            ) { cardWithBill ->
-                CreditCardBillCard(
-                    uiModel = cardWithBill.billUi,
-                    cardName = cardWithBill.creditCard.name,
+            ) { creditCardUi ->
+                CreditCardUI(
+                    ui = creditCardUi,
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateItem(),
                     onClick = {
                         modalManager.show(
                             ViewCreditCardModal(
-                                creditCard = cardWithBill.creditCard,
-                                billAmount = cardWithBill.billAmount
+                                creditCard = creditCardUi.creditCard,
                             )
                         )
                     }

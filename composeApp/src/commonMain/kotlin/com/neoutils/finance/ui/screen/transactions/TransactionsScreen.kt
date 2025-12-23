@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,13 +80,17 @@ private fun TransactionsContent(
                 selectedYearMonth = uiState.selectedYearMonth,
                 onPreviousMonth = { onAction(TransactionsAction.PreviousMonth) },
                 onNextMonth = { onAction(TransactionsAction.NextMonth) },
-                modifier = Modifier.padding(vertical = 8.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
             )
         },
         contentWindowInsets = WindowInsets(),
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -105,68 +110,58 @@ private fun TransactionsContent(
                         pageSpacing = 8.dp
                     ) { page ->
                         when (page) {
-                            0 ->
+                            0 -> {
                                 SummaryCard(
                                     balanceOverview = uiState.balanceOverview,
                                     modifier = Modifier.fillMaxWidth(),
                                     isCurrentMonth = uiState.isCurrentMonth,
-                                    onEditBalance =
-                                        {
-                                            modalManager.show(
-                                                EditBalanceModal(
-                                                    currentBalance =
-                                                        uiState.balanceOverview
-                                                            .finalBalance,
-                                                    type =
-                                                        if (uiState.isCurrentMonth
-                                                        ) {
-                                                            EditBalanceModal
-                                                                .Type
-                                                                .CURRENT
-                                                        } else {
-                                                            EditBalanceModal
-                                                                .Type
-                                                                .FINAL
-                                                        },
-                                                    targetMonth =
-                                                        uiState.selectedYearMonth
-                                                            .takeUnless {
-                                                                uiState.isCurrentMonth
-                                                            },
-                                                )
+                                    onEditBalance = {
+                                        modalManager.show(
+                                            EditBalanceModal(
+                                                currentBalance = uiState.balanceOverview.finalBalance,
+                                                type = if (uiState.isCurrentMonth) {
+                                                    EditBalanceModal.Type.CURRENT
+                                                } else {
+                                                    EditBalanceModal.Type.FINAL
+                                                },
+                                                targetMonth = uiState
+                                                    .selectedYearMonth
+                                                    .takeUnless {
+                                                        uiState.isCurrentMonth
+                                                    },
                                             )
-                                        }.takeUnless { uiState.isFutureMonth },
-                                    onEditInitialBalance =
-                                        {
-                                            modalManager.show(
-                                                EditBalanceModal(
-                                                    currentBalance =
-                                                        uiState.balanceOverview
-                                                            .initialBalance,
-                                                    type =
-                                                        EditBalanceModal
-                                                            .Type
-                                                            .INITIAL,
-                                                    targetMonth =
-                                                        uiState.selectedYearMonth
-                                                            .takeUnless {
-                                                                uiState.isCurrentMonth
-                                                            },
-                                                )
+                                        )
+                                    }.takeUnless { uiState.isFutureMonth },
+                                    onEditInitialBalance = {
+                                        modalManager.show(
+                                            EditBalanceModal(
+                                                currentBalance = uiState.balanceOverview.initialBalance,
+                                                type = EditBalanceModal.Type.INITIAL,
+                                                targetMonth = uiState
+                                                    .selectedYearMonth
+                                                    .takeUnless {
+                                                        uiState.isCurrentMonth
+                                                    },
                                             )
-                                        }.takeUnless { uiState.isFutureMonth }
+                                        )
+                                    }.takeUnless { uiState.isFutureMonth },
                                 )
+                            }
 
-                            1 ->
+                            1 -> {
                                 CreditCardSummaryCard(
                                     overview = uiState.creditCardOverview,
                                     modifier = Modifier.fillMaxWidth()
                                 )
+                            }
                         }
                     }
 
                     if (pageCount > 1) {
-                        PagerIndicator(pagerState = pagerState, pageCount = pageCount)
+                        PagerIndicator(
+                            pagerState = pagerState,
+                            pageCount = pageCount
+                        )
                     }
                 }
             }
@@ -237,10 +232,22 @@ private fun FiltersRow(
             }
         }
 
-        item { Box { TypeFilterChip(selectedType = uiState.selectedType, onAction = onAction) } }
+        item {
+            Box {
+                TypeFilterChip(
+                    selectedType = uiState.selectedType,
+                    onAction = onAction
+                )
+            }
+        }
 
         item {
-            Box { TargetFilterChip(selectedTarget = uiState.selectedTarget, onAction = onAction) }
+            Box {
+                TargetFilterChip(
+                    selectedTarget = uiState.selectedTarget,
+                    onAction = onAction
+                )
+            }
         }
     }
 }
@@ -266,20 +273,23 @@ private fun CategoryFilterChip(
         onClick = { expanded = true },
         label = { Text(selectedCategory?.name ?: "Categoria") },
         trailingIcon = {
-            Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
         },
-        colors =
-            chipColor?.let { color ->
-                FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = color.copy(alpha = 0.2f),
-                    selectedLabelColor = color,
-                    selectedLeadingIconColor = color
-                )
-            }
-                ?: FilterChipDefaults.filterChipColors()
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color
+            )
+        } ?: FilterChipDefaults.filterChipColors()
     )
 
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
             text = { Text("Todas") },
             onClick = {
@@ -312,8 +322,8 @@ private fun TypeFilterChip(
             Transaction.Type.INCOME -> IncomeColor
             Transaction.Type.EXPENSE -> ExpenseColor
             Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.INVOICE_PAYMENT, Transaction.Type.ADVANCE_PAYMENT ->
-                BillPaymentColor
+            Transaction.Type.INVOICE_PAYMENT,
+            Transaction.Type.ADVANCE_PAYMENT -> BillPaymentColor
 
             null -> null
         }
@@ -334,20 +344,23 @@ private fun TypeFilterChip(
             )
         },
         trailingIcon = {
-            Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
         },
-        colors =
-            chipColor?.let { color ->
-                FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = color.copy(alpha = 0.2f),
-                    selectedLabelColor = color,
-                    selectedLeadingIconColor = color
-                )
-            }
-                ?: FilterChipDefaults.filterChipColors()
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color
+            )
+        } ?: FilterChipDefaults.filterChipColors()
     )
 
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
             text = { Text("Todos") },
             onClick = {
@@ -360,7 +373,7 @@ private fun TypeFilterChip(
             DropdownMenuItem(
                 text = {
                     Text(
-                        when (type) {
+                        text = when (type) {
                             Transaction.Type.INCOME -> "Entrada"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
@@ -399,11 +412,17 @@ private fun TargetFilterChip(
             )
         },
         trailingIcon = {
-            Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
         }
     )
 
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
         DropdownMenuItem(
             text = { Text("Todas") },
             onClick = {
@@ -431,7 +450,11 @@ private fun TargetFilterChip(
 }
 
 @Composable
-private fun PagerIndicator(pagerState: PagerState, pageCount: Int, modifier: Modifier = Modifier) {
+private fun PagerIndicator(
+    pagerState: PagerState,
+    pageCount: Int,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -439,18 +462,15 @@ private fun PagerIndicator(pagerState: PagerState, pageCount: Int, modifier: Mod
     ) {
         repeat(pageCount) { index ->
             Box(
-                modifier =
-                    Modifier.size(8.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (pagerState.currentPage == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface.copy(
-                                    alpha = 0.3f
-                                )
-                            }
-                        )
+                modifier = Modifier.size(8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (pagerState.currentPage == index) {
+                            colorScheme.primary
+                        } else {
+                            colorScheme.onSurface.copy(alpha = 0.3f)
+                        }
+                    )
             )
         }
     }

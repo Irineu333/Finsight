@@ -60,12 +60,11 @@ class AdvancePaymentModal(
         val amount = rememberTextFieldState()
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
 
-        // Limites: dentro do período da fatura (abertura até fechamento)
-        val minDate = invoice.openingMonth.toLocalDate()
-        val maxDate = invoice.closingMonth.toLastDayOfMonth().let { lastDayOfClosing ->
-            val today = currentDate()
-            if (today < lastDayOfClosing) today else lastDayOfClosing
-        }
+        val minDate = invoice.openingMonth.firstDay
+
+        val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
+            maximumValue = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        )
 
         Column(
             modifier = Modifier
@@ -180,10 +179,10 @@ class AdvancePaymentModal(
         if (amount.isEmpty()) return false
         val parsedAmount = parseMoneyToDouble(amount)
         if (parsedAmount <= 0.0) return false
-        if (parsedAmount > currentBillAmount) return false  // Não permitir antecipação acima da fatura
+        if (parsedAmount > currentBillAmount) return false
         if (date.isEmpty()) return false
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-        return parsedDate >= minDate && parsedDate <= maxDate
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+        return parsedDate in minDate..maxDate
     }
 
     private fun currentDate(): LocalDate {

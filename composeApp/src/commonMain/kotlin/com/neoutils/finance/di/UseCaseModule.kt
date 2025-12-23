@@ -1,6 +1,7 @@
 package com.neoutils.finance.di
 
 import com.neoutils.finance.domain.usecase.AddCreditCardUseCase
+import com.neoutils.finance.domain.usecase.AddTransactionUseCase
 import com.neoutils.finance.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustInvoiceUseCase
@@ -122,6 +123,12 @@ val useCaseModules = module {
         OpenInvoiceUseCase(
             invoiceRepository = get(),
             creditCardRepository = get(),
+        )
+    }
+
+    factory {
+        AddTransactionUseCase(
+            transactionRepository = get(),
         )
     }
 }

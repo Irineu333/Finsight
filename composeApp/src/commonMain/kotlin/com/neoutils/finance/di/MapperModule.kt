@@ -4,7 +4,7 @@ import com.neoutils.finance.database.mapper.CategoryMapper
 import com.neoutils.finance.database.mapper.CreditCardMapper
 import com.neoutils.finance.database.mapper.InvoiceMapper
 import com.neoutils.finance.database.mapper.TransactionMapper
-import com.neoutils.finance.ui.mapper.CreditCardBillUiMapper
+import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import org.koin.dsl.module
 
 val mapperModule = module {
@@ -12,5 +12,5 @@ val mapperModule = module {
     factory { CreditCardMapper() }
     factory { InvoiceMapper() }
     factory { TransactionMapper() }
-    factory { CreditCardBillUiMapper() }
+    factory { InvoiceUiMapper(calculateInvoiceUseCase = get()) }
 }

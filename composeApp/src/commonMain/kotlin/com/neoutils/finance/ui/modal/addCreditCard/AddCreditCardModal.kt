@@ -63,11 +63,10 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = limit,
                 label = { Text(text = "Limite") },
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
                 inputTransformation = MoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
@@ -77,11 +76,10 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = closingDay,
                 label = { Text(text = "Dia de Fechamento") },
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
                 inputTransformation = DayInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
@@ -96,14 +94,20 @@ class AddCreditCardModal : ModalBottomSheet() {
                         CreditCardForm(
                             name = name.text.toString().trim(),
                             limit = parseMoneyToDouble(limit.text.toString()),
-                            closingDay = parsedClosingDay
+                            closingDay = parsedClosingDay,
                         )
                     )
                 },
                 enabled = name.text.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
-            ) { Text(text = "Salvar", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+            ) {
+                Text(
+                    text = "Salvar",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 

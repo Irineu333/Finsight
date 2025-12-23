@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.ui.modal.viewCreditCard
 
 import androidx.compose.foundation.BorderStroke
@@ -31,7 +33,7 @@ import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
 import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
-import com.neoutils.finance.ui.modal.payBill.PayInvoiceModal
+import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -42,7 +44,9 @@ import kotlin.time.ExperimentalTime
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class ViewCreditCardModal(private val creditCard: CreditCard, private val billAmount: Double) :
+class ViewCreditCardModal(
+    private val creditCard: CreditCard,
+) :
     ModalBottomSheet() {
 
     private val formats = DateFormats()
@@ -50,15 +54,18 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
-        val viewModel =
-            koinViewModel<ViewCreditCardViewModel>(key = key) {
-                parametersOf(creditCard, billAmount)
-            }
+
+        val viewModel = koinViewModel<ViewCreditCardViewModel>(key = key) {
+            parametersOf(creditCard)
+        }
+
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(
             modifier =
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Header
@@ -79,26 +86,27 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
             uiState.currentInvoice?.let { invoice ->
                 Spacer(modifier = Modifier.height(12.dp))
 
-                val statusColor =
-                    when (invoice.status) {
-                        Invoice.Status.OPEN -> Color(0xFFFFA726)
-                        Invoice.Status.CLOSED -> Color(0xFFEF5350)
-                        Invoice.Status.PAID -> Color(0xFF66BB6A)
-                    }
+                val statusColor = when (invoice.status) {
+                    Invoice.Status.OPEN -> Color(0xFFFFA726)
+                    Invoice.Status.CLOSED -> Color(0xFFEF5350)
+                    Invoice.Status.PAID -> Color(0xFF66BB6A)
+                }
 
                 Card(
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = statusColor.copy(alpha = 0.15f),
-                            contentColor = statusColor
-                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = statusColor.copy(alpha = 0.15f),
+                        contentColor = statusColor
+                    ),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = "Fatura ${invoice.status.label}",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 6.dp
+                        )
                     )
                 }
             }
@@ -108,17 +116,20 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
             // Details
             DetailRow(
                 label = "Fatura Atual",
-                value = uiState.billAmount.toMoneyFormat(),
-                valueColor = if (uiState.billAmount > 0) Expense else colorScheme.onSurface
+                value = uiState.invoiceAmount.toMoneyFormat(),
+                valueColor = if (uiState.invoiceAmount > 0) Expense else colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DetailRow(label = "Limite", value = uiState.creditCard.limit.toMoneyFormat())
+            DetailRow(
+                label = "Limite",
+                value = uiState.creditCard.limit.toMoneyFormat()
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val availableLimit = uiState.creditCard.limit - uiState.billAmount
+            val availableLimit = uiState.creditCard.limit - uiState.invoiceAmount
 
             DetailRow(
                 label = "Limite Disponível",
@@ -144,18 +155,18 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
-                    onClick = { modalManager.show(DeleteCreditCardModal(uiState.creditCard)) },
+                    onClick = {
+                        modalManager.show(DeleteCreditCardModal(uiState.creditCard))
+                    },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors =
-                        ButtonDefaults.outlinedButtonColors(
-                            contentColor = Expense,
-                        ),
-                    border =
-                        BorderStroke(
-                            width = 1.dp,
-                            color = Expense.copy(alpha = 0.5f),
-                        ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Expense,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Expense.copy(alpha = 0.5f),
+                    ),
                     contentPadding = PaddingValues(12.dp),
                 ) {
                     Icon(
@@ -164,26 +175,30 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "Excluir", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    Text(
+                        text = "Excluir",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
 
                 OutlinedButton(
                     onClick = {
                         modalManager.show(
-                            EditCreditCardModal(creditCardId = uiState.creditCard.id)
+                            EditCreditCardModal(
+                                creditCard = uiState.creditCard
+                            )
                         )
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
-                    colors =
-                        ButtonDefaults.outlinedButtonColors(
-                            contentColor = Info,
-                        ),
-                    border =
-                        BorderStroke(
-                            width = 1.dp,
-                            color = Info.copy(alpha = 0.5f),
-                        ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Info,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Info.copy(alpha = 0.5f),
+                    ),
                     contentPadding = PaddingValues(12.dp),
                 ) {
                     Icon(
@@ -192,34 +207,34 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text(text = "Editar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Editar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            @OptIn(ExperimentalTime::class)
             uiState.currentInvoice?.let { invoice ->
                 val currentMonth = Clock.System.now().toYearMonth()
                 val isInClosingMonth = currentMonth >= invoice.closingMonth
 
                 when (invoice.status) {
                     Invoice.Status.OPEN -> {
-                        // Fechar Fatura - apenas no mês de fechamento
                         if (isInClosingMonth) {
                             OutlinedButton(
                                 onClick = { modalManager.show(CloseInvoiceModal(invoice)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
-                                colors =
-                                    ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color(0xFFFFA726)
-                                    ),
-                                border =
-                                    BorderStroke(
-                                        1.dp,
-                                        Color(0xFFFFA726).copy(alpha = 0.5f)
-                                    ),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color(0xFFFFA726)
+                                ),
+                                border = BorderStroke(
+                                    1.dp,
+                                    Color(0xFFFFA726).copy(alpha = 0.5f)
+                                ),
                                 contentPadding = PaddingValues(12.dp),
                             ) {
                                 Icon(
@@ -238,22 +253,20 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
-                        // Antecipar Pagamento - sempre disponível quando OPEN
                         OutlinedButton(
                             onClick = {
                                 modalManager.show(
                                     AdvancePaymentModal(
                                         invoice = invoice,
-                                        currentBillAmount = uiState.billAmount
+                                        currentBillAmount = uiState.invoiceAmount
                                     )
                                 )
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors =
-                                ButtonDefaults.outlinedButtonColors(
-                                    contentColor = colorScheme.primary
-                                ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = colorScheme.primary
+                            ),
                             border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.5f)),
                             contentPadding = PaddingValues(12.dp),
                         ) {
@@ -272,13 +285,12 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                     }
 
                     Invoice.Status.CLOSED -> {
-                        // Pagar Fatura - apenas quando fechada
                         Button(
                             onClick = {
                                 modalManager.show(
                                     PayInvoiceModal(
                                         invoice = invoice,
-                                        currentBillAmount = uiState.billAmount
+                                        currentBillAmount = uiState.invoiceAmount
                                     )
                                 )
                             },
@@ -301,15 +313,13 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Reabrir Fatura - apenas quando fechada
                         OutlinedButton(
                             onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors =
-                                ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFFFFA726)
-                                ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFFFA726)
+                            ),
                             border = BorderStroke(1.dp, Color(0xFFFFA726).copy(alpha = 0.5f)),
                             contentPadding = PaddingValues(12.dp),
                         ) {
@@ -327,15 +337,14 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
                         }
                     }
 
-                    Invoice.Status.PAID -> {
-                        // Fatura quitada - nenhum botão de ação
-                    }
+                    Invoice.Status.PAID -> Unit
                 }
             } ?: run {
-                // Sem fatura - mostrar botão para abrir
                 Button(
                     onClick = {
-                        modalManager.show(OpenInvoiceModal(uiState.creditCard.id))
+                        modalManager.show(
+                            OpenInvoiceModal(uiState.creditCard)
+                        )
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -369,8 +378,17 @@ class ViewCreditCardModal(private val creditCard: CreditCard, private val billAm
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = label, fontSize = 16.sp, color = colorScheme.onSurfaceVariant)
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(
+                text = label,
+                fontSize = 16.sp,
+                color = colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
         }
     }
 }

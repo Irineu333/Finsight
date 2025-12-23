@@ -15,7 +15,10 @@ class AddCreditCardViewModel(
     fun addCreditCard(
         creditCardForm: CreditCardForm
     ) = viewModelScope.launch {
-        addCreditCardUseCase(creditCardForm)
-        modalManager.dismiss()
+        addCreditCardUseCase(
+            form = creditCardForm
+        ).onSuccess {
+            modalManager.dismiss()
+        }
     }
 }

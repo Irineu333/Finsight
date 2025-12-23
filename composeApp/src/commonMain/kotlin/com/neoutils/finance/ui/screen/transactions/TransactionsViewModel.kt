@@ -22,102 +22,100 @@ import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 
 class TransactionsViewModel(
-        private val transaction: Transaction.Type?,
-        private val category: Category?,
-        private val target: Transaction.Target?,
-        private val transactionRepository: ITransactionRepository,
-        private val categoryRepository: ICategoryRepository,
-        private val calculateBalanceUseCase: CalculateBalanceUseCase,
-        private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
+    private val transaction: Transaction.Type?,
+    private val category: Category?,
+    private val target: Transaction.Target?,
+    private val transactionRepository: ITransactionRepository,
+    private val categoryRepository: ICategoryRepository,
+    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val filters =
-            MutableStateFlow(
-                    TransactionsFilters(category = category, type = transaction, target = target)
-            )
+    private val filters = MutableStateFlow(
+        TransactionsFilters(
+            category = category,
+            type = transaction,
+            target = target
+        )
+    )
 
-    val uiState =
-            combine(
-                            transactionRepository.observeAllTransactions(),
-                            categoryRepository.observeAllCategories(),
-                            selectedYearMonth,
-                            filters
-                    ) { transactions, categories, yearMonth, filters ->
-                        val stats =
-                                calculateTransactionStatsUseCase(
-                                        transactions = transactions,
-                                        forYearMonth = yearMonth,
-                                )
+    val uiState = combine(
+        transactionRepository.observeAllTransactions(),
+        categoryRepository.observeAllCategories(),
+        selectedYearMonth,
+        filters
+    ) { transactions, categories, yearMonth, filters ->
+        val stats = calculateTransactionStatsUseCase(
+            transactions = transactions,
+            forYearMonth = yearMonth,
+        )
 
-                        TransactionsUiState(
-                                transactions =
-                                        stats.transactions
-                                                .filter(filters.category)
-                                                .filter(filters.type)
-                                                .filter(filters.target)
-                                                .sortedByDescending { it.date }
-                                                .groupBy { it.date },
-                                balanceOverview =
-                                        TransactionsUiState.BalanceOverview(
-                                                income = stats.income,
-                                                accountExpense = stats.accountExpense,
-                                                creditCardExpense = stats.creditCardExpense,
-                                                accountAdjustment = stats.accountAdjustment,
-                                                creditCardAdjustment = stats.creditCardAdjustment,
-                                                invoicePayment = stats.invoicePayment,
-                                                initialBalance =
-                                                        calculateBalanceUseCase(
-                                                                target = yearMonth.minusMonth(),
-                                                                transactions = transactions,
-                                                        ),
-                                                finalBalance =
-                                                        calculateBalanceUseCase(
-                                                                target = yearMonth,
-                                                                transactions = transactions,
-                                                        )
-                                        ),
-                                creditCardOverview =
-                                        TransactionsUiState.CreditCardOverview(
-                                                expense = stats.creditCardExpense,
-                                                invoicePayment = stats.invoicePayment,
-                                                advancePayment = stats.advancePayment,
-                                                adjustment = stats.creditCardAdjustment
-                                        ),
-                                selectedYearMonth = yearMonth,
-                                categories = categories,
-                                selectedCategory = filters.category,
-                                selectedType = filters.type,
-                                selectedTarget = filters.target
-                        )
-                    }
-                    .stateIn(
-                            scope = viewModelScope,
-                            started = SharingStarted.WhileSubscribed(5000),
-                            initialValue = TransactionsUiState()
-                    )
+        TransactionsUiState(
+            transactions = stats.transactions
+                .filter(filters.category)
+                .filter(filters.type)
+                .filter(filters.target)
+                .sortedByDescending { it.date }
+                .groupBy { it.date },
+            balanceOverview = TransactionsUiState.BalanceOverview(
+                income = stats.income,
+                accountExpense = stats.accountExpense,
+                creditCardExpense = stats.creditCardExpense,
+                accountAdjustment = stats.accountAdjustment,
+                creditCardAdjustment = stats.creditCardAdjustment,
+                invoicePayment = stats.invoicePayment,
+                initialBalance = calculateBalanceUseCase(
+                    target = yearMonth.minusMonth(),
+                    transactions = transactions,
+                ),
+                finalBalance = calculateBalanceUseCase(
+                    target = yearMonth,
+                    transactions = transactions,
+                )
+            ),
+            creditCardOverview = TransactionsUiState.CreditCardOverview(
+                expense = stats.creditCardExpense,
+                invoicePayment = stats.invoicePayment,
+                advancePayment = stats.advancePayment,
+                adjustment = stats.creditCardAdjustment
+            ),
+            selectedYearMonth = yearMonth,
+            categories = categories,
+            selectedCategory = filters.category,
+            selectedType = filters.type,
+            selectedTarget = filters.target,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = TransactionsUiState()
+    )
 
-    fun onAction(action: TransactionsAction) =
-            viewModelScope.launch {
-                when (action) {
-                    TransactionsAction.NextMonth -> {
-                        selectedYearMonth.value = selectedYearMonth.value.plusMonth()
-                    }
-                    TransactionsAction.PreviousMonth -> {
-                        selectedYearMonth.value = selectedYearMonth.value.minusMonth()
-                    }
-                    is TransactionsAction.SelectCategory -> {
-                        filters.value = filters.value.copy(category = action.category)
-                    }
-                    is TransactionsAction.SelectType -> {
-                        filters.value = filters.value.copy(type = action.type)
-                    }
-                    is TransactionsAction.SelectTarget -> {
-                        filters.value = filters.value.copy(target = action.target)
-                    }
-                }
+    fun onAction(action: TransactionsAction) = viewModelScope.launch {
+        when (action) {
+            TransactionsAction.NextMonth -> {
+                selectedYearMonth.value = selectedYearMonth.value.plusMonth()
             }
+
+            TransactionsAction.PreviousMonth -> {
+                selectedYearMonth.value = selectedYearMonth.value.minusMonth()
+            }
+
+            is TransactionsAction.SelectCategory -> {
+                filters.value = filters.value.copy(category = action.category)
+            }
+
+            is TransactionsAction.SelectType -> {
+                filters.value = filters.value.copy(type = action.type)
+            }
+
+            is TransactionsAction.SelectTarget -> {
+                filters.value = filters.value.copy(target = action.target)
+            }
+        }
+    }
 }
 
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
@@ -135,13 +133,15 @@ private fun List<Transaction>.filter(target: Transaction.Target?): List<Transact
     return filter { transaction ->
         when (target) {
             Transaction.Target.ACCOUNT ->
-                    transaction.target == Transaction.Target.ACCOUNT ||
-                            transaction.target == Transaction.Target.INVOICE_PAYMENT
+                transaction.target == Transaction.Target.ACCOUNT ||
+                        transaction.target == Transaction.Target.INVOICE_PAYMENT
+
             Transaction.Target.CREDIT_CARD ->
-                    transaction.target == Transaction.Target.CREDIT_CARD ||
-                            transaction.target == Transaction.Target.INVOICE_PAYMENT
+                transaction.target == Transaction.Target.CREDIT_CARD ||
+                        transaction.target == Transaction.Target.INVOICE_PAYMENT
+
             Transaction.Target.INVOICE_PAYMENT ->
-                    transaction.target == Transaction.Target.INVOICE_PAYMENT
+                transaction.target == Transaction.Target.INVOICE_PAYMENT
         }
     }
 }

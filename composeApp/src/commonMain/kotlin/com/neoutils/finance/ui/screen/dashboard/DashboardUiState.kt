@@ -7,7 +7,7 @@ import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.ui.model.CreditCardBillUi
+import com.neoutils.finance.ui.model.InvoiceUi
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -17,7 +17,7 @@ data class DashboardUiState(
     val balance: BalanceStats = BalanceStats(),
     val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val categorySpending: List<CategorySpending> = emptyList(),
-    val creditCards: List<CreditCardWithBill> = emptyList()
+    val creditCards: List<CreditCardUi> = emptyList()
 ) {
     data class BalanceStats(
         val income: Double = 0.0,
@@ -26,9 +26,7 @@ data class DashboardUiState(
     )
 }
 
-data class CreditCardWithBill(
+data class CreditCardUi(
     val creditCard: CreditCard,
-    val billUi: CreditCardBillUi,
-    val billAmount: Double,
-    val currentInvoice: Invoice? = null
+    val invoiceUi: InvoiceUi?,
 )

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal.payBill
+package com.neoutils.finance.ui.modal.payInvoice
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -57,14 +57,12 @@ class PayInvoiceModal(
         val manager = LocalModalManager.current
 
         val amount = formatMoneyFromDouble(currentBillAmount)
-        
-        // Limites de data: mês de fechamento da fatura
+
         val minDate = invoice.closingMonth.toLocalDate()
-        val maxDate = invoice.closingMonth.toLastDayOfMonth().let { lastDay ->
-            val today = currentDate()
-            if (today < lastDay) today else lastDay
-        }
-        
+        val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
+            maximumValue = currentDate()
+        )
+
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
 
         Column(
@@ -88,7 +86,6 @@ class PayInvoiceModal(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Campo de valor - somente leitura
             OutlinedTextField(
                 value = amount,
                 onValueChange = { },
@@ -174,12 +171,12 @@ class PayInvoiceModal(
         maxDate: LocalDate
     ): Boolean {
         if (date.isEmpty()) return false
+
         if (currentBillAmount < 0.0) return false
-        
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-        if (parsedDate < minDate || parsedDate > maxDate) return false
-        
-        return true
+
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse {  return false }
+
+        return parsedDate in minDate..maxDate
     }
 
     private fun currentDate(): LocalDate {

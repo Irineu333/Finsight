@@ -22,8 +22,8 @@ class CreditCardRepository(
         return dao.getAllCreditCardsList().map { mapper.toDomain(it) }
     }
 
-    override suspend fun getCreditCardById(id: Long): CreditCard? {
-        return dao.getCreditCardById(id)?.let { mapper.toDomain(it) }
+    override suspend fun getCreditCardById(creditCardId: Long): CreditCard? {
+        return dao.getCreditCardById(creditCardId)?.let { mapper.toDomain(it) }
     }
 
     override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> {

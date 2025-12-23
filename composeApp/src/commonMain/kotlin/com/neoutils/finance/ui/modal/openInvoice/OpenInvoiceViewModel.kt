@@ -13,14 +13,12 @@ class OpenInvoiceViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    fun openInvoice(openingMonth: YearMonth) {
-        viewModelScope.launch {
-            openInvoiceUseCase(
-                creditCardId,
-                openingMonth
-            ).onSuccess {
-                modalManager.dismiss()
-            }
+    fun openInvoice(openingMonth: YearMonth) = viewModelScope.launch {
+        openInvoiceUseCase(
+            creditCardId,
+            openingMonth
+        ).onSuccess {
+            modalManager.dismiss()
         }
     }
 }

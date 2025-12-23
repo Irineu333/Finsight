@@ -188,7 +188,6 @@ class ViewTransactionModal(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             } ?: run {
-                // Se target é cartão de crédito mas creditCard é null, cartão foi excluído
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
                         label = "Cartão",
@@ -201,7 +200,6 @@ class ViewTransactionModal(
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-            // Botões só aparecem se a transação não pertence a uma fatura fechada/paga
             val canModify = uiState.transaction.invoice?.let { invoice ->
                 invoice.status == Invoice.Status.OPEN
             } ?: true
@@ -276,7 +274,6 @@ class ViewTransactionModal(
                     }
                 }
             } else {
-                // Fatura fechada/paga - exibir mensagem informativa
                 Text(
                     text = "Esta transação pertence a uma fatura ${uiState.transaction.invoice?.status?.label?.lowercase() ?: "fechada"} e não pode ser modificada.",
                     fontSize = 14.sp,

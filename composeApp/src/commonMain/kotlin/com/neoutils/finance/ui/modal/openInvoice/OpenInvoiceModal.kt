@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -28,129 +29,114 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearMonth
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class OpenInvoiceModal(private val creditCardId: Long) : ModalBottomSheet() {
+class OpenInvoiceModal(
+    private val creditCard: CreditCard
+) : ModalBottomSheet() {
 
-        private val formats = DateFormats()
+    private val formats = DateFormats()
 
-        @Composable
-        override fun ColumnScope.BottomSheetContent() {
-                val viewModel =
-                        koinViewModel<OpenInvoiceViewModel>(key = key) {
-                                parametersOf(creditCardId)
-                        }
-                val manager = LocalModalManager.current
+    @Composable
+    override fun ColumnScope.BottomSheetContent() {
+        val viewModel = koinViewModel<OpenInvoiceViewModel>(key = key) {
+            parametersOf(creditCard.id)
+        }
 
-                val defaultDate = currentDate()
-                val date = rememberTextFieldState(formats.dayMonthYear.format(defaultDate))
+        val manager = LocalModalManager.current
 
-                Column(
-                        modifier =
-                                Modifier.fillMaxWidth()
-                                        .padding(horizontal = 24.dp)
-                                        .padding(bottom = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                        Text(
-                                text = "Abrir Fatura",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                        )
+        val defaultDate = currentDate()
+        val date = rememberTextFieldState(formats.dayMonthYear.format(defaultDate))
 
-                        Text(
-                                text =
-                                        "Informe a data de abertura da fatura. O fechamento será no mês seguinte.",
-                                fontSize = 14.sp,
-                                color = colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                        )
+        Column(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Abrir Fatura",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-                        OutlinedTextField(
-                                state = date,
-                                label = { Text(text = "Data de Abertura") },
-                                inputTransformation = DateInputTransformation(),
-                                keyboardOptions =
-                                        KeyboardOptions(
-                                                keyboardType = KeyboardType.Number,
-                                                imeAction = ImeAction.Done
-                                        ),
-                                trailingIcon = {
-                                        IconButton(
-                                                onClick = {
-                                                        manager.show(
-                                                                DatePickerModal(
-                                                                        initialDate =
-                                                                                formats.dayMonthYear
-                                                                                        .parse(
-                                                                                                date.text
-                                                                                                        .toString()
-                                                                                        ),
-                                                                        maxDate = currentDate(),
-                                                                        onDateSelected = {
-                                                                                selectedDate ->
-                                                                                date.edit {
-                                                                                        replace(
-                                                                                                0,
-                                                                                                length,
-                                                                                                formats.dayMonthYear
-                                                                                                        .format(
-                                                                                                                selectedDate
-                                                                                                        )
-                                                                                        )
-                                                                                }
-                                                                        }
-                                                                )
-                                                        )
-                                                }
-                                        ) {
-                                                Icon(
-                                                        imageVector = Icons.TwoTone.CalendarToday,
-                                                        contentDescription = null,
-                                                        tint = colorScheme.primary,
-                                                )
+            Text(
+                text = "Informe a data de abertura da fatura. O fechamento será no mês seguinte.",
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            OutlinedTextField(
+                state = date,
+                label = { Text(text = "Data de Abertura") },
+                inputTransformation = DateInputTransformation(),
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            manager.show(
+                                DatePickerModal(
+                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    maxDate = currentDate(),
+                                    onDateSelected = { selectedDate ->
+                                        date.edit {
+                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
                                         }
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                lineLimits = TextFieldLineLimits.SingleLine,
-                                modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Button(
-                                onClick = {
-                                        val parsedDate =
-                                                formats.dayMonthYear.parse(date.text.toString())
-                                        val openingMonth =
-                                                YearMonth(parsedDate.year, parsedDate.month)
-                                        viewModel.openInvoice(openingMonth)
-                                },
-                                enabled = isValidDate(date.text.toString()),
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp)
-                        ) {
-                                Text(
-                                        text = "Abrir Fatura",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
+                                    }
                                 )
+                            )
                         }
-                }
-        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.CalendarToday,
+                            contentDescription = null,
+                            tint = colorScheme.primary,
+                        )
+                    }
+                },
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        private fun isValidDate(date: String): Boolean {
-                if (date.isEmpty()) return false
-                val parsedDate =
-                        runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-                return parsedDate <= currentDate()
-        }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        private fun currentDate(): LocalDate {
-                return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            Button(
+                onClick = {
+                    viewModel.openInvoice(
+                        formats.dayMonthYear.parse(date.text.toString()).yearMonth
+                    )
+                },
+                enabled = isValidDate(date.text.toString()),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Abrir Fatura",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
+    }
+
+    private fun isValidDate(date: String): Boolean {
+        if (date.isEmpty()) return false
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+        return parsedDate <= currentDate()
+    }
+
+    private fun currentDate(): LocalDate {
+        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
 }

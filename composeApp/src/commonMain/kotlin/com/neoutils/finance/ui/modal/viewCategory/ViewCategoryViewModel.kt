@@ -20,19 +20,18 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class ViewCategoryViewModel(
-    private val category: Category,
+    category: Category,
     private val categoryRepository: ICategoryRepository,
-    private val repository: ITransactionRepository
+    private val transactionRepository: ITransactionRepository
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
     val uiState = combine(
         categoryRepository.observeCategoryById(category.id).filterNotNull(),
-        repository.observeAllTransactions(),
+        transactionRepository.observeAllTransactions(),
         selectedYearMonth
     ) { category, transactions, yearMonth ->
-
         val transactionsForMonth = transactions.filter {
             it.category?.id == category.id && it.date.yearMonth == yearMonth
         }
@@ -49,14 +48,12 @@ class ViewCategoryViewModel(
         initialValue = ViewCategoryUiState(category = category)
     )
 
-    fun onAction(action: ViewCategoryAction) {
-        when (action) {
-            ViewCategoryAction.NextMonth -> {
-                selectedYearMonth.value = selectedYearMonth.value.plusMonth()
-            }
-            ViewCategoryAction.PreviousMonth -> {
-                selectedYearMonth.value = selectedYearMonth.value.minusMonth()
-            }
+    fun onAction(action: ViewCategoryAction) = when (action) {
+        ViewCategoryAction.NextMonth -> {
+            selectedYearMonth.value = selectedYearMonth.value.plusMonth()
+        }
+        ViewCategoryAction.PreviousMonth -> {
+            selectedYearMonth.value = selectedYearMonth.value.minusMonth()
         }
     }
 }

@@ -19,7 +19,10 @@ class OpenInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository
 ) {
-    suspend operator fun invoke(creditCardId: Long, openingMonth: YearMonth): Result<Invoice> {
+    suspend operator fun invoke(
+        creditCardId: Long,
+        openingMonth: YearMonth
+    ): Result<Invoice> {
         val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             ?: return Result.failure(OpenInvoiceException(errors.creditCardNotFound))
 

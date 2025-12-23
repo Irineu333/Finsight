@@ -58,7 +58,6 @@ class EditInvoicePaymentModal(
         val amount = rememberTextFieldState(formatMoneyFromDouble(-transaction.amount))
         val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
 
-        // Limites de data baseados na fatura
         val invoice = transaction.invoice
         val minDate = invoice?.openingMonth?.toLocalDate()
         val maxDate = invoice?.closingMonth?.toLocalDate()?.let { closing ->
@@ -172,7 +171,7 @@ class EditInvoicePaymentModal(
         if (amount.isEmpty()) return false
         if (parseMoneyToDouble(amount) <= 0.0) return false
         if (date.isEmpty()) return false
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
         if (minDate != null && parsedDate < minDate) return false
         if (maxDate != null && parsedDate > maxDate) return false
         return true

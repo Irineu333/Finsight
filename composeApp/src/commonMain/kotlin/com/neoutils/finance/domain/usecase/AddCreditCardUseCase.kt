@@ -21,27 +21,27 @@ class AddCreditCardUseCase(
     private val openInvoiceUseCase: OpenInvoiceUseCase,
 ) {
     suspend operator fun invoke(
-        creditCard: CreditCardForm
+        form: CreditCardForm
     ): Result<CreditCard> {
 
-        if (creditCard.name.isBlank()) {
+        if (form.name.isBlank()) {
             return Result.failure(RegisterCreditCardException(errors.emptyName))
         }
 
-        if (creditCard.limit < 0) {
+        if (form.limit < 0) {
             return Result.failure(RegisterCreditCardException(errors.negativeLimit))
         }
 
-        if (creditCard.closingDay != null && creditCard.closingDay !in 1..28) {
+        if (form.closingDay != null && form.closingDay !in 1..28) {
             return Result.failure(
                 RegisterCreditCardException(errors.invalidClosingDay)
             )
         }
 
         val creditCard = CreditCard(
-            name = creditCard.name,
-            limit = creditCard.limit,
-            closingDay = creditCard.closingDay,
+            name = form.name,
+            limit = form.limit,
+            closingDay = form.closingDay,
             createdAt = Clock.System.now().toEpochMilliseconds()
         )
 

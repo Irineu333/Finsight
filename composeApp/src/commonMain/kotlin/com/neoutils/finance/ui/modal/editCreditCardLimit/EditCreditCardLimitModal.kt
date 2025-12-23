@@ -20,11 +20,9 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Expense
@@ -47,36 +46,18 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class EditCreditCardLimitModal(
-    private val creditCardId: Long
+    private val creditCard: CreditCard
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditCreditCardLimitViewModel>(key = key) {
-            parametersOf(creditCardId)
+            parametersOf(creditCard.id)
         }
 
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-            return
-        }
-
-        val limit = rememberTextFieldState()
-
-        LaunchedEffect(uiState.currentLimit) {
-            limit.edit {
-                replace(0, length, formatMoneyFromDouble(uiState.currentLimit))
-            }
-        }
+        val limit = rememberTextFieldState(formatMoneyFromDouble(creditCard.limit))
 
         val newLimit by remember {
             derivedStateOf {
@@ -147,7 +128,7 @@ class EditCreditCardLimitModal(
 
             Button(
                 onClick = {
-                    viewModel.saveLimit(parseMoneyToDouble(limit.text.toString()))
+                    viewModel.updateLimit(parseMoneyToDouble(limit.text.toString()))
                 },
                 enabled = isValidLimit(limit.text.toString()),
                 modifier = Modifier.fillMaxWidth(),

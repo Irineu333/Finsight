@@ -1,64 +1,51 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finance.ui.modal.viewCreditCard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
-import com.neoutils.finance.domain.usecase.CloseInvoiceUseCase
-import com.neoutils.finance.domain.usecase.PayInvoiceUseCase
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.stateIn
 
 class ViewCreditCardViewModel(
-    private val creditCard: CreditCard,
-    private val initialBillAmount: Double,
+    creditCard: CreditCard,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val transactionRepository: com.neoutils.finance.domain.repository.ITransactionRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
 ) : ViewModel() {
 
-    private val _uiState =
-        MutableStateFlow(
-            ViewCreditCardUiState(creditCard = creditCard, billAmount = initialBillAmount)
-        )
-    val uiState: StateFlow<ViewCreditCardUiState> = _uiState.asStateFlow()
+    private val creditCardFlow = creditCardRepository
+        .observeCreditCardById(creditCard.id)
+        .filterNotNull()
 
-    init {
-        refreshBill()
-    }
+    private val invoiceFlow = invoiceRepository
+        .observeLatestUnpaidInvoice(creditCard.id)
+        .filterNotNull()
 
-    private fun refreshBill() {
-        viewModelScope.launch {
-            val invoice = invoiceRepository.getLatestUnpaidInvoice(creditCard.id) ?: return@launch
-
-            val billAmount = calculateInvoiceUseCase(
+    val uiState = combine(
+        creditCardFlow,
+        invoiceFlow,
+        transactionRepository.observeAllTransactions()
+    ) { creditCard, invoice, transactions ->
+        ViewCreditCardUiState(
+            creditCard = creditCard,
+            invoiceAmount = calculateInvoiceUseCase(
                 invoiceId = invoice.id,
-            )
-
-            val currentCard = creditCardRepository.getCreditCardById(creditCard.id) ?: creditCard
-
-            _uiState.value =
-                _uiState.value.copy(
-                    creditCard = currentCard,
-                    billAmount = billAmount,
-                    currentInvoice = invoice
-                )
-        }
-    }
+                transactions = transactions
+            ),
+            currentInvoice = invoice,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ViewCreditCardUiState(
+            creditCard = creditCard,
+            invoiceAmount = 0.0, // TODO: improve this
+        )
+    )
 }
-
-data class ViewCreditCardUiState(
-    val creditCard: CreditCard,
-    val billAmount: Double,
-    val currentInvoice: Invoice? = null
-)

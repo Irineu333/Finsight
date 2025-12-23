@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
-
-package com.neoutils.finance.ui.modal.payBill
+package com.neoutils.finance.ui.modal.payInvoice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,7 +6,6 @@ import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finance.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
@@ -20,10 +17,7 @@ class PayInvoiceViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    fun payInvoice(
-        date: LocalDate
-    ) = viewModelScope.launch {
-
+    fun payInvoice(date: LocalDate) = viewModelScope.launch {
         val invoiceAmount = calculateInvoiceUseCase(invoiceId)
 
         if (invoiceAmount == 0.0) {

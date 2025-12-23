@@ -2,16 +2,14 @@ package com.neoutils.finance.ui.screen.creditCards
 
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.ui.model.CreditCardBillUi
+import com.neoutils.finance.ui.model.InvoiceUi
 
 data class CreditCardsUiState(
-    val creditCards: List<CreditCardWithBill> = emptyList()
+    val creditCards: List<CreditCardUi> = emptyList()
 )
 
-data class CreditCardWithBill(
+data class CreditCardUi(
     val creditCard: CreditCard,
-    val billUi: CreditCardBillUi,
-    val billAmount: Double,
-    val currentInvoice: Invoice? = null
+    val invoiceUi: InvoiceUi?,
 )
 

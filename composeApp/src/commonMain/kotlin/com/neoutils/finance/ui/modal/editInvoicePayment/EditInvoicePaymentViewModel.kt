@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finance.ui.modal.editInvoicePayment
 
 import androidx.lifecycle.ViewModel
@@ -9,7 +7,6 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlin.time.ExperimentalTime
 
 class EditInvoicePaymentViewModel(
     private val transaction: Transaction,
@@ -20,17 +17,16 @@ class EditInvoicePaymentViewModel(
     fun updateInvoicePayment(
         amount: Double,
         date: LocalDate
-    ) {
-        viewModelScope.launch {
-            require(amount > 0) { "Payment amount must be positive" }
-            
-            val updatedTransaction = transaction.copy(
+    ) = viewModelScope.launch {
+        require(amount > 0) { "Payment amount must be positive" }
+
+        transactionRepository.update(
+            transaction.copy(
                 amount = -amount,
                 date = date
             )
-            
-            transactionRepository.update(updatedTransaction)
-            modalManager.dismiss()
-        }
+        )
+
+        modalManager.dismiss()
     }
 }

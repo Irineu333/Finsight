@@ -26,7 +26,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,8 +42,6 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.toLastDayOfMonth
-import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.CreditCardSelector
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -70,8 +67,9 @@ class AddTransactionModal : ModalBottomSheet() {
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<AddTransactionViewModel>(key = key)
         val manager = LocalModalManager.current
+
+        val viewModel = koinViewModel<AddTransactionViewModel>(key = key)
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
@@ -82,34 +80,6 @@ class AddTransactionModal : ModalBottomSheet() {
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
 
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
-        var selectedCreditCard by remember { mutableStateOf<CreditCard?>(null) }
-        
-        // Fatura atual do cartão selecionado (para validação de data)
-        var currentInvoice by remember { mutableStateOf<Invoice?>(null) }
-        
-        // Buscar fatura quando cartão muda
-        androidx.compose.runtime.LaunchedEffect(selectedCreditCard) {
-            currentInvoice = selectedCreditCard?.let { card ->
-                viewModel.getOpenInvoiceForCard(card.id)
-            }
-        }
-        
-        // Limites de data baseados na fatura do cartão
-        val minDate = currentInvoice?.openingMonth?.toLocalDate()
-        val maxDate = currentInvoice?.closingMonth?.toLastDayOfMonth()?.let { lastDayOfClosing ->
-            val today = currentDate()
-            if (today < lastDayOfClosing) today else lastDayOfClosing
-        }
-
-        val availableTargets by remember {
-            derivedStateOf {
-                if (uiState.creditCards.isEmpty()) {
-                    listOf(Transaction.Target.ACCOUNT)
-                } else {
-                    listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
-                }
-            }
-        }
 
         Column(
             modifier = Modifier
@@ -146,7 +116,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
-                    availableTargets = availableTargets,
+                    availableTargets = uiState.targets,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -158,8 +128,8 @@ class AddTransactionModal : ModalBottomSheet() {
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
-                    selectedCreditCard = selectedCreditCard,
-                    onCreditCardSelected = { selectedCreditCard = it },
+                    selectedCreditCard = uiState.selectedCreditCard,
+                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -214,8 +184,8 @@ class AddTransactionModal : ModalBottomSheet() {
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = if (target == Transaction.Target.CREDIT_CARD) minDate else null,
-                                    maxDate = if (target == Transaction.Target.CREDIT_CARD) maxDate else null,
+                                    minDate = uiState.minDate.takeIf { target.isCreditCard },
+                                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))
@@ -249,7 +219,8 @@ class AddTransactionModal : ModalBottomSheet() {
                             date = formats.dayMonthYear.parse(date.text.toString()),
                             category = selectedCategory?.takeIf { it.type.isAccept(type) },
                             target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
-                            creditCard = selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
+                            creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
+                            invoice = uiState.currentInvoice.takeIf { target.isCreditCard && type.isExpense },
                         )
                     )
                 },
@@ -257,14 +228,13 @@ class AddTransactionModal : ModalBottomSheet() {
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
-                    hasCategory = selectedCategory != null,
+                    category = selectedCategory,
                     target = target,
-                    hasCreditCard = selectedCreditCard != null,
-                    isExpense = type.isExpense,
-                    hasCreditCards = uiState.creditCards.isNotEmpty(),
-                    hasOpenInvoice = currentInvoice != null,
-                    minDate = minDate,
-                    maxDate = maxDate
+                    creditCard = uiState.selectedCreditCard,
+                    type = type,
+                    invoice = uiState.currentInvoice,
+                    minDate = uiState.minDate.takeIf { target.isCreditCard },
+                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -358,12 +328,11 @@ class AddTransactionModal : ModalBottomSheet() {
         amount: String,
         date: String,
         title: String,
-        hasCategory: Boolean,
+        type: Transaction.Type,
         target: Transaction.Target,
-        hasCreditCard: Boolean,
-        isExpense: Boolean,
-        hasCreditCards: Boolean,
-        hasOpenInvoice: Boolean,
+        category: Category?,
+        creditCard: CreditCard?,
+        invoice: Invoice?,
         minDate: LocalDate?,
         maxDate: LocalDate?
     ): Boolean {
@@ -374,18 +343,23 @@ class AddTransactionModal : ModalBottomSheet() {
 
         if (date.isEmpty()) return false
 
-        if (title.isEmpty() && !hasCategory) return false
+        if (title.isEmpty() && category == null) return false
 
-        if (isExpense && target == Transaction.Target.CREDIT_CARD) {
-            if (!hasCreditCards) return false
-            if (!hasCreditCard) return false
-            if (!hasOpenInvoice) return false
-            
-            // Validar data dentro do período da fatura
-            val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
-            if (minDate != null && parsedDate < minDate) return false
-            if (maxDate != null && parsedDate > maxDate) return false
-        }
+        if (target.isAccount) return true
+
+        if (type != Transaction.Type.EXPENSE) return false
+
+        val invoice = invoice ?: return false
+        val creditCard = creditCard ?: return false
+
+        if (invoice.status != Invoice.Status.OPEN) return false
+
+        if (creditCard.id != invoice.creditCard.id) return false
+
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+
+        if (minDate != null && parsedDate < minDate) return false
+        if (maxDate != null && parsedDate > maxDate) return false
 
         return true
     }

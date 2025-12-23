@@ -1,16 +1,33 @@
 package com.neoutils.finance.ui.modal.editTransaction
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -21,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.CreditCardSelector
@@ -33,16 +51,10 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
-import com.neoutils.finance.extension.toLocalDate
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class EditTransactionModal(
     private val transaction: Transaction,
 ) : ModalBottomSheet() {
@@ -63,26 +75,6 @@ class EditTransactionModal(
         val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
 
         var selectedCategory by remember(type) { mutableStateOf(transaction.category) }
-
-        var selectedCreditCard by remember { mutableStateOf(transaction.creditCard) }
-
-        val availableTargets by remember {
-            derivedStateOf {
-                if (uiState.creditCards.isEmpty()) {
-                    listOf(Transaction.Target.ACCOUNT)
-                } else {
-                    listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
-                }
-            }
-        }
-
-        // Limites de data baseados na fatura (se transação de cartão)
-        val invoice = transaction.invoice
-        val minDate = invoice?.openingMonth?.toLocalDate()
-        val maxDate = invoice?.closingMonth?.toLocalDate()?.let { closing ->
-            val today = currentDate()
-            if (today < closing) today else closing
-        }
 
         Column(
             modifier = Modifier
@@ -127,7 +119,7 @@ class EditTransactionModal(
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
-                    availableTargets = availableTargets,
+                    availableTargets = uiState.targets,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -135,13 +127,12 @@ class EditTransactionModal(
             }
 
             AnimatedVisibility(
-                type.isExpense &&
-                        target == Transaction.Target.CREDIT_CARD
+                type.isExpense && target == Transaction.Target.CREDIT_CARD
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
-                    selectedCreditCard = selectedCreditCard,
-                    onCreditCardSelected = { selectedCreditCard = it },
+                    selectedCreditCard = uiState.selectedCreditCard,
+                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -196,8 +187,8 @@ class EditTransactionModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = minDate,
-                                    maxDate = maxDate,
+                                    minDate = uiState.minDate.takeIf { target.isCreditCard },
+                                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))
@@ -231,7 +222,8 @@ class EditTransactionModal(
                             date = formats.dayMonthYear.parse(date.text.toString()),
                             category = selectedCategory?.takeIf { it.type.isAccept(type) },
                             target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
-                            creditCard = selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
+                            creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
+                            invoice = uiState.currentInvoice.takeIf { target.isCreditCard && type.isExpense },
                         )
                     )
                 },
@@ -239,9 +231,13 @@ class EditTransactionModal(
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
-                    hasCategory = selectedCategory != null,
-                    minDate = minDate,
-                    maxDate = maxDate
+                    category = selectedCategory,
+                    target = target,
+                    creditCard = uiState.selectedCreditCard,
+                    type = type,
+                    invoice = uiState.currentInvoice,
+                    minDate = uiState.minDate.takeIf { target.isCreditCard },
+                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -284,7 +280,7 @@ class EditTransactionModal(
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Despesa",
@@ -314,7 +310,7 @@ class EditTransactionModal(
                     )
                 }
             },
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = "Receita",
@@ -335,24 +331,40 @@ class EditTransactionModal(
         amount: String,
         date: String,
         title: String,
-        hasCategory: Boolean,
+        type: Transaction.Type,
+        target: Transaction.Target,
+        category: Category?,
+        creditCard: CreditCard?,
+        invoice: Invoice?,
         minDate: LocalDate?,
         maxDate: LocalDate?
     ): Boolean {
+
         if (amount.isEmpty()) return false
+
+        if (parseMoneyToDouble(amount) == 0.0) return false
+
         if (date.isEmpty()) return false
-        if (title.isEmpty() && !hasCategory) return false
-        
-        // Validar data dentro do período da fatura
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrNull() ?: return false
+
+        if (title.isEmpty() && category == null) return false
+
+        if (target.isAccount) return true
+
+        if (type != Transaction.Type.EXPENSE) return false
+
+        val invoice = invoice ?: return false
+        val creditCard = creditCard ?: return false
+
+        if (invoice.status != Invoice.Status.OPEN) return false
+
+        if (creditCard.id != invoice.creditCard.id) return false
+
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+
         if (minDate != null && parsedDate < minDate) return false
         if (maxDate != null && parsedDate > maxDate) return false
-        
-        return true
-    }
 
-    private fun currentDate(): LocalDate {
-        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return true
     }
 
     private fun formatMoneyFromDouble(value: Double): String {

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.neoutils.finance.database.repository
 
 import com.neoutils.finance.database.dao.TransactionDao
@@ -7,8 +9,12 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
@@ -90,24 +96,33 @@ class TransactionRepository(
     }
 
     override fun observeTransactionById(id: Long): Flow<Transaction?> {
-        return combine(
-            dao.observeTransactionById(id),
-            categoryRepository.observeAllCategories().map { categories ->
-                categories.associateBy { it.id }
-            },
-            creditCardRepository.observeAllCreditCards().map { creditCards ->
-                creditCards.associateBy { it.id }
-            },
-            invoiceRepository.observeAllInvoices().map { invoices ->
-                invoices.associateBy { it.id }
-            },
-        ) { transaction, categories, creditCards, invoices ->
-            transaction?.let { transaction ->
+        return dao.observeTransactionById(id).flatMapMerge { entity ->
+            if (entity == null) {
+                return@flatMapMerge emptyFlow()
+            }
+
+            val categoryFlow = entity.categoryId?.let { categoryId ->
+                categoryRepository.observeCategoryById(categoryId)
+            }
+
+            val creditCardFlow = entity.creditCardId?.let { creditCardId ->
+                creditCardRepository.observeCreditCardById(creditCardId)
+            }
+
+            val invoiceFlow = entity.invoiceId?.let { invoiceId ->
+                invoiceRepository.observeInvoiceById(invoiceId)
+            }
+
+            combine(
+                categoryFlow ?: flowOf(null),
+                creditCardFlow ?: flowOf(null),
+                invoiceFlow ?: flowOf(null),
+            ) { category, creditCard, invoice ->
                 mapper.toDomain(
-                    entity = transaction,
-                    category = categories[transaction.categoryId],
-                    creditCard = creditCards[transaction.creditCardId],
-                    invoice = invoices[transaction.invoiceId],
+                    entity = entity,
+                    category = category,
+                    creditCard = creditCard,
+                    invoice = invoice,
                 )
             }
         }
@@ -116,15 +131,9 @@ class TransactionRepository(
     override fun observeTransactionsByType(type: Transaction.Type): Flow<List<Transaction>> {
         return combine(
             dao.observeTransactionsByType(mapper.toEntity(type)),
-            categoryRepository.observeAllCategories().map { categories ->
-                categories.associateBy { it.id }
-            },
-            creditCardRepository.observeAllCreditCards().map { creditCards ->
-                creditCards.associateBy { it.id }
-            },
-            invoiceRepository.observeAllInvoices().map { invoices ->
-                invoices.associateBy { it.id }
-            },
+            categoriesFlow,
+            creditCardsFlow,
+            invoicesFlow,
         ) { transactions, categories, creditCards, invoices ->
             transactions.map { transaction ->
                 mapper.toDomain(

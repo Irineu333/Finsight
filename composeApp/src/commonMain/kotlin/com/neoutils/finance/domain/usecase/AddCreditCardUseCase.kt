@@ -43,9 +43,11 @@ class AddCreditCardUseCase(
             limit = form.limit,
             closingDay = form.closingDay,
             createdAt = Clock.System.now().toEpochMilliseconds()
-        )
-
-        repository.insert(creditCard)
+        ).let {
+            it.copy(
+                id = repository.insert(it)
+            )
+        }
 
         if (creditCard.closingDay == null) {
             return Result.success(creditCard)

@@ -7,6 +7,7 @@ import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -17,20 +18,20 @@ class EditCreditCardLimitViewModel(
     private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val invoiceUiMapper: InvoiceUiMapper,
 ) : ViewModel() {
 
     val uiState = combine(
         creditCardRepository.observeCreditCardById(creditCardId).filterNotNull(),
-        invoiceRepository.observeLatestUnpaidInvoice(creditCardId).filterNotNull()
+        invoiceRepository.observeLatestUnpaidInvoice(creditCardId)
     ) { creditCard, invoice ->
         EditCreditCardLimitUiState(
             limit = creditCard.limit,
-            invoiceAmount = calculateInvoiceUseCase(
-                invoiceId = invoice.id
-            ),
+            invoiceUi = invoice?.let {
+                invoiceUiMapper.toUi(it)
+            },
         )
     }.stateIn(
         scope = viewModelScope,

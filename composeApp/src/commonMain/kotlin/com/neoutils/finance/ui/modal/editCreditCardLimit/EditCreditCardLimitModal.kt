@@ -65,18 +65,6 @@ class EditCreditCardLimitModal(
             }
         }
 
-        val availableLimit by remember {
-            derivedStateOf {
-                (newLimit - uiState.invoiceAmount).coerceAtLeast(minimumValue = 0.0)
-            }
-        }
-
-        val showPreview by remember {
-            derivedStateOf {
-                uiState.invoiceAmount > 0 && availableLimit != newLimit
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,19 +80,34 @@ class EditCreditCardLimitModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            AnimatedContent(
-                targetState = availableLimit to showPreview,
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-            ) { (available, show) ->
-                if (show) {
-                    AvailableLimitPreview(
-                        availableLimit = available,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxWidth())
+            uiState.invoiceUi?.let { invoice ->
+
+                val availableLimit by remember {
+                    derivedStateOf {
+                        (newLimit - invoice.amount).coerceAtLeast(minimumValue = 0.0)
+                    }
+                }
+
+                val showPreview by remember {
+                    derivedStateOf {
+                        invoice.amount > 0 && availableLimit != invoice.availableLimit
+                    }
+                }
+
+                AnimatedContent(
+                    targetState = availableLimit to showPreview,
+                    transitionSpec = {
+                        fadeIn() togetherWith fadeOut()
+                    },
+                ) { (available, show) ->
+                    if (show) {
+                        AvailableLimitPreview(
+                            availableLimit = available,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxWidth())
+                    }
                 }
             }
 

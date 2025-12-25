@@ -19,5 +19,6 @@ data class InvoiceUi(
     val id = invoice.id
     val isClosable = invoice.let { it.status.isOpen && currentMonth >= it.closingMonth }
     val status = invoice.status
+    val closingMonth = invoice.closingMonth
 }
 

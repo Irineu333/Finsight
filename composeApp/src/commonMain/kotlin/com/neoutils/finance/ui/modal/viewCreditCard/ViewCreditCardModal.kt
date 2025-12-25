@@ -83,21 +83,15 @@ class ViewCreditCardModal(
                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
 
-            uiState.currentInvoice?.let { invoice ->
-                Spacer(modifier = Modifier.height(12.dp))
-
-                val statusColor = when (invoice.status) {
-                    Invoice.Status.OPEN -> Color(0xFFFFA726)
-                    Invoice.Status.CLOSED -> Color(0xFFEF5350)
-                    Invoice.Status.PAID -> Color(0xFF66BB6A)
-                }
+            uiState.invoiceUi?.let { invoice ->
 
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = statusColor.copy(alpha = 0.15f),
-                        contentColor = statusColor
+                        containerColor = invoice.status.color.copy(alpha = 0.15f),
+                        contentColor = invoice.status.color,
                     ),
-                    shape = RoundedCornerShape(6.dp)
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.padding(top = 12.dp)
                 ) {
                     Text(
                         text = "Fatura ${invoice.status.label}",
@@ -114,11 +108,14 @@ class ViewCreditCardModal(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Details
-            DetailRow(
-                label = "Fatura Atual",
-                value = uiState.invoiceAmount.toMoneyFormat(),
-                valueColor = if (uiState.invoiceAmount > 0) Expense else colorScheme.onSurface
-            )
+
+            uiState.invoiceUi?.let {
+                DetailRow(
+                    label = "Fatura Atual",
+                    value = it.amount.toMoneyFormat(),
+                    valueColor = Expense
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -129,15 +126,19 @@ class ViewCreditCardModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val availableLimit = uiState.creditCard.limit - uiState.invoiceAmount
+            val availableLimit = uiState.invoiceUi
+                ?.availableLimit
+                ?.toMoneyFormat()
+
+            val limit = uiState.creditCard.limit.toMoneyFormat()
 
             DetailRow(
                 label = "Limite Disponível",
-                value = availableLimit.toMoneyFormat(),
+                value = availableLimit ?: limit,
                 valueColor = Income
             )
 
-            uiState.currentInvoice?.let { invoice ->
+            uiState.invoiceUi?.let { invoice ->
                 DetailRow(
                     label = "Fechamento",
                     value = formats.yearMonth.format(invoice.closingMonth),
@@ -217,15 +218,15 @@ class ViewCreditCardModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            uiState.currentInvoice?.let { invoice ->
+            uiState.invoiceUi?.let { ui ->
                 val currentMonth = Clock.System.now().toYearMonth()
-                val isInClosingMonth = currentMonth >= invoice.closingMonth
+                val isInClosingMonth = currentMonth >= ui.closingMonth
 
-                when (invoice.status) {
+                when (ui.status) {
                     Invoice.Status.OPEN -> {
                         if (isInClosingMonth) {
                             OutlinedButton(
-                                onClick = { modalManager.show(CloseInvoiceModal(invoice)) },
+                                onClick = { modalManager.show(CloseInvoiceModal(ui.invoice)) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
@@ -257,8 +258,8 @@ class ViewCreditCardModal(
                             onClick = {
                                 modalManager.show(
                                     AdvancePaymentModal(
-                                        invoice = invoice,
-                                        currentBillAmount = uiState.invoiceAmount
+                                        invoice = ui.invoice,
+                                        currentBillAmount = ui.amount,
                                     )
                                 )
                             },
@@ -267,7 +268,10 @@ class ViewCreditCardModal(
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = colorScheme.primary
                             ),
-                            border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.5f)),
+                            border = BorderStroke(
+                                1.dp,
+                                colorScheme.primary.copy(alpha = 0.5f)
+                            ),
                             contentPadding = PaddingValues(12.dp),
                         ) {
                             Icon(
@@ -289,8 +293,8 @@ class ViewCreditCardModal(
                             onClick = {
                                 modalManager.show(
                                     PayInvoiceModal(
-                                        invoice = invoice,
-                                        currentBillAmount = uiState.invoiceAmount
+                                        invoice = ui.invoice,
+                                        currentBillAmount = ui.amount
                                     )
                                 )
                             },
@@ -314,7 +318,7 @@ class ViewCreditCardModal(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         OutlinedButton(
-                            onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
+                            onClick = { modalManager.show(ReopenInvoiceModal(ui.id)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.outlinedButtonColors(

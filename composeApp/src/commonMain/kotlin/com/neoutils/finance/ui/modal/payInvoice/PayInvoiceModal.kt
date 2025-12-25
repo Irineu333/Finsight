@@ -46,7 +46,7 @@ import kotlin.time.ExperimentalTime
 
 class PayInvoiceModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double
+    private val currentBillAmount: Double // TODO: improve this 
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()

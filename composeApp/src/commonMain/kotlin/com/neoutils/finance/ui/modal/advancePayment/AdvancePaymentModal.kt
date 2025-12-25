@@ -47,14 +47,17 @@ import kotlin.time.ExperimentalTime
 
 class AdvancePaymentModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double
+    private val currentBillAmount: Double // TODO: improve this
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<AdvancePaymentViewModel>(key = key) { parametersOf(invoice.id) }
+        val viewModel = koinViewModel<AdvancePaymentViewModel>(key = key) {
+            parametersOf(invoice.id)
+        }
+
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState()

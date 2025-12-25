@@ -2,13 +2,11 @@ package com.neoutils.finance.ui.mapper
 
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
-import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.model.InvoiceUi
 
 class InvoiceUiMapper(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
 ) {
-
     suspend fun toUi(
         invoice: Invoice,
     ): InvoiceUi {

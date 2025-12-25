@@ -35,9 +35,11 @@ class AddTransactionUseCase(
             return Result.failure(AddTransactionException(errors.invoiceNotOpen))
         }
 
-        transactionRepository.insert(transaction)
-
-        return Result.success(transaction)
+        return Result.success(
+            transaction.copy(
+                id = transactionRepository.insert(transaction)
+            )
+        )
     }
 }
 

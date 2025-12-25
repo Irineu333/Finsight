@@ -42,9 +42,12 @@ class AdvanceInvoicePaymentUseCase(
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,
             invoice = invoice
-        )
+        ).let {
+            it.copy(
+                id = repository.insert(it)
+            )
+        }
 
-        repository.insert(transaction)
         return Result.success(transaction)
     }
 }

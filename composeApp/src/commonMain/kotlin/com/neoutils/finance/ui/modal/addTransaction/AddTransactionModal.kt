@@ -209,6 +209,12 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // TODO: improve this
+            val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
+            val invoice = uiState.currentInvoice.takeIf { target.isCreditCard }
+            val category = selectedCategory?.takeIf { it.type.isAccept(type) }
+            val creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard }
+
             Button(
                 onClick = {
                     viewModel.addTransaction(
@@ -217,22 +223,22 @@ class AddTransactionModal : ModalBottomSheet() {
                             amount = parseMoneyToDouble(amount.text.toString()),
                             title = title.text.toString().ifBlank { null },
                             date = formats.dayMonthYear.parse(date.text.toString()),
-                            category = selectedCategory?.takeIf { it.type.isAccept(type) },
-                            target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
-                            creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
-                            invoice = uiState.currentInvoice.takeIf { target.isCreditCard && type.isExpense },
+                            category = category,
+                            target = target,
+                            creditCard = creditCard,
+                            invoice = invoice,
                         )
                     )
                 },
                 enabled = showSaveButton(
+                    type = type,
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
-                    category = selectedCategory,
+                    category = category,
                     target = target,
-                    creditCard = uiState.selectedCreditCard,
-                    type = type,
-                    invoice = uiState.currentInvoice,
+                    creditCard = creditCard,
+                    invoice = invoice,
                     minDate = uiState.minDate.takeIf { target.isCreditCard },
                     maxDate = uiState.maxDate.takeIf { target.isCreditCard },
                 ),

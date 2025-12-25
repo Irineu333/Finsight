@@ -133,7 +133,10 @@ class EditCreditCardLimitModal(
                 onClick = {
                     viewModel.updateLimit(parseMoneyToDouble(limit.text.toString()))
                 },
-                enabled = isValidLimit(limit.text.toString()),
+                enabled = isValidLimit(
+                    newLimit = limit.text.toString(),
+                    creditCard = creditCard,
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -183,9 +186,17 @@ class EditCreditCardLimitModal(
         }
     }
 
-    private fun isValidLimit(amount: String): Boolean {
-        if (amount.isEmpty()) return false
-        return parseMoneyToDouble(amount) >= 0.0
+    private fun isValidLimit(
+        newLimit: String,
+        creditCard: CreditCard
+    ): Boolean {
+        if (newLimit.isEmpty()) return false
+
+        val newLimit = parseMoneyToDouble(newLimit)
+
+        if (newLimit <= 0.0) return false
+
+        return newLimit != creditCard.limit
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {

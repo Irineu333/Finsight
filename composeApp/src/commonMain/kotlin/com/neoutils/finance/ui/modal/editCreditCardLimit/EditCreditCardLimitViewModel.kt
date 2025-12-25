@@ -24,11 +24,11 @@ class EditCreditCardLimitViewModel(
 
     val uiState = combine(
         creditCardRepository.observeCreditCardById(creditCardId).filterNotNull(),
-        invoiceRepository.observeOpenInvoice(creditCardId).filterNotNull()
+        invoiceRepository.observeLatestUnpaidInvoice(creditCardId).filterNotNull()
     ) { creditCard, invoice ->
         EditCreditCardLimitUiState(
-            currentLimit = creditCard.limit,
-            currentBill = calculateInvoiceUseCase(
+            limit = creditCard.limit,
+            invoiceAmount = calculateInvoiceUseCase(
                 invoiceId = invoice.id
             ),
         )

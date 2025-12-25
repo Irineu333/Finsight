@@ -67,13 +67,13 @@ class EditCreditCardLimitModal(
 
         val availableLimit by remember {
             derivedStateOf {
-                (newLimit - uiState.currentBill).coerceAtLeast(minimumValue = 0.0)
+                (newLimit - uiState.invoiceAmount).coerceAtLeast(minimumValue = 0.0)
             }
         }
 
         val showPreview by remember {
             derivedStateOf {
-                uiState.currentBill > 0 && availableLimit != newLimit
+                uiState.invoiceAmount > 0 && availableLimit != newLimit
             }
         }
 

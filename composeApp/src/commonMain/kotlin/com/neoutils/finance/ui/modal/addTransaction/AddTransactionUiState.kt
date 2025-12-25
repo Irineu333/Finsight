@@ -6,12 +6,13 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.extension.toLastDayOfMonth
-import com.neoutils.finance.extension.toLocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 data class AddTransactionUiState(
     val incomeCategories: List<Category> = emptyList(),
@@ -29,6 +30,6 @@ data class AddTransactionUiState(
     val minDate = currentInvoice?.openingMonth?.firstDay
 
     val maxDate = currentInvoice?.closingMonth?.lastDay?.coerceAtMost(
-        maximumValue = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        maximumValue = currentDate,
     )
 }

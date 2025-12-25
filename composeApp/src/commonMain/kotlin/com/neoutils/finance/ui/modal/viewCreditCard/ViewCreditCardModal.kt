@@ -6,11 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -39,10 +35,11 @@ import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
 import com.neoutils.finance.util.DateFormats
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
+import kotlinx.datetime.onDay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class ViewCreditCardModal(
     private val creditCard: CreditCard,
@@ -141,7 +138,9 @@ class ViewCreditCardModal(
             uiState.invoiceUi?.let { invoice ->
                 DetailRow(
                     label = "Fechamento",
-                    value = formats.yearMonth.format(invoice.closingMonth),
+                    value = creditCard.closingDay
+                        ?.let { day -> formats.dayMonthYear.format(invoice.closingMonth.onDay(day)) }
+                        ?: formats.yearMonth.format(invoice.closingMonth),
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }

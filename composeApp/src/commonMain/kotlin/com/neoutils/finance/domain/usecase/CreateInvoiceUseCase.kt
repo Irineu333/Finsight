@@ -8,20 +8,19 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.extension.toYearMonth
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.plus
 import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private val errors = CreateInvoiceErrors()
 
+private val currentMonth get() = Clock.System.now().toYearMonth()
+private val nextMonth get() = currentMonth.plusMonth()
+
 class CreateInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository
 ) {
-    private val currentMonth get() = Clock.System.now().toYearMonth()
-    private val nextMonth get() = currentMonth.plusMonth()
 
     suspend operator fun invoke(creditCardId: Long): Result<Invoice> {
 

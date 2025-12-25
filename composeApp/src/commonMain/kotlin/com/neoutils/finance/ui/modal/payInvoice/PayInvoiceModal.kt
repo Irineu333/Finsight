@@ -29,8 +29,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.extension.toLastDayOfMonth
-import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -44,6 +42,9 @@ import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
 class PayInvoiceModal(
     private val invoice: Invoice,
     private val currentBillAmount: Double // TODO: improve this 
@@ -53,17 +54,21 @@ class PayInvoiceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<PayInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
+        val viewModel = koinViewModel<PayInvoiceViewModel>(key = key) {
+            parametersOf(invoice.id)
+        }
+
         val manager = LocalModalManager.current
 
         val amount = formatMoneyFromDouble(currentBillAmount)
 
-        val minDate = invoice.closingMonth.toLocalDate()
+        val minDate = invoice.closingMonth.firstDay
+
         val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
-            maximumValue = currentDate()
+            maximumValue = currentDate
         )
 
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
         Column(
             modifier = Modifier
@@ -174,13 +179,9 @@ class PayInvoiceModal(
 
         if (currentBillAmount < 0.0) return false
 
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse {  return false }
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
 
         return parsedDate in minDate..maxDate
-    }
-
-    private fun currentDate(): LocalDate {
-        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
 
     private fun formatMoneyFromDouble(value: Double): String {

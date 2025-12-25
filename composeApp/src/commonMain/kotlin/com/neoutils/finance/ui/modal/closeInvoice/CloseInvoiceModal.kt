@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,9 +28,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -39,11 +36,15 @@ import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.onDay
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class CloseInvoiceModal(
     private val invoice: Invoice
@@ -56,11 +57,7 @@ class CloseInvoiceModal(
         val viewModel = koinViewModel<CloseInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
-        val defaultDate = invoice.closingMonth.toLocalDate()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(defaultDate))
-
-        val minDate = invoice.closingMonth.toLocalDate()
-        val maxDate = currentDate()
+        val date = rememberTextFieldState(formats.dayMonthYear.format(getClosingDate(invoice)))
 
         Column(
             modifier = Modifier
@@ -99,8 +96,8 @@ class CloseInvoiceModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = minDate,
-                                    maxDate = maxDate,
+                                    minDate = invoice.closingMonth.firstDay,
+                                    maxDate = currentDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))
@@ -132,8 +129,8 @@ class CloseInvoiceModal(
                 },
                 enabled = isValidClosing(
                     date = date.text.toString(),
-                    minDate = minDate,
-                    maxDate = maxDate
+                    minDate = invoice.closingMonth.firstDay,
+                    maxDate = currentDate
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -154,12 +151,21 @@ class CloseInvoiceModal(
     ): Boolean {
         if (date.isEmpty()) return false
 
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+        val parsedDate = runCatching {
+            formats.dayMonthYear.parse(date)
+        }.getOrElse { return false }
 
         return parsedDate in minDate..maxDate
     }
 
-    private fun currentDate(): LocalDate {
-        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private fun getClosingDate(invoice: Invoice): LocalDate {
+
+        val date = invoice.creditCard.closingDay?.let { day ->
+            invoice.closingMonth.onDay(day)
+        } ?: invoice.closingMonth.lastDay
+
+        return date.coerceAtMost(
+            maximumValue = currentDate,
+        )
     }
 }

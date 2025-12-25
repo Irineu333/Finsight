@@ -13,10 +13,8 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 
-private val currentMonth = Clock.System.now()
-    .toLocalDateTime(TimeZone.currentSystemDefault())
-    .date
-    .yearMonth
+private val currentMonth
+    get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),

@@ -13,6 +13,8 @@ import kotlin.time.ExperimentalTime
 
 private val errors = CloseInvoiceErrors()
 
+private val currentMonth get() = Clock.System.now().toYearMonth()
+
 class CloseInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
@@ -33,8 +35,6 @@ class CloseInvoiceUseCase(
         if (invoice.status == Invoice.Status.CLOSED) {
             return Result.failure(CloseInvoiceException(errors.invoiceAlreadyClosed))
         }
-
-        val currentMonth = Clock.System.now().toYearMonth()
 
         if (currentMonth < invoice.closingMonth) {
             return Result.failure(CloseInvoiceException(errors.cannotCloseBeforeClosingMonth))

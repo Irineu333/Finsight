@@ -29,8 +29,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.extension.toLastDayOfMonth
-import com.neoutils.finance.extension.toLocalDate
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -44,6 +42,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvancePaymentModal(
     private val invoice: Invoice,
@@ -61,12 +62,12 @@ class AdvancePaymentModal(
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
         val minDate = invoice.openingMonth.firstDay
 
         val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
-            maximumValue = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            maximumValue = currentDate,
         )
 
         Column(
@@ -186,10 +187,6 @@ class AdvancePaymentModal(
         if (date.isEmpty()) return false
         val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
         return parsedDate in minDate..maxDate
-    }
-
-    private fun currentDate(): LocalDate {
-        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {

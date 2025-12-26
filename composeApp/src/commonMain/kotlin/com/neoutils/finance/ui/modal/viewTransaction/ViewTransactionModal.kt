@@ -124,8 +124,7 @@ class ViewTransactionModal(
                             Transaction.Type.INCOME -> "Receita"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
-                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
-                            Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
+                            else -> "Pagamento"
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
@@ -140,7 +139,11 @@ class ViewTransactionModal(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = uiState.title,
+                        text = uiState.title ?: when (uiState.transaction.type) {
+                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
+                            Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
+                            else -> error("Invalid type")
+                        },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface
@@ -213,7 +216,9 @@ class ViewTransactionModal(
                         onClick = {
                             manager.show(DeleteTransactionModal(uiState.transaction))
                         },
-                        modifier = if (uiState.transaction.type == Transaction.Type.ADJUSTMENT) {
+                        modifier = if (uiState.transaction.type == Transaction.Type.ADJUSTMENT ||
+                            uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT
+                        ) {
                             Modifier.fillMaxWidth()
                         } else {
                             Modifier.weight(1f)
@@ -240,36 +245,41 @@ class ViewTransactionModal(
                         )
                     }
 
-                    if (uiState.transaction.type != Transaction.Type.ADJUSTMENT) {
-                        OutlinedButton(
-                            onClick = {
-                                val modal = when (uiState.transaction.type) {
-                                    Transaction.Type.INVOICE_PAYMENT -> EditInvoicePaymentModal(uiState.transaction)
-                                    else -> EditTransactionModal(uiState.transaction)
-                                }
-                                manager.show(modal)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Info,
-                            ),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = Info,
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Editar",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                    when (uiState.transaction.type) {
+                        Transaction.Type.ADJUSTMENT,
+                        Transaction.Type.ADVANCE_PAYMENT -> Unit
+
+                        else -> {
+                            OutlinedButton(
+                                onClick = {
+                                    val modal = when (uiState.transaction.type) {
+                                        Transaction.Type.INVOICE_PAYMENT -> EditInvoicePaymentModal(uiState.transaction)
+                                        else -> EditTransactionModal(uiState.transaction)
+                                    }
+                                    manager.show(modal)
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Info,
+                                ),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = Info,
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(
+                                    text = "Editar",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

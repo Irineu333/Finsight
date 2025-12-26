@@ -64,7 +64,7 @@ class ViewAdjustmentModal(
 
                 Column {
                     Text(
-                        text = if (uiState.transaction.target.isCreditCard) "Ajuste de Fatura" else "Ajuste de Saldo",
+                        text = "Ajuste",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Adjustment
@@ -73,7 +73,11 @@ class ViewAdjustmentModal(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = uiState.transaction.title ?: "Ajuste de saldo",
+                        text = uiState.transaction.title ?: when (uiState.transaction.target) {
+                            Transaction.Target.ACCOUNT -> "Ajuste de Saldo"
+                            Transaction.Target.CREDIT_CARD -> "Ajuste de Fatura"
+                            else -> error("Invalid target for adjustment")
+                        },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface

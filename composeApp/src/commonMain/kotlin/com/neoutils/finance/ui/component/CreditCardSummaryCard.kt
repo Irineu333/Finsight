@@ -21,86 +21,82 @@ import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.TextLight1
+import kotlin.math.absoluteValue
 
 @Composable
 fun CreditCardSummaryCard(
-        overview: TransactionsUiState.CreditCardOverview,
-        modifier: Modifier = Modifier
+    overview: TransactionsUiState.CreditCardOverview,
+    modifier: Modifier = Modifier
 ) {
     Card(
-            modifier = modifier.fillMaxWidth(),
-            colors =
-                    CardDefaults.cardColors(
-                            containerColor = colorScheme.surfaceContainer,
-                    ),
-            shape = RoundedCornerShape(16.dp),
+        modifier = modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = colorScheme.surfaceContainer,
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                    text = "Cartão de Crédito",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
+                text = "Cartão de Crédito",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colorScheme.onSurface
             )
 
             AnimatedContent(
-                    targetState = overview,
-                    transitionSpec = { fadeIn() togetherWith fadeOut() }
+                targetState = overview,
+                transitionSpec = { fadeIn() togetherWith fadeOut() }
             ) { overview ->
                 Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CreditCardSummaryRow(
-                            label = "Gastos",
-                            amount = overview.expense,
-                            color = Expense,
-                            signDisplay = CreditCardSignDisplay.ALWAYS_NEGATIVE
+                        label = "Gastos",
+                        amount = overview.expense,
+                        color = Expense,
+                        signDisplay = CreditCardSignDisplay.ALWAYS_NEGATIVE
                     )
 
                     if (overview.mustShowInvoicePayment) {
                         CreditCardSummaryRow(
-                                label = "Fatura Paga",
-                                amount = overview.invoicePayment,
-                                color = InvoicePayment,
-                                signDisplay = CreditCardSignDisplay.ALWAYS_NEGATIVE
+                            label = "Fatura Paga",
+                            amount = overview.invoicePayment,
+                            color = InvoicePayment,
+                            signDisplay = CreditCardSignDisplay.ALWAYS_POSITIVE
                         )
                     }
 
                     if (overview.mustShowAdvancePayment) {
                         CreditCardSummaryRow(
-                                label = "Adiantamentos",
-                                amount = overview.advancePayment,
-                                color = InvoicePayment,
-                                signDisplay = CreditCardSignDisplay.SHOW_ALWAYS
+                            label = "Adiantamentos",
+                            amount = overview.advancePayment,
+                            color = InvoicePayment,
+                            signDisplay = CreditCardSignDisplay.ALWAYS_POSITIVE
                         )
                     }
 
                     if (overview.mustShowAdjustment) {
                         CreditCardSummaryRow(
-                                label = "Ajustes",
-                                amount = overview.adjustment,
-                                color = Adjustment,
-                                signDisplay = CreditCardSignDisplay.SHOW_ALWAYS
+                            label = "Ajustes",
+                            amount = overview.adjustment * -1,
+                            color = Adjustment,
+                            signDisplay = CreditCardSignDisplay.SHOW_ALWAYS
                         )
                     }
 
                     HorizontalDivider()
 
-                    val total =
-                            overview.expense +
-                                    overview.invoicePayment +
-                                    overview.advancePayment +
-                                    overview.adjustment
                     CreditCardSummaryRow(
-                            label = "Total",
-                            amount = total,
-                            color = colorScheme.onSurface,
-                            signDisplay = CreditCardSignDisplay.ALWAYS_NEGATIVE,
-                            isTotal = true
+                        label = "Final",
+                        amount = overview.finalBalance,
+                        color = colorScheme.onSurface,
+                        signDisplay = CreditCardSignDisplay.SHOW_ONLY_NEGATIVE,
+                        isTotal = true
                     )
                 }
             }
@@ -110,46 +106,51 @@ fun CreditCardSummaryCard(
 
 @Composable
 private fun CreditCardSummaryRow(
-        label: String,
-        amount: Double,
-        color: Color,
-        modifier: Modifier = Modifier,
-        signDisplay: CreditCardSignDisplay = CreditCardSignDisplay.SHOW_ONLY_NEGATIVE,
-        isTotal: Boolean = false
+    label: String,
+    amount: Double,
+    color: Color,
+    modifier: Modifier = Modifier,
+    signDisplay: CreditCardSignDisplay = CreditCardSignDisplay.SHOW_ONLY_NEGATIVE,
+    isTotal: Boolean = false
 ) {
     Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-                text = label,
-                fontSize = if (isTotal) 18.sp else 16.sp,
-                fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (isTotal) colorScheme.onSurface else TextLight1
+            text = label,
+            fontSize = if (isTotal) 18.sp else 16.sp,
+            fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isTotal) colorScheme.onSurface else TextLight1
         )
 
         val formattedAmount =
-                when (signDisplay) {
-                    CreditCardSignDisplay.ALWAYS_POSITIVE -> "+${amount.toMoneyFormat()}"
-                    CreditCardSignDisplay.ALWAYS_NEGATIVE -> "-${amount.toMoneyFormat()}"
-                    CreditCardSignDisplay.SHOW_ALWAYS -> {
-                        when {
-                            amount > 0 -> "+${amount.toMoneyFormat()}"
-                            amount < 0 -> amount.toMoneyFormat()
-                            else -> amount.toMoneyFormat()
-                        }
-                    }
-                    CreditCardSignDisplay.SHOW_ONLY_NEGATIVE -> {
-                        if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
+            when (signDisplay) {
+                CreditCardSignDisplay.ALWAYS_POSITIVE -> {
+                    "+${amount.absoluteValue.toMoneyFormat()}"
+                }
+                CreditCardSignDisplay.ALWAYS_NEGATIVE -> {
+                    "-${amount.absoluteValue.toMoneyFormat()}"
+                }
+                CreditCardSignDisplay.SHOW_ALWAYS -> {
+                    when {
+                        amount > 0 -> "+${amount.toMoneyFormat()}"
+                        amount < 0 -> amount.toMoneyFormat()
+                        else -> amount.toMoneyFormat()
                     }
                 }
 
+                CreditCardSignDisplay.SHOW_ONLY_NEGATIVE -> {
+                    if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
+                }
+            }
+
         Text(
-                text = formattedAmount,
-                fontSize = if (isTotal) 20.sp else 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
+            text = formattedAmount,
+            fontSize = if (isTotal) 20.sp else 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }

@@ -62,9 +62,7 @@ class TransactionsViewModel(
             balanceOverview = TransactionsUiState.BalanceOverview(
                 income = stats.income,
                 accountExpense = stats.accountExpense,
-                creditCardExpense = stats.creditCardExpense,
                 accountAdjustment = stats.accountAdjustment,
-                creditCardAdjustment = stats.creditCardAdjustment,
                 invoicePayment = stats.invoicePayment,
                 initialBalance = calculateBalanceUseCase(
                     target = yearMonth.minusMonth(),
@@ -79,7 +77,11 @@ class TransactionsViewModel(
                 expense = stats.creditCardExpense,
                 invoicePayment = stats.invoicePayment,
                 advancePayment = stats.advancePayment,
-                adjustment = stats.creditCardAdjustment
+                adjustment = stats.creditCardAdjustment,
+                finalBalance = stats.creditCardExpense +
+                    stats.invoicePayment +
+                    stats.advancePayment +
+                    stats.creditCardAdjustment
             ),
             selectedYearMonth = yearMonth,
             categories = categories,

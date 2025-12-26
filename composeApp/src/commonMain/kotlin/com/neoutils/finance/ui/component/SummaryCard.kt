@@ -114,7 +114,6 @@ fun SummaryCard(
     }
 }
 
-
 @Composable
 private fun SummaryRow(
     label: String,

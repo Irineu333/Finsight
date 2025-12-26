@@ -5,9 +5,11 @@ package com.neoutils.finance.ui.component
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -89,11 +91,11 @@ fun TransactionCard(
                 } else {
                     Icon(
                         imageVector = when (transaction.type) {
-                            Transaction.Type.INCOME -> Icons.Default.ShoppingCart
-                            Transaction.Type.EXPENSE -> Icons.Default.Receipt
-                            Transaction.Type.ADJUSTMENT -> Icons.Default.Edit
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.Receipt
+                            Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                            Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                            Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+                            Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
+                            Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
                         },
                         contentDescription = null,
                         tint = when (transaction.type) {

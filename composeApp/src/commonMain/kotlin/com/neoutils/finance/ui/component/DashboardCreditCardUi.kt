@@ -19,10 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormat
-import com.neoutils.finance.ui.model.InvoiceUi
 import com.neoutils.finance.ui.screen.dashboard.CreditCardUi
 
 data class CreditCardUiConfig(

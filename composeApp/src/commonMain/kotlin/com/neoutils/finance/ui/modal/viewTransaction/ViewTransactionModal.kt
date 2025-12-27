@@ -4,10 +4,12 @@ package com.neoutils.finance.ui.modal.viewTransaction
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FastForward
@@ -68,54 +70,72 @@ class ViewTransactionModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Surface(
-                    color = when (transaction.type) {
-                        Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
-                        Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
-                        Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
-                        Transaction.Type.INVOICE_PAYMENT,
-                        Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.size(64.dp),
-                ) {
+                Box {
+                    Surface(
+                        color = when (transaction.type) {
+                            Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
+                            Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
+                            Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
+                            Transaction.Type.INVOICE_PAYMENT,
+                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.size(64.dp),
+                    ) {
+                        uiState.transaction.category?.let { category ->
+                            Icon(
+                                painter = category.icon(),
+                                contentDescription = null,
+                                tint = when (transaction.type) {
+                                    Transaction.Type.INCOME -> Income
+                                    Transaction.Type.EXPENSE -> Expense
+                                    Transaction.Type.ADJUSTMENT -> Adjustment
+                                    Transaction.Type.INVOICE_PAYMENT,
+                                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                                },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                            )
+                        } ?: run {
+                            Icon(
+                                imageVector = when (transaction.type) {
+                                    Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                    Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                    Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+                                    Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
+                                    Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
+                                },
+                                contentDescription = null,
+                                tint = when (transaction.type) {
+                                    Transaction.Type.INCOME -> Income
+                                    Transaction.Type.EXPENSE -> Expense
+                                    Transaction.Type.ADJUSTMENT -> Adjustment
+                                    Transaction.Type.INVOICE_PAYMENT,
+                                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                                },
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                            )
+                        }
+                    }
 
-                    uiState.transaction.category?.let { category ->
-                        Icon(
-                            painter = category.icon(),
-                            contentDescription = null,
-                            tint = when (transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                                Transaction.Type.INVOICE_PAYMENT,
-                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                            },
+                    if (transaction.target.isCreditCard) {
+                        Surface(
+                            color = colorScheme.surfaceVariant,
+                            shape = CircleShape,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                        )
-                    } ?: run {
-                        Icon(
-                            imageVector = when (transaction.type) {
-                                Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
-                                Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
-                                Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
-                            },
-                            contentDescription = null,
-                            tint = when (transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                                Transaction.Type.INVOICE_PAYMENT,
-                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                            },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                        )
+                                .size(22.dp)
+                                .align(Alignment.BottomEnd)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CreditCard,
+                                contentDescription = null,
+                                tint = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(3.dp)
+                            )
+                        }
                     }
                 }
 

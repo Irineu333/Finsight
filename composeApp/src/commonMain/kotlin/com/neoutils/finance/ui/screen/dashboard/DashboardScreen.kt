@@ -159,7 +159,9 @@ private fun DashboardContent(
                                 fontWeight = FontWeight.Bold,
                             )
 
-                            TextButton(onClick = onOpenCreditCards) { Text(text = "Ver Todos") }
+                            TextButton(onClick = onOpenCreditCards) {
+                                Text(text = "Ver Todos")
+                            }
                         }
 
                         Spacer(Modifier.height(8.dp))
@@ -307,7 +309,11 @@ private fun DashboardContent(
                             fontWeight = FontWeight.Bold,
                         )
 
-                        TextButton(onClick = { openTransactions(null, null) }) {
+                        TextButton(
+                            onClick = {
+                                openTransactions(null, null)
+                            }
+                        ) {
                             Text(text = "Ver Tudo")
                         }
                     }
@@ -339,15 +345,14 @@ private fun DashboardContent(
             item {
                 Card(
                     onClick = onOpenCategories,
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = colorScheme.surfaceContainer,
-                            contentColor = colorScheme.onSurface,
-                        ),
-                    modifier =
-                        Modifier.padding(horizontal = 16.dp)
-                            .padding(top = 24.dp)
-                            .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorScheme.surfaceContainer,
+                        contentColor = colorScheme.onSurface,
+                    ),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 24.dp)
+                        .fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -369,15 +374,13 @@ private fun DashboardContent(
             item {
                 Card(
                     onClick = onOpenCreditCards,
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = colorScheme.surfaceContainer,
-                            contentColor = colorScheme.onSurface,
-                        ),
-                    modifier =
-                        Modifier.padding(top = 8.dp)
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorScheme.surfaceContainer,
+                        contentColor = colorScheme.onSurface,
+                    ),
+                    modifier = Modifier.padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth(),
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),

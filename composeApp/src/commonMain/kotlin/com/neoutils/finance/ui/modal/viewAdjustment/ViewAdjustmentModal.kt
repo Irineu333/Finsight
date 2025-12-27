@@ -4,8 +4,10 @@ package com.neoutils.finance.ui.modal.viewAdjustment
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ButtonDefaults
@@ -58,7 +60,9 @@ class ViewAdjustmentModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AdjustmentIconBox()
+                AdjustmentIconBox(
+                    showCreditCardBadge = uiState.transaction.target.isCreditCard
+                )
 
                 Spacer(Modifier.width(16.dp))
 
@@ -164,22 +168,43 @@ class ViewAdjustmentModal(
     }
 
     @Composable
-    private fun AdjustmentIconBox() {
-        Surface(
-            color = Adjustment.copy(alpha = 0.2f),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.size(64.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
+    private fun AdjustmentIconBox(
+        showCreditCardBadge: Boolean
+    ) {
+        Box {
+            Surface(
+                color = Adjustment.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.size(64.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = Adjustment,
-                    modifier = Modifier.size(32.dp)
-                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = Adjustment,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            if (showCreditCardBadge) {
+                Surface(
+                    color = colorScheme.surfaceVariant,
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(22.dp)
+                        .align(Alignment.BottomEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CreditCard,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(3.dp)
+                    )
+                }
             }
         }
     }

@@ -3,10 +3,12 @@
 package com.neoutils.finance.ui.component
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Tune
@@ -59,53 +61,71 @@ fun TransactionCard(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            color = when (transaction.type) {
-                Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
-                Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
-                Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
-                Transaction.Type.INVOICE_PAYMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
-            },
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
+        Box {
+            Surface(
+                color = when (transaction.type) {
+                    Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
+                    Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
+                    Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
+                    Transaction.Type.INVOICE_PAYMENT,
+                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
+                },
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.size(48.dp)
             ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (category != null) {
+                        Icon(
+                            painter = category.icon(),
+                            contentDescription = null,
+                            tint = when (transaction.type) {
+                                Transaction.Type.INCOME -> Income
+                                Transaction.Type.EXPENSE -> Expense
+                                Transaction.Type.ADJUSTMENT -> Adjustment
+                                Transaction.Type.INVOICE_PAYMENT,
+                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                            },
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = when (transaction.type) {
+                                Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+                                Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
+                                Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
+                            },
+                            contentDescription = null,
+                            tint = when (transaction.type) {
+                                Transaction.Type.INCOME -> Income
+                                Transaction.Type.EXPENSE -> Expense
+                                Transaction.Type.ADJUSTMENT -> Adjustment
+                                Transaction.Type.INVOICE_PAYMENT,
+                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
+                            },
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
 
-                if (category != null) {
+            if (transaction.target.isCreditCard) {
+                Surface(
+                    color = colorScheme.surfaceVariant,
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .align(Alignment.BottomEnd)
+                ) {
                     Icon(
-                        painter = category.icon(),
+                        imageVector = Icons.Default.CreditCard,
                         contentDescription = null,
-                        tint = when (transaction.type) {
-                            Transaction.Type.INCOME -> Income
-                            Transaction.Type.EXPENSE -> Expense
-                            Transaction.Type.ADJUSTMENT -> Adjustment
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                        },
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Icon(
-                        imageVector = when (transaction.type) {
-                            Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                            Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                            Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
-                            Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
-                            Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
-                        },
-                        contentDescription = null,
-                        tint = when (transaction.type) {
-                            Transaction.Type.INCOME -> Income
-                            Transaction.Type.EXPENSE -> Expense
-                            Transaction.Type.ADJUSTMENT -> Adjustment
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                        },
-                        modifier = Modifier.size(24.dp)
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(3.dp)
                     )
                 }
             }

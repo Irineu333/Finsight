@@ -31,7 +31,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.component.CreditCardSummaryCard
+import com.neoutils.finance.ui.component.CreditCardTotalSummaryCard
+import com.neoutils.finance.ui.component.InvoiceSummaryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
@@ -74,6 +75,11 @@ private fun TransactionsContent(
 ) {
     val modalManager = LocalModalManager.current
 
+    val pageCount = if (uiState.creditCardOverview.hasData) 2 else 1
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+
+    var invoicesExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             MonthSelector(
@@ -95,9 +101,6 @@ private fun TransactionsContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                val pageCount = if (uiState.creditCardOverview.hasData) 2 else 1
-                val pagerState = rememberPagerState(pageCount = { pageCount })
-
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -149,9 +152,11 @@ private fun TransactionsContent(
                             }
 
                             1 -> {
-                                CreditCardSummaryCard(
+                                CreditCardTotalSummaryCard(
                                     overview = uiState.creditCardOverview,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isExpanded = invoicesExpanded,
+                                    onExpandClick = { invoicesExpanded = !invoicesExpanded }
                                 )
                             }
                         }
@@ -166,6 +171,18 @@ private fun TransactionsContent(
                 }
             }
 
+            if (invoicesExpanded) {
+                items(uiState.creditCardOverview.invoices) { invoiceOverview ->
+                    InvoiceSummaryCard(
+                        overview = invoiceOverview,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .animateItem()
+                    )
+                }
+            }
+
             item {
                 FiltersRow(
                     uiState = uiState,
@@ -173,6 +190,7 @@ private fun TransactionsContent(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
+                        .animateItem()
                 )
             }
 
@@ -189,7 +207,10 @@ private fun TransactionsContent(
                     )
                 }
 
-                items(items = transactions, key = { it.id }) { transaction ->
+                items(
+                    items = transactions,
+                    key = { it.id }
+                ) { transaction ->
                     TransactionCard(
                         transaction = transaction,
                         category = transaction.category,
@@ -462,7 +483,8 @@ private fun PagerIndicator(
     ) {
         repeat(pageCount) { index ->
             Box(
-                modifier = Modifier.size(8.dp)
+                modifier = Modifier
+                    .size(8.dp)
                     .clip(CircleShape)
                     .background(
                         if (pagerState.currentPage == index) {

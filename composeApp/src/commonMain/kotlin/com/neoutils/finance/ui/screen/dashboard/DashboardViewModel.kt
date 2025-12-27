@@ -10,7 +10,6 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
-import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.flow.SharingStarted

@@ -7,10 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
+import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase
+import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase.CreditCardOverviewResult
+import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase.InvoiceOverviewStats
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.extension.toYearMonth
+import com.neoutils.finance.ui.screen.transactions.TransactionsUiState.CreditCardOverview
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +32,10 @@ class TransactionsViewModel(
     private val target: Transaction.Target?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val invoiceRepository: IInvoiceRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase
+    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
+    private val calculateInvoiceOverviewsUseCase: CalculateInvoiceOverviewsUseCase
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -44,10 +51,17 @@ class TransactionsViewModel(
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
         categoryRepository.observeAllCategories(),
+        invoiceRepository.observeAllInvoices(),
         selectedYearMonth,
         filters
-    ) { transactions, categories, yearMonth, filters ->
+    ) { transactions, categories, invoices, yearMonth, filters ->
         val stats = calculateTransactionStatsUseCase(
+            transactions = transactions,
+            forYearMonth = yearMonth,
+        )
+
+        val invoiceOverviewStats = calculateInvoiceOverviewsUseCase(
+            invoices = invoices,
             transactions = transactions,
             forYearMonth = yearMonth,
         )
@@ -61,9 +75,10 @@ class TransactionsViewModel(
                 .groupBy { it.date },
             balanceOverview = TransactionsUiState.BalanceOverview(
                 income = stats.income,
-                accountExpense = stats.accountExpense,
-                accountAdjustment = stats.accountAdjustment,
+                expense = stats.expense,
+                adjustment = stats.adjustment,
                 invoicePayment = stats.invoicePayment,
+                advancePayment = stats.advancePayment,
                 initialBalance = calculateBalanceUseCase(
                     target = yearMonth.minusMonth(),
                     transactions = transactions,
@@ -73,16 +88,7 @@ class TransactionsViewModel(
                     transactions = transactions,
                 )
             ),
-            creditCardOverview = TransactionsUiState.CreditCardOverview(
-                expense = stats.creditCardExpense,
-                invoicePayment = stats.invoicePayment,
-                advancePayment = stats.advancePayment,
-                adjustment = stats.creditCardAdjustment,
-                finalBalance = stats.creditCardExpense +
-                    stats.invoicePayment +
-                    stats.advancePayment +
-                    stats.creditCardAdjustment
-            ),
+            creditCardOverview = invoiceOverviewStats.toUiModel(),
             selectedYearMonth = yearMonth,
             categories = categories,
             selectedCategory = filters.category,
@@ -147,3 +153,18 @@ private fun List<Transaction>.filter(target: Transaction.Target?): List<Transact
         }
     }
 }
+
+private fun InvoiceOverviewStats.toUiModel() = CreditCardOverview(
+    expense = creditCardOverview.expense,
+    advancePayment = creditCardOverview.advancePayment,
+    total = creditCardOverview.total,
+    invoices = invoiceOverviews.map {
+        TransactionsUiState.InvoiceOverview(
+            creditCardName = it.creditCardName,
+            invoiceStatus = it.invoiceStatus,
+            expense = it.expense,
+            advancePayment = it.advancePayment,
+            total = it.total,
+        )
+    }
+)

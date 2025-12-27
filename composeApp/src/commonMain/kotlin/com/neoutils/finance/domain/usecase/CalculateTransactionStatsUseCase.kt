@@ -10,31 +10,32 @@ class CalculateTransactionStatsUseCase {
         forYearMonth: YearMonth,
     ): TransactionStats {
         val monthTransactions = transactions.filter { it.date.yearMonth == forYearMonth }
-        val expense = monthTransactions.filter { it.type.isExpense }
-        val adjustment = monthTransactions.filter { it.type.isAdjustment }
+
+        val accountTransactions = monthTransactions.filter { it.target.isAccount }
+
+        val expense = accountTransactions.filter { it.type.isExpense }
+        val adjustment = accountTransactions.filter { it.type.isAdjustment }
+        val income = accountTransactions.filter { it.type.isIncome }
+
+        val invoicePayment = accountTransactions.filter { it.type.isInvoicePayment }
+        val advancePayment = accountTransactions.filter { it.type.isAdvancePayment }
 
         return TransactionStats(
-            income = monthTransactions.filter { it.type.isIncome }.sumOf { it.amount },
-            accountExpense = expense.filter { it.target.isAccount }.sumOf { it.amount },
-            creditCardExpense = expense.filter { it.target.isCreditCard }.sumOf { it.amount },
-            accountAdjustment = adjustment.filter { it.target.isAccount }.sumOf { it.amount },
-            creditCardAdjustment = adjustment.filter { it.target.isCreditCard }.sumOf { it.amount },
-            invoicePayment = monthTransactions.filter { it.type.isInvoicePayment }.sumOf { it.amount },
-            advancePayment = monthTransactions.filter { it.type.isAdvancePayment }.sumOf { it.amount },
+            income = income.sumOf { it.amount },
+            expense = expense.sumOf { it.amount },
+            adjustment = adjustment.sumOf { it.amount },
+            invoicePayment = invoicePayment.sumOf { it.amount },
+            advancePayment = advancePayment.sumOf { it.amount },
             transactions = monthTransactions,
         )
     }
 
     data class TransactionStats(
         val income: Double,
-        val accountExpense: Double,
-        val creditCardExpense: Double,
-        val accountAdjustment: Double,
-        val creditCardAdjustment: Double,
+        val expense: Double,
+        val adjustment: Double,
         val invoicePayment: Double,
         val advancePayment: Double,
         val transactions: List<Transaction>
-    ) {
-        val expense = accountExpense + creditCardExpense
-    }
+    )
 }

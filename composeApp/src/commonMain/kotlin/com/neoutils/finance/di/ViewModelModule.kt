@@ -79,8 +79,10 @@ val viewModelModule = module {
             target = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
+            invoiceRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
+            calculateInvoiceOverviewsUseCase = get(),
         )
     }
 

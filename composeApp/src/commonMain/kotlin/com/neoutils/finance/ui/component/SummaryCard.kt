@@ -76,7 +76,7 @@ fun SummaryCard(
 
                     SummaryRow(
                         label = "Saídas",
-                        amount = balanceOverview.accountExpense,
+                        amount = balanceOverview.expense,
                         color = Expense,
                         signDisplay = SignDisplay.ALWAYS_NEGATIVE
                     )
@@ -89,10 +89,18 @@ fun SummaryCard(
                         )
                     }
 
+                    if (balanceOverview.mustShowAdvancePayment) {
+                        SummaryRow(
+                            label = "Adiantamentos",
+                            amount = balanceOverview.advancePayment,
+                            color = InvoicePayment,
+                        )
+                    }
+
                     if (balanceOverview.mustShowAccountAdjustment) {
                         SummaryRow(
                             label = "Ajustes",
-                            amount = balanceOverview.accountAdjustment,
+                            amount = balanceOverview.adjustment,
                             color = Adjustment,
                             signDisplay = SignDisplay.SHOW_ALWAYS
                         )

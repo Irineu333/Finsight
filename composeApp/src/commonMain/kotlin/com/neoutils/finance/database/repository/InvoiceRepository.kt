@@ -8,11 +8,7 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.datetime.YearMonth
 
 class InvoiceRepository(
@@ -131,6 +127,22 @@ class InvoiceRepository(
                     mapper.toDomain(
                         entity = entity,
                         creditCard = creditCard
+                    )
+                }
+            }
+        }
+    }
+
+    override fun observeLatestInvoices(): Flow<List<Invoice>> {
+        return combine(
+            dao.observeLatestInvoices(),
+            creditCardsFlow,
+        ) { entities, creditCards ->
+            entities.mapNotNull { entity ->
+                creditCards[entity.creditCardId]?.let { creditCard ->
+                    mapper.toDomain(
+                        entity = entity,
+                        creditCard = creditCard,
                     )
                 }
             }

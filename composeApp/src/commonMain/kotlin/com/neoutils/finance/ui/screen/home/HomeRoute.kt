@@ -24,4 +24,7 @@ sealed class AppRoute {
 
     @Serializable
     data object CreditCards : AppRoute()
+
+    @Serializable
+    data class InvoiceTransactions(val creditCardId: Long) : AppRoute()
 }

@@ -200,7 +200,8 @@ class TransactionRepository(
         type: Transaction.Type?,
         target: Transaction.Target?,
         date: LocalDate?,
-        invoiceId: Long?
+        invoiceId: Long?,
+        creditCardId: Long?,
     ): Flow<List<Transaction>> {
         return combine(
             dao.observeTransactionsBy(
@@ -208,6 +209,7 @@ class TransactionRepository(
                 target = target?.let { mapper.toEntity(it) },
                 date = date,
                 invoiceId = invoiceId,
+                creditCardId = creditCardId,
             ),
             categoriesFlow,
             creditCardsFlow,

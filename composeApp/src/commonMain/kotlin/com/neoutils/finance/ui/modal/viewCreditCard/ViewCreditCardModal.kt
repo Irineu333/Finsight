@@ -23,7 +23,9 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.LocalNavigator
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.component.NavigationAction
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
@@ -51,6 +53,7 @@ class ViewCreditCardModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val modalManager = LocalModalManager.current
+        val navigator = LocalNavigator.current
 
         val viewModel = koinViewModel<ViewCreditCardViewModel>(key = key) {
             parametersOf(creditCard)
@@ -215,44 +218,16 @@ class ViewCreditCardModal(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
 
-            uiState.invoiceUi?.let { ui ->
-                val currentMonth = Clock.System.now().toYearMonth()
-                val isInClosingMonth = currentMonth >= ui.closingMonth
 
-                when (ui.status) {
-                    Invoice.Status.OPEN -> {
-                        if (isInClosingMonth) {
-                            OutlinedButton(
-                                onClick = { modalManager.show(CloseInvoiceModal(ui.invoice)) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFFFFA726)
-                                ),
-                                border = BorderStroke(
-                                    1.dp,
-                                    Color(0xFFFFA726).copy(alpha = 0.5f)
-                                ),
-                                contentPadding = PaddingValues(12.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    text = "Fechar Fatura",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
+                uiState.invoiceUi?.let { ui ->
+                    if (ui.status.isOpen) {
                         OutlinedButton(
                             onClick = {
                                 modalManager.show(
@@ -287,7 +262,60 @@ class ViewCreditCardModal(
                         }
                     }
 
-                    Invoice.Status.CLOSED -> {
+                    if (ui.isClosable) {
+                        OutlinedButton(
+                            onClick = { modalManager.show(CloseInvoiceModal(ui.invoice)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFFFA726)
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                Color(0xFFFFA726).copy(alpha = 0.5f)
+                            ),
+                            contentPadding = PaddingValues(12.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                text = "Fechar Fatura",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (ui.status.isClosed) {
+                        OutlinedButton(
+                            onClick = { modalManager.show(ReopenInvoiceModal(ui.id)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFFFA726)
+                            ),
+                            border = BorderStroke(1.dp, Color(0xFFFFA726).copy(alpha = 0.5f)),
+                            contentPadding = PaddingValues(12.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                text = "Reabrir Fatura",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (ui.status.isClosed) {
                         Button(
                             onClick = {
                                 modalManager.show(
@@ -313,57 +341,61 @@ class ViewCreditCardModal(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedButton(
-                            onClick = { modalManager.show(ReopenInvoiceModal(ui.id)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFFFA726)
-                            ),
-                            border = BorderStroke(1.dp, Color(0xFFFFA726).copy(alpha = 0.5f)),
-                            contentPadding = PaddingValues(12.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Reabrir Fatura",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
 
-                    Invoice.Status.PAID -> Unit
-                }
-            } ?: run {
-                Button(
-                    onClick = {
-                        modalManager.show(
-                            OpenInvoiceModal(uiState.creditCard)
+                    OutlinedButton(
+                        onClick = {
+                            modalManager.dismissAll()
+                            navigator.navigate(
+                                NavigationAction.InvoiceTransactions(uiState.creditCard.id)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorScheme.primary
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            colorScheme.primary.copy(alpha = 0.5f)
+                        ),
+                        contentPadding = PaddingValues(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Receipt,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CreditCard,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "Abrir Fatura",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Ver Faturas",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } ?: run {
+                    Button(
+                        onClick = {
+                            modalManager.show(
+                                OpenInvoiceModal(uiState.creditCard)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreditCard,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Abrir Fatura",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

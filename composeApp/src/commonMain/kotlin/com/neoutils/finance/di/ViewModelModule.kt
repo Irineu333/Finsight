@@ -256,4 +256,14 @@ val viewModelModule = module {
             modalManager = get()
         )
     }
+
+    viewModel {
+        com.neoutils.finance.ui.screen.invoiceTransactions.InvoiceTransactionsViewModel(
+            creditCardId = it.get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            transactionRepository = get(),
+            categoryRepository = get(),
+        )
+    }
 }

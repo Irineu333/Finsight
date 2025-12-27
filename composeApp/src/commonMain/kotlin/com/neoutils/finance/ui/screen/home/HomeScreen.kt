@@ -31,10 +31,17 @@ import kotlin.reflect.typeOf
 @Composable
 fun AppNavHost() = Surface {
 
-    ModalManagerHost {
+    val navController = rememberNavController()
 
-        val navController = rememberNavController()
-
+    ModalManagerHost(
+        onNavigate = { action ->
+            when (action) {
+                is com.neoutils.finance.ui.component.NavigationAction.InvoiceTransactions -> {
+                    navController.navigate(AppRoute.InvoiceTransactions(action.creditCardId))
+                }
+            }
+        }
+    ) {
         NavHost(
             navController = navController,
             startDestination = AppRoute.Home,
@@ -60,6 +67,16 @@ fun AppNavHost() = Surface {
 
             composable<AppRoute.CreditCards> {
                 CreditCardsScreen(
+                    onNavigateBack = {
+                        navController.navigateUp()
+                    }
+                )
+            }
+
+            composable<AppRoute.InvoiceTransactions> { backStackEntry ->
+                val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
+                com.neoutils.finance.ui.screen.invoiceTransactions.InvoiceTransactionsScreen(
+                    creditCardId = route.creditCardId,
                     onNavigateBack = {
                         navController.navigateUp()
                     }

@@ -23,7 +23,7 @@ class CreditCardsViewModel(
 ) : ViewModel() {
 
     private val invoicesFlow = invoiceRepository
-        .observeAllInvoices() // TODO: improve this
+        .observeLatestInvoices()
         .map { invoices ->
             invoices.associateBy { it.creditCard.id }
         }

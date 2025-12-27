@@ -11,6 +11,7 @@ interface IInvoiceRepository {
     fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?>
     fun observeLatestUnpaidInvoice(creditCardId: Long): Flow<Invoice?>
     fun observeLatestInvoice(creditCardId: Long): Flow<Invoice?>
+    fun observeLatestInvoices(): Flow<List<Invoice>>
     suspend fun getAllInvoices(): List<Invoice>
     suspend fun getAllInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getOpenInvoice(creditCardId: Long): Invoice?

@@ -36,6 +36,9 @@ data class Invoice(
 
         val isOpen: Boolean
             get() = this == OPEN
+
+        val isClosed: Boolean
+            get() = this == CLOSED
     }
 
     init {

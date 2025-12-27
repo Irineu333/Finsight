@@ -60,6 +60,7 @@ interface TransactionDao {
           AND (:target IS NULL OR target = :target)
           AND (:date IS NULL OR date = :date)
           AND (:invoiceId IS NULL OR invoiceId = :invoiceId)
+          AND (:creditCardId IS NULL OR creditCardId = :creditCardId)
         ORDER BY date DESC, id DESC
     """)
     fun observeTransactionsBy(
@@ -67,6 +68,7 @@ interface TransactionDao {
         target: TransactionEntity.Target?,
         date: LocalDate?,
         invoiceId: Long?,
+        creditCardId: Long?
     ): Flow<List<TransactionEntity>>
 
     @Query("DELETE FROM transactions")

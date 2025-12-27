@@ -33,7 +33,7 @@ class DashboardViewModel(
     private val currentMonth get() = instant.toYearMonth()
 
     private val invoicesFlow = invoiceRepository
-        .observeAllInvoices() // TODO: improve this
+        .observeLatestInvoices()
         .map { invoices ->
             invoices.associateBy { it.creditCard.id }
         }

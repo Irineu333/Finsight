@@ -41,6 +41,15 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId ORDER BY openingMonth DESC LIMIT 1")
     fun observeLatestInvoice(creditCardId: Long): Flow<InvoiceEntity?>
 
+    @Query("""
+        SELECT * FROM invoices i1 
+        WHERE openingMonth = (
+            SELECT MAX(openingMonth) FROM invoices i2 WHERE i2.creditCardId = i1.creditCardId
+        )
+        ORDER BY openingMonth DESC
+    """)
+    fun observeLatestInvoices(): Flow<List<InvoiceEntity>>
+
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND :month >= openingMonth AND :month <= closingMonth LIMIT 1")
     suspend fun getInvoiceForMonth(creditCardId: Long, month: YearMonth): InvoiceEntity?
 

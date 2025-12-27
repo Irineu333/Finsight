@@ -1,5 +1,6 @@
 package com.neoutils.finance.domain.repository
 
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
@@ -27,6 +28,7 @@ interface ITransactionRepository {
         target: Transaction.Target? = null,
         date: LocalDate? = null,
         invoiceId: Long? = null,
+        creditCardId: Long? = null,
     ): Flow<List<Transaction>>
 
     suspend fun deleteAll()

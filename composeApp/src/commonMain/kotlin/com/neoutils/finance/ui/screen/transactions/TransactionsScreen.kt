@@ -2,21 +2,14 @@
     FormatStringsInDatetimeFormats::class,
     ExperimentalTime::class,
     ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class
 )
 
 package com.neoutils.finance.ui.screen.transactions
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
@@ -24,15 +17,12 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.component.InvoiceSummaryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
@@ -45,7 +35,6 @@ import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 import com.neoutils.finance.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finance.util.DateFormats
-import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -76,12 +65,6 @@ private fun TransactionsContent(
 ) {
     val modalManager = LocalModalManager.current
 
-    val pagerState = rememberPagerState(
-        pageCount = {
-            1 + uiState.creditCardOverview.invoices.size
-        }
-    )
-
     Scaffold(
         topBar = {
             MonthSelector(
@@ -103,97 +86,43 @@ private fun TransactionsContent(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 8.dp
-                    ) { page ->
-                        val coroutineScope = rememberCoroutineScope()
-
-                        when (page) {
-                            0 -> {
-                                SummaryCard(
-                                    balanceOverview = uiState.balanceOverview,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    isCurrentMonth = uiState.isCurrentMonth,
-                                    onEditBalance = {
-                                        modalManager.show(
-                                            EditBalanceModal(
-                                                currentBalance = uiState.balanceOverview.finalBalance,
-                                                type = if (uiState.isCurrentMonth) {
-                                                    EditBalanceModal.Type.CURRENT
-                                                } else {
-                                                    EditBalanceModal.Type.FINAL
-                                                },
-                                                targetMonth = uiState
-                                                    .selectedYearMonth
-                                                    .takeUnless {
-                                                        uiState.isCurrentMonth
-                                                    },
-                                            )
-                                        )
-                                    }.takeUnless { uiState.isFutureMonth },
-                                    onEditInitialBalance = {
-                                        modalManager.show(
-                                            EditBalanceModal(
-                                                currentBalance = uiState.balanceOverview.initialBalance,
-                                                type = EditBalanceModal.Type.INITIAL,
-                                                targetMonth = uiState
-                                                    .selectedYearMonth
-                                                    .takeUnless {
-                                                        uiState.isCurrentMonth
-                                                    },
-                                            )
-                                        )
-                                    }.takeUnless { uiState.isFutureMonth },
-                                    onInvoiceClick = {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(1)
-                                        }
-                                        Unit
-                                    }.takeUnless {
-                                        uiState.creditCardOverview.invoices.isEmpty()
+                SummaryCard(
+                    balanceOverview = uiState.balanceOverview,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth(),
+                    isCurrentMonth = uiState.isCurrentMonth,
+                    onEditBalance = {
+                        modalManager.show(
+                            EditBalanceModal(
+                                currentBalance = uiState.balanceOverview.finalBalance,
+                                type = if (uiState.isCurrentMonth) {
+                                    EditBalanceModal.Type.CURRENT
+                                } else {
+                                    EditBalanceModal.Type.FINAL
+                                },
+                                targetMonth = uiState
+                                    .selectedYearMonth
+                                    .takeUnless {
+                                        uiState.isCurrentMonth
                                     },
-                                )
-                            }
-
-                            else -> {
-                                val invoiceIndex = page - 1
-                                if (invoiceIndex in uiState.creditCardOverview.invoices.indices) {
-                                    val invoiceOverview = uiState.creditCardOverview.invoices[invoiceIndex]
-                                    InvoiceSummaryCard(
-                                        overview = invoiceOverview,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onEditClick = {
-                                            modalManager.show(
-                                                EditBalanceModal(
-                                                    currentBalance = invoiceOverview.total,
-                                                    type = EditBalanceModal.Type.CREDIT_CARD,
-                                                    invoiceId = invoiceOverview.invoiceId,
-                                                )
-                                            )
-                                        }.takeIf {
-                                            invoiceOverview.invoiceStatus != Invoice.Status.PAID
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    if (pagerState.pageCount > 1) {
-                        PagerIndicator(
-                            pagerState = pagerState,
-                            pageCount = pagerState.pageCount,
+                            )
                         )
-                    }
-                }
+                    }.takeUnless { uiState.isFutureMonth },
+                    onEditInitialBalance = {
+                        modalManager.show(
+                            EditBalanceModal(
+                                currentBalance = uiState.balanceOverview.initialBalance,
+                                type = EditBalanceModal.Type.INITIAL,
+                                targetMonth = uiState
+                                    .selectedYearMonth
+                                    .takeUnless {
+                                        uiState.isCurrentMonth
+                                    },
+                            )
+                        )
+                    }.takeUnless { uiState.isFutureMonth },
+                )
             }
 
             item {
@@ -480,33 +409,5 @@ private fun TargetFilterChip(
                 expanded = false
             }
         )
-    }
-}
-
-@Composable
-private fun PagerIndicator(
-    pagerState: PagerState,
-    pageCount: Int,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(pageCount) { index ->
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (pagerState.currentPage == index) {
-                            colorScheme.primary
-                        } else {
-                            colorScheme.onSurface.copy(alpha = 0.3f)
-                        }
-                    )
-            )
-        }
     }
 }

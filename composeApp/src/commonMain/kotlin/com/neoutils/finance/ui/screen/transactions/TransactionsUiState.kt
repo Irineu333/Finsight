@@ -48,15 +48,18 @@ data class TransactionsUiState(
         val total: Double = 0.0,
         val invoices: List<InvoiceOverview> = emptyList(),
     ) {
-        val hasData = expense != 0.0 || advancePayment != 0.0
         val mustShowAdvancePayment = advancePayment != 0.0
     }
 
     data class InvoiceOverview(
+        val invoiceId: Long,
         val creditCardName: String,
         val invoiceStatus: Invoice.Status,
         val expense: Double,
         val advancePayment: Double,
+        val adjustment: Double,
         val total: Double
-    )
+    ) {
+        val mustShowAdjustment = adjustment != 0.0
+    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -34,7 +35,8 @@ fun SummaryCard(
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
     onEditBalance: (() -> Unit)? = null,
-    onEditInitialBalance: (() -> Unit)? = null
+    onEditInitialBalance: (() -> Unit)? = null,
+    onInvoiceClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -86,6 +88,7 @@ fun SummaryCard(
                             label = "Faturas",
                             amount = balanceOverview.invoicePayment,
                             color = InvoicePayment,
+                            onNavigateClick = onInvoiceClick,
                         )
                     }
 
@@ -129,6 +132,7 @@ private fun SummaryRow(
     color: Color,
     modifier: Modifier = Modifier,
     onEditClick: (() -> Unit)? = null,
+    onNavigateClick: (() -> Unit)? = null,
     config: SummaryRowConfig = SummaryRowConfig.Default,
     signDisplay: SignDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
 ) {
@@ -137,11 +141,32 @@ private fun SummaryRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.then(
+                if (onNavigateClick != null) {
+                    Modifier.clickable { onNavigateClick() }
+                } else {
+                    Modifier
+                }
+            )
+        ) {
+            Text(
+                text = label,
+                style = config.labelStyle
+            )
 
-        Text(
-            text = label,
-            style = config.labelStyle
-        )
+            if (onNavigateClick != null) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = "Ver faturas",
+                    tint = config.labelStyle.color.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),

@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.component.CreditCardTotalSummaryCard
 import com.neoutils.finance.ui.component.InvoiceSummaryCard
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.MonthSelector
@@ -45,6 +45,7 @@ import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 import com.neoutils.finance.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finance.util.DateFormats
+import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -75,10 +76,11 @@ private fun TransactionsContent(
 ) {
     val modalManager = LocalModalManager.current
 
-    val pageCount = if (uiState.creditCardOverview.hasData) 2 else 1
-    val pagerState = rememberPagerState(pageCount = { pageCount })
-
-    var invoicesExpanded by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(
+        pageCount = {
+            1 + uiState.creditCardOverview.invoices.size
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -112,6 +114,8 @@ private fun TransactionsContent(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         pageSpacing = 8.dp
                     ) { page ->
+                        val coroutineScope = rememberCoroutineScope()
+
                         when (page) {
                             0 -> {
                                 SummaryCard(
@@ -148,38 +152,47 @@ private fun TransactionsContent(
                                             )
                                         )
                                     }.takeUnless { uiState.isFutureMonth },
+                                    onInvoiceClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(1)
+                                        }
+                                        Unit
+                                    }.takeUnless {
+                                        uiState.creditCardOverview.invoices.isEmpty()
+                                    },
                                 )
                             }
 
-                            1 -> {
-                                CreditCardTotalSummaryCard(
-                                    overview = uiState.creditCardOverview,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    isExpanded = invoicesExpanded,
-                                    onExpandClick = { invoicesExpanded = !invoicesExpanded }
-                                )
+                            else -> {
+                                val invoiceIndex = page - 1
+                                if (invoiceIndex in uiState.creditCardOverview.invoices.indices) {
+                                    val invoiceOverview = uiState.creditCardOverview.invoices[invoiceIndex]
+                                    InvoiceSummaryCard(
+                                        overview = invoiceOverview,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onEditClick = {
+                                            modalManager.show(
+                                                EditBalanceModal(
+                                                    currentBalance = invoiceOverview.total,
+                                                    type = EditBalanceModal.Type.CREDIT_CARD,
+                                                    invoiceId = invoiceOverview.invoiceId,
+                                                )
+                                            )
+                                        }.takeIf {
+                                            invoiceOverview.invoiceStatus != Invoice.Status.PAID
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
 
-                    if (pageCount > 1) {
+                    if (pagerState.pageCount > 1) {
                         PagerIndicator(
                             pagerState = pagerState,
-                            pageCount = pageCount
+                            pageCount = pagerState.pageCount,
                         )
                     }
-                }
-            }
-
-            if (invoicesExpanded) {
-                items(uiState.creditCardOverview.invoices) { invoiceOverview ->
-                    InvoiceSummaryCard(
-                        overview = invoiceOverview,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .animateItem()
-                    )
                 }
             }
 

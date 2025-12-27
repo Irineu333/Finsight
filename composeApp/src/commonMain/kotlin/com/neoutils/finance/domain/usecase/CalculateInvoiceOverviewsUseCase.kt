@@ -21,19 +21,25 @@ class CalculateInvoiceOverviewsUseCase {
                 val advancePayment = invoiceTransactions
                     .filter { it.type.isAdvancePayment }
                     .sumOf { it.amount }
+                val adjustment = invoiceTransactions
+                    .filter { it.type.isAdjustment }
+                    .sumOf { it.amount }
 
                 InvoiceOverviewResult(
+                    invoiceId = invoice.id,
                     creditCardName = invoice.creditCard.name,
                     invoiceStatus = invoice.status,
                     expense = expense,
                     advancePayment = advancePayment,
-                    total = expense + advancePayment
+                    adjustment = adjustment,
+                    total = expense + advancePayment + adjustment
                 )
             }
 
         val creditCardOverview = CreditCardOverviewResult(
             expense = invoiceOverviews.sumOf { it.expense },
             advancePayment = invoiceOverviews.sumOf { it.advancePayment },
+            adjustment = invoiceOverviews.sumOf { it.adjustment },
             total = invoiceOverviews.sumOf { it.total }
         )
 
@@ -49,19 +55,23 @@ class CalculateInvoiceOverviewsUseCase {
     )
 
     data class InvoiceOverviewResult(
+        val invoiceId: Long,
         val creditCardName: String,
         val invoiceStatus: Invoice.Status,
         val expense: Double,
         val advancePayment: Double,
+        val adjustment: Double,
         val total: Double
     )
 
     data class CreditCardOverviewResult(
         val expense: Double,
         val advancePayment: Double,
+        val adjustment: Double,
         val total: Double
     ) {
-        val hasData = expense != 0.0 || advancePayment != 0.0
+        val hasData = expense != 0.0 || advancePayment != 0.0 || adjustment != 0.0
         val mustShowAdvancePayment = advancePayment != 0.0
+        val mustShowAdjustment = adjustment != 0.0
     }
 }

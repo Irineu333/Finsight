@@ -4,19 +4,24 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.screen.transactions.TransactionsUiState
+import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.TextLight1
@@ -25,7 +30,8 @@ import kotlin.math.absoluteValue
 @Composable
 fun InvoiceSummaryCard(
     overview: TransactionsUiState.InvoiceOverview,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEditClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -84,12 +90,19 @@ fun InvoiceSummaryCard(
                         signDisplay = InvoiceSignDisplay.ALWAYS_NEGATIVE
                     )
 
-                    if (currentOverview.advancePayment != 0.0) {
+                    InvoiceSummaryRow(
+                        label = "Adiantamentos",
+                        amount = currentOverview.advancePayment,
+                        color = InvoicePayment,
+                        signDisplay = InvoiceSignDisplay.ALWAYS_POSITIVE
+                    )
+
+                    if (currentOverview.mustShowAdjustment) {
                         InvoiceSummaryRow(
-                            label = "Adiantamentos",
-                            amount = currentOverview.advancePayment,
-                            color = InvoicePayment,
-                            signDisplay = InvoiceSignDisplay.ALWAYS_POSITIVE
+                            label = "Ajustes",
+                            amount = currentOverview.adjustment,
+                            color = Adjustment,
+                            signDisplay = InvoiceSignDisplay.SHOW_ALWAYS
                         )
                     }
 
@@ -100,7 +113,8 @@ fun InvoiceSummaryCard(
                         amount = currentOverview.total,
                         color = colorScheme.onSurface,
                         signDisplay = InvoiceSignDisplay.SHOW_ONLY_NEGATIVE,
-                        isTotal = true
+                        isTotal = true,
+                        onEditClick = onEditClick
                     )
                 }
             }
@@ -115,7 +129,8 @@ private fun InvoiceSummaryRow(
     color: Color,
     modifier: Modifier = Modifier,
     signDisplay: InvoiceSignDisplay = InvoiceSignDisplay.SHOW_ONLY_NEGATIVE,
-    isTotal: Boolean = false
+    isTotal: Boolean = false,
+    onEditClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -151,12 +166,35 @@ private fun InvoiceSummaryRow(
             }
         }
 
-        Text(
-            text = formattedAmount,
-            fontSize = if (isTotal) 20.sp else 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .then(
+                    if (onEditClick != null) {
+                        Modifier.clickable { onEditClick() }
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            if (onEditClick != null) {
+                Icon(
+                    imageVector = Icons.Rounded.ModeEdit,
+                    contentDescription = "Editar fatura",
+                    tint = color.copy(alpha = 0.5f),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Text(
+                text = formattedAmount,
+                fontSize = if (isTotal) 20.sp else 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
     }
 }
 

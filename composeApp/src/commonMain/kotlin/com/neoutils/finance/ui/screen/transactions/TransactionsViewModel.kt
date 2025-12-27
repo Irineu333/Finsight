@@ -160,10 +160,12 @@ private fun InvoiceOverviewStats.toUiModel() = CreditCardOverview(
     total = creditCardOverview.total,
     invoices = invoiceOverviews.map {
         TransactionsUiState.InvoiceOverview(
+            invoiceId = it.invoiceId,
             creditCardName = it.creditCardName,
             invoiceStatus = it.invoiceStatus,
             expense = it.expense,
             advancePayment = it.advancePayment,
+            adjustment = it.adjustment,
             total = it.total,
         )
     }

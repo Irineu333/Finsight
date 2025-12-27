@@ -54,6 +54,21 @@ interface TransactionDao {
         invoiceId: Long?,
     ): List<TransactionEntity>
 
+    @Query("""
+        SELECT * FROM transactions
+        WHERE (:type IS NULL OR type = :type)
+          AND (:target IS NULL OR target = :target)
+          AND (:date IS NULL OR date = :date)
+          AND (:invoiceId IS NULL OR invoiceId = :invoiceId)
+        ORDER BY date DESC, id DESC
+    """)
+    fun observeTransactionsBy(
+        type: TransactionEntity.Type?,
+        target: TransactionEntity.Target?,
+        date: LocalDate?,
+        invoiceId: Long?,
+    ): Flow<List<TransactionEntity>>
+
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
 }

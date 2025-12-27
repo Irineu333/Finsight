@@ -92,7 +92,8 @@ val viewModelModule = module {
         CreditCardsViewModel(
             creditCardRepository = get(),
             invoiceRepository = get(),
-            invoiceUiMapper = get()
+            invoiceUiMapper = get(),
+            transactionRepository = get(),
         )
     }
 

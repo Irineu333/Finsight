@@ -14,6 +14,7 @@ import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -31,10 +32,17 @@ class DashboardViewModel(
     private val instant get() = Clock.System.now()
     private val currentMonth get() = instant.toYearMonth()
 
+    private val invoicesFlow = invoiceRepository
+        .observeAllInvoices() // TODO: improve this
+        .map { invoices ->
+            invoices.associateBy { it.creditCard.id }
+        }
+
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
         creditCardRepository.observeAllCreditCards(),
-    ) { transactions, creditCards ->
+        invoicesFlow,
+    ) { transactions, creditCards, invoices ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -47,13 +55,14 @@ class DashboardViewModel(
         )
 
         val creditCardsWithBills = creditCards.map { creditCard ->
-            val invoice = invoiceRepository.getLatestUnpaidInvoice(creditCard.id)
+            val invoice = invoices[creditCard.id]
 
             CreditCardUi(
                 creditCard = creditCard,
                 invoiceUi = invoice?.let {
                     invoiceUiMapper.toUi(
                         invoice = it,
+                        transactions = transactions,
                     )
                 },
             )

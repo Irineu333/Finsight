@@ -32,11 +32,13 @@ class InvoiceRepository(
             dao.observeAllInvoices(),
             creditCardsFlow,
         ) { entities, creditCards ->
-            entities.map { entity ->
-                mapper.toDomain(
-                    entity = entity,
-                    creditCard = creditCards[entity.creditCardId]!!
-                )
+            entities.mapNotNull { entity ->
+                creditCards[entity.creditCardId]?.let { creditCard ->
+                    mapper.toDomain(
+                        entity = entity,
+                        creditCard = creditCard,
+                    )
+                }
             }
         }
     }

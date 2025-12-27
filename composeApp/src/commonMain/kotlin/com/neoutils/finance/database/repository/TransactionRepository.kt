@@ -196,6 +196,34 @@ class TransactionRepository(
         }
     }
 
+    override fun observeTransactionsBy(
+        type: Transaction.Type?,
+        target: Transaction.Target?,
+        date: LocalDate?,
+        invoiceId: Long?
+    ): Flow<List<Transaction>> {
+        return combine(
+            dao.observeTransactionsBy(
+                type = type?.let { mapper.toEntity(it) },
+                target = target?.let { mapper.toEntity(it) },
+                date = date,
+                invoiceId = invoiceId,
+            ),
+            categoriesFlow,
+            creditCardsFlow,
+            invoicesFlow,
+        ) { transactions, categories, creditCards, invoices ->
+            transactions.map { transaction ->
+                mapper.toDomain(
+                    entity = transaction,
+                    category = categories[transaction.categoryId],
+                    creditCard = creditCards[transaction.creditCardId],
+                    invoice = invoices[transaction.invoiceId],
+                )
+            }
+        }
+    }
+
     override suspend fun insert(transaction: Transaction): Long {
         return dao.insert(mapper.toEntity(transaction))
     }

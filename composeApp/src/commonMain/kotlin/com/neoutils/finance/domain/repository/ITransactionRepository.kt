@@ -22,5 +22,12 @@ interface ITransactionRepository {
         invoiceId: Long?,
     ): List<Transaction>
 
+    fun observeTransactionsBy(
+        type: Transaction.Type? = null,
+        target: Transaction.Target? = null,
+        date: LocalDate? = null,
+        invoiceId: Long? = null,
+    ): Flow<List<Transaction>>
+
     suspend fun deleteAll()
 }

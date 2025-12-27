@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.neoutils.finance.ui.modal.viewCreditCard
 
 import androidx.lifecycle.ViewModel
@@ -7,9 +9,12 @@ import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 class ViewCreditCardViewModel(
@@ -27,15 +32,28 @@ class ViewCreditCardViewModel(
     private val invoiceFlow = invoiceRepository
         .observeLatestUnpaidInvoice(creditCard.id)
 
+    private val transactionsFlow = invoiceFlow.flatMapMerge { invoice ->
+        if (invoice == null) {
+            return@flatMapMerge flowOf()
+        }
+
+        transactionRepository.observeTransactionsBy(
+            invoiceId = invoice.id
+        )
+    }
+
     val uiState = combine(
         creditCardFlow,
         invoiceFlow,
-        transactionRepository.observeAllTransactions() // TODO: improve this
-    ) { creditCard, invoice, _ ->
+        transactionsFlow,
+    ) { creditCard, invoice, transactions ->
         ViewCreditCardUiState(
             creditCard = creditCard,
             invoiceUi = invoice?.let {
-                invoiceUiMapper.toUi(it)
+                invoiceUiMapper.toUi(
+                    invoice = it,
+                    transactions = transactions,
+                )
             }
         )
     }.stateIn(

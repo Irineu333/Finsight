@@ -93,7 +93,7 @@ class InvoiceTransactionsViewModel(
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = expense + advancePayment + adjustment,
+                    total = invoiceTransactions.sumOf { it.creditAmount },
                     closingMonthLabel = formats.yearMonth.format(invoice.closingMonth),
                 )
             },

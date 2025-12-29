@@ -37,7 +37,7 @@ class AdvanceInvoicePaymentUseCase(
             category = null,
             title = null,
             type = Transaction.Type.ADVANCE_PAYMENT,
-            amount = -amount,
+            amount = amount,
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,

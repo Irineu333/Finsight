@@ -79,7 +79,6 @@ val useCaseModules = module {
     factory {
         PayInvoicePaymentUseCase(
             repository = get(),
-            creditCardRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),

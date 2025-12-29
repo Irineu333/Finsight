@@ -13,6 +13,24 @@ data class Transaction(
     val creditCard: CreditCard? = null,
     val invoice: Invoice? = null
 ) {
+    val accountAmount: Double
+        get() = when (type) {
+            Type.INCOME -> amount
+            Type.EXPENSE -> -amount
+            Type.ADJUSTMENT -> amount
+            Type.INVOICE_PAYMENT -> -amount
+            Type.ADVANCE_PAYMENT -> -amount
+        }
+
+    val creditAmount: Double
+        get() = when (type) {
+            Type.INCOME -> -amount
+            Type.EXPENSE -> amount
+            Type.ADJUSTMENT -> amount
+            Type.INVOICE_PAYMENT -> -amount
+            Type.ADVANCE_PAYMENT -> -amount
+        }
+
     enum class Type {
         EXPENSE,
         INCOME,

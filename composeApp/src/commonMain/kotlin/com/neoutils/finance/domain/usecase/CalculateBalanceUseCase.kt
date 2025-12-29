@@ -21,15 +21,7 @@ class CalculateBalanceUseCase(
         return transactions
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isAccount }
-            .sumOf { transaction ->
-                when (transaction.type) {
-                    Transaction.Type.INCOME -> transaction.amount
-                    Transaction.Type.EXPENSE -> -transaction.amount
-                    Transaction.Type.ADJUSTMENT -> transaction.amount
-                    Transaction.Type.INVOICE_PAYMENT,
-                    Transaction.Type.ADVANCE_PAYMENT -> transaction.amount
-                }
-            }
+            .sumOf { it.accountAmount }
     }
 
     suspend operator fun invoke(

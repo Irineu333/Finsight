@@ -12,7 +12,7 @@ class CalculateInvoiceUseCase(
     ): Double {
         return transactions.filter {
             it.invoice?.id == invoiceId
-        }.sumOf { it.amount }
+        }.sumOf { it.creditAmount }
     }
 
     suspend operator fun invoke(
@@ -23,6 +23,6 @@ class CalculateInvoiceUseCase(
             type = null,
             target = null,
             date = null,
-        ).sumOf { it.amount }
+        ).sumOf { it.creditAmount }
     }
 }

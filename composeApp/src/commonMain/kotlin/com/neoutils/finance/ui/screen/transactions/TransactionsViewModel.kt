@@ -88,7 +88,6 @@ class TransactionsViewModel(
                     transactions = transactions,
                 )
             ),
-            creditCardOverview = invoiceOverviewStats.toUiModel(),
             selectedYearMonth = yearMonth,
             categories = categories,
             selectedCategory = filters.category,
@@ -153,20 +152,3 @@ private fun List<Transaction>.filter(target: Transaction.Target?): List<Transact
         }
     }
 }
-
-private fun InvoiceOverviewStats.toUiModel() = CreditCardOverview(
-    expense = creditCardOverview.expense,
-    advancePayment = creditCardOverview.advancePayment,
-    total = creditCardOverview.total,
-    invoices = invoiceOverviews.map {
-        TransactionsUiState.InvoiceOverview(
-            invoiceId = it.invoiceId,
-            creditCardName = it.creditCardName,
-            invoiceStatus = it.invoiceStatus,
-            expense = it.expense,
-            advancePayment = it.advancePayment,
-            adjustment = it.adjustment,
-            total = it.total,
-        )
-    }
-)

@@ -17,7 +17,6 @@ private val currentMonth
 data class TransactionsUiState(
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
-    val creditCardOverview: CreditCardOverview = CreditCardOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),

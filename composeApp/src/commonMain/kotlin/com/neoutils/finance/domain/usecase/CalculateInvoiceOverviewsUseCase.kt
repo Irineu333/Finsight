@@ -32,7 +32,7 @@ class CalculateInvoiceOverviewsUseCase {
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = expense + advancePayment + adjustment
+                    total = invoiceTransactions.sumOf { it.creditAmount }
                 )
             }
 
@@ -69,9 +69,5 @@ class CalculateInvoiceOverviewsUseCase {
         val advancePayment: Double,
         val adjustment: Double,
         val total: Double
-    ) {
-        val hasData = expense != 0.0 || advancePayment != 0.0 || adjustment != 0.0
-        val mustShowAdvancePayment = advancePayment != 0.0
-        val mustShowAdjustment = adjustment != 0.0
-    }
+    )
 }

@@ -16,7 +16,6 @@ private val errors = PayInvoicePaymentErrors()
 
 class PayInvoicePaymentUseCase(
     private val repository: ITransactionRepository,
-    private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase
@@ -39,7 +38,7 @@ class PayInvoicePaymentUseCase(
             category = null,
             title = null,
             type = Transaction.Type.INVOICE_PAYMENT,
-            amount = -currentBillAmount,
+            amount = currentBillAmount,
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,

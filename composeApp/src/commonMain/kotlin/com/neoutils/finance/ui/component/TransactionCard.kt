@@ -148,11 +148,12 @@ fun TransactionCard(
 
         Text(
             text = when (transaction.type) {
-                Transaction.Type.INCOME -> transaction.amount.toMoneyFormat()
-                Transaction.Type.EXPENSE -> transaction.amount.toMoneyFormat()
-                Transaction.Type.ADJUSTMENT -> transaction.amount.toMoneyFormatWithSign()
-                Transaction.Type.INVOICE_PAYMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> transaction.amount.toMoneyFormatWithSign()
+                Transaction.Type.ADJUSTMENT -> {
+                    transaction.amount.toMoneyFormatWithSign()
+                }
+                else -> {
+                    transaction.amount.toMoneyFormat()
+                }
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,

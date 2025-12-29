@@ -89,6 +89,7 @@ fun SummaryCard(
                             amount = balanceOverview.invoicePayment,
                             color = InvoicePayment,
                             onNavigateClick = onInvoiceClick,
+                            signDisplay = SignDisplay.ALWAYS_NEGATIVE
                         )
                     }
 
@@ -97,6 +98,7 @@ fun SummaryCard(
                             label = "Adiantamentos",
                             amount = balanceOverview.advancePayment,
                             color = InvoicePayment,
+                            signDisplay = SignDisplay.ALWAYS_NEGATIVE
                         )
                     }
 

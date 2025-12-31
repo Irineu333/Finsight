@@ -1,7 +1,9 @@
 package com.neoutils.finance.database
 
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.CreditCardDao
@@ -13,14 +15,24 @@ import com.neoutils.finance.database.entity.InvoiceEntity
 import com.neoutils.finance.database.entity.TransactionEntity
 
 @Database(
-    entities = [TransactionEntity::class, CategoryEntity::class, CreditCardEntity::class, InvoiceEntity::class],
+    entities = [
+        TransactionEntity::class,
+        CategoryEntity::class,
+        CreditCardEntity::class,
+        InvoiceEntity::class
+    ],
     version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
+@ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao
     abstract fun creditCardDao(): CreditCardDao
     abstract fun invoiceDao(): InvoiceDao
 }
+
+// Room compiler generates the actual implementations
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase>

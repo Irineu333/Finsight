@@ -80,323 +80,323 @@ private fun DashboardContent(
     onOpenCreditCards: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager
-) =
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = formats.yearMonth.format(uiState.yearMonth))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colorScheme.background,
-                ),
-            )
-        },
-        contentWindowInsets = WindowInsets()
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(
-                top = 8.dp,
-                bottom = 16.dp,
+) = Scaffold(
+    topBar = {
+        TopAppBar(
+            title = {
+                Text(text = formats.yearMonth.format(uiState.yearMonth))
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = colorScheme.background,
             ),
-        ) {
-            item {
+            windowInsets = WindowInsets()
+        )
+    },
+    contentWindowInsets = WindowInsets(),
+) { paddingValues ->
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(
+            top = 8.dp,
+            bottom = 16.dp,
+        ),
+    ) {
+        item {
+            BalanceCard(
+                balance = uiState.balance.balance,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                onEditClick = openEditBalance,
+                onClick = null,
+            )
+        }
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 BalanceCard(
-                    balance = uiState.balance.balance,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    onEditClick = openEditBalance,
-                    onClick = null,
+                    balance = uiState.balance.income,
+                    modifier = Modifier.weight(1f),
+                    config = BalanceCardConfig.Income,
+                    onClick = { openTransactions(Transaction.Type.INCOME, null) }
+                )
+
+                BalanceCard(
+                    balance = uiState.balance.expense,
+                    modifier = Modifier.weight(1f),
+                    config = BalanceCardConfig.Expense,
+                    onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
                 )
             }
+        }
+
+        if (uiState.creditCards.isNotEmpty()) {
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    BalanceCard(
-                        balance = uiState.balance.income,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Income,
-                        onClick = { openTransactions(Transaction.Type.INCOME, null) }
-                    )
+                val pagerState = rememberPagerState(
+                    pageCount = { uiState.creditCards.size }
+                )
 
-                    BalanceCard(
-                        balance = uiState.balance.expense,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Expense,
-                        onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
-                    )
-                }
-            }
-
-            if (uiState.creditCards.isNotEmpty()) {
-
-                item {
-                    val pagerState = rememberPagerState(
-                        pageCount = { uiState.creditCards.size }
-                    )
-
-                    Column(Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Cartões de Crédito",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-
-                            TextButton(onClick = onOpenCreditCards) {
-                                Text(text = "Ver Todos")
-                            }
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            pageSpacing = 8.dp
-                        ) { page ->
-                            val creditCardUi = uiState.creditCards[page]
-
-                            val config = CreditCardUiConfig.from(creditCardUi = creditCardUi)
-
-                            DashboardCreditCardUi(
-                                ui = creditCardUi,
-                                config = config,
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    modalManager.show(
-                                        ViewCreditCardModal(
-                                            creditCard = creditCardUi.creditCard,
-                                        )
-                                    )
-                                },
-                                onCloseInvoice = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(CloseInvoiceModal(it.invoice))
-                                    }
-                                },
-                                onPayInvoice = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            PayInvoiceModal(
-                                                invoice = it.invoice,
-                                                currentBillAmount = it.amount
-                                            )
-                                        )
-                                    }
-                                },
-                                onAdvancePayment = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            AdvancePaymentModal(
-                                                invoice = it.invoice,
-                                                currentBillAmount = it.amount
-                                            )
-                                        )
-                                    }
-                                },
-                                onOpenInvoice = {
-                                    modalManager.show(
-                                        OpenInvoiceModal(
-                                            creditCardUi.creditCard
-                                        )
-                                    )
-                                },
-                                onEditAmount = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            EditBalanceModal(
-                                                type = EditBalanceModal.Type.CREDIT_CARD,
-                                                currentBalance = it.amount,
-                                                invoiceId = it.id
-                                            )
-                                        )
-                                    }
-                                },
-                                onEditLimit = {
-                                    modalManager.show(
-                                        EditCreditCardLimitModal(
-                                            creditCard = creditCardUi.creditCard
-                                        )
-                                    )
-                                }
-                            )
-                        }
-
-                        if (uiState.creditCards.size > 1) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .padding(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                repeat(uiState.creditCards.size) { index ->
-                                    val isSelected = pagerState.currentPage == index
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(horizontal = 4.dp)
-                                            .size(
-                                                if (isSelected) {
-                                                    8.dp
-                                                } else {
-                                                    6.dp
-                                                }
-                                            )
-                                            .background(
-                                                color = if (isSelected) {
-                                                    colorScheme.primary
-                                                } else {
-                                                    colorScheme.outline
-                                                },
-                                                shape = CircleShape
-                                            )
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (uiState.categorySpending.isNotEmpty()) {
-                item {
-                    CategorySpendingCard(
-                        categorySpending = uiState.categorySpending,
-                        modifier = Modifier
-                            .padding(top = 16.dp)
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        onCategoryClick = { category ->
-                            modalManager.show(ViewCategoryModal(category))
-                        }
-                    )
-                }
-            }
-
-            if (uiState.recents.isNotEmpty()) {
-                item {
+                Column(Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Recentes",
+                            text = "Cartões de Crédito",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                         )
 
-                        TextButton(
+                        TextButton(onClick = onOpenCreditCards) {
+                            Text(text = "Ver Todos")
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        pageSpacing = 8.dp
+                    ) { page ->
+                        val creditCardUi = uiState.creditCards[page]
+
+                        val config = CreditCardUiConfig.from(creditCardUi = creditCardUi)
+
+                        DashboardCreditCardUi(
+                            ui = creditCardUi,
+                            config = config,
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
-                                openTransactions(null, null)
+                                modalManager.show(
+                                    ViewCreditCardModal(
+                                        creditCard = creditCardUi.creditCard,
+                                    )
+                                )
+                            },
+                            onCloseInvoice = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(CloseInvoiceModal(it.invoice))
+                                }
+                            },
+                            onPayInvoice = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        PayInvoiceModal(
+                                            invoice = it.invoice,
+                                            currentBillAmount = it.amount
+                                        )
+                                    )
+                                }
+                            },
+                            onAdvancePayment = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        AdvancePaymentModal(
+                                            invoice = it.invoice,
+                                            currentBillAmount = it.amount
+                                        )
+                                    )
+                                }
+                            },
+                            onOpenInvoice = {
+                                modalManager.show(
+                                    OpenInvoiceModal(
+                                        creditCardUi.creditCard
+                                    )
+                                )
+                            },
+                            onEditAmount = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        EditBalanceModal(
+                                            type = EditBalanceModal.Type.CREDIT_CARD,
+                                            currentBalance = it.amount,
+                                            invoiceId = it.id
+                                        )
+                                    )
+                                }
+                            },
+                            onEditLimit = {
+                                modalManager.show(
+                                    EditCreditCardLimitModal(
+                                        creditCard = creditCardUi.creditCard
+                                    )
+                                )
                             }
+                        )
+                    }
+
+                    if (uiState.creditCards.size > 1) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Ver Tudo")
-                        }
-                    }
-                }
-            }
-
-            items(items = uiState.recents) { transaction ->
-                TransactionCard(
-                    transaction = transaction,
-                    category = transaction.category,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                        .animateItem(),
-                    onClick = {
-                        when (transaction.type) {
-                            Transaction.Type.ADJUSTMENT -> {
-                                modalManager.show(ViewAdjustmentModal(transaction))
+                            repeat(uiState.creditCards.size) { index ->
+                                val isSelected = pagerState.currentPage == index
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 4.dp)
+                                        .size(
+                                            if (isSelected) {
+                                                8.dp
+                                            } else {
+                                                6.dp
+                                            }
+                                        )
+                                        .background(
+                                            color = if (isSelected) {
+                                                colorScheme.primary
+                                            } else {
+                                                colorScheme.outline
+                                            },
+                                            shape = CircleShape
+                                        )
+                                )
                             }
-
-                            else -> {
-                                modalManager.show(ViewTransactionModal(transaction))
-                            }
                         }
-                    }
-                )
-            }
-
-            item {
-                Card(
-                    onClick = onOpenCategories,
-                    colors = CardDefaults.cardColors(
-                        containerColor = colorScheme.surfaceContainer,
-                        contentColor = colorScheme.onSurface,
-                    ),
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 24.dp)
-                        .fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Categorias",
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowForwardIos,
-                            modifier = Modifier.size(18.dp),
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
-
-            item {
-                Card(
-                    onClick = onOpenCreditCards,
-                    colors = CardDefaults.cardColors(
-                        containerColor = colorScheme.surfaceContainer,
-                        contentColor = colorScheme.onSurface,
-                    ),
-                    modifier = Modifier.padding(top = 8.dp)
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Cartões de Crédito",
-                            modifier = Modifier.weight(1f),
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowForwardIos,
-                            modifier = Modifier.size(18.dp),
-                            contentDescription = null,
-                        )
                     }
                 }
             }
         }
+
+        if (uiState.categorySpending.isNotEmpty()) {
+            item {
+                CategorySpendingCard(
+                    categorySpending = uiState.categorySpending,
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .animateItem(),
+                    onCategoryClick = { category ->
+                        modalManager.show(ViewCategoryModal(category))
+                    }
+                )
+            }
+        }
+
+        if (uiState.recents.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Recentes",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    TextButton(
+                        onClick = {
+                            openTransactions(null, null)
+                        }
+                    ) {
+                        Text(text = "Ver Tudo")
+                    }
+                }
+            }
+        }
+
+        items(items = uiState.recents) { transaction ->
+            TransactionCard(
+                transaction = transaction,
+                category = transaction.category,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
+                    .animateItem(),
+                onClick = {
+                    when (transaction.type) {
+                        Transaction.Type.ADJUSTMENT -> {
+                            modalManager.show(ViewAdjustmentModal(transaction))
+                        }
+
+                        else -> {
+                            modalManager.show(ViewTransactionModal(transaction))
+                        }
+                    }
+                }
+            )
+        }
+
+        item {
+            Card(
+                onClick = onOpenCategories,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 24.dp)
+                    .fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Categorias",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                onClick = onOpenCreditCards,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier.padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Cartões de Crédito",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
     }
+}

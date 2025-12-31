@@ -187,8 +187,8 @@ class PayInvoiceModal(
     private fun formatMoneyFromDouble(value: Double): String {
         val intValue = (value * 100).toInt()
         val reais = intValue / 100
-        val centavos = intValue % 100
-        return "R$ %d,%02d".format(reais, centavos)
+        val centavos = (intValue % 100).toString().padStart(2, '0')
+        return "R$ $reais,$centavos"
     }
 }
 

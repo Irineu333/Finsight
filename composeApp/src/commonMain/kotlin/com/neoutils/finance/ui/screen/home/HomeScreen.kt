@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.ui.screen.home
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -19,11 +20,13 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.NavigationItem
 import com.neoutils.finance.ui.component.ModalManagerHost
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.ui.component.NavigationAction
 import com.neoutils.finance.util.TransactionTargetNavType
 import com.neoutils.finance.util.TransactionTypeNavType
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
+import com.neoutils.finance.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finance.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
@@ -36,7 +39,7 @@ fun AppNavHost() = Surface {
     ModalManagerHost(
         onNavigate = { action ->
             when (action) {
-                is com.neoutils.finance.ui.component.NavigationAction.InvoiceTransactions -> {
+                is NavigationAction.InvoiceTransactions -> {
                     navController.navigate(AppRoute.InvoiceTransactions(action.creditCardId))
                 }
             }
@@ -75,7 +78,7 @@ fun AppNavHost() = Surface {
 
             composable<AppRoute.InvoiceTransactions> { backStackEntry ->
                 val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
-                com.neoutils.finance.ui.screen.invoiceTransactions.InvoiceTransactionsScreen(
+                InvoiceTransactionsScreen(
                     creditCardId = route.creditCardId,
                     onNavigateBack = {
                         navController.navigateUp()

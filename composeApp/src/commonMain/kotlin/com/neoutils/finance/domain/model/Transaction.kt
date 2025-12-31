@@ -1,6 +1,7 @@
 package com.neoutils.finance.domain.model
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
 data class Transaction(
     val id: Long = 0,
@@ -31,6 +32,7 @@ data class Transaction(
             Type.ADVANCE_PAYMENT -> -amount
         }
 
+    @Serializable
     enum class Type {
         EXPENSE,
         INCOME,
@@ -45,6 +47,7 @@ data class Transaction(
         val isAdvancePayment: Boolean get() = this == ADVANCE_PAYMENT
     }
 
+    @Serializable
     enum class Target {
         ACCOUNT,
         CREDIT_CARD,
@@ -66,3 +69,4 @@ data class Transaction(
             }
     }
 }
+

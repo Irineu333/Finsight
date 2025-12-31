@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finance.ui.component.BottomNavigationBar
@@ -116,11 +117,17 @@ fun HomeScreen(
                 selectedItem = selectedItem,
                 onItemSelected = { item ->
                     navController.navigate(
-                        when (item) {
+                        route = when (item) {
                             NavigationItem.Dashboard -> HomeRoute.Dashboard
                             NavigationItem.Transactions -> HomeRoute.Transactions()
+                        },
+                    ) {
+                        launchSingleTop = true
+
+                        popUpTo(HomeRoute.Dashboard::class) {
+                            inclusive = false
                         }
-                    )
+                    }
                 },
                 onAddClick = {
                     modalManager.show(AddTransactionModal())

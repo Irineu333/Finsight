@@ -55,7 +55,7 @@ class ViewCreditCardModal(
         val modalManager = LocalModalManager.current
         val navigator = LocalNavigator.current
 
-        val viewModel = koinViewModel<ViewCreditCardViewModel>(key = key) {
+        val viewModel = koinViewModel<ViewCreditCardViewModel> {
             parametersOf(creditCard)
         }
 

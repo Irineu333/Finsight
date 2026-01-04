@@ -65,7 +65,7 @@ class EditTransactionModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditTransactionViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
         val manager = LocalModalManager.current
         val uiState by viewModel.uiState.collectAsState()
 

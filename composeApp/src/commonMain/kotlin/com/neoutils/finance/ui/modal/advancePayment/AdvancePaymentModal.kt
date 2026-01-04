@@ -55,7 +55,7 @@ class AdvancePaymentModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<AdvancePaymentViewModel>(key = key) {
+        val viewModel = koinViewModel<AdvancePaymentViewModel> {
             parametersOf(invoice.id)
         }
 

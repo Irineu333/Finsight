@@ -23,7 +23,7 @@ class DeleteCategoryModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<DeleteCategoryViewModel>(key = key) { parametersOf(category) }
+        val viewModel = koinViewModel<DeleteCategoryViewModel> { parametersOf(category) }
 
         Column(
             modifier = Modifier

@@ -44,7 +44,7 @@ class EditCreditCardModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditCreditCardViewModel>(key = key) {
+        val viewModel = koinViewModel<EditCreditCardViewModel> {
             parametersOf(creditCard.id)
         }
 

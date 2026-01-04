@@ -57,7 +57,7 @@ class ViewTransactionModal(
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
 
-        val viewModel = koinViewModel<ViewTransactionViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<ViewTransactionViewModel> { parametersOf(transaction) }
 
         val uiState by viewModel.uiState.collectAsState()
 

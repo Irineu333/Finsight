@@ -25,7 +25,7 @@ class AddCreditCardModal : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<AddCreditCardViewModel>(key = key)
+        val viewModel = koinViewModel<AddCreditCardViewModel>()
 
         val name = rememberTextFieldState()
         val limit = rememberTextFieldState("R$ 0,00")

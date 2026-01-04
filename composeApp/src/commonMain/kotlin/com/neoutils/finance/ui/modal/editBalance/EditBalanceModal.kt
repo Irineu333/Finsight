@@ -60,7 +60,7 @@ class EditBalanceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditBalanceViewModel>(key = key) {
+        val viewModel = koinViewModel<EditBalanceViewModel> {
             parametersOf(type, targetMonth, invoiceId)
         }
         val balanceState = rememberTextFieldState(formatMoney(initialCents))

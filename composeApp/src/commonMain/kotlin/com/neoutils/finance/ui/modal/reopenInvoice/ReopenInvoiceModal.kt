@@ -32,7 +32,7 @@ class ReopenInvoiceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<ReopenInvoiceViewModel>(key = key) { parametersOf(invoiceId) }
+        val viewModel = koinViewModel<ReopenInvoiceViewModel> { parametersOf(invoiceId) }
         val manager = LocalModalManager.current
 
         Column(

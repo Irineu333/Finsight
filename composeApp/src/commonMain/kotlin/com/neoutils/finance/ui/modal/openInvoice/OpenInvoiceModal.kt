@@ -42,7 +42,7 @@ class OpenInvoiceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<OpenInvoiceViewModel>(key = key) {
+        val viewModel = koinViewModel<OpenInvoiceViewModel> {
             parametersOf(creditCard.id)
         }
 

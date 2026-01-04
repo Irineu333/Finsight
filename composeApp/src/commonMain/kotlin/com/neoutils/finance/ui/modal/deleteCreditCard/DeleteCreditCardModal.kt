@@ -23,7 +23,7 @@ class DeleteCreditCardModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<DeleteCreditCardViewModel>(key = key) { parametersOf(creditCard) }
+        val viewModel = koinViewModel<DeleteCreditCardViewModel> { parametersOf(creditCard) }
 
         Column(
             modifier = Modifier

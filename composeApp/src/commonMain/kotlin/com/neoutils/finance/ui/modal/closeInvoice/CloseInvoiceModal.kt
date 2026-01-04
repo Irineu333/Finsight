@@ -54,7 +54,7 @@ class CloseInvoiceModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<CloseInvoiceViewModel>(key = key) { parametersOf(invoice.id) }
+        val viewModel = koinViewModel<CloseInvoiceViewModel> { parametersOf(invoice.id) }
         val manager = LocalModalManager.current
 
         val date = rememberTextFieldState(formats.dayMonthYear.format(getClosingDate(invoice)))

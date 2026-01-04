@@ -44,7 +44,7 @@ class ViewCategoryModal(
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
 
-        val viewModel = koinViewModel<ViewCategoryViewModel>(key = key) { parametersOf(category) }
+        val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(category) }
 
         val uiState by viewModel.uiState.collectAsState()
 

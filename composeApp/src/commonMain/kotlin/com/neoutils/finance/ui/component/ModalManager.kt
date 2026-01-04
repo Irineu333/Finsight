@@ -11,6 +11,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -76,7 +79,12 @@ abstract class Modal {
     abstract fun Content()
 }
 
-abstract class ModalBottomSheet : Modal() {
+abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
+
+    override val viewModelStore = ViewModelStore()
+
+    private val providedValue get() = LocalViewModelStoreOwner provides this
+
     @Composable
     override fun Content() {
 
@@ -90,11 +98,12 @@ abstract class ModalBottomSheet : Modal() {
                 skipPartiallyExpanded = true
             ),
             content = {
-                BottomSheetContent()
 
-                Spacer(
-                    Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
-                )
+                CompositionLocalProvider(providedValue) {
+                    BottomSheetContent()
+                }
+
+                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
             },
             contentWindowInsets = {
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top)
@@ -103,5 +112,5 @@ abstract class ModalBottomSheet : Modal() {
     }
 
     @Composable
-    abstract fun ColumnScope.BottomSheetContent()
+    protected abstract fun ColumnScope.BottomSheetContent()
 }

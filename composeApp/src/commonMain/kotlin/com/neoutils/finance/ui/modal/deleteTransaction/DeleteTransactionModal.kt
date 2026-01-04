@@ -22,7 +22,7 @@ class DeleteTransactionModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<DeleteTransactionViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<DeleteTransactionViewModel> { parametersOf(transaction) }
 
         Column(
             modifier = Modifier

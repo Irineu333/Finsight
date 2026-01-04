@@ -47,7 +47,7 @@ class AddCategoryModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<AddCategoryViewModel>(key = key) { parametersOf(initialType) }
+        val viewModel = koinViewModel<AddCategoryViewModel> { parametersOf(initialType) }
 
         val name = rememberTextFieldState()
         var selectedIcon by remember { mutableStateOf(CategoryIcon.SHOPPING_CART) }

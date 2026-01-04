@@ -48,7 +48,7 @@ class ViewAdjustmentModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(transaction) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(

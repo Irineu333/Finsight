@@ -54,7 +54,7 @@ class EditInvoicePaymentModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditInvoicePaymentViewModel>(key = key) { parametersOf(transaction) }
+        val viewModel = koinViewModel<EditInvoicePaymentViewModel> { parametersOf(transaction) }
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState(formatMoneyFromDouble(-transaction.amount))

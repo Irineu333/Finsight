@@ -43,7 +43,7 @@ class EditCategoryModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditCategoryViewModel>(key = key) { parametersOf(category) }
+        val viewModel = koinViewModel<EditCategoryViewModel> { parametersOf(category) }
 
         val name = rememberTextFieldState(category.name)
         var selectedIcon by remember { mutableStateOf(CategoryIcon.fromKey(category.icon.key)) }

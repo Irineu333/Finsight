@@ -71,7 +71,7 @@ class AddTransactionModal : ModalBottomSheet() {
 
         val manager = LocalModalManager.current
 
-        val viewModel = koinViewModel<AddTransactionViewModel>(key = key)
+        val viewModel = koinViewModel<AddTransactionViewModel>()
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }

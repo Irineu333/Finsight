@@ -48,10 +48,9 @@ class EditCategoryModal(
         val name = rememberTextFieldState(category.name)
         var selectedIcon by remember { mutableStateOf(CategoryIcon.fromKey(category.icon.key)) }
         val selectedType = category.type
-        var isIconGridExpanded by remember { mutableStateOf(false) }
+        var isIconGridExpanded by remember(selectedIcon) { mutableStateOf(false) }
 
-        val existingCategories by viewModel.existingCategories
-            .collectAsState()
+        val existingCategories by viewModel.existingCategories.collectAsState()
 
         val isDuplicateName by remember {
             derivedStateOf {
@@ -108,7 +107,7 @@ class EditCategoryModal(
                 onToggleExpand = { isIconGridExpanded = !isIconGridExpanded }
             )
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+            HorizontalDivider()
 
             Button(
                 onClick = {

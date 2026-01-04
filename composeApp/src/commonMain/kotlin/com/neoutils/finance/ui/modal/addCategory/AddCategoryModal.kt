@@ -52,7 +52,7 @@ class AddCategoryModal(
         val name = rememberTextFieldState()
         var selectedIcon by remember { mutableStateOf(CategoryIcon.SHOPPING_CART) }
         var selectedType by remember { mutableStateOf(initialType) }
-        var isIconGridExpanded by remember { mutableStateOf(false) }
+        var isIconGridExpanded by remember(selectedIcon) { mutableStateOf(false) }
 
         val existingCategories by viewModel.categories.collectAsState()
 

@@ -2,12 +2,7 @@
 
 package com.neoutils.finance.ui.component
 
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -15,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.Modifier
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -93,7 +89,16 @@ abstract class ModalBottomSheet : Modal() {
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
-            content = { BottomSheetContent() }
+            content = {
+                BottomSheetContent()
+
+                Spacer(
+                    Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
+                )
+            },
+            contentWindowInsets = {
+                WindowInsets.safeDrawing.only(WindowInsetsSides.Top)
+            }
         )
     }
 

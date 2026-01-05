@@ -46,19 +46,19 @@ class CloseInvoiceUseCase(
             return Result.failure(CloseInvoiceException(errors.negativeBalance))
         }
 
-        if (invoiceAmount == 0.0) {
-            return payInvoiceUseCase(
-                invoiceId = invoiceId,
-                paidAt = closedAt,
-            )
-        }
-
         val closedInvoice = invoice.copy(
             status = Invoice.Status.CLOSED,
             closedAt = closedAt.toEpochDays(),
-        )
+        ).also {
+            invoiceRepository.update(it)
+        }
 
-        invoiceRepository.update(closedInvoice)
+        if (invoiceAmount == 0.0) {
+            return payInvoiceUseCase(
+                invoice = closedInvoice,
+                paidAt = closedAt,
+            )
+        }
 
         return Result.success(closedInvoice)
     }

@@ -20,6 +20,14 @@ class PayInvoiceUseCase(
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
             ?: return Result.failure(PayInvoiceException(errors.invoiceNotFound))
 
+        return invoke(invoice, paidAt)
+    }
+
+    suspend operator fun invoke(
+        invoice: Invoice,
+        paidAt: LocalDate,
+    ): Result<Invoice> {
+
         if (invoice.status != Invoice.Status.CLOSED) {
             return Result.failure(PayInvoiceException(errors.cannotPayOpenInvoice))
         }
@@ -27,9 +35,9 @@ class PayInvoiceUseCase(
         val paidInvoice = invoice.copy(
             status = Invoice.Status.PAID,
             paidAt = paidAt.toEpochDays(),
-        )
-
-        invoiceRepository.update(paidInvoice)
+        ).also {
+            invoiceRepository.update(it)
+        }
 
         createInvoiceUseCase(invoice.creditCard.id)
 

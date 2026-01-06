@@ -93,7 +93,9 @@ class InvoiceTransactionsViewModel(
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { it.creditAmount },
+                    total = invoiceTransactions
+                        .filterNot { it.type.isInvoicePayment }
+                        .sumOf { it.creditAmount },
                     closingMonthLabel = formats.yearMonth.format(invoice.closingMonth),
                 )
             },

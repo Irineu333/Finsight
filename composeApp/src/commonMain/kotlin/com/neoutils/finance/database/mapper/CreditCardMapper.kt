@@ -10,6 +10,7 @@ class CreditCardMapper {
             name = entity.name,
             limit = entity.limit,
             closingDay = entity.closingDay,
+            dueDay = entity.dueDay,
             createdAt = entity.createdAt
         )
     }
@@ -20,6 +21,7 @@ class CreditCardMapper {
             name = domain.name,
             limit = domain.limit,
             closingDay = domain.closingDay,
+            dueDay = domain.dueDay,
             createdAt = domain.createdAt
         )
     }

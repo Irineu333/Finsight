@@ -23,7 +23,8 @@ import kotlinx.datetime.YearMonth
     indices = [
         Index(value = ["creditCardId"]),
         Index(value = ["creditCardId", "openingMonth"], unique = true),
-        Index(value = ["creditCardId", "closingMonth"], unique = true)
+        Index(value = ["creditCardId", "closingMonth"], unique = true),
+        Index(value = ["creditCardId", "dueMonth"], unique = true)
     ]
 )
 data class InvoiceEntity(
@@ -31,6 +32,7 @@ data class InvoiceEntity(
     val creditCardId: Long,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
+    val dueMonth: YearMonth,
     val status: Status,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val closedAt: Long? = null,

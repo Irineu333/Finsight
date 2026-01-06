@@ -24,7 +24,7 @@ data class InvoiceTransactionsUiState(
         val advancePayment: Double,
         val adjustment: Double,
         val total: Double,
-        val closingMonthLabel: String,
+        val dueMonthLabel: String,
     ) {
         val mustShowAdjustment = adjustment != 0.0
         val canEdit = status != Invoice.Status.PAID

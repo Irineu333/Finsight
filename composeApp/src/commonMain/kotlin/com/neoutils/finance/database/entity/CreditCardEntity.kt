@@ -12,6 +12,7 @@ data class CreditCardEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val limit: Double,
-    val closingDay: Int? = null,
+    val closingDay: Int,
+    val dueDay: Int,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 )

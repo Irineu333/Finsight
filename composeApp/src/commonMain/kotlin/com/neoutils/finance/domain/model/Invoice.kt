@@ -12,6 +12,7 @@ data class Invoice(
     val creditCard: CreditCard,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
+    val dueMonth: YearMonth,
     val status: Status,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val closedAt: Long? = null,
@@ -44,6 +45,9 @@ data class Invoice(
     init {
         require(closingMonth > openingMonth) {
             "Closing month must be after opening month"
+        }
+        require(dueMonth >= closingMonth) {
+            "Due month must be equal to or after closing month"
         }
     }
 }

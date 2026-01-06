@@ -243,7 +243,7 @@ private fun InvoiceSummaryItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = summary.closingMonthLabel,
+                    text = summary.dueMonthLabel,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface

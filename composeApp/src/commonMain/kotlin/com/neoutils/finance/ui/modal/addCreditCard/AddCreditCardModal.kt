@@ -35,6 +35,12 @@ class AddCreditCardModal : ModalBottomSheet() {
             derivedStateOf { closingDay.text.toString().toIntOrNull() }
         }
 
+        val dueDay = rememberTextFieldState()
+
+        val parsedDueDay by remember {
+            derivedStateOf { dueDay.text.toString().toIntOrNull() }
+        }
+
         Column(
             modifier =
                 Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
@@ -78,6 +84,19 @@ class AddCreditCardModal : ModalBottomSheet() {
                 label = { Text(text = "Dia de Fechamento") },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                inputTransformation = DayInputTransformation(),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                state = dueDay,
+                label = { Text(text = "Dia de Vencimento") },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
                 inputTransformation = DayInputTransformation(),
@@ -95,10 +114,11 @@ class AddCreditCardModal : ModalBottomSheet() {
                             name = name.text.toString().trim(),
                             limit = parseMoneyToDouble(limit.text.toString()),
                             closingDay = parsedClosingDay,
+                            dueDay = parsedDueDay,
                         )
                     )
                 },
-                enabled = name.text.isNotBlank(),
+                enabled = name.text.isNotBlank() && parsedClosingDay != null && parsedDueDay != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

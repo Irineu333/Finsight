@@ -96,7 +96,7 @@ class InvoiceTransactionsViewModel(
                     total = invoiceTransactions
                         .filterNot { it.type.isInvoicePayment }
                         .sumOf { it.creditAmount },
-                    closingMonthLabel = formats.yearMonth.format(invoice.closingMonth),
+                    dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
                 )
             },
             selectedInvoiceIndex = index,

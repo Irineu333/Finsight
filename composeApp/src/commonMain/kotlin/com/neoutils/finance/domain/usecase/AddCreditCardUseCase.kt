@@ -32,9 +32,21 @@ class AddCreditCardUseCase(
             return Result.failure(RegisterCreditCardException(errors.negativeLimit))
         }
 
-        if (form.closingDay != null && form.closingDay !in 1..28) {
+        if (form.closingDay == null) {
             return Result.failure(
                 RegisterCreditCardException(errors.invalidClosingDay)
+            )
+        }
+
+        if (form.closingDay !in 1..28) {
+            return Result.failure(
+                RegisterCreditCardException(errors.invalidClosingDay)
+            )
+        }
+
+        if (form.dueDay == null || form.dueDay !in 1..28) {
+            return Result.failure(
+                RegisterCreditCardException(errors.invalidDueDay)
             )
         }
 
@@ -42,15 +54,12 @@ class AddCreditCardUseCase(
             name = form.name,
             limit = form.limit,
             closingDay = form.closingDay,
+            dueDay = form.dueDay,
             createdAt = Clock.System.now().toEpochMilliseconds()
         ).let {
             it.copy(
                 id = repository.insert(it)
             )
-        }
-
-        if (creditCard.closingDay == null) {
-            return Result.success(creditCard)
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
@@ -72,3 +81,4 @@ class AddCreditCardUseCase(
         return Result.success(creditCard)
     }
 }
+

@@ -60,8 +60,16 @@ class EditCreditCardModal(
             derivedStateOf { closingDay.text.toString().toIntOrNull() }
         }
 
+        val dueDay = rememberTextFieldState(creditCard.dueDay.toString())
+
+        val parsedDueDay by remember {
+            derivedStateOf { dueDay.text.toString().toIntOrNull() }
+        }
+
         val isValid by remember {
-            derivedStateOf { name.text.isNotBlank() && newLimit >= 0.0 }
+            derivedStateOf {
+                name.text.isNotBlank() && newLimit >= 0.0 && parsedClosingDay != null && parsedDueDay != null
+            }
         }
 
         Column(
@@ -111,6 +119,20 @@ class EditCreditCardModal(
                 keyboardOptions =
                     KeyboardOptions(
                         keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                inputTransformation = DayInputTransformation(),
+                shape = RoundedCornerShape(12.dp),
+                lineLimits = TextFieldLineLimits.SingleLine,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                state = dueDay,
+                label = { Text(text = "Dia de Vencimento") },
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Done
                     ),
                 inputTransformation = DayInputTransformation(),
@@ -128,6 +150,7 @@ class EditCreditCardModal(
                             name = name.text.toString(),
                             limit = parseMoneyToDouble(limit.text.toString()),
                             closingDay = parsedClosingDay,
+                            dueDay = parsedDueDay,
                         )
                     )
                 },

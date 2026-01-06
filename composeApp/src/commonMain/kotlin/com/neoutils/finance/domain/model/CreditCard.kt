@@ -13,7 +13,8 @@ data class CreditCard(
     val id: Long = 0,
     val name: String,
     val limit: Double,
-    val closingDay: Int? = null,
+    val closingDay: Int,
+    val dueDay: Int,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
     init {
@@ -25,8 +26,12 @@ data class CreditCard(
             throw RegisterCreditCardException(creditCardErrors.negativeLimit)
         }
 
-        if (closingDay != null && closingDay !in 1..28) {
+        if (closingDay !in 1..28) {
             throw RegisterCreditCardException(creditCardErrors.invalidClosingDay)
+        }
+
+        if (dueDay !in 1..28) {
+            throw RegisterCreditCardException(creditCardErrors.invalidDueDay)
         }
     }
 }

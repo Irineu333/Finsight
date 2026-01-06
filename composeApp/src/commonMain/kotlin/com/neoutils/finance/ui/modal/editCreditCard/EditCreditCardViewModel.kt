@@ -14,11 +14,15 @@ class EditCreditCardViewModel(
 ) : ViewModel() {
 
     fun update(form: CreditCardForm) = viewModelScope.launch {
+        val closingDay = form.closingDay ?: return@launch
+        val dueDay = form.dueDay ?: return@launch
+
         updateCreditCardUseCase(creditCardId) {
             it.copy(
                 name = form.name.trim(),
                 limit = form.limit,
-                closingDay = form.closingDay
+                closingDay = closingDay,
+                dueDay = dueDay
             )
         }.onSuccess {
             modalManager.dismissAll()

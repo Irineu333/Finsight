@@ -37,10 +37,19 @@ class CreateInvoiceUseCase(
             return Result.success(overlappingInvoice)
         }
 
+        val closingMonth = nextMonth
+
+        val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
+            closingMonth.plusMonth()
+        } else {
+            closingMonth
+        }
+
         val newInvoice = Invoice(
             creditCard = creditCard,
             openingMonth = currentMonth,
-            closingMonth = nextMonth,
+            closingMonth = closingMonth,
+            dueMonth = dueMonth,
             status = Invoice.Status.OPEN,
         )
 
@@ -51,3 +60,4 @@ class CreateInvoiceUseCase(
         )
     }
 }
+

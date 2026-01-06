@@ -28,6 +28,12 @@ class OpenInvoiceUseCase(
 
         val closingMonth = openingMonth.plusMonth()
 
+        val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
+            closingMonth.plusMonth()
+        } else {
+            closingMonth
+        }
+
         val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
 
         val overlappingInvoice = existingInvoices.find { existing ->
@@ -44,6 +50,7 @@ class OpenInvoiceUseCase(
             creditCard = creditCard,
             openingMonth = openingMonth,
             closingMonth = closingMonth,
+            dueMonth = dueMonth,
             status = Invoice.Status.OPEN
         )
 
@@ -52,3 +59,4 @@ class OpenInvoiceUseCase(
         )
     }
 }
+

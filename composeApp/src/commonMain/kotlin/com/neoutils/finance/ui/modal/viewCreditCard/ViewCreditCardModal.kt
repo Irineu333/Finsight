@@ -141,9 +141,13 @@ class ViewCreditCardModal(
             uiState.invoiceUi?.let { invoice ->
                 DetailRow(
                     label = "Fechamento",
-                    value = creditCard.closingDay
-                        ?.let { day -> formats.dayMonthYear.format(invoice.closingMonth.onDay(day)) }
-                        ?: formats.yearMonth.format(invoice.closingMonth),
+                    value = formats.dayMonthYear.format(invoice.closingMonth.onDay(creditCard.closingDay)),
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+
+                DetailRow(
+                    label = "Vencimento",
+                    value = formats.dayMonthYear.format(invoice.dueMonth.onDay(creditCard.dueDay)),
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }

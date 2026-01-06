@@ -8,6 +8,7 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -36,8 +37,8 @@ class CloseInvoiceUseCase(
             return Result.failure(CloseInvoiceException(errors.invoiceAlreadyClosed))
         }
 
-        if (currentMonth < invoice.closingMonth) {
-            return Result.failure(CloseInvoiceException(errors.cannotCloseBeforeClosingMonth))
+        if (closedAt.yearMonth != invoice.closingMonth) {
+            return Result.failure(CloseInvoiceException(errors.cannotCloseOutsideClosingMonth))
         }
 
         val invoiceAmount = calculateInvoiceUseCase(invoiceId)

@@ -4,6 +4,7 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.errors.OpenInvoiceErrors
 import com.neoutils.finance.domain.exception.OpenInvoiceException
+import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -26,6 +27,14 @@ class OpenInvoiceUseCase(
         val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             ?: return Result.failure(OpenInvoiceException(errors.creditCardNotFound))
 
+        return invoke(creditCard, openingMonth)
+    }
+
+    suspend operator fun invoke(
+        creditCard: CreditCard,
+        openingMonth: YearMonth
+    ): Result<Invoice> {
+
         val closingMonth = openingMonth.plusMonth()
 
         val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
@@ -34,7 +43,7 @@ class OpenInvoiceUseCase(
             closingMonth
         }
 
-        val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
+        val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCard.id)
 
         val overlappingInvoice = existingInvoices.find { existing ->
             openingMonth < existing.closingMonth && closingMonth > existing.openingMonth

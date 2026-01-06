@@ -6,20 +6,17 @@ import com.neoutils.finance.domain.errors.CloseInvoiceErrors
 import com.neoutils.finance.domain.exception.CloseInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private val errors = CloseInvoiceErrors()
-
-private val currentMonth get() = Clock.System.now().toYearMonth()
 
 class CloseInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase,
+    private val openInvoiceUseCase: OpenInvoiceUseCase,
 ) {
     suspend operator fun invoke(
         invoiceId: Long,
@@ -53,6 +50,11 @@ class CloseInvoiceUseCase(
         ).also {
             invoiceRepository.update(it)
         }
+
+        openInvoiceUseCase(
+            creditCardId = invoice.creditCard.id,
+            openingMonth = invoice.closingMonth
+        )
 
         if (invoiceAmount == 0.0) {
             return payInvoiceUseCase(

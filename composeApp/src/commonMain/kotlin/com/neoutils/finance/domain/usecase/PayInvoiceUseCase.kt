@@ -10,7 +10,6 @@ private val errors = PayInvoiceErrors()
 
 class PayInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val createInvoiceUseCase: CreateInvoiceUseCase
 ) {
     suspend operator fun invoke(
         invoiceId: Long,
@@ -39,8 +38,7 @@ class PayInvoiceUseCase(
             invoiceRepository.update(it)
         }
 
-        createInvoiceUseCase(invoice.creditCard.id)
-
         return Result.success(paidInvoice)
     }
 }
+

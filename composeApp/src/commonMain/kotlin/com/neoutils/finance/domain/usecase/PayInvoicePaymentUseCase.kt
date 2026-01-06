@@ -6,7 +6,6 @@ import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
 import com.neoutils.finance.domain.exception.PayCreditCardBillException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
@@ -34,7 +33,7 @@ class PayInvoicePaymentUseCase(
 
         val currentBillAmount = calculateInvoiceUseCase(invoiceId)
 
-        val transaction = Transaction(
+        Transaction(
             category = null,
             title = null,
             type = Transaction.Type.INVOICE_PAYMENT,
@@ -43,9 +42,11 @@ class PayInvoicePaymentUseCase(
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,
             invoice = invoice
-        )
-
-        repository.insert(transaction)
+        ).let { transaction ->
+            transaction.copy(
+                id = repository.insert(transaction)
+            )
+        }
 
         return payInvoiceUseCase(
             invoiceId = invoiceId,

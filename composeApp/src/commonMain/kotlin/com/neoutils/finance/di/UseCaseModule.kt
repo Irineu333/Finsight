@@ -98,13 +98,13 @@ val useCaseModules = module {
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
+            openInvoiceUseCase = get(),
         )
     }
 
     factory {
         PayInvoiceUseCase(
             invoiceRepository = get(),
-            createInvoiceUseCase = get(),
         )
     }
 

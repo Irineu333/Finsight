@@ -1,6 +1,5 @@
 package com.neoutils.finance.domain.repository
 
-import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate

@@ -88,8 +88,7 @@ class InvoiceTransactionsViewModel(
                     .sumOf { it.amount }
 
                 InvoiceTransactionsUiState.InvoiceSummary(
-                    invoiceId = invoice.id,
-                    status = invoice.status,
+                    invoice = invoice,
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,

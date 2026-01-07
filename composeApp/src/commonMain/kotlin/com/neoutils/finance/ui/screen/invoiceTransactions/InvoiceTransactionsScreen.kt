@@ -17,7 +17,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -26,15 +31,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
+import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
+import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
+import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
+import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
+import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
@@ -91,6 +104,55 @@ private fun InvoiceTransactionsContent(
                         )
                     }
                 },
+                actions = {
+                    // Get credit card from first invoice (all invoices have same credit card)
+                    val creditCard = uiState.invoices.firstOrNull()?.invoice?.creditCard
+                    if (creditCard != null) {
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Menu",
+                                )
+                            }
+                            
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Editar Cartão") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        modalManager.show(EditCreditCardModal(creditCard))
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Excluir Cartão") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = Expense
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        modalManager.show(DeleteCreditCardModal(creditCard))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -118,9 +180,20 @@ private fun InvoiceTransactionsContent(
                             )
                         )
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 )
+            }
+
+            uiState.invoices.getOrNull(uiState.selectedInvoiceIndex)?.let { selectedInvoice ->
+                item {
+                    InvoiceActions(
+                        summary = selectedInvoice,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .animateItem()
+                    )
+                }
             }
 
             item {
@@ -130,6 +203,7 @@ private fun InvoiceTransactionsContent(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
+                        .animateItem()
                 )
             }
 
@@ -305,10 +379,138 @@ private fun InvoiceSummaryItem(
 }
 
 @Composable
+private fun InvoiceActions(
+    summary: InvoiceTransactionsUiState.InvoiceSummary,
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+    val invoice = summary.invoice
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (summary.status.isOpen) {
+            OutlinedButton(
+                onClick = {
+                    modalManager.show(
+                        AdvancePaymentModal(
+                            invoice = invoice,
+                            currentBillAmount = summary.total,
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.primary
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Payment,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Antecipar Pagamento",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        if (summary.isClosable) {
+            OutlinedButton(
+                onClick = { modalManager.show(CloseInvoiceModal(invoice)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFFFA726)
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Fechar Fatura",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        if (summary.status.isClosed) {
+            OutlinedButton(
+                onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFFFFA726)
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Reabrir Fatura",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Button(
+                onClick = {
+                    modalManager.show(
+                        PayInvoiceModal(
+                            invoice = invoice,
+                            currentBillAmount = summary.total
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Payment,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Pagar Fatura",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun SummaryRow(
     label: String,
     amount: Double,
-    color: androidx.compose.ui.graphics.Color,
+    color: Color,
     modifier: Modifier = Modifier,
     isNegative: Boolean = false,
     isPositive: Boolean = false,

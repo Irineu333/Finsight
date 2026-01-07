@@ -4,8 +4,8 @@ import com.neoutils.finance.domain.errors.AddTransactionErrors
 import com.neoutils.finance.domain.exception.AddTransactionException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.model.form.TransactionForm
 
 private val errors = AddTransactionErrors()
 
@@ -13,32 +13,37 @@ class AddTransactionUseCase(
     private val transactionRepository: ITransactionRepository,
 ) {
     suspend operator fun invoke(
-        transaction: Transaction
+        form: TransactionForm
     ): Result<Transaction> {
 
-        if (transaction.target.isAccount) {
-
-            transactionRepository.insert(transaction)
-
-            return Result.success(transaction)
+        if (form.target.isAccount) {
+            return Result.success(
+                form.build().let { transaction ->
+                    transaction.copy(
+                        id = transactionRepository.insert(transaction)
+                    )
+                }
+            )
         }
 
-        if (transaction.creditCard == null) {
+        if (form.creditCard == null) {
             return Result.failure(AddTransactionException(errors.creditCardRequired))
         }
 
-        if (transaction.invoice == null) {
+        if (form.invoice == null) {
             return Result.failure(AddTransactionException(errors.invoiceNotFound))
         }
 
-        if (transaction.invoice.status != Invoice.Status.OPEN) {
+        if (form.invoice.status != Invoice.Status.OPEN) {
             return Result.failure(AddTransactionException(errors.invoiceNotOpen))
         }
 
         return Result.success(
-            transaction.copy(
-                id = transactionRepository.insert(transaction)
-            )
+            form.build().let { transaction ->
+                transaction.copy(
+                    id = transactionRepository.insert(transaction)
+                )
+            }
         )
     }
 }

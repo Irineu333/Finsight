@@ -5,7 +5,7 @@ package com.neoutils.finance.ui.modal.addTransaction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -62,11 +62,9 @@ class AddTransactionViewModel(
     }
 
     fun addTransaction(
-        transaction: Transaction
+        form: TransactionForm
     ) = viewModelScope.launch {
-        addTransactionUseCase(
-            transaction = transaction,
-        ).onSuccess {
+        addTransactionUseCase(form).onSuccess {
             modalManager.dismiss()
         }
     }

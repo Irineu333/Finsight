@@ -3,14 +3,7 @@
 package com.neoutils.finance.ui.modal.addTransaction
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,19 +12,9 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -41,30 +24,27 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.component.CategorySelector
-import com.neoutils.finance.ui.component.CreditCardSelector
-import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.component.TargetSelector
+import com.neoutils.finance.domain.model.form.TransactionForm
+import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AddTransactionModal : ModalBottomSheet() {
+private val formats = DateFormats()
 
-    private val formats = DateFormats()
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+class AddTransactionModal : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -79,9 +59,24 @@ class AddTransactionModal : ModalBottomSheet() {
 
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate()))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
         var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
+
+        val form by remember {
+            derivedStateOf {
+                TransactionForm.from(
+                    type = type,
+                    amount = amount.text.toString(),
+                    title = title.text.toString(),
+                    date = date.text.toString(),
+                    category = selectedCategory,
+                    target = target,
+                    creditCard = uiState.selectedCreditCard,
+                    invoice = uiState.currentInvoice,
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -212,39 +207,11 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // TODO: improve this
-            val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
-            val invoice = uiState.currentInvoice.takeIf { target.isCreditCard }
-            val category = selectedCategory?.takeIf { it.type.isAccept(type) }
-            val creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard }
-
             Button(
                 onClick = {
-                    viewModel.addTransaction(
-                        transaction = Transaction(
-                            type = type,
-                            amount = parseMoneyToDouble(amount.text.toString()),
-                            title = title.text.toString().ifBlank { null },
-                            date = formats.dayMonthYear.parse(date.text.toString()),
-                            category = category,
-                            target = target,
-                            creditCard = creditCard,
-                            invoice = invoice,
-                        )
-                    )
+                    viewModel.addTransaction(form)
                 },
-                enabled = showSaveButton(
-                    type = type,
-                    amount = amount.text.toString(),
-                    title = title.text.toString(),
-                    date = date.text.toString(),
-                    category = category,
-                    target = target,
-                    creditCard = creditCard,
-                    invoice = invoice,
-                    minDate = uiState.minDate.takeIf { target.isCreditCard },
-                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
-                ),
+                enabled = form.isValid(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -324,66 +291,5 @@ class AddTransactionModal : ModalBottomSheet() {
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-
-    private fun Category.Type.isAccept(type: Transaction.Type): Boolean {
-        return when (this) {
-            Category.Type.EXPENSE -> type.isExpense
-            Category.Type.INCOME -> type.isIncome
-        }
-    }
-
-    private fun showSaveButton(
-        amount: String,
-        date: String,
-        title: String,
-        type: Transaction.Type,
-        target: Transaction.Target,
-        category: Category?,
-        creditCard: CreditCard?,
-        invoice: Invoice?,
-        minDate: LocalDate?,
-        maxDate: LocalDate?
-    ): Boolean {
-
-        if (amount.isEmpty()) return false
-
-        if (parseMoneyToDouble(amount) == 0.0) return false
-
-        if (date.isEmpty()) return false
-
-        if (title.isEmpty() && category == null) return false
-
-        if (target.isAccount) return true
-
-        if (type != Transaction.Type.EXPENSE) return false
-
-        val invoice = invoice ?: return false
-        val creditCard = creditCard ?: return false
-
-        if (invoice.status != Invoice.Status.OPEN) return false
-
-        if (creditCard.id != invoice.creditCard.id) return false
-
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
-
-        if (minDate != null && parsedDate < minDate) return false
-        if (maxDate != null && parsedDate > maxDate) return false
-
-        return true
-    }
-
-    private fun currentDate(): LocalDate {
-        return Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly = formatted
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
     }
 }

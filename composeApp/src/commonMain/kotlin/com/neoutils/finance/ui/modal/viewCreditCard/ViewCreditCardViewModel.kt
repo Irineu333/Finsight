@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +29,7 @@ class ViewCreditCardViewModel(
         .filterNotNull()
 
     private val invoiceFlow = invoiceRepository
-        .observeLatestUnpaidInvoice(creditCard.id)
+        .observeUnpaidInvoice(creditCard.id)
 
     private val transactionsFlow = invoiceFlow.flatMapMerge { invoice ->
         if (invoice == null) {
@@ -46,13 +45,12 @@ class ViewCreditCardViewModel(
         creditCardFlow,
         invoiceFlow,
         transactionsFlow,
-    ) { creditCard, invoice, transactions ->
+    ) { creditCard, invoice, _ ->
         ViewCreditCardUiState(
             creditCard = creditCard,
             invoiceUi = invoice?.let {
                 invoiceUiMapper.toUi(
                     invoice = it,
-                    transactions = transactions,
                 )
             }
         )

@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -78,23 +79,6 @@ class TransactionRepository(
         }
     }
 
-    override suspend fun getTransactionById(id: Long): Transaction? {
-        val entity = dao.getTransactionById(id) ?: return null
-
-        return mapper.toDomain(
-            entity = entity,
-            category = entity.categoryId?.let {
-                categoryRepository.getCategoryById(it)
-            },
-            creditCard = entity.creditCardId?.let {
-                creditCardRepository.getCreditCardById(it)
-            },
-            invoice = entity.invoiceId?.let {
-                invoiceRepository.getInvoiceById(it)
-            },
-        )
-    }
-
     override fun observeTransactionById(id: Long): Flow<Transaction?> {
         return dao.observeTransactionById(id).flatMapMerge { entity ->
             if (entity == null) {
@@ -126,44 +110,6 @@ class TransactionRepository(
                 )
             }
         }
-    }
-
-    override fun observeTransactionsByType(type: Transaction.Type): Flow<List<Transaction>> {
-        return combine(
-            dao.observeTransactionsByType(mapper.toEntity(type)),
-            categoriesFlow,
-            creditCardsFlow,
-            invoicesFlow,
-        ) { transactions, categories, creditCards, invoices ->
-            transactions.map { transaction ->
-                mapper.toDomain(
-                    entity = transaction,
-                    category = categories[transaction.categoryId],
-                    creditCard = creditCards[transaction.creditCardId],
-                    invoice = invoices[transaction.invoiceId],
-                )
-            }
-        }
-    }
-
-    override suspend fun getTransactionByTypeAndDate(
-        type: Transaction.Type,
-        date: LocalDate
-    ): Transaction? {
-        val transaction = dao.getTransactionByTypeAndDate(mapper.toEntity(type), date) ?: return null
-
-        return mapper.toDomain(
-            entity = transaction,
-            category = transaction.categoryId?.let {
-                categoryRepository.getCategoryById(it)
-            },
-            creditCard = transaction.creditCardId?.let {
-                creditCardRepository.getCreditCardById(it)
-            },
-            invoice = transaction.invoiceId?.let {
-                invoiceRepository.getInvoiceById(it)
-            }
-        )
     }
 
     override suspend fun getTransactionsBy(
@@ -236,9 +182,5 @@ class TransactionRepository(
 
     override suspend fun delete(transaction: Transaction) {
         dao.delete(mapper.toEntity(transaction))
-    }
-
-    override suspend fun deleteAll() {
-        dao.deleteAll()
     }
 }

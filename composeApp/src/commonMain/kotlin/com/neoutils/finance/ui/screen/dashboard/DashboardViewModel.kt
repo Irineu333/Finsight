@@ -33,7 +33,7 @@ class DashboardViewModel(
     private val currentMonth get() = instant.toYearMonth()
 
     private val invoicesFlow = invoiceRepository
-        .observeLatestInvoices()
+        .observeUnpaidInvoices()
         .map { invoices ->
             invoices.associateBy { it.creditCard.id }
         }
@@ -62,7 +62,6 @@ class DashboardViewModel(
                 invoiceUi = invoice?.let {
                     invoiceUiMapper.toUi(
                         invoice = it,
-                        transactions = transactions,
                     )
                 },
             )

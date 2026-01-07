@@ -23,7 +23,7 @@ class CreditCardsViewModel(
 ) : ViewModel() {
 
     private val invoicesFlow = invoiceRepository
-        .observeLatestInvoices()
+        .observeUnpaidInvoices()
         .map { invoices ->
             invoices.associateBy { it.creditCard.id }
         }
@@ -32,7 +32,7 @@ class CreditCardsViewModel(
         creditCardRepository.observeAllCreditCards(),
         transactionRepository.observeAllTransactions(),
         invoicesFlow,
-    ) { creditCards, transactions, invoices ->
+    ) { creditCards, _, invoices ->
         CreditCardsUiState(
             creditCards = creditCards.map { creditCard ->
 
@@ -43,7 +43,6 @@ class CreditCardsViewModel(
                     invoiceUi = invoice?.let {
                         invoiceUiMapper.toUi(
                             invoice = invoice,
-                            transactions = transactions
                         )
                     }
                 )

@@ -12,5 +12,10 @@ val mapperModule = module {
     factory { CreditCardMapper() }
     factory { InvoiceMapper() }
     factory { TransactionMapper() }
-    factory { InvoiceUiMapper(calculateInvoiceUseCase = get()) }
+    factory {
+        InvoiceUiMapper(
+            calculateInvoiceUseCase = get(),
+            calculateAvailableLimitUseCase = get(),
+        )
+    }
 }

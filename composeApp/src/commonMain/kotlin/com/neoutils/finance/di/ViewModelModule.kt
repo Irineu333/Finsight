@@ -203,8 +203,8 @@ val viewModelModule = module {
             creditCardId = it.get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            invoiceUiMapper = get(),
             updateCreditCardUseCase = get(),
+            invoiceUiMapper = get(),
             modalManager = get()
         )
     }

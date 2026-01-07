@@ -1,12 +1,13 @@
 package com.neoutils.finance.ui.mapper
 
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.ui.model.InvoiceUi
 
 class InvoiceUiMapper(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val calculateAvailableLimitUseCase: CalculateAvailableLimitUseCase,
 ) {
     suspend fun toUi(
         invoice: Invoice,
@@ -15,14 +16,15 @@ class InvoiceUiMapper(
         val amount = calculateInvoiceUseCase(invoiceId = invoice.id)
 
         val displayAmount = amount.coerceAtLeast(0.0)
-        val availableLimit = (invoice.creditCard.limit - amount).coerceAtLeast(0.0)
+        val limit = calculateAvailableLimitUseCase(invoice.creditCard)
 
-        if (displayAmount > 0 && invoice.creditCard.limit > 0) {
+        if (displayAmount > 0 && limit.usage != 0.0) {
             return InvoiceUi(
                 invoice = invoice,
                 amount = displayAmount,
-                availableLimit = availableLimit,
-                usagePercentage = (amount / invoice.creditCard.limit).coerceIn(0.0, 1.0),
+                totalUnpaidAmount = limit.totalUnpaidAmount,
+                availableLimit = limit.available,
+                usagePercentage = limit.usage,
                 showProgress = true,
             )
         }
@@ -30,39 +32,8 @@ class InvoiceUiMapper(
         return InvoiceUi(
             invoice = invoice,
             amount = displayAmount,
-            availableLimit = availableLimit,
-            usagePercentage = 0.0,
-            showProgress = false,
-        )
-    }
-
-    fun toUi(
-        invoice: Invoice,
-        transactions: List<Transaction>
-    ): InvoiceUi {
-
-        val amount = calculateInvoiceUseCase(
-            invoiceId = invoice.id,
-            transactions = transactions
-        )
-
-        val displayAmount = amount.coerceAtLeast(0.0)
-        val availableLimit = (invoice.creditCard.limit - amount).coerceAtLeast(0.0)
-
-        if (displayAmount > 0 && invoice.creditCard.limit > 0) {
-            return InvoiceUi(
-                invoice = invoice,
-                amount = displayAmount,
-                availableLimit = availableLimit,
-                usagePercentage = (amount / invoice.creditCard.limit).coerceIn(0.0, 1.0),
-                showProgress = true,
-            )
-        }
-
-        return InvoiceUi(
-            invoice = invoice,
-            amount = displayAmount,
-            availableLimit = availableLimit,
+            totalUnpaidAmount = limit.totalUnpaidAmount,
+            availableLimit = limit.available,
             usagePercentage = 0.0,
             showProgress = false,
         )

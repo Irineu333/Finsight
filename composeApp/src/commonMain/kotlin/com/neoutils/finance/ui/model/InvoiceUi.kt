@@ -11,6 +11,7 @@ private val currentMonth get() = Clock.System.now().toYearMonth()
 
 data class InvoiceUi(
     val amount: Double,
+    val totalUnpaidAmount: Double,
     val availableLimit: Double,
     val usagePercentage: Double,
     val showProgress: Boolean,
@@ -22,4 +23,3 @@ data class InvoiceUi(
     val closingMonth = invoice.closingMonth
     val dueMonth = invoice.dueMonth
 }
-

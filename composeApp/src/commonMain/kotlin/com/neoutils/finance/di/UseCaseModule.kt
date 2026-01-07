@@ -7,6 +7,7 @@ import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finance.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustInitialBalanceUseCase
+import com.neoutils.finance.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase
@@ -62,6 +63,13 @@ val useCaseModules = module {
     factory { CalculateCategorySpendingUseCase() }
 
     factory { CalculateInvoiceOverviewsUseCase() }
+
+    factory {
+        CalculateAvailableLimitUseCase(
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+        )
+    }
 
     factory {
         AddCreditCardUseCase(

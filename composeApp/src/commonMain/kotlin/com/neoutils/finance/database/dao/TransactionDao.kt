@@ -28,16 +28,9 @@ interface TransactionDao {
     suspend fun getAllTransactions(): List<TransactionEntity>
 
     @Query("SELECT * FROM transactions WHERE id = :id")
-    suspend fun getTransactionById(id: Long): TransactionEntity?
-
-    @Query("SELECT * FROM transactions WHERE id = :id")
     fun observeTransactionById(id: Long): Flow<TransactionEntity?>
 
-    @Query("SELECT * FROM transactions WHERE type = :type ORDER BY date DESC")
-    fun observeTransactionsByType(type: TransactionEntity.Type): Flow<List<TransactionEntity>>
 
-    @Query("SELECT * FROM transactions WHERE type = :type AND date = :date LIMIT 1")
-    suspend fun getTransactionByTypeAndDate(type: TransactionEntity.Type, date: LocalDate): TransactionEntity?
 
     @Query("""
         SELECT * FROM transactions
@@ -70,7 +63,4 @@ interface TransactionDao {
         invoiceId: Long?,
         creditCardId: Long?
     ): Flow<List<TransactionEntity>>
-
-    @Query("DELETE FROM transactions")
-    suspend fun deleteAll()
 }

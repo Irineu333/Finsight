@@ -9,7 +9,6 @@ import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.datetime.YearMonth
 
 class InvoiceRepository(
     private val dao: InvoiceDao,
@@ -101,9 +100,9 @@ class InvoiceRepository(
         }
     }
 
-    override fun observeLatestUnpaidInvoice(creditCardId: Long): Flow<Invoice?> {
+    override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> {
         return combine(
-            dao.observeLatestUnpaidInvoice(creditCardId),
+            dao.observeUnpaidInvoice(creditCardId),
             creditCardRepository.observeCreditCardById(creditCardId),
         ) { entity, creditCard ->
             entity?.let {
@@ -117,25 +116,9 @@ class InvoiceRepository(
         }
     }
 
-    override fun observeLatestInvoice(creditCardId: Long): Flow<Invoice?> {
+    override fun observeUnpaidInvoices(): Flow<List<Invoice>> {
         return combine(
-            dao.observeLatestInvoice(creditCardId),
-            creditCardRepository.observeCreditCardById(creditCardId),
-        ) { entity, creditCard ->
-            entity?.let {
-                creditCard?.let {
-                    mapper.toDomain(
-                        entity = entity,
-                        creditCard = creditCard
-                    )
-                }
-            }
-        }
-    }
-
-    override fun observeLatestInvoices(): Flow<List<Invoice>> {
-        return combine(
-            dao.observeLatestInvoices(),
+            dao.observeUnpaidInvoices(),
             creditCardsFlow,
         ) { entities, creditCards ->
             entities.mapNotNull { entity ->
@@ -161,69 +144,19 @@ class InvoiceRepository(
         }
     }
 
-    override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
-        return dao.getOpenInvoice(
-            creditCardId = creditCardId,
-        )?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
-    }
+    override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId)!!
 
-    override suspend fun getLatestUnpaidInvoice(creditCardId: Long): Invoice? {
-        return dao.getLatestUnpaidInvoice(creditCardId)?.let { entity ->
+        return dao.getUnpaidInvoicesByCreditCard(creditCardId).map { entity ->
             mapper.toDomain(
                 entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
-    }
-
-    override suspend fun getLatestInvoice(creditCardId: Long): Invoice? {
-        return dao.getLatestInvoice(creditCardId)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
-    }
-
-    override suspend fun getInvoiceForMonth(creditCardId: Long, month: YearMonth): Invoice? {
-        return dao.getInvoiceForMonth(creditCardId, month)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
-    }
-
-    override suspend fun getByOpeningMonth(creditCardId: Long, openingMonth: YearMonth): Invoice? {
-        return dao.getByOpeningMonth(creditCardId, openingMonth)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
-    }
-
-    override suspend fun getByClosingMonth(creditCardId: Long, closingMonth: YearMonth): Invoice? {
-        return dao.getByClosingMonth(creditCardId, closingMonth)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
+                creditCard = creditCard
             )
         }
     }
 
     override suspend fun getInvoiceById(id: Long): Invoice? {
-        return dao.getById(id)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCardRepository.getCreditCardById(entity.creditCardId)!!
-            )
-        }
+        return observeInvoiceById(id).first()
     }
 
     override suspend fun insert(invoice: Invoice): Long {

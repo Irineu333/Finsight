@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
@@ -25,11 +24,11 @@ class EditCreditCardLimitViewModel(
 
     val uiState = combine(
         creditCardRepository.observeCreditCardById(creditCardId).filterNotNull(),
-        invoiceRepository.observeLatestUnpaidInvoice(creditCardId)
-    ) { creditCard, invoice ->
+        invoiceRepository.observeUnpaidInvoice(creditCardId)
+    ) { creditCard, unpaidInvoice ->
         EditCreditCardLimitUiState(
             limit = creditCard.limit,
-            invoiceUi = invoice?.let {
+            invoiceUi = unpaidInvoice?.let {
                 invoiceUiMapper.toUi(it)
             },
         )

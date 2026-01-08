@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
+import com.neoutils.finance.extension.isAccept
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
@@ -61,7 +62,13 @@ class AddTransactionModal : ModalBottomSheet() {
         val title = rememberTextFieldState()
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
-        var selectedCategory by remember(type) { mutableStateOf<Category?>(null) }
+        var selectedCategory by remember { mutableStateOf<Category?>(null) }
+
+        LaunchedEffect(type) {
+            selectedCategory = selectedCategory?.takeIf {
+                it.type.isAccept(type)
+            }
+        }
 
         val form by remember {
             derivedStateOf {

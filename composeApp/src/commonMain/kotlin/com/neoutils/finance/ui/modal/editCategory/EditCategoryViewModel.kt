@@ -25,6 +25,6 @@ class EditCategoryViewModel(
 
     fun updateCategory(updatedCategory: Category) = viewModelScope.launch {
         repository.update(updatedCategory)
-        modalManager.dismiss()
+        modalManager.dismissAll()
     }
 }

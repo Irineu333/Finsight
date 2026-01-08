@@ -27,6 +27,6 @@ class EditInvoicePaymentViewModel(
             )
         )
 
-        modalManager.dismiss()
+        modalManager.dismissAll()
     }
 }

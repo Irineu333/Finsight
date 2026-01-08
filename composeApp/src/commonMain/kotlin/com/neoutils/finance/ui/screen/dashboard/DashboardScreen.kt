@@ -5,7 +5,7 @@ package com.neoutils.finance.ui.screen.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -320,26 +326,53 @@ private fun DashboardContent(
             }
         }
 
-        items(items = uiState.recents) { transaction ->
-            TransactionCard(
-                transaction = transaction,
-                category = transaction.category,
+        itemsIndexed(items = uiState.recents) { index, transaction ->
+            val isLastWithFade = uiState.hasMoreRecents && index == uiState.recents.lastIndex
+
+            Box(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .fillMaxWidth()
-                    .animateItem(),
-                onClick = {
-                    when (transaction.type) {
-                        Transaction.Type.ADJUSTMENT -> {
-                            modalManager.show(ViewAdjustmentModal(transaction))
+                    .animateItem()
+                    .then(
+                        if (isLastWithFade) {
+                            Modifier
+                                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                .drawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(Color.Black, Color.Transparent)
+                                        ),
+                                        blendMode = BlendMode.DstIn
+                                    )
+                                }
+                        } else {
+                            Modifier
                         }
+                    )
+            ) {
+                TransactionCard(
+                    transaction = transaction,
+                    category = transaction.category,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        if (isLastWithFade) {
+                            openTransactions(null, null)
+                        } else {
+                            when (transaction.type) {
+                                Transaction.Type.ADJUSTMENT -> {
+                                    modalManager.show(ViewAdjustmentModal(transaction))
+                                }
 
-                        else -> {
-                            modalManager.show(ViewTransactionModal(transaction))
+                                else -> {
+                                    modalManager.show(ViewTransactionModal(transaction))
+                                }
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
 
         item {

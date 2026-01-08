@@ -16,8 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.CreditCardUI
 import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.LocalNavigator
+import com.neoutils.finance.ui.component.NavigationAction
 import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardModal
-import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -39,6 +40,7 @@ private fun CreditCardsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val navigator = LocalNavigator.current
 
     Scaffold(
         topBar = {
@@ -91,10 +93,8 @@ private fun CreditCardsContent(
                         .fillMaxWidth()
                         .animateItem(),
                     onClick = {
-                        modalManager.show(
-                            ViewCreditCardModal(
-                                creditCard = creditCardUi.creditCard,
-                            )
+                        navigator.navigate(
+                            NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
                         )
                     }
                 )
@@ -102,3 +102,4 @@ private fun CreditCardsContent(
         }
     }
 }
+

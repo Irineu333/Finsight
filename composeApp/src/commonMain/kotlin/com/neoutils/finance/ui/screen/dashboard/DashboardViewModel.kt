@@ -68,7 +68,8 @@ class DashboardViewModel(
         }
 
         DashboardUiState(
-            recents = stats.transactions.take(3),
+            recents = stats.transactions.take(4),
+            hasMoreRecents = stats.transactions.size > 3,
             balance = DashboardUiState.BalanceStats(
                 income = stats.income,
                 expense = stats.expense,
@@ -78,8 +79,8 @@ class DashboardViewModel(
                 )
             ),
             yearMonth = currentMonth,
-            categorySpending = categorySpending.take(3),
-            creditCards = creditCardsWithBills.take(3),
+            categorySpending = categorySpending,
+            creditCards = creditCardsWithBills,
         )
     }.stateIn(
         scope = viewModelScope,

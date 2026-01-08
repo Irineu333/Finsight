@@ -14,6 +14,7 @@ import kotlin.time.ExperimentalTime
 
 data class DashboardUiState(
     val recents: List<Transaction> = emptyList(),
+    val hasMoreRecents: Boolean = false,
     val balance: BalanceStats = BalanceStats(),
     val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val categorySpending: List<CategorySpending> = emptyList(),

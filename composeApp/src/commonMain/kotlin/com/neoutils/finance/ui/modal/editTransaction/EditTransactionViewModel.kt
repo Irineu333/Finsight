@@ -67,6 +67,6 @@ class EditTransactionViewModel(
         form: TransactionForm
     ) = viewModelScope.launch {
         transactionRepository.update(form.build(id = transaction.id))
-        modalManager.dismiss()
+        modalManager.dismissAll()
     }
 }

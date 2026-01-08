@@ -25,7 +25,9 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,9 +41,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Category
-import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.ui.component.CategorySelector
 import com.neoutils.finance.ui.component.CreditCardSelector
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -53,7 +54,6 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
-import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -76,7 +76,28 @@ class EditTransactionModal(
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember(type) { mutableStateOf(transaction.category) }
+        var selectedCategory by remember { mutableStateOf(transaction.category) }
+
+        LaunchedEffect(type) {
+            selectedCategory = selectedCategory?.takeIf {
+                it.type.isAccept(type)
+            }
+        }
+
+        val form by remember {
+            derivedStateOf {
+                TransactionForm.from(
+                    type = type,
+                    amount = amount.text.toString(),
+                    title = title.text.toString(),
+                    date = date.text.toString(),
+                    category = selectedCategory,
+                    target = target,
+                    creditCard = uiState.selectedCreditCard,
+                    invoice = uiState.currentInvoice,
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -218,30 +239,10 @@ class EditTransactionModal(
             Button(
                 onClick = {
                     viewModel.updateTransaction(
-                        transaction = transaction.copy(
-                            type = type,
-                            amount = parseMoneyToDouble(amount.text.toString()),
-                            title = title.text.toString().ifBlank { null },
-                            date = formats.dayMonthYear.parse(date.text.toString()),
-                            category = selectedCategory?.takeIf { it.type.isAccept(type) },
-                            target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT,
-                            creditCard = uiState.selectedCreditCard?.takeIf { target.isCreditCard && type.isExpense },
-                            invoice = uiState.currentInvoice.takeIf { target.isCreditCard && type.isExpense },
-                        )
+                        form = form
                     )
                 },
-                enabled = showSaveButton(
-                    amount = amount.text.toString(),
-                    title = title.text.toString(),
-                    date = date.text.toString(),
-                    category = selectedCategory,
-                    target = target,
-                    creditCard = uiState.selectedCreditCard,
-                    type = type,
-                    invoice = uiState.currentInvoice,
-                    minDate = uiState.minDate.takeIf { target.isCreditCard },
-                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
-                ),
+                enabled = form.isValid(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -330,46 +331,6 @@ class EditTransactionModal(
         }
     }
 
-    private fun showSaveButton(
-        amount: String,
-        date: String,
-        title: String,
-        type: Transaction.Type,
-        target: Transaction.Target,
-        category: Category?,
-        creditCard: CreditCard?,
-        invoice: Invoice?,
-        minDate: LocalDate?,
-        maxDate: LocalDate?
-    ): Boolean {
-
-        if (amount.isEmpty()) return false
-
-        if (parseMoneyToDouble(amount) == 0.0) return false
-
-        if (date.isEmpty()) return false
-
-        if (title.isEmpty() && category == null) return false
-
-        if (target.isAccount) return true
-
-        if (type != Transaction.Type.EXPENSE) return false
-
-        val invoice = invoice ?: return false
-        val creditCard = creditCard ?: return false
-
-        if (invoice.status != Invoice.Status.OPEN) return false
-
-        if (creditCard.id != invoice.creditCard.id) return false
-
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
-
-        if (minDate != null && parsedDate < minDate) return false
-        if (maxDate != null && parsedDate > maxDate) return false
-
-        return true
-    }
-
     private fun formatMoneyFromDouble(value: Double): String {
         val cents = (value * 100).toLong()
         val reais = cents / 100
@@ -382,15 +343,5 @@ class EditTransactionModal(
             .reversed()
 
         return "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly = formatted
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
     }
 }

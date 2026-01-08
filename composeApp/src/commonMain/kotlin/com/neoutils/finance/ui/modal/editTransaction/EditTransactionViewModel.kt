@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -63,9 +64,9 @@ class EditTransactionViewModel(
     }
 
     fun updateTransaction(
-        transaction: Transaction
+        form: TransactionForm
     ) = viewModelScope.launch {
-        transactionRepository.update(transaction)
+        transactionRepository.update(form.build(id = transaction.id))
         modalManager.dismiss()
     }
 }

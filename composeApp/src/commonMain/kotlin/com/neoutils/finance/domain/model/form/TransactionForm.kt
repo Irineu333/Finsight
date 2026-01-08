@@ -35,11 +35,12 @@ data class TransactionForm(
         maximumValue = currentDate,
     )
 
-    fun build(): Transaction {
+    fun build(id: Long = 0): Transaction {
 
         check(isValid()) { "Invalid Transaction" }
 
         return Transaction(
+            id = id,
             type = type,
             amount = parseMoneyToDouble(amount),
             title = title,

@@ -21,9 +21,11 @@ data class InvoiceUi(
     val closingDate: LocalDate,
 ) {
     val id = invoice.id
+    val creditCard = invoice.creditCard
     val isClosable = invoice.status.isOpen && currentDate >= closingDate
     val status = invoice.status
     val closingMonth = invoice.closingMonth
     val dueMonth = invoice.dueMonth
     val dueDate = invoice.dueDate
+    val label = invoice.label
 }

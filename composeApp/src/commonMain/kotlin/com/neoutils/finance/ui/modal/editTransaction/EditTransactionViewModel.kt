@@ -12,12 +12,14 @@ import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -27,31 +29,34 @@ class EditTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val invoiceUiMapper: InvoiceUiMapper,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
 
-    private val currentInvoice = selectedCreditCard.flatMapLatest { card ->
+    private val currentInvoiceUi = selectedCreditCard.flatMapLatest { card ->
         if (card != null) {
             invoiceRepository.observeOpenInvoice(card.id)
         } else {
             flowOf(null)
         }
+    }.mapLatest { invoice ->
+        invoice?.let { invoiceUiMapper.toUi(it) }
     }
 
     val uiState = combine(
         categoryRepository.observeAllCategories(),
         creditCardRepository.observeAllCreditCards(),
         selectedCreditCard,
-        currentInvoice
-    ) { categories, creditCards, selectedCard, invoice ->
+        currentInvoiceUi
+    ) { categories, creditCards, selectedCard, invoiceUi ->
         EditTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
-            currentInvoice = invoice
+            currentInvoiceUi = invoiceUi
         )
     }.stateIn(
         scope = viewModelScope,

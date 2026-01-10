@@ -27,6 +27,7 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.extension.isAccept
+import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
@@ -133,7 +134,8 @@ class AddTransactionModal : ModalBottomSheet() {
             ) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
-                    selectedCreditCard = uiState.selectedCreditCard,
+                    creditCard = uiState.selectedCreditCard,
+                    invoice = uiState.currentInvoiceUi,
                     onCreditCardSelected = { viewModel.selectCreditCard(it) },
                     modifier = Modifier
                         .padding(top = 8.dp)

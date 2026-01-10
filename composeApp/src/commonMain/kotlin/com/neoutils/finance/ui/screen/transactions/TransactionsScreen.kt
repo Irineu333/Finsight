@@ -125,15 +125,17 @@ private fun TransactionsContent(
                 )
             }
 
-            item {
-                FiltersRow(
-                    uiState = uiState,
-                    onAction = onAction,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                        .animateItem()
-                )
+            if (uiState.transactions.isNotEmpty()) {
+                item {
+                    FiltersRow(
+                        uiState = uiState,
+                        onAction = onAction,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .animateItem()
+                    )
+                }
             }
 
             uiState.transactions.forEach { (date, transactions) ->

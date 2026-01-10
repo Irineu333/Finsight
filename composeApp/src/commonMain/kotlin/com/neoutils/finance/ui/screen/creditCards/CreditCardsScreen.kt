@@ -137,15 +137,17 @@ private fun CreditCardsContent(
                 }
             }
 
-            item {
-                FiltersRow(
-                    uiState = uiState,
-                    onAction = onAction,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .fillMaxWidth()
-                        .animateItem()
-                )
+            if (uiState.creditCards.isNotEmpty()) {
+                item {
+                    FiltersRow(
+                        uiState = uiState,
+                        onAction = onAction,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .animateItem()
+                    )
+                }
             }
 
             uiState.transactions.forEach { (date, transactions) ->

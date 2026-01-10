@@ -145,7 +145,7 @@ class InvoiceRepository(
     }
 
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId)!!
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return emptyList()
 
         return dao.getUnpaidInvoicesByCreditCard(creditCardId).map { entity ->
             mapper.toDomain(

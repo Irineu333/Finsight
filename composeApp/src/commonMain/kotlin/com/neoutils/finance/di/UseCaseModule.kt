@@ -1,5 +1,6 @@
 package com.neoutils.finance.di
 
+import com.neoutils.finance.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finance.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finance.domain.usecase.AddTransactionUseCase
 import com.neoutils.finance.domain.usecase.AdvanceInvoicePaymentUseCase
@@ -139,6 +140,12 @@ val useCaseModules = module {
     factory {
         AddTransactionUseCase(
             transactionRepository = get(),
+        )
+    }
+
+    factory {
+        ValidateCategoryNameUseCase(
+            repository = get(),
         )
     }
 }

@@ -25,43 +25,39 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.icons.CategoryLazyIcon
-import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.util.stringUiText
+import com.neoutils.finance.util.CategoryIcon
+import com.neoutils.finance.util.Validation
+import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AddCategoryModal(
-    private val initialType: Category.Type = Category.Type.EXPENSE
-) : ModalBottomSheet() {
-
-    private val duplicatedNameError = @Composable {
-        Text("Nome duplicado")
-    }
+class AddCategoryModal : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<AddCategoryViewModel> { parametersOf(initialType) }
+        val viewModel = koinViewModel<AddCategoryViewModel>()
 
-        val name = rememberTextFieldState()
-        var selectedIcon by remember { mutableStateOf(CategoryIcon.SHOPPING_CART) }
-        var selectedType by remember { mutableStateOf(initialType) }
-        var isIconGridExpanded by remember(selectedIcon) { mutableStateOf(false) }
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val existingCategories by viewModel.categories.collectAsState()
+        val name = rememberTextFieldState(uiState.name.text)
 
-        val isDuplicateName by remember {
-            derivedStateOf {
-                existingCategories.any {
-                    it.name.equals(name.text.toString().trim(), ignoreCase = true)
+        var isIconGridExpanded by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { name.text.toString() }
+                .drop(1)
+                .collect { name ->
+                    viewModel.onAction(
+                        AddCategoryAction.NameChanged(name)
+                    )
                 }
-            }
         }
 
         Column(
@@ -80,8 +76,12 @@ class AddCategoryModal(
             )
 
             TypeToggle(
-                selectedType = selectedType,
-                onTypeSelected = { selectedType = it }
+                selectedType = uiState.selectedType,
+                onTypeSelected = { category ->
+                    viewModel.onAction(
+                        AddCategoryAction.SelectedType(category)
+                    )
+                }
             )
 
             OutlinedTextField(
@@ -89,15 +89,37 @@ class AddCategoryModal(
                 label = {
                     Text(text = "Nome")
                 },
+                trailingIcon = when (uiState.name.validation) {
+                    Validation.Validating -> {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+
+                    else -> null
+                },
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done
                 ),
-                isError = isDuplicateName,
-                supportingText = duplicatedNameError.takeIf { isDuplicateName },
+                isError = uiState.name.validation is Validation.Error,
+                supportingText = when (val validation = uiState.name.validation) {
+                    is Validation.Error -> {
+                        {
+                            Text(text = stringUiText(validation.error))
+                        }
+                    }
+
+                    else -> null
+                },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .animateContentSize()
+                    .fillMaxWidth(),
             )
 
             Text(
@@ -108,10 +130,14 @@ class AddCategoryModal(
 
             IconGrid(
                 icons = CategoryIcon.entries,
-                selectedIcon = selectedIcon,
-                selectedType = selectedType,
+                selectedIcon = uiState.selectedIcon,
+                selectedType = uiState.selectedType,
                 isExpanded = isIconGridExpanded,
-                onIconSelected = { selectedIcon = it },
+                onIconSelected = { category ->
+                    viewModel.onAction(
+                        AddCategoryAction.IconChanged(category)
+                    )
+                },
                 onToggleExpand = { isIconGridExpanded = !isIconGridExpanded }
             )
 
@@ -119,16 +145,11 @@ class AddCategoryModal(
 
             Button(
                 onClick = {
-                    viewModel.addCategory(
-                        category = Category(
-                            name = name.text.toString(),
-                            icon = CategoryLazyIcon(selectedIcon.key),
-                            type = selectedType,
-                            createdAt = Clock.System.now().toEpochMilliseconds()
-                        )
+                    viewModel.onAction(
+                        AddCategoryAction.Submit
                     )
                 },
-                enabled = name.text.isNotBlank() && !isDuplicateName,
+                enabled = uiState.canSubmit,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

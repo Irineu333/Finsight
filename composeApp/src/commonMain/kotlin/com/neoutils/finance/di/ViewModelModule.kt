@@ -28,6 +28,7 @@ import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
+import com.neoutils.finance.util.DebounceManager
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import org.koin.core.module.dsl.viewModel
@@ -36,6 +37,8 @@ import org.koin.dsl.module
 val viewModelModule = module {
 
     single { ModalManager() }
+
+    factory { DebounceManager(delayMillis = 500L) }
 
     viewModel {
         ViewCategoryViewModel(
@@ -130,9 +133,10 @@ val viewModelModule = module {
 
     viewModel {
         AddCategoryViewModel(
-            initialType = it.get(),
             repository = get(),
-            modalManager = get()
+            validateCategoryName = get(),
+            modalManager = get(),
+            debounceManager = get()
         )
     }
 

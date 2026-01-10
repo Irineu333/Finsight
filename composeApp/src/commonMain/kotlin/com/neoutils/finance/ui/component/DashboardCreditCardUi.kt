@@ -29,7 +29,6 @@ data class CreditCardUiConfig(
     val canPayInvoice: Boolean,
     val canCloseInvoice: Boolean,
     val canAdvanceInvoice: Boolean,
-    val canOpenInvoice: Boolean,
 ) {
     companion object {
         fun from(creditCardUi: CreditCardUi): CreditCardUiConfig {
@@ -37,7 +36,6 @@ data class CreditCardUiConfig(
             val invoice = creditCardUi.invoiceUi
 
             return CreditCardUiConfig(
-                canOpenInvoice = invoice == null,
                 canEditAmount = invoice != null,
                 canEditLimit = true,
                 canCloseInvoice = invoice?.isClosable == true,
@@ -56,7 +54,6 @@ fun DashboardCreditCardUi(
     onCloseInvoice: () -> Unit,
     onPayInvoice: () -> Unit,
     onAdvancePayment: () -> Unit,
-    onOpenInvoice: () -> Unit,
     onEditAmount: () -> Unit,
     onEditLimit: () -> Unit,
     modifier: Modifier = Modifier,
@@ -261,26 +258,6 @@ fun DashboardCreditCardUi(
                     ) {
                         Text(
                             text = "Fechar Fatura",
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-
-                if (config.canOpenInvoice) {
-                    OutlinedButton(
-                        onClick = onOpenInvoice,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.primary
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = colorScheme.primary.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Text(
-                            text = "Abrir Fatura",
                             fontSize = 14.sp
                         )
                     }

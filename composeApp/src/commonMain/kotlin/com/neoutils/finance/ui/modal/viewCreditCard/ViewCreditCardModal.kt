@@ -30,7 +30,6 @@ import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
-import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.theme.Expense
@@ -344,29 +343,6 @@ class ViewCreditCardModal(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    }
-                } ?: run {
-                    Button(
-                        onClick = {
-                            modalManager.show(
-                                OpenInvoiceModal(uiState.creditCard)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(12.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CreditCard,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Abrir Fatura",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 }
             }

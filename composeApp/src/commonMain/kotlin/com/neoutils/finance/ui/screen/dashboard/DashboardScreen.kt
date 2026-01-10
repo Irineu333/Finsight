@@ -40,7 +40,6 @@ import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
-import com.neoutils.finance.ui.modal.openInvoice.OpenInvoiceModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
@@ -217,13 +216,6 @@ private fun DashboardContent(
                                         )
                                     )
                                 }
-                            },
-                            onOpenInvoice = {
-                                modalManager.show(
-                                    OpenInvoiceModal(
-                                        creditCardUi.creditCard
-                                    )
-                                )
                             },
                             onEditAmount = {
                                 creditCardUi.invoiceUi?.let {

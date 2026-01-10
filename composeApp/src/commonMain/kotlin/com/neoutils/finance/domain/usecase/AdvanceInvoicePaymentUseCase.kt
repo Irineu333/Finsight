@@ -1,14 +1,22 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
 import com.neoutils.finance.domain.exception.PayCreditCardBillException
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private val errors = PayInvoicePaymentErrors()
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvanceInvoicePaymentUseCase(
     private val repository: ITransactionRepository,
@@ -26,6 +34,14 @@ class AdvanceInvoicePaymentUseCase(
 
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
             ?: return Result.failure(PayCreditCardBillException(errors.invoiceNotFound))
+
+        if (date < invoice.openingDate || date > invoice.closingDate) {
+            return Result.failure(PayCreditCardBillException(errors.dateOutsideInvoicePeriod))
+        }
+
+        if (date > currentDate) {
+            return Result.failure(PayCreditCardBillException(errors.dateInFuture))
+        }
 
         val currentBillAmount = calculateInvoiceUseCase(invoiceId)
 

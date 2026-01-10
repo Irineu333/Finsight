@@ -5,6 +5,7 @@
 
 package com.neoutils.finance.ui.screen.invoiceTransactions
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -105,11 +106,10 @@ private fun InvoiceTransactionsContent(
                     }
                 },
                 actions = {
-                    // Get credit card from first invoice (all invoices have same credit card)
                     val creditCard = uiState.invoices.firstOrNull()?.invoice?.creditCard
                     if (creditCard != null) {
                         var menuExpanded by remember { mutableStateOf(false) }
-                        
+
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
@@ -117,7 +117,7 @@ private fun InvoiceTransactionsContent(
                                     contentDescription = "Menu",
                                 )
                             }
-                            
+
                             DropdownMenu(
                                 expanded = menuExpanded,
                                 onDismissRequest = { menuExpanded = false }
@@ -191,7 +191,7 @@ private fun InvoiceTransactionsContent(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
-                            .animateItem()
+                            .animateContentSize()
                     )
                 }
             }
@@ -236,6 +236,7 @@ private fun InvoiceTransactionsContent(
                                 Transaction.Type.ADJUSTMENT -> {
                                     modalManager.show(ViewAdjustmentModal(transaction))
                                 }
+
                                 else -> {
                                     modalManager.show(ViewTransactionModal(transaction))
                                 }
@@ -316,16 +317,23 @@ private fun InvoiceSummaryItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = summary.dueMonthLabel,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
-                )
+                Column {
+                    Text(
+                        text = summary.dueMonthLabel,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                    Text(
+                        text = summary.periodLabel,
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Surface(
                     color = summary.status.color.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = summary.status.label,
@@ -426,7 +434,7 @@ private fun InvoiceActions(
 
         if (summary.isClosable) {
             OutlinedButton(
-                onClick = { modalManager.show(CloseInvoiceModal(invoice)) },
+                onClick = { modalManager.show(CloseInvoiceModal(summary.invoiceId, summary.closingDate)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(

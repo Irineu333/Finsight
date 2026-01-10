@@ -26,11 +26,11 @@ data class CreditCard(
             throw RegisterCreditCardException(creditCardErrors.negativeLimit)
         }
 
-        if (closingDay !in 1..28) {
+        if (closingDay !in 1..31) {
             throw RegisterCreditCardException(creditCardErrors.invalidClosingDay)
         }
 
-        if (dueDay !in 1..28) {
+        if (dueDay !in 1..31) {
             throw RegisterCreditCardException(creditCardErrors.invalidDueDay)
         }
     }

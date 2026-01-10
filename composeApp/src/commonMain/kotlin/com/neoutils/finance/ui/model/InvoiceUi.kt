@@ -3,11 +3,13 @@
 package com.neoutils.finance.ui.model
 
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
-private val currentMonth get() = Clock.System.now().toYearMonth()
+private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 data class InvoiceUi(
     val amount: Double,
@@ -16,10 +18,12 @@ data class InvoiceUi(
     val usagePercentage: Double,
     val showProgress: Boolean,
     val invoice: Invoice,
+    val closingDate: LocalDate,
 ) {
     val id = invoice.id
-    val isClosable = invoice.let { it.status.isOpen && currentMonth >= it.closingMonth }
+    val isClosable = invoice.status.isOpen && currentDate >= closingDate
     val status = invoice.status
     val closingMonth = invoice.closingMonth
     val dueMonth = invoice.dueMonth
+    val dueDate = invoice.dueDate
 }

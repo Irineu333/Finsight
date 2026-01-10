@@ -7,6 +7,7 @@ import com.neoutils.finance.domain.exception.RegisterCreditCardException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.domain.repository.ICreditCardRepository
+import com.neoutils.finance.extension.effectiveDay
 import com.neoutils.finance.extension.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -38,13 +39,13 @@ class AddCreditCardUseCase(
             )
         }
 
-        if (form.closingDay !in 1..28) {
+        if (form.closingDay !in 1..31) {
             return Result.failure(
                 RegisterCreditCardException(errors.invalidClosingDay)
             )
         }
 
-        if (form.dueDay == null || form.dueDay !in 1..28) {
+        if (form.dueDay == null || form.dueDay !in 1..31) {
             return Result.failure(
                 RegisterCreditCardException(errors.invalidDueDay)
             )
@@ -63,8 +64,9 @@ class AddCreditCardUseCase(
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val effectiveClosingDay = now.yearMonth.effectiveDay(creditCard.closingDay)
 
-        if (now.day < creditCard.closingDay) {
+        if (now.day < effectiveClosingDay) {
             openInvoiceUseCase(
                 creditCardId = creditCard.id,
                 openingMonth = now.yearMonth.minusMonth()

@@ -28,13 +28,6 @@ data class TransactionForm(
     val creditCard: CreditCard?,
     val invoice: Invoice?
 ) {
-
-    val minDate = invoice?.openingMonth?.firstDay
-
-    val maxDate = invoice?.closingMonth?.lastDay?.coerceAtMost(
-        maximumValue = currentDate,
-    )
-
     fun build(id: Long = 0): Transaction {
 
         check(isValid()) { "Invalid Transaction" }
@@ -62,6 +55,11 @@ data class TransactionForm(
 
         if (title.isNullOrEmpty() && category == null) return false
 
+        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+
+        // Não pode ser no futuro
+        if (parsedDate > currentDate) return false
+
         if (target.isAccount) return true
 
         // Credit Card
@@ -75,10 +73,8 @@ data class TransactionForm(
 
         if (creditCard.id != invoice.creditCard.id) return false
 
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
-
-        if (minDate != null && parsedDate < minDate) return false
-        if (maxDate != null && parsedDate > maxDate) return false
+        if (parsedDate < invoice.openingDate) return false
+        if (parsedDate > invoice.closingDate) return false
 
         return true
     }

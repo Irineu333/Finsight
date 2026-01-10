@@ -26,6 +26,7 @@ class InvoiceUiMapper(
                 availableLimit = limit.available,
                 usagePercentage = limit.usage,
                 showProgress = true,
+                closingDate = invoice.closingDate,
             )
         }
 
@@ -36,6 +37,7 @@ class InvoiceUiMapper(
             availableLimit = limit.available,
             usagePercentage = 0.0,
             showProgress = false,
+            closingDate = invoice.closingDate,
         )
     }
 }

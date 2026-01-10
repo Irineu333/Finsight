@@ -62,13 +62,10 @@ class AdvancePaymentModal(
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
-        val minDate = invoice.openingMonth.firstDay
+        val maxDate = invoice.closingDate.coerceAtMost(currentDate)
 
-        val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
-            maximumValue = currentDate,
-        )
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate.coerceIn(invoice.openingDate, maxDate)))
 
         Column(
             modifier = Modifier
@@ -124,7 +121,7 @@ class AdvancePaymentModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = minDate,
+                                    minDate = invoice.openingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
@@ -159,7 +156,7 @@ class AdvancePaymentModal(
                 enabled = isValidPayment(
                     amount = amount.text.toString(),
                     date = date.text.toString(),
-                    minDate = minDate,
+                    minDate = invoice.openingDate,
                     maxDate = maxDate
                 ),
                 modifier = Modifier.fillMaxWidth(),

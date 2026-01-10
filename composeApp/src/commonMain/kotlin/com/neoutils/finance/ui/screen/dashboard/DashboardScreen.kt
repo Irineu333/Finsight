@@ -195,7 +195,7 @@ private fun DashboardContent(
                             },
                             onCloseInvoice = {
                                 creditCardUi.invoiceUi?.let {
-                                    modalManager.show(CloseInvoiceModal(it.invoice))
+                                    modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
                                 }
                             },
                             onPayInvoice = {

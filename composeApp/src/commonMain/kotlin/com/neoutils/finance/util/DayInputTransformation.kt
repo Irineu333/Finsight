@@ -5,7 +5,7 @@ import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 
-class DayInputTransformation(private val minDay: Int = 1, private val maxDay: Int = 28) :
+class DayInputTransformation(private val minDay: Int = 1, private val maxDay: Int = 31) :
         InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {

@@ -37,7 +37,6 @@ import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
 import com.neoutils.finance.util.DateFormats
-import kotlinx.datetime.onDay
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -141,13 +140,13 @@ class ViewCreditCardModal(
             uiState.invoiceUi?.let { invoice ->
                 DetailRow(
                     label = "Fechamento",
-                    value = formats.dayMonthYear.format(invoice.closingMonth.onDay(creditCard.closingDay)),
+                    value = formats.dayMonthYear.format(invoice.closingDate),
                     modifier = Modifier.padding(top = 16.dp)
                 )
 
                 DetailRow(
                     label = "Vencimento",
-                    value = formats.dayMonthYear.format(invoice.dueMonth.onDay(creditCard.dueDay)),
+                    value = formats.dayMonthYear.format(invoice.dueDate),
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -268,7 +267,7 @@ class ViewCreditCardModal(
 
                     if (ui.isClosable) {
                         OutlinedButton(
-                            onClick = { modalManager.show(CloseInvoiceModal(ui.invoice)) },
+                            onClick = { modalManager.show(CloseInvoiceModal(ui.id, ui.closingDate)) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.outlinedButtonColors(

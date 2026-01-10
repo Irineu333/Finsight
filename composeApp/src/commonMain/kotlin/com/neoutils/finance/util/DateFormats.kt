@@ -49,4 +49,8 @@ class DateFormats(
     val dayMonthYear = LocalDate.Format {
         byUnicodePattern("dd/MM/yyyy")
     }
+
+    val dayMonth = LocalDate.Format {
+        byUnicodePattern("dd/MM")
+    }
 }

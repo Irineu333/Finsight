@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.ui.modal.editTransaction
 
 import androidx.compose.animation.AnimatedVisibility
@@ -54,8 +56,15 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.DateInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class EditTransactionModal(
     private val transaction: Transaction,
@@ -208,11 +217,21 @@ class EditTransactionModal(
                 trailingIcon = {
                     IconButton(
                         onClick = {
+                            val minDate = if (target.isCreditCard) {
+                                uiState.currentInvoice?.openingDate
+                            } else null
+
+                            val maxDate = if (target.isCreditCard) {
+                                uiState.currentInvoice?.closingDate?.coerceAtMost(currentDate)
+                            } else {
+                                currentDate
+                            }
+
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = uiState.minDate.takeIf { target.isCreditCard },
-                                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
+                                    minDate = minDate,
+                                    maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))

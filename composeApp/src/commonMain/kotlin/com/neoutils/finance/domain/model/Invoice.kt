@@ -3,6 +3,7 @@
 package com.neoutils.finance.domain.model
 
 import androidx.compose.ui.graphics.Color
+import com.neoutils.finance.extension.safeOnDay
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -18,6 +19,10 @@ data class Invoice(
     val closedAt: Long? = null,
     val paidAt: Long? = null
 ) {
+    val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)
+    val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
+    val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
+
     enum class Status(
         val label: String,
         val color: Color,

@@ -10,15 +10,21 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.util.DateFormats
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
     creditCardId: Long,
@@ -87,6 +93,8 @@ class InvoiceTransactionsViewModel(
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
                     .sumOf { it.amount }
 
+                val isClosable = invoice.status == Invoice.Status.OPEN && currentDate >= invoice.closingDate
+
                 InvoiceTransactionsUiState.InvoiceSummary(
                     invoice = invoice,
                     expense = expense,
@@ -96,6 +104,9 @@ class InvoiceTransactionsViewModel(
                         .filterNot { it.type.isInvoicePayment }
                         .sumOf { it.creditAmount },
                     dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
+                    periodLabel = "${formats.dayMonth.format(invoice.openingDate)} até ${formats.dayMonth.format(invoice.closingDate)}",
+                    closingDate = invoice.closingDate,
+                    isClosable = isClosable,
                 )
             },
             selectedInvoiceIndex = index,

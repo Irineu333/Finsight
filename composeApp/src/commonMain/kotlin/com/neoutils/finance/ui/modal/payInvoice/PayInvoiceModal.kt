@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.extension.safeOnDay
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -62,13 +63,9 @@ class PayInvoiceModal(
 
         val amount = formatMoneyFromDouble(currentBillAmount)
 
-        val minDate = invoice.closingMonth.firstDay
+        val maxDate = invoice.dueDate.coerceAtMost(currentDate)
 
-        val maxDate = invoice.closingMonth.lastDay.coerceAtMost(
-            maximumValue = currentDate
-        )
-
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
+        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate.coerceIn(invoice.closingDate, maxDate)))
 
         Column(
             modifier = Modifier
@@ -122,7 +119,7 @@ class PayInvoiceModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = minDate,
+                                    minDate = invoice.closingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
@@ -155,7 +152,7 @@ class PayInvoiceModal(
                 },
                 enabled = isValidPayment(
                     date = date.text.toString(),
-                    minDate = minDate,
+                    minDate = invoice.closingDate,
                     maxDate = maxDate
                 ),
                 modifier = Modifier.fillMaxWidth(),

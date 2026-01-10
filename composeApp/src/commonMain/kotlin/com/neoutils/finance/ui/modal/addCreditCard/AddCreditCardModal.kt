@@ -19,9 +19,14 @@ import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.util.DayInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
+import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
 
 class AddCreditCardModal : ModalBottomSheet() {
+
+    companion object {
+        private const val DEFAULT_DAYS_DIFFERENCE = 8
+    }
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -29,21 +34,51 @@ class AddCreditCardModal : ModalBottomSheet() {
 
         val name = rememberTextFieldState()
         val limit = rememberTextFieldState("R$ 0,00")
-        val closingDay = rememberTextFieldState()
 
-        val parsedClosingDay by remember {
-            derivedStateOf { closingDay.text.toString().toIntOrNull() }
+        val closingDayField = rememberTextFieldState()
+        val dueDayField = rememberTextFieldState()
+
+        var closingDayCalc by remember { mutableStateOf<Int?>(null) }
+        var dueDayCalc by remember { mutableStateOf<Int?>(null) }
+
+        val closingDay by remember {
+            derivedStateOf {
+                closingDayField.text.toString().toIntOrNull() ?: closingDayCalc
+            }
         }
 
-        val dueDay = rememberTextFieldState()
+        val dueDay by remember {
+            derivedStateOf {
+                dueDayField.text.toString().toIntOrNull() ?: dueDayCalc
+            }
+        }
 
-        val parsedDueDay by remember {
-            derivedStateOf { dueDay.text.toString().toIntOrNull() }
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                closingDayField.text.toString()
+            }.collect {
+                val closingDay = it.toIntOrNull()
+                dueDayCalc = closingDay?.let {
+                    calculateDueDay(closingDay)
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                dueDayField.text.toString()
+            }.collect {
+                val dueDay = it.toIntOrNull()
+                closingDayCalc = dueDay?.let {
+                    calculateClosingDay(dueDay)
+                }
+            }
         }
 
         Column(
-            modifier =
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp),
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -80,12 +115,20 @@ class AddCreditCardModal : ModalBottomSheet() {
             )
 
             OutlinedTextField(
-                state = closingDay,
+                state = closingDayField,
+                labelPosition = TextFieldLabelPosition.Attached(
+                    alwaysMinimize = closingDayCalc != null
+                ),
                 label = { Text(text = "Dia de Fechamento") },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
+                placeholder = {
+                    if (closingDayCalc != null) {
+                        Text(text = closingDayCalc.toString())
+                    }
+                },
                 inputTransformation = DayInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
@@ -93,12 +136,20 @@ class AddCreditCardModal : ModalBottomSheet() {
             )
 
             OutlinedTextField(
-                state = dueDay,
+                state = dueDayField,
+                labelPosition = TextFieldLabelPosition.Attached(
+                    alwaysMinimize = dueDayCalc != null
+                ),
                 label = { Text(text = "Dia de Vencimento") },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
+                placeholder = {
+                    if (dueDayCalc != null) {
+                        Text(text = dueDayCalc.toString())
+                    }
+                },
                 inputTransformation = DayInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
@@ -113,12 +164,12 @@ class AddCreditCardModal : ModalBottomSheet() {
                         CreditCardForm(
                             name = name.text.toString().trim(),
                             limit = parseMoneyToDouble(limit.text.toString()),
-                            closingDay = parsedClosingDay,
-                            dueDay = parsedDueDay,
+                            closingDay = closingDay,
+                            dueDay = dueDay,
                         )
                     )
                 },
-                enabled = name.text.isNotBlank() && parsedClosingDay != null && parsedDueDay != null,
+                enabled = name.text.isNotBlank() && closingDay != null && dueDay != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -129,6 +180,14 @@ class AddCreditCardModal : ModalBottomSheet() {
                 )
             }
         }
+    }
+
+    private fun calculateDueDay(closingDay: Int): Int {
+        return ((closingDay - 1 + DEFAULT_DAYS_DIFFERENCE) % 31) + 1
+    }
+
+    private fun calculateClosingDay(dueDay: Int): Int {
+        return ((dueDay - 1 - DEFAULT_DAYS_DIFFERENCE + 31) % 31) + 1
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {

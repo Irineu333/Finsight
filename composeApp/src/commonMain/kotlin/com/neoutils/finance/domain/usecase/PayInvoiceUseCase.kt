@@ -1,12 +1,22 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.errors.PayInvoiceErrors
 import com.neoutils.finance.domain.exception.PayInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
+import com.neoutils.finance.extension.safeOnDay
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private val errors = PayInvoiceErrors()
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class PayInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
@@ -29,6 +39,18 @@ class PayInvoiceUseCase(
 
         if (invoice.status != Invoice.Status.CLOSED) {
             return Result.failure(PayInvoiceException(errors.cannotPayOpenInvoice))
+        }
+
+        if (paidAt < invoice.closingDate) {
+            return Result.failure(PayInvoiceException(errors.paymentDateBeforeClosing))
+        }
+
+        if (paidAt > invoice.dueDate) {
+            return Result.failure(PayInvoiceException(errors.paymentDateAfterDue))
+        }
+
+        if (paidAt > currentDate) {
+            return Result.failure(PayInvoiceException(errors.paymentDateInFuture))
         }
 
         val paidInvoice = invoice.copy(

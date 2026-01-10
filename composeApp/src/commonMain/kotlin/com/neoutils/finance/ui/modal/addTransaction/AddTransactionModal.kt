@@ -186,11 +186,21 @@ class AddTransactionModal : ModalBottomSheet() {
                 trailingIcon = {
                     IconButton(
                         onClick = {
+                            val minDate = if (target.isCreditCard) {
+                                uiState.currentInvoice?.openingDate
+                            } else null
+
+                            val maxDate = if (target.isCreditCard) {
+                                uiState.currentInvoice?.closingDate?.coerceAtMost(currentDate)
+                            } else {
+                                currentDate
+                            }
+
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = uiState.minDate.takeIf { target.isCreditCard },
-                                    maxDate = uiState.maxDate.takeIf { target.isCreditCard },
+                                    minDate = minDate,
+                                    maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))

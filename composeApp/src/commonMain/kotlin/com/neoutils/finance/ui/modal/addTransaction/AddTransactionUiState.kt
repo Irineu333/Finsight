@@ -1,18 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finance.ui.modal.addTransaction
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 data class AddTransactionUiState(
     val incomeCategories: List<Category> = emptyList(),
@@ -26,10 +17,4 @@ data class AddTransactionUiState(
     } else {
         listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
     }
-
-    val minDate = currentInvoice?.openingMonth?.firstDay
-
-    val maxDate = currentInvoice?.closingMonth?.lastDay?.coerceAtMost(
-        maximumValue = currentDate,
-    )
 }

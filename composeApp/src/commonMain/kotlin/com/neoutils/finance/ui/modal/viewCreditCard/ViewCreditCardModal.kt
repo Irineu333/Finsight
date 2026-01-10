@@ -230,41 +230,6 @@ class ViewCreditCardModal(
 
 
                 uiState.invoiceUi?.let { ui ->
-                    if (ui.status.isOpen) {
-                        OutlinedButton(
-                            onClick = {
-                                modalManager.show(
-                                    AdvancePaymentModal(
-                                        invoice = ui.invoice,
-                                        currentBillAmount = ui.amount,
-                                    )
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = colorScheme.primary
-                            ),
-                            border = BorderStroke(
-                                1.dp,
-                                colorScheme.primary.copy(alpha = 0.5f)
-                            ),
-                            contentPadding = PaddingValues(12.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Payment,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                text = "Antecipar Pagamento",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
                     if (ui.isClosable) {
                         OutlinedButton(
                             onClick = { modalManager.show(CloseInvoiceModal(ui.id, ui.closingDate)) },
@@ -318,6 +283,41 @@ class ViewCreditCardModal(
                         }
                     }
 
+                    if (ui.status.isOpen) {
+                        OutlinedButton(
+                            onClick = {
+                                modalManager.show(
+                                    AdvancePaymentModal(
+                                        invoice = ui.invoice,
+                                        currentBillAmount = ui.amount,
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = colorScheme.primary
+                            ),
+                            border = BorderStroke(
+                                1.dp,
+                                colorScheme.primary.copy(alpha = 0.5f)
+                            ),
+                            contentPadding = PaddingValues(12.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Payment,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                text = "Antecipar Pagamento",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     if (ui.status.isClosed) {
                         Button(
                             onClick = {
@@ -344,37 +344,6 @@ class ViewCreditCardModal(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            modalManager.dismissAll()
-                            navigator.navigate(
-                                NavigationAction.InvoiceTransactions(uiState.creditCard.id)
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.primary
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            colorScheme.primary.copy(alpha = 0.5f)
-                        ),
-                        contentPadding = PaddingValues(12.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Receipt,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Ver Faturas",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 } ?: run {
                     Button(

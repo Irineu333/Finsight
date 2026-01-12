@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
-
-package com.neoutils.finance.ui.modal.addCategory
+package com.neoutils.finance.ui.modal.categoryForm
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
@@ -35,28 +33,26 @@ import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.util.Validation
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.ExperimentalTime
+import org.koin.core.parameter.parametersOf
 
-class AddCategoryModal : ModalBottomSheet() {
+class CategoryFormModal(
+    private val category: Category? = null,
+) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<AddCategoryViewModel>()
-
+        val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val name = rememberTextFieldState(uiState.name.text)
-
         var isIconGridExpanded by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
                 .drop(1)
                 .collect { name ->
-                    viewModel.onAction(
-                        AddCategoryAction.NameChanged(name)
-                    )
+                    viewModel.onAction(CategoryFormAction.NameChanged(name))
                 }
         }
 
@@ -70,19 +66,19 @@ class AddCategoryModal : ModalBottomSheet() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Nova Categoria",
+                text = if (uiState.isEditMode) "Editar Categoria" else "Nova Categoria",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
 
-            TypeToggle(
-                selectedType = uiState.selectedType,
-                onTypeSelected = { category ->
-                    viewModel.onAction(
-                        AddCategoryAction.SelectedType(category)
-                    )
-                }
-            )
+            if (!uiState.isEditMode) {
+                TypeToggle(
+                    selectedType = uiState.selectedType,
+                    onTypeSelected = { type ->
+                        viewModel.onAction(CategoryFormAction.TypeChanged(type))
+                    }
+                )
+            }
 
             OutlinedTextField(
                 state = name,
@@ -133,10 +129,8 @@ class AddCategoryModal : ModalBottomSheet() {
                 selectedIcon = uiState.selectedIcon,
                 selectedType = uiState.selectedType,
                 isExpanded = isIconGridExpanded,
-                onIconSelected = { category ->
-                    viewModel.onAction(
-                        AddCategoryAction.IconChanged(category)
-                    )
+                onIconSelected = { icon ->
+                    viewModel.onAction(CategoryFormAction.IconChanged(icon))
                 },
                 onToggleExpand = { isIconGridExpanded = !isIconGridExpanded }
             )
@@ -145,9 +139,7 @@ class AddCategoryModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
-                    viewModel.onAction(
-                        AddCategoryAction.Submit
-                    )
+                    viewModel.onAction(CategoryFormAction.Submit)
                 },
                 enabled = uiState.canSubmit,
                 modifier = Modifier.fillMaxWidth(),
@@ -234,10 +226,7 @@ class AddCategoryModal : ModalBottomSheet() {
         onIconSelected: (CategoryIcon) -> Unit,
         onToggleExpand: () -> Unit
     ) {
-        val categoryColor = when (selectedType) {
-            Category.Type.INCOME -> Income
-            Category.Type.EXPENSE -> Expense
-        }
+        val categoryColor = if (selectedType.isIncome) Income else Expense
 
         val visibleIcons = if (isExpanded) icons else icons.take(12)
         val hiddenCount = icons.size - 12

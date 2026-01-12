@@ -26,7 +26,7 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryModal
-import com.neoutils.finance.ui.modal.editCategory.EditCategoryModal
+import com.neoutils.finance.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
@@ -149,7 +149,7 @@ class ViewCategoryModal(
 
                 OutlinedButton(
                     onClick = {
-                        manager.show(EditCategoryModal(uiState.category))
+                        manager.show(CategoryFormModal(uiState.category))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),

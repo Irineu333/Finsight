@@ -4,8 +4,8 @@ package com.neoutils.finance.di
 
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.ui.modal.addCategory.AddCategoryViewModel
 import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardViewModel
+import com.neoutils.finance.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel
@@ -13,7 +13,6 @@ import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
-import com.neoutils.finance.ui.modal.editCategory.EditCategoryViewModel
 import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
@@ -132,7 +131,8 @@ val viewModelModule = module {
     }
 
     viewModel {
-        AddCategoryViewModel(
+        CategoryFormViewModel(
+            category = it.getOrNull(),
             repository = get(),
             validateCategoryName = get(),
             modalManager = get(),
@@ -167,15 +167,6 @@ val viewModelModule = module {
         )
     }
 
-    viewModel {
-        EditCategoryViewModel(
-            category = it.get(),
-            repository = get(),
-            validateCategoryName = get(),
-            modalManager = get(),
-            debounceManager = get(),
-        )
-    }
 
     viewModel {
         DeleteCategoryViewModel(

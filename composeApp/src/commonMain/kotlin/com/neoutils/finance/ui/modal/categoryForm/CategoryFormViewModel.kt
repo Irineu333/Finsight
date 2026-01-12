@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finance.ui.modal.editCategory
+package com.neoutils.finance.ui.modal.categoryForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,61 +15,61 @@ import com.neoutils.finance.util.FieldForm
 import com.neoutils.finance.util.Validation
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class EditCategoryViewModel(
-    private val category: Category,
+class CategoryFormViewModel(
+    private val category: Category?,
     private val repository: ICategoryRepository,
     private val validateCategoryName: ValidateCategoryNameUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
 ) : ViewModel() {
 
+    private val isEditMode = category != null
+
     private val name = MutableStateFlow(
         FieldForm(
-            text = category.name,
-            validation = Validation.Valid
+            text = category?.name.orEmpty(),
+            validation = if (isEditMode) Validation.Valid else Validation.Waiting
         )
     )
 
-    private val icon = MutableStateFlow(
-        CategoryIcon.fromKey(category.icon.key)
+    private val type = MutableStateFlow(
+        category?.type ?: Category.Type.EXPENSE
     )
 
-    val uiState = combine(name, icon) { name, icon ->
-        EditCategoryUiState(
+    private val icon = MutableStateFlow(
+        category?.icon?.key?.let { CategoryIcon.fromKey(it) }
+            ?: CategoryIcon.SHOPPING_CART
+    )
+
+    val uiState = combine(name, type, icon) { name, type, icon ->
+        CategoryFormUiState(
             name = name,
             selectedIcon = icon,
-            selectedType = category.type,
+            selectedType = type,
+            isEditMode = isEditMode,
             canSubmit = name.validation == Validation.Valid,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = EditCategoryUiState(
-            name = FieldForm(
-                text = category.name,
-                validation = Validation.Valid
-            ),
-            selectedIcon = CategoryIcon.fromKey(category.icon.key),
-            selectedType = category.type,
-            canSubmit = true,
+        initialValue = CategoryFormUiState(
+            name = name.value,
+            selectedIcon = icon.value,
+            selectedType = type.value,
+            isEditMode = isEditMode,
+            canSubmit = name.value.validation == Validation.Valid,
         )
     )
 
-    fun onAction(action: EditCategoryAction) {
+    fun onAction(action: CategoryFormAction) {
         when (action) {
-            is EditCategoryAction.NameChanged -> {
-                changeName(action.name)
-            }
-
-            is EditCategoryAction.IconChanged -> {
-                icon.value = action.icon
-            }
-
-            is EditCategoryAction.Submit -> {
-                submit()
-            }
+            is CategoryFormAction.NameChanged -> changeName(action.name)
+            is CategoryFormAction.TypeChanged -> type.value = action.type
+            is CategoryFormAction.IconChanged -> icon.value = action.icon
+            is CategoryFormAction.Submit -> submit()
         }
     }
 
@@ -89,7 +89,7 @@ class EditCategoryViewModel(
                 it.copy(
                     validation = validateCategoryName(
                         name = newName,
-                        ignoreId = category.id
+                        ignoreId = category?.id
                     )?.let { error ->
                         Validation.Error(error)
                     } ?: Validation.Valid,
@@ -102,18 +102,30 @@ class EditCategoryViewModel(
 
         validateCategoryName(
             name = name.value.text,
-            ignoreId = category.id
+            ignoreId = category?.id
         )?.let {
             return@launch
         }
 
-        repository.update(
-            category.copy(
+        if (isEditMode) {
+            repository.update(
+                category!!.copy(
+                    name = name.value.text.trim(),
+                    icon = CategoryLazyIcon(icon.value.key)
+                )
+            )
+            modalManager.dismissAll()
+            return@launch
+        }
+
+        repository.insert(
+            Category(
                 name = name.value.text.trim(),
-                icon = CategoryLazyIcon(icon.value.key)
+                icon = CategoryLazyIcon(icon.value.key),
+                type = type.value,
+                createdAt = Clock.System.now().toEpochMilliseconds()
             )
         )
-
-        modalManager.dismissAll()
+        modalManager.dismiss()
     }
 }

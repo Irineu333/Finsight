@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.CategoryCard
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.modal.addCategory.AddCategoryModal
+import com.neoutils.finance.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -61,7 +61,7 @@ private fun CategoriesContent(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    modalManager.show(AddCategoryModal())
+                    modalManager.show(CategoryFormModal())
                 },
             ) {
                 Icon(

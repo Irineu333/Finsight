@@ -143,7 +143,9 @@ val viewModelModule = module {
     viewModel {
         AddCreditCardViewModel(
             addCreditCardUseCase = get(),
-            modalManager = get()
+            validateCreditCardName = get(),
+            modalManager = get(),
+            debounceManager = get(),
         )
     }
 

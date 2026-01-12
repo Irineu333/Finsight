@@ -1,12 +1,26 @@
 package com.neoutils.finance.ui.modal.addCreditCard
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelPosition
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -15,68 +29,62 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.form.CreditCardForm
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.util.stringUiText
 import com.neoutils.finance.util.DayInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
+import com.neoutils.finance.util.Validation
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
 
 class AddCreditCardModal : ModalBottomSheet() {
 
-    companion object {
-        private const val DEFAULT_DAYS_DIFFERENCE = 8
-    }
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<AddCreditCardViewModel>()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val name = rememberTextFieldState()
-        val limit = rememberTextFieldState("R$ 0,00")
+        val name = rememberTextFieldState(uiState.forms.name.text)
+        val limit = rememberTextFieldState(uiState.forms.limit)
+        val closingDayField = rememberTextFieldState(uiState.forms.closingDay)
+        val dueDayField = rememberTextFieldState(uiState.forms.dueDay)
 
-        val closingDayField = rememberTextFieldState()
-        val dueDayField = rememberTextFieldState()
-
-        var closingDayCalc by remember { mutableStateOf<Int?>(null) }
-        var dueDayCalc by remember { mutableStateOf<Int?>(null) }
-
-        val closingDay by remember {
-            derivedStateOf {
-                closingDayField.text.toString().toIntOrNull() ?: closingDayCalc
-            }
-        }
-
-        val dueDay by remember {
-            derivedStateOf {
-                dueDayField.text.toString().toIntOrNull() ?: dueDayCalc
-            }
+        LaunchedEffect(Unit) {
+            snapshotFlow { name.text.toString() }
+                .drop(1)
+                .collect { value ->
+                    viewModel.onAction(AddCreditCardAction.NameChanged(value))
+                }
         }
 
         LaunchedEffect(Unit) {
-            snapshotFlow {
-                closingDayField.text.toString()
-            }.collect {
-                val closingDay = it.toIntOrNull()
-                dueDayCalc = closingDay?.let {
-                    calculateDueDay(closingDay)
+            snapshotFlow { limit.text.toString() }
+                .drop(1)
+                .collect { value ->
+                    viewModel.onAction(AddCreditCardAction.LimitChanged(value))
                 }
-            }
         }
 
         LaunchedEffect(Unit) {
-            snapshotFlow {
-                dueDayField.text.toString()
-            }.collect {
-                val dueDay = it.toIntOrNull()
-                closingDayCalc = dueDay?.let {
-                    calculateClosingDay(dueDay)
+            snapshotFlow { closingDayField.text.toString() }
+                .drop(1)
+                .collect { value ->
+                    viewModel.onAction(AddCreditCardAction.ClosingDayChanged(value))
                 }
-            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow { dueDayField.text.toString() }
+                .drop(1)
+                .collect { value ->
+                    viewModel.onAction(AddCreditCardAction.DueDayChanged(value))
+                }
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,14 +99,37 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = name,
                 label = { Text(text = "Nome do Cartão") },
-                keyboardOptions =
-                    KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Next
-                    ),
+                trailingIcon = when (uiState.forms.name.validation) {
+                    Validation.Validating -> {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+
+                    else -> null
+                },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Next
+                ),
+                isError = uiState.forms.name.validation is Validation.Error,
+                supportingText = when (val validation = uiState.forms.name.validation) {
+                    is Validation.Error -> {
+                        {
+                            Text(text = stringUiText(validation.error))
+                        }
+                    }
+
+                    else -> null
+                },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .animateContentSize()
+                    .fillMaxWidth(),
             )
 
             OutlinedTextField(
@@ -117,16 +148,18 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = closingDayField,
                 labelPosition = TextFieldLabelPosition.Attached(
-                    alwaysMinimize = closingDayCalc != null
+                    alwaysMinimize = uiState.forms.closingDayCalc != null
                 ),
-                label = { Text(text = "Dia de Fechamento") },
+                label = {
+                    Text(text = "Dia de Fechamento")
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                placeholder = {
-                    if (closingDayCalc != null) {
-                        Text(text = closingDayCalc.toString())
+                placeholder = uiState.forms.closingDayCalc?.let { hint ->
+                    {
+                        Text(text = hint.toString())
                     }
                 },
                 inputTransformation = DayInputTransformation(),
@@ -138,16 +171,18 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = dueDayField,
                 labelPosition = TextFieldLabelPosition.Attached(
-                    alwaysMinimize = dueDayCalc != null
+                    alwaysMinimize = uiState.forms.dueDayCalc != null
                 ),
-                label = { Text(text = "Dia de Vencimento") },
+                label = {
+                    Text(text = "Dia de Vencimento")
+                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
-                placeholder = {
-                    if (dueDayCalc != null) {
-                        Text(text = dueDayCalc.toString())
+                placeholder = uiState.forms.dueDayCalc?.let { hint ->
+                    {
+                        Text(text = hint.toString())
                     }
                 },
                 inputTransformation = DayInputTransformation(),
@@ -160,16 +195,9 @@ class AddCreditCardModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
-                    viewModel.addCreditCard(
-                        CreditCardForm(
-                            name = name.text.toString().trim(),
-                            limit = parseMoneyToDouble(limit.text.toString()),
-                            closingDay = closingDay,
-                            dueDay = dueDay,
-                        )
-                    )
+                    viewModel.onAction(AddCreditCardAction.Submit)
                 },
-                enabled = name.text.isNotBlank() && closingDay != null && dueDay != null,
+                enabled = uiState.canSubmit,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -180,25 +208,5 @@ class AddCreditCardModal : ModalBottomSheet() {
                 )
             }
         }
-    }
-
-    private fun calculateDueDay(closingDay: Int): Int {
-        return ((closingDay - 1 + DEFAULT_DAYS_DIFFERENCE) % 31) + 1
-    }
-
-    private fun calculateClosingDay(dueDay: Int): Int {
-        return ((dueDay - 1 - DEFAULT_DAYS_DIFFERENCE + 31) % 31) + 1
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly =
-            formatted
-                .replace("R$", "")
-                .replace(".", "")
-                .replace(",", ".")
-                .replace("-", "")
-                .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
     }
 }

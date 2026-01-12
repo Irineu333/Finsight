@@ -171,7 +171,9 @@ val viewModelModule = module {
         EditCategoryViewModel(
             category = it.get(),
             repository = get(),
-            modalManager = get()
+            validateCategoryName = get(),
+            modalManager = get(),
+            debounceManager = get(),
         )
     }
 

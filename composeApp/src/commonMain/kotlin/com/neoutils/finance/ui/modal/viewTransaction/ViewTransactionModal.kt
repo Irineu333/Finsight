@@ -221,6 +221,14 @@ class ViewTransactionModal(
                 )
             }
 
+            if (uiState.transaction.isInstallment) {
+                DetailRow(
+                    label = "Parcela",
+                    value = uiState.transaction.installmentLabel ?: "",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             uiState.transaction.invoice?.let { invoice ->

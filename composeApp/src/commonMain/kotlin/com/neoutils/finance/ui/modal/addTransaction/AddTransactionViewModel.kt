@@ -11,6 +11,7 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.usecase.AddInstallmentTransactionsUseCase
 import com.neoutils.finance.domain.usecase.CreateFutureInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,6 +30,7 @@ class AddTransactionViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
     private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
+    private val addInstallmentTransactionsUseCase: AddInstallmentTransactionsUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -77,12 +79,19 @@ class AddTransactionViewModel(
     fun addTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        form.build().map { transaction ->
-            transaction.copy(
-                id = transactionRepository.insert(transaction)
-            )
-        }.onSuccess {
-            modalManager.dismiss()
+        form.build().onSuccess { transaction ->
+            if (form.installments > 1 && form.invoice != null) {
+                addInstallmentTransactionsUseCase(
+                    baseTransaction = transaction,
+                    totalInstallments = form.installments,
+                    startingInvoice = form.invoice!!
+                ).onSuccess {
+                    modalManager.dismiss()
+                }
+            } else {
+                transactionRepository.insert(transaction)
+                modalManager.dismiss()
+            }
         }
     }
 

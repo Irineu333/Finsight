@@ -171,10 +171,19 @@ fun TransactionCard(
 private fun getTitle(
     transaction: Transaction,
     category: Category?
-) = when (transaction.type) {
-    Transaction.Type.ADJUSTMENT if transaction.target.isAccount ->  "Ajuste de Saldo"
-    Transaction.Type.ADJUSTMENT if transaction.target.isCreditCard -> "Ajuste de Fatura"
-    Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
-    Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
-    else -> checkNotNull(transaction.title ?: category?.name)
+): String {
+    val baseTitle = when (transaction.type) {
+        Transaction.Type.ADJUSTMENT if transaction.target.isAccount -> "Ajuste de Saldo"
+        Transaction.Type.ADJUSTMENT if transaction.target.isCreditCard -> "Ajuste de Fatura"
+        Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
+        Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
+        else -> checkNotNull(transaction.title ?: category?.name)
+    }
+
+    return if (transaction.isInstallment) {
+        "$baseTitle (${transaction.installmentLabel})"
+    } else {
+        baseTitle
+    }
 }
+

@@ -22,7 +22,10 @@ class TransactionMapper {
             category = category,
             target = toDomain(entity.target),
             creditCard = creditCard,
-            invoice = invoice
+            invoice = invoice,
+            installmentNumber = entity.installmentNumber,
+            totalInstallments = entity.totalInstallments,
+            installmentGroupId = entity.installmentGroupId
         )
     }
 
@@ -38,7 +41,10 @@ class TransactionMapper {
             categoryId = domain.category?.id,
             target = toEntity(domain.target),
             creditCardId = domain.creditCard?.id,
-            invoiceId = domain.invoice?.id
+            invoiceId = domain.invoice?.id,
+            installmentNumber = domain.installmentNumber,
+            totalInstallments = domain.totalInstallments,
+            installmentGroupId = domain.installmentGroupId
         )
     }
 

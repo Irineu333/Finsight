@@ -109,6 +109,7 @@ val viewModelModule = module {
             invoiceRepository = get(),
             transactionRepository = get(),
             createFutureInvoiceUseCase = get(),
+            addInstallmentTransactionsUseCase = get(),
             modalManager = get()
         )
     }

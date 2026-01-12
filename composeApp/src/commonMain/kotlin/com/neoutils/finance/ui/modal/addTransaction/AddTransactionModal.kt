@@ -27,6 +27,7 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.extension.isAccept
+import com.neoutils.finance.extension.moneyToDouble
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -64,6 +65,7 @@ class AddTransactionModal : ModalBottomSheet() {
         val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
 
         var selectedCategory by remember { mutableStateOf<Category?>(null) }
+        var installments by remember { mutableStateOf(1) }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf {
@@ -82,6 +84,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     target = target,
                     creditCard = uiState.selectedCreditCard,
                     invoice = uiState.selectedInvoice,
+                    installments = installments
                 )
             }
         }
@@ -185,6 +188,19 @@ class AddTransactionModal : ModalBottomSheet() {
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            AnimatedVisibility(
+                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedInvoice != null
+            ) {
+                InstallmentSelector(
+                    selectedInstallments = installments,
+                    totalAmount = form.amount.moneyToDouble(),
+                    onInstallmentsSelected = { installments = it },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

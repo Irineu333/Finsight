@@ -31,8 +31,13 @@ data class TransactionForm(
     val category: Category?,
     val target: Transaction.Target,
     val creditCard: CreditCard?,
-    val invoice: Invoice?
+    val invoice: Invoice?,
+    val installments: Int = 1
 ) {
+    val installmentAmount: Double?
+        get() = if (installments > 1 && amount.isNotEmpty()) {
+            amount.moneyToDouble() / installments
+        } else null
     fun build(id: Long = 0): Result<Transaction> {
 
         if (amount.isEmpty()) {
@@ -128,12 +133,14 @@ data class TransactionForm(
             target: Transaction.Target,
             creditCard: CreditCard?,
             invoice: Invoice?,
+            installments: Int = 1
         ): TransactionForm {
 
             val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
             val invoice = invoice.takeIf { target.isCreditCard }
             val category = category?.takeIf { it.type.isAccept(type) }
             val creditCard = creditCard?.takeIf { target.isCreditCard }
+            val installments = if (target.isCreditCard) installments else 1
 
             return TransactionForm(
                 type = type,
@@ -144,6 +151,7 @@ data class TransactionForm(
                 target = target,
                 creditCard = creditCard,
                 invoice = invoice,
+                installments = installments,
             )
         }
     }

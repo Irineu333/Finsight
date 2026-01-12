@@ -1,4 +1,4 @@
-package com.neoutils.finance.ui.modal.editCreditCard
+package com.neoutils.finance.ui.modal.creditCardForm
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
@@ -40,26 +40,25 @@ import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class EditCreditCardModal(
-    private val creditCard: CreditCard
+class CreditCardFormModal(
+    private val creditCard: CreditCard? = null,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditCreditCardViewModel> { parametersOf(creditCard) }
-
+        val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val name = rememberTextFieldState(uiState.form.name.text)
         val limit = rememberTextFieldState(uiState.form.limit)
-        val closingDayField = rememberTextFieldState(uiState.form.closingDayUser)
-        val dueDayField = rememberTextFieldState(uiState.form.dueDayUser)
+        val closingDay = rememberTextFieldState(uiState.form.closingDayUser)
+        val dueDay = rememberTextFieldState(uiState.form.dueDayUser)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
                 .drop(1)
                 .collect { value ->
-                    viewModel.onAction(EditCreditCardAction.NameChanged(value))
+                    viewModel.onAction(CreditCardFormAction.NameChanged(value))
                 }
         }
 
@@ -67,23 +66,23 @@ class EditCreditCardModal(
             snapshotFlow { limit.text.toString() }
                 .drop(1)
                 .collect { value ->
-                    viewModel.onAction(EditCreditCardAction.LimitChanged(value))
+                    viewModel.onAction(CreditCardFormAction.LimitChanged(value))
                 }
         }
 
         LaunchedEffect(Unit) {
-            snapshotFlow { closingDayField.text.toString() }
+            snapshotFlow { closingDay.text.toString() }
                 .drop(1)
                 .collect { value ->
-                    viewModel.onAction(EditCreditCardAction.ClosingDayChanged(value))
+                    viewModel.onAction(CreditCardFormAction.ClosingDayChanged(value))
                 }
         }
 
         LaunchedEffect(Unit) {
-            snapshotFlow { dueDayField.text.toString() }
+            snapshotFlow { dueDay.text.toString() }
                 .drop(1)
                 .collect { value ->
-                    viewModel.onAction(EditCreditCardAction.DueDayChanged(value))
+                    viewModel.onAction(CreditCardFormAction.DueDayChanged(value))
                 }
         }
 
@@ -96,7 +95,7 @@ class EditCreditCardModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Editar Cartão",
+                text = if (uiState.isEditMode) "Editar Cartão" else "Novo Cartão",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -151,7 +150,7 @@ class EditCreditCardModal(
             )
 
             OutlinedTextField(
-                state = closingDayField,
+                state = closingDay,
                 labelPosition = TextFieldLabelPosition.Attached(
                     alwaysMinimize = uiState.form.closingDayCalc != null
                 ),
@@ -174,7 +173,7 @@ class EditCreditCardModal(
             )
 
             OutlinedTextField(
-                state = dueDayField,
+                state = dueDay,
                 labelPosition = TextFieldLabelPosition.Attached(
                     alwaysMinimize = uiState.form.dueDayCalc != null
                 ),
@@ -200,7 +199,7 @@ class EditCreditCardModal(
 
             Button(
                 onClick = {
-                    viewModel.onAction(EditCreditCardAction.Submit)
+                    viewModel.onAction(CreditCardFormAction.Submit)
                 },
                 enabled = uiState.canSubmit,
                 modifier = Modifier.fillMaxWidth(),

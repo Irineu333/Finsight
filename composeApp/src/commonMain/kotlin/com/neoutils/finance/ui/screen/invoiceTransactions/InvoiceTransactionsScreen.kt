@@ -46,7 +46,7 @@ import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
-import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
+import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -132,7 +132,7 @@ private fun InvoiceTransactionsContent(
                                     },
                                     onClick = {
                                         menuExpanded = false
-                                        modalManager.show(EditCreditCardModal(creditCard))
+                                        modalManager.show(CreditCardFormModal(creditCard))
                                     }
                                 )
                                 DropdownMenuItem(

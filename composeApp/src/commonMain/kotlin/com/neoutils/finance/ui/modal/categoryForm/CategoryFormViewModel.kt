@@ -67,8 +67,14 @@ class CategoryFormViewModel(
     fun onAction(action: CategoryFormAction) {
         when (action) {
             is CategoryFormAction.NameChanged -> changeName(action.name)
-            is CategoryFormAction.TypeChanged -> type.value = action.type
-            is CategoryFormAction.IconChanged -> icon.value = action.icon
+            is CategoryFormAction.TypeChanged -> {
+                type.value = action.type
+            }
+
+            is CategoryFormAction.IconChanged -> {
+                icon.value = action.icon
+            }
+
             is CategoryFormAction.Submit -> submit()
         }
     }
@@ -107,9 +113,9 @@ class CategoryFormViewModel(
             return@launch
         }
 
-        if (isEditMode) {
+        if (category != null) {
             repository.update(
-                category!!.copy(
+                category.copy(
                     name = name.value.text.trim(),
                     icon = CategoryLazyIcon(icon.value.key)
                 )

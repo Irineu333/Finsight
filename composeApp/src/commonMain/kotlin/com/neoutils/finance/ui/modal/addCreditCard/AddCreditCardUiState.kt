@@ -1,8 +1,0 @@
-package com.neoutils.finance.ui.modal.addCreditCard
-
-import com.neoutils.finance.domain.model.form.CreditCardForm
-
-data class AddCreditCardUiState(
-    val form: CreditCardForm = CreditCardForm(),
-    val canSubmit: Boolean = false,
-)

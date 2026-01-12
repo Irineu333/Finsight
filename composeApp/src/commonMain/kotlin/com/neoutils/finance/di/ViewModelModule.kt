@@ -4,8 +4,8 @@ package com.neoutils.finance.di
 
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardViewModel
 import com.neoutils.finance.ui.modal.categoryForm.CategoryFormViewModel
+import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel
@@ -13,7 +13,6 @@ import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
-import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
@@ -27,6 +26,7 @@ import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
+import com.neoutils.finance.util.CreditCardPeriod
 import com.neoutils.finance.util.DebounceManager
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -38,6 +38,8 @@ val viewModelModule = module {
     single { ModalManager() }
 
     factory { DebounceManager(delayMillis = 500L) }
+
+    factory { CreditCardPeriod(defaultDaysDifference = 8) }
 
     viewModel {
         ViewCategoryViewModel(
@@ -141,11 +143,14 @@ val viewModelModule = module {
     }
 
     viewModel {
-        AddCreditCardViewModel(
+        CreditCardFormViewModel(
+            creditCard = it.getOrNull(),
             addCreditCardUseCase = get(),
+            updateCreditCardUseCase = get(),
             validateCreditCardName = get(),
             modalManager = get(),
             debounceManager = get(),
+            creditCardPeriod = get(),
         )
     }
 
@@ -210,15 +215,6 @@ val viewModelModule = module {
         )
     }
 
-    viewModel {
-        EditCreditCardViewModel(
-            creditCard = it.get(),
-            updateCreditCardUseCase = get(),
-            validateCreditCardName = get(),
-            modalManager = get(),
-            debounceManager = get(),
-        )
-    }
 
     viewModel {
         EditInvoicePaymentViewModel(

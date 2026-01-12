@@ -65,16 +65,4 @@ data class CreditCardForm(
     }
 
     fun isValid() = build().isSuccess
-
-    companion object {
-        private const val DEFAULT_DAYS_DIFFERENCE = 8
-
-        fun calculateDueDay(closingDay: Int): Int {
-            return ((closingDay - 1 + DEFAULT_DAYS_DIFFERENCE) % 31) + 1
-        }
-
-        fun calculateClosingDay(dueDay: Int): Int {
-            return ((dueDay - 1 - DEFAULT_DAYS_DIFFERENCE + 31) % 31) + 1
-        }
-    }
 }

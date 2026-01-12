@@ -29,11 +29,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.*
-import com.neoutils.finance.ui.modal.addCreditCard.AddCreditCardModal
+import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
-import com.neoutils.finance.ui.modal.editCreditCard.EditCreditCardModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -91,7 +90,7 @@ private fun CreditCardsContent(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    modalManager.show(AddCreditCardModal())
+                    modalManager.show(CreditCardFormModal())
                 },
             ) {
                 Icon(
@@ -279,7 +278,7 @@ private fun CardActions(
 
             OutlinedButton(
                 onClick = {
-                    modalManager.show(EditCreditCardModal(creditCard))
+                    modalManager.show(CreditCardFormModal(creditCard))
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),

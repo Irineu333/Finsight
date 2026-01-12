@@ -2,11 +2,14 @@
 
 package com.neoutils.finance.domain.model.form
 
+import com.neoutils.finance.domain.errors.BuildTransactionErrors
+import com.neoutils.finance.domain.exception.BuildTransactionException
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.isAccept
+import com.neoutils.finance.extension.parseToMoney
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -18,6 +21,8 @@ private val currentDate
 
 private val formats = DateFormats()
 
+private val errors = BuildTransactionErrors()
+
 data class TransactionForm(
     val type: Transaction.Type,
     val amount: String,
@@ -28,66 +33,90 @@ data class TransactionForm(
     val creditCard: CreditCard?,
     val invoice: Invoice?
 ) {
-    fun build(id: Long = 0): Transaction {
+    fun build(id: Long = 0): Result<Transaction> {
 
-        check(isValid()) { "Invalid Transaction" }
+        if (amount.isEmpty()) {
+            return Result.failure(BuildTransactionException(errors.amountRequired))
+        }
 
-        return Transaction(
-            id = id,
-            type = type,
-            amount = parseMoneyToDouble(amount),
-            title = title,
-            date = formats.dayMonthYear.parse(date),
-            category = category,
-            target = target,
-            creditCard = creditCard,
-            invoice = invoice,
+        if (amount.parseToMoney() == 0.0) {
+            return Result.failure(BuildTransactionException(errors.amountZero))
+        }
+
+        if (date.isEmpty()) {
+            return Result.failure(BuildTransactionException(errors.dateRequired))
+        }
+
+        if (title.isNullOrEmpty() && category == null) {
+            return Result.failure(BuildTransactionException(errors.titleOrCategoryRequired))
+        }
+
+        val date = runCatching {
+            formats.dayMonthYear.parse(date)
+        }.getOrElse {
+            return Result.failure(BuildTransactionException(errors.dateInvalid))
+        }
+
+        if (date > currentDate) {
+            return Result.failure(BuildTransactionException(errors.dateFuture))
+        }
+
+        if (target.isAccount) {
+            return Result.success(
+                Transaction(
+                    id = id,
+                    type = type,
+                    amount = amount.parseToMoney(),
+                    title = title,
+                    date = date,
+                    category = category,
+                    target = target,
+                    creditCard = null,
+                    invoice = null,
+                )
+            )
+        }
+
+        if (type != Transaction.Type.EXPENSE) {
+            return Result.failure(BuildTransactionException(errors.creditCardExpenseOnly))
+        }
+
+        val invoice = invoice ?: return Result.failure(
+            BuildTransactionException(errors.invoiceRequired)
+        )
+
+        val creditCard = creditCard ?: return Result.failure(
+            BuildTransactionException(errors.creditCardRequired)
+        )
+
+        if (invoice.status != Invoice.Status.OPEN) {
+            return Result.failure(BuildTransactionException(errors.invoiceNotOpen))
+        }
+
+        if (creditCard.id != invoice.creditCard.id) {
+            return Result.failure(BuildTransactionException(errors.creditCardMismatch))
+        }
+
+        if (date < invoice.openingDate || date > invoice.closingDate) {
+            return Result.failure(BuildTransactionException(errors.dateOutsideInvoicePeriod))
+        }
+
+        return Result.success(
+            Transaction(
+                id = id,
+                type = type,
+                amount = amount.parseToMoney(),
+                title = title,
+                date = date,
+                category = category,
+                target = target,
+                creditCard = creditCard,
+                invoice = invoice,
+            )
         )
     }
 
-    fun isValid(): Boolean {
-
-        if (amount.isEmpty()) return false
-
-        if (parseMoneyToDouble(amount) == 0.0) return false
-
-        if (date.isEmpty()) return false
-
-        if (title.isNullOrEmpty() && category == null) return false
-
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
-
-        // Não pode ser no futuro
-        if (parsedDate > currentDate) return false
-
-        if (target.isAccount) return true
-
-        // Credit Card
-
-        if (type != Transaction.Type.EXPENSE) return false
-
-        val invoice = invoice ?: return false
-        val creditCard = creditCard ?: return false
-
-        if (invoice.status != Invoice.Status.OPEN) return false
-
-        if (creditCard.id != invoice.creditCard.id) return false
-
-        if (parsedDate < invoice.openingDate) return false
-        if (parsedDate > invoice.closingDate) return false
-
-        return true
-    }
-
-    private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly = formatted
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
-    }
+    fun isValid() = build().isSuccess
 
     companion object {
         fun from(

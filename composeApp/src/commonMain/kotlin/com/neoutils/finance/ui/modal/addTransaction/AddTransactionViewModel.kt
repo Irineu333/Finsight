@@ -9,7 +9,7 @@ import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.usecase.AddTransactionUseCase
+import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,7 +26,7 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val addTransactionUseCase: AddTransactionUseCase,
+    private val transactionRepository: ITransactionRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val modalManager: ModalManager
 ) : ViewModel() {
@@ -69,7 +69,11 @@ class AddTransactionViewModel(
     fun addTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        addTransactionUseCase(form).onSuccess {
+        form.build().map { transaction ->
+            transaction.copy(
+                id = transactionRepository.insert(transaction)
+            )
+        }.onSuccess {
             modalManager.dismiss()
         }
     }

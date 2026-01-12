@@ -11,6 +11,7 @@ data class BuildTransactionErrors(
     val invoiceRequired: String = "Fatura é obrigatória para transações de cartão.",
     val creditCardRequired: String = "Cartão de crédito é obrigatório.",
     val invoiceNotOpen: String = "A fatura precisa estar aberta.",
+    val closedInvoice: String = "Não é possível adicionar transações em faturas fechadas.",
     val creditCardMismatch: String = "O cartão não corresponde à fatura.",
     val dateOutsideInvoicePeriod: String = "A data deve estar dentro do período da fatura.",
 )

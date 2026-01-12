@@ -46,15 +46,14 @@ class InvoiceTransactionsViewModel(
     )
 
     private val creditCardFlow = creditCardRepository
-        .observeCreditCardById(creditCardId)
+        .observeCreditCardById(creditCardId = creditCardId)
         .filterNotNull()
 
     private val invoicesFlow = invoiceRepository
-        .observeInvoicesByCreditCard(creditCardId)
+        .observeInvoicesByCreditCard(creditCardId = creditCardId)
 
-    private val transactionsFlow = transactionRepository.observeTransactionsBy(
-        creditCardId = creditCardId
-    )
+    private val transactionsFlow = transactionRepository
+        .observeTransactionsBy(creditCardId = creditCardId)
 
     val uiState = combine(
         creditCardFlow,
@@ -118,8 +117,26 @@ class InvoiceTransactionsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = InvoiceTransactionsUiState()
+        initialValue = InvoiceTransactionsUiState(
+            selectedInvoiceIndex = selectedInvoiceIndex.value
+        )
     )
+
+    init {
+        setInitialInvoice(creditCardId)
+    }
+
+    private fun setInitialInvoice(
+        creditCardId: Long
+    ) = viewModelScope.launch {
+        val index = invoiceRepository
+            .getInvoicesByCreditCard(creditCardId)
+            .indexOfFirst { it.status.isOpen }
+
+        if (index >= 0) {
+            selectedInvoiceIndex.value = index
+        }
+    }
 
     fun onAction(action: InvoiceTransactionsAction) = viewModelScope.launch {
         when (action) {

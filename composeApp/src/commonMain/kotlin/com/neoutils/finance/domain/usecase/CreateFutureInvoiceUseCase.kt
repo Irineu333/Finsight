@@ -2,37 +2,35 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.OpenInvoiceErrors
-import com.neoutils.finance.domain.exception.OpenInvoiceException
+import com.neoutils.finance.domain.exception.CreateFutureInvoiceException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import kotlin.time.ExperimentalTime
-import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plusMonth
 
-private val errors = OpenInvoiceErrors()
-
-class OpenInvoiceUseCase(
+class CreateFutureInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository
 ) {
-    suspend operator fun invoke(
-        creditCardId: Long,
-        openingMonth: YearMonth
-    ): Result<Invoice> {
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
-            ?: return Result.failure(OpenInvoiceException(errors.creditCardNotFound))
 
-        return invoke(creditCard, openingMonth)
+    suspend operator fun invoke(creditCardId: Long): Result<Invoice> {
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
+            ?: return Result.failure(CreateFutureInvoiceException("Cartão não encontrado"))
+
+        return invoke(creditCard)
     }
 
-    suspend operator fun invoke(
-        creditCard: CreditCard,
-        openingMonth: YearMonth
-    ): Result<Invoice> {
+    suspend operator fun invoke(creditCard: CreditCard): Result<Invoice> {
+        val existingInvoices = invoiceRepository
+            .getInvoicesByCreditCard(creditCard.id)
+            .sortedByDescending { it.closingMonth }
 
+        val lastInvoice = existingInvoices.firstOrNull()
+            ?: return Result.failure(CreateFutureInvoiceException("Nenhuma fatura existente. Crie uma fatura aberta primeiro."))
+
+        val openingMonth = lastInvoice.closingMonth
         val closingMonth = openingMonth.plusMonth()
 
         val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
@@ -41,30 +39,12 @@ class OpenInvoiceUseCase(
             closingMonth
         }
 
-        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(creditCard.id)
-
-        val futureInvoice = existingInvoices.find { existing ->
-            existing.status == Invoice.Status.FUTURE && existing.openingMonth == openingMonth
-        }
-
-        if (futureInvoice != null) {
-            return Result.success(
-                futureInvoice.copy(
-                    status = Invoice.Status.OPEN
-                ).also {
-                    invoiceRepository.update(it)
-                }
-            )
-        }
-
         val overlappingInvoice = existingInvoices.find { existing ->
             openingMonth < existing.closingMonth && closingMonth > existing.openingMonth
         }
 
         if (overlappingInvoice != null) {
-            return Result.failure(
-                OpenInvoiceException(errors.overlappingInvoice)
-            )
+            return Result.failure(CreateFutureInvoiceException("Já existe uma fatura para este período"))
         }
 
         val invoice = Invoice(
@@ -72,7 +52,7 @@ class OpenInvoiceUseCase(
             openingMonth = openingMonth,
             closingMonth = closingMonth,
             dueMonth = dueMonth,
-            status = Invoice.Status.OPEN
+            status = Invoice.Status.FUTURE
         )
 
         return Result.success(
@@ -80,4 +60,3 @@ class OpenInvoiceUseCase(
         )
     }
 }
-

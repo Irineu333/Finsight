@@ -22,13 +22,27 @@ class ReopenInvoiceUseCase(
             return Result.failure(ReopenInvoiceException(errors.cannotReopenPaidInvoice))
         }
 
-        val openedInvoice = invoice.copy(
-            status = Invoice.Status.OPEN,
-            closedAt = null
+        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
+
+        val nextOpenInvoice = existingInvoices.find { existing ->
+            existing.status == Invoice.Status.OPEN && 
+            existing.openingMonth == invoice.closingMonth
+        }
+
+        if (nextOpenInvoice != null) {
+            invoiceRepository.update(
+                nextOpenInvoice.copy(status = Invoice.Status.FUTURE)
+            )
+        }
+
+        return Result.success(
+            invoice.copy(
+                status = Invoice.Status.OPEN,
+                closedAt = null
+            ).also {
+                invoiceRepository.update(it)
+            }
         )
-
-        invoiceRepository.update(openedInvoice)
-
-        return Result.success(openedInvoice)
     }
 }
+

@@ -2,6 +2,7 @@ package com.neoutils.finance.ui.modal.editTransaction
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.model.InvoiceUi
 
@@ -10,9 +11,9 @@ data class EditTransactionUiState(
     val expenseCategories: List<Category> = emptyList(),
     val creditCards: List<CreditCard> = emptyList(),
     val selectedCreditCard: CreditCard? = null,
-    val currentInvoiceUi: InvoiceUi? = null
+    val availableInvoices: List<Invoice> = emptyList(),
+    val selectedInvoice: Invoice? = null
 ) {
-    val currentInvoice get() = currentInvoiceUi?.invoice
     val targets = if (creditCards.isEmpty()) {
         listOf(Transaction.Target.ACCOUNT)
     } else {

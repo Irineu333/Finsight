@@ -22,7 +22,7 @@ data class Invoice(
     val closedAt: Long? = null,
     val paidAt: Long? = null
 ) {
-    val label get() = "${creditCard.name} - ${formats.yearMonth.format(dueMonth)}"
+    val label get() = "${formats.yearMonth.format(dueMonth)} • ${status.label}"
     val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)
     val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
     val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
@@ -31,6 +31,10 @@ data class Invoice(
         val label: String,
         val color: Color,
     ) {
+        FUTURE(
+            label = "Futura",
+            color = Color(0xFF42A5F5)
+        ),
         OPEN(
             label = "Aberta",
             color = Color(0xFFFFA726)
@@ -44,11 +48,17 @@ data class Invoice(
             color = Color(0xFF66BB6A)
         );
 
+        val isFuture: Boolean
+            get() = this == FUTURE
+
         val isOpen: Boolean
             get() = this == OPEN
 
         val isClosed: Boolean
             get() = this == CLOSED
+
+        val isPaid: Boolean
+            get() = this == PAID
     }
 
     init {

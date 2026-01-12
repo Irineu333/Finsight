@@ -5,20 +5,21 @@ package com.neoutils.finance.ui.modal.addTransaction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.usecase.CreateFutureInvoiceUseCase
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -27,34 +28,37 @@ class AddTransactionViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
-    private val invoiceUiMapper: InvoiceUiMapper,
+    private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
+    private val selectedInvoice = MutableStateFlow<Invoice?>(null)
 
-    private val currentInvoiceUi = selectedCreditCard.flatMapLatest { card ->
+    private val availableInvoicesFlow = selectedCreditCard.flatMapLatest { card ->
         if (card != null) {
-            invoiceRepository.observeOpenInvoice(card.id)
+            invoiceRepository.observeAvailableInvoices(card.id)
         } else {
-            flowOf(null)
+            flowOf(emptyList())
         }
-    }.mapLatest { invoice ->
-        invoice?.let { invoiceUiMapper.toUi(it) }
+    }.onEach { invoices ->
+        selectedInvoice.value = invoices.firstOrNull { it.status.isOpen }
     }
 
     val uiState = combine(
         categoryRepository.observeAllCategories(),
         creditCardRepository.observeAllCreditCards(),
         selectedCreditCard,
-        currentInvoiceUi
-    ) { categories, creditCards, selectedCard, invoiceUi ->
+        availableInvoicesFlow,
+        selectedInvoice,
+    ) { categories, creditCards, selectedCard, availableInvoices, selectedInvoice ->
         AddTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
-            currentInvoiceUi = invoiceUi
+            availableInvoices = availableInvoices,
+            selectedInvoice = selectedInvoice,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -66,6 +70,10 @@ class AddTransactionViewModel(
         selectedCreditCard.value = creditCard
     }
 
+    fun selectInvoice(invoice: Invoice?) {
+        selectedInvoice.value = invoice
+    }
+
     fun addTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
@@ -75,6 +83,13 @@ class AddTransactionViewModel(
             )
         }.onSuccess {
             modalManager.dismiss()
+        }
+    }
+
+    fun createFutureInvoice() = viewModelScope.launch {
+        val creditCard = selectedCreditCard.value ?: return@launch
+        createFutureInvoiceUseCase(creditCard).onSuccess { invoice ->
+            selectedInvoice.value = invoice
         }
     }
 }

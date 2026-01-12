@@ -9,12 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.Payment
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -26,21 +21,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.icons.CategoryLazyIcon
-import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finance.ui.theme.Adjustment
-import com.neoutils.finance.ui.theme.InvoicePayment
-import com.neoutils.finance.ui.theme.Expense
-import com.neoutils.finance.ui.theme.Income
-import com.neoutils.finance.ui.theme.Info
+import com.neoutils.finance.ui.theme.*
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,7 +44,6 @@ class ViewTransactionModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val manager = LocalModalManager.current
 
         val viewModel = koinViewModel<ViewTransactionViewModel> { parametersOf(transaction) }
 
@@ -217,102 +205,128 @@ class ViewTransactionModal(
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
                         label = "Cartão",
-                        value = "(Excluído)",
+                        value = "Excluído",
                         valueColor = colorScheme.error,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
 
+            uiState.transaction.invoice?.let { invoice ->
+                DetailRow(
+                    label = "Fatura",
+                    value = invoice.label,
+                    valueColor = invoice.status.color,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-            val canModify = uiState.transaction.invoice?.let { invoice ->
-                invoice.status == Invoice.Status.OPEN
-            } ?: true
-
-            if (canModify) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = {
-                            manager.show(DeleteTransactionModal(uiState.transaction))
-                        },
-                        modifier = if (uiState.transaction.type == Transaction.Type.ADJUSTMENT ||
-                            uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT
-                        ) {
-                            Modifier.fillMaxWidth()
-                        } else {
-                            Modifier.weight(1f)
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = colorScheme.error,
-                        ),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = colorScheme.error,
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Excluir",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+            uiState.transaction.invoice?.let { invoice ->
+                when (invoice.status) {
+                    Invoice.Status.FUTURE, Invoice.Status.OPEN -> {
+                        EditAndDelete(uiState)
                     }
 
-                    when (uiState.transaction.type) {
-                        Transaction.Type.ADJUSTMENT,
-                        Transaction.Type.ADVANCE_PAYMENT -> Unit
-
-                        else -> {
-                            OutlinedButton(
-                                onClick = {
-                                    val modal = when (uiState.transaction.type) {
-                                        Transaction.Type.INVOICE_PAYMENT -> EditInvoicePaymentModal(uiState.transaction)
-                                        else -> EditTransactionModal(uiState.transaction)
-                                    }
-                                    manager.show(modal)
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Info,
-                                ),
-                                border = BorderStroke(
-                                    width = 1.dp,
-                                    color = Info,
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    text = "Editar",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                    Invoice.Status.CLOSED, Invoice.Status.PAID -> {
+                        Text(
+                            text = "Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.",
+                            fontSize = 14.sp,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
-            } else {
-                Text(
-                    text = "Esta transação pertence a uma fatura ${uiState.transaction.invoice?.status?.label?.lowercase() ?: "fechada"} e não pode ser modificada.",
-                    fontSize = 14.sp,
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            } ?: run {
+                EditAndDelete(uiState)
+            }
+        }
+    }
+
+    @Composable
+    private fun EditAndDelete(
+        uiState: ViewTransactionUiState,
+    ) = Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        val manager = LocalModalManager.current
+
+        OutlinedButton(
+            onClick = {
+                manager.show(DeleteTransactionModal(uiState.transaction))
+            },
+            modifier = when (uiState.transaction.type) {
+                Transaction.Type.ADJUSTMENT,
+                Transaction.Type.ADVANCE_PAYMENT -> Modifier.fillMaxWidth()
+
+                else -> Modifier.weight(1f)
+            },
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colorScheme.error,
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = colorScheme.error,
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = "Excluir",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        when (uiState.transaction.type) {
+            Transaction.Type.ADJUSTMENT,
+            Transaction.Type.ADVANCE_PAYMENT -> Unit
+
+            else -> {
+                OutlinedButton(
+                    onClick = {
+                        manager.show(
+                            when (uiState.transaction.type) {
+                                Transaction.Type.INVOICE_PAYMENT -> {
+                                    EditInvoicePaymentModal(uiState.transaction)
+                                }
+
+                                else -> {
+                                    EditTransactionModal(uiState.transaction)
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Info,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = Info,
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = "Editar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

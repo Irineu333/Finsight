@@ -52,7 +52,7 @@ class InvoiceRepository(
         }
     }
 
-    override suspend fun getAllInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
+    override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
 
         val creditCard = creditCardRepository.getCreditCardById(creditCardId)!!
 
@@ -96,6 +96,21 @@ class InvoiceRepository(
                         creditCard = creditCard
                     )
                 }
+            }
+        }
+    }
+
+    override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> {
+        return combine(
+            dao.observeAvailableInvoices(creditCardId),
+            creditCardRepository.observeCreditCardById(creditCardId),
+        ) { entities, creditCard ->
+            if (creditCard == null) return@combine emptyList()
+            entities.map { entity ->
+                mapper.toDomain(
+                    entity = entity,
+                    creditCard = creditCard
+                )
             }
         }
     }

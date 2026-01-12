@@ -81,7 +81,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     category = selectedCategory,
                     target = target,
                     creditCard = uiState.selectedCreditCard,
-                    invoice = uiState.currentInvoice,
+                    invoice = uiState.selectedInvoice,
                 )
             }
         }
@@ -135,8 +135,21 @@ class AddTransactionModal : ModalBottomSheet() {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
-                    invoice = uiState.currentInvoiceUi,
                     onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+
+            AnimatedVisibility(
+                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedCreditCard != null
+            ) {
+                InvoiceSelector(
+                    invoices = uiState.availableInvoices,
+                    selectedInvoice = uiState.selectedInvoice,
+                    onInvoiceSelected = { viewModel.selectInvoice(it) },
+                    onCreateFutureInvoice = { viewModel.createFutureInvoice() },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -188,21 +201,10 @@ class AddTransactionModal : ModalBottomSheet() {
                 trailingIcon = {
                     IconButton(
                         onClick = {
-                            val minDate = if (target.isCreditCard) {
-                                uiState.currentInvoice?.openingDate
-                            } else null
-
-                            val maxDate = if (target.isCreditCard) {
-                                uiState.currentInvoice?.closingDate?.coerceAtMost(currentDate)
-                            } else {
-                                currentDate
-                            }
-
                             manager.show(
                                 DatePickerModal(
                                     initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    minDate = minDate,
-                                    maxDate = maxDate,
+                                    maxDate = currentDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
                                             replace(0, length, formats.dayMonthYear.format(selectedDate))

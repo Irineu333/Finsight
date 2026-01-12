@@ -27,7 +27,7 @@ class CreateInvoiceUseCase(
         val creditCard = creditCardRepository.getCreditCardById(creditCardId)
             ?: return Result.failure(CreateInvoiceException(errors.creditCardNotFound))
 
-        val existingInvoices = invoiceRepository.getAllInvoicesByCreditCard(creditCardId)
+        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(creditCardId)
 
         val overlappingInvoice = existingInvoices.find { existing ->
             currentMonth < existing.closingMonth && nextMonth > existing.openingMonth

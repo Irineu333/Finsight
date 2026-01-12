@@ -25,13 +25,26 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status = 'OPEN' LIMIT 1")
     fun observeOpenInvoice(creditCardId: Long): Flow<InvoiceEntity?>
 
+    @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status IN ('OPEN', 'FUTURE') ORDER BY openingMonth ASC")
+    fun observeAvailableInvoices(creditCardId: Long): Flow<List<InvoiceEntity>>
+
     @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status != 'PAID' ORDER BY openingMonth DESC")
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<InvoiceEntity>
 
     @Query("SELECT * FROM invoices WHERE status != 'PAID' ORDER BY openingMonth DESC")
     fun observeUnpaidInvoices(): Flow<List<InvoiceEntity>>
 
-    @Query("SELECT * FROM invoices WHERE creditCardId = :creditCardId AND status != 'PAID' ORDER BY openingMonth ASC LIMIT 1")
+    @Query("""
+        SELECT * FROM invoices 
+        WHERE creditCardId = :creditCardId AND status IN ('CLOSED', 'OPEN')
+        ORDER BY 
+            CASE status 
+                WHEN 'CLOSED' THEN 0 
+                WHEN 'OPEN' THEN 1 
+            END,
+            openingMonth ASC 
+        LIMIT 1
+    """)
     fun observeUnpaidInvoice(creditCardId: Long): Flow<InvoiceEntity?>
 
     @Query("SELECT * FROM invoices WHERE id = :id")

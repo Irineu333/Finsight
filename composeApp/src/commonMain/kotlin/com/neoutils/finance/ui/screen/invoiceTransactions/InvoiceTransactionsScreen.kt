@@ -52,6 +52,7 @@ import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income as IncomeColor
@@ -270,7 +271,7 @@ private fun InvoicePager(
 
     LaunchedEffect(selectedIndex) {
         if (pagerState.currentPage != selectedIndex) {
-            pagerState.animateScrollToPage(selectedIndex)
+            pagerState.scrollToPage(selectedIndex)
         }
     }
 
@@ -453,6 +454,33 @@ private fun InvoiceActions(
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
                     text = "Fechar Fatura",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        if (summary.status.isFuture) {
+            OutlinedButton(
+                onClick = { modalManager.show(DeleteFutureInvoiceModal(invoice)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.error
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.error.copy(alpha = 0.5f))
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Excluir Fatura",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

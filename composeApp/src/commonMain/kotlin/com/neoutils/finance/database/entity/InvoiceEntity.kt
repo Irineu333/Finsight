@@ -39,6 +39,7 @@ data class InvoiceEntity(
     val paidAt: Long? = null
 ) {
     enum class Status {
+        FUTURE,
         OPEN,
         CLOSED,
         PAID

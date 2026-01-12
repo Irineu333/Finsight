@@ -11,6 +11,7 @@ import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
+import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
@@ -107,7 +108,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             transactionRepository = get(),
-            invoiceUiMapper = get(),
+            createFutureInvoiceUseCase = get(),
             modalManager = get()
         )
     }
@@ -119,7 +120,7 @@ val viewModelModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            invoiceUiMapper = get(),
+            createFutureInvoiceUseCase = get(),
             modalManager = get()
         )
     }
@@ -128,6 +129,14 @@ val viewModelModule = module {
         DeleteTransactionViewModel(
             transaction = it.get(),
             repository = get(),
+            modalManager = get()
+        )
+    }
+
+    viewModel {
+        DeleteFutureInvoiceViewModel(
+            invoice = it.get(),
+            deleteFutureInvoiceUseCase = get(),
             modalManager = get()
         )
     }

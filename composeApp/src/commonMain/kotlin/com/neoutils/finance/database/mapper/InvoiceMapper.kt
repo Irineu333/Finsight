@@ -39,6 +39,7 @@ class InvoiceMapper {
 
     fun InvoiceEntity.Status.toDomain(): Invoice.Status {
         return when (this) {
+            InvoiceEntity.Status.FUTURE -> Invoice.Status.FUTURE
             InvoiceEntity.Status.OPEN -> Invoice.Status.OPEN
             InvoiceEntity.Status.CLOSED -> Invoice.Status.CLOSED
             InvoiceEntity.Status.PAID -> Invoice.Status.PAID
@@ -47,6 +48,7 @@ class InvoiceMapper {
 
     fun Invoice.Status.toEntity(): InvoiceEntity.Status {
         return when (this) {
+            Invoice.Status.FUTURE -> InvoiceEntity.Status.FUTURE
             Invoice.Status.OPEN -> InvoiceEntity.Status.OPEN
             Invoice.Status.CLOSED -> InvoiceEntity.Status.CLOSED
             Invoice.Status.PAID -> InvoiceEntity.Status.PAID

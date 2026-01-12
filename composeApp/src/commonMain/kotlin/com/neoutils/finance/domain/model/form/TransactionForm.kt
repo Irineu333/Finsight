@@ -89,16 +89,16 @@ data class TransactionForm(
             BuildTransactionException(errors.creditCardRequired)
         )
 
-        if (invoice.status != Invoice.Status.OPEN) {
-            return Result.failure(BuildTransactionException(errors.invoiceNotOpen))
+        if (invoice.status.isClosed) {
+            return Result.failure(BuildTransactionException(errors.closedInvoice))
+        }
+
+        if (invoice.status.isPaid) {
+            return Result.failure(BuildTransactionException(errors.closedInvoice))
         }
 
         if (creditCard.id != invoice.creditCard.id) {
             return Result.failure(BuildTransactionException(errors.creditCardMismatch))
-        }
-
-        if (date < invoice.openingDate || date > invoice.closingDate) {
-            return Result.failure(BuildTransactionException(errors.dateOutsideInvoicePeriod))
         }
 
         return Result.success(

@@ -3,6 +3,7 @@ package com.neoutils.finance.database.mapper
 import com.neoutils.finance.database.entity.TransactionEntity
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Installment
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 
@@ -23,9 +24,17 @@ class TransactionMapper {
             target = toDomain(entity.target),
             creditCard = creditCard,
             invoice = invoice,
-            installmentNumber = entity.installmentNumber,
-            totalInstallments = entity.totalInstallments,
-            installmentGroupId = entity.installmentGroupId
+            installment = entity.installmentNumber?.let { number ->
+                entity.totalInstallments?.let { total ->
+                    entity.installmentGroupId?.let { groupUuid ->
+                        Installment(
+                            count = total,
+                            number = number,
+                            groupUuid = groupUuid,
+                        )
+                    }
+                }
+            }
         )
     }
 
@@ -42,9 +51,9 @@ class TransactionMapper {
             target = toEntity(domain.target),
             creditCardId = domain.creditCard?.id,
             invoiceId = domain.invoice?.id,
-            installmentNumber = domain.installmentNumber,
-            totalInstallments = domain.totalInstallments,
-            installmentGroupId = domain.installmentGroupId
+            installmentNumber = domain.installment?.number,
+            totalInstallments = domain.installment?.count,
+            installmentGroupId = domain.installment?.groupUuid
         )
     }
 

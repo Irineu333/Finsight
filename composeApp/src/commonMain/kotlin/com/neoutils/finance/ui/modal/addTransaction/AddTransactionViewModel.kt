@@ -43,8 +43,6 @@ class AddTransactionViewModel(
         } else {
             flowOf(emptyList())
         }
-    }.onEach { invoices ->
-        selectedInvoice.value = invoices.firstOrNull { it.status.isOpen }
     }
 
     val uiState = combine(
@@ -68,8 +66,13 @@ class AddTransactionViewModel(
         initialValue = AddTransactionUiState(),
     )
 
-    fun selectCreditCard(creditCard: CreditCard?) {
+    fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
         selectedCreditCard.value = creditCard
+        selectedInvoice.value = creditCard?.let {
+            invoiceRepository
+                .getInvoicesByCreditCard(creditCard.id)
+                .firstOrNull { it.status.isOpen }
+        }
     }
 
     fun selectInvoice(invoice: Invoice?) {
@@ -84,7 +87,7 @@ class AddTransactionViewModel(
                 addInstallmentTransactionsUseCase(
                     baseTransaction = transaction,
                     totalInstallments = form.installments,
-                    startingInvoice = form.invoice!!
+                    startingInvoice = form.invoice
                 ).onSuccess {
                     modalManager.dismiss()
                 }

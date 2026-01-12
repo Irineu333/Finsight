@@ -180,10 +180,10 @@ private fun getTitle(
         else -> checkNotNull(transaction.title ?: category?.name)
     }
 
-    return if (transaction.isInstallment) {
-        "$baseTitle (${transaction.installmentLabel})"
-    } else {
-        baseTitle
+    if (transaction.installment != null) {
+        return "$baseTitle • ${transaction.installment.label}"
     }
+
+    return baseTitle
 }
 

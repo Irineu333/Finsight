@@ -34,10 +34,6 @@ data class TransactionForm(
     val invoice: Invoice?,
     val installments: Int = 1
 ) {
-    val installmentAmount: Double?
-        get() = if (installments > 1 && amount.isNotEmpty()) {
-            amount.moneyToDouble() / installments
-        } else null
     fun build(id: Long = 0): Result<Transaction> {
 
         if (amount.isEmpty()) {

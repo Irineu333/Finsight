@@ -221,10 +221,10 @@ class ViewTransactionModal(
                 )
             }
 
-            if (uiState.transaction.isInstallment) {
+            uiState.transaction.installment?.let { installment ->
                 DetailRow(
                     label = "Parcela",
-                    value = uiState.transaction.installmentLabel ?: "",
+                    value = installment.label,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

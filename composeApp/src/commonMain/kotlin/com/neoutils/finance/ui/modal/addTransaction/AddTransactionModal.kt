@@ -28,7 +28,6 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.extension.isAccept
 import com.neoutils.finance.extension.moneyToDouble
-import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.DatePickerModal
 import com.neoutils.finance.ui.theme.Expense
@@ -184,23 +183,22 @@ class AddTransactionModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
+                trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedInvoice != null) {
+                    {
+                        InstallmentCounter(
+                            state = InstallmentState(
+                                count = installments,
+                                total = amount.text.toString().moneyToDouble(),
+                            ),
+                            onInstallmentsChange = { installments = it },
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+                } else null,
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
-
-            AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedInvoice != null
-            ) {
-                InstallmentSelector(
-                    selectedInstallments = installments,
-                    totalAmount = form.amount.moneyToDouble(),
-                    onInstallmentsSelected = { installments = it },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                )
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

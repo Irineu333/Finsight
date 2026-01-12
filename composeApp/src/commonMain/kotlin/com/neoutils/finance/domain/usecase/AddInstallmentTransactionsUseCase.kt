@@ -1,5 +1,6 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.model.Installment
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -73,9 +74,11 @@ class AddInstallmentTransactionsUseCase(
                 amount = installmentAmount,
                 date = installmentDate,
                 invoice = currentInvoice,
-                installmentNumber = installmentNumber,
-                totalInstallments = totalInstallments,
-                installmentGroupId = installmentGroupId
+                installment = Installment(
+                    count = totalInstallments,
+                    number = installmentNumber,
+                    groupUuid = installmentGroupId,
+                ),
             )
 
             val insertedId = transactionRepository.insert(installmentTransaction)

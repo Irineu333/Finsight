@@ -13,15 +13,8 @@ data class Transaction(
     val target: Target = Target.ACCOUNT,
     val creditCard: CreditCard? = null,
     val invoice: Invoice? = null,
-    val installmentNumber: Int? = null,
-    val totalInstallments: Int? = null,
-    val installmentGroupId: String? = null
+    val installment: Installment? = null,
 ) {
-    val isInstallment: Boolean
-        get() = installmentNumber != null && totalInstallments != null
-
-    val installmentLabel: String?
-        get() = if (isInstallment) "$installmentNumber/$totalInstallments" else null
     val accountAmount: Double
         get() = when (type) {
             Type.INCOME -> amount

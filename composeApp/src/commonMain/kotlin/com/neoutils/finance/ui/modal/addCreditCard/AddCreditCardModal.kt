@@ -45,10 +45,10 @@ class AddCreditCardModal : ModalBottomSheet() {
         val viewModel = koinViewModel<AddCreditCardViewModel>()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val name = rememberTextFieldState(uiState.forms.name.text)
-        val limit = rememberTextFieldState(uiState.forms.limit)
-        val closingDayField = rememberTextFieldState(uiState.forms.closingDay)
-        val dueDayField = rememberTextFieldState(uiState.forms.dueDay)
+        val name = rememberTextFieldState(uiState.form.name.text)
+        val limit = rememberTextFieldState(uiState.form.limit)
+        val closingDayField = rememberTextFieldState(uiState.form.closingDayUser)
+        val dueDayField = rememberTextFieldState(uiState.form.dueDayUser)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
@@ -99,7 +99,7 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = name,
                 label = { Text(text = "Nome do Cartão") },
-                trailingIcon = when (uiState.forms.name.validation) {
+                trailingIcon = when (uiState.form.name.validation) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -115,8 +115,8 @@ class AddCreditCardModal : ModalBottomSheet() {
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Next
                 ),
-                isError = uiState.forms.name.validation is Validation.Error,
-                supportingText = when (val validation = uiState.forms.name.validation) {
+                isError = uiState.form.name.validation is Validation.Error,
+                supportingText = when (val validation = uiState.form.name.validation) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))
@@ -148,7 +148,7 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = closingDayField,
                 labelPosition = TextFieldLabelPosition.Attached(
-                    alwaysMinimize = uiState.forms.closingDayCalc != null
+                    alwaysMinimize = uiState.form.closingDayCalc != null
                 ),
                 label = {
                     Text(text = "Dia de Fechamento")
@@ -157,7 +157,7 @@ class AddCreditCardModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                placeholder = uiState.forms.closingDayCalc?.let { hint ->
+                placeholder = uiState.form.closingDayCalc?.let { hint ->
                     {
                         Text(text = hint.toString())
                     }
@@ -171,7 +171,7 @@ class AddCreditCardModal : ModalBottomSheet() {
             OutlinedTextField(
                 state = dueDayField,
                 labelPosition = TextFieldLabelPosition.Attached(
-                    alwaysMinimize = uiState.forms.dueDayCalc != null
+                    alwaysMinimize = uiState.form.dueDayCalc != null
                 ),
                 label = {
                     Text(text = "Dia de Vencimento")
@@ -180,7 +180,7 @@ class AddCreditCardModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
-                placeholder = uiState.forms.dueDayCalc?.let { hint ->
+                placeholder = uiState.form.dueDayCalc?.let { hint ->
                     {
                         Text(text = hint.toString())
                     }

@@ -9,7 +9,7 @@ import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.isAccept
-import com.neoutils.finance.extension.parseToMoney
+import com.neoutils.finance.extension.moneyToDouble
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -39,7 +39,7 @@ data class TransactionForm(
             return Result.failure(BuildTransactionException(errors.amountRequired))
         }
 
-        if (amount.parseToMoney() == 0.0) {
+        if (amount.moneyToDouble() == 0.0) {
             return Result.failure(BuildTransactionException(errors.amountZero))
         }
 
@@ -66,7 +66,7 @@ data class TransactionForm(
                 Transaction(
                     id = id,
                     type = type,
-                    amount = amount.parseToMoney(),
+                    amount = amount.moneyToDouble(),
                     title = title,
                     date = date,
                     category = category,
@@ -105,7 +105,7 @@ data class TransactionForm(
             Transaction(
                 id = id,
                 type = type,
-                amount = amount.parseToMoney(),
+                amount = amount.moneyToDouble(),
                 title = title,
                 date = date,
                 category = category,

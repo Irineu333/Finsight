@@ -2,7 +2,7 @@ package com.neoutils.finance.extension
 
 import kotlin.math.abs
 
-fun String.parseToMoney(): Double {
+fun String.moneyToDouble(): Double {
     val digitsOnly = this
         .replace("R$", "")
         .replace(".", "")

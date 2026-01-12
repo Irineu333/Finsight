@@ -219,9 +219,11 @@ val viewModelModule = module {
 
     viewModel {
         EditCreditCardViewModel(
-            creditCardId = it.get(),
+            creditCard = it.get(),
             updateCreditCardUseCase = get(),
+            validateCreditCardName = get(),
             modalManager = get(),
+            debounceManager = get(),
         )
     }
 

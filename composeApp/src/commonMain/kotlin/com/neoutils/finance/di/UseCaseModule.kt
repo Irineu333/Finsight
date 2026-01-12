@@ -76,12 +76,14 @@ val useCaseModules = module {
         AddCreditCardUseCase(
             repository = get(),
             openInvoiceUseCase = get(),
+            validateCreditCardName = get(),
         )
     }
 
     factory {
         UpdateCreditCardUseCase(
             repository = get(),
+            validateCreditCardName = get(),
         )
     }
 

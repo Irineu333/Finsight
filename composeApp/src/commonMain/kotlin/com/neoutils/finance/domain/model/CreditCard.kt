@@ -2,12 +2,12 @@
 
 package com.neoutils.finance.domain.model
 
-import com.neoutils.finance.domain.errors.RegisterCreditCardErrors
-import com.neoutils.finance.domain.exception.RegisterCreditCardException
+import com.neoutils.finance.domain.errors.BuildCreditCardErrors
+import com.neoutils.finance.domain.exception.BuildCreditCardException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-private val creditCardErrors = RegisterCreditCardErrors()
+private val errors = BuildCreditCardErrors()
 
 data class CreditCard(
     val id: Long = 0,
@@ -19,19 +19,19 @@ data class CreditCard(
 ) {
     init {
         if (name.isBlank()) {
-            throw RegisterCreditCardException(creditCardErrors.emptyName)
+            throw BuildCreditCardException(errors.nameRequired)
         }
 
         if (limit < 0) {
-            throw RegisterCreditCardException(creditCardErrors.negativeLimit)
+            throw BuildCreditCardException(errors.limitNegative)
         }
 
         if (closingDay !in 1..31) {
-            throw RegisterCreditCardException(creditCardErrors.invalidClosingDay)
+            throw BuildCreditCardException(errors.closingDayInvalid)
         }
 
         if (dueDay !in 1..31) {
-            throw RegisterCreditCardException(creditCardErrors.invalidDueDay)
+            throw BuildCreditCardException(errors.dueDayInvalid)
         }
     }
 }

@@ -12,15 +12,11 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.domain.usecase.GetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 
@@ -30,7 +26,7 @@ class EditTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val buildTransactionUseCase: BuildTransactionUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -84,7 +80,7 @@ class EditTransactionViewModel(
                     dueMonth = it.dueMonth,
                     existingInvoice = it
                 )
-            },
+            }
         )
     )
 
@@ -105,20 +101,7 @@ class EditTransactionViewModel(
     fun updateTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        val creditCard = form.creditCard
-        val dueMonth = selectedDueMonth.value
-
-        val invoice = if (creditCard != null && dueMonth != null && form.target.isCreditCard) {
-            getOrCreateInvoiceForMonthUseCase(creditCard, dueMonth).getOrElse {
-                return@launch
-            }
-        } else {
-            null
-        }
-
-        val updatedForm = form.copy(invoice = invoice)
-
-        updatedForm.build(id = transaction.id).onSuccess {
+        buildTransactionUseCase(form, transaction.id).onSuccess {
             transactionRepository.update(it)
             modalManager.dismissAll()
         }

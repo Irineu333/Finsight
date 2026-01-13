@@ -82,8 +82,8 @@ class AddTransactionModal : ModalBottomSheet() {
                     category = selectedCategory,
                     target = target,
                     creditCard = uiState.selectedCreditCard,
-                    invoice = uiState.invoiceSelection?.existingInvoice,
-                    installments = installments
+                    invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
+                    installments = installments,
                 )
             }
         }

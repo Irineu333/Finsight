@@ -2,16 +2,14 @@
 
 package com.neoutils.finance.domain.model.form
 
-import com.neoutils.finance.domain.errors.BuildTransactionErrors
-import com.neoutils.finance.domain.exception.BuildTransactionException
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.isAccept
 import com.neoutils.finance.extension.moneyToDouble
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -21,8 +19,6 @@ private val currentDate
 
 private val formats = DateFormats()
 
-private val errors = BuildTransactionErrors()
-
 data class TransactionForm(
     val type: Transaction.Type,
     val amount: String,
@@ -31,93 +27,28 @@ data class TransactionForm(
     val category: Category?,
     val target: Transaction.Target,
     val creditCard: CreditCard?,
-    val invoice: Invoice?,
+    val invoiceDueMonth: YearMonth?,
     val installments: Int = 1
 ) {
-    fun build(id: Long = 0): Result<Transaction> {
-
-        if (amount.isEmpty()) {
-            return Result.failure(BuildTransactionException(errors.amountRequired))
-        }
-
-        if (amount.moneyToDouble() == 0.0) {
-            return Result.failure(BuildTransactionException(errors.amountZero))
-        }
-
-        if (date.isEmpty()) {
-            return Result.failure(BuildTransactionException(errors.dateRequired))
-        }
-
-        if (title.isNullOrEmpty() && category == null) {
-            return Result.failure(BuildTransactionException(errors.titleOrCategoryRequired))
-        }
+    fun isValid(): Boolean {
+        if (amount.isEmpty()) return false
+        if (amount.moneyToDouble() == 0.0) return false
+        if (date.isEmpty()) return false
+        if (title.isNullOrEmpty() && category == null) return false
 
         val date = runCatching {
-            formats.dayMonthYear.parse(date)
-        }.getOrElse {
-            return Result.failure(BuildTransactionException(errors.dateInvalid))
-        }
+            formats.dayMonthYear.parse(this.date)
+        }.getOrElse { return false }
 
-        if (date > currentDate) {
-            return Result.failure(BuildTransactionException(errors.dateFuture))
-        }
+        if (date > currentDate) return false
 
-        if (target.isAccount) {
-            return Result.success(
-                Transaction(
-                    id = id,
-                    type = type,
-                    amount = amount.moneyToDouble(),
-                    title = title,
-                    date = date,
-                    category = category,
-                    target = target,
-                    creditCard = null,
-                    invoice = null,
-                )
-            )
-        }
+        if (target.isAccount) return true
 
-        if (type != Transaction.Type.EXPENSE) {
-            return Result.failure(BuildTransactionException(errors.creditCardExpenseOnly))
-        }
+        if (type != Transaction.Type.EXPENSE) return false
+        if (creditCard == null) return false
 
-        val invoice = invoice ?: return Result.failure(
-            BuildTransactionException(errors.invoiceRequired)
-        )
-
-        val creditCard = creditCard ?: return Result.failure(
-            BuildTransactionException(errors.creditCardRequired)
-        )
-
-        if (invoice.status.isClosed) {
-            return Result.failure(BuildTransactionException(errors.closedInvoice))
-        }
-
-        if (invoice.status.isPaid) {
-            return Result.failure(BuildTransactionException(errors.closedInvoice))
-        }
-
-        if (creditCard.id != invoice.creditCard.id) {
-            return Result.failure(BuildTransactionException(errors.creditCardMismatch))
-        }
-
-        return Result.success(
-            Transaction(
-                id = id,
-                type = type,
-                amount = amount.moneyToDouble(),
-                title = title,
-                date = date,
-                category = category,
-                target = target,
-                creditCard = creditCard,
-                invoice = invoice,
-            )
-        )
+        return true
     }
-
-    fun isValid() = build().isSuccess
 
     companion object {
         fun from(
@@ -128,12 +59,11 @@ data class TransactionForm(
             category: Category?,
             target: Transaction.Target,
             creditCard: CreditCard?,
-            invoice: Invoice?,
+            invoiceDueMonth: YearMonth?,
             installments: Int = 1
         ): TransactionForm {
 
             val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
-            val invoice = invoice.takeIf { target.isCreditCard }
             val category = category?.takeIf { it.type.isAccept(type) }
             val creditCard = creditCard?.takeIf { target.isCreditCard }
             val installments = if (target.isCreditCard) installments else 1
@@ -146,7 +76,7 @@ data class TransactionForm(
                 category = category,
                 target = target,
                 creditCard = creditCard,
-                invoice = invoice,
+                invoiceDueMonth = invoiceDueMonth,
                 installments = installments,
             )
         }

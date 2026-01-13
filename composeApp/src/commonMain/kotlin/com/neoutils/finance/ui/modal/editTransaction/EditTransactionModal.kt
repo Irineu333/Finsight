@@ -82,7 +82,7 @@ class EditTransactionModal(
                     category = selectedCategory,
                     target = target,
                     creditCard = uiState.selectedCreditCard,
-                    invoice = uiState.invoiceSelection?.existingInvoice,
+                    invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
                 )
             }
         }

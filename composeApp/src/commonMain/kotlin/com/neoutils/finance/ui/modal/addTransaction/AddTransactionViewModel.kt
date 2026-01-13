@@ -12,15 +12,11 @@ import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.AddInstallmentTransactionsUseCase
-import com.neoutils.finance.domain.usecase.GetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 
@@ -29,7 +25,7 @@ class AddTransactionViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentTransactionsUseCase: AddInstallmentTransactionsUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
@@ -97,25 +93,12 @@ class AddTransactionViewModel(
     fun addTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        val creditCard = form.creditCard
-        val dueMonth = selectedDueMonth.value
-
-        val invoice = if (creditCard != null && dueMonth != null && form.target.isCreditCard) {
-            getOrCreateInvoiceForMonthUseCase(creditCard, dueMonth).getOrElse {
-                return@launch
-            }
-        } else {
-            null
-        }
-
-        val updatedForm = form.copy(invoice = invoice)
-
-        updatedForm.build().onSuccess { transaction ->
-            if (updatedForm.installments > 1 && invoice != null) {
+        buildTransactionUseCase(form).onSuccess { transaction ->
+            if (form.installments > 1 && transaction.invoice != null) {
                 addInstallmentTransactionsUseCase(
                     baseTransaction = transaction,
-                    totalInstallments = updatedForm.installments,
-                    startingInvoice = invoice
+                    totalInstallments = form.installments,
+                    startingInvoice = transaction.invoice
                 ).onSuccess {
                     modalManager.dismiss()
                 }

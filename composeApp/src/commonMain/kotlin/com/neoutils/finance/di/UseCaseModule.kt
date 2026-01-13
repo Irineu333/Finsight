@@ -19,6 +19,7 @@ import com.neoutils.finance.domain.usecase.CreateFutureInvoiceUseCase
 import com.neoutils.finance.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finance.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finance.domain.usecase.AddInstallmentTransactionsUseCase
+import com.neoutils.finance.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finance.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finance.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finance.domain.usecase.PayInvoiceUseCase
@@ -173,6 +174,13 @@ val useCaseModules = module {
             transactionRepository = get(),
             invoiceRepository = get(),
             openInvoiceUseCase = get(),
+            createFutureInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        GetOrCreateInvoiceForMonthUseCase(
+            invoiceRepository = get(),
             createFutureInvoiceUseCase = get(),
         )
     }

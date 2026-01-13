@@ -82,7 +82,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     category = selectedCategory,
                     target = target,
                     creditCard = uiState.selectedCreditCard,
-                    invoice = uiState.selectedInvoice,
+                    invoice = uiState.invoiceSelection?.existingInvoice,
                     installments = installments
                 )
             }
@@ -145,17 +145,20 @@ class AddTransactionModal : ModalBottomSheet() {
             }
 
             AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedCreditCard != null
+                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
             ) {
-                InvoiceSelector(
-                    invoices = uiState.availableInvoices,
-                    selectedInvoice = uiState.selectedInvoice,
-                    onInvoiceSelected = { viewModel.selectInvoice(it) },
-                    onCreateFutureInvoice = { viewModel.createFutureInvoice() },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                )
+                uiState.invoiceSelection?.let { selection ->
+                    uiState.minDueMonth?.let { minMonth ->
+                        InvoiceMonthNavigator(
+                            selection = selection,
+                            minDueMonth = minMonth,
+                            onNavigate = { viewModel.navigateToMonth(it) },
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -183,7 +186,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.selectedInvoice != null) {
+                trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null) {
                     {
                         InstallmentCounter(
                             state = InstallmentState(

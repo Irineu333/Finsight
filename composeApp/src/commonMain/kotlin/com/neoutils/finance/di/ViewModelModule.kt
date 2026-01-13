@@ -108,7 +108,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             transactionRepository = get(),
-            createFutureInvoiceUseCase = get(),
+            getOrCreateInvoiceForMonthUseCase = get(),
             addInstallmentTransactionsUseCase = get(),
             modalManager = get()
         )
@@ -121,7 +121,7 @@ val viewModelModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            createFutureInvoiceUseCase = get(),
+            getOrCreateInvoiceForMonthUseCase = get(),
             modalManager = get()
         )
     }

@@ -12,7 +12,8 @@ import kotlin.time.ExperimentalTime
 
 class GetOrCreateInvoiceForMonthUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase
+    private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
+    private val createRetroactiveInvoiceUseCase: CreateRetroactiveInvoiceUseCase
 ) {
 
     suspend operator fun invoke(
@@ -25,14 +26,21 @@ class GetOrCreateInvoiceForMonthUseCase(
 
         val existingInvoice = existingInvoices.find { it.dueMonth == targetDueMonth }
         if (existingInvoice != null) {
+            if (existingInvoice.status.isBlocked) {
+                return Result.failure(
+                    CreateFutureInvoiceException("Fatura ${existingInvoice.status.label.lowercase()} não permite lançamentos")
+                )
+            }
             return Result.success(existingInvoice)
         }
 
         val openInvoice = existingInvoices.find { it.status.isOpen }
             ?: return Result.failure(CreateFutureInvoiceException("Nenhuma fatura aberta encontrada"))
 
-        if (targetDueMonth < openInvoice.dueMonth) {
-            return Result.failure(CreateFutureInvoiceException("Não é possível criar fatura anterior à fatura aberta"))
+        val isPastMonth = targetDueMonth < openInvoice.dueMonth
+
+        if (isPastMonth) {
+            return createRetroactiveInvoiceUseCase(creditCard, targetDueMonth)
         }
 
         var currentInvoice = existingInvoices.first()

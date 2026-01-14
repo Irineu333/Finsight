@@ -92,8 +92,6 @@ class InvoiceTransactionsViewModel(
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
                     .sumOf { it.amount }
 
-                val isClosable = invoice.status == Invoice.Status.OPEN && currentDate >= invoice.closingDate
-
                 InvoiceTransactionsUiState.InvoiceSummary(
                     invoice = invoice,
                     expense = expense,
@@ -105,7 +103,7 @@ class InvoiceTransactionsViewModel(
                     dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
                     periodLabel = "${formats.dayMonth.format(invoice.openingDate)} até ${formats.dayMonth.format(invoice.closingDate)}",
                     closingDate = invoice.closingDate,
-                    isClosable = isClosable,
+                    isClosable = invoice.isClosable && currentDate >= invoice.closingDate,
                 )
             },
             selectedInvoiceIndex = index,

@@ -11,6 +11,8 @@ data class InvoiceMonthSelection(
 ) {
     val isNew = existingInvoice == null
 
+    val isBlocked = existingInvoice?.status?.isBlocked == true
+
     val label = existingInvoice?.label ?: "${formats.yearMonth.format(dueMonth)} • Nova"
 
     val statusColor get() = existingInvoice?.status?.color

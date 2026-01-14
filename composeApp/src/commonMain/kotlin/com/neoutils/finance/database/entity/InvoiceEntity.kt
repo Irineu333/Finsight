@@ -42,6 +42,7 @@ data class InvoiceEntity(
         FUTURE,
         OPEN,
         CLOSED,
-        PAID
+        PAID,
+        RETROACTIVE
     }
 }

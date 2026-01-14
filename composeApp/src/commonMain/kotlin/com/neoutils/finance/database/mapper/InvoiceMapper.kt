@@ -43,6 +43,7 @@ class InvoiceMapper {
             InvoiceEntity.Status.OPEN -> Invoice.Status.OPEN
             InvoiceEntity.Status.CLOSED -> Invoice.Status.CLOSED
             InvoiceEntity.Status.PAID -> Invoice.Status.PAID
+            InvoiceEntity.Status.RETROACTIVE -> Invoice.Status.RETROACTIVE
         }
     }
 
@@ -52,6 +53,7 @@ class InvoiceMapper {
             Invoice.Status.OPEN -> InvoiceEntity.Status.OPEN
             Invoice.Status.CLOSED -> InvoiceEntity.Status.CLOSED
             Invoice.Status.PAID -> InvoiceEntity.Status.PAID
+            Invoice.Status.RETROACTIVE -> InvoiceEntity.Status.RETROACTIVE
         }
     }
 }

@@ -25,12 +25,9 @@ import kotlinx.datetime.plusMonth
 @Composable
 fun InvoiceMonthNavigator(
     selection: InvoiceMonthSelection,
-    minDueMonth: YearMonth,
     onNavigate: (YearMonth) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val canNavigatePrevious = selection.dueMonth > minDueMonth
-
     OutlinedTextField(
         value = selection.label,
         onValueChange = {},
@@ -53,13 +50,12 @@ fun InvoiceMonthNavigator(
                 IconButton(
                     onClick = {
                         onNavigate(selection.dueMonth.minusMonth())
-                    },
-                    enabled = canNavigatePrevious
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
-                        tint = if (canNavigatePrevious) colorScheme.primary else colorScheme.outline
+                        tint = colorScheme.primary
                     )
                 }
 
@@ -76,11 +72,17 @@ fun InvoiceMonthNavigator(
                 }
             }
         },
-        colors = OutlinedTextFieldDefaults.colors(),
+        colors = if (selection.isBlocked) {
+            OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = colorScheme.error.copy(alpha = 0.5f),
+                focusedBorderColor = colorScheme.error
+            )
+        } else {
+            OutlinedTextFieldDefaults.colors()
+        },
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize()
     )
 }
-

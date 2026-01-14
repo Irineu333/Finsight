@@ -13,7 +13,6 @@ import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
-import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -41,22 +40,13 @@ class EditTransactionViewModel(
         }
     }
 
-    private val openInvoiceFlow = selectedCreditCard.flatMapLatest { card ->
-        if (card != null) {
-            invoiceRepository.observeOpenInvoice(card.id)
-        } else {
-            flowOf(null)
-        }
-    }
-
     val uiState = combine(
         categoryRepository.observeAllCategories(),
         creditCardRepository.observeAllCreditCards(),
         selectedCreditCard,
         invoicesFlow,
         selectedDueMonth,
-        openInvoiceFlow,
-    ) { categories, creditCards, selectedCard, invoices, dueMonth, openInvoice ->
+    ) { categories, creditCards, selectedCard, invoices, dueMonth ->
         EditTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
@@ -68,7 +58,6 @@ class EditTransactionViewModel(
                     existingInvoice = invoices.find { it.dueMonth == month }
                 )
             },
-            minDueMonth = openInvoice?.dueMonth,
         )
     }.stateIn(
         scope = viewModelScope,

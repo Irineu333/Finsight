@@ -37,7 +37,7 @@ class PayInvoiceUseCase(
         paidAt: LocalDate,
     ): Result<Invoice> {
 
-        if (invoice.status != Invoice.Status.CLOSED) {
+        if (!invoice.isPayable) {
             return Result.failure(PayInvoiceException(errors.cannotPayOpenInvoice))
         }
 

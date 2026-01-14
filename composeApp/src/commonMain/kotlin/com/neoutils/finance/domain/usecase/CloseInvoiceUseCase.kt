@@ -44,6 +44,13 @@ class CloseInvoiceUseCase(
             return Result.failure(CloseInvoiceException(errors.negativeBalance))
         }
 
+        if (invoice.status.isRetroactive) {
+            return payInvoiceUseCase(
+                invoice = invoice,
+                paidAt = closedAt,
+            )
+        }
+
         val closedInvoice = invoice.copy(
             status = Invoice.Status.CLOSED,
             closedAt = closedAt.toEpochDays(),

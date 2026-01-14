@@ -233,7 +233,7 @@ class ViewTransactionModal(
 
             uiState.transaction.invoice?.let { invoice ->
                 when (invoice.status) {
-                    Invoice.Status.FUTURE, Invoice.Status.OPEN -> {
+                    Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
                         EditAndDelete(uiState)
                     }
 

@@ -27,6 +27,18 @@ data class Invoice(
     val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
     val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
 
+    val isClosable get() = when(status) {
+        Status.OPEN -> true
+        Status.RETROACTIVE -> true
+        else -> false
+    }
+
+    val isPayable get() = when(status) {
+        Status.CLOSED -> true
+        Status.RETROACTIVE -> true
+        else -> false
+    }
+
     enum class Status(
         val label: String,
         val color: Color,
@@ -46,6 +58,10 @@ data class Invoice(
         PAID(
             label = "Paga",
             color = Color(0xFF66BB6A)
+        ),
+        RETROACTIVE(
+            label = "Retroativa",
+            color = Color(0xFF5C6BC0)
         );
 
         val isFuture: Boolean
@@ -59,6 +75,12 @@ data class Invoice(
 
         val isPaid: Boolean
             get() = this == PAID
+
+        val isRetroactive: Boolean
+            get() = this == RETROACTIVE
+
+        val isBlocked: Boolean
+            get() = this == CLOSED || this == PAID
     }
 
     init {

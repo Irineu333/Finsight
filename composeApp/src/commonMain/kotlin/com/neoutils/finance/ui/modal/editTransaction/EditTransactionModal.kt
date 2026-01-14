@@ -156,16 +156,13 @@ class EditTransactionModal(
                 type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
             ) {
                 uiState.invoiceSelection?.let { selection ->
-                    uiState.minDueMonth?.let { minMonth ->
-                        InvoiceMonthNavigator(
-                            selection = selection,
-                            minDueMonth = minMonth,
-                            onNavigate = { viewModel.navigateToMonth(it) },
-                            modifier = Modifier
-                                .padding(top = 8.dp)
-                                .fillMaxWidth()
-                        )
-                    }
+                    InvoiceMonthNavigator(
+                        selection = selection,
+                        onNavigate = { viewModel.navigateToMonth(it) },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
                 }
             }
 
@@ -247,7 +244,7 @@ class EditTransactionModal(
                         form = form
                     )
                 },
-                enabled = form.isValid(),
+                enabled = form.isValid() && !uiState.isInvoiceBlocked,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

@@ -266,10 +266,10 @@ class ViewTransactionModal(
             onClick = {
                 manager.show(DeleteTransactionModal(uiState.transaction))
             },
-            modifier = when (uiState.transaction.type) {
-                Transaction.Type.ADJUSTMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> Modifier.fillMaxWidth()
-
+            modifier = when {
+                uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
+                uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT -> Modifier.fillMaxWidth()
+                uiState.transaction.installment != null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
             shape = RoundedCornerShape(12.dp),
@@ -294,9 +294,10 @@ class ViewTransactionModal(
             )
         }
 
-        when (uiState.transaction.type) {
-            Transaction.Type.ADJUSTMENT,
-            Transaction.Type.ADVANCE_PAYMENT -> Unit
+        when {
+            uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
+            uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT -> Unit
+            uiState.transaction.installment != null -> Unit
 
             else -> {
                 OutlinedButton(

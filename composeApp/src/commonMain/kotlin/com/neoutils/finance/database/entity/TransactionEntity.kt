@@ -47,7 +47,8 @@ data class TransactionEntity(
     val invoiceId: Long? = null,
     val installmentNumber: Int? = null,
     val totalInstallments: Int? = null,
-    val installmentGroupId: String? = null
+    val installmentGroupId: String? = null,
+    val installmentTotalAmount: Double? = null
 ) {
     enum class Type {
         EXPENSE,

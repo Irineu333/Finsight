@@ -78,6 +78,7 @@ class AddInstallmentTransactionsUseCase(
                     count = totalInstallments,
                     number = installmentNumber,
                     groupUuid = installmentGroupId,
+                    totalAmount = baseTransaction.amount,
                 ),
             )
 

@@ -21,7 +21,7 @@ import com.neoutils.finance.database.entity.TransactionEntity
         CreditCardEntity::class,
         InvoiceEntity::class
     ],
-    version = 4,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

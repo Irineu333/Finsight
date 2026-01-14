@@ -224,7 +224,7 @@ class ViewTransactionModal(
             uiState.transaction.installment?.let { installment ->
                 DetailRow(
                     label = "Parcela",
-                    value = installment.label,
+                    value = "${installment.label} de ${installment.totalLabel}",
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

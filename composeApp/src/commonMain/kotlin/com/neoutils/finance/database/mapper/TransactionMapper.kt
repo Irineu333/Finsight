@@ -27,11 +27,14 @@ class TransactionMapper {
             installment = entity.installmentNumber?.let { number ->
                 entity.totalInstallments?.let { total ->
                     entity.installmentGroupId?.let { groupUuid ->
-                        Installment(
-                            count = total,
-                            number = number,
-                            groupUuid = groupUuid,
-                        )
+                        entity.installmentTotalAmount?.let { totalAmount ->
+                            Installment(
+                                count = total,
+                                number = number,
+                                groupUuid = groupUuid,
+                                totalAmount = totalAmount,
+                            )
+                        }
                     }
                 }
             }
@@ -53,7 +56,8 @@ class TransactionMapper {
             invoiceId = domain.invoice?.id,
             installmentNumber = domain.installment?.number,
             totalInstallments = domain.installment?.count,
-            installmentGroupId = domain.installment?.groupUuid
+            installmentGroupId = domain.installment?.groupUuid,
+            installmentTotalAmount = domain.installment?.totalAmount
         )
     }
 

@@ -211,7 +211,7 @@ private fun InvoiceTransactionsContent(
             uiState.transactions.forEach { (date, transactions) ->
                 item {
                     Text(
-                        text = formats.dayOfWeek.format(date),
+                        text = formats.formatRelativeDate(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier

@@ -66,7 +66,7 @@ data class TransactionForm(
             val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
             val category = category?.takeIf { it.type.isAccept(type) }
             val creditCard = creditCard?.takeIf { target.isCreditCard }
-            val installments = if (target.isCreditCard) installments else 1
+            val installments = installments.takeIf { target.isCreditCard } ?: 1
 
             return TransactionForm(
                 type = type,

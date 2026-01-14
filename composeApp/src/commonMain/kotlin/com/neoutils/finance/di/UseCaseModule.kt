@@ -175,7 +175,6 @@ val useCaseModules = module {
         AddInstallmentTransactionsUseCase(
             transactionRepository = get(),
             invoiceRepository = get(),
-            openInvoiceUseCase = get(),
             createFutureInvoiceUseCase = get(),
         )
     }

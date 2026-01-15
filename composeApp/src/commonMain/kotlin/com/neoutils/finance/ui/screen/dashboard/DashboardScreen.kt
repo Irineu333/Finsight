@@ -18,24 +18,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.ui.component.BalanceCard
-import com.neoutils.finance.ui.component.BalanceCardConfig
-import com.neoutils.finance.ui.component.CategorySpendingCard
-import com.neoutils.finance.ui.component.CreditCardUiConfig
-import com.neoutils.finance.ui.component.DashboardCreditCardUi
-import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
@@ -46,8 +35,8 @@ import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.util.DateFormats
-import kotlin.time.ExperimentalTime
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.ExperimentalTime
 
 private val formats = DateFormats()
 
@@ -99,6 +88,11 @@ private fun DashboardContent(
     },
     contentWindowInsets = WindowInsets(),
 ) { paddingValues ->
+
+    val pagerState = rememberPagerState(
+        pageCount = { uiState.creditCards.size }
+    )
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -112,11 +106,12 @@ private fun DashboardContent(
         item {
             BalanceCard(
                 balance = uiState.balance.balance,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
                 onEditClick = openEditBalance,
                 onClick = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
             )
         }
 
@@ -124,7 +119,8 @@ private fun DashboardContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BalanceCard(
@@ -144,33 +140,34 @@ private fun DashboardContent(
         }
 
         if (uiState.creditCards.isNotEmpty()) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Cartões de Crédito",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    TextButton(onClick = onOpenCreditCards) {
+                        Text(text = "Ver Todos")
+                    }
+                }
+            }
 
             item {
-                val pagerState = rememberPagerState(
-                    pageCount = { uiState.creditCards.size }
-                )
-
-                Column(Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Cartões de Crédito",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-
-                        TextButton(onClick = onOpenCreditCards) {
-                            Text(text = "Ver Todos")
-                        }
-                    }
-
-                    Spacer(Modifier.height(8.dp))
-
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem()
+                ) {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxWidth(),
@@ -237,38 +234,34 @@ private fun DashboardContent(
                             }
                         )
                     }
+                }
+            }
 
-                    if (uiState.creditCards.size > 1) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp)
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            repeat(uiState.creditCards.size) { index ->
-                                val isSelected = pagerState.currentPage == index
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 4.dp)
-                                        .size(
-                                            if (isSelected) {
-                                                8.dp
-                                            } else {
-                                                6.dp
-                                            }
-                                        )
-                                        .background(
-                                            color = if (isSelected) {
-                                                colorScheme.primary
-                                            } else {
-                                                colorScheme.outline
-                                            },
-                                            shape = CircleShape
-                                        )
-                                )
-                            }
+            if (uiState.creditCards.size > 1) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(uiState.creditCards.size) { index ->
+                            val isSelected = pagerState.currentPage == index
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .size(if (isSelected) 8.dp else 6.dp)
+                                    .background(
+                                        color = if (isSelected) {
+                                            colorScheme.primary
+                                        } else {
+                                            colorScheme.outline
+                                        },
+                                        shape = CircleShape
+                                    )
+                            )
                         }
                     }
                 }
@@ -280,9 +273,9 @@ private fun DashboardContent(
                 CategorySpendingCard(
                     categorySpending = uiState.categorySpending,
                     modifier = Modifier
-                        .padding(top = 16.dp)
-                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
                         .animateItem(),
                     onCategoryClick = { category ->
                         modalManager.show(ViewCategoryModal(category))
@@ -297,7 +290,8 @@ private fun DashboardContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -375,9 +369,10 @@ private fun DashboardContent(
                     contentColor = colorScheme.onSurface,
                 ),
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
                     .padding(top = 24.dp)
-                    .fillMaxWidth(),
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -403,9 +398,11 @@ private fun DashboardContent(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
                 ),
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
+                    .animateItem(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),

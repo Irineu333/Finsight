@@ -32,6 +32,9 @@ class AddTransactionViewModel(
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
 
+    private val _errorMessage = MutableSharedFlow<String>()
+    val errorMessage = _errorMessage.asSharedFlow()
+
     private val invoicesFlow = selectedCreditCard.flatMapLatest { card ->
         if (card != null) {
             invoiceRepository.observeInvoicesByCreditCard(card.id)
@@ -90,6 +93,8 @@ class AddTransactionViewModel(
                     startingInvoice = transaction.invoice
                 ).onSuccess {
                     modalManager.dismiss()
+                }.onFailure { error ->
+                    _errorMessage.emit(error.message ?: "Erro ao adicionar parcelas")
                 }
             } else {
                 transactionRepository.insert(transaction)

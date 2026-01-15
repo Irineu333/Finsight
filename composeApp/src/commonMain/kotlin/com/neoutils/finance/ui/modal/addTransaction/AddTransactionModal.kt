@@ -15,6 +15,7 @@ import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,14 @@ class AddTransactionModal : ModalBottomSheet() {
         val viewModel = koinViewModel<AddTransactionViewModel>()
         val uiState by viewModel.uiState.collectAsState()
 
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.errorMessage.collect { message ->
+                snackbarHostState.showSnackbar(message)
+            }
+        }
+
         var type by remember { mutableStateOf(Transaction.Type.EXPENSE) }
         var target by remember { mutableStateOf(Transaction.Target.ACCOUNT) }
 
@@ -88,174 +97,183 @@ class AddTransactionModal : ModalBottomSheet() {
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-        ) {
-
-            TypeToggle(
-                selectedType = type,
-                onTypeSelected = {
-                    type = it
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                state = title,
-                label = {
-                    Text(text = "Título")
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            AnimatedVisibility(type.isExpense) {
-                TargetSelector(
-                    selectedTarget = target,
-                    onTargetSelected = { target = it },
-                    availableTargets = uiState.targets,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                )
-            }
-
-            AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD
+        Box {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp)
             ) {
-                CreditCardSelector(
-                    creditCards = uiState.creditCards,
-                    creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                )
-            }
 
-            AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
-            ) {
-                uiState.invoiceSelection?.let { selection ->
-                    InvoiceMonthNavigator(
-                        selection = selection,
-                        onNavigate = { viewModel.navigateToMonth(it) },
+                TypeToggle(
+                    selectedType = type,
+                    onTypeSelected = {
+                        type = it
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    state = title,
+                    label = {
+                        Text(text = "Título")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                AnimatedVisibility(type.isExpense) {
+                    TargetSelector(
+                        selectedTarget = target,
+                        onTargetSelected = { target = it },
+                        availableTargets = uiState.targets,
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                AnimatedVisibility(
+                    type.isExpense && target == Transaction.Target.CREDIT_CARD
+                ) {
+                    CreditCardSelector(
+                        creditCards = uiState.creditCards,
+                        creditCard = uiState.selectedCreditCard,
+                        onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
-            CategorySelector(
-                selectedCategory = selectedCategory,
-                categories = when (type) {
-                    Transaction.Type.INCOME -> uiState.incomeCategories
-                    Transaction.Type.EXPENSE -> uiState.expenseCategories
-                    else -> listOf()
-                },
-                onCategorySelected = { selectedCategory = it },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                state = amount,
-                label = {
-                    Text(text = "Valor")
-                },
-                inputTransformation = MoneyInputTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
-                trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null) {
-                    {
-                        InstallmentCounter(
-                            state = InstallmentState(
-                                count = installments,
-                                total = amount.text.toString().moneyToDouble(),
-                            ),
-                            onInstallmentsChange = { installments = it },
-                            modifier = Modifier.padding(end = 8.dp)
+                AnimatedVisibility(
+                    type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
+                ) {
+                    uiState.invoiceSelection?.let { selection ->
+                        InvoiceMonthNavigator(
+                            selection = selection,
+                            onNavigate = { viewModel.navigateToMonth(it) },
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
                         )
                     }
-                } else null,
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                state = date,
-                label = {
-                    Text(text = "Data")
-                },
-                inputTransformation = DateInputTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            manager.show(
-                                DatePickerModal(
-                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
-                                    maxDate = currentDate,
-                                    onDateSelected = { selectedDate ->
-                                        date.edit {
-                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
-                                        }
-                                    }
-                                )
+                CategorySelector(
+                    selectedCategory = selectedCategory,
+                    categories = when (type) {
+                        Transaction.Type.INCOME -> uiState.incomeCategories
+                        Transaction.Type.EXPENSE -> uiState.expenseCategories
+                        else -> listOf()
+                    },
+                    onCategorySelected = { selectedCategory = it },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    state = amount,
+                    label = {
+                        Text(text = "Valor")
+                    },
+                    inputTransformation = MoneyInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    trailingIcon = if (type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null) {
+                        {
+                            InstallmentCounter(
+                                state = InstallmentState(
+                                    count = installments,
+                                    total = amount.text.toString().moneyToDouble(),
+                                ),
+                                onInstallmentsChange = { installments = it },
+                                modifier = Modifier.padding(end = 8.dp)
                             )
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.TwoTone.CalendarToday,
-                            contentDescription = null,
-                            tint = colorScheme.primary,
-                        )
-                    }
-                },
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    viewModel.addTransaction(form)
-                },
-                enabled = form.isValid() && !uiState.isInvoiceBlocked,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = "Salvar",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    } else null,
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    state = date,
+                    label = {
+                        Text(text = "Data")
+                    },
+                    inputTransformation = DateInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                manager.show(
+                                    DatePickerModal(
+                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                        maxDate = currentDate,
+                                        onDateSelected = { selectedDate ->
+                                            date.edit {
+                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                            }
+                                        }
+                                    )
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.TwoTone.CalendarToday,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.addTransaction(form)
+                    },
+                    enabled = form.isValid() && !uiState.isInvoiceBlocked,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Salvar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            )
         }
     }
 

@@ -1,5 +1,6 @@
 package com.neoutils.finance.ui.modal.addTransaction
 
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
@@ -11,6 +12,8 @@ data class AddTransactionUiState(
     val creditCards: List<CreditCard> = emptyList(),
     val selectedCreditCard: CreditCard? = null,
     val invoiceSelection: InvoiceMonthSelection? = null,
+    val accounts: List<Account> = emptyList(),
+    val selectedAccount: Account? = null,
 ) {
     val targets = if (creditCards.isEmpty()) {
         listOf(Transaction.Target.ACCOUNT)

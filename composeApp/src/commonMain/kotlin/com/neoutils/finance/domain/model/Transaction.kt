@@ -13,6 +13,7 @@ data class Transaction(
     val target: Target = Target.ACCOUNT,
     val creditCard: CreditCard? = null,
     val invoice: Invoice? = null,
+    val account: Account? = null,
     val installment: Installment? = null,
 ) {
     val accountAmount: Double

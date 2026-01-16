@@ -65,6 +65,9 @@ class BuildTransactionUseCase(
                     target = form.target,
                     creditCard = null,
                     invoice = null,
+                    account = form.account ?: return Result.failure(
+                        BuildTransactionException(errors.accountRequired)
+                    ),
                 )
             )
         }

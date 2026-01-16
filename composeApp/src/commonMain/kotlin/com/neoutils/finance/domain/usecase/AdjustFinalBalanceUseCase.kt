@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
@@ -18,7 +19,8 @@ class AdjustFinalBalanceUseCase(
 
     suspend operator fun invoke(
         targetBalance: Double,
-        targetMonth: YearMonth
+        targetMonth: YearMonth,
+        account: Account
     ) {
         if (targetMonth > currentYearMonth) return
 
@@ -26,6 +28,7 @@ class AdjustFinalBalanceUseCase(
             adjustBalanceUseCase(
                 targetBalance = targetBalance,
                 adjustmentDate = currentDateTime.date,
+                account = account,
             )
             return
         }
@@ -33,6 +36,7 @@ class AdjustFinalBalanceUseCase(
         adjustBalanceUseCase(
             targetBalance = targetBalance,
             adjustmentDate = targetMonth.lastDay,
+            account = account,
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
@@ -11,10 +12,12 @@ class AdjustBalanceUseCase(
 ) {
     suspend operator fun invoke(
         targetBalance: Double,
-        adjustmentDate: LocalDate
+        adjustmentDate: LocalDate,
+        account: Account
     ) {
         val currentBalance = calculateBalanceUseCase(
             target = adjustmentDate.yearMonth,
+            accountId = account.id,
         )
 
         if (targetBalance == currentBalance) return
@@ -23,7 +26,7 @@ class AdjustBalanceUseCase(
             type = Transaction.Type.ADJUSTMENT,
             target = Transaction.Target.ACCOUNT,
             date = adjustmentDate,
-            invoiceId = null,
+            accountId = account.id,
         ).firstOrNull()
 
         val difference = targetBalance - currentBalance
@@ -34,7 +37,8 @@ class AdjustBalanceUseCase(
                     title = null,
                     type = Transaction.Type.ADJUSTMENT,
                     amount = difference,
-                    date = adjustmentDate
+                    date = adjustmentDate,
+                    account = account,
                 )
             )
             return

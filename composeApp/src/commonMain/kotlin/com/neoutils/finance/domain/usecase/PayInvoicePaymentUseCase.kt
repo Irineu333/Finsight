@@ -4,6 +4,7 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
 import com.neoutils.finance.domain.exception.PayCreditCardBillException
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -22,6 +23,7 @@ class PayInvoicePaymentUseCase(
     suspend operator fun invoke(
         invoiceId: Long,
         date: LocalDate,
+        account: Account,
     ): Result<Invoice> {
 
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
@@ -41,7 +43,8 @@ class PayInvoicePaymentUseCase(
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,
-            invoice = invoice
+            invoice = invoice,
+            account = account,
         ).let { transaction ->
             transaction.copy(
                 id = repository.insert(transaction)

@@ -44,7 +44,7 @@ fun TargetSelector(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Conta")
+                Text(text = "Tipo")
             },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)

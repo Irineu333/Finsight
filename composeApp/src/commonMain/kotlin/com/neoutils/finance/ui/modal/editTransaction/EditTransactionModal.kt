@@ -83,6 +83,7 @@ class EditTransactionModal(
                     target = target,
                     creditCard = uiState.selectedCreditCard,
                     invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
+                    account = uiState.selectedAccount,
                 )
             }
         }
@@ -151,6 +152,24 @@ class EditTransactionModal(
                         .fillMaxWidth()
                 )
             }
+
+            // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
+            /*
+            AnimatedVisibility(
+                visible = target == Transaction.Target.ACCOUNT || type.isIncome
+            ) {
+                AccountSelector(
+                    selectedAccount = uiState.selectedAccount,
+                    accounts = uiState.accounts,
+                    onAccountSelected = {
+                        viewModel.selectAccount(it)
+                    },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+            */
 
             AnimatedVisibility(
                 type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null

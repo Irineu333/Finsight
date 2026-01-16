@@ -93,6 +93,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     creditCard = uiState.selectedCreditCard,
                     invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
                     installments = installments,
+                    account = uiState.selectedAccount,
                 )
             }
         }
@@ -142,7 +143,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 }
 
                 AnimatedVisibility(
-                    type.isExpense && target == Transaction.Target.CREDIT_CARD
+                    type.isExpense && target.isCreditCard
                 ) {
                     CreditCardSelector(
                         creditCards = uiState.creditCards,
@@ -155,7 +156,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 }
 
                 AnimatedVisibility(
-                    type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
+                    type.isExpense && target.isCreditCard && uiState.invoiceSelection != null
                 ) {
                     uiState.invoiceSelection?.let { selection ->
                         InvoiceMonthNavigator(
@@ -167,6 +168,24 @@ class AddTransactionModal : ModalBottomSheet() {
                         )
                     }
                 }
+
+                // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
+                /*
+                AnimatedVisibility(
+                    visible = target.isAccount || type.isIncome
+                ) {
+                    AccountSelector(
+                        selectedAccount = uiState.selectedAccount,
+                        accounts = uiState.accounts,
+                        onAccountSelected = {
+                            viewModel.selectAccount(it)
+                        },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
+                */
 
                 Spacer(modifier = Modifier.height(8.dp))
 

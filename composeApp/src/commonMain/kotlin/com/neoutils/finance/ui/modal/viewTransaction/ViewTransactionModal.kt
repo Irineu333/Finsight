@@ -195,6 +195,14 @@ class ViewTransactionModal(
                 )
             }
 
+            uiState.transaction.account?.let { account ->
+                DetailRow(
+                    label = "Conta",
+                    value = account.name,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
                     label = "Cartão",

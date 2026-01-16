@@ -5,6 +5,7 @@ package com.neoutils.finance.database.repository
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.mapper.TransactionMapper
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -24,6 +25,7 @@ class TransactionRepository(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val accountRepository: IAccountRepository,
     private val mapper: TransactionMapper,
 ) : ITransactionRepository {
 
@@ -45,19 +47,27 @@ class TransactionRepository(
             invoices.associateBy { it.id }
         }
 
+    private val accountsFlow = accountRepository
+        .observeAllAccounts()
+        .map { accounts ->
+            accounts.associateBy { it.id }
+        }
+
     override fun observeAllTransactions(): Flow<List<Transaction>> {
         return combine(
             dao.observeAllTransactions(),
             categoriesFlow,
             creditCardsFlow,
             invoicesFlow,
-        ) { entities, categories, creditCards, invoices ->
+            accountsFlow,
+        ) { entities, categories, creditCards, invoices, accounts ->
             entities.map { entity ->
                 mapper.toDomain(
                     entity = entity,
                     category = categories[entity.categoryId],
                     creditCard = creditCards[entity.creditCardId],
                     invoice = invoices[entity.invoiceId],
+                    account = accounts[entity.accountId],
                 )
             }
         }
@@ -68,6 +78,7 @@ class TransactionRepository(
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
+        val accounts = accountRepository.getAllAccounts().associateBy { it.id }
 
         return entities.map { entity ->
             mapper.toDomain(
@@ -75,6 +86,7 @@ class TransactionRepository(
                 category = categories[entity.categoryId],
                 creditCard = creditCards[entity.creditCardId],
                 invoice = invoices[entity.invoiceId],
+                account = accounts[entity.accountId],
             )
         }
     }
@@ -97,16 +109,22 @@ class TransactionRepository(
                 invoiceRepository.observeInvoiceById(invoiceId)
             }
 
+            val accountFlow = entity.accountId?.let { accountId ->
+                accountRepository.observeAccountById(accountId)
+            }
+
             combine(
                 categoryFlow ?: flowOf(null),
                 creditCardFlow ?: flowOf(null),
                 invoiceFlow ?: flowOf(null),
-            ) { category, creditCard, invoice ->
+                accountFlow ?: flowOf(null),
+            ) { category, creditCard, invoice, account ->
                 mapper.toDomain(
                     entity = entity,
                     category = category,
                     creditCard = creditCard,
                     invoice = invoice,
+                    account = account,
                 )
             }
         }
@@ -116,7 +134,8 @@ class TransactionRepository(
         type: Transaction.Type?,
         target: Transaction.Target?,
         date: LocalDate?,
-        invoiceId: Long?
+        invoiceId: Long?,
+        accountId: Long?,
     ): List<Transaction> {
 
         val transactions = dao.getTransactionsBy(
@@ -124,6 +143,7 @@ class TransactionRepository(
             target = target?.let { mapper.toEntity(it) },
             date = date,
             invoiceId = invoiceId,
+            accountId = accountId,
         )
 
         return transactions.map { transaction ->
@@ -138,6 +158,9 @@ class TransactionRepository(
                 invoice = transaction.invoiceId?.let {
                     invoiceRepository.getInvoiceById(it)
                 },
+                account = transaction.accountId?.let {
+                    accountRepository.getAccountById(it)
+                },
             )
         }
     }
@@ -148,6 +171,7 @@ class TransactionRepository(
         date: LocalDate?,
         invoiceId: Long?,
         creditCardId: Long?,
+        accountId: Long?,
     ): Flow<List<Transaction>> {
         return combine(
             dao.observeTransactionsBy(
@@ -156,17 +180,20 @@ class TransactionRepository(
                 date = date,
                 invoiceId = invoiceId,
                 creditCardId = creditCardId,
+                accountId = accountId,
             ),
             categoriesFlow,
             creditCardsFlow,
             invoicesFlow,
-        ) { transactions, categories, creditCards, invoices ->
+            accountsFlow,
+        ) { transactions, categories, creditCards, invoices, accounts ->
             transactions.map { transaction ->
                 mapper.toDomain(
                     entity = transaction,
                     category = categories[transaction.categoryId],
                     creditCard = creditCards[transaction.creditCardId],
                     invoice = invoices[transaction.invoiceId],
+                    account = accounts[transaction.accountId],
                 )
             }
         }

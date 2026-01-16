@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.modal.editBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finance.domain.usecase.AdjustInitialBalanceUseCase
@@ -24,6 +25,7 @@ class EditBalanceViewModel(
     private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
     private val adjustInvoiceUseCase: AdjustInvoiceUseCase,
+    private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -32,20 +34,29 @@ class EditBalanceViewModel(
 
     fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
         when (type) {
-            EditBalanceModal.Type.CURRENT -> adjustBalanceUseCase(
-                targetBalance = targetBalance,
-                adjustmentDate = currentDate
-            )
+            EditBalanceModal.Type.CURRENT -> {
+                adjustBalanceUseCase(
+                    targetBalance = targetBalance,
+                    adjustmentDate = currentDate,
+                    account = checkNotNull(accountRepository.getDefaultAccount()),
+                )
+            }
 
-            EditBalanceModal.Type.FINAL -> adjustFinalBalanceUseCase(
-                targetBalance = targetBalance,
-                targetMonth = targetMonth
-            )
+            EditBalanceModal.Type.FINAL -> {
+                adjustFinalBalanceUseCase(
+                    targetBalance = targetBalance,
+                    targetMonth = targetMonth,
+                    account = checkNotNull(accountRepository.getDefaultAccount()),
+                )
+            }
 
-            EditBalanceModal.Type.INITIAL -> adjustInitialBalanceUseCase(
-                targetBalance = targetBalance,
-                targetMonth = targetMonth
-            )
+            EditBalanceModal.Type.INITIAL -> {
+                adjustInitialBalanceUseCase(
+                    targetBalance = targetBalance,
+                    targetMonth = targetMonth,
+                    account = checkNotNull(accountRepository.getDefaultAccount()),
+                )
+            }
 
             EditBalanceModal.Type.CREDIT_CARD -> adjustInvoiceUseCase(
                 invoiceId = invoiceId ?: return@launch,

@@ -72,6 +72,7 @@ val viewModelModule = module {
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
+            ensureDefaultAccountUseCase = get(),
             invoiceUiMapper = get()
         )
     }
@@ -108,6 +109,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             transactionRepository = get(),
+            accountRepository = get(),
             buildTransactionUseCase = get(),
             addInstallmentTransactionsUseCase = get(),
             modalManager = get()
@@ -121,6 +123,7 @@ val viewModelModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            accountRepository = get(),
             buildTransactionUseCase = get(),
             modalManager = get()
         )
@@ -200,6 +203,7 @@ val viewModelModule = module {
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
             adjustInvoiceUseCase = get(),
+            accountRepository = get(),
             modalManager = get()
         )
     }
@@ -207,9 +211,10 @@ val viewModelModule = module {
     viewModel {
         PayInvoiceViewModel(
             invoiceId = it.get(),
-            payInvoiceUseCase = get(),
             payInvoicePaymentUseCase = get(),
+            payInvoiceUseCase = get(),
             calculateInvoiceUseCase = get(),
+            accountRepository = get(),
             modalManager = get(),
         )
     }
@@ -246,6 +251,7 @@ val viewModelModule = module {
         AdvancePaymentViewModel(
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
+            accountRepository = get(),
             modalManager = get()
         )
     }

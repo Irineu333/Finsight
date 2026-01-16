@@ -16,20 +16,24 @@ class CalculateBalanceUseCase(
 ) {
     operator fun invoke(
         target: YearMonth,
-        transactions: List<Transaction>
+        transactions: List<Transaction>,
+        accountId: Long? = null
     ): Double {
         return transactions
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isAccount }
+            .filter { accountId == null || it.account?.id == accountId }
             .sumOf { it.accountAmount }
     }
 
     suspend operator fun invoke(
         target: YearMonth,
+        accountId: Long? = null,
     ): Double {
         return invoke(
             transactions = repository.getAllTransactions(),
             target = target,
+            accountId = accountId,
         )
     }
 }

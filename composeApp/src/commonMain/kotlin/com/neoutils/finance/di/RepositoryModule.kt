@@ -1,10 +1,12 @@
 package com.neoutils.finance.di
 
 import com.neoutils.finance.database.AppDatabase
+import com.neoutils.finance.database.repository.AccountRepository
 import com.neoutils.finance.database.repository.CategoryRepository
 import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.database.repository.InvoiceRepository
 import com.neoutils.finance.database.repository.TransactionRepository
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -15,6 +17,13 @@ import org.koin.dsl.module
 val repositoryModule = module {
 
     single<Settings> { Settings() }
+
+    single<IAccountRepository> {
+        AccountRepository(
+            dao = get(),
+            mapper = get(),
+        )
+    }
 
     single<ICategoryRepository> {
         CategoryRepository(
@@ -44,6 +53,7 @@ val repositoryModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            accountRepository = get(),
             mapper = get(),
         )
     }

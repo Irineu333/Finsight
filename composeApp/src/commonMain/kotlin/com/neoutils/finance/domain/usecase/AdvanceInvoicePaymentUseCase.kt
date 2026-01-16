@@ -4,6 +4,7 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
 import com.neoutils.finance.domain.exception.PayCreditCardBillException
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
@@ -27,6 +28,7 @@ class AdvanceInvoicePaymentUseCase(
         invoiceId: Long,
         amount: Double,
         date: LocalDate,
+        account: Account,
     ): Result<Transaction> {
         if (amount <= 0) {
             return Result.failure(PayCreditCardBillException(errors.negativeAmount))
@@ -57,7 +59,8 @@ class AdvanceInvoicePaymentUseCase(
             date = date,
             target = Transaction.Target.INVOICE_PAYMENT,
             creditCard = invoice.creditCard,
-            invoice = invoice
+            invoice = invoice,
+            account = account,
         ).let {
             it.copy(
                 id = repository.insert(it)

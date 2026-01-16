@@ -115,6 +115,16 @@ class ViewAdjustmentModal(
                 }
             )
 
+            uiState.transaction.account?.let { account ->
+                DetailRow(
+                    label = "Conta",
+                    value = account.name,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+
             uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
                     label = "Cartão",

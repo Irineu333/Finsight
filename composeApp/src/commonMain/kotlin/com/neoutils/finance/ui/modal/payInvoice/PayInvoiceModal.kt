@@ -21,6 +21,8 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.safeOnDay
+import com.neoutils.finance.ui.component.AccountSelector
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.DatePickerModal
@@ -59,6 +62,7 @@ class PayInvoiceModal(
             parametersOf(invoice.id)
         }
 
+        val uiState by viewModel.uiState.collectAsState()
         val manager = LocalModalManager.current
 
         val amount = formatMoneyFromDouble(currentBillAmount)
@@ -101,7 +105,17 @@ class PayInvoiceModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
+            /*
             Spacer(modifier = Modifier.height(8.dp))
+
+            AccountSelector(
+                selectedAccount = uiState.selectedAccount,
+                accounts = uiState.accounts,
+                onAccountSelected = { viewModel.selectAccount(it) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            */
 
             OutlinedTextField(
                 state = date,
@@ -147,14 +161,14 @@ class PayInvoiceModal(
             Button(
                 onClick = {
                     viewModel.payInvoice(
-                        date = formats.dayMonthYear.parse(date.text.toString())
+                        date = formats.dayMonthYear.parse(date.text.toString()),
                     )
                 },
                 enabled = isValidPayment(
                     date = date.text.toString(),
                     minDate = invoice.closingDate,
                     maxDate = maxDate
-                ),
+                ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

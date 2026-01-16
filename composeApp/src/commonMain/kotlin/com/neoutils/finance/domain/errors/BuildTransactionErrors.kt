@@ -10,6 +10,7 @@ data class BuildTransactionErrors(
     val creditCardExpenseOnly: String = "Apenas despesas podem ser associadas a cartões de crédito.",
     val invoiceRequired: String = "Fatura é obrigatória para transações de cartão.",
     val creditCardRequired: String = "Cartão de crédito é obrigatório.",
+    val accountRequired: String = "Conta é obrigatória para transações de conta.",
     val invoiceNotOpen: String = "A fatura precisa estar aberta.",
     val closedInvoice: String = "Não é possível adicionar transações em faturas fechadas.",
     val creditCardMismatch: String = "O cartão não corresponde à fatura.",

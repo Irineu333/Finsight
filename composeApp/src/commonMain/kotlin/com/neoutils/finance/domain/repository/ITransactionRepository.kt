@@ -13,10 +13,11 @@ interface ITransactionRepository {
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
     suspend fun getTransactionsBy(
-        type: Transaction.Type?,
-        target: Transaction.Target?,
-        date: LocalDate?,
-        invoiceId: Long?,
+        type: Transaction.Type? = null,
+        target: Transaction.Target? = null,
+        date: LocalDate? = null,
+        invoiceId: Long? = null,
+        accountId: Long? = null,
     ): List<Transaction>
 
     fun observeTransactionsBy(
@@ -25,5 +26,6 @@ interface ITransactionRepository {
         date: LocalDate? = null,
         invoiceId: Long? = null,
         creditCardId: Long? = null,
+        accountId: Long? = null,
     ): Flow<List<Transaction>>
 }

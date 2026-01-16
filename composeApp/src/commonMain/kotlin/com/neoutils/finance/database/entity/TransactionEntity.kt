@@ -26,12 +26,19 @@ import kotlinx.datetime.LocalDate
             parentColumns = ["id"],
             childColumns = ["invoiceId"],
             onDelete = ForeignKey.SET_NULL
+        ),
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["accountId"],
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [
         Index(value = ["categoryId"]),
         Index(value = ["creditCardId"]),
-        Index(value = ["invoiceId"])
+        Index(value = ["invoiceId"]),
+        Index(value = ["accountId"])
     ]
 )
 data class TransactionEntity(
@@ -45,6 +52,7 @@ data class TransactionEntity(
     val target: Target = Target.ACCOUNT,
     val creditCardId: Long? = null,
     val invoiceId: Long? = null,
+    val accountId: Long? = null,
     val installmentNumber: Int? = null,
     val totalInstallments: Int? = null,
     val installmentGroupId: String? = null,

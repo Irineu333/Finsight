@@ -4,15 +4,20 @@ package com.neoutils.finance.ui.modal.editTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.model.Account
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -25,12 +30,14 @@ class EditTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
     private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
+    private val selectedAccount = MutableStateFlow(transaction.account)
 
     private val invoicesFlow = selectedCreditCard.flatMapLatest { card ->
         if (card != null) {
@@ -46,7 +53,9 @@ class EditTransactionViewModel(
         selectedCreditCard,
         invoicesFlow,
         selectedDueMonth,
-    ) { categories, creditCards, selectedCard, invoices, dueMonth ->
+        accountRepository.observeAllAccounts(),
+        selectedAccount,
+    ) { categories, creditCards, selectedCard, invoices, dueMonth, accounts, account ->
         EditTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
@@ -58,12 +67,15 @@ class EditTransactionViewModel(
                     existingInvoice = invoices.find { it.dueMonth == month }
                 )
             },
+            accounts = accounts,
+            selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = EditTransactionUiState(
             selectedCreditCard = transaction.creditCard,
+            selectedAccount = transaction.account,
             invoiceSelection = transaction.invoice?.let {
                 InvoiceMonthSelection(
                     dueMonth = it.dueMonth,
@@ -85,6 +97,10 @@ class EditTransactionViewModel(
 
     fun navigateToMonth(dueMonth: YearMonth) {
         selectedDueMonth.value = dueMonth
+    }
+
+    fun selectAccount(account: Account?) {
+        selectedAccount.value = account
     }
 
     fun updateTransaction(

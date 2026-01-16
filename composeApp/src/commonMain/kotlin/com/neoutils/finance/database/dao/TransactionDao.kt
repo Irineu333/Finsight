@@ -38,6 +38,7 @@ interface TransactionDao {
           AND (:target IS NULL OR target = :target)
           AND (:date IS NULL OR date = :date)
           AND (:invoiceId IS NULL OR invoiceId = :invoiceId)
+          AND (:accountId IS NULL OR accountId = :accountId)
         ORDER BY date DESC, id DESC
     """)
     suspend fun getTransactionsBy(
@@ -45,6 +46,7 @@ interface TransactionDao {
         target: TransactionEntity.Target?,
         date: LocalDate?,
         invoiceId: Long?,
+        accountId: Long?,
     ): List<TransactionEntity>
 
     @Query("""
@@ -54,6 +56,7 @@ interface TransactionDao {
           AND (:date IS NULL OR date = :date)
           AND (:invoiceId IS NULL OR invoiceId = :invoiceId)
           AND (:creditCardId IS NULL OR creditCardId = :creditCardId)
+          AND (:accountId IS NULL OR accountId = :accountId)
         ORDER BY date DESC, id DESC
     """)
     fun observeTransactionsBy(
@@ -61,6 +64,7 @@ interface TransactionDao {
         target: TransactionEntity.Target?,
         date: LocalDate?,
         invoiceId: Long?,
-        creditCardId: Long?
+        creditCardId: Long?,
+        accountId: Long?
     ): Flow<List<TransactionEntity>>
 }

@@ -1,5 +1,6 @@
 package com.neoutils.finance.di
 
+import com.neoutils.finance.database.mapper.AccountMapper
 import com.neoutils.finance.database.mapper.CategoryMapper
 import com.neoutils.finance.database.mapper.CreditCardMapper
 import com.neoutils.finance.database.mapper.InvoiceMapper
@@ -8,6 +9,7 @@ import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import org.koin.dsl.module
 
 val mapperModule = module {
+    factory { AccountMapper() }
     factory { CategoryMapper() }
     factory { CreditCardMapper() }
     factory { InvoiceMapper() }

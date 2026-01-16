@@ -5,10 +5,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
+import com.neoutils.finance.database.dao.AccountDao
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.CreditCardDao
 import com.neoutils.finance.database.dao.InvoiceDao
 import com.neoutils.finance.database.dao.TransactionDao
+import com.neoutils.finance.database.entity.AccountEntity
 import com.neoutils.finance.database.entity.CategoryEntity
 import com.neoutils.finance.database.entity.CreditCardEntity
 import com.neoutils.finance.database.entity.InvoiceEntity
@@ -19,9 +21,10 @@ import com.neoutils.finance.database.entity.TransactionEntity
         TransactionEntity::class,
         CategoryEntity::class,
         CreditCardEntity::class,
-        InvoiceEntity::class
+        InvoiceEntity::class,
+        AccountEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -31,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun creditCardDao(): CreditCardDao
     abstract fun invoiceDao(): InvoiceDao
+    abstract fun accountDao(): AccountDao
 }
 
 // Room compiler generates the actual implementations

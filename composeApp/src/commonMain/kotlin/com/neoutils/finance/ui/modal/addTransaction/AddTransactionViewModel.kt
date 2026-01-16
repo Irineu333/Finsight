@@ -4,19 +4,25 @@ package com.neoutils.finance.ui.modal.addTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.model.Account
+import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
 import com.neoutils.finance.domain.model.form.TransactionForm
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.domain.usecase.AddInstallmentTransactionsUseCase
 import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.YearMonth
 
 class AddTransactionViewModel(
@@ -24,6 +30,7 @@ class AddTransactionViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
+    private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentTransactionsUseCase: AddInstallmentTransactionsUseCase,
     private val modalManager: ModalManager
@@ -31,6 +38,7 @@ class AddTransactionViewModel(
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
+    private val selectedAccount = MutableStateFlow<Account?>(null)
 
     private val _errorMessage = MutableSharedFlow<String>()
     val errorMessage = _errorMessage.asSharedFlow()
@@ -49,7 +57,9 @@ class AddTransactionViewModel(
         selectedCreditCard,
         invoicesFlow,
         selectedDueMonth,
-    ) { categories, creditCards, selectedCard, invoices, dueMonth ->
+        accountRepository.observeAllAccounts(),
+        selectedAccount,
+    ) { categories, creditCards, selectedCard, invoices, dueMonth, accounts, account ->
         AddTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
@@ -61,6 +71,8 @@ class AddTransactionViewModel(
                     existingInvoice = invoices.find { it.dueMonth == month }
                 )
             },
+            accounts = accounts,
+            selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -80,6 +92,10 @@ class AddTransactionViewModel(
 
     fun navigateToMonth(dueMonth: YearMonth) {
         selectedDueMonth.value = dueMonth
+    }
+
+    fun selectAccount(account: Account?) {
+        selectedAccount.value = account
     }
 
     fun addTransaction(

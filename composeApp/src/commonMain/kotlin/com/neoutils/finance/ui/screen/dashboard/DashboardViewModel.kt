@@ -11,11 +11,13 @@ import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finance.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -26,8 +28,15 @@ class DashboardViewModel(
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
+    private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            ensureDefaultAccountUseCase()
+        }
+    }
 
     private val instant get() = Clock.System.now()
     private val currentMonth get() = instant.toYearMonth()

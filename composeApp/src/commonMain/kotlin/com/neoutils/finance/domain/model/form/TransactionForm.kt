@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.domain.model.form
 
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Transaction
@@ -28,6 +29,7 @@ data class TransactionForm(
     val target: Transaction.Target,
     val creditCard: CreditCard?,
     val invoiceDueMonth: YearMonth?,
+    val account: Account?,
     val installments: Int = 1
 ) {
     fun isValid(): Boolean {
@@ -42,7 +44,7 @@ data class TransactionForm(
 
         if (date > currentDate) return false
 
-        if (target.isAccount) return true
+        if (target.isAccount) return account != null
 
         if (type != Transaction.Type.EXPENSE) return false
         if (creditCard == null) return false
@@ -60,12 +62,14 @@ data class TransactionForm(
             target: Transaction.Target,
             creditCard: CreditCard?,
             invoiceDueMonth: YearMonth?,
+            account: Account?,
             installments: Int = 1
         ): TransactionForm {
 
             val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
             val category = category?.takeIf { it.type.isAccept(type) }
             val creditCard = creditCard?.takeIf { target.isCreditCard }
+            val account = account?.takeIf { target.isAccount }
             val installments = installments.takeIf { target.isCreditCard } ?: 1
 
             return TransactionForm(
@@ -77,6 +81,7 @@ data class TransactionForm(
                 target = target,
                 creditCard = creditCard,
                 invoiceDueMonth = invoiceDueMonth,
+                account = account,
                 installments = installments,
             )
         }

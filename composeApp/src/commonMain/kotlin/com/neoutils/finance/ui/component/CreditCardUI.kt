@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,12 +32,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.screen.creditCards.CreditCardUi
+import com.neoutils.finance.util.DateFormats
 
 @Composable
 fun CreditCardUI(
     ui: CreditCardUi,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onEditInvoice: ((Long, Double) -> Unit)? = null,
 ) {
     Card(
         modifier = modifier.then(
@@ -112,13 +115,40 @@ fun CreditCardUI(
                         color = colorScheme.onSurfaceVariant
                     )
 
-                    ui.invoiceUi?.let {
-                        Text(
-                            text = it.amount.toMoneyFormat(),
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface
-                        )
+                    ui.invoiceUi?.let { invoiceUi ->
+                        val canEdit = !invoiceUi.status.isPaid && onEditInvoice != null
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .then(
+                                    if (canEdit) {
+                                        Modifier.clickable {
+                                            onEditInvoice(invoiceUi.id, invoiceUi.amount)
+                                        }
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                        ) {
+                            Text(
+                                text = invoiceUi.amount.toMoneyFormat(),
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onSurface
+                            )
+
+                            if (canEdit) {
+                                Icon(
+                                    imageVector = Icons.Rounded.ModeEdit,
+                                    contentDescription = "Editar fatura",
+                                    tint = colorScheme.onSurface.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                     } ?: Text(
                         text = "",
                         fontSize = 28.sp,
@@ -159,6 +189,30 @@ fun CreditCardUI(
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface
                     )
+                }
+
+                ui.invoiceUi?.let { invoiceUi ->
+                    val dateInfo = when {
+                        invoiceUi.status.isOpen -> "Fecha em" to invoiceUi.closingDate
+                        invoiceUi.status.isClosed || invoiceUi.status.isRetroactive -> "Vence em" to invoiceUi.dueDate
+                        else -> null
+                    }
+
+                    dateInfo?.let { (dateLabel, date) ->
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = dateLabel,
+                                fontSize = 12.sp,
+                                color = colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = DateFormats().dayMonth.format(date),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
 

@@ -32,7 +32,6 @@ import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModa
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -49,6 +48,7 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+    val navigator = LocalNavigator.current
 
     DashboardContent(
         uiState = uiState,
@@ -56,6 +56,7 @@ fun DashboardScreen(
         onOpenCategories = openCategories,
         onOpenCreditCards = openCreditCards,
         modalManager = modalManager,
+        navigator = navigator,
         openEditBalance = {
             modalManager.show(
                 EditBalanceModal(
@@ -73,7 +74,8 @@ private fun DashboardContent(
     onOpenCategories: () -> Unit,
     onOpenCreditCards: () -> Unit,
     uiState: DashboardUiState,
-    modalManager: ModalManager
+    modalManager: ModalManager,
+    navigator: Navigator
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -183,9 +185,9 @@ private fun DashboardContent(
                             config = config,
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
-                                modalManager.show(
-                                    ViewCreditCardModal(
-                                        creditCard = creditCardUi.creditCard,
+                                navigator.navigate(
+                                    NavigationAction.CreditCards(
+                                        creditCardId = creditCardUi.creditCard.id
                                     )
                                 )
                             },

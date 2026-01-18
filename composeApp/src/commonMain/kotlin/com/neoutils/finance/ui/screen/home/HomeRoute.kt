@@ -23,7 +23,7 @@ sealed class AppRoute {
     data object Categories : AppRoute()
 
     @Serializable
-    data object CreditCards : AppRoute()
+    data class CreditCards(val creditCardId: Long? = null) : AppRoute()
 
     @Serializable
     data class InvoiceTransactions(val creditCardId: Long) : AppRoute()

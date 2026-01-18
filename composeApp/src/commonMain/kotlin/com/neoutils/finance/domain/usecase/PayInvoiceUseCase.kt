@@ -6,7 +6,6 @@ import com.neoutils.finance.domain.errors.PayInvoiceErrors
 import com.neoutils.finance.domain.exception.PayInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -55,7 +54,7 @@ class PayInvoiceUseCase(
 
         val paidInvoice = invoice.copy(
             status = Invoice.Status.PAID,
-            paidAt = paidAt.toEpochDays(),
+            paidAt = paidAt,
         ).also {
             invoiceRepository.update(it)
         }

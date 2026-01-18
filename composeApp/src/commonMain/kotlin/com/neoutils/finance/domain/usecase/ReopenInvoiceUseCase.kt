@@ -38,7 +38,8 @@ class ReopenInvoiceUseCase(
         return Result.success(
             invoice.copy(
                 status = Invoice.Status.OPEN,
-                closedAt = null
+                closedAt = null,
+                paidAt = null
             ).also {
                 invoiceRepository.update(it)
             }

@@ -18,6 +18,7 @@ class InvoiceMapper {
             dueMonth = entity.dueMonth,
             status = entity.status.toDomain(),
             createdAt = entity.createdAt,
+            openedAt = entity.openedAt,
             closedAt = entity.closedAt,
             paidAt = entity.paidAt
         )
@@ -32,6 +33,7 @@ class InvoiceMapper {
             dueMonth = domain.dueMonth,
             status = domain.status.toEntity(),
             createdAt = domain.createdAt,
+            openedAt = domain.openedAt,
             closedAt = domain.closedAt,
             paidAt = domain.paidAt
         )

@@ -8,11 +8,18 @@ import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import kotlin.time.ExperimentalTime
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plusMonth
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 private val errors = OpenInvoiceErrors()
+
+private val currentDate
+    get() = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class OpenInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
@@ -50,7 +57,8 @@ class OpenInvoiceUseCase(
         if (futureInvoice != null) {
             return Result.success(
                 futureInvoice.copy(
-                    status = Invoice.Status.OPEN
+                    status = Invoice.Status.OPEN,
+                    openedAt = currentDate
                 ).also {
                     invoiceRepository.update(it)
                 }
@@ -72,7 +80,8 @@ class OpenInvoiceUseCase(
             openingMonth = openingMonth,
             closingMonth = closingMonth,
             dueMonth = dueMonth,
-            status = Invoice.Status.OPEN
+            status = Invoice.Status.OPEN,
+            openedAt = currentDate
         )
 
         return Result.success(

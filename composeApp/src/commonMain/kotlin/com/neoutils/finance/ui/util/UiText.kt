@@ -9,5 +9,6 @@ fun stringUiText(error: UiText): String {
     return when (error) {
         is UiText.Raw -> error.value
         is UiText.Res -> stringResource(error.res)
+        is UiText.ResWithArgs -> stringResource(error.res).format(*error.args.toTypedArray())
     }
 }

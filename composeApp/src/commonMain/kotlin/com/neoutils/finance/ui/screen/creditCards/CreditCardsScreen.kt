@@ -33,6 +33,7 @@ import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
+import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -41,6 +42,7 @@ import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Info
 import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
@@ -50,8 +52,11 @@ private val formats = DateFormats()
 
 @Composable
 fun CreditCardsScreen(
+    initialCreditCardId: Long? = null,
     onNavigateBack: () -> Unit = {},
-    viewModel: CreditCardsViewModel = koinViewModel()
+    viewModel: CreditCardsViewModel = koinViewModel {
+        parametersOf(initialCreditCardId)
+    }
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -118,6 +123,15 @@ private fun CreditCardsContent(
                     onCardClick = { creditCardUi ->
                         navigator.navigate(
                             NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
+                        )
+                    },
+                    onEditInvoice = { invoiceId, amount ->
+                        modalManager.show(
+                            EditBalanceModal(
+                                type = EditBalanceModal.Type.CREDIT_CARD,
+                                currentBalance = amount,
+                                invoiceId = invoiceId
+                            )
                         )
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -197,6 +211,7 @@ private fun CreditCardPager(
     selectedIndex: Int,
     onSelectCard: (Int) -> Unit,
     onCardClick: (CreditCardUi) -> Unit,
+    onEditInvoice: (Long, Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -212,7 +227,7 @@ private fun CreditCardPager(
 
     LaunchedEffect(selectedIndex) {
         if (pagerState.currentPage != selectedIndex) {
-            pagerState.animateScrollToPage(selectedIndex)
+            pagerState.scrollToPage(selectedIndex)
         }
     }
 
@@ -226,7 +241,8 @@ private fun CreditCardPager(
             CreditCardUI(
                 ui = creditCards[page],
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onCardClick(creditCards[page]) }
+                onClick = { onCardClick(creditCards[page]) },
+                onEditInvoice = onEditInvoice
             )
         }
     }

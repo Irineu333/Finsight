@@ -11,6 +11,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            """
+            ALTER TABLE invoices ADD COLUMN openedAt INTEGER
+            """.trimIndent()
+        )
+        
+        connection.execSQL(
+            """
+            UPDATE invoices 
+            SET openedAt = createdAt / 86400000
+            WHERE status = 'OPEN'
+            """.trimIndent()
+        )
+    }
+}
+
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(connection: SQLiteConnection) {
         val currentTime = Clock.System.now().toEpochMilliseconds()
@@ -62,6 +80,6 @@ fun getRoomDatabase(
     return builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
-        .addMigrations(MIGRATION_7_8)
+        .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
         .build()
 }

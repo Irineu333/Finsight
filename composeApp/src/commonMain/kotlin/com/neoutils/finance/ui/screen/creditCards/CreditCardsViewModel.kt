@@ -25,7 +25,8 @@ class CreditCardsViewModel(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
-    private val invoiceUiMapper: InvoiceUiMapper
+    private val invoiceUiMapper: InvoiceUiMapper,
+    private val initialCreditCardId: Long? = null
 ) : ViewModel() {
 
     private val selectedCardIndex = MutableStateFlow(0)
@@ -86,6 +87,24 @@ class CreditCardsViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CreditCardsUiState()
     )
+
+    init {
+        initialCreditCardId?.let {
+            setInitialCreditCard(creditCardId = it)
+        }
+    }
+
+    private fun setInitialCreditCard(
+        creditCardId: Long
+    ) = viewModelScope.launch {
+        val index = creditCardRepository
+            .getAllCreditCards()
+            .indexOfFirst { it.id == creditCardId }
+
+        if (index >= 0) {
+            selectedCardIndex.value = index
+        }
+    }
 
     fun onAction(action: CreditCardsAction) = viewModelScope.launch {
         when (action) {

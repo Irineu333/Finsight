@@ -60,6 +60,7 @@ import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finance.ui.theme.InvoicePayment as BillPaymentColor
+import com.neoutils.finance.ui.util.stringUiText
 import com.neoutils.finance.util.DateFormats
 import kotlin.math.absoluteValue
 import org.koin.compose.viewmodel.koinViewModel
@@ -325,11 +326,13 @@ private fun InvoiceSummaryItem(
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface
                     )
-                    Text(
-                        text = summary.periodLabel,
-                        fontSize = 12.sp,
-                        color = colorScheme.onSurfaceVariant
-                    )
+                    summary.nextDateLabel?.let { label ->
+                        Text(
+                            text = stringUiText(label),
+                            fontSize = 12.sp,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 Surface(

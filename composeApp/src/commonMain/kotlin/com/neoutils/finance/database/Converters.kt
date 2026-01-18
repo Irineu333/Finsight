@@ -1,10 +1,24 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.database
 
 import androidx.room.TypeConverter
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class Converters {
+
+    @TypeConverter
+    fun fromInstant(instant: Instant): Long {
+        return instant.toEpochMilliseconds()
+    }
+
+    @TypeConverter
+    fun toInstant(timestamp: Long): Instant {
+        return Instant.fromEpochMilliseconds(timestamp)
+    }
 
     @TypeConverter
     fun fromLocalDate(date: LocalDate): String {

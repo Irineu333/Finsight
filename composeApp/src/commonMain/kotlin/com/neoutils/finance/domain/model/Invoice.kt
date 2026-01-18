@@ -5,9 +5,11 @@ package com.neoutils.finance.domain.model
 import androidx.compose.ui.graphics.Color
 import com.neoutils.finance.extension.safeOnDay
 import com.neoutils.finance.util.DateFormats
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private val formats = DateFormats()
 
@@ -18,9 +20,10 @@ data class Invoice(
     val closingMonth: YearMonth,
     val dueMonth: YearMonth,
     val status: Status,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
-    val closedAt: Long? = null,
-    val paidAt: Long? = null
+    val createdAt: Instant = Clock.System.now(),
+    val openedAt: LocalDate? = null,
+    val closedAt: LocalDate? = null,
+    val paidAt: LocalDate? = null
 ) {
     val label get() = "${formats.yearMonth.format(dueMonth)} • ${status.label}"
     val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)

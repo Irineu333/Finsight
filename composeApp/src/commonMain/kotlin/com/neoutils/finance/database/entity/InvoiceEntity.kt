@@ -6,9 +6,11 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlinx.datetime.YearMonth
+import kotlin.time.Instant
 
 @Entity(
     tableName = "invoices",
@@ -34,9 +36,10 @@ data class InvoiceEntity(
     val closingMonth: YearMonth,
     val dueMonth: YearMonth,
     val status: Status,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
-    val closedAt: Long? = null,
-    val paidAt: Long? = null
+    val createdAt: Instant = Clock.System.now(),
+    val openedAt: LocalDate? = null,
+    val closedAt: LocalDate? = null,
+    val paidAt: LocalDate? = null
 ) {
     enum class Status {
         FUTURE,

@@ -43,6 +43,9 @@ fun AppNavHost() = Surface {
                 is NavigationAction.InvoiceTransactions -> {
                     navController.navigate(AppRoute.InvoiceTransactions(action.creditCardId))
                 }
+                is NavigationAction.CreditCards -> {
+                    navController.navigate(AppRoute.CreditCards(action.creditCardId))
+                }
             }
         }
     ) {
@@ -56,7 +59,7 @@ fun AppNavHost() = Surface {
                         navController.navigate(AppRoute.Categories)
                     },
                     openCreditCards = {
-                        navController.navigate(AppRoute.CreditCards)
+                        navController.navigate(AppRoute.CreditCards())
                     }
                 )
             }
@@ -69,8 +72,10 @@ fun AppNavHost() = Surface {
                 )
             }
 
-            composable<AppRoute.CreditCards> {
+            composable<AppRoute.CreditCards> { backStackEntry ->
+                val route = backStackEntry.toRoute<AppRoute.CreditCards>()
                 CreditCardsScreen(
+                    initialCreditCardId = route.creditCardId,
                     onNavigateBack = {
                         navController.navigateUp()
                     }

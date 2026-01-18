@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Invoice date labels -->
+    <string name="invoice_opens_on">abre em %s</string>
+    <string name="invoice_closes_on">fecha em %s</string>
+    <string name="invoice_due_on">vence em %s</string>
+    <string name="invoice_paid_on">paga em %s</string>
+</resources>

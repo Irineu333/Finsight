@@ -1,30 +1,32 @@
-@file:OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class)
 
 package com.neoutils.finance.ui.screen.invoiceTransactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.combine
+import com.neoutils.finance.resources.*
 import com.neoutils.finance.util.DateFormats
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.neoutils.finance.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private val currentDate
-    get() = kotlin.time.Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
     creditCardId: Long,
@@ -92,6 +94,32 @@ class InvoiceTransactionsViewModel(
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
                     .sumOf { it.amount }
 
+                val nextDateLabel = when (invoice.status) {
+                    Invoice.Status.OPEN -> UiText.ResWithArgs(
+                        Res.string.invoice_closes_on,
+                        formats.dayMonth.format(invoice.closingDate)
+                    )
+
+                    Invoice.Status.CLOSED -> UiText.ResWithArgs(
+                        Res.string.invoice_due_on,
+                        formats.dayMonth.format(invoice.dueDate)
+                    )
+
+                    Invoice.Status.PAID -> invoice.paidAt?.let { paidDate ->
+                        UiText.ResWithArgs(
+                            Res.string.invoice_paid_on,
+                            formats.dayMonth.format(paidDate)
+                        )
+                    }
+
+                    Invoice.Status.FUTURE -> UiText.ResWithArgs(
+                        Res.string.invoice_opens_on,
+                        formats.dayMonth.format(invoice.openingDate)
+                    )
+
+                    Invoice.Status.RETROACTIVE -> null
+                }
+
                 InvoiceTransactionsUiState.InvoiceSummary(
                     invoice = invoice,
                     expense = expense,
@@ -101,7 +129,7 @@ class InvoiceTransactionsViewModel(
                         .filterNot { it.type.isInvoicePayment }
                         .sumOf { it.creditAmount },
                     dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
-                    periodLabel = "${formats.dayMonth.format(invoice.openingDate)} até ${formats.dayMonth.format(invoice.closingDate)}",
+                    nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
                     isClosable = invoice.isClosable && currentDate >= invoice.closingDate,
                 )

@@ -16,10 +16,15 @@ kotlin {
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
+            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         }
     }
 
-    jvm()
+    jvm() {
+        compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        }
+    }
 
     listOf(
         iosX64(),
@@ -30,6 +35,9 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts += "-lsqlite3"
+        }
+        iosTarget.compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         }
     }
 
@@ -122,4 +130,10 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "com.neoutils.finance.resources"
+    generateResClass = auto
 }

@@ -21,7 +21,6 @@ import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
-import com.neoutils.finance.ui.modal.viewCreditCard.ViewCreditCardViewModel
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
@@ -98,8 +97,9 @@ val viewModelModule = module {
             creditCardRepository = get(),
             transactionRepository = get(),
             invoiceRepository = get(),
-            invoiceUiMapper = get(),
             categoryRepository = get(),
+            invoiceUiMapper = get(),
+            initialCreditCardId = it.getOrNull(),
         )
     }
 
@@ -164,16 +164,6 @@ val viewModelModule = module {
             modalManager = get(),
             debounceManager = get(),
             creditCardPeriod = get(),
-        )
-    }
-
-    viewModel {
-        ViewCreditCardViewModel(
-            creditCard = it.get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            transactionRepository = get(),
-            invoiceUiMapper = get(),
         )
     }
 

@@ -5,6 +5,7 @@ package com.neoutils.finance.ui.screen.invoiceTransactions
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
 
@@ -24,7 +25,7 @@ data class InvoiceTransactionsUiState(
         val adjustment: Double,
         val total: Double,
         val dueMonthLabel: String,
-        val periodLabel: String,
+        val nextDateLabel: UiText?,
         val closingDate: LocalDate,
         val isClosable: Boolean,
     ) {

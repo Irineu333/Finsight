@@ -15,6 +15,9 @@ import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -44,27 +47,34 @@ class CreditCardsViewModel(
             invoices.associateBy { it.creditCard.id }
         }
 
+    private val transactionsFlow = combine(
+        creditCardRepository.observeAllCreditCards(),
+        invoicesFlow,
+        selectedCardIndex,
+    ) { creditCards, invoices, index ->
+        invoices[creditCards.getOrNull(index)?.id]
+    }.flatMapLatest { invoice ->
+        if (invoice != null) {
+            transactionRepository.observeTransactionsBy(invoiceId = invoice.id)
+        } else {
+            flowOf(emptyList())
+        }
+    }
+
     val uiState = combine(
         creditCardRepository.observeAllCreditCards(),
-        transactionRepository.observeAllTransactions(),
+        transactionsFlow,
         invoicesFlow,
         categoryRepository.observeAllCategories(),
         selectedCardIndex,
         filters,
     ) { creditCards, transactions, invoices, categories, index, currentFilters ->
 
-        val selectedCreditCard = creditCards.getOrNull(index)
-
-        val filteredTransactions = if (selectedCreditCard != null) {
-            transactions
-                .filter { it.creditCard?.id == selectedCreditCard.id }
-                .filter(currentFilters.category)
-                .filter(currentFilters.type)
-                .sortedByDescending { it.date }
-                .groupBy { it.date }
-        } else {
-            emptyMap()
-        }
+        val filteredTransactions = transactions
+            .filter(currentFilters.category)
+            .filter(currentFilters.type)
+            .sortedByDescending { it.date }
+            .groupBy { it.date }
 
         CreditCardsUiState(
             creditCards = creditCards.map { creditCard ->

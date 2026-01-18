@@ -169,8 +169,6 @@ class AddTransactionModal : ModalBottomSheet() {
                     }
                 }
 
-                // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
-                /*
                 AnimatedVisibility(
                     visible = target.isAccount || type.isIncome
                 ) {
@@ -185,7 +183,6 @@ class AddTransactionModal : ModalBottomSheet() {
                             .fillMaxWidth()
                     )
                 }
-                */
 
                 Spacer(modifier = Modifier.height(8.dp))
 

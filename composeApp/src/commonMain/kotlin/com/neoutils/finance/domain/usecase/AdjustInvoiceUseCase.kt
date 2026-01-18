@@ -1,5 +1,6 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -12,20 +13,19 @@ class AdjustInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
-        invoiceId: Long,
+        invoice: Invoice,
         target: Double,
         adjustmentDate: LocalDate
     ) {
-        val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return
 
-        val currentInvoice = calculateInvoiceUseCase(invoiceId = invoiceId)
+        val currentInvoice = calculateInvoiceUseCase(invoiceId = invoice.id)
 
         if (target == currentInvoice) return
 
         val existingAdjustment = repository.getTransactionsBy(
             type = Transaction.Type.ADJUSTMENT,
             target = Transaction.Target.CREDIT_CARD,
-            invoiceId = invoiceId,
+            invoiceId = invoice.id,
             date = adjustmentDate
         ).firstOrNull()
 

@@ -21,7 +21,7 @@ class EnsureDefaultAccountUseCase(
         }
 
         val newAccount = Account(
-            name = "Principal",
+            name = "Carteira",
             isDefault = true
         )
         val id = repository.insert(newAccount)

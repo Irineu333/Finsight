@@ -105,8 +105,6 @@ class PayInvoiceModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
-            /*
             Spacer(modifier = Modifier.height(8.dp))
 
             AccountSelector(
@@ -115,7 +113,6 @@ class PayInvoiceModal(
                 onAccountSelected = { viewModel.selectAccount(it) },
                 modifier = Modifier.fillMaxWidth()
             )
-            */
 
             OutlinedTextField(
                 state = date,

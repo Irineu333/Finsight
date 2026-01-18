@@ -24,6 +24,7 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.NavigationAction
 import com.neoutils.finance.util.TransactionTargetNavType
 import com.neoutils.finance.util.TransactionTypeNavType
+import com.neoutils.finance.ui.screen.accounts.AccountsScreen
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
@@ -46,6 +47,9 @@ fun AppNavHost() = Surface {
                 is NavigationAction.CreditCards -> {
                     navController.navigate(AppRoute.CreditCards(action.creditCardId))
                 }
+                is NavigationAction.Accounts -> {
+                    navController.navigate(AppRoute.Accounts(action.accountId))
+                }
             }
         }
     ) {
@@ -60,6 +64,9 @@ fun AppNavHost() = Surface {
                     },
                     openCreditCards = {
                         navController.navigate(AppRoute.CreditCards())
+                    },
+                    openAccounts = {
+                        navController.navigate(AppRoute.Accounts())
                     }
                 )
             }
@@ -91,6 +98,16 @@ fun AppNavHost() = Surface {
                     }
                 )
             }
+
+            composable<AppRoute.Accounts> { backStackEntry ->
+                val route = backStackEntry.toRoute<AppRoute.Accounts>()
+                AccountsScreen(
+                    initialAccountId = route.accountId,
+                    onNavigateBack = {
+                        navController.navigateUp()
+                    }
+                )
+            }
         }
     }
 }
@@ -99,6 +116,7 @@ fun AppNavHost() = Surface {
 fun HomeScreen(
     openCategories: () -> Unit = {},
     openCreditCards: () -> Unit = {},
+    openAccounts: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -157,6 +175,7 @@ fun HomeScreen(
                     },
                     openCategories = openCategories,
                     openCreditCards = openCreditCards,
+                    openAccounts = openAccounts,
                 )
             }
 

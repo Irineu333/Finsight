@@ -30,6 +30,7 @@ class Navigator(private val onNavigate: (NavigationAction) -> Unit) {
 sealed class NavigationAction {
     data class InvoiceTransactions(val creditCardId: Long) : NavigationAction()
     data class CreditCards(val creditCardId: Long) : NavigationAction()
+    data class Accounts(val accountId: Long? = null) : NavigationAction()
 }
 
 class ModalManager {

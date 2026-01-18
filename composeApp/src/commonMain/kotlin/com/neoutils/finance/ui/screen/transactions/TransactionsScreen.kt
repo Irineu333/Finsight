@@ -92,36 +92,6 @@ private fun TransactionsContent(
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth(),
                     isCurrentMonth = uiState.isCurrentMonth,
-                    onEditBalance = {
-                        modalManager.show(
-                            EditBalanceModal(
-                                currentBalance = uiState.balanceOverview.finalBalance,
-                                type = if (uiState.isCurrentMonth) {
-                                    EditBalanceModal.Type.CURRENT
-                                } else {
-                                    EditBalanceModal.Type.FINAL
-                                },
-                                targetMonth = uiState
-                                    .selectedYearMonth
-                                    .takeUnless {
-                                        uiState.isCurrentMonth
-                                    },
-                            )
-                        )
-                    }.takeUnless { uiState.isFutureMonth },
-                    onEditInitialBalance = {
-                        modalManager.show(
-                            EditBalanceModal(
-                                currentBalance = uiState.balanceOverview.initialBalance,
-                                type = EditBalanceModal.Type.INITIAL,
-                                targetMonth = uiState
-                                    .selectedYearMonth
-                                    .takeUnless {
-                                        uiState.isCurrentMonth
-                                    },
-                            )
-                        )
-                    }.takeUnless { uiState.isFutureMonth },
                 )
             }
 

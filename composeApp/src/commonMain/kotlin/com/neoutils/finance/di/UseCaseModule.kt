@@ -1,5 +1,10 @@
 package com.neoutils.finance.di
 
+import com.neoutils.finance.domain.usecase.CreateAccountUseCase
+import com.neoutils.finance.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finance.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finance.domain.usecase.UpdateAccountUseCase
+import com.neoutils.finance.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finance.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finance.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finance.domain.usecase.AddCreditCardUseCase
@@ -161,6 +166,40 @@ val useCaseModules = module {
 
     factory {
         ValidateCreditCardNameUseCase(
+            repository = get(),
+        )
+    }
+
+    factory {
+        ValidateAccountNameUseCase(
+            repository = get(),
+        )
+    }
+
+    factory {
+        SetDefaultAccountUseCase(
+            repository = get(),
+        )
+    }
+
+    factory {
+        CreateAccountUseCase(
+            repository = get(),
+            validateAccountName = get(),
+            setDefaultAccount = get(),
+        )
+    }
+
+    factory {
+        UpdateAccountUseCase(
+            repository = get(),
+            validateAccountName = get(),
+            setDefaultAccount = get(),
+        )
+    }
+
+    factory {
+        DeleteAccountUseCase(
             repository = get(),
         )
     }

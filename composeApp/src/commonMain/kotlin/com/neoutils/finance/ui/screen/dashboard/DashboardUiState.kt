@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.ui.screen.dashboard
 
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.CategorySpending
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
@@ -13,6 +14,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 data class DashboardUiState(
+    val accounts: List<DashboardAccountUi> = emptyList(),
     val recents: List<Transaction> = emptyList(),
     val hasMoreRecents: Boolean = false,
     val balance: BalanceStats = BalanceStats(),
@@ -30,4 +32,9 @@ data class DashboardUiState(
 data class CreditCardUi(
     val creditCard: CreditCard,
     val invoiceUi: InvoiceUi?,
+)
+
+data class DashboardAccountUi(
+    val account: Account,
+    val balance: Double,
 )

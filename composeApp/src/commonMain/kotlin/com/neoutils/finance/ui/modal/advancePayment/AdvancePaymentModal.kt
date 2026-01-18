@@ -107,8 +107,6 @@ class AdvancePaymentModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
-            /*
             Spacer(modifier = Modifier.height(8.dp))
 
             AccountSelector(
@@ -117,7 +115,6 @@ class AdvancePaymentModal(
                 onAccountSelected = { viewModel.selectAccount(it) },
                 modifier = Modifier.fillMaxWidth()
             )
-            */
 
             Spacer(modifier = Modifier.height(8.dp))
 

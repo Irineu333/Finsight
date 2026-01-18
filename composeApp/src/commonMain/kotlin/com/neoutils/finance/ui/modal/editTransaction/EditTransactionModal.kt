@@ -153,8 +153,6 @@ class EditTransactionModal(
                 )
             }
 
-            // TODO: Múltiplas Contas - Descomentar quando implementar gerenciamento de contas
-            /*
             AnimatedVisibility(
                 visible = target == Transaction.Target.ACCOUNT || type.isIncome
             ) {
@@ -169,7 +167,6 @@ class EditTransactionModal(
                         .fillMaxWidth()
                 )
             }
-            */
 
             AnimatedVisibility(
                 type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null

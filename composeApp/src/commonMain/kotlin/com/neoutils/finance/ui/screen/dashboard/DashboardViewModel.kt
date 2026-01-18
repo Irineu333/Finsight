@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
@@ -25,6 +26,7 @@ class DashboardViewModel(
     private val transactionRepository: ITransactionRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val accountRepository: IAccountRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
@@ -51,7 +53,8 @@ class DashboardViewModel(
         transactionRepository.observeAllTransactions(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
-    ) { transactions, creditCards, invoices ->
+        accountRepository.observeAllAccounts(),
+    ) { transactions, creditCards, invoices, accounts ->
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -76,7 +79,17 @@ class DashboardViewModel(
             )
         }
 
+        val accountsUi = accounts.map { account ->
+            val accountTransactions = transactions.filter { it.account?.id == account.id }
+            val balance = accountTransactions.sumOf { it.accountAmount }
+            DashboardAccountUi(
+                account = account,
+                balance = balance,
+            )
+        }
+
         DashboardUiState(
+            accounts = accountsUi,
             recents = stats.transactions.take(4),
             hasMoreRecents = stats.transactions.size > 3,
             balance = DashboardUiState.BalanceStats(

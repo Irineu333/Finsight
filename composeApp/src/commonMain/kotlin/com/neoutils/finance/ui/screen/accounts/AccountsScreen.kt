@@ -46,6 +46,7 @@ import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -107,8 +108,16 @@ private fun AccountsContent(
                     uiState.selectedMonth?.let { month ->
                         MonthSelector(
                             selectedMonth = month,
-                            onPreviousMonth = { onAction(AccountsAction.PreviousMonth) },
-                            onNextMonth = { onAction(AccountsAction.NextMonth) }
+                            onOpenPicker = {
+                                modalManager.show(
+                                    MonthPickerModal(
+                                        initialYearMonth = month,
+                                        onMonthSelected = { selected ->
+                                            onAction(AccountsAction.SelectMonth(selected))
+                                        }
+                                    )
+                                )
+                            }
                         )
                     }
                 }
@@ -581,14 +590,17 @@ private fun FiltersRow(
 @Composable
 private fun MonthSelector(
     selectedMonth: YearMonth,
-    onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit,
+    onOpenPicker: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.padding(end = 8.dp),
+        modifier = modifier
+            .padding(end = 8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .clickable { onOpenPicker() }
+            .padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = formats.yearMonth.format(selectedMonth),
@@ -597,27 +609,12 @@ private fun MonthSelector(
             color = Color.White
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(28.dp)
-                    .clickable { onPreviousMonth() }
-            )
-
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .size(28.dp)
-                    .clickable { onNextMonth() }
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 

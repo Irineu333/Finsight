@@ -1,5 +1,6 @@
 package com.neoutils.finance.ui.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ fun MonthSelector(
     selectedYearMonth: YearMonth,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
+    onOpenPicker: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) = Row(
     modifier = modifier,
@@ -40,6 +42,11 @@ fun MonthSelector(
         text = formats.yearMonth.format(selectedYearMonth),
         fontSize = 20.sp,
         fontWeight = FontWeight.Bold,
+        modifier = if (onOpenPicker != null) {
+            Modifier.clickable { onOpenPicker() }
+        } else {
+            Modifier
+        }
     )
 
     IconButton(onClick = onNextMonth) {

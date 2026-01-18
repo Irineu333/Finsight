@@ -155,6 +155,10 @@ class AccountsViewModel(
                 filters.value = filters.value.copy(type = action.type)
             }
 
+            is AccountsAction.SelectMonth -> {
+                selectedMonth.value = action.yearMonth
+            }
+
             is AccountsAction.PreviousMonth -> {
                 selectedMonth.value = selectedMonth.value.minus(1, DateTimeUnit.MONTH)
             }

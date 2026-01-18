@@ -110,6 +110,10 @@ class TransactionsViewModel(
                 selectedYearMonth.value = selectedYearMonth.value.minusMonth()
             }
 
+            is TransactionsAction.SelectMonth -> {
+                selectedYearMonth.value = action.yearMonth
+            }
+
             is TransactionsAction.SelectCategory -> {
                 filters.value = filters.value.copy(category = action.category)
             }

@@ -28,6 +28,7 @@ import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
@@ -71,6 +72,16 @@ private fun TransactionsContent(
                 selectedYearMonth = uiState.selectedYearMonth,
                 onPreviousMonth = { onAction(TransactionsAction.PreviousMonth) },
                 onNextMonth = { onAction(TransactionsAction.NextMonth) },
+                onOpenPicker = {
+                    modalManager.show(
+                        MonthPickerModal(
+                            initialYearMonth = uiState.selectedYearMonth,
+                            onMonthSelected = { selected ->
+                                onAction(TransactionsAction.SelectMonth(selected))
+                            }
+                        )
+                    )
+                },
                 modifier = Modifier
                     .padding(vertical = 8.dp)
                     .fillMaxWidth()

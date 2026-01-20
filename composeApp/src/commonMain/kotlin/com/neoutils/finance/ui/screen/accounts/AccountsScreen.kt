@@ -5,7 +5,11 @@
 
 package com.neoutils.finance.ui.screen.accounts
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -322,7 +326,8 @@ private fun AccountCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(20.dp)
+                .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -602,12 +607,17 @@ private fun MonthSelector(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = formats.yearMonth.format(selectedMonth),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White
-        )
+        AnimatedContent(
+            targetState = selectedMonth,
+            transitionSpec = { fadeIn() togetherWith fadeOut() }
+        ) { month ->
+            Text(
+                text = formats.yearMonth.format(month),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+        }
 
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,

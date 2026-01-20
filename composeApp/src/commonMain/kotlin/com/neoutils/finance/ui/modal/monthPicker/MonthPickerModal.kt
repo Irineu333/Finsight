@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.ui.modal.monthPicker
 
 import androidx.compose.foundation.BorderStroke
@@ -18,7 +20,12 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import kotlinx.datetime.Month
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class MonthPickerModal(
     private val initialYearMonth: YearMonth,
@@ -40,7 +47,7 @@ class MonthPickerModal(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Período",
+                text = "Selecionar Mês",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface
@@ -58,6 +65,7 @@ class MonthPickerModal(
             Spacer(modifier = Modifier.height(24.dp))
 
             MonthGrid(
+                selectedYear = selectedYear,
                 selectedMonth = selectedMonth,
                 onMonthSelected = { selectedMonth = it },
                 modifier = Modifier.fillMaxWidth()
@@ -98,12 +106,15 @@ class MonthPickerModal(
             colors = CardDefaults.outlinedCardColors(
                 containerColor = Color.Transparent
             ),
-            border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.3f))
+            border = BorderStroke(
+                1.dp,
+                colorScheme.outline.copy(alpha = 0.3f)
+            )
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -135,10 +146,15 @@ class MonthPickerModal(
 
     @Composable
     private fun MonthGrid(
+        selectedYear: Int,
         selectedMonth: Month,
         onMonthSelected: (Month) -> Unit,
         modifier: Modifier = Modifier
     ) {
+        val currentYearMonth = remember {
+            Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
+        }
+
         val months = listOf(
             Month.JANUARY to "JAN",
             Month.FEBRUARY to "FEV",
@@ -164,9 +180,13 @@ class MonthPickerModal(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     row.forEach { (month, label) ->
+                        val isCurrentMonth = selectedYear == currentYearMonth.year &&
+                            month == currentYearMonth.month
+
                         MonthChip(
                             label = label,
                             isSelected = month == selectedMonth,
+                            isCurrentMonth = isCurrentMonth,
                             onClick = { onMonthSelected(month) },
                             modifier = Modifier.weight(1f)
                         )
@@ -180,6 +200,7 @@ class MonthPickerModal(
     private fun MonthChip(
         label: String,
         isSelected: Boolean,
+        isCurrentMonth: Boolean,
         onClick: () -> Unit,
         modifier: Modifier = Modifier
     ) {
@@ -195,10 +216,10 @@ class MonthPickerModal(
             colorScheme.onSurface
         }
 
-        val borderColor = if (isSelected) {
-            colorScheme.primary
-        } else {
-            colorScheme.outline.copy(alpha = 0.3f)
+        val borderColor = when {
+            isSelected -> colorScheme.primary
+            isCurrentMonth -> colorScheme.primary
+            else -> colorScheme.outline.copy(alpha = 0.3f)
         }
 
         OutlinedCard(
@@ -213,7 +234,7 @@ class MonthPickerModal(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

@@ -19,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -126,6 +128,9 @@ class AccountFormModal(
                 Switch(
                     checked = uiState.isDefault,
                     enabled = uiState.canChangeDefault,
+                    colors = SwitchDefaults.colors(
+                        uncheckedThumbColor = Color.LightGray,
+                    ),
                     onCheckedChange = { isDefault ->
                         viewModel.onAction(AccountFormAction.IsDefaultChanged(isDefault))
                     }

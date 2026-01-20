@@ -13,8 +13,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material.icons.rounded.ArrowForwardIos
+import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -102,14 +102,14 @@ private fun DashboardContent(
     )
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
             top = 8.dp,
             bottom = 16.dp,
         ),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
     ) {
         item {
             DashboardAccountPager(
@@ -135,11 +135,11 @@ private fun DashboardContent(
 
         item {
             Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .animateItem(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .animateItem()
             ) {
                 BalanceCard(
                     balance = uiState.balance.income,
@@ -159,32 +159,11 @@ private fun DashboardContent(
 
         if (uiState.creditCards.isNotEmpty()) {
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Cartões de Crédito",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                    TextButton(onClick = onOpenCreditCards) {
-                        Text(text = "Ver Todos")
-                    }
-                }
-            }
-
-            item {
                 HorizontalPager(
                     state = creditCardPagerState,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(top = 16.dp)
                         .animateItem(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     pageSpacing = 8.dp
@@ -253,31 +232,13 @@ private fun DashboardContent(
 
             if (uiState.creditCards.size > 1) {
                 item {
-                    Row(
+                    PageIndicator(
+                        count = uiState.creditCards.size,
+                        current = creditCardPagerState.currentPage,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .animateItem(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(uiState.creditCards.size) { index ->
-                            val isSelected = creditCardPagerState.currentPage == index
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .size(if (isSelected) 8.dp else 6.dp)
-                                    .background(
-                                        color = if (isSelected) {
-                                            colorScheme.primary
-                                        } else {
-                                            colorScheme.outline
-                                        },
-                                        shape = CircleShape
-                                    )
-                            )
-                        }
-                    }
+                            .animateItem()
+                    )
                 }
             }
         }
@@ -329,11 +290,12 @@ private fun DashboardContent(
         itemsIndexed(items = uiState.recents) { index, transaction ->
             val isLastWithFade = uiState.hasMoreRecents && index == uiState.recents.lastIndex
 
-            Box(
+            TransactionCard(
+                transaction = transaction,
+                category = transaction.category,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
                     .fillMaxWidth()
-                    .animateItem()
+                    .padding(horizontal = 16.dp)
                     .then(
                         if (isLastWithFade) {
                             Modifier
@@ -350,29 +312,23 @@ private fun DashboardContent(
                         } else {
                             Modifier
                         }
-                    )
-            ) {
-                TransactionCard(
-                    transaction = transaction,
-                    category = transaction.category,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        if (isLastWithFade) {
+                    ).animateItem(),
+                onClick = {
+                    when {
+                        isLastWithFade -> {
                             openTransactions(null, null)
-                        } else {
-                            when (transaction.type) {
-                                Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(transaction))
-                                }
+                        }
 
-                                else -> {
-                                    modalManager.show(ViewTransactionModal(transaction))
-                                }
-                            }
+                        transaction.type.isAdjustment -> {
+                            modalManager.show(ViewAdjustmentModal(transaction))
+                        }
+
+                        else -> {
+                            modalManager.show(ViewTransactionModal(transaction))
                         }
                     }
-                )
-            }
+                }
+            )
         }
 
         item {
@@ -464,6 +420,40 @@ private fun DashboardContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PageIndicator(
+    count: Int,
+    current: Int,
+    modifier: Modifier = Modifier
+) = Row(
+    modifier = modifier,
+    horizontalArrangement = Arrangement.spacedBy(
+        space = 4.dp,
+        alignment = Alignment.CenterHorizontally
+    ),
+    verticalAlignment = Alignment.CenterVertically
+) {
+    repeat(count) { index ->
+
+        Box(
+            modifier = Modifier
+                .size(
+                    when (index) {
+                        current -> 8.dp
+                        else -> 6.dp
+                    }
+                )
+                .background(
+                    color = when (index) {
+                        current -> colorScheme.primary
+                        else -> colorScheme.outline
+                    },
+                    shape = CircleShape
+                )
+        )
     }
 }
 

@@ -10,11 +10,12 @@ local.properties
 captures
 .externalNativeBuild
 .cxx
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcodeproj/project.xcworkspace/
-!*.xcworkspace/contents.xcworkspacedata
+# XcodeGen - Exclude generated Xcode project
+iosApp/iosApp.xcodeproj/
+
+# Keep XcodeGen source files
+!iosApp/project.yml
+!iosApp/generate-project.sh
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 /composeApp/schemas/*

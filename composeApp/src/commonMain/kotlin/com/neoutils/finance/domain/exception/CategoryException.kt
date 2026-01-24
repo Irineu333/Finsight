@@ -3,7 +3,7 @@ package com.neoutils.finance.domain.exception
 import com.neoutils.finance.util.UiText
 import kotlinx.coroutines.runBlocking
 
-class UpdateCreditCardException(text: UiText) : CreditCardException(text) {
+open class CategoryException(val text: UiText) : Exception() {
 
     constructor(message: String) : this(UiText.Raw(message))
 

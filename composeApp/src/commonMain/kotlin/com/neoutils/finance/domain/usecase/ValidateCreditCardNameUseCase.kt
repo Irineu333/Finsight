@@ -1,7 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.BuildCreditCardErrors
+import com.neoutils.finance.domain.exception.CreditCardException
 import com.neoutils.finance.domain.repository.ICreditCardRepository
-import com.neoutils.finance.util.UiText
+
+private val errors = BuildCreditCardErrors()
 
 class ValidateCreditCardNameUseCase(
     private val repository: ICreditCardRepository
@@ -9,16 +12,16 @@ class ValidateCreditCardNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): UiText? {
+    ): Result<String> {
         if (name.isBlank()) {
-            return UiText.Raw("O nome do cartão não pode ser vazio.")
+            return Result.failure(CreditCardException(errors.nameRequired))
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return UiText.Raw("Já existe um cartão com esse nome.")
+            return Result.failure(CreditCardException(errors.nameAlreadyExists))
         }
 
-        return null
+        return Result.success(name)
     }
 
     private suspend fun hasDuplicateName(

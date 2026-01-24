@@ -7,13 +7,18 @@ import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finance.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finance.extension.then
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.ModalManager
+import com.neoutils.finance.util.ObservableMutableMap
 import com.neoutils.finance.util.CreditCardPeriod
 import com.neoutils.finance.util.DebounceManager
-import com.neoutils.finance.util.FieldForm
 import com.neoutils.finance.util.Validation
-import kotlinx.coroutines.flow.*
+import com.neoutils.finance.util.validation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CreditCardFormViewModel(
@@ -28,13 +33,12 @@ class CreditCardFormViewModel(
 
     private val isEditMode = creditCard != null
 
-    private val name = MutableStateFlow(
-        creditCard?.let {
-            FieldForm(
-                text = it.name,
-                validation = Validation.Valid
-            )
-        } ?: FieldForm()
+    private val name = MutableStateFlow(creditCard?.name.orEmpty())
+
+    private val validation = ObservableMutableMap<CreditCardField, Validation>(
+        map = mutableMapOf(
+            CreditCardField.NAME to Validation.Valid
+        )
     )
 
     private val limit = MutableStateFlow(
@@ -71,10 +75,7 @@ class CreditCardFormViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = creditCard?.let {
             CreditCardForm(
-                name = FieldForm(
-                    text = it.name,
-                    validation = Validation.Valid
-                ),
+                name = it.name,
                 limit = it.limit.toMoneyFormat(),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
@@ -82,9 +83,10 @@ class CreditCardFormViewModel(
         } ?: CreditCardForm()
     )
 
-    val uiState = form.map { form ->
+    val uiState = combine(form, validation) { form, validation ->
         CreditCardFormUiState(
             form = form,
+            validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.isValid(),
         )
@@ -93,6 +95,7 @@ class CreditCardFormViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = CreditCardFormUiState(
             form = form.value,
+            validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.value.isValid(),
         )
@@ -118,45 +121,36 @@ class CreditCardFormViewModel(
     }
 
     private fun changeName(newName: String) {
-        name.update {
-            it.copy(
-                text = newName,
-                validation = Validation.Validating,
-            )
-        }
+        name.value = newName
+        validation[CreditCardField.NAME] = Validation.Validating
 
         debounceManager(
             scope = viewModelScope,
             key = "validate_credit_card_name",
         ) {
-            name.update {
-                it.copy(
-                    validation = validateCreditCardName(
-                        name = newName,
-                        ignoreId = creditCard?.id
-                    )?.let { error ->
-                        Validation.Error(error)
-                    } ?: Validation.Valid,
-                )
-            }
+            validation[CreditCardField.NAME] = validateCreditCardName(
+                name = newName,
+                ignoreId = creditCard?.id
+            ).validation
         }
     }
 
     private fun submit() = viewModelScope.launch {
 
         if (creditCard != null) {
-            form.value.build(id = creditCard.id).onSuccess { builtCreditCard ->
+            form.value.build(id = creditCard.id).then { creditCard ->
                 updateCreditCardUseCase(creditCard.id) {
                     it.copy(
-                        name = builtCreditCard.name,
-                        limit = builtCreditCard.limit,
-                        closingDay = builtCreditCard.closingDay,
-                        dueDay = builtCreditCard.dueDay,
+                        name = creditCard.name,
+                        limit = creditCard.limit,
+                        closingDay = creditCard.closingDay,
+                        dueDay = creditCard.dueDay,
                     )
-                }.onSuccess {
-                    modalManager.dismissAll()
                 }
+            }.onSuccess {
+                modalManager.dismissAll()
             }
+
             return@launch
         }
 

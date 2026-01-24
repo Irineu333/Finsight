@@ -29,14 +29,11 @@ class UpdateCreditCardUseCase(
     private suspend fun validate(
         creditCard: CreditCard
     ): Result<CreditCard> {
-
-        validateCreditCardName(
+        return validateCreditCardName(
             name = creditCard.name,
             ignoreId = creditCard.id
-        )?.let { error ->
-            return Result.failure(UpdateCreditCardException(error))
+        ).map {
+            creditCard
         }
-
-        return Result.success(creditCard)
     }
 }

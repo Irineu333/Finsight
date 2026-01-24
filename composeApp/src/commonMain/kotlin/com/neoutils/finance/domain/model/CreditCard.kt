@@ -3,7 +3,7 @@
 package com.neoutils.finance.domain.model
 
 import com.neoutils.finance.domain.errors.BuildCreditCardErrors
-import com.neoutils.finance.domain.exception.BuildCreditCardException
+import com.neoutils.finance.domain.exception.CreditCardException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -19,19 +19,19 @@ data class CreditCard(
 ) {
     init {
         if (name.isBlank()) {
-            throw BuildCreditCardException(errors.nameRequired)
+            throw CreditCardException(errors.nameRequired)
         }
 
         if (limit < 0) {
-            throw BuildCreditCardException(errors.limitNegative)
+            throw CreditCardException(errors.limitNegative)
         }
 
         if (closingDay !in 1..31) {
-            throw BuildCreditCardException(errors.closingDayInvalid)
+            throw CreditCardException(errors.closingDayInvalid)
         }
 
         if (dueDay !in 1..31) {
-            throw BuildCreditCardException(errors.dueDayInvalid)
+            throw CreditCardException(errors.dueDayInvalid)
         }
     }
 }

@@ -7,14 +7,11 @@ import com.neoutils.finance.domain.usecase.CreateAccountUseCase
 import com.neoutils.finance.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finance.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.util.DebounceManager
-import com.neoutils.finance.util.FieldForm
 import com.neoutils.finance.util.Validation
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import com.neoutils.finance.util.DebounceManager
+import com.neoutils.finance.util.ObservableMutableMap
+import com.neoutils.finance.util.validation
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class AccountFormViewModel(
@@ -28,10 +25,15 @@ class AccountFormViewModel(
 
     private val isEditMode = account != null
 
-    private val name = MutableStateFlow(
-        FieldForm(
-            text = account?.name.orEmpty(),
-            validation = if (isEditMode) Validation.Valid else Validation.Waiting
+    private val name = MutableStateFlow(account?.name.orEmpty())
+
+    private val validation = ObservableMutableMap(
+        map = mutableMapOf(
+            if (isEditMode) {
+                AccountField.NAME to Validation.Valid
+            } else {
+                AccountField.NAME to Validation.Waiting
+            }
         )
     )
 
@@ -39,12 +41,13 @@ class AccountFormViewModel(
         account?.isDefault ?: false
     )
 
-    val uiState = combine(name, isDefault) { name, isDefault ->
+    val uiState = combine(name, isDefault, validation) { name, isDefault, validation ->
         AccountFormUiState(
             name = name,
+            validation = validation,
             isDefault = isDefault,
             isEditMode = isEditMode,
-            canSubmit = name.validation == Validation.Valid,
+            canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
         )
     }.stateIn(
@@ -52,16 +55,20 @@ class AccountFormViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = AccountFormUiState(
             name = name.value,
+            validation = validation,
             isDefault = isDefault.value,
             isEditMode = isEditMode,
-            canSubmit = name.value.validation == Validation.Valid,
+            canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = !(isEditMode && account?.isDefault == true),
         )
     )
 
     fun onAction(action: AccountFormAction) {
         when (action) {
-            is AccountFormAction.NameChanged -> changeName(action.name)
+            is AccountFormAction.NameChanged -> {
+                changeName(action.name)
+            }
+
             is AccountFormAction.IsDefaultChanged -> {
                 isDefault.value = action.isDefault
             }
@@ -71,43 +78,35 @@ class AccountFormViewModel(
     }
 
     private fun changeName(newName: String) {
-        name.update {
-            it.copy(
-                text = newName,
-                validation = Validation.Validating,
-            )
-        }
+
+        validation[AccountField.NAME] = Validation.Validating
+
+        name.value = newName
 
         debounceManager(
             scope = viewModelScope,
             key = "validate_account_name",
         ) {
-            name.update {
-                it.copy(
-                    validation = validateAccountName(
-                        name = newName,
-                        ignoreId = account?.id
-                    )?.let { error ->
-                        Validation.Error(error)
-                    } ?: Validation.Valid,
-                )
-            }
+            validation[AccountField.NAME] = validateAccountName(
+                name = newName,
+                ignoreId = account?.id
+            ).validation
         }
     }
 
     private fun submit() = viewModelScope.launch {
 
-        validateAccountName(
-            name = name.value.text,
+        val name = validateAccountName(
+            name = name.value,
             ignoreId = account?.id
-        )?.let {
+        ).getOrElse {
             return@launch
         }
 
         if (account != null) {
             updateAccountUseCase(
                 account = account,
-                name = name.value.text,
+                name = name,
                 isDefault = isDefault.value
             ).onSuccess {
                 modalManager.dismissAll()
@@ -118,7 +117,7 @@ class AccountFormViewModel(
         }
 
         createAccountUseCase(
-            name = name.value.text,
+            name = name,
             isDefault = isDefault.value
         ).onSuccess {
             modalManager.dismiss()

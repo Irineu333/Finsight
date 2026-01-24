@@ -3,18 +3,16 @@
 package com.neoutils.finance.domain.model.form
 
 import com.neoutils.finance.domain.errors.BuildCreditCardErrors
-import com.neoutils.finance.domain.exception.BuildCreditCardException
+import com.neoutils.finance.domain.exception.CreditCardException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.extension.moneyToDouble
-import com.neoutils.finance.util.FieldForm
-import com.neoutils.finance.util.Validation
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 private val errors = BuildCreditCardErrors()
 
 data class CreditCardForm(
-    val name: FieldForm = FieldForm(),
+    val name: String = "",
     val limit: String = "",
     val closingDayUser: String = "",
     val dueDayUser: String = "",
@@ -26,36 +24,32 @@ data class CreditCardForm(
     val dueDay = dueDayUser.toIntOrNull() ?: dueDayCalc
 
     fun build(id: Long = 0): Result<CreditCard> {
-        if (name.text.isBlank()) {
-            return Result.failure(BuildCreditCardException(errors.nameRequired))
-        }
-
-        if (name.validation != Validation.Valid) {
-            return Result.failure(BuildCreditCardException(errors.nameRequired))
+        if (name.isBlank()) {
+            return Result.failure(CreditCardException(errors.nameRequired))
         }
 
         val limitValue = limit.moneyToDouble()
 
         if (limitValue < 0) {
-            return Result.failure(BuildCreditCardException(errors.limitNegative))
+            return Result.failure(CreditCardException(errors.limitNegative))
         }
 
-        val closingDay = closingDay ?: return Result.failure(BuildCreditCardException(errors.closingDayRequired))
+        val closingDay = closingDay ?: return Result.failure(CreditCardException(errors.closingDayRequired))
 
         if (closingDay !in 1..31) {
-            return Result.failure(BuildCreditCardException(errors.closingDayInvalid))
+            return Result.failure(CreditCardException(errors.closingDayInvalid))
         }
 
-        val dueDay = dueDay ?: return Result.failure(BuildCreditCardException(errors.dueDayRequired))
+        val dueDay = dueDay ?: return Result.failure(CreditCardException(errors.dueDayRequired))
 
         if (dueDay !in 1..31) {
-            return Result.failure(BuildCreditCardException(errors.dueDayInvalid))
+            return Result.failure(CreditCardException(errors.dueDayInvalid))
         }
 
         return Result.success(
             CreditCard(
                 id = id,
-                name = name.text.trim(),
+                name = name.trim(),
                 limit = limitValue,
                 closingDay = closingDay,
                 dueDay = dueDay,

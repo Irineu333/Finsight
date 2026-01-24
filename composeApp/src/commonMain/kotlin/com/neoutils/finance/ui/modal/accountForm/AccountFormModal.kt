@@ -36,8 +36,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.ui.component.ModalBottomSheet
-import com.neoutils.finance.ui.util.stringUiText
 import com.neoutils.finance.util.Validation
+import com.neoutils.finance.ui.util.stringUiText
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -52,7 +52,7 @@ class AccountFormModal(
         val viewModel = koinViewModel<AccountFormViewModel> { parametersOf(account) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val name = rememberTextFieldState(uiState.name.text)
+        val name = rememberTextFieldState(uiState.name)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
@@ -82,7 +82,7 @@ class AccountFormModal(
                 label = {
                     Text(text = "Nome")
                 },
-                trailingIcon = when (uiState.name.validation) {
+                trailingIcon = when (uiState.validation[AccountField.NAME]) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -98,8 +98,8 @@ class AccountFormModal(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done
                 ),
-                isError = uiState.name.validation is Validation.Error,
-                supportingText = when (val validation = uiState.name.validation) {
+                isError = uiState.validation[AccountField.NAME] is Validation.Error,
+                supportingText = when (val validation = uiState.validation[AccountField.NAME]) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))

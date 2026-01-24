@@ -1,7 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.ValidateCategoryNameErrors
+import com.neoutils.finance.domain.exception.CategoryException
 import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.util.UiText
+
+private val errors = ValidateCategoryNameErrors()
 
 class ValidateCategoryNameUseCase(
     private val repository: ICategoryRepository
@@ -9,16 +12,16 @@ class ValidateCategoryNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): UiText? {
+    ): Result<String> {
         if (name.isEmpty()) {
-            return UiText.Raw("O nome da categoria não pode ser vazio.")
+            return Result.failure(CategoryException(errors.nameRequired))
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return UiText.Raw("Já existe uma categoria com esse nome.")
+            return Result.failure(CategoryException(errors.nameAlreadyExists))
         }
 
-        return null
+        return Result.success(name)
     }
 
     private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {

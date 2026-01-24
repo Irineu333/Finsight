@@ -26,11 +26,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.modal.accountForm.AccountField
+import com.neoutils.finance.util.Validation
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.util.stringUiText
 import com.neoutils.finance.util.CategoryIcon
-import com.neoutils.finance.util.Validation
 import kotlinx.coroutines.flow.drop
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -45,7 +46,7 @@ class CategoryFormModal(
         val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val name = rememberTextFieldState(uiState.name.text)
+        val name = rememberTextFieldState(uiState.name)
         var isIconGridExpanded by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
@@ -85,7 +86,7 @@ class CategoryFormModal(
                 label = {
                     Text(text = "Nome")
                 },
-                trailingIcon = when (uiState.name.validation) {
+                trailingIcon = when (uiState.validation[CategoryField.NAME]) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -101,8 +102,8 @@ class CategoryFormModal(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done
                 ),
-                isError = uiState.name.validation is Validation.Error,
-                supportingText = when (val validation = uiState.name.validation) {
+                isError = uiState.validation[CategoryField.NAME]is Validation.Error,
+                supportingText = when (val validation = uiState.validation[CategoryField.NAME]) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))

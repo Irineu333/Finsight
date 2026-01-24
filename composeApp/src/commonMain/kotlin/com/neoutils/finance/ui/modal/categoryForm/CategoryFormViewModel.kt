@@ -9,10 +9,11 @@ import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.icons.CategoryLazyIcon
+import com.neoutils.finance.util.ObservableMutableMap
 import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.util.DebounceManager
-import com.neoutils.finance.util.FieldForm
 import com.neoutils.finance.util.Validation
+import com.neoutils.finance.util.validation
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -28,10 +29,15 @@ class CategoryFormViewModel(
 
     private val isEditMode = category != null
 
-    private val name = MutableStateFlow(
-        FieldForm(
-            text = category?.name.orEmpty(),
-            validation = if (isEditMode) Validation.Valid else Validation.Waiting
+    private val name = MutableStateFlow(category?.name.orEmpty())
+
+    private val validation = ObservableMutableMap(
+        map = mutableMapOf(
+            if (isEditMode) {
+                CategoryField.NAME to Validation.Valid
+            } else {
+                CategoryField.NAME to Validation.Waiting
+            }
         )
     )
 
@@ -44,23 +50,25 @@ class CategoryFormViewModel(
             ?: CategoryIcon.SHOPPING_CART
     )
 
-    val uiState = combine(name, type, icon) { name, type, icon ->
+    val uiState = combine(name, type, icon, validation) { name, type, icon, validation ->
         CategoryFormUiState(
             name = name,
+            validation = validation,
             selectedIcon = icon,
             selectedType = type,
             isEditMode = isEditMode,
-            canSubmit = name.validation == Validation.Valid,
+            canSubmit = validation[CategoryField.NAME] == Validation.Valid,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = CategoryFormUiState(
             name = name.value,
+            validation = validation,
             selectedIcon = icon.value,
             selectedType = type.value,
             isEditMode = isEditMode,
-            canSubmit = name.value.validation == Validation.Valid,
+            canSubmit = validation[CategoryField.NAME] == Validation.Valid,
         )
     )
 
@@ -80,43 +88,33 @@ class CategoryFormViewModel(
     }
 
     private fun changeName(newName: String) {
-        name.update {
-            it.copy(
-                text = newName,
-                validation = Validation.Validating,
-            )
-        }
+        name.value = newName
+        validation[CategoryField.NAME] = Validation.Validating
 
         debounceManager(
             scope = viewModelScope,
             key = "validate_category_name",
         ) {
-            name.update {
-                it.copy(
-                    validation = validateCategoryName(
-                        name = newName,
-                        ignoreId = category?.id
-                    )?.let { error ->
-                        Validation.Error(error)
-                    } ?: Validation.Valid,
-                )
-            }
+            validation[CategoryField.NAME] = validateCategoryName(
+                name = newName,
+                ignoreId = category?.id
+            ).validation
         }
     }
 
     private fun submit() = viewModelScope.launch {
 
-        validateCategoryName(
-            name = name.value.text,
+        val name = validateCategoryName(
+            name = name.value,
             ignoreId = category?.id
-        )?.let {
+        ).getOrElse {
             return@launch
         }
 
         if (category != null) {
             repository.update(
                 category.copy(
-                    name = name.value.text.trim(),
+                    name = name.trim(),
                     icon = CategoryLazyIcon(icon.value.key)
                 )
             )
@@ -126,7 +124,7 @@ class CategoryFormViewModel(
 
         repository.insert(
             Category(
-                name = name.value.text.trim(),
+                name = name.trim(),
                 icon = CategoryLazyIcon(icon.value.key),
                 type = type.value,
                 createdAt = Clock.System.now().toEpochMilliseconds()

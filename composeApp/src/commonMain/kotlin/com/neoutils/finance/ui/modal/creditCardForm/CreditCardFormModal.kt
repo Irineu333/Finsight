@@ -1,22 +1,12 @@
 package com.neoutils.finance.ui.modal.creditCardForm
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldLabelPosition
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.ui.component.ModalBottomSheet
+import com.neoutils.finance.ui.modal.categoryForm.CategoryField
 import com.neoutils.finance.ui.util.stringUiText
 import com.neoutils.finance.util.DayInputTransformation
 import com.neoutils.finance.util.MoneyInputTransformation
@@ -49,7 +40,7 @@ class CreditCardFormModal(
         val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val name = rememberTextFieldState(uiState.form.name.text)
+        val name = rememberTextFieldState(uiState.form.name)
         val limit = rememberTextFieldState(uiState.form.limit)
         val closingDay = rememberTextFieldState(uiState.form.closingDayUser)
         val dueDay = rememberTextFieldState(uiState.form.dueDayUser)
@@ -103,7 +94,7 @@ class CreditCardFormModal(
             OutlinedTextField(
                 state = name,
                 label = { Text(text = "Nome do Cartão") },
-                trailingIcon = when (uiState.form.name.validation) {
+                trailingIcon = when (uiState.validation[CreditCardField.NAME]) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -119,8 +110,8 @@ class CreditCardFormModal(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Next
                 ),
-                isError = uiState.form.name.validation is Validation.Error,
-                supportingText = when (val validation = uiState.form.name.validation) {
+                isError = uiState.validation[CreditCardField.NAME] is Validation.Error,
+                supportingText = when (val validation = uiState.validation[CreditCardField.NAME]) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))

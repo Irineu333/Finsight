@@ -1,7 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.errors.ValidateAccountNameErrors
+import com.neoutils.finance.domain.exception.AccountException
 import com.neoutils.finance.domain.repository.IAccountRepository
-import com.neoutils.finance.util.UiText
+
+private val errors = ValidateAccountNameErrors()
 
 class ValidateAccountNameUseCase(
     private val repository: IAccountRepository
@@ -9,16 +12,16 @@ class ValidateAccountNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): UiText? {
+    ): Result<String> {
         if (name.isEmpty()) {
-            return UiText.Raw("O nome da conta não pode ser vazio.")
+            return Result.failure(AccountException(errors.nameRequired))
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return UiText.Raw("Já existe uma conta com esse nome.")
+            return Result.failure(AccountException(errors.nameAlreadyExists))
         }
 
-        return null
+        return Result.success(name)
     }
 
     private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {

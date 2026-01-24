@@ -2,7 +2,7 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.AddInstallmentErrors
+import com.neoutils.finance.domain.error.AddInstallmentErrors
 import com.neoutils.finance.domain.exception.AddInstallmentException
 import com.neoutils.finance.domain.model.Installment
 import com.neoutils.finance.domain.model.Invoice

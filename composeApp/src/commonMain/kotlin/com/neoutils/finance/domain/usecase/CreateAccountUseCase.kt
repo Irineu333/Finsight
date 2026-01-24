@@ -2,6 +2,10 @@
 
 package com.neoutils.finance.domain.usecase
 
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.raise.either
+import com.neoutils.finance.domain.exception.AccountException
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.repository.IAccountRepository
 import kotlin.time.Clock
@@ -15,19 +19,30 @@ class CreateAccountUseCase(
     suspend operator fun invoke(
         name: String,
         isDefault: Boolean
-    ): Result<Long> {
+    ): Either<Throwable, Account> {
+        return either {
+            validateAccountName(
+                name = name,
+            ).mapLeft {
+                AccountException(it)
+            }.bind()
 
-        return validateAccountName(name).mapCatching {
-            repository.insert(
+            val account = catch {
                 Account(
                     name = name.trim(),
                     isDefault = false,
                     createdAt = Clock.System.now().toEpochMilliseconds()
                 )
-            )
-        }.onSuccess { accountId ->
+            }.bind()
+
+            catch {
+                account.copy(
+                    id = repository.insert(account)
+                )
+            }.bind()
+        }.onRight { account ->
             if (isDefault) {
-                setDefaultAccount(accountId)
+                setDefaultAccount(account.id)
             }
         }
     }

@@ -1,10 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.ValidateAccountNameErrors
-import com.neoutils.finance.domain.exception.AccountException
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import com.neoutils.finance.domain.error.AccountError
 import com.neoutils.finance.domain.repository.IAccountRepository
-
-private val errors = ValidateAccountNameErrors()
 
 class ValidateAccountNameUseCase(
     private val repository: IAccountRepository
@@ -12,16 +12,16 @@ class ValidateAccountNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): Result<String> {
+    ): Either<AccountError, String> {
         if (name.isEmpty()) {
-            return Result.failure(AccountException(errors.nameRequired))
+            return AccountError.EMPTY_NAME.left()
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return Result.failure(AccountException(errors.nameAlreadyExists))
+            return AccountError.ALREADY_EXIST.left()
         }
 
-        return Result.success(name)
+        return name.right()
     }
 
     private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {

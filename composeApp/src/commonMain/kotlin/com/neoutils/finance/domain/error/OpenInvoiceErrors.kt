@@ -1,4 +1,4 @@
-package com.neoutils.finance.domain.errors
+package com.neoutils.finance.domain.error
 
 data class OpenInvoiceErrors(
     val creditCardNotFound: String = "Credit card not found",

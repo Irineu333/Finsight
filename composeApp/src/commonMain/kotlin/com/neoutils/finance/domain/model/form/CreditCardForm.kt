@@ -2,14 +2,15 @@
 
 package com.neoutils.finance.domain.model.form
 
-import com.neoutils.finance.domain.errors.BuildCreditCardErrors
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import com.neoutils.finance.domain.error.CreditCardError
 import com.neoutils.finance.domain.exception.CreditCardException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.extension.moneyToDouble
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val errors = BuildCreditCardErrors()
 
 data class CreditCardForm(
     val name: String = "",
@@ -23,40 +24,39 @@ data class CreditCardForm(
 
     val dueDay = dueDayUser.toIntOrNull() ?: dueDayCalc
 
-    fun build(id: Long = 0): Result<CreditCard> {
+    fun build(id: Long = 0): Either<CreditCardException, CreditCard> {
         if (name.isBlank()) {
-            return Result.failure(CreditCardException(errors.nameRequired))
+            return CreditCardException(CreditCardError.EMPTY_NAME).left()
         }
 
         val limitValue = limit.moneyToDouble()
 
         if (limitValue < 0) {
-            return Result.failure(CreditCardException(errors.limitNegative))
+            return CreditCardException(CreditCardError.NEGATIVE_LIMIT).left()
         }
 
-        val closingDay = closingDay ?: return Result.failure(CreditCardException(errors.closingDayRequired))
+        val closingDay = closingDay ?: return CreditCardException(CreditCardError.MISSING_CLOSING_DAY).left()
 
         if (closingDay !in 1..31) {
-            return Result.failure(CreditCardException(errors.closingDayInvalid))
+            return CreditCardException(CreditCardError.INVALID_CLOSING_DAY).left()
         }
 
-        val dueDay = dueDay ?: return Result.failure(CreditCardException(errors.dueDayRequired))
+        val dueDay = dueDay ?: return CreditCardException(CreditCardError.MISSING_DUE_DAY).left()
 
         if (dueDay !in 1..31) {
-            return Result.failure(CreditCardException(errors.dueDayInvalid))
+            return CreditCardException(CreditCardError.INVALID_DUE_DAY).left()
         }
 
-        return Result.success(
-            CreditCard(
-                id = id,
-                name = name.trim(),
-                limit = limitValue,
-                closingDay = closingDay,
-                dueDay = dueDay,
-                createdAt = Clock.System.now().toEpochMilliseconds()
-            )
-        )
+        return CreditCard(
+            id = id,
+            name = name.trim(),
+            limit = limitValue,
+            closingDay = closingDay,
+            dueDay = dueDay,
+            createdAt = Clock.System.now().toEpochMilliseconds()
+        ).right()
     }
 
-    fun isValid() = build().isSuccess
+    fun isValid() = build().isRight()
+    fun isInvalid() = build().isLeft()
 }

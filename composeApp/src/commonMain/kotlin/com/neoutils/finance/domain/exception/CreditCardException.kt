@@ -1,11 +1,7 @@
 package com.neoutils.finance.domain.exception
 
-import com.neoutils.finance.util.UiText
-import kotlinx.coroutines.runBlocking
+import com.neoutils.finance.domain.error.CreditCardError
 
-open class CreditCardException(val text: UiText) : Exception() {
-
-    constructor(message: String) : this(UiText.Raw(message))
-
-    override val message get() = runBlocking { text.asString() }
-}
+class CreditCardException(
+    val error: CreditCardError,
+) : Exception(error.message)

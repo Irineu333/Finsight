@@ -1,4 +1,4 @@
-package com.neoutils.finance.domain.errors
+package com.neoutils.finance.domain.error
 
 data class ReopenInvoiceErrors(
     val invoiceNotFound: String = "Invoice not found",

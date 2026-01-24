@@ -1,10 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.ValidateCategoryNameErrors
-import com.neoutils.finance.domain.exception.CategoryException
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import com.neoutils.finance.domain.error.CategoryError
 import com.neoutils.finance.domain.repository.ICategoryRepository
-
-private val errors = ValidateCategoryNameErrors()
 
 class ValidateCategoryNameUseCase(
     private val repository: ICategoryRepository
@@ -12,22 +12,26 @@ class ValidateCategoryNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): Result<String> {
+    ): Either<CategoryError, String> {
         if (name.isEmpty()) {
-            return Result.failure(CategoryException(errors.nameRequired))
+            return CategoryError.EMPTY_NAME.left()
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return Result.failure(CategoryException(errors.nameAlreadyExists))
+            return CategoryError.ALREADY_EXIST.left()
         }
 
-        return Result.success(name)
+        return name.right()
     }
 
-    private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {
-        val categories = repository.getAllCategories()
-        return categories.any {
-            it.name.equals(name.trim(), ignoreCase = true) && it.id != ignoreId
+    private suspend fun hasDuplicateName(
+        name: String,
+        ignoreId: Long?
+    ): Boolean {
+        // TODO: improve this
+        return repository.getAllCategories().any { creditCard ->
+            creditCard.name.equals(name.trim(), ignoreCase = true) &&
+                    creditCard.id != ignoreId
         }
     }
 }

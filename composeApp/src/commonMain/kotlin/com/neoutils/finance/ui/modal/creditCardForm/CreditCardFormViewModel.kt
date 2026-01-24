@@ -2,19 +2,20 @@ package com.neoutils.finance.ui.modal.creditCardForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arrow.core.flatMap
+import arrow.core.getOrElse
+import com.neoutils.finance.domain.error.toUiText
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finance.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finance.domain.usecase.ValidateCreditCardNameUseCase
-import com.neoutils.finance.extension.then
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.util.ObservableMutableMap
 import com.neoutils.finance.util.CreditCardPeriod
 import com.neoutils.finance.util.DebounceManager
+import com.neoutils.finance.util.ObservableMutableMap
 import com.neoutils.finance.util.Validation
-import com.neoutils.finance.util.validation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -103,7 +104,10 @@ class CreditCardFormViewModel(
 
     fun onAction(action: CreditCardFormAction) {
         when (action) {
-            is CreditCardFormAction.NameChanged -> changeName(action.name)
+            is CreditCardFormAction.NameChanged -> {
+                changeName(action.name)
+            }
+
             is CreditCardFormAction.LimitChanged -> {
                 limit.value = action.limit
             }
@@ -131,14 +135,20 @@ class CreditCardFormViewModel(
             validation[CreditCardField.NAME] = validateCreditCardName(
                 name = newName,
                 ignoreId = creditCard?.id
-            ).validation
+            ).map {
+                Validation.Valid
+            }.getOrElse { error ->
+                Validation.Error(error.toUiText())
+            }
         }
     }
 
     private fun submit() = viewModelScope.launch {
 
         if (creditCard != null) {
-            form.value.build(id = creditCard.id).then { creditCard ->
+            form.value.build(
+                id = creditCard.id,
+            ).flatMap { creditCard ->
                 updateCreditCardUseCase(creditCard.id) {
                     it.copy(
                         name = creditCard.name,
@@ -147,14 +157,20 @@ class CreditCardFormViewModel(
                         dueDay = creditCard.dueDay,
                     )
                 }
-            }.onSuccess {
+            }.onLeft {
+                // TODO: register exception
+            }.onRight {
                 modalManager.dismissAll()
             }
 
             return@launch
         }
 
-        addCreditCardUseCase(form.value).onSuccess {
+        addCreditCardUseCase(
+            form = form.value,
+        ).onLeft {
+            // TODO: register exception
+        }.onRight {
             modalManager.dismiss()
         }
     }

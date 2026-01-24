@@ -1,4 +1,4 @@
-package com.neoutils.finance.domain.errors
+package com.neoutils.finance.domain.error
 
 data class BuildTransactionErrors(
     val amountRequired: String = "O valor é obrigatório.",

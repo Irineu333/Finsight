@@ -2,11 +2,14 @@
 
 package com.neoutils.finance.domain.usecase
 
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.raise.either
+import com.neoutils.finance.domain.exception.CreditCardException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.form.CreditCardForm
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.extension.effectiveDay
-import com.neoutils.finance.extension.then
 import com.neoutils.finance.extension.yearMonth
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minusMonth
@@ -24,28 +27,34 @@ class AddCreditCardUseCase(
 ) {
     suspend operator fun invoke(
         form: CreditCardForm
-    ): Result<CreditCard> {
+    ): Either<Throwable, CreditCard> {
+        return either {
+            validateCreditCardName(
+                form.name
+            ).mapLeft {
+                CreditCardException(it)
+            }.bind()
 
-        return validateCreditCardName(form.name)
-            .then { form.build() }
-            .map { creditCard ->
+            val creditCard = form.build().bind()
+
+             catch {
                 creditCard.copy(
                     id = repository.insert(creditCard)
                 )
-            }
-            .onSuccess { creditCard ->
-                val closingDay = currentDate.yearMonth.effectiveDay(creditCard.closingDay)
+            }.bind()
+        }.onRight { creditCard ->
+            val closingDay = currentDate.yearMonth.effectiveDay(creditCard.closingDay)
 
-                val openingMonth = if (currentDate.day < closingDay) {
-                    currentDate.yearMonth.minusMonth()
-                } else {
-                    currentDate.yearMonth
-                }
-
-                openInvoiceUseCase(
-                    creditCardId = creditCard.id,
-                    openingMonth = openingMonth
-                )
+            val openingMonth = if (currentDate.day < closingDay) {
+                currentDate.yearMonth.minusMonth()
+            } else {
+                currentDate.yearMonth
             }
+
+            openInvoiceUseCase(
+                creditCardId = creditCard.id,
+                openingMonth = openingMonth
+            )
+        }
     }
 }

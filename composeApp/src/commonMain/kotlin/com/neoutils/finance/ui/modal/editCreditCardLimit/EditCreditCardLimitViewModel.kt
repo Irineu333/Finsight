@@ -41,7 +41,9 @@ class EditCreditCardLimitViewModel(
     fun updateLimit(limit: Double) = viewModelScope.launch {
         updateCreditCardUseCase(creditCardId) {
             it.copy(limit = limit)
-        }.onSuccess {
+        }.onLeft {
+            // TODO: register exception
+        }.onRight {
             modalManager.dismiss()
         }
     }

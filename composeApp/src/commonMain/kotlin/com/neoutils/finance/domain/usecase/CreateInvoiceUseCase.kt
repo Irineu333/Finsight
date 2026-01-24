@@ -2,7 +2,7 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.CreateInvoiceErrors
+import com.neoutils.finance.domain.error.CreateInvoiceErrors
 import com.neoutils.finance.domain.exception.CreateInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.ICreditCardRepository

@@ -1,10 +1,10 @@
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.BuildCreditCardErrors
-import com.neoutils.finance.domain.exception.CreditCardException
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import com.neoutils.finance.domain.error.CreditCardError
 import com.neoutils.finance.domain.repository.ICreditCardRepository
-
-private val errors = BuildCreditCardErrors()
 
 class ValidateCreditCardNameUseCase(
     private val repository: ICreditCardRepository
@@ -12,25 +12,27 @@ class ValidateCreditCardNameUseCase(
     suspend operator fun invoke(
         name: String,
         ignoreId: Long? = null
-    ): Result<String> {
+    ): Either<CreditCardError, String> {
+
         if (name.isBlank()) {
-            return Result.failure(CreditCardException(errors.nameRequired))
+            return CreditCardError.EMPTY_NAME.left()
         }
 
         if (hasDuplicateName(name, ignoreId)) {
-            return Result.failure(CreditCardException(errors.nameAlreadyExists))
+            return CreditCardError.ALREADY_EXIST_NAME.left()
         }
 
-        return Result.success(name)
+        return name.right()
     }
 
     private suspend fun hasDuplicateName(
         name: String,
         ignoreId: Long?
     ): Boolean {
-        val creditCards = repository.getAllCreditCards()
-        return creditCards.any {
-            it.name.equals(name.trim(), ignoreCase = true) && it.id != ignoreId
+        // TODO: improve this
+        return repository.getAllCreditCards().any { creditCards ->
+            creditCards.name.equals(name.trim(), ignoreCase = true) &&
+                    creditCards.id != ignoreId
         }
     }
 }

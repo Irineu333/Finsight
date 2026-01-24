@@ -2,16 +2,20 @@ package com.neoutils.finance.ui.modal.accountForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arrow.core.getOrElse
+import com.neoutils.finance.domain.error.toUiText
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.usecase.CreateAccountUseCase
 import com.neoutils.finance.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finance.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finance.ui.component.ModalManager
-import com.neoutils.finance.util.Validation
 import com.neoutils.finance.util.DebounceManager
 import com.neoutils.finance.util.ObservableMutableMap
-import com.neoutils.finance.util.validation
-import kotlinx.coroutines.flow.*
+import com.neoutils.finance.util.Validation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class AccountFormViewModel(
@@ -90,7 +94,11 @@ class AccountFormViewModel(
             validation[AccountField.NAME] = validateAccountName(
                 name = newName,
                 ignoreId = account?.id
-            ).validation
+            ).map {
+                Validation.Valid
+            }.getOrElse {
+                Validation.Error(it.toUiText())
+            }
         }
     }
 
@@ -105,24 +113,27 @@ class AccountFormViewModel(
 
         if (account != null) {
             updateAccountUseCase(
-                account = account,
-                name = name,
-                isDefault = isDefault.value
-            ).onSuccess {
+                accountId = account.id,
+            ) {
+                it.copy(
+                    name = name,
+                    isDefault = isDefault.value
+                )
+            }.onLeft {
+                // TODO: register exception
+            }.onRight {
                 modalManager.dismissAll()
-            }.onFailure {
-                // TODO: Show error message to user
             }
             return@launch
         }
 
         createAccountUseCase(
             name = name,
-            isDefault = isDefault.value
-        ).onSuccess {
+            isDefault = isDefault.value,
+        ).onLeft {
+            // TODO: register exception
+        }.onRight {
             modalManager.dismiss()
-        }.onFailure {
-            // TODO: Show error message to user
         }
     }
 }

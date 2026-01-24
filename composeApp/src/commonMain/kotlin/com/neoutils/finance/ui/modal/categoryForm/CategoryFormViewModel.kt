@@ -4,17 +4,18 @@ package com.neoutils.finance.ui.modal.categoryForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arrow.core.getOrElse
+import com.neoutils.finance.domain.error.toUiText
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finance.ui.component.ModalManager
 import com.neoutils.finance.ui.icons.CategoryLazyIcon
-import com.neoutils.finance.util.ObservableMutableMap
-import com.neoutils.finance.util.CategoryIcon
-import com.neoutils.finance.util.DebounceManager
-import com.neoutils.finance.util.Validation
-import com.neoutils.finance.util.validation
-import kotlinx.coroutines.flow.*
+import com.neoutils.finance.util.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -46,8 +47,11 @@ class CategoryFormViewModel(
     )
 
     private val icon = MutableStateFlow(
-        category?.icon?.key?.let { CategoryIcon.fromKey(it) }
-            ?: CategoryIcon.SHOPPING_CART
+        if (category != null) {
+            CategoryIcon.fromKey(category.icon.key)
+        } else {
+            CategoryIcon.SHOPPING_CART
+        }
     )
 
     val uiState = combine(name, type, icon, validation) { name, type, icon, validation ->
@@ -74,7 +78,9 @@ class CategoryFormViewModel(
 
     fun onAction(action: CategoryFormAction) {
         when (action) {
-            is CategoryFormAction.NameChanged -> changeName(action.name)
+            is CategoryFormAction.NameChanged -> {
+                changeName(action.name)
+            }
             is CategoryFormAction.TypeChanged -> {
                 type.value = action.type
             }
@@ -98,7 +104,11 @@ class CategoryFormViewModel(
             validation[CategoryField.NAME] = validateCategoryName(
                 name = newName,
                 ignoreId = category?.id
-            ).validation
+            ).map {
+                Validation.Valid
+            }.getOrElse {
+                Validation.Error(it.toUiText())
+            }
         }
     }
 

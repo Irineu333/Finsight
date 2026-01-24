@@ -63,6 +63,12 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
+
+            // Arrow
+            implementation(libs.arrow.core)
+            // implementation(libs.arrow.fx.coroutines)
+            // implementation(libs.arrow.autoclose)
+            // implementation(libs.arrow.resilience)
         }
         androidMain.dependencies {
             implementation(compose.preview)

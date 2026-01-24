@@ -1,6 +1,6 @@
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.ReopenInvoiceErrors
+import com.neoutils.finance.domain.error.ReopenInvoiceErrors
 import com.neoutils.finance.domain.exception.ReopenInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository

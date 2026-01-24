@@ -1,39 +1,45 @@
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.UpdateCreditCardErrors
-import com.neoutils.finance.domain.exception.UpdateCreditCardException
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.raise.either
+import arrow.core.raise.ensureNotNull
+import com.neoutils.finance.domain.error.CreditCardError
+import com.neoutils.finance.domain.exception.CreditCardException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.repository.ICreditCardRepository
-
-private val errors = UpdateCreditCardErrors()
 
 class UpdateCreditCardUseCase(
     private val repository: ICreditCardRepository,
     private val validateCreditCardName: ValidateCreditCardNameUseCase,
 ) {
-
     suspend operator fun invoke(
         creditCardId: Long,
         block: (CreditCard) -> CreditCard
-    ): Result<CreditCard> {
-        val creditCard = repository.getCreditCardById(creditCardId)
-            ?: return Result.failure(UpdateCreditCardException(errors.notFound))
+    ): Either<Throwable, CreditCard> {
+        return either {
+            val oldCreditCard = catch {
+                ensureNotNull(repository.getCreditCardById(creditCardId)) {
+                    CreditCardException(CreditCardError.NOT_FOUND)
+                }
+            }.bind()
 
-        return validate(
-            block(creditCard)
-        ).onSuccess {
-            repository.update(it)
-        }
-    }
+            val newCreditCard = catch {
+                block(oldCreditCard)
+            }.bind()
 
-    private suspend fun validate(
-        creditCard: CreditCard
-    ): Result<CreditCard> {
-        return validateCreditCardName(
-            name = creditCard.name,
-            ignoreId = creditCard.id
-        ).map {
-            creditCard
+            validateCreditCardName(
+                name = newCreditCard.name,
+                ignoreId = creditCardId,
+            ).mapLeft {
+                CreditCardException(it)
+            }.bind()
+
+            catch {
+                repository.update(newCreditCard)
+            }.bind()
+
+            newCreditCard
         }
     }
 }

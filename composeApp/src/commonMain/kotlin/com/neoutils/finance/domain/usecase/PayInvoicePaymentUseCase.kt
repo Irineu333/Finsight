@@ -2,7 +2,7 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.errors.PayInvoicePaymentErrors
+import com.neoutils.finance.domain.error.PayInvoicePaymentErrors
 import com.neoutils.finance.domain.exception.PayCreditCardBillException
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Invoice

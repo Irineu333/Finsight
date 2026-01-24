@@ -1,4 +1,4 @@
-package com.neoutils.finance.domain.errors
+package com.neoutils.finance.domain.error
 
 data class AddInstallmentErrors(
     val creditCardRequired: String = "Transação parcelada requer cartão de crédito",

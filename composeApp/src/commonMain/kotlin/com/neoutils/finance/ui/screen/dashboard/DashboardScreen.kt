@@ -2,6 +2,7 @@
 
 package com.neoutils.finance.ui.screen.dashboard
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -111,7 +112,9 @@ private fun DashboardContent(
             .fillMaxSize()
             .padding(paddingValues),
     ) {
-        item {
+        item(
+            key = "accounts_pager",
+        ) {
             DashboardAccountPager(
                 accounts = uiState.accounts,
                 pagerState = accountPagerState,
@@ -133,7 +136,9 @@ private fun DashboardContent(
             )
         }
 
-        item {
+        item(
+            key = "balance"
+        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
@@ -158,93 +163,97 @@ private fun DashboardContent(
         }
 
         if (uiState.creditCards.isNotEmpty()) {
-            item {
-                HorizontalPager(
-                    state = creditCardPagerState,
+            item(
+                key = "credit_cards_pager",
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
+                        .animateContentSize()
                         .animateItem(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    pageSpacing = 8.dp
-                ) { page ->
-                    val creditCardUi = uiState.creditCards[page]
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HorizontalPager(
+                        state = creditCardPagerState,
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        pageSpacing = 8.dp
+                    ) { page ->
+                        val creditCardUi = uiState.creditCards[page]
 
-                    val config = CreditCardUiConfig.from(creditCardUi = creditCardUi)
+                        val config = CreditCardUiConfig.from(creditCardUi = creditCardUi)
 
-                    DashboardCreditCardUi(
-                        ui = creditCardUi,
-                        config = config,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            navigator.navigate(
-                                NavigationAction.CreditCards(
-                                    creditCardId = creditCardUi.creditCard.id
+                        DashboardCreditCardUi(
+                            ui = creditCardUi,
+                            config = config,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                navigator.navigate(
+                                    NavigationAction.CreditCards(
+                                        creditCardId = creditCardUi.creditCard.id
+                                    )
                                 )
-                            )
-                        },
-                        onCloseInvoice = {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
-                            }
-                        },
-                        onPayInvoice = {
-                            creditCardUi.invoiceUi?.let {
+                            },
+                            onCloseInvoice = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                                }
+                            },
+                            onPayInvoice = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        PayInvoiceModal(
+                                            invoice = it.invoice,
+                                            currentBillAmount = it.amount
+                                        )
+                                    )
+                                }
+                            },
+                            onAdvancePayment = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        AdvancePaymentModal(
+                                            invoice = it.invoice,
+                                            currentBillAmount = it.amount
+                                        )
+                                    )
+                                }
+                            },
+                            onEditAmount = {
+                                creditCardUi.invoiceUi?.let {
+                                    modalManager.show(
+                                        EditBalanceModal(
+                                            type = EditBalanceModal.Type.CREDIT_CARD,
+                                            currentBalance = it.amount,
+                                            invoiceId = it.id
+                                        )
+                                    )
+                                }
+                            },
+                            onEditLimit = {
                                 modalManager.show(
-                                    PayInvoiceModal(
-                                        invoice = it.invoice,
-                                        currentBillAmount = it.amount
+                                    EditCreditCardLimitModal(
+                                        creditCard = creditCardUi.creditCard
                                     )
                                 )
                             }
-                        },
-                        onAdvancePayment = {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(
-                                    AdvancePaymentModal(
-                                        invoice = it.invoice,
-                                        currentBillAmount = it.amount
-                                    )
-                                )
-                            }
-                        },
-                        onEditAmount = {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(
-                                    EditBalanceModal(
-                                        type = EditBalanceModal.Type.CREDIT_CARD,
-                                        currentBalance = it.amount,
-                                        invoiceId = it.id
-                                    )
-                                )
-                            }
-                        },
-                        onEditLimit = {
-                            modalManager.show(
-                                EditCreditCardLimitModal(
-                                    creditCard = creditCardUi.creditCard
-                                )
-                            )
-                        }
-                    )
-                }
-            }
-
-            if (uiState.creditCards.size > 1) {
-                item {
-                    PageIndicator(
-                        count = uiState.creditCards.size,
-                        current = creditCardPagerState.currentPage,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                    )
+                        )
+                    }
+                    if (uiState.creditCards.size > 1) {
+                        PageIndicator(
+                            count = uiState.creditCards.size,
+                            current = creditCardPagerState.currentPage,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
 
         if (uiState.categorySpending.isNotEmpty()) {
-            item {
+            item(
+                key = "category_spending"
+            ) {
                 CategorySpendingCard(
                     categorySpending = uiState.categorySpending,
                     modifier = Modifier
@@ -260,7 +269,9 @@ private fun DashboardContent(
         }
 
         if (uiState.recents.isNotEmpty()) {
-            item {
+            item(
+                key = "recents_title"
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -287,7 +298,12 @@ private fun DashboardContent(
             }
         }
 
-        itemsIndexed(items = uiState.recents) { index, transaction ->
+        itemsIndexed(
+            items = uiState.recents,
+            key = { _, transaction ->
+                "transaction_" + transaction.id
+            },
+        ) { index, transaction ->
             val isLastWithFade = uiState.hasMoreRecents && index == uiState.recents.lastIndex
 
             TransactionCard(
@@ -331,7 +347,9 @@ private fun DashboardContent(
             )
         }
 
-        item {
+        item(
+            key = "open_category_action"
+        ) {
             Card(
                 onClick = onOpenCategories,
                 colors = CardDefaults.cardColors(
@@ -340,7 +358,7 @@ private fun DashboardContent(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp)
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp)
                     .animateItem(),
             ) {
@@ -361,7 +379,9 @@ private fun DashboardContent(
             }
         }
 
-        item {
+        item(
+            key = "open_credit_card_action"
+        ) {
             Card(
                 onClick = onOpenCreditCards,
                 colors = CardDefaults.cardColors(
@@ -391,7 +411,9 @@ private fun DashboardContent(
             }
         }
 
-        item {
+        item(
+            key = "open_accounts_action"
+        ) {
             Card(
                 onClick = onOpenAccounts,
                 colors = CardDefaults.cardColors(

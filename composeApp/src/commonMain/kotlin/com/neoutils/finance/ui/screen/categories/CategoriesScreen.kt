@@ -87,7 +87,9 @@ private fun CategoriesContent(
             val expenses = uiState.categories.filter { it.type.isExpense }
 
             if (incomes.isNotEmpty()) {
-                item {
+                item(
+                    key = "incomes_title"
+                ) {
                     Text(
                         text = "Receitas",
                         fontSize = 18.sp,
@@ -113,7 +115,9 @@ private fun CategoriesContent(
             }
 
             if (expenses.isNotEmpty()) {
-                item {
+                item(
+                    key = "expenses_title"
+                ) {
                     Text(
                         text = "Despesas",
                         fontSize = 18.sp,

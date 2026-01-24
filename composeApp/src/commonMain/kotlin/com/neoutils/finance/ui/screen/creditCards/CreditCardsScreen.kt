@@ -113,7 +113,9 @@ private fun CreditCardsContent(
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item {
+            item(
+                key = "credit_card_pager"
+            ) {
                 CreditCardPager(
                     creditCards = uiState.creditCards,
                     selectedIndex = uiState.selectedCardIndex,
@@ -139,7 +141,9 @@ private fun CreditCardsContent(
             }
 
             uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
-                item {
+                item(
+                    key = "card_actions"
+                ) {
                     CardActions(
                         creditCardUi = selectedCard,
                         modifier = Modifier
@@ -151,7 +155,9 @@ private fun CreditCardsContent(
             }
 
             if (uiState.creditCards.isNotEmpty()) {
-                item {
+                item(
+                    key = "filters_row"
+                ) {
                     FiltersRow(
                         uiState = uiState,
                         onAction = onAction,
@@ -164,7 +170,9 @@ private fun CreditCardsContent(
             }
 
             uiState.transactions.forEach { (date, transactions) ->
-                item {
+                item(
+                    key = "date_title_$date"
+                ) {
                     Text(
                         text = formats.formatRelativeDate(date),
                         fontSize = 18.sp,
@@ -449,7 +457,9 @@ private fun FiltersRow(
     modifier: Modifier = Modifier
 ) {
     LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        item {
+        item(
+            key = "category_filter"
+        ) {
             Box {
                 CategoryFilterChip(
                     selectedCategory = uiState.selectedCategory,
@@ -459,7 +469,9 @@ private fun FiltersRow(
             }
         }
 
-        item {
+        item(
+            key = "type_filter"
+        ) {
             Box {
                 TypeFilterChip(
                     selectedType = uiState.selectedType,

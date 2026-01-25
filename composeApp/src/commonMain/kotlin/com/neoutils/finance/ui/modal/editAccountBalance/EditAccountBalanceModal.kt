@@ -14,9 +14,11 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +39,7 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.TextLight1
 import com.neoutils.finance.util.DateFormats
 import com.neoutils.finance.util.MoneyInputTransformation
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -70,6 +73,16 @@ class EditAccountBalanceModal(
         val adjustment by remember {
             derivedStateOf {
                 newBalance - uiState.currentBalance
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                uiState.currentBalance
+            }.collectLatest {
+                balanceState.edit {
+                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong()))
+                }
             }
         }
 

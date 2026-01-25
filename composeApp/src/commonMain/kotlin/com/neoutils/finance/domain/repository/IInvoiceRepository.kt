@@ -14,6 +14,7 @@ interface IInvoiceRepository {
     suspend fun getAllInvoices(): List<Invoice>
     suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice>
     suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice>
+    suspend fun getOpenInvoice(creditCardId: Long): Invoice?
     suspend fun getInvoiceById(id: Long): Invoice?
     suspend fun insert(invoice: Invoice): Long
     suspend fun update(invoice: Invoice)

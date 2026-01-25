@@ -32,6 +32,6 @@ data class InvoiceTransactionsUiState(
         val invoiceId = invoice.id
         val status = invoice.status
         val mustShowAdjustment = adjustment != 0.0
-        val canEdit = status != Invoice.Status.PAID
+        val canEdit = status.isRetroactive || status.isOpen || status.isFuture
     }
 }

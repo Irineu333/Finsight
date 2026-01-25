@@ -175,11 +175,10 @@ private fun InvoiceTransactionsContent(
                     onSelectInvoice = { index ->
                         onAction(InvoiceTransactionsAction.SelectInvoice(index))
                     },
-                    onEditInvoice = { invoiceId, amount ->
+                    onEditInvoice = { invoice ->
                         modalManager.show(
                             EditInvoiceBalanceModal(
-                                invoiceId = invoiceId,
-                                currentBalance = amount,
+                                initialInvoice = invoice
                             )
                         )
                     },
@@ -263,7 +262,7 @@ private fun InvoicePager(
     invoices: List<InvoiceTransactionsUiState.InvoiceSummary>,
     selectedIndex: Int,
     onSelectInvoice: (Int) -> Unit,
-    onEditInvoice: (Long, Double) -> Unit,
+    onEditInvoice: (invoice: Invoice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -294,9 +293,7 @@ private fun InvoicePager(
             InvoiceSummaryItem(
                 summary = invoices[page],
                 modifier = Modifier.fillMaxWidth(),
-                onEditClick = { invoiceId, amount ->
-                    onEditInvoice(invoiceId, amount)
-                }
+                onEditClick = onEditInvoice
             )
         }
     }
@@ -306,7 +303,7 @@ private fun InvoicePager(
 private fun InvoiceSummaryItem(
     summary: InvoiceTransactionsUiState.InvoiceSummary,
     modifier: Modifier = Modifier,
-    onEditClick: ((Long, Double) -> Unit)? = null
+    onEditClick: ((invoice: Invoice) -> Unit)? = null
 ) {
     Card(
         modifier = modifier,
@@ -389,8 +386,10 @@ private fun InvoiceSummaryItem(
                 amount = summary.total,
                 color = colorScheme.onSurface,
                 isTotal = true,
-                onEditClick = if (summary.canEdit) {
-                    onEditClick?.let { { it(summary.invoiceId, summary.total) } }
+                onEditClick = if (summary.canEdit && onEditClick != null) {
+                    {
+                        onEditClick(summary.invoice)
+                    }
                 } else null
             )
         }

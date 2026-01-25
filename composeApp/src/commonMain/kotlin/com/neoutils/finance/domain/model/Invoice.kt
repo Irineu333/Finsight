@@ -84,6 +84,11 @@ data class Invoice(
 
         val isBlocked: Boolean
             get() = this == CLOSED || this == PAID
+
+        val isEditable: Boolean
+            get() = this == RETROACTIVE ||
+                    this == OPEN ||
+                    this == FUTURE
     }
 
     init {

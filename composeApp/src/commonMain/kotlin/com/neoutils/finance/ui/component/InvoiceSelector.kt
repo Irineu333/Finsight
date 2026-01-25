@@ -9,20 +9,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 
 @Composable
-fun CreditCardSelector(
-    creditCards: List<CreditCard>,
-    creditCard: CreditCard?,
-    onCreditCardSelected: (CreditCard) -> Unit,
+fun InvoiceSelector(
+    invoices: List<Invoice>,
+    invoice: Invoice?,
+    onInvoiceSelected: (Invoice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -30,24 +30,25 @@ fun CreditCardSelector(
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
-            if (creditCards.isNotEmpty()) {
+            if (invoices.isNotEmpty()) {
                 expanded = it
             }
         },
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = creditCard?.name.orEmpty(),
+            value = invoice?.label.orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Cartão")
+                Text(text = "Fatura")
             },
-            leadingIcon = creditCard?.let {
+            leadingIcon = invoice?.let {
                 {
                     Icon(
-                        imageVector = Icons.Default.CreditCard,
+                        imageVector = Icons.Default.Receipt,
                         contentDescription = null,
+                        tint = it.status.color,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -55,7 +56,7 @@ fun CreditCardSelector(
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            enabled = creditCards.isNotEmpty(),
+            enabled = invoices.isNotEmpty(),
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -68,7 +69,7 @@ fun CreditCardSelector(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            creditCards.forEach { creditCard ->
+            invoices.forEach { invoice ->
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -76,18 +77,19 @@ fun CreditCardSelector(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.CreditCard,
+                                imageVector = Icons.Default.Receipt,
                                 contentDescription = null,
+                                tint = invoice.status.color,
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = creditCard.name,
+                                text = invoice.label,
                                 fontSize = 14.sp
                             )
                         }
                     },
                     onClick = {
-                        onCreditCardSelected(creditCard)
+                        onInvoiceSelected(invoice)
                         expanded = false
                     }
                 )
@@ -95,4 +97,3 @@ fun CreditCardSelector(
         }
     }
 }
-

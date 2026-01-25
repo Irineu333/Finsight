@@ -13,10 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,30 +22,35 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormatWithSign
+import com.neoutils.finance.ui.component.CreditCardSelector
+import com.neoutils.finance.ui.component.InvoiceSelector
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.util.MoneyInputTransformation
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditInvoiceBalanceModal(
-    private val invoiceId: Long,
-    private val currentBalance: Double,
+    private val initialInvoice: Invoice,
 ) : ModalBottomSheet() {
-
-    private val initialCents = (currentBalance * 100).toLong()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditInvoiceBalanceViewModel> {
-            parametersOf(invoiceId)
+            parametersOf(initialInvoice)
         }
-        val balanceState = rememberTextFieldState(formatMoney(initialCents))
+
+        val uiState by viewModel.uiState.collectAsState()
+
+        val balanceState = rememberTextFieldState(formatMoney((uiState.currentBalance * 100).toLong()))
 
         val newBalance by remember {
             derivedStateOf {
@@ -58,7 +60,17 @@ class EditInvoiceBalanceModal(
 
         val adjustment by remember {
             derivedStateOf {
-                newBalance - currentBalance
+                newBalance - uiState.currentBalance
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            snapshotFlow {
+                uiState.currentBalance
+            }.collectLatest {
+                balanceState.edit {
+                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong()))
+                }
             }
         }
 
@@ -91,6 +103,28 @@ class EditInvoiceBalanceModal(
                 }
             }
 
+            CreditCardSelector(
+                creditCards = uiState.creditCards,
+                creditCard = uiState.selectedCreditCard,
+                onCreditCardSelected = { creditCard ->
+                    viewModel.selectCreditCard(creditCard)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            InvoiceSelector(
+                invoices = uiState.editableInvoices,
+                invoice = uiState.selectedInvoice,
+                onInvoiceSelected = { invoice ->
+                    viewModel.selectInvoice(invoice)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 label = { Text("Valor") },
                 state = balanceState,
@@ -101,6 +135,7 @@ class EditInvoiceBalanceModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Done
                 ),
+                enabled = uiState.selectedInvoice != null,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -108,7 +143,9 @@ class EditInvoiceBalanceModal(
 
             Button(
                 onClick = { viewModel.adjustBalance(newBalance) },
-                enabled = balanceState.text.isNotBlank() && newBalance != currentBalance,
+                enabled = uiState.selectedInvoice != null &&
+                        balanceState.text.isNotBlank() &&
+                        newBalance != uiState.currentBalance,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Adjustment),

@@ -170,6 +170,17 @@ class InvoiceRepository(
         }
     }
 
+    override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return null
+
+        return dao.getOpenInvoice(creditCardId)?.let { entity ->
+            mapper.toDomain(
+                entity = entity,
+                creditCard = creditCard
+            )
+        }
+    }
+
     override suspend fun getInvoiceById(id: Long): Invoice? {
         return observeInvoiceById(id).first()
     }

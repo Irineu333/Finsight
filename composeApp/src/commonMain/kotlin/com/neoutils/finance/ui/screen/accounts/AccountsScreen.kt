@@ -39,9 +39,7 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
-import com.neoutils.finance.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.LocalSharedTransitionScope
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal

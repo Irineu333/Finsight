@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.CreditCard
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormModal
@@ -127,11 +129,10 @@ private fun CreditCardsContent(
                             NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
                         )
                     },
-                    onEditInvoice = { invoiceId, amount ->
+                    onEditInvoice = { invoice ->
                         modalManager.show(
                             EditInvoiceBalanceModal(
-                                invoiceId = invoiceId,
-                                currentBalance = amount,
+                                initialInvoice = invoice
                             )
                         )
                     },
@@ -218,7 +219,7 @@ private fun CreditCardPager(
     selectedIndex: Int,
     onSelectCard: (Int) -> Unit,
     onCardClick: (CreditCardUi) -> Unit,
-    onEditInvoice: (Long, Double) -> Unit,
+    onEditInvoice: (invoice: Invoice) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(

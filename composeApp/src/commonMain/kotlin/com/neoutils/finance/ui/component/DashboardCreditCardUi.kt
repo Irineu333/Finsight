@@ -29,7 +29,6 @@ import com.neoutils.finance.ui.screen.dashboard.CreditCardUi
 
 data class CreditCardUiConfig(
     val canEditAmount: Boolean = false,
-    val canEditLimit: Boolean = false,
     val canPayInvoice: Boolean,
     val canCloseInvoice: Boolean,
     val canAdvanceInvoice: Boolean,
@@ -41,7 +40,6 @@ data class CreditCardUiConfig(
 
             return CreditCardUiConfig(
                 canEditAmount = invoice != null,
-                canEditLimit = true,
                 canCloseInvoice = invoice?.isClosable == true,
                 canPayInvoice = invoice?.status == Invoice.Status.CLOSED,
                 canAdvanceInvoice = invoice?.status == Invoice.Status.OPEN,
@@ -59,7 +57,6 @@ fun DashboardCreditCardUI(
     onPayInvoice: () -> Unit,
     onAdvancePayment: () -> Unit,
     onEditAmount: () -> Unit,
-    onEditLimit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -203,42 +200,19 @@ fun DashboardCreditCardUI(
                         color = colorScheme.onSurfaceVariant
                     )
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .then(
-                                if (config.canEditLimit) {
-                                    Modifier.clickable { onEditLimit() }
-                                } else {
-                                    Modifier
-                                }
-                            )
-                    ) {
-                        ui.invoiceUi?.let {
-                            Text(
-                                text = it.availableLimit.toMoneyFormat(),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colorScheme.onSurface
-                            )
-                        } ?: Text(
-                            text = ui.creditCard.limit.toMoneyFormat(),
+                    ui.invoiceUi?.let {
+                        Text(
+                            text = it.availableLimit.toMoneyFormat(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface
                         )
-
-                        if (config.canEditLimit) {
-                            Icon(
-                                imageVector = Icons.Rounded.ModeEdit,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = colorScheme.onSurface.copy(alpha = 0.5f),
-                            )
-                        }
-                    }
+                    } ?: Text(
+                        text = ui.creditCard.limit.toMoneyFormat(),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
                 }
             }
 

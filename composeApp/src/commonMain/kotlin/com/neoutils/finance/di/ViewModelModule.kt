@@ -18,7 +18,6 @@ import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewMode
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceViewModel
@@ -234,9 +233,11 @@ val viewModelModule = module {
 
     viewModel {
         EditInvoiceBalanceViewModel(
-            invoiceId = it.get(),
+            initialInvoice = it.get(),
             adjustInvoiceUseCase = get(),
+            calculateInvoiceUseCase = get(),
             invoiceRepository = get(),
+            creditCardRepository = get(),
             modalManager = get(),
         )
     }
@@ -251,18 +252,6 @@ val viewModelModule = module {
             modalManager = get(),
         )
     }
-
-    viewModel {
-        EditCreditCardLimitViewModel(
-            creditCardId = it.get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            updateCreditCardUseCase = get(),
-            invoiceUiMapper = get(),
-            modalManager = get()
-        )
-    }
-
 
     viewModel {
         EditInvoicePaymentViewModel(

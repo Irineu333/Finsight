@@ -28,12 +28,16 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.screen.creditCards.CreditCardUi
 import com.neoutils.finance.util.DateFormats
@@ -43,7 +47,7 @@ fun CreditCardUI(
     ui: CreditCardUi,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    onEditInvoice: ((Long, Double) -> Unit)? = null,
+    onEditInvoice: ((invoice: Invoice) -> Unit)? = null,
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
@@ -136,17 +140,15 @@ fun CreditCardUI(
                     )
 
                     ui.invoiceUi?.let { invoiceUi ->
-                        val canEdit = !invoiceUi.status.isPaid && onEditInvoice != null
-                        
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
                                 .then(
-                                    if (canEdit) {
+                                    if (invoiceUi.status.isEditable && onEditInvoice != null) {
                                         Modifier.clickable {
-                                            onEditInvoice(invoiceUi.id, invoiceUi.amount)
+                                            onEditInvoice(invoiceUi.invoice)
                                         }
                                     } else {
                                         Modifier
@@ -160,7 +162,7 @@ fun CreditCardUI(
                                 color = colorScheme.onSurface
                             )
 
-                            if (canEdit) {
+                            if (invoiceUi.status.isEditable && onEditInvoice != null) {
                                 Icon(
                                     imageVector = Icons.Rounded.ModeEdit,
                                     contentDescription = "Editar fatura",

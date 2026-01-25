@@ -1,16 +1,12 @@
 @file:OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class,
+    ExperimentalSharedTransitionApi::class,
 )
 
 package com.neoutils.finance.ui.screen.accounts
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,7 +22,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -44,8 +38,9 @@ import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
-import kotlin.math.absoluteValue
+import com.neoutils.finance.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.LocalSharedTransitionScope
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
@@ -59,11 +54,11 @@ import com.neoutils.finance.ui.theme.Income
 import com.neoutils.finance.ui.theme.Info
 import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.TextLight1
-import com.neoutils.finance.ui.theme.TextLight2
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.math.absoluteValue
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 
@@ -272,36 +267,38 @@ private fun AccountPager(
         pageCount = { accounts.size }
     )
 
-    LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage != selectedIndex) {
-            onSelectAccount(pagerState.currentPage)
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            pagerState.currentPage
+        }.collect {
+            if (pagerState.currentPage != selectedIndex) {
+                onSelectAccount(pagerState.currentPage)
+            }
         }
     }
 
-    LaunchedEffect(selectedIndex) {
-        if (pagerState.currentPage != selectedIndex) {
-            pagerState.scrollToPage(selectedIndex)
-        }
-    }
+//    LaunchedEffect(selectedIndex) {
+//        if (pagerState.currentPage != selectedIndex) {
+//            pagerState.scrollToPage(selectedIndex)
+//        }
+//    }
 
-    Column(modifier = modifier) {
-        HorizontalPager(
-            state = pagerState,
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        pageSpacing = 8.dp,
+    ) { page ->
+        AccountCard(
+            accountUi = accounts[page],
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 8.dp,
-        ) { page ->
-            AccountCard(
-                accountUi = accounts[page],
-                modifier = Modifier.fillMaxWidth(),
-                onEditBalance = {
-                    onEditBalance(accounts[page].account.id, accounts[page].balance)
-                },
-                onEditInitialBalance = {
-                    onEditInitialBalance(accounts[page].account.id, accounts[page].initialBalance)
-                }
-            )
-        }
+            onEditBalance = {
+                onEditBalance(accounts[page].account.id, accounts[page].balance)
+            },
+            onEditInitialBalance = {
+                onEditInitialBalance(accounts[page].account.id, accounts[page].initialBalance)
+            }
+        )
     }
 }
 

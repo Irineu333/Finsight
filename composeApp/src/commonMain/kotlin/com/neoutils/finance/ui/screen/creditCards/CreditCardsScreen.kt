@@ -227,32 +227,34 @@ private fun CreditCardPager(
         pageCount = { creditCards.size }
     )
 
-    LaunchedEffect(pagerState.currentPage) {
-        if (pagerState.currentPage != selectedIndex) {
-            onSelectCard(pagerState.currentPage)
+    LaunchedEffect(Unit) {
+        snapshotFlow {
+            pagerState.currentPage
+        }.collect {
+            if (pagerState.currentPage != selectedIndex) {
+                onSelectCard(pagerState.currentPage)
+            }
         }
     }
 
-    LaunchedEffect(selectedIndex) {
-        if (pagerState.currentPage != selectedIndex) {
-            pagerState.scrollToPage(selectedIndex)
-        }
-    }
+//    LaunchedEffect(selectedIndex) {
+//        if (pagerState.currentPage != selectedIndex) {
+//            pagerState.scrollToPage(selectedIndex)
+//        }
+//    }
 
-    Column(modifier = modifier) {
-        HorizontalPager(
-            state = pagerState,
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        pageSpacing = 8.dp,
+    ) { page ->
+        CreditCardUI(
+            ui = creditCards[page],
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 8.dp,
-        ) { page ->
-            CreditCardUI(
-                ui = creditCards[page],
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onCardClick(creditCards[page]) },
-                onEditInvoice = onEditInvoice
-            )
-        }
+            onClick = { onCardClick(creditCards[page]) },
+            onEditInvoice = onEditInvoice,
+        )
     }
 }
 

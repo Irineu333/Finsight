@@ -1,14 +1,15 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
 
 package com.neoutils.finance.ui.screen.dashboard
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -170,22 +171,20 @@ private fun DashboardContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
-                        .animateContentSize()
                         .animateItem(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     HorizontalPager(
                         state = creditCardPagerState,
                         contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 8.dp
+                        pageSpacing = 8.dp,
+                        modifier = Modifier.fillMaxWidth(),
                     ) { page ->
                         val creditCardUi = uiState.creditCards[page]
 
-                        val config = CreditCardUiConfig.from(creditCardUi = creditCardUi)
-
-                        DashboardCreditCardUi(
+                        DashboardCreditCardUI(
                             ui = creditCardUi,
-                            config = config,
+                            config = CreditCardUiConfig.from(creditCardUi = creditCardUi),
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 navigator.navigate(
@@ -482,25 +481,23 @@ private fun PageIndicator(
 @Composable
 private fun DashboardAccountPager(
     accounts: List<DashboardAccountUi>,
-    pagerState: androidx.compose.foundation.pager.PagerState,
+    pagerState: PagerState,
     onAccountClick: (Long) -> Unit,
     onEditBalance: (Long, Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 8.dp,
-        ) { page ->
-            DashboardAccountCard(
-                accountUi = accounts[page],
-                onClick = { onAccountClick(accounts[page].account.id) },
-                onEditBalance = { onEditBalance(accounts[page].account.id, accounts[page].balance) },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        pageSpacing = 8.dp,
+    ) { page ->
+        DashboardAccountCard(
+            accountUi = accounts[page],
+            onClick = { onAccountClick(accounts[page].account.id) },
+            onEditBalance = { onEditBalance(accounts[page].account.id, accounts[page].balance) },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

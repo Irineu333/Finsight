@@ -13,14 +13,10 @@ import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.time.ExperimentalTime
 
 class CreditCardsViewModel(
@@ -29,10 +25,18 @@ class CreditCardsViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
-    private val initialCreditCardId: Long? = null
+    private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
 
-    private val selectedCardIndex = MutableStateFlow(0)
+    private val creditCards = creditCardRepository.observeAllCreditCards()
+
+    private val selectedCardIndex = MutableStateFlow(
+        runBlocking {
+            creditCards.first().indexOfFirst {
+                it.id == initialCreditCardId
+            }.coerceAtLeast(minimumValue = 0)
+        }
+    )
 
     private val filters = MutableStateFlow(
         CreditCardsFilters(
@@ -48,7 +52,7 @@ class CreditCardsViewModel(
         }
 
     private val transactionsFlow = combine(
-        creditCardRepository.observeAllCreditCards(),
+        creditCards,
         invoicesFlow,
         selectedCardIndex,
     ) { creditCards, invoices, index ->
@@ -62,7 +66,7 @@ class CreditCardsViewModel(
     }
 
     val uiState = combine(
-        creditCardRepository.observeAllCreditCards(),
+        creditCards,
         transactionsFlow,
         invoicesFlow,
         categoryRepository.observeAllCategories(),
@@ -95,26 +99,10 @@ class CreditCardsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CreditCardsUiState()
+        initialValue = CreditCardsUiState(
+            selectedCardIndex = selectedCardIndex.value,
+        )
     )
-
-    init {
-        initialCreditCardId?.let {
-            setInitialCreditCard(creditCardId = it)
-        }
-    }
-
-    private fun setInitialCreditCard(
-        creditCardId: Long
-    ) = viewModelScope.launch {
-        val index = creditCardRepository
-            .getAllCreditCards()
-            .indexOfFirst { it.id == creditCardId }
-
-        if (index >= 0) {
-            selectedCardIndex.value = index
-        }
-    }
 
     fun onAction(action: CreditCardsAction) = viewModelScope.launch {
         when (action) {

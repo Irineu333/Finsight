@@ -1,12 +1,14 @@
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class, ExperimentalSharedTransitionApi::class)
 
 package com.neoutils.finance.ui.screen.home
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -17,11 +19,13 @@ import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finance.ui.component.BottomNavigationBar
+import com.neoutils.finance.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.NavigationItem
 import com.neoutils.finance.ui.component.ModalManagerHost
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.NavigationAction
+import com.neoutils.finance.ui.component.SharedTransitionProvider
 import com.neoutils.finance.util.TransactionTargetNavType
 import com.neoutils.finance.util.TransactionTypeNavType
 import com.neoutils.finance.ui.screen.accounts.AccountsScreen
@@ -53,60 +57,70 @@ fun AppNavHost() = Surface {
             }
         }
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = AppRoute.Home,
-        ) {
-            composable<AppRoute.Home> {
-                HomeScreen(
-                    openCategories = {
-                        navController.navigate(AppRoute.Categories)
-                    },
-                    openCreditCards = {
-                        navController.navigate(AppRoute.CreditCards())
-                    },
-                    openAccounts = {
-                        navController.navigate(AppRoute.Accounts())
+        SharedTransitionProvider {
+            NavHost(
+                navController = navController,
+                startDestination = AppRoute.Home,
+            ) {
+                composable<AppRoute.Home> {
+                    CompositionLocalProvider(
+                        LocalAnimatedVisibilityScope provides this
+                    ) {
+                        HomeScreen(
+                            openCategories = {
+                                navController.navigate(AppRoute.Categories)
+                            },
+                            openCreditCards = {
+                                navController.navigate(AppRoute.CreditCards())
+                            },
+                            openAccounts = {
+                                navController.navigate(AppRoute.Accounts())
+                            }
+                        )
                     }
-                )
-            }
+                }
 
-            composable<AppRoute.Categories> {
-                CategoriesScreen(
-                    onNavigateBack = {
-                        navController.navigateUp()
-                    }
-                )
-            }
+                composable<AppRoute.Categories> {
+                    CategoriesScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
 
-            composable<AppRoute.CreditCards> { backStackEntry ->
-                val route = backStackEntry.toRoute<AppRoute.CreditCards>()
-                CreditCardsScreen(
-                    initialCreditCardId = route.creditCardId,
-                    onNavigateBack = {
-                        navController.navigateUp()
+                composable<AppRoute.CreditCards> { backStackEntry ->
+                    val route = backStackEntry.toRoute<AppRoute.CreditCards>()
+                    CompositionLocalProvider(
+                        LocalAnimatedVisibilityScope provides this
+                    ) {
+                        CreditCardsScreen(
+                            initialCreditCardId = route.creditCardId,
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
                     }
-                )
-            }
+                }
 
-            composable<AppRoute.InvoiceTransactions> { backStackEntry ->
-                val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
-                InvoiceTransactionsScreen(
-                    creditCardId = route.creditCardId,
-                    onNavigateBack = {
-                        navController.navigateUp()
-                    }
-                )
-            }
+                composable<AppRoute.InvoiceTransactions> { backStackEntry ->
+                    val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
+                    InvoiceTransactionsScreen(
+                        creditCardId = route.creditCardId,
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
 
-            composable<AppRoute.Accounts> { backStackEntry ->
-                val route = backStackEntry.toRoute<AppRoute.Accounts>()
-                AccountsScreen(
-                    initialAccountId = route.accountId,
-                    onNavigateBack = {
-                        navController.navigateUp()
-                    }
-                )
+                composable<AppRoute.Accounts> { backStackEntry ->
+                    val route = backStackEntry.toRoute<AppRoute.Accounts>()
+                    AccountsScreen(
+                        initialAccountId = route.accountId,
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }

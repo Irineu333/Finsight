@@ -15,9 +15,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -32,7 +34,15 @@ class AccountsViewModel(
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
-    private val selectedAccountIndex = MutableStateFlow(0)
+    private val accounts = accountRepository.observeAllAccounts()
+
+    private val selectedAccountIndex = MutableStateFlow(
+        runBlocking {
+            accounts.first().indexOfFirst {
+                it.id == initialAccountId
+            }.coerceAtLeast(minimumValue = 0)
+        }
+    )
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
@@ -44,7 +54,7 @@ class AccountsViewModel(
     )
 
     private val transactionsFlow = combine(
-        accountRepository.observeAllAccounts(),
+        accounts,
         selectedAccountIndex,
         selectedMonth,
     ) { accounts, index, month ->
@@ -59,7 +69,7 @@ class AccountsViewModel(
     }
 
     val uiState = combine(
-        accountRepository.observeAllAccounts(),
+        accounts,
         transactionsFlow,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
@@ -120,26 +130,10 @@ class AccountsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = AccountsUiState()
+        initialValue = AccountsUiState(
+            selectedAccountIndex = selectedAccountIndex.value,
+        )
     )
-
-    init {
-        initialAccountId?.let {
-            setInitialAccount(accountId = it)
-        }
-    }
-
-    private fun setInitialAccount(
-        accountId: Long
-    ) = viewModelScope.launch {
-        val index = accountRepository
-            .getAllAccounts()
-            .indexOfFirst { it.id == accountId }
-
-        if (index >= 0) {
-            selectedAccountIndex.value = index
-        }
-    }
 
     fun onAction(action: AccountsAction) = viewModelScope.launch {
         when (action) {

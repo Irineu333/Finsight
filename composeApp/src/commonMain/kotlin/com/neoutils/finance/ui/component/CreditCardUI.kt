@@ -1,5 +1,9 @@
+@file:OptIn(ExperimentalSharedTransitionApi::class)
+
 package com.neoutils.finance.ui.component
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope.ResizeMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,14 +45,30 @@ fun CreditCardUI(
     onClick: (() -> Unit)? = null,
     onEditInvoice: ((Long, Double) -> Unit)? = null,
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+
+    val sharedModifier = sharedTransitionScope?.run {
+        animatedVisibilityScope?.let {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(
+                    key = "credit_card_${ui.creditCard.id}",
+                ),
+                animatedVisibilityScope = animatedVisibilityScope,
+            )
+        }
+    } ?: Modifier
+
     Card(
-        modifier = modifier.then(
-            if (onClick != null) {
-                Modifier.clip(shapes.large).clickable { onClick() }
-            } else {
-                Modifier
-            }
-        ),
+        modifier = modifier
+            .then(sharedModifier)
+            .then(
+                if (onClick != null) {
+                    Modifier.clip(shapes.large).clickable { onClick() }
+                } else {
+                    Modifier
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer
         ),

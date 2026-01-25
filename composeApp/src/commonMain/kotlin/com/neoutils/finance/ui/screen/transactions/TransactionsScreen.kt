@@ -27,7 +27,6 @@ import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
 import com.neoutils.finance.ui.component.TransactionCard
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
 import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal

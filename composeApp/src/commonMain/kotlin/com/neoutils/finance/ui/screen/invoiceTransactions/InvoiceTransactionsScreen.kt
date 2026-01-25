@@ -51,7 +51,7 @@ import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
@@ -177,10 +177,9 @@ private fun InvoiceTransactionsContent(
                     },
                     onEditInvoice = { invoiceId, amount ->
                         modalManager.show(
-                            EditBalanceModal(
-                                type = EditBalanceModal.Type.CREDIT_CARD,
+                            EditInvoiceBalanceModal(
+                                invoiceId = invoiceId,
                                 currentBalance = amount,
-                                invoiceId = invoiceId
                             )
                         )
                     },

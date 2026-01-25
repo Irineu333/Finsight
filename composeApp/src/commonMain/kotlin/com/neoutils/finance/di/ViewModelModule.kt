@@ -15,7 +15,9 @@ import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceViewModel
+import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
+import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceViewModel
+import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
@@ -217,16 +219,23 @@ val viewModelModule = module {
     }
 
     viewModel {
-        EditBalanceViewModel(
+        EditAccountBalanceViewModel(
             type = it.get(),
+            account = it.get(),
             targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
-            accountId = it.getOrNull(),
-            invoiceId = it.getOrNull(),
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
             adjustInitialBalanceUseCase = get(),
-            adjustInvoiceUseCase = get(),
+            calculateBalanceUseCase = get(),
             accountRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        EditInvoiceBalanceViewModel(
+            invoiceId = it.get(),
+            adjustInvoiceUseCase = get(),
             invoiceRepository = get(),
             modalManager = get(),
         )

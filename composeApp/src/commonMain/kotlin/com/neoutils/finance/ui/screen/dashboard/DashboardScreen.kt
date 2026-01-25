@@ -30,12 +30,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.*
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
+import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finance.ui.modal.editCreditCardLimit.EditCreditCardLimitModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -122,12 +124,11 @@ private fun DashboardContent(
                 onAccountClick = { accountId ->
                     navigator.navigate(NavigationAction.Accounts(accountId = accountId))
                 },
-                onEditBalance = { accountId, currentBalance ->
+                onEditBalance = { account ->
                     modalManager.show(
-                        EditBalanceModal(
-                            type = EditBalanceModal.Type.CURRENT,
-                            currentBalance = currentBalance,
-                            accountId = accountId,
+                        EditAccountBalanceModal(
+                            type = EditAccountBalanceModal.Type.CURRENT,
+                            account = account,
                         )
                     )
                 },
@@ -221,10 +222,9 @@ private fun DashboardContent(
                             onEditAmount = {
                                 creditCardUi.invoiceUi?.let {
                                     modalManager.show(
-                                        EditBalanceModal(
-                                            type = EditBalanceModal.Type.CREDIT_CARD,
+                                        EditInvoiceBalanceModal(
+                                            invoiceId = it.id,
                                             currentBalance = it.amount,
-                                            invoiceId = it.id
                                         )
                                     )
                                 }
@@ -483,7 +483,7 @@ private fun DashboardAccountPager(
     accounts: List<DashboardAccountUi>,
     pagerState: PagerState,
     onAccountClick: (Long) -> Unit,
-    onEditBalance: (Long, Double) -> Unit,
+    onEditBalance: (Account) -> Unit,
     modifier: Modifier = Modifier
 ) {
     HorizontalPager(
@@ -495,7 +495,7 @@ private fun DashboardAccountPager(
         DashboardAccountCard(
             accountUi = accounts[page],
             onClick = { onAccountClick(accounts[page].account.id) },
-            onEditBalance = { onEditBalance(accounts[page].account.id, accounts[page].balance) },
+            onEditBalance = { onEditBalance(accounts[page].account) },
             modifier = Modifier.fillMaxWidth()
         )
     }

@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
@@ -44,7 +45,7 @@ import com.neoutils.finance.ui.component.LocalSharedTransitionScope
 import com.neoutils.finance.ui.component.TransactionCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
-import com.neoutils.finance.ui.modal.editBalance.EditBalanceModal
+import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
@@ -152,26 +153,24 @@ private fun AccountsContent(
                     onSelectAccount = { index ->
                         onAction(AccountsAction.SelectAccount(index))
                     },
-                    onEditBalance = { accountId, currentBalance ->
+                    onEditBalance = { account ->
                         uiState.selectedMonth?.let { month ->
                             modalManager.show(
-                                EditBalanceModal(
-                                    type = EditBalanceModal.Type.FINAL,
+                                EditAccountBalanceModal(
+                                    type = EditAccountBalanceModal.Type.FINAL,
                                     targetMonth = month,
-                                    currentBalance = currentBalance,
-                                    accountId = accountId,
+                                    account = account,
                                 )
                             )
                         }
                     },
-                    onEditInitialBalance = { accountId, initialBalance ->
+                    onEditInitialBalance = { account ->
                         uiState.selectedMonth?.let { month ->
                             modalManager.show(
-                                EditBalanceModal(
-                                    type = EditBalanceModal.Type.INITIAL,
+                                EditAccountBalanceModal(
+                                    type = EditAccountBalanceModal.Type.INITIAL,
                                     targetMonth = month,
-                                    currentBalance = initialBalance,
-                                    accountId = accountId,
+                                    account = account,
                                 )
                             )
                         }
@@ -258,8 +257,8 @@ private fun AccountPager(
     accounts: List<AccountUi>,
     selectedIndex: Int,
     onSelectAccount: (Int) -> Unit,
-    onEditBalance: (Long, Double) -> Unit,
-    onEditInitialBalance: (Long, Double) -> Unit,
+    onEditBalance: (Account) -> Unit,
+    onEditInitialBalance: (Account) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -293,10 +292,10 @@ private fun AccountPager(
             accountUi = accounts[page],
             modifier = Modifier.fillMaxWidth(),
             onEditBalance = {
-                onEditBalance(accounts[page].account.id, accounts[page].balance)
+                onEditBalance(accounts[page].account)
             },
             onEditInitialBalance = {
-                onEditInitialBalance(accounts[page].account.id, accounts[page].initialBalance)
+                onEditInitialBalance(accounts[page].account)
             }
         )
     }

@@ -2,7 +2,11 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.exception.CreateFutureInvoiceException
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import com.neoutils.finance.domain.error.InvoiceError
+import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
@@ -15,56 +19,60 @@ class GetOrCreateInvoiceForMonthUseCase(
     private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
     private val createRetroactiveInvoiceUseCase: CreateRetroactiveInvoiceUseCase
 ) {
-
     suspend operator fun invoke(
         creditCard: CreditCard,
         targetDueMonth: YearMonth
-    ): Result<Invoice> {
-        val existingInvoices = invoiceRepository
+    ): Either<Throwable, Invoice> = either {
+        val invoices = invoiceRepository
             .getInvoicesByCreditCard(creditCard.id)
-            .sortedByDescending { it.closingMonth }
+            .sortedBy { it.closingMonth }
 
-        val existingInvoice = existingInvoices.find { it.dueMonth == targetDueMonth }
+        val existingInvoice = invoices.find { it.dueMonth == targetDueMonth }
+
         if (existingInvoice != null) {
-            if (existingInvoice.status.isBlocked) {
-                return Result.failure(
-                    CreateFutureInvoiceException("Fatura ${existingInvoice.status.label.lowercase()} não permite lançamentos")
+            ensure(!existingInvoice.status.isBlocked) {
+                InvoiceException(
+                    InvoiceError.BlockedInvoice(
+                        status = existingInvoice.status,
+                    )
                 )
             }
-            return Result.success(existingInvoice)
+            return@either existingInvoice
         }
 
-        val openInvoice = existingInvoices.find { it.status.isOpen }
-            ?: return Result.failure(CreateFutureInvoiceException("Nenhuma fatura aberta encontrada"))
+        val openInvoice = invoices.find { it.status.isOpen }
+            ?: raise(InvoiceException(InvoiceError.NoOpenInvoice))
 
-        val isPastMonth = targetDueMonth < openInvoice.dueMonth
-
-        if (isPastMonth) {
-            return createRetroactiveInvoiceUseCase(creditCard, targetDueMonth)
+        if (targetDueMonth < openInvoice.dueMonth) {
+            return@either createRetroactiveInvoiceUseCase(creditCard, targetDueMonth).bind()
         }
 
-        var currentInvoice = existingInvoices.first()
+        val latestInvoice = invoices.lastOrNull()
+            ?: raise(InvoiceException(InvoiceError.NoInvoicesFound))
 
-        while (currentInvoice.dueMonth < targetDueMonth) {
-            val nextDueMonth = calculateNextDueMonth(currentInvoice, creditCard)
+        createInvoicesUntilTarget(
+            creditCard = creditCard,
+            targetDueMonth = targetDueMonth,
+            existingInvoices = invoices,
+            currentInvoice = latestInvoice
+        ).bind()
+    }
 
-            val nextExisting = existingInvoices.find { it.dueMonth == nextDueMonth }
-            if (nextExisting != null) {
-                currentInvoice = nextExisting
-                continue
-            }
+    private suspend fun createInvoicesUntilTarget(
+        creditCard: CreditCard,
+        targetDueMonth: YearMonth,
+        existingInvoices: List<Invoice>,
+        currentInvoice: Invoice
+    ): Either<Throwable, Invoice> = either {
+        var current = currentInvoice
 
-            val newInvoice = createFutureInvoiceUseCase(creditCard).getOrElse {
-                return Result.failure(it)
-            }
-            currentInvoice = newInvoice
-
-            if (currentInvoice.dueMonth == targetDueMonth) {
-                return Result.success(currentInvoice)
-            }
+        while (current.dueMonth < targetDueMonth) {
+            val nextDueMonth = calculateNextDueMonth(current, creditCard)
+            current = existingInvoices.find { it.dueMonth == nextDueMonth }
+                ?: createFutureInvoiceUseCase(creditCard).bind()
         }
 
-        return Result.success(currentInvoice)
+        current
     }
 
     private fun calculateNextDueMonth(invoice: Invoice, creditCard: CreditCard): YearMonth {

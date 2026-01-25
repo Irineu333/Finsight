@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.error.ReopenInvoiceErrors
 import com.neoutils.finance.domain.exception.ReopenInvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
+import kotlin.time.ExperimentalTime
 
 private val errors = ReopenInvoiceErrors()
 

@@ -4,6 +4,9 @@ package com.neoutils.finance.ui.modal.editTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arrow.core.Either.Companion.catch
+import arrow.core.flatMap
+import arrow.core.raise.catch
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
@@ -112,8 +115,14 @@ class EditTransactionViewModel(
     fun updateTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        buildTransactionUseCase(form, transaction.id).onSuccess {
-            transactionRepository.update(it)
+        buildTransactionUseCase(
+            form = form,
+            id = transaction.id,
+        ).flatMap {
+            catch {
+                transactionRepository.update(it)
+            }
+        }.onRight {
             modalManager.dismissAll()
         }
     }

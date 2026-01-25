@@ -10,14 +10,12 @@ import kotlinx.datetime.LocalDate
 class AdjustInvoiceUseCase(
     private val repository: ITransactionRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
-    private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
         invoice: Invoice,
         target: Double,
         adjustmentDate: LocalDate
     ) {
-
         val currentInvoice = calculateInvoiceUseCase(invoiceId = invoice.id)
 
         if (target == currentInvoice) return

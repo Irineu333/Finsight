@@ -2,7 +2,12 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.error.BuildTransactionErrors
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
+import com.neoutils.finance.domain.error.BuildTransactionError
 import com.neoutils.finance.domain.exception.BuildTransactionException
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
@@ -13,88 +18,48 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+private val formats = DateFormats()
+
 class BuildTransactionUseCase(
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
 ) {
-    private val currentDate
-        get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-    private val formats = DateFormats()
-    private val errors = BuildTransactionErrors()
 
     suspend operator fun invoke(
         form: TransactionForm,
         id: Long = 0
-    ): Result<Transaction> {
-        if (form.amount.isEmpty()) {
-            return Result.failure(BuildTransactionException(errors.amountRequired))
+    ): Either<Throwable, Transaction> = either {
+        ensure(form.amount.isNotEmpty()) {
+            BuildTransactionException(BuildTransactionError.AmountRequired)
         }
 
-        if (form.amount.moneyToDouble() == 0.0) {
-            return Result.failure(BuildTransactionException(errors.amountZero))
+        ensure(form.amount.moneyToDouble() != 0.0) {
+            BuildTransactionException(BuildTransactionError.AmountZero)
         }
 
-        if (form.date.isEmpty()) {
-            return Result.failure(BuildTransactionException(errors.dateRequired))
+        ensure(form.date.isNotEmpty()) {
+            BuildTransactionException(BuildTransactionError.DateRequired)
         }
 
-        if (form.title.isNullOrEmpty() && form.category == null) {
-            return Result.failure(BuildTransactionException(errors.titleOrCategoryRequired))
+        ensure(!form.title.isNullOrEmpty() || form.category != null) {
+            BuildTransactionException(BuildTransactionError.TitleOrCategoryRequired)
         }
 
-        val date = runCatching {
-            formats.dayMonthYear.parse(form.date)
-        }.getOrElse {
-            return Result.failure(BuildTransactionException(errors.dateInvalid))
-        }
+        val date = catch { formats.dayMonthYear.parse(form.date) }.bind()
 
-        if (date > currentDate) {
-            return Result.failure(BuildTransactionException(errors.dateFuture))
+        ensure(date <= currentDate) {
+            BuildTransactionException(BuildTransactionError.DateFuture)
         }
 
         if (form.target.isAccount) {
-            return Result.success(
-                Transaction(
-                    id = id,
-                    type = form.type,
-                    amount = form.amount.moneyToDouble(),
-                    title = form.title,
-                    date = date,
-                    category = form.category,
-                    target = form.target,
-                    creditCard = null,
-                    invoice = null,
-                    account = form.account ?: return Result.failure(
-                        BuildTransactionException(errors.accountRequired)
-                    ),
-                )
-            )
-        }
 
-        if (form.type != Transaction.Type.EXPENSE) {
-            return Result.failure(BuildTransactionException(errors.creditCardExpenseOnly))
-        }
+            ensureNotNull(form.account) {
+                BuildTransactionException(BuildTransactionError.AccountRequired)
+            }
 
-        val creditCard = form.creditCard
-            ?: return Result.failure(BuildTransactionException(errors.creditCardRequired))
-
-        val dueMonth = form.invoiceDueMonth
-            ?: return Result.failure(BuildTransactionException(errors.invoiceRequired))
-
-        val invoice = getOrCreateInvoiceForMonthUseCase(creditCard, dueMonth).getOrElse {
-            return Result.failure(it)
-        }
-
-        if (invoice.status.isClosed) {
-            return Result.failure(BuildTransactionException(errors.closedInvoice))
-        }
-
-        if (invoice.status.isPaid) {
-            return Result.failure(BuildTransactionException(errors.closedInvoice))
-        }
-
-        return Result.success(
-            Transaction(
+            return@either Transaction(
                 id = id,
                 type = form.type,
                 amount = form.amount.moneyToDouble(),
@@ -102,9 +67,44 @@ class BuildTransactionUseCase(
                 date = date,
                 category = form.category,
                 target = form.target,
-                creditCard = creditCard,
-                invoice = invoice,
+                account = form.account,
+                creditCard = null,
+                invoice = null,
             )
+        }
+
+        ensure(form.type == Transaction.Type.EXPENSE) {
+            BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
+        }
+
+        ensureNotNull(form.creditCard) {
+            BuildTransactionException(BuildTransactionError.CreditCardRequired)
+        }
+
+        ensureNotNull(form.invoiceDueMonth) {
+            BuildTransactionException(BuildTransactionError.InvoiceRequired)
+        }
+
+        val invoice = getOrCreateInvoiceForMonthUseCase(form.creditCard, form.invoiceDueMonth).bind()
+
+        ensure(!invoice.status.isClosed) {
+            BuildTransactionException(BuildTransactionError.ClosedInvoice)
+        }
+
+        ensure(!invoice.status.isPaid) {
+            BuildTransactionException(BuildTransactionError.ClosedInvoice)
+        }
+
+        Transaction(
+            id = id,
+            type = form.type,
+            amount = form.amount.moneyToDouble(),
+            title = form.title,
+            date = date,
+            category = form.category,
+            target = form.target,
+            creditCard = form.creditCard,
+            invoice = invoice,
         )
     }
 }

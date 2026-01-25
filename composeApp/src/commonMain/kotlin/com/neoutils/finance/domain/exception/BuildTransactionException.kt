@@ -1,5 +1,5 @@
 package com.neoutils.finance.domain.exception
 
-data class BuildTransactionException(
-    override val message: String
-) : Exception(message)
+import com.neoutils.finance.domain.error.BuildTransactionError
+
+class BuildTransactionException(val error: BuildTransactionError) : Exception(error.message)

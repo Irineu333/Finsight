@@ -25,9 +25,10 @@ class ValidateAccountNameUseCase(
     }
 
     private suspend fun hasDuplicateName(name: String, ignoreId: Long?): Boolean {
-        val accounts = repository.getAllAccounts()
-        return accounts.any {
-            it.name.equals(name.trim(), ignoreCase = true) && it.id != ignoreId
+        // TODO: improve this
+        return repository.getAllAccounts().any { account ->
+            account.name.equals(name.trim(), ignoreCase = true) &&
+                    account.id != ignoreId
         }
     }
 }

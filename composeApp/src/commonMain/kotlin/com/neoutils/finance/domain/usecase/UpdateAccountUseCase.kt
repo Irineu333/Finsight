@@ -27,22 +27,20 @@ class UpdateAccountUseCase(
                 }
             }.bind()
 
-            val newAccount = catch {
-                update(oldAccount)
-            }.bind()
-
-            validateAccountName(
-                name = newAccount.name,
-                ignoreId = accountId,
-            ).mapLeft {
-                AccountException(it)
-            }.bind()
-
             catch {
-                repository.update(newAccount)
-            }.bind()
+                update(oldAccount)
+            }.onRight { newAccount ->
+                validateAccountName(
+                    name = newAccount.name,
+                    ignoreId = accountId,
+                ).mapLeft {
+                    AccountException(it)
+                }.bind()
 
-            newAccount
+                catch {
+                    repository.update(newAccount)
+                }.bind()
+            }.bind()
         }.onRight {
             if (it.isDefault) {
                 setDefaultAccount(it.id)

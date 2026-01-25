@@ -4,16 +4,14 @@ package com.neoutils.finance.ui.modal.addTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import arrow.core.Either.Companion.catch
+import arrow.core.flatMap
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
 import com.neoutils.finance.domain.model.form.TransactionForm
-import com.neoutils.finance.domain.repository.IAccountRepository
-import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.domain.repository.ICreditCardRepository
-import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
-import com.neoutils.finance.domain.usecase.AddInstallmentTransactionsUseCase
+import com.neoutils.finance.domain.repository.*
+import com.neoutils.finance.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
@@ -29,7 +27,7 @@ class AddTransactionViewModel(
     private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
-    private val addInstallmentTransactionsUseCase: AddInstallmentTransactionsUseCase,
+    private val addInstallmentUseCase: AddInstallmentUseCase,
     private val modalManager: ModalManager
 ) : ViewModel() {
 
@@ -110,21 +108,28 @@ class AddTransactionViewModel(
     fun addTransaction(
         form: TransactionForm
     ) = viewModelScope.launch {
-        buildTransactionUseCase(form).onSuccess { transaction ->
-            if (form.installments > 1 && transaction.invoice != null) {
-                addInstallmentTransactionsUseCase(
-                    baseTransaction = transaction,
-                    totalInstallments = form.installments,
-                    startingInvoice = transaction.invoice
-                ).onSuccess {
-                    modalManager.dismiss()
-                }.onFailure { error ->
-                    _errorMessage.emit(error.message ?: "Erro ao adicionar parcelas")
-                }
-            } else {
-                transactionRepository.insert(transaction)
+        if (form.installments > 1) {
+            addInstallmentUseCase(
+                form = form,
+                installments = form.installments,
+            ).onLeft {
+                // TODO: register exception
+            }.onRight {
                 modalManager.dismiss()
             }
+
+            return@launch
         }
+
+        buildTransactionUseCase(form)
+            .flatMap {
+                catch {
+                    transactionRepository.insert(it)
+                }
+            }.onLeft {
+                // TODO: register exception
+            }.onRight {
+                modalManager.dismiss()
+            }
     }
 }

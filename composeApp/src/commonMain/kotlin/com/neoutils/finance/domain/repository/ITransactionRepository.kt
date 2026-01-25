@@ -12,6 +12,8 @@ interface ITransactionRepository {
     suspend fun getAllTransactions(): List<Transaction>
     fun observeTransactionById(id: Long): Flow<Transaction?>
 
+    suspend fun getTransactionBy(id: Long) : Transaction?
+
     suspend fun getTransactionsBy(
         type: Transaction.Type? = null,
         target: Transaction.Target? = null,

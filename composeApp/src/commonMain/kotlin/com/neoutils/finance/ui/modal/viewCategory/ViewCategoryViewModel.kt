@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
@@ -27,9 +28,17 @@ class ViewCategoryViewModel(
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
+    private val categoryFlow = flow {
+        emit(categoryRepository.getCategoryById(category.id) ?: category)
+    }
+
+    private val transactions = flow {
+        emit(transactionRepository.getAllTransactions())
+    }
+
     val uiState = combine(
-        categoryRepository.observeCategoryById(category.id).filterNotNull(),
-        transactionRepository.observeAllTransactions(),
+        categoryFlow,
+        transactions,
         selectedYearMonth
     ) { category, transactions, yearMonth ->
         val transactionsForMonth = transactions.filter {

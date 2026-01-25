@@ -30,6 +30,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun observeTransactionById(id: Long): Flow<TransactionEntity?>
 
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    suspend fun getTransactionById(id: Long): TransactionEntity?
+
 
 
     @Query("""

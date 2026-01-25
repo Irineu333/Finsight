@@ -130,6 +130,18 @@ class TransactionRepository(
         }
     }
 
+    override suspend fun getTransactionBy(id: Long): Transaction? {
+        val entity = dao.getTransactionById(id) ?: return null
+
+        return mapper.toDomain(
+            entity = entity,
+            category = entity.categoryId?.let { categoryRepository.getCategoryById(it) },
+            creditCard = entity.creditCardId?.let { creditCardRepository.getCreditCardById(it) },
+            invoice = entity.invoiceId?.let { invoiceRepository.getInvoiceById(it) },
+            account = entity.accountId?.let { accountRepository.getAccountById(it) },
+        )
+    }
+
     override suspend fun getTransactionsBy(
         type: Transaction.Type?,
         target: Transaction.Target?,

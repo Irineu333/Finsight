@@ -5,17 +5,11 @@ package com.neoutils.finance.ui.modal.editTransaction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Account
-import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
-import com.neoutils.finance.domain.repository.IAccountRepository
-import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.domain.repository.ICreditCardRepository
-import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.*
 import com.neoutils.finance.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.component.ModalManager
@@ -39,23 +33,35 @@ class EditTransactionViewModel(
     private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
     private val selectedAccount = MutableStateFlow(transaction.account)
 
-    private val invoicesFlow = selectedCreditCard.flatMapLatest { card ->
+    private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
-            invoiceRepository.observeInvoicesByCreditCard(card.id)
+            invoiceRepository.getInvoicesByCreditCard(card.id)
         } else {
-            flowOf(emptyList())
+            emptyList()
         }
     }
 
+    private val categories = flow {
+        emit(categoryRepository.getAllCategories())
+    }
+
+    private val creditCards = flow {
+        emit(creditCardRepository.getAllCreditCards())
+    }
+
+    private val accounts = flow {
+        emit(accountRepository.getAllAccounts())
+    }
+
     val uiState = combine(
-        categoryRepository.observeAllCategories(),
-        creditCardRepository.observeAllCreditCards(),
+        categories,
+        creditCards,
+        invoices,
+        accounts,
         selectedCreditCard,
-        invoicesFlow,
         selectedDueMonth,
-        accountRepository.observeAllAccounts(),
         selectedAccount,
-    ) { categories, creditCards, selectedCard, invoices, dueMonth, accounts, account ->
+    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account ->
         EditTransactionUiState(
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },

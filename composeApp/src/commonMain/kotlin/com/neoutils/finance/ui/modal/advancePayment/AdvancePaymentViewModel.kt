@@ -9,6 +9,7 @@ import com.neoutils.finance.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -22,8 +23,12 @@ class AdvancePaymentViewModel(
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
 
+    private val accounts = flow {
+        emit(accountRepository.getAllAccounts())
+    }
+
     val uiState = combine(
-        accountRepository.observeAllAccounts(),
+        accounts,
         selectedAccount,
     ) { accounts, account ->
         AdvancePaymentUiState(

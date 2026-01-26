@@ -1,6 +1,7 @@
 package com.neoutils.finance.ui.modal.editInvoiceBalance
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -16,7 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -89,20 +90,6 @@ class EditInvoiceBalanceModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            AnimatedContent(
-                targetState = adjustment,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-            ) { adjustment ->
-                if (adjustment != 0.0) {
-                    AdjustmentCard(
-                        adjustment = adjustment,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                } else {
-                    Box(modifier = Modifier.fillMaxWidth())
-                }
-            }
-
             CreditCardSelector(
                 creditCards = uiState.creditCards,
                 creditCard = uiState.selectedCreditCard,
@@ -136,6 +123,27 @@ class EditInvoiceBalanceModal(
                     imeAction = ImeAction.Done
                 ),
                 enabled = uiState.selectedInvoice != null,
+                trailingIcon = {
+                    AnimatedVisibility(
+                        visible = adjustment != 0.0,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        if (adjustment != 0.0) {
+                            AnimatedContent(
+                                targetState = adjustment,
+                                transitionSpec = {
+                                    fadeIn() togetherWith fadeOut()
+                                }
+                            ) { adjustment ->
+                                AdjustmentLabel(
+                                    adjustment = adjustment,
+                                    modifier = Modifier.padding(end = 16.dp),
+                                )
+                            }
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -160,50 +168,31 @@ class EditInvoiceBalanceModal(
     }
 
     @Composable
-    private fun AdjustmentCard(
+    private fun AdjustmentLabel(
         adjustment: Double,
         modifier: Modifier = Modifier
     ) {
         val isPayment = adjustment < 0
         val color = if (isPayment) Income else Expense
         val icon = if (isPayment) Icons.Default.CreditCard else Icons.Default.ArrowDownward
-        val label = if (isPayment) "Pagou" else "Gastou"
 
-        Card(
-            modifier = modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = color.copy(alpha = 0.1f),
-                contentColor = Color.White,
-            ),
-            shape = RoundedCornerShape(12.dp)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier,
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(text = label, fontSize = 16.sp)
-                }
-
-                Text(
-                    text = adjustment.toMoneyFormatWithSign(),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = color
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(
+                text = adjustment.toMoneyFormatWithSign(),
+                color = color,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 

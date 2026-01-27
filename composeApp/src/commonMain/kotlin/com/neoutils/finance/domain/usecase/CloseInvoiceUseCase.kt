@@ -2,15 +2,17 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.error.CloseInvoiceErrors
-import com.neoutils.finance.domain.exception.CloseInvoiceException
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
+import com.neoutils.finance.domain.error.InvoiceError
+import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.ExperimentalTime
-
-private val errors = CloseInvoiceErrors()
 
 class CloseInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
@@ -21,34 +23,37 @@ class CloseInvoiceUseCase(
     suspend operator fun invoke(
         invoiceId: Long,
         closedAt: LocalDate
-    ): Result<Invoice> {
+    ): Either<InvoiceException, Invoice> = either {
 
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
-            ?: return Result.failure(CloseInvoiceException(errors.invoiceNotFound))
 
-        if (invoice.status == Invoice.Status.PAID) {
-            return Result.failure(CloseInvoiceException(errors.cannotClosePaidInvoice))
+        ensureNotNull(invoice) {
+            InvoiceException(InvoiceError.NotFound)
         }
 
-        if (invoice.status == Invoice.Status.CLOSED) {
-            return Result.failure(CloseInvoiceException(errors.invoiceAlreadyClosed))
+        ensure(invoice.status != Invoice.Status.PAID) {
+            InvoiceException(InvoiceError.CannotClosePaidInvoice)
         }
 
-        if (closedAt.yearMonth != invoice.closingMonth) {
-            return Result.failure(CloseInvoiceException(errors.cannotCloseOutsideClosingMonth))
+        ensure(invoice.status != Invoice.Status.CLOSED) {
+            InvoiceException(InvoiceError.AlreadyClosed)
+        }
+
+        ensure(closedAt.yearMonth == invoice.closingMonth) {
+            InvoiceException(InvoiceError.CannotCloseOutsideClosingMonth)
         }
 
         val invoiceAmount = calculateInvoiceUseCase(invoiceId)
 
-        if (invoiceAmount < 0) {
-            return Result.failure(CloseInvoiceException(errors.negativeBalance))
+        ensure(invoiceAmount >= 0) {
+            InvoiceException(InvoiceError.NegativeBalance)
         }
 
         if (invoice.status.isRetroactive) {
-            return payInvoiceUseCase(
+            return@either payInvoiceUseCase(
                 invoice = invoice,
                 paidAt = closedAt,
-            )
+            ).bind()
         }
 
         val closedInvoice = invoice.copy(
@@ -64,12 +69,12 @@ class CloseInvoiceUseCase(
         )
 
         if (invoiceAmount == 0.0) {
-            return payInvoiceUseCase(
+            return@either payInvoiceUseCase(
                 invoice = closedInvoice,
                 paidAt = closedAt,
-            )
+            ).bind()
         }
 
-        return Result.success(closedInvoice)
+        closedInvoice
     }
 }

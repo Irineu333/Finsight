@@ -17,7 +17,7 @@ class CloseInvoiceViewModel(
         closeInvoiceUseCase(
             invoiceId,
             closingDate
-        ).onSuccess {
+        ).onRight {
             modalManager.dismissAll()
         }
     }

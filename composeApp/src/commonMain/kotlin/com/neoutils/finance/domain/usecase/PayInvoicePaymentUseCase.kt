@@ -2,8 +2,12 @@
 
 package com.neoutils.finance.domain.usecase
 
-import com.neoutils.finance.domain.error.PayInvoicePaymentErrors
-import com.neoutils.finance.domain.exception.PayCreditCardBillException
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
+import com.neoutils.finance.domain.error.InvoiceError
+import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
@@ -11,8 +15,6 @@ import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlin.time.ExperimentalTime
-
-private val errors = PayInvoicePaymentErrors()
 
 class PayInvoicePaymentUseCase(
     private val repository: ITransactionRepository,
@@ -24,13 +26,15 @@ class PayInvoicePaymentUseCase(
         invoiceId: Long,
         date: LocalDate,
         account: Account,
-    ): Result<Invoice> {
-
+    ): Either<InvoiceException, Invoice> = either {
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
-            ?: return Result.failure(PayCreditCardBillException(errors.invoiceNotFound))
 
-        if (invoice.status != Invoice.Status.CLOSED) {
-            return Result.failure(PayCreditCardBillException(errors.invoiceNotClosed))
+        ensureNotNull(invoice) {
+            InvoiceException(InvoiceError.NotFound)
+        }
+
+        ensure(invoice.status == Invoice.Status.CLOSED) {
+            InvoiceException(InvoiceError.InvoiceNotClosed)
         }
 
         val currentBillAmount = calculateInvoiceUseCase(invoiceId)
@@ -51,9 +55,9 @@ class PayInvoicePaymentUseCase(
             )
         }
 
-        return payInvoiceUseCase(
+        payInvoiceUseCase(
             invoiceId = invoiceId,
             paidAt = date,
-        )
+        ).bind()
     }
 }

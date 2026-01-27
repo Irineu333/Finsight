@@ -61,7 +61,7 @@ class PayInvoiceViewModel(
                 date = date,
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
             )
-        }.onSuccess {
+        }.onRight {
             modalManager.dismissAll()
         }
     }

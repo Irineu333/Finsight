@@ -14,9 +14,9 @@ class DeleteAccountViewModel(
 ) : ViewModel() {
 
     fun deleteAccount() = viewModelScope.launch {
-        deleteAccountUseCase(account).onSuccess {
+        deleteAccountUseCase(account).onRight {
             modalManager.dismissAll()
-        }.onFailure {
+        }.onLeft {
             // TODO: Show error message to user
         }
     }

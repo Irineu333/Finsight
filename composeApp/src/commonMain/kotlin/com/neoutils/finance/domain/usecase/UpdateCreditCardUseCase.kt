@@ -2,6 +2,7 @@ package com.neoutils.finance.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
+import arrow.core.flatMap
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finance.domain.error.CreditCardError
@@ -24,22 +25,20 @@ class UpdateCreditCardUseCase(
                 }
             }.bind()
 
-            val newCreditCard = catch {
-                block(oldCreditCard)
-            }.bind()
-
-            validateCreditCardName(
-                name = newCreditCard.name,
-                ignoreId = creditCardId,
-            ).mapLeft {
-                CreditCardException(it)
-            }.bind()
-
             catch {
-                repository.update(newCreditCard)
+                block(oldCreditCard)
+            }.onRight { creditCard ->
+                validateCreditCardName(
+                    name = creditCard.name,
+                    ignoreId = creditCardId,
+                ).mapLeft {
+                    CreditCardException(it)
+                }.bind()
+            }.onRight { newCreditCard ->
+                catch {
+                    repository.update(newCreditCard)
+                }.bind()
             }.bind()
-
-            newCreditCard
         }
     }
 }

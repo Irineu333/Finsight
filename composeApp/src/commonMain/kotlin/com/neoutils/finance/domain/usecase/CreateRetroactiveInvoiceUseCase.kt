@@ -27,7 +27,7 @@ class CreateRetroactiveInvoiceUseCase(
             .find { it.dueMonth == targetDueMonth }
 
         ensure(collisions == null) {
-            InvoiceException(InvoiceError.InvoiceAlreadyExists)
+            InvoiceException(InvoiceError.AlreadyExists)
         }
 
         val closingMonth = if (creditCard.dueDay < creditCard.closingDay) {

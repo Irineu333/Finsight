@@ -15,7 +15,7 @@ class ReopenInvoiceViewModel(
     fun reopenInvoice() = viewModelScope.launch {
         reopenInvoiceUseCase(
             invoiceId = invoiceId,
-        ).onSuccess {
+        ).onRight {
             modalManager.dismissAll()
         }
     }

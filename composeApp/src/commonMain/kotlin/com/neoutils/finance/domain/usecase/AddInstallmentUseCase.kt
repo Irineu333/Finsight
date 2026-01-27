@@ -6,6 +6,8 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.left
 import arrow.core.raise.either
+import arrow.core.raise.ensure
+import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import com.neoutils.finance.domain.error.InstallmentError
 import com.neoutils.finance.domain.exception.InstallmentException
@@ -34,34 +36,32 @@ class AddInstallmentUseCase(
         installments: Int,
     ): Either<Throwable, List<Transaction>> {
 
-        if (installments <= 1) {
-            return InstallmentException(InstallmentError.MinInstallment).left()
-        }
-
-        val creditCard = form.creditCard ?: return InstallmentException(InstallmentError.MissingCreditCard).left()
-
-        val firstInvoice = getOrCreateInvoiceForMonthUseCase(
-            creditCard = creditCard,
-            targetDueMonth = form.invoiceDueMonth ?: return InstallmentException(InstallmentError.MissingInvoice).left()
-        ).fold(
-            ifLeft = { return it.left() },
-            ifRight = { it }
-        )
-
-        val existingInvoices = invoiceRepository
-            .getInvoicesByCreditCard(firstInvoice.creditCard.id)
-            .sortedBy { it.openingMonth }
-
-        val slots = getSlots(
-            firstInvoice = firstInvoice,
-            installments = installments,
-            invoices = existingInvoices
-        )
-
         return either {
-            val slots = validateSlots(slots)
-                .mapLeft(::InstallmentException)
-                .bind()
+
+            ensure(installments > 1) {
+                InstallmentException(InstallmentError.MinInstallment)
+            }
+
+            val creditCard = ensureNotNull(form.creditCard) {
+                InstallmentException(InstallmentError.MissingCreditCard)
+            }
+
+            val firstInvoice = getOrCreateInvoiceForMonthUseCase(
+                creditCard = creditCard,
+                targetDueMonth = ensureNotNull(form.invoiceDueMonth) {
+                    InstallmentException(InstallmentError.MissingInvoice)
+                }
+            ).bind()
+
+            val existingInvoices = invoiceRepository
+                .getInvoicesByCreditCard(firstInvoice.creditCard.id)
+                .sortedBy { it.openingMonth }
+
+            val slots = getSlots(
+                firstInvoice = firstInvoice,
+                installments = installments,
+                invoices = existingInvoices
+            ).bind()
 
             val invoices = getInvoices(slots).bind()
 
@@ -73,12 +73,21 @@ class AddInstallmentUseCase(
         firstInvoice: Invoice,
         installments: Int,
         invoices: List<Invoice>
-    ): List<InvoiceSlot> {
+    ): Either<InstallmentException, List<InvoiceSlot>> {
         val slots = mutableListOf<InvoiceSlot>()
         var dueMonth = firstInvoice.dueMonth
 
         repeat(installments) { index ->
             val invoice = invoices.find { it.dueMonth == dueMonth }
+
+            if (invoice != null && invoice.status.isBlocked) {
+                return InstallmentException(
+                    InstallmentError.BlockedInvoice(
+                        installment = index + 1,
+                        invoice = invoice,
+                    )
+                ).left()
+            }
 
             slots.add(
                 InvoiceSlot(
@@ -90,23 +99,6 @@ class AddInstallmentUseCase(
             )
 
             dueMonth = dueMonth.plus(1, DateTimeUnit.MONTH)
-        }
-
-        return slots
-    }
-
-    private fun validateSlots(
-        slots: List<InvoiceSlot>
-    ): Either<InstallmentError, List<InvoiceSlot>> {
-        for (slot in slots) {
-            val invoice = slot.invoice ?: continue
-
-            if (invoice.status.isBlocked) {
-                return InstallmentError.BlockedInvoice(
-                    installment = slot.number,
-                    invoice = invoice,
-                ).left()
-            }
         }
 
         return slots.right()

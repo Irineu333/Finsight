@@ -55,7 +55,7 @@ class AdvancePaymentViewModel(
             amount = amount,
             date = date,
             account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
-        ).onSuccess {
+        ).onRight {
             modalManager.dismissAll()
         }
     }

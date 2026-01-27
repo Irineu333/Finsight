@@ -14,7 +14,7 @@ class DeleteFutureInvoiceViewModel(
 ) : ViewModel() {
 
     fun deleteInvoice() = viewModelScope.launch {
-        deleteFutureInvoiceUseCase(invoice.id).onSuccess {
+        deleteFutureInvoiceUseCase(invoice.id).onRight {
             modalManager.dismissAll()
         }
     }

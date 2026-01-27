@@ -469,7 +469,7 @@ private fun InvoiceActions(
             }
         }
 
-        if (summary.status.isFuture) {
+        if (summary.status.isDeletable) {
             OutlinedButton(
                 onClick = { modalManager.show(DeleteFutureInvoiceModal(invoice)) },
                 modifier = Modifier.fillMaxWidth(),

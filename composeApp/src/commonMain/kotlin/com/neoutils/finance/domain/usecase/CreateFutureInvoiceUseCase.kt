@@ -4,56 +4,50 @@ package com.neoutils.finance.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.left
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.neoutils.finance.domain.error.InvoiceError
 import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import kotlinx.datetime.plusMonth
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.minusMonth
 import kotlin.time.ExperimentalTime
 
 class CreateFutureInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
 ) {
     suspend operator fun invoke(
-        creditCard: CreditCard
-    ): Either<Throwable, Invoice> {
-
-        val invoices = invoiceRepository
+        creditCard: CreditCard,
+        targetDueMonth: YearMonth
+    ): Either<Throwable, Invoice> = either {
+        val collisions = invoiceRepository
             .getInvoicesByCreditCard(creditCard.id)
-            .sortedBy { it.closingMonth }
+            .find { it.dueMonth == targetDueMonth }
 
-        val lastInvoice = invoices.lastOrNull()
-            ?: return InvoiceException(InvoiceError.NoInvoicesFound).left()
+        ensure(collisions == null) {
+            InvoiceException(InvoiceError.InvoiceAlreadyExists)
+        }
 
-        val openingMonth = lastInvoice.closingMonth
-        val closingMonth = openingMonth.plusMonth()
-
-        val dueMonth = if (creditCard.dueDay < creditCard.closingDay) {
-            closingMonth.plusMonth()
+        val closingMonth = if (creditCard.dueDay < creditCard.closingDay) {
+            targetDueMonth.minusMonth()
         } else {
-            closingMonth
+            targetDueMonth
         }
 
-        val collisions = invoices.filter {
-            openingMonth < it.closingMonth && closingMonth > it.openingMonth
-        }
-
-        if (collisions.isNotEmpty()) {
-            return InvoiceException(InvoiceError.PeriodCollision).left()
-        }
+        val openingMonth = closingMonth.minusMonth()
 
         val invoice = Invoice(
             creditCard = creditCard,
             openingMonth = openingMonth,
             closingMonth = closingMonth,
-            dueMonth = dueMonth,
+            dueMonth = targetDueMonth,
             status = Invoice.Status.FUTURE
         )
 
-        return catch {
+        catch {
             invoice.copy(id = invoiceRepository.insert(invoice))
-        }
+        }.bind()
     }
 }

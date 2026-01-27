@@ -89,6 +89,10 @@ data class Invoice(
             get() = this == RETROACTIVE ||
                     this == OPEN ||
                     this == FUTURE
+
+        val isDeletable: Boolean
+            get() = this == FUTURE ||
+                    this == RETROACTIVE
     }
 
     init {

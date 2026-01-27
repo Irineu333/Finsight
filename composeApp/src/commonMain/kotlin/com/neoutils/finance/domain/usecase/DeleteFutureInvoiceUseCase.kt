@@ -13,8 +13,8 @@ class DeleteFutureInvoiceUseCase(
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
             ?: return Result.failure(DeleteFutureInvoiceException("Fatura não encontrada"))
 
-        if (invoice.status != Invoice.Status.FUTURE) {
-            return Result.failure(DeleteFutureInvoiceException("Apenas faturas futuras podem ser excluídas"))
+        if (!invoice.status.isDeletable) {
+            return Result.failure(DeleteFutureInvoiceException("Apenas faturas futuras ou retroativas podem ser excluídas"))
         }
 
         transactionRepository.getTransactionsBy(

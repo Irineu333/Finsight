@@ -55,6 +55,7 @@ import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.TextLight1
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.YearMonth
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.absoluteValue
@@ -266,18 +267,13 @@ private fun AccountPager(
     LaunchedEffect(Unit) {
         snapshotFlow {
             pagerState.currentPage
-        }.collect {
-            if (pagerState.currentPage != selectedIndex) {
-                onSelectAccount(pagerState.currentPage)
-            }
         }
+            .distinctUntilChanged()
+            .collect { page ->
+                onSelectAccount(page)
+            }
     }
 
-//    LaunchedEffect(selectedIndex) {
-//        if (pagerState.currentPage != selectedIndex) {
-//            pagerState.scrollToPage(selectedIndex)
-//        }
-//    }
 
     HorizontalPager(
         state = pagerState,

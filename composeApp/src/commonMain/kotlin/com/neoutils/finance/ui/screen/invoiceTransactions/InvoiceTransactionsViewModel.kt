@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.resources.*
 import com.neoutils.finance.util.DateFormats
@@ -32,7 +34,7 @@ class InvoiceTransactionsViewModel(
     creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
 ) : ViewModel() {
 
@@ -54,22 +56,23 @@ class InvoiceTransactionsViewModel(
     private val invoicesFlow = invoiceRepository
         .observeInvoicesByCreditCard(creditCardId = creditCardId)
 
-    private val transactionsFlow = transactionRepository
-        .observeTransactionsBy(creditCardId = creditCardId)
+    private val operationsFlow = operationRepository
+        .observeOperationsBy(creditCardId = creditCardId)
 
     val uiState = combine(
         creditCardFlow,
         invoicesFlow,
-        transactionsFlow,
+        operationsFlow,
         categoryRepository.observeAllCategories(),
         selectedInvoiceIndex,
         filters,
-    ) { creditCard, invoices, transactions, categories, index, currentFilters ->
+    ) { creditCard, invoices, operations, categories, index, currentFilters ->
+        val transactions = operations.flatMap { it.transactions }
 
         val invoice = invoices.getOrNull(index)
 
-        val filteredTransactions = transactions
-            .filter { it.invoice?.id == invoice?.id }
+        val filteredOperations = operations
+            .filter { it.targetInvoice?.id == invoice?.id || it.transactions.any { tx -> tx.invoice?.id == invoice?.id } }
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .sortedByDescending { it.date }
@@ -79,7 +82,7 @@ class InvoiceTransactionsViewModel(
             creditCardName = creditCard.name,
             invoices = invoices.map { invoice ->
                 val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id
+                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
                 }
 
                 val expense = invoiceTransactions
@@ -87,7 +90,7 @@ class InvoiceTransactionsViewModel(
                     .sumOf { it.amount }
 
                 val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.ADVANCE_PAYMENT }
+                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.title == "Pagamento de Fatura" }
                     .sumOf { it.amount }
 
                 val adjustment = invoiceTransactions
@@ -125,9 +128,7 @@ class InvoiceTransactionsViewModel(
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions
-                        .filterNot { it.type.isInvoicePayment }
-                        .sumOf { it.creditAmount },
+                    total = invoiceTransactions.sumOf { -it.signedImpact() },
                     dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
@@ -135,7 +136,7 @@ class InvoiceTransactionsViewModel(
                 )
             },
             selectedInvoiceIndex = index,
-            transactions = filteredTransactions,
+            operations = filteredOperations,
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
@@ -186,12 +187,14 @@ private data class InvoiceTransactionsFilters(
     val type: Transaction.Type?,
 )
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id }
+    return filter { operation ->
+        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+    }
 }
 
-private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
-    return filter { it.type == type }
+    return filter { operation -> operation.type == type }
 }

@@ -5,11 +5,13 @@ import com.neoutils.finance.database.repository.AccountRepository
 import com.neoutils.finance.database.repository.CategoryRepository
 import com.neoutils.finance.database.repository.CreditCardRepository
 import com.neoutils.finance.database.repository.InvoiceRepository
+import com.neoutils.finance.database.repository.OperationRepository
 import com.neoutils.finance.database.repository.TransactionRepository
 import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.russhwolf.settings.Settings
 import org.koin.dsl.module
@@ -55,6 +57,18 @@ val repositoryModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             mapper = get(),
+        )
+    }
+
+    single<IOperationRepository> {
+        OperationRepository(
+            operationDao = get(),
+            transactionDao = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            accountRepository = get(),
+            transactionMapper = get(),
         )
     }
 }

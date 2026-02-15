@@ -18,6 +18,7 @@ class TransactionMapper {
     ): Transaction {
         return Transaction(
             id = entity.id,
+            operationId = entity.operationId,
             type = toDomain(entity.type),
             amount = entity.amount,
             title = entity.title,
@@ -49,6 +50,7 @@ class TransactionMapper {
     ): TransactionEntity {
         return TransactionEntity(
             id = domain.id,
+            operationId = domain.operationId,
             type = toEntity(domain.type),
             amount = domain.amount,
             title = domain.title,
@@ -72,8 +74,6 @@ class TransactionMapper {
             TransactionEntity.Type.EXPENSE -> Transaction.Type.EXPENSE
             TransactionEntity.Type.INCOME -> Transaction.Type.INCOME
             TransactionEntity.Type.ADJUSTMENT -> Transaction.Type.ADJUSTMENT
-            TransactionEntity.Type.INVOICE_PAYMENT -> Transaction.Type.INVOICE_PAYMENT
-            TransactionEntity.Type.ADVANCE_PAYMENT -> Transaction.Type.ADVANCE_PAYMENT
         }
     }
 
@@ -84,8 +84,6 @@ class TransactionMapper {
             Transaction.Type.EXPENSE -> TransactionEntity.Type.EXPENSE
             Transaction.Type.INCOME -> TransactionEntity.Type.INCOME
             Transaction.Type.ADJUSTMENT -> TransactionEntity.Type.ADJUSTMENT
-            Transaction.Type.INVOICE_PAYMENT -> TransactionEntity.Type.INVOICE_PAYMENT
-            Transaction.Type.ADVANCE_PAYMENT -> TransactionEntity.Type.ADVANCE_PAYMENT
         }
     }
 
@@ -95,7 +93,6 @@ class TransactionMapper {
         return when (target) {
             TransactionEntity.Target.ACCOUNT -> Transaction.Target.ACCOUNT
             TransactionEntity.Target.CREDIT_CARD -> Transaction.Target.CREDIT_CARD
-            TransactionEntity.Target.INVOICE_PAYMENT -> Transaction.Target.INVOICE_PAYMENT
         }
     }
 
@@ -105,7 +102,6 @@ class TransactionMapper {
         return when (target) {
             Transaction.Target.ACCOUNT -> TransactionEntity.Target.ACCOUNT
             Transaction.Target.CREDIT_CARD -> TransactionEntity.Target.CREDIT_CARD
-            Transaction.Target.INVOICE_PAYMENT -> TransactionEntity.Target.INVOICE_PAYMENT
         }
     }
 }

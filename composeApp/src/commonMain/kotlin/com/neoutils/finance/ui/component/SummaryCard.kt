@@ -83,21 +83,12 @@ fun SummaryCard(
                         signDisplay = SignDisplay.ALWAYS_NEGATIVE
                     )
 
-                    if (balanceOverview.mustShowInvoicePayment) {
+                    if (balanceOverview.mustShowPayment) {
                         SummaryRow(
                             label = "Faturas",
-                            amount = balanceOverview.invoicePayment,
+                            amount = balanceOverview.payment,
                             color = InvoicePayment,
                             onNavigateClick = onInvoiceClick,
-                            signDisplay = SignDisplay.ALWAYS_NEGATIVE
-                        )
-                    }
-
-                    if (balanceOverview.mustShowAdvancePayment) {
-                        SummaryRow(
-                            label = "Adiantamentos",
-                            amount = balanceOverview.advancePayment,
-                            color = InvoicePayment,
                             signDisplay = SignDisplay.ALWAYS_NEGATIVE
                         )
                     }

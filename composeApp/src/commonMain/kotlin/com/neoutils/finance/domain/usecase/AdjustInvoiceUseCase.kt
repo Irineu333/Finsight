@@ -1,14 +1,15 @@
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
-import com.neoutils.finance.domain.repository.ICreditCardRepository
-import com.neoutils.finance.domain.repository.IInvoiceRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
 class AdjustInvoiceUseCase(
     private val repository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
 ) {
     suspend operator fun invoke(
@@ -30,16 +31,25 @@ class AdjustInvoiceUseCase(
         val difference = target - currentInvoice
 
         if (existingAdjustment == null) {
-            repository.insert(
-                Transaction(
-                    title = null,
-                    type = Transaction.Type.ADJUSTMENT,
-                    amount = difference,
-                    date = adjustmentDate,
-                    target = Transaction.Target.CREDIT_CARD,
-                    creditCard = invoice.creditCard,
-                    invoice = invoice
-                )
+            operationRepository.createOperation(
+                kind = Operation.Kind.TRANSACTION,
+                title = null,
+                date = adjustmentDate,
+                categoryId = null,
+                sourceAccountId = null,
+                targetCreditCardId = invoice.creditCard.id,
+                targetInvoiceId = invoice.id,
+                transactions = listOf(
+                    Transaction(
+                        title = null,
+                        type = Transaction.Type.ADJUSTMENT,
+                        amount = difference,
+                        date = adjustmentDate,
+                        target = Transaction.Target.CREDIT_CARD,
+                        creditCard = invoice.creditCard,
+                        invoice = invoice
+                    )
+                ),
             )
             return
         }
@@ -47,7 +57,12 @@ class AdjustInvoiceUseCase(
         val newAmount = existingAdjustment.amount + difference
 
         if (newAmount == 0.0) {
-            repository.delete(existingAdjustment)
+            val operationId = existingAdjustment.operationId
+            if (operationId != null) {
+                operationRepository.deleteOperationById(operationId)
+            } else {
+                repository.delete(existingAdjustment)
+            }
             return
         }
 

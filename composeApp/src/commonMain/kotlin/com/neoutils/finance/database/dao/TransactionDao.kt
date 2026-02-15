@@ -21,11 +21,23 @@ interface TransactionDao {
     @Delete
     suspend fun delete(transaction: TransactionEntity)
 
+    @Query("DELETE FROM transactions WHERE operationId = :operationId")
+    suspend fun deleteByOperationId(operationId: Long)
+
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     fun observeAllTransactions(): Flow<List<TransactionEntity>>
 
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
+    fun observeAllTransactionsRaw(): Flow<List<TransactionEntity>>
+
+    @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     suspend fun getAllTransactions(): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE operationId = :operationId ORDER BY date DESC, id DESC")
+    suspend fun getTransactionsByOperationId(operationId: Long): List<TransactionEntity>
+
+    @Query("SELECT * FROM transactions WHERE operationId IN (:operationIds) ORDER BY date DESC, id DESC")
+    suspend fun getTransactionsByOperationIds(operationIds: List<Long>): List<TransactionEntity>
 
     @Query("SELECT * FROM transactions WHERE id = :id")
     fun observeTransactionById(id: Long): Flow<TransactionEntity?>

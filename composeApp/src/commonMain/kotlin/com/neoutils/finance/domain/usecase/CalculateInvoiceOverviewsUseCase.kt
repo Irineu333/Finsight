@@ -2,6 +2,7 @@ package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.signedImpact
 import kotlinx.datetime.YearMonth
 
 class CalculateInvoiceOverviewsUseCase {
@@ -14,12 +15,14 @@ class CalculateInvoiceOverviewsUseCase {
         val invoiceOverviews = invoices
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
-                val invoiceTransactions = transactions.filter { it.invoice?.id == invoice.id }
+                val invoiceTransactions = transactions.filter {
+                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
+                }
                 val expense = invoiceTransactions
                     .filter { it.type.isExpense }
                     .sumOf { it.amount }
                 val advancePayment = invoiceTransactions
-                    .filter { it.type.isAdvancePayment }
+                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.title == "Pagamento de Fatura" }
                     .sumOf { it.amount }
                 val adjustment = invoiceTransactions
                     .filter { it.type.isAdjustment }
@@ -32,7 +35,7 @@ class CalculateInvoiceOverviewsUseCase {
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { it.creditAmount }
+                    total = invoiceTransactions.sumOf { -it.signedImpact() }
                 )
             }
 

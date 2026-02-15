@@ -293,9 +293,7 @@ class EditTransactionModal(
                 }
 
                 Transaction.Type.INCOME,
-                Transaction.Type.ADJUSTMENT,
-                Transaction.Type.INVOICE_PAYMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> {
+                Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant
@@ -323,9 +321,7 @@ class EditTransactionModal(
                 }
 
                 Transaction.Type.EXPENSE,
-                Transaction.Type.ADJUSTMENT,
-                Transaction.Type.INVOICE_PAYMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> {
+                Transaction.Type.ADJUSTMENT -> {
                     ButtonDefaults.buttonColors(
                         containerColor = colorScheme.surfaceContainerHighest,
                         contentColor = colorScheme.onSurfaceVariant

@@ -39,7 +39,6 @@ fun TargetSelector(
             value = when (selectedTarget) {
                 Transaction.Target.ACCOUNT -> "Conta"
                 Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                Transaction.Target.INVOICE_PAYMENT -> "Ambas"
             },
             onValueChange = {},
             readOnly = true,
@@ -67,7 +66,6 @@ fun TargetSelector(
                             text = when (target) {
                                 Transaction.Target.ACCOUNT -> "Conta"
                                 Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                                Transaction.Target.INVOICE_PAYMENT -> "Ambas"
                             },
                             fontSize = 14.sp
                         )

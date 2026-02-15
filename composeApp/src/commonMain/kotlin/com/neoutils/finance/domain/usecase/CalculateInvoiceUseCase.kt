@@ -1,5 +1,7 @@
 package com.neoutils.finance.domain.usecase
 
+import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.ITransactionRepository
 
 class CalculateInvoiceUseCase(
@@ -11,8 +13,8 @@ class CalculateInvoiceUseCase(
         return repository.getTransactionsBy(
             invoiceId = invoiceId,
             type = null,
-            target = null,
+            target = Transaction.Target.CREDIT_CARD,
             date = null,
-        ).sumOf { it.creditAmount }
+        ).sumOf { -it.signedImpact() }
     }
 }

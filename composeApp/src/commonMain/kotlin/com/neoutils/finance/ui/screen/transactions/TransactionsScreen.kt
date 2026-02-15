@@ -22,14 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.MonthSelector
 import com.neoutils.finance.ui.component.SummaryCard
-import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.component.OperationCard
 import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
@@ -120,7 +121,7 @@ private fun TransactionsContent(
                 )
             }
 
-            uiState.transactions.forEach { (date, transactions) ->
+            uiState.operations.forEach { (date, operations) ->
                 item(
                     key = "date_title_$date"
                 ) {
@@ -136,24 +137,23 @@ private fun TransactionsContent(
                 }
 
                 items(
-                    items = transactions,
+                    items = operations,
                     key = { it.id }
-                ) { transaction ->
-                    TransactionCard(
-                        transaction = transaction,
-                        category = transaction.category,
+                ) { operation ->
+                    OperationCard(
+                        operation = operation,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (transaction.type) {
+                            when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(transaction))
+                                    modalManager.show(ViewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewTransactionModal(transaction))
+                                    modalManager.show(ViewOperationModal(operation))
                                 }
                             }
                         }
@@ -277,8 +277,6 @@ private fun TypeFilterChip(
             Transaction.Type.INCOME -> IncomeColor
             Transaction.Type.EXPENSE -> ExpenseColor
             Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.INVOICE_PAYMENT,
-            Transaction.Type.ADVANCE_PAYMENT -> BillPaymentColor
 
             null -> null
         }
@@ -292,8 +290,6 @@ private fun TypeFilterChip(
                     Transaction.Type.INCOME -> "Entrada"
                     Transaction.Type.EXPENSE -> "Despesa"
                     Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.INVOICE_PAYMENT -> "Pagamento"
-                    Transaction.Type.ADVANCE_PAYMENT -> "Antecipação"
                     null -> "Tipo"
                 }
             )
@@ -332,8 +328,6 @@ private fun TypeFilterChip(
                             Transaction.Type.INCOME -> "Entrada"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
-                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento"
-                            Transaction.Type.ADVANCE_PAYMENT -> "Antecipação"
                         }
                     )
                 },
@@ -361,7 +355,6 @@ private fun TargetFilterChip(
                 when (selectedTarget) {
                     Transaction.Target.ACCOUNT -> "Conta"
                     Transaction.Target.CREDIT_CARD -> "Cartão"
-                    Transaction.Target.INVOICE_PAYMENT -> "Conta"
                     null -> "Conta"
                 }
             )

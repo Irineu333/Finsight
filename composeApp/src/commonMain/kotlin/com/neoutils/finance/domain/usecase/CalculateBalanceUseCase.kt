@@ -3,6 +3,7 @@
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.coroutines.flow.first
@@ -23,7 +24,7 @@ class CalculateBalanceUseCase(
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isAccount }
             .filter { accountId == null || it.account?.id == accountId }
-            .sumOf { it.accountAmount }
+            .sumOf { it.signedImpact() }
     }
 
     suspend operator fun invoke(

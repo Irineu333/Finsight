@@ -3,14 +3,34 @@
 package com.neoutils.finance.ui.modal.viewTransaction
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,22 +42,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.ModalBottomSheet
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionModal
-import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentModal
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finance.ui.theme.*
+import com.neoutils.finance.ui.theme.Adjustment
+import com.neoutils.finance.ui.theme.Expense
+import com.neoutils.finance.ui.theme.Info
+import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
 
-class ViewTransactionModal(
-    private val transaction: Transaction
+class ViewOperationModal(
+    private val operation: Operation
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
@@ -45,7 +69,7 @@ class ViewTransactionModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<ViewTransactionViewModel> { parametersOf(transaction) }
+        val viewModel = koinViewModel<ViewOperationViewModel> { parametersOf(operation) }
 
         val uiState by viewModel.uiState.collectAsState()
 
@@ -58,15 +82,9 @@ class ViewTransactionModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box {
+                androidx.compose.foundation.layout.Box {
                     Surface(
-                        color = when (transaction.type) {
-                            Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
-                            Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
-                            Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
-                        },
+                        color = uiState.operationColor().copy(alpha = 0.2f),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(64.dp),
                     ) {
@@ -74,34 +92,21 @@ class ViewTransactionModal(
                             Icon(
                                 painter = category.icon(),
                                 contentDescription = null,
-                                tint = when (transaction.type) {
-                                    Transaction.Type.INCOME -> Income
-                                    Transaction.Type.EXPENSE -> Expense
-                                    Transaction.Type.ADJUSTMENT -> Adjustment
-                                    Transaction.Type.INVOICE_PAYMENT,
-                                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                                },
+                                tint = uiState.operationColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
                             )
                         } ?: run {
                             Icon(
-                                imageVector = when (transaction.type) {
-                                    Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                    Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                    Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
-                                    Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
-                                    Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
+                                imageVector = when {
+                                    uiState.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
+                                    uiState.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                    uiState.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                    else -> Icons.Default.Tune
                                 },
                                 contentDescription = null,
-                                tint = when (transaction.type) {
-                                    Transaction.Type.INCOME -> Income
-                                    Transaction.Type.EXPENSE -> Expense
-                                    Transaction.Type.ADJUSTMENT -> Adjustment
-                                    Transaction.Type.INVOICE_PAYMENT,
-                                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                                },
+                                tint = uiState.operationColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -109,7 +114,7 @@ class ViewTransactionModal(
                         }
                     }
 
-                    if (transaction.target.isCreditCard) {
+                    if (uiState.transaction.target.isCreditCard || uiState.operation.kind == Operation.Kind.PAYMENT) {
                         Surface(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
@@ -135,26 +140,15 @@ class ViewTransactionModal(
                             Transaction.Type.INCOME -> "Receita"
                             Transaction.Type.EXPENSE -> "Despesa"
                             Transaction.Type.ADJUSTMENT -> "Ajuste"
-                            else -> "Pagamento"
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = when (uiState.transaction.type) {
-                            Transaction.Type.INCOME -> Income
-                            Transaction.Type.EXPENSE -> Expense
-                            Transaction.Type.ADJUSTMENT -> Adjustment
-                            Transaction.Type.INVOICE_PAYMENT,
-                            Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                        }
+                        color = uiState.operationColor()
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = uiState.title ?: when (uiState.transaction.type) {
-                            Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
-                            Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
-                            else -> error("Invalid type")
-                        },
+                        text = uiState.title,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface
@@ -167,13 +161,7 @@ class ViewTransactionModal(
             DetailRow(
                 label = "Valor",
                 value = uiState.transaction.amount.toMoneyFormat(),
-                valueColor = when (uiState.transaction.type) {
-                    Transaction.Type.INCOME -> Income
-                    Transaction.Type.EXPENSE -> Expense
-                    Transaction.Type.ADJUSTMENT -> Adjustment
-                    Transaction.Type.INVOICE_PAYMENT,
-                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                }
+                valueColor = uiState.operationColor()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -189,7 +177,6 @@ class ViewTransactionModal(
                     value = when (uiState.transaction.target) {
                         Transaction.Target.ACCOUNT -> "Conta"
                         Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                        else -> error("Invalid type")
                     },
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -262,7 +249,7 @@ class ViewTransactionModal(
 
     @Composable
     private fun EditAndDelete(
-        uiState: ViewTransactionUiState,
+        uiState: ViewOperationUiState,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -276,7 +263,7 @@ class ViewTransactionModal(
             },
             modifier = when {
                 uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
-                uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT -> Modifier.fillMaxWidth()
+                !uiState.operation.isEditable -> Modifier.fillMaxWidth()
                 uiState.transaction.installment != null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
@@ -304,22 +291,14 @@ class ViewTransactionModal(
 
         when {
             uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
-            uiState.transaction.type == Transaction.Type.ADVANCE_PAYMENT -> Unit
+            !uiState.operation.isEditable -> Unit
             uiState.transaction.installment != null -> Unit
 
             else -> {
                 OutlinedButton(
                     onClick = {
                         manager.show(
-                            when (uiState.transaction.type) {
-                                Transaction.Type.INVOICE_PAYMENT -> {
-                                    EditInvoicePaymentModal(uiState.transaction)
-                                }
-
-                                else -> {
-                                    EditTransactionModal(uiState.transaction)
-                                }
-                            }
+                            EditTransactionModal(uiState.transaction)
                         )
                     },
                     modifier = Modifier.weight(1f),
@@ -371,5 +350,12 @@ class ViewTransactionModal(
                 color = valueColor
             )
         }
+    }
+
+    private fun ViewOperationUiState.operationColor() = when {
+        operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
+        transaction.type == Transaction.Type.INCOME -> Income
+        transaction.type == Transaction.Type.EXPENSE -> Expense
+        else -> Adjustment
     }
 }

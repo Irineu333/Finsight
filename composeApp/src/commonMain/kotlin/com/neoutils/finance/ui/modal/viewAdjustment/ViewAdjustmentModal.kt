@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
@@ -39,7 +40,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
-    private val transaction: Transaction
+    private val operation: Operation
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
@@ -48,7 +49,7 @@ class ViewAdjustmentModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(transaction) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(
@@ -80,7 +81,6 @@ class ViewAdjustmentModal(
                         text = uiState.transaction.title ?: when (uiState.transaction.target) {
                             Transaction.Target.ACCOUNT -> "Ajuste de Saldo"
                             Transaction.Target.CREDIT_CARD -> "Ajuste de Fatura"
-                            else -> error("Invalid target for adjustment")
                         },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -111,7 +111,6 @@ class ViewAdjustmentModal(
                 value = when (uiState.transaction.target) {
                     Transaction.Target.ACCOUNT -> "Conta"
                     Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
-                    Transaction.Target.INVOICE_PAYMENT -> "Pagamento de Fatura"
                 }
             )
 

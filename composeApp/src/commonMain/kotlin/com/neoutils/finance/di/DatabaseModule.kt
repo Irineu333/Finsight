@@ -4,6 +4,7 @@ import com.neoutils.finance.database.AppDatabase
 import com.neoutils.finance.database.dao.AccountDao
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.InvoiceDao
+import com.neoutils.finance.database.dao.OperationDao
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.getRoomDatabase
 import org.koin.core.module.Module
@@ -14,6 +15,7 @@ val databaseModule = module {
 
     single<AppDatabase> { getRoomDatabase(builder = get()) }
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
+    single<OperationDao> { get<AppDatabase>().operationDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single<InvoiceDao> { get<AppDatabase>().invoiceDao() }
     single<AccountDao> { get<AppDatabase>().accountDao() }

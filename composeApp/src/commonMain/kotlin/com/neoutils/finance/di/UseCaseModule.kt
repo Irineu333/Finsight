@@ -39,6 +39,7 @@ val useCaseModules = module {
     factory {
         AdjustBalanceUseCase(
             repository = get(),
+            operationRepository = get(),
             calculateBalanceUseCase = get(),
         )
     }
@@ -46,6 +47,7 @@ val useCaseModules = module {
     factory {
         AdjustInvoiceUseCase(
             repository = get(),
+            operationRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
@@ -100,7 +102,7 @@ val useCaseModules = module {
 
     factory {
         PayInvoicePaymentUseCase(
-            repository = get(),
+            operationRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
@@ -109,7 +111,7 @@ val useCaseModules = module {
 
     factory {
         AdvanceInvoicePaymentUseCase(
-            repository = get(),
+            operationRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
         )
@@ -205,13 +207,13 @@ val useCaseModules = module {
     factory {
         DeleteFutureInvoiceUseCase(
             invoiceRepository = get(),
-            transactionRepository = get(),
+            operationRepository = get(),
         )
     }
 
     factory {
         AddInstallmentUseCase(
-            transactionRepository = get(),
+            operationRepository = get(),
             invoiceRepository = get(),
             buildTransactionUseCase = get(),
             getOrCreateInvoiceForMonthUseCase = get(),

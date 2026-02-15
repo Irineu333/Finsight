@@ -9,11 +9,13 @@ import com.neoutils.finance.database.dao.AccountDao
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.CreditCardDao
 import com.neoutils.finance.database.dao.InvoiceDao
+import com.neoutils.finance.database.dao.OperationDao
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.entity.AccountEntity
 import com.neoutils.finance.database.entity.CategoryEntity
 import com.neoutils.finance.database.entity.CreditCardEntity
 import com.neoutils.finance.database.entity.InvoiceEntity
+import com.neoutils.finance.database.entity.OperationEntity
 import com.neoutils.finance.database.entity.TransactionEntity
 
 @Database(
@@ -22,9 +24,10 @@ import com.neoutils.finance.database.entity.TransactionEntity
         CategoryEntity::class,
         CreditCardEntity::class,
         InvoiceEntity::class,
-        AccountEntity::class
+        AccountEntity::class,
+        OperationEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -35,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun creditCardDao(): CreditCardDao
     abstract fun invoiceDao(): InvoiceDao
     abstract fun accountDao(): AccountDao
+    abstract fun operationDao(): OperationDao
 }
 
 // Room compiler generates the actual implementations

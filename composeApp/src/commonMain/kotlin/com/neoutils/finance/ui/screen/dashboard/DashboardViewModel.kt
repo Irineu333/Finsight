@@ -4,10 +4,11 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateCategorySpendingUseCase
@@ -23,7 +24,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
@@ -50,11 +51,12 @@ class DashboardViewModel(
         }
 
     val uiState = combine(
-        transactionRepository.observeAllTransactions(),
+        operationRepository.observeAllOperations(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
         accountRepository.observeAllAccounts(),
-    ) { transactions, creditCards, invoices, accounts ->
+    ) { operations, creditCards, invoices, accounts ->
+        val transactions = operations.flatMap { it.transactions }
 
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
@@ -81,7 +83,7 @@ class DashboardViewModel(
 
         val accountsUi = accounts.map { account ->
             val accountTransactions = transactions.filter { it.account?.id == account.id }
-            val balance = accountTransactions.sumOf { it.accountAmount }
+            val balance = accountTransactions.sumOf { it.signedImpact() }
             DashboardAccountUi(
                 account = account,
                 balance = balance,
@@ -90,8 +92,8 @@ class DashboardViewModel(
 
         DashboardUiState(
             accounts = accountsUi,
-            recents = stats.transactions.take(4),
-            hasMoreRecents = stats.transactions.size > 3,
+            recents = operations.sortedByDescending { it.date }.take(4),
+            hasMoreRecents = operations.size > 3,
             balance = DashboardUiState.BalanceStats(
                 income = stats.income,
                 expense = stats.expense,

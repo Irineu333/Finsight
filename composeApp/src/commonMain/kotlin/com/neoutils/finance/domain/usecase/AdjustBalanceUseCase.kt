@@ -1,13 +1,16 @@
 package com.neoutils.finance.domain.usecase
 
 import com.neoutils.finance.domain.model.Account
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
 class AdjustBalanceUseCase(
     private val repository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
 ) {
     suspend operator fun invoke(
@@ -32,14 +35,23 @@ class AdjustBalanceUseCase(
         val difference = targetBalance - currentBalance
 
         if (existingAdjustment == null) {
-            repository.insert(
-                Transaction(
-                    title = null,
-                    type = Transaction.Type.ADJUSTMENT,
-                    amount = difference,
-                    date = adjustmentDate,
-                    account = account,
-                )
+            operationRepository.createOperation(
+                kind = Operation.Kind.TRANSACTION,
+                title = null,
+                date = adjustmentDate,
+                categoryId = null,
+                sourceAccountId = account.id,
+                targetCreditCardId = null,
+                targetInvoiceId = null,
+                transactions = listOf(
+                    Transaction(
+                        title = null,
+                        type = Transaction.Type.ADJUSTMENT,
+                        amount = difference,
+                        date = adjustmentDate,
+                        account = account,
+                    )
+                ),
             )
             return
         }
@@ -47,7 +59,12 @@ class AdjustBalanceUseCase(
         val newAmount = existingAdjustment.amount + difference
 
         if (newAmount == 0.0) {
-            repository.delete(existingAdjustment)
+            val operationId = existingAdjustment.operationId
+            if (operationId != null) {
+                operationRepository.deleteOperationById(operationId)
+            } else {
+                repository.delete(existingAdjustment)
+            }
             return
         }
 

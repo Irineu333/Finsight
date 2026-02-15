@@ -51,7 +51,7 @@ private val currentDate
 
 class AdvancePaymentModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double // TODO: improve this
+    private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
@@ -170,7 +170,12 @@ class AdvancePaymentModal(
                     amount = amount.text.toString(),
                     date = date.text.toString(),
                     minDate = invoice.openingDate,
-                    maxDate = maxDate
+                    maxDate = maxDate,
+                    outstandingDebt = if (currentBillAmount < 0.0) {
+                        -currentBillAmount
+                    } else {
+                        currentBillAmount
+                    }.coerceAtLeast(0.0),
                 ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -188,12 +193,14 @@ class AdvancePaymentModal(
         amount: String,
         date: String,
         minDate: LocalDate,
-        maxDate: LocalDate
+        maxDate: LocalDate,
+        outstandingDebt: Double,
     ): Boolean {
         if (amount.isEmpty()) return false
         val parsedAmount = parseMoneyToDouble(amount)
         if (parsedAmount <= 0.0) return false
-        if (parsedAmount > currentBillAmount) return false
+        if (outstandingDebt <= 0.0) return false
+        if (parsedAmount > outstandingDebt) return false
         if (date.isEmpty()) return false
         val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
         return parsedDate in minDate..maxDate

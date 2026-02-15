@@ -9,6 +9,7 @@ import arrow.core.flatMap
 import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.InvoiceMonthSelection
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.*
 import com.neoutils.finance.domain.usecase.AddInstallmentUseCase
@@ -24,7 +25,7 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
@@ -124,7 +125,16 @@ class AddTransactionViewModel(
         buildTransactionUseCase(form)
             .flatMap {
                 catch {
-                    transactionRepository.insert(it)
+                    operationRepository.createOperation(
+                        kind = Operation.Kind.TRANSACTION,
+                        title = it.title,
+                        date = it.date,
+                        categoryId = it.category?.id,
+                        sourceAccountId = it.account?.id,
+                        targetCreditCardId = it.creditCard?.id,
+                        targetInvoiceId = it.invoice?.id,
+                        transactions = listOf(it),
+                    )
                 }
             }.onLeft {
                 // TODO: register exception

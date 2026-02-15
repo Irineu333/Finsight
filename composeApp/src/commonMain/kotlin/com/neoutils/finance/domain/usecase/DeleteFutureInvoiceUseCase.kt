@@ -7,11 +7,12 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finance.domain.error.InvoiceError
 import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
+import kotlinx.coroutines.flow.first
 
 class DeleteFutureInvoiceUseCase(
     private val invoiceRepository: IInvoiceRepository,
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
 ) {
     suspend operator fun invoke(invoiceId: Long): Either<InvoiceException, Unit> = either {
         val invoice = invoiceRepository.getInvoiceById(invoiceId)
@@ -24,13 +25,10 @@ class DeleteFutureInvoiceUseCase(
             InvoiceException(InvoiceError.CannotDeleteInvoice)
         }
 
-        transactionRepository.getTransactionsBy(
-            type = null,
-            target = null,
-            date = null,
-            invoiceId = invoiceId
-        ).forEach { transaction ->
-            transactionRepository.delete(transaction)
+        operationRepository.observeOperationsBy(
+            invoiceId = invoiceId,
+        ).first().forEach { operation ->
+            operationRepository.deleteOperationById(operation.id)
         }
 
         invoiceRepository.deleteById(invoiceId)

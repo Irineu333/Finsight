@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.transactions
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toYearMonth
 import kotlin.time.Clock
@@ -15,7 +16,7 @@ private val currentMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
-    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
+    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,
@@ -32,13 +33,11 @@ data class TransactionsUiState(
         val income: Double = 0.0,
         val expense: Double = 0.0,
         val adjustment: Double = 0.0,
-        val invoicePayment: Double = 0.0,
         val finalBalance: Double = 0.0,
-        val advancePayment: Double = 0.0,
+        val payment: Double = 0.0,
     ) {
-        val mustShowInvoicePayment = invoicePayment != 0.0
+        val mustShowPayment = payment != 0.0
         val mustShowAccountAdjustment = adjustment != 0.0
-        val mustShowAdvancePayment = advancePayment != 0.0
     }
 
     data class CreditCardOverview(

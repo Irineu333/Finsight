@@ -17,15 +17,10 @@ class CalculateTransactionStatsUseCase {
         val adjustment = accountTransactions.filter { it.type.isAdjustment }
         val income = accountTransactions.filter { it.type.isIncome }
 
-        val invoicePayment = accountTransactions.filter { it.type.isInvoicePayment }
-        val advancePayment = accountTransactions.filter { it.type.isAdvancePayment }
-
         return TransactionStats(
             income = income.sumOf { it.amount },
             expense = expense.sumOf { it.amount },
             adjustment = adjustment.sumOf { it.amount },
-            invoicePayment = invoicePayment.sumOf { it.amount },
-            advancePayment = advancePayment.sumOf { it.amount },
             transactions = monthTransactions,
         )
     }
@@ -34,8 +29,6 @@ class CalculateTransactionStatsUseCase {
         val income: Double,
         val expense: Double,
         val adjustment: Double,
-        val invoicePayment: Double,
-        val advancePayment: Double,
         val transactions: List<Transaction>
     )
 }

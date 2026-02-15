@@ -5,10 +5,12 @@ package com.neoutils.finance.ui.screen.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.extension.toYearMonth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,7 +31,7 @@ import kotlin.time.ExperimentalTime
 
 class AccountsViewModel(
     private val accountRepository: IAccountRepository,
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
@@ -62,7 +64,7 @@ class AccountsViewModel(
         account?.id to month
     }.flatMapLatest { (accountId, month) ->
         if (accountId != null) {
-            transactionRepository.observeTransactionsBy(accountId = accountId)
+            operationRepository.observeOperationsBy(accountId = accountId)
         } else {
             kotlinx.coroutines.flow.flowOf(emptyList())
         }
@@ -75,9 +77,9 @@ class AccountsViewModel(
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accounts, transactions, categories, index, month, currentFilters ->
-
-        val filteredTransactions = transactions
+    ) { accounts, operations, categories, index, month, currentFilters ->
+        val transactions = operations.flatMap { it.transactions }
+        val filteredOperations = operations
             .filter { it.date.yearMonth == month }
             .filter(currentFilters.category)
             .filter(currentFilters.type)
@@ -89,10 +91,10 @@ class AccountsViewModel(
                 val allAccountTransactions = transactions.filter { it.account?.id == account.id }
                 val initialBalance = allAccountTransactions
                     .filter { it.date.yearMonth < month }
-                    .sumOf { it.accountAmount }
+                    .sumOf { it.signedImpact() }
                 val accountTransactions = allAccountTransactions
                     .filter { it.date.yearMonth <= month }
-                val balance = accountTransactions.sumOf { it.accountAmount }
+                val balance = accountTransactions.sumOf { it.signedImpact() }
                 val monthTransactions = accountTransactions.filter { it.date.yearMonth == month }
                 val income = monthTransactions
                     .filter { it.type == Transaction.Type.INCOME }
@@ -102,12 +104,9 @@ class AccountsViewModel(
                     .sumOf { it.amount }
                 val adjustment = monthTransactions
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
-                    .sumOf { it.accountAmount }
+                    .sumOf { it.signedImpact() }
                 val invoicePayment = monthTransactions
-                    .filter { it.type == Transaction.Type.INVOICE_PAYMENT }
-                    .sumOf { it.amount }
-                val advancePayment = monthTransactions
-                    .filter { it.type == Transaction.Type.ADVANCE_PAYMENT }
+                    .filter { it.type == Transaction.Type.EXPENSE && it.title == "Pagamento de Fatura" }
                     .sumOf { it.amount }
                 AccountUi(
                     account = account,
@@ -117,12 +116,12 @@ class AccountsViewModel(
                     expense = expense,
                     adjustment = adjustment,
                     invoicePayment = invoicePayment,
-                    advancePayment = advancePayment
+                    advancePayment = 0.0
                 )
             },
             selectedAccountIndex = index,
             selectedMonth = month,
-            transactions = filteredTransactions,
+            operations = filteredOperations,
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
@@ -169,12 +168,14 @@ private data class AccountsFilters(
     val type: Transaction.Type?,
 )
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id }
+    return filter { operation ->
+        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+    }
 }
 
-private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
-    return filter { it.type == type }
+    return filter { operation -> operation.type == type }
 }

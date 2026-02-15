@@ -23,7 +23,7 @@ import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
-import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionViewModel
+import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finance.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
@@ -54,21 +54,21 @@ val viewModelModule = module {
 
     viewModel {
         ViewAdjustmentViewModel(
-            transaction = it.get(),
-            transactionRepository = get()
+            operation = it.get(),
+            operationRepository = get(),
         )
     }
 
     viewModel {
-        ViewTransactionViewModel(
-            transaction = it.get(),
-            transactionRepository = get(),
+        ViewOperationViewModel(
+            operation = it.get(),
+            operationRepository = get(),
         )
     }
 
     viewModel {
         DashboardViewModel(
-            transactionRepository = get(),
+            operationRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
@@ -82,15 +82,13 @@ val viewModelModule = module {
 
     viewModel {
         TransactionsViewModel(
-            transaction = getOrNull(),
+            filterType = getOrNull(),
             category = getOrNull(),
-            target = getOrNull(),
-            transactionRepository = get(),
+            filterTarget = getOrNull(),
+            operationRepository = get(),
             categoryRepository = get(),
-            invoiceRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
-            calculateInvoiceOverviewsUseCase = get(),
         )
     }
 
@@ -99,7 +97,7 @@ val viewModelModule = module {
     viewModel {
         AccountsViewModel(
             accountRepository = get(),
-            transactionRepository = get(),
+            operationRepository = get(),
             categoryRepository = get(),
             initialAccountId = it.getOrNull(),
         )
@@ -109,7 +107,7 @@ val viewModelModule = module {
         CreditCardsViewModel(
             initialCreditCardId = it.getOrNull(),
             creditCardRepository = get(),
-            transactionRepository = get(),
+            operationRepository = get(),
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
@@ -121,7 +119,7 @@ val viewModelModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
+            operationRepository = get(),
             accountRepository = get(),
             buildTransactionUseCase = get(),
             addInstallmentUseCase = get(),
@@ -145,7 +143,7 @@ val viewModelModule = module {
     viewModel {
         DeleteTransactionViewModel(
             transaction = it.get(),
-            repository = get(),
+            operationRepository = get(),
             modalManager = get()
         )
     }
@@ -290,7 +288,7 @@ val viewModelModule = module {
             creditCardId = it.get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            transactionRepository = get(),
+            operationRepository = get(),
             categoryRepository = get(),
         )
     }

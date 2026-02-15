@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.invoiceTransactions
 
 import com.neoutils.finance.domain.model.Category
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.util.UiText
 import kotlin.time.ExperimentalTime
@@ -13,7 +14,7 @@ data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
-    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
+    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,

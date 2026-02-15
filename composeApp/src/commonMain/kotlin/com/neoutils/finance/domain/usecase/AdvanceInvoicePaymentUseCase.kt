@@ -10,9 +10,10 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finance.domain.error.InvoiceError
 import com.neoutils.finance.domain.error.InvoiceException
 import com.neoutils.finance.domain.model.Account
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -23,7 +24,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvanceInvoicePaymentUseCase(
-    private val repository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
@@ -32,7 +33,7 @@ class AdvanceInvoicePaymentUseCase(
         amount: Double,
         date: LocalDate,
         account: Account,
-    ): Either<Throwable, Transaction> = either {
+    ): Either<Throwable, Operation> = either {
         ensure(amount > 0) {
             InvoiceException(InvoiceError.NegativeAmount)
         }
@@ -53,26 +54,48 @@ class AdvanceInvoicePaymentUseCase(
 
         val currentBillAmount = calculateInvoiceUseCase(invoiceId)
 
+        ensure(currentBillAmount > 0.0) {
+            InvoiceException(InvoiceError.InvoiceNotInDebt)
+        }
+
         ensure(amount <= currentBillAmount) {
             InvoiceException(InvoiceError.AmountExceedsInvoice)
         }
         
-        Transaction(
-            category = null,
-            title = null,
-            type = Transaction.Type.ADVANCE_PAYMENT,
-            amount = amount,
-            date = date,
-            target = Transaction.Target.INVOICE_PAYMENT,
-            creditCard = invoice.creditCard,
-            invoice = invoice,
-            account = account,
-        ).let { transaction ->
-            catch {
-               transaction.copy(
-                   id = repository.insert(transaction)
-               )
-           }
+        catch {
+            operationRepository.createOperation(
+                kind = Operation.Kind.PAYMENT,
+                title = "Pagamento de Fatura",
+                date = date,
+                categoryId = null,
+                sourceAccountId = account.id,
+                targetCreditCardId = invoice.creditCard.id,
+                targetInvoiceId = invoice.id,
+                transactions = listOf(
+                    Transaction(
+                        category = null,
+                        title = "Pagamento de Fatura",
+                        type = Transaction.Type.EXPENSE,
+                        amount = amount,
+                        date = date,
+                        target = Transaction.Target.ACCOUNT,
+                        creditCard = invoice.creditCard,
+                        invoice = invoice,
+                        account = account,
+                    ),
+                    Transaction(
+                        category = null,
+                        title = "Pagamento de Fatura",
+                        type = Transaction.Type.INCOME,
+                        amount = amount,
+                        date = date,
+                        target = Transaction.Target.CREDIT_CARD,
+                        creditCard = invoice.creditCard,
+                        invoice = invoice,
+                        account = null,
+                    ),
+                ),
+            )
         }.bind()
     }
 }

@@ -30,6 +30,7 @@ sealed class InvoiceError(val message: String) {
     data object NegativeAmount : InvoiceError("Payment amount must be positive")
     data object AmountExceedsInvoice : InvoiceError("Payment amount cannot exceed invoice bill")
     data object InvoiceNotClosed : InvoiceError("Invoice must be closed before payment")
+    data object InvoiceNotInDebt : InvoiceError("Invoice has no outstanding debt")
     data object DateOutsideInvoicePeriod : InvoiceError("Payment date must be within invoice period")
     data object DateInFuture : InvoiceError("Payment date cannot be in the future")
 

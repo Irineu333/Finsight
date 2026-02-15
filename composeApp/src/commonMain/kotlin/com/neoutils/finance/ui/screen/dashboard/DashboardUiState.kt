@@ -6,7 +6,7 @@ import com.neoutils.finance.domain.model.Account
 import com.neoutils.finance.domain.model.CategorySpending
 import com.neoutils.finance.domain.model.CreditCard
 import com.neoutils.finance.domain.model.Invoice
-import com.neoutils.finance.domain.model.Transaction
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.extension.toYearMonth
 import com.neoutils.finance.ui.model.InvoiceUi
 import kotlinx.datetime.YearMonth
@@ -15,7 +15,7 @@ import kotlin.time.ExperimentalTime
 
 data class DashboardUiState(
     val accounts: List<DashboardAccountUi> = emptyList(),
-    val recents: List<Transaction> = emptyList(),
+    val recents: List<Operation> = emptyList(),
     val hasMoreRecents: Boolean = false,
     val balance: BalanceStats = BalanceStats(),
     val yearMonth: YearMonth = Clock.System.now().toYearMonth(),

@@ -42,7 +42,7 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.component.OperationCard
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardModal
@@ -50,7 +50,7 @@ import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -213,7 +213,7 @@ private fun InvoiceTransactionsContent(
                 )
             }
 
-            uiState.transactions.forEach { (date, transactions) ->
+            uiState.operations.forEach { (date, operations) ->
                 item(
                     key = "date_title_$date"
                 ) {
@@ -229,24 +229,23 @@ private fun InvoiceTransactionsContent(
                 }
 
                 items(
-                    items = transactions,
+                    items = operations,
                     key = { it.id }
-                ) { transaction ->
-                    TransactionCard(
-                        transaction = transaction,
-                        category = transaction.category,
+                ) { operation ->
+                    OperationCard(
+                        operation = operation,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (transaction.type) {
+                            when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(transaction))
+                                    modalManager.show(ViewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewTransactionModal(transaction))
+                                    modalManager.show(ViewOperationModal(operation))
                                 }
                             }
                         }
@@ -715,7 +714,7 @@ private fun TypeFilterChip(
         when (selectedType) {
             Transaction.Type.EXPENSE -> ExpenseColor
             Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.ADVANCE_PAYMENT -> BillPaymentColor
+            Transaction.Type.INCOME -> BillPaymentColor
             else -> null
         }
 
@@ -727,7 +726,7 @@ private fun TypeFilterChip(
                 when (selectedType) {
                     Transaction.Type.EXPENSE -> "Despesa"
                     Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.ADVANCE_PAYMENT -> "Antecipação"
+                    Transaction.Type.INCOME -> "Pagamento"
                     else -> "Tipo"
                 }
             )
@@ -761,7 +760,7 @@ private fun TypeFilterChip(
         listOf(
             Transaction.Type.EXPENSE to "Despesa",
             Transaction.Type.ADJUSTMENT to "Ajuste",
-            Transaction.Type.ADVANCE_PAYMENT to "Antecipação",
+            Transaction.Type.INCOME to "Pagamento",
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

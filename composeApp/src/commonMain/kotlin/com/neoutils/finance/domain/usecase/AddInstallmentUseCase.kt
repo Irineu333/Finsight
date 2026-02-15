@@ -17,7 +17,7 @@ import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
@@ -25,7 +25,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class AddInstallmentUseCase(
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
@@ -142,8 +142,17 @@ class AddInstallmentUseCase(
             }
 
             catch {
-                transactions.map {
-                    it.copy(id = transactionRepository.insert(it))
+                transactions.map { transaction ->
+                    operationRepository.createOperation(
+                        kind = com.neoutils.finance.domain.model.Operation.Kind.TRANSACTION,
+                        title = transaction.title,
+                        date = transaction.date,
+                        categoryId = transaction.category?.id,
+                        sourceAccountId = transaction.account?.id,
+                        targetCreditCardId = transaction.creditCard?.id,
+                        targetInvoiceId = transaction.invoice?.id,
+                        transactions = listOf(transaction),
+                    ).primaryTransaction
                 }
             }.bind()
         }

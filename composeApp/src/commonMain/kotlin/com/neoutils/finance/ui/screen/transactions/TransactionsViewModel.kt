@@ -5,17 +5,13 @@ package com.neoutils.finance.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
-import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase
-import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase.CreditCardOverviewResult
-import com.neoutils.finance.domain.usecase.CalculateInvoiceOverviewsUseCase.InvoiceOverviewStats
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.extension.toYearMonth
-import com.neoutils.finance.ui.screen.transactions.TransactionsUiState.CreditCardOverview
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,17 +21,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
+import kotlinx.datetime.yearMonth
 
 class TransactionsViewModel(
-    private val transaction: Transaction.Type?,
+    private val filterType: Transaction.Type?,
     private val category: Category?,
-    private val target: Transaction.Target?,
-    private val transactionRepository: ITransactionRepository,
+    private val filterTarget: Transaction.Target?,
+    private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
-    private val invoiceRepository: IInvoiceRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
-    private val calculateInvoiceOverviewsUseCase: CalculateInvoiceOverviewsUseCase
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -43,42 +38,32 @@ class TransactionsViewModel(
     private val filters = MutableStateFlow(
         TransactionsFilters(
             category = category,
-            type = transaction,
-            target = target
+            type = filterType,
+            target = filterTarget
         )
     )
 
     val uiState = combine(
-        transactionRepository.observeAllTransactions(),
+        operationRepository.observeAllOperations(),
         categoryRepository.observeAllCategories(),
-        invoiceRepository.observeAllInvoices(),
         selectedYearMonth,
         filters
-    ) { transactions, categories, invoices, yearMonth, filters ->
+    ) { operations, categories, yearMonth, filters ->
+        val transactions = operations.flatMap { it.transactions }
         val stats = calculateTransactionStatsUseCase(
             transactions = transactions,
             forYearMonth = yearMonth,
         )
 
-        val invoiceOverviewStats = calculateInvoiceOverviewsUseCase(
-            invoices = invoices,
-            transactions = transactions,
-            forYearMonth = yearMonth,
-        )
-
         TransactionsUiState(
-            transactions = stats.transactions
-                .filter(filters.category)
-                .filter(filters.type)
-                .filter(filters.target)
-                .sortedByDescending { it.date }
-                .groupBy { it.date },
             balanceOverview = TransactionsUiState.BalanceOverview(
                 income = stats.income,
                 expense = stats.expense,
                 adjustment = stats.adjustment,
-                invoicePayment = stats.invoicePayment,
-                advancePayment = stats.advancePayment,
+                payment = operations
+                    .filter { it.kind == Operation.Kind.PAYMENT }
+                    .filter { it.date.yearMonth == yearMonth }
+                    .sumOf { it.amount },
                 initialBalance = calculateBalanceUseCase(
                     target = yearMonth.minusMonth(),
                     transactions = transactions,
@@ -93,6 +78,13 @@ class TransactionsViewModel(
             selectedCategory = filters.category,
             selectedType = filters.type,
             selectedTarget = filters.target,
+            operations = operations
+                .filter(filters.category)
+                .filter(filters.type)
+                .filter(filters.target)
+                .filter { it.date.yearMonth == yearMonth }
+                .sortedByDescending { it.date }
+                .groupBy { it.date },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -129,30 +121,19 @@ class TransactionsViewModel(
     }
 }
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id }
+    return filter { it.category?.id == category.id || it.primaryTransaction.category?.id == category.id }
 }
 
-private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
-    return filter { it.type == type }
+    return filter { operation ->
+        operation.type == type
+    }
 }
 
-private fun List<Transaction>.filter(target: Transaction.Target?): List<Transaction> {
+private fun List<Operation>.filter(target: Transaction.Target?): List<Operation> {
     if (target == null) return this
-    return filter { transaction ->
-        when (target) {
-            Transaction.Target.ACCOUNT ->
-                transaction.target == Transaction.Target.ACCOUNT ||
-                        transaction.target == Transaction.Target.INVOICE_PAYMENT
-
-            Transaction.Target.CREDIT_CARD ->
-                transaction.target == Transaction.Target.CREDIT_CARD ||
-                        transaction.target == Transaction.Target.INVOICE_PAYMENT
-
-            Transaction.Target.INVOICE_PAYMENT ->
-                transaction.target == Transaction.Target.INVOICE_PAYMENT
-        }
-    }
+    return filter { operation -> operation.transactions.any { it.target == target } }
 }

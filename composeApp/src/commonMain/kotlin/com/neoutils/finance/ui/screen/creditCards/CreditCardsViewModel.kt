@@ -5,11 +5,12 @@ package com.neoutils.finance.ui.screen.creditCards
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
-import com.neoutils.finance.domain.repository.ITransactionRepository
+import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.extension.combine
 import com.neoutils.finance.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,7 +22,7 @@ import kotlin.time.ExperimentalTime
 
 class CreditCardsViewModel(
     private val creditCardRepository: ICreditCardRepository,
-    private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
@@ -59,7 +60,7 @@ class CreditCardsViewModel(
         invoices[creditCards.getOrNull(index)?.id]
     }.flatMapLatest { invoice ->
         if (invoice != null) {
-            transactionRepository.observeTransactionsBy(invoiceId = invoice.id)
+            operationRepository.observeOperationsBy(invoiceId = invoice.id)
         } else {
             flowOf(emptyList())
         }
@@ -72,9 +73,9 @@ class CreditCardsViewModel(
         categoryRepository.observeAllCategories(),
         selectedCardIndex,
         filters,
-    ) { creditCards, transactions, invoices, categories, index, currentFilters ->
+    ) { creditCards, operations, invoices, categories, index, currentFilters ->
 
-        val filteredTransactions = transactions
+        val filteredOperations = operations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .sortedByDescending { it.date }
@@ -91,7 +92,7 @@ class CreditCardsViewModel(
                 )
             },
             selectedCardIndex = index,
-            transactions = filteredTransactions,
+            operations = filteredOperations,
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
@@ -126,12 +127,14 @@ private data class CreditCardsFilters(
     val type: Transaction.Type?,
 )
 
-private fun List<Transaction>.filter(category: Category?): List<Transaction> {
+private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id }
+    return filter { operation ->
+        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+    }
 }
 
-private fun List<Transaction>.filter(type: Transaction.Type?): List<Transaction> {
+private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
-    return filter { it.type == type }
+    return filter { operation -> operation.type == type }
 }

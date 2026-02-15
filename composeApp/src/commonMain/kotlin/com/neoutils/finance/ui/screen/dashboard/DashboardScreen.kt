@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finance.domain.model.Account
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.*
@@ -41,7 +42,7 @@ import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finance.ui.theme.TextLight1
 import com.neoutils.finance.util.DateFormats
 import org.koin.compose.viewmodel.koinViewModel
@@ -290,15 +291,14 @@ private fun DashboardContent(
 
         itemsIndexed(
             items = uiState.recents,
-            key = { _, transaction ->
-                "transaction_" + transaction.id
+            key = { _, operation ->
+                "operation_" + operation.id
             },
-        ) { index, transaction ->
+        ) { index, operation ->
             val isLastWithFade = uiState.hasMoreRecents && index == uiState.recents.lastIndex
 
-            TransactionCard(
-                transaction = transaction,
-                category = transaction.category,
+            OperationCard(
+                operation = operation,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -325,12 +325,12 @@ private fun DashboardContent(
                             openTransactions(null, null)
                         }
 
-                        transaction.type.isAdjustment -> {
-                            modalManager.show(ViewAdjustmentModal(transaction))
+                        operation.type.isAdjustment -> {
+                            modalManager.show(ViewAdjustmentModal(operation))
                         }
 
                         else -> {
-                            modalManager.show(ViewTransactionModal(transaction))
+                            modalManager.show(ViewOperationModal(operation))
                         }
                     }
                 }

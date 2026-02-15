@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 data class Transaction(
     val id: Long = 0,
+    val operationId: Long? = null,
     val type: Type,
     val amount: Double,
     val title: String?,
@@ -16,59 +17,26 @@ data class Transaction(
     val account: Account? = null,
     val installment: Installment? = null,
 ) {
-    val accountAmount: Double
-        get() = when (type) {
-            Type.INCOME -> amount
-            Type.EXPENSE -> -amount
-            Type.ADJUSTMENT -> amount
-            Type.INVOICE_PAYMENT -> -amount
-            Type.ADVANCE_PAYMENT -> -amount
-        }
-
-    val creditAmount: Double
-        get() = when (type) {
-            Type.INCOME -> -amount
-            Type.EXPENSE -> amount
-            Type.ADJUSTMENT -> amount
-            Type.INVOICE_PAYMENT -> -amount
-            Type.ADVANCE_PAYMENT -> -amount
-        }
-
     @Serializable
     enum class Type {
         EXPENSE,
         INCOME,
-        ADJUSTMENT,
-        INVOICE_PAYMENT,
-        ADVANCE_PAYMENT;
+        ADJUSTMENT;
 
         val isExpense: Boolean get() = this == EXPENSE
         val isIncome: Boolean get() = this == INCOME
         val isAdjustment: Boolean get() = this == ADJUSTMENT
-        val isInvoicePayment: Boolean get() = this == INVOICE_PAYMENT
-        val isAdvancePayment: Boolean get() = this == ADVANCE_PAYMENT
     }
 
     @Serializable
     enum class Target {
         ACCOUNT,
-        CREDIT_CARD,
-        INVOICE_PAYMENT;
+        CREDIT_CARD;
 
         val isAccount: Boolean
-            get() = when (this) {
-                ACCOUNT,
-                INVOICE_PAYMENT -> true
-
-                CREDIT_CARD -> false
-            }
+            get() = this == ACCOUNT
         val isCreditCard: Boolean
-            get() = when (this) {
-                INVOICE_PAYMENT,
-                CREDIT_CARD -> true
-
-                ACCOUNT -> false
-            }
+            get() = this == CREDIT_CARD
     }
 }
 

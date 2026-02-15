@@ -51,7 +51,7 @@ private val currentDate
 
 class PayInvoiceModal(
     private val invoice: Invoice,
-    private val currentBillAmount: Double // TODO: improve this 
+    private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
     private val formats = DateFormats()
@@ -65,7 +65,12 @@ class PayInvoiceModal(
         val uiState by viewModel.uiState.collectAsState()
         val manager = LocalModalManager.current
 
-        val amount = formatMoneyFromDouble(currentBillAmount)
+        val outstandingDebt = if (currentBillAmount < 0.0) {
+            -currentBillAmount
+        } else {
+            currentBillAmount
+        }.coerceAtLeast(0.0)
+        val amount = formatMoneyFromDouble(outstandingDebt)
 
         val maxDate = invoice.dueDate.coerceAtMost(currentDate)
 
@@ -164,7 +169,8 @@ class PayInvoiceModal(
                 enabled = isValidPayment(
                     date = date.text.toString(),
                     minDate = invoice.closingDate,
-                    maxDate = maxDate
+                    maxDate = maxDate,
+                    outstandingDebt = outstandingDebt,
                 ) && uiState.selectedAccount != null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
@@ -181,11 +187,12 @@ class PayInvoiceModal(
     private fun isValidPayment(
         date: String,
         minDate: LocalDate,
-        maxDate: LocalDate
+        maxDate: LocalDate,
+        outstandingDebt: Double,
     ): Boolean {
         if (date.isEmpty()) return false
 
-        if (currentBillAmount < 0.0) return false
+        if (outstandingDebt <= 0.0) return false
 
         val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
 

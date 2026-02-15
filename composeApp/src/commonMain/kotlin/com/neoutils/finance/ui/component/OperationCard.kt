@@ -2,47 +2,51 @@
 
 package com.neoutils.finance.ui.component
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
-import com.neoutils.finance.util.CategoryIcon
 import com.neoutils.finance.ui.theme.Adjustment
-import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 
 private val formats = DateFormats()
 
 @Composable
-fun TransactionCard(
-    transaction: Transaction,
-    category: Category?,
+fun OperationCard(
+    operation: Operation,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) = Card(
@@ -63,13 +67,7 @@ fun TransactionCard(
     ) {
         Box {
             Surface(
-                color = when (transaction.type) {
-                    Transaction.Type.INCOME -> Income.copy(alpha = 0.2f)
-                    Transaction.Type.EXPENSE -> Expense.copy(alpha = 0.2f)
-                    Transaction.Type.ADJUSTMENT -> Adjustment.copy(alpha = 0.2f)
-                    Transaction.Type.INVOICE_PAYMENT,
-                    Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment.copy(alpha = 0.2f)
-                },
+                color = operation.color().copy(alpha = 0.2f),
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.size(48.dp)
             ) {
@@ -77,43 +75,32 @@ fun TransactionCard(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    if (category != null) {
+                    if (operation.category != null) {
                         Icon(
-                            painter = category.icon(),
+                            painter = operation.category.icon(),
                             contentDescription = null,
-                            tint = when (transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                                Transaction.Type.INVOICE_PAYMENT,
-                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                            },
+                            tint = operation.color(),
                             modifier = Modifier.size(24.dp)
                         )
                     } else {
                         Icon(
-                            imageVector = when (transaction.type) {
-                                Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
-                                Transaction.Type.INVOICE_PAYMENT -> Icons.Default.Payment
-                                Transaction.Type.ADVANCE_PAYMENT -> Icons.Default.FastForward
+                            imageVector = when {
+                                operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
+                                else -> when (operation.type) {
+                                    Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                    Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                    Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+                                }
                             },
                             contentDescription = null,
-                            tint = when (transaction.type) {
-                                Transaction.Type.INCOME -> Income
-                                Transaction.Type.EXPENSE -> Expense
-                                Transaction.Type.ADJUSTMENT -> Adjustment
-                                Transaction.Type.INVOICE_PAYMENT,
-                                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-                            },
+                            tint = operation.color(),
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
 
-            if (transaction.target.isCreditCard) {
+            if (operation.target.isCreditCard || operation.kind == Operation.Kind.PAYMENT) {
                 Surface(
                     color = colorScheme.surfaceVariant,
                     shape = CircleShape,
@@ -135,55 +122,55 @@ fun TransactionCard(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = getTitle(transaction, category),
+                text = getTitle(operation),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = formats.dayMonthYear.format(transaction.date),
+                text = formats.dayMonthYear.format(operation.date),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant
             )
         }
 
         Text(
-            text = when (transaction.type) {
+            text = when (operation.type) {
                 Transaction.Type.ADJUSTMENT -> {
-                    transaction.amount.toMoneyFormatWithSign()
+                    operation.amount.toMoneyFormatWithSign()
                 }
+
                 else -> {
-                    transaction.amount.toMoneyFormat()
+                    operation.amount.toMoneyFormat()
                 }
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = when (transaction.type) {
-                Transaction.Type.INCOME -> Income
-                Transaction.Type.EXPENSE -> Expense
-                Transaction.Type.ADJUSTMENT -> Adjustment
-                Transaction.Type.INVOICE_PAYMENT,
-                Transaction.Type.ADVANCE_PAYMENT -> InvoicePayment
-            }
+            color = operation.color()
         )
     }
 }
 
 private fun getTitle(
-    transaction: Transaction,
-    category: Category?
+    operation: Operation,
 ): String {
-    val baseTitle = when (transaction.type) {
-        Transaction.Type.ADJUSTMENT if transaction.target.isAccount -> "Ajuste de Saldo"
-        Transaction.Type.ADJUSTMENT if transaction.target.isCreditCard -> "Ajuste de Fatura"
-        Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
-        Transaction.Type.ADVANCE_PAYMENT -> "Antecipação de Fatura"
-        else -> checkNotNull(transaction.title ?: category?.name)
+    val baseTitle = when {
+        operation.kind == Operation.Kind.PAYMENT -> operation.label
+        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> "Ajuste de Saldo"
+        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> "Ajuste de Fatura"
+        else -> operation.label
     }
 
-    if (transaction.installment != null) {
-        return "$baseTitle • ${transaction.installment.label}"
+    val installment = operation.primaryTransaction.installment
+    if (installment != null) {
+        return "$baseTitle • ${installment.label}"
     }
 
     return baseTitle
 }
 
+private fun Operation.color() = when {
+    kind == Operation.Kind.PAYMENT -> InvoicePayment
+    type == Transaction.Type.INCOME -> Income
+    type == Transaction.Type.EXPENSE -> Expense
+    else -> Adjustment
+}

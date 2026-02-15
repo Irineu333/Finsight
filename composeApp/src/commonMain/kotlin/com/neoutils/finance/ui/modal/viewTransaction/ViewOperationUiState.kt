@@ -1,9 +1,10 @@
-package com.neoutils.finance.ui.modal.viewAdjustment
+package com.neoutils.finance.ui.modal.viewTransaction
 
 import com.neoutils.finance.domain.model.Operation
 
-data class ViewAdjustmentUiState(
+data class ViewOperationUiState(
     val operation: Operation,
 ) {
     val transaction = operation.primaryTransaction
+    val title = operation.label
 }

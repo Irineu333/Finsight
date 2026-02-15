@@ -40,13 +40,13 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
-import com.neoutils.finance.ui.component.TransactionCard
+import com.neoutils.finance.ui.component.OperationCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finance.ui.modal.viewTransaction.ViewTransactionModal
+import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
@@ -206,7 +206,7 @@ private fun AccountsContent(
                 }
             }
 
-            uiState.transactions.forEach { (date, transactions) ->
+            uiState.operations.forEach { (date, operations) ->
                 item(
                     key = "date_title_$date"
                 ) {
@@ -222,24 +222,23 @@ private fun AccountsContent(
                 }
 
                 items(
-                    items = transactions,
+                    items = operations,
                     key = { it.id }
-                ) { transaction ->
-                    TransactionCard(
-                        transaction = transaction,
-                        category = transaction.category,
+                ) { operation ->
+                    OperationCard(
+                        operation = operation,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (transaction.type) {
+                            when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(transaction))
+                                    modalManager.show(ViewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewTransactionModal(transaction))
+                                    modalManager.show(ViewOperationModal(operation))
                                 }
                             }
                         }
@@ -717,8 +716,6 @@ private fun TypeFilterChip(
                     Transaction.Type.INCOME -> "Receita"
                     Transaction.Type.EXPENSE -> "Despesa"
                     Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.INVOICE_PAYMENT -> "Pagamento de Fatura"
-                    Transaction.Type.ADVANCE_PAYMENT -> "Pagamento Antecipado"
                     null -> "Tipo"
                 }
             )
@@ -774,21 +771,6 @@ private fun TypeFilterChip(
             }
         )
 
-        DropdownMenuItem(
-            text = { Text("Pagamento de Fatura") },
-            onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.INVOICE_PAYMENT))
-                expanded = false
-            }
-        )
-
-        DropdownMenuItem(
-            text = { Text("Pagamento Antecipado") },
-            onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.ADVANCE_PAYMENT))
-                expanded = false
-            }
-        )
     }
 }
 

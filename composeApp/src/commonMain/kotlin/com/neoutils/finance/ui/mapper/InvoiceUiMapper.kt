@@ -13,15 +13,16 @@ class InvoiceUiMapper(
         invoice: Invoice,
     ): InvoiceUi {
 
-        val amount = calculateInvoiceUseCase(invoiceId = invoice.id)
+        val outstandingDebt = calculateInvoiceUseCase(
+            invoiceId = invoice.id,
+        ).coerceAtLeast(0.0)
 
-        val displayAmount = amount.coerceAtLeast(0.0)
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
 
-        if (displayAmount > 0 && limit.usage != 0.0) {
+        if (outstandingDebt > 0 && limit.usage != 0.0) {
             return InvoiceUi(
                 invoice = invoice,
-                amount = displayAmount,
+                amount = outstandingDebt,
                 totalUnpaidAmount = limit.totalUnpaidAmount,
                 availableLimit = limit.available,
                 usagePercentage = limit.usage,
@@ -32,7 +33,7 @@ class InvoiceUiMapper(
 
         return InvoiceUi(
             invoice = invoice,
-            amount = displayAmount,
+            amount = outstandingDebt,
             totalUnpaidAmount = limit.totalUnpaidAmount,
             availableLimit = limit.available,
             usagePercentage = 0.0,

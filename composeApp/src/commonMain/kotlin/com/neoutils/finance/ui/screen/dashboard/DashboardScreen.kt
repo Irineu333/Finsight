@@ -141,26 +141,45 @@ private fun DashboardContent(
         item(
             key = "balance"
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .animateItem()
             ) {
-                BalanceCard(
-                    balance = uiState.balance.income,
-                    modifier = Modifier.weight(1f),
-                    config = BalanceCardConfig.Income,
-                    onClick = { openTransactions(Transaction.Type.INCOME, null) }
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    BalanceCard(
+                        balance = uiState.balance.income,
+                        modifier = Modifier.weight(1f),
+                        config = BalanceCardConfig.Income,
+                        onClick = { openTransactions(Transaction.Type.INCOME, null) }
+                    )
 
-                BalanceCard(
-                    balance = uiState.balance.expense,
-                    modifier = Modifier.weight(1f),
-                    config = BalanceCardConfig.Expense,
-                    onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
-                )
+                    BalanceCard(
+                        balance = uiState.balance.expense,
+                        modifier = Modifier.weight(1f),
+                        config = BalanceCardConfig.Expense,
+                        onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
+                    )
+                }
+
+                if (uiState.balance.mustShowPayment) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        BalanceCard(
+                            balance = uiState.balance.payment,
+                            modifier = Modifier.weight(1f),
+                            config = BalanceCardConfig.Payment,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
 

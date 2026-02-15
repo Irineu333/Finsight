@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -101,6 +102,7 @@ class ViewOperationModal(
                             Icon(
                                 imageVector = when {
                                     uiState.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
+                                    uiState.operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
                                     uiState.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
                                     uiState.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
                                     else -> Icons.Default.Tune
@@ -182,12 +184,39 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.transaction.account?.let { account ->
-                DetailRow(
-                    label = "Conta",
-                    value = account.name,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            if (uiState.operation.kind == Operation.Kind.TRANSFER) {
+                val sourceAccount = uiState.operation.transactions
+                    .firstOrNull { it.type == Transaction.Type.EXPENSE && it.target == Transaction.Target.ACCOUNT }
+                    ?.account
+                val destinationAccount = uiState.operation.transactions
+                    .firstOrNull { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.ACCOUNT }
+                    ?.account
+
+                sourceAccount?.let { account ->
+                    DetailRow(
+                        label = "Conta origem",
+                        value = account.name,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+                destinationAccount?.let { account ->
+                    DetailRow(
+                        label = "Conta destino",
+                        value = account.name,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+
+            if (uiState.operation.kind != Operation.Kind.TRANSFER) {
+                uiState.transaction.account?.let { account ->
+                    DetailRow(
+                        label = "Conta",
+                        value = account.name,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
 
             uiState.transaction.creditCard?.let { creditCard ->
@@ -354,6 +383,7 @@ class ViewOperationModal(
 
     private fun ViewOperationUiState.operationColor() = when {
         operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
+        operation.kind == Operation.Kind.TRANSFER -> Info
         transaction.type == Transaction.Type.INCOME -> Income
         transaction.type == Transaction.Type.EXPENSE -> Expense
         else -> Adjustment

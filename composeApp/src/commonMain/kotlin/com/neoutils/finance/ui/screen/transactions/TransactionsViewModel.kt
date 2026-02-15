@@ -12,8 +12,6 @@ import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finance.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finance.extension.toYearMonth
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -22,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
     private val filterType: Transaction.Type?,
@@ -50,8 +50,14 @@ class TransactionsViewModel(
         filters
     ) { operations, categories, yearMonth, filters ->
         val transactions = operations.flatMap { it.transactions }
+
+        val transactionsForStats = operations
+            .filterNot { it.kind == Operation.Kind.TRANSFER }
+            .filterNot { it.kind == Operation.Kind.PAYMENT }
+            .flatMap { it.transactions }
+
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactions,
+            transactions = transactionsForStats,
             forYearMonth = yearMonth,
         )
 

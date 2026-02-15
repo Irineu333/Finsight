@@ -55,5 +55,6 @@ data class OperationEntity(
     enum class Kind {
         TRANSACTION,
         PAYMENT,
+        TRANSFER,
     }
 }

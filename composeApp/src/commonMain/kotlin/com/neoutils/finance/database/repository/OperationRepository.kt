@@ -230,6 +230,7 @@ class OperationRepository(
         return when (kind) {
             OperationEntity.Kind.TRANSACTION -> Operation.Kind.TRANSACTION
             OperationEntity.Kind.PAYMENT -> Operation.Kind.PAYMENT
+            OperationEntity.Kind.TRANSFER -> Operation.Kind.TRANSFER
         }
     }
 
@@ -237,6 +238,7 @@ class OperationRepository(
         return when (kind) {
             Operation.Kind.TRANSACTION -> OperationEntity.Kind.TRANSACTION
             Operation.Kind.PAYMENT -> OperationEntity.Kind.PAYMENT
+            Operation.Kind.TRANSFER -> OperationEntity.Kind.TRANSFER
         }
     }
 }

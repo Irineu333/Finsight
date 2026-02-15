@@ -4,6 +4,7 @@ package com.neoutils.finance.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.signedImpact
 import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -57,9 +59,12 @@ class DashboardViewModel(
         accountRepository.observeAllAccounts(),
     ) { operations, creditCards, invoices, accounts ->
         val transactions = operations.flatMap { it.transactions }
+        val transactionsForStats = operations
+            .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
+            .flatMap { it.transactions }
 
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactions,
+            transactions = transactionsForStats,
             forYearMonth = currentMonth
         )
 
@@ -97,6 +102,10 @@ class DashboardViewModel(
             balance = DashboardUiState.BalanceStats(
                 income = stats.income,
                 expense = stats.expense,
+                payment = operations
+                    .filter { it.kind == Operation.Kind.PAYMENT }
+                    .filter { it.date.yearMonth == currentMonth }
+                    .sumOf { it.amount },
                 balance = calculateBalanceUseCase(
                     target = currentMonth,
                     transactions = transactions,

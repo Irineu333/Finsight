@@ -24,4 +24,12 @@
     <string name="credit_card_error_missing_due_day">O dia de vencimento é obrigatório.</string>
     <string name="credit_card_error_invalid_due_day">O dia de vencimento deve ser entre 1 e 31.</string>
     <string name="credit_card_error_not_found">Cartão de crédito não encontrado.</string>
+
+    <!-- Transfer errors -->
+    <string name="transfer_error_invalid_amount">O valor da transferência deve ser maior que zero.</string>
+    <string name="transfer_error_same_account">A conta de origem deve ser diferente da conta de destino.</string>
+    <string name="transfer_error_source_account_not_found">Conta de origem não encontrada.</string>
+    <string name="transfer_error_destination_account_not_found">Conta de destino não encontrada.</string>
+    <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
+    <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
 </resources>

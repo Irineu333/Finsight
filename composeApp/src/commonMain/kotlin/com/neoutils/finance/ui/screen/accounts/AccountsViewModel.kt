@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -55,24 +57,44 @@ class AccountsViewModel(
         )
     )
 
-    private val transactionsFlow = combine(
+    private val operationsBySelectedAccount = combine(
         accounts,
         selectedAccountIndex,
-        selectedMonth,
-    ) { accounts, index, month ->
+    ) { accounts, index ->
         val account = accounts.getOrNull(index)
-        account?.id to month
-    }.flatMapLatest { (accountId, month) ->
+        account?.id
+    }.flatMapLatest { accountId ->
         if (accountId != null) {
-            operationRepository.observeOperationsBy(accountId = accountId)
+            operationRepository.observeAllOperations().map { operations ->
+                operations
+                    .filter { operation ->
+                        operation.transactions.any { transaction ->
+                            transaction.account?.id == accountId
+                        }
+                    }
+                    .map { operation ->
+                        val selectedTransactions = operation.transactions.filter { transaction ->
+                            transaction.account?.id == accountId
+                        }
+                        if (selectedTransactions.isEmpty()) {
+                            operation
+                        } else {
+                            operation.copy(
+                                transactions = selectedTransactions + operation.transactions.filterNot { transaction ->
+                                    transaction.account?.id == accountId
+                                }
+                            )
+                        }
+                    }
+            }
         } else {
-            kotlinx.coroutines.flow.flowOf(emptyList())
+            flowOf(emptyList())
         }
     }
 
     val uiState = combine(
         accounts,
-        transactionsFlow,
+        operationsBySelectedAccount,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
         selectedMonth,
@@ -100,7 +122,7 @@ class AccountsViewModel(
                     .filter { it.type == Transaction.Type.INCOME }
                     .sumOf { it.amount }
                 val expense = monthTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE }
+                    .filter { it.type == Transaction.Type.EXPENSE && it.title != "Pagamento de Fatura" }
                     .sumOf { it.amount }
                 val adjustment = monthTransactions
                     .filter { it.type == Transaction.Type.ADJUSTMENT }

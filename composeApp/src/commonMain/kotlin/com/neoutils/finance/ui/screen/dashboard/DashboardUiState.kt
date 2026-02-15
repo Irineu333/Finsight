@@ -25,8 +25,11 @@ data class DashboardUiState(
     data class BalanceStats(
         val income: Double = 0.0,
         val expense: Double = 0.0,
-        val balance: Double = 0.0
-    )
+        val payment: Double = 0.0,
+        val balance: Double = 0.0,
+    ) {
+        val mustShowPayment = payment != 0.0
+    }
 }
 
 data class CreditCardUi(

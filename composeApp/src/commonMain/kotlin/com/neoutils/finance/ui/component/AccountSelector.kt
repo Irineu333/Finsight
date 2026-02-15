@@ -16,6 +16,7 @@ fun AccountSelector(
     selectedAccount: Account?,
     accounts: List<Account>,
     onAccountSelected: (Account?) -> Unit,
+    label: String = "Conta",
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -34,7 +35,7 @@ fun AccountSelector(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Conta")
+                Text(text = label)
             },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)

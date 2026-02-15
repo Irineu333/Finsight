@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -45,6 +46,7 @@ import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
+import com.neoutils.finance.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finance.ui.theme.Adjustment
@@ -184,6 +186,7 @@ private fun AccountsContent(
                 ) {
                     AccountActions(
                         accountUi = selectedAccount,
+                        canTransfer = uiState.accounts.size > 1,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
@@ -483,6 +486,7 @@ private fun AccountSummaryRow(
 @Composable
 private fun AccountActions(
     accountUi: AccountUi,
+    canTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
@@ -553,6 +557,36 @@ private fun AccountActions(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Editar",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+        }
+
+        if (canTransfer) {
+            OutlinedButton(
+                onClick = {
+                    modalManager.show(TransferBetweenAccountsModal(account))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.primary
+                ),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
+                ),
+                contentPadding = PaddingValues(12.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SwapHoriz,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Transferir",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

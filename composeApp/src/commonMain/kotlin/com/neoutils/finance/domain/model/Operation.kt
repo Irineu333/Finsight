@@ -16,6 +16,7 @@ data class Operation(
     enum class Kind {
         TRANSACTION,
         PAYMENT,
+        TRANSFER,
     }
 
     val accountTransaction: Transaction?

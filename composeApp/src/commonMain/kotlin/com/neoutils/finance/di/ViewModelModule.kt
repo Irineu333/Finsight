@@ -21,6 +21,7 @@ import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewMo
 import com.neoutils.finance.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finance.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finance.ui.modal.reopenInvoice.ReopenInvoiceViewModel
+import com.neoutils.finance.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finance.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationViewModel
@@ -280,6 +281,15 @@ val viewModelModule = module {
             invoiceId = it.get(),
             reopenInvoiceUseCase = get(),
             modalManager = get()
+        )
+    }
+
+    viewModel {
+        TransferBetweenAccountsViewModel(
+            initialSourceAccount = it.get(),
+            transferBetweenAccountsUseCase = get(),
+            accountRepository = get(),
+            modalManager = get(),
         )
     }
 

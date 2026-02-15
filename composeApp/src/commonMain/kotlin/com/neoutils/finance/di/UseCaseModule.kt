@@ -3,6 +3,7 @@ package com.neoutils.finance.di
 import com.neoutils.finance.domain.usecase.CreateAccountUseCase
 import com.neoutils.finance.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finance.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finance.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finance.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finance.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finance.domain.usecase.ValidateCategoryNameUseCase
@@ -243,6 +244,13 @@ val useCaseModules = module {
     factory {
         EnsureDefaultAccountUseCase(
             repository = get(),
+        )
+    }
+
+    factory {
+        TransferBetweenAccountsUseCase(
+            operationRepository = get(),
+            accountRepository = get(),
         )
     }
 }

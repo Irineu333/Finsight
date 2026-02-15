@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,6 +39,7 @@ import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.theme.Adjustment
 import com.neoutils.finance.ui.theme.Expense
 import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.Info
 import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.util.DateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -86,6 +88,7 @@ fun OperationCard(
                         Icon(
                             imageVector = when {
                                 operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
+                                operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
                                 else -> when (operation.type) {
                                     Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
                                     Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
@@ -139,6 +142,14 @@ fun OperationCard(
                     operation.amount.toMoneyFormatWithSign()
                 }
 
+                Transaction.Type.EXPENSE -> {
+                    if (operation.kind == Operation.Kind.TRANSFER) {
+                        "-${operation.amount.toMoneyFormat()}"
+                    } else {
+                        operation.amount.toMoneyFormat()
+                    }
+                }
+
                 else -> {
                     operation.amount.toMoneyFormat()
                 }
@@ -155,6 +166,7 @@ private fun getTitle(
 ): String {
     val baseTitle = when {
         operation.kind == Operation.Kind.PAYMENT -> operation.label
+        operation.kind == Operation.Kind.TRANSFER -> "Transferência"
         operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> "Ajuste de Saldo"
         operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> "Ajuste de Fatura"
         else -> operation.label
@@ -170,6 +182,7 @@ private fun getTitle(
 
 private fun Operation.color() = when {
     kind == Operation.Kind.PAYMENT -> InvoicePayment
+    kind == Operation.Kind.TRANSFER -> Info
     type == Transaction.Type.INCOME -> Income
     type == Transaction.Type.EXPENSE -> Expense
     else -> Adjustment

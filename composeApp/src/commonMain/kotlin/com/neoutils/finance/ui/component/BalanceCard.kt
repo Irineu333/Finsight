@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.ui.theme.InvoicePayment
 import com.neoutils.finance.ui.theme.Expense as ExpenseColor
 import com.neoutils.finance.ui.theme.Income as IncomeColor
 
@@ -209,6 +210,25 @@ data class BalanceCardConfig(
                 ),
                 padding = PaddingValues(16.dp),
                 container = ExpenseColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val Payment
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.CreditCard,
+                title = "Faturas",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = InvoicePayment
+                ),
+                padding = PaddingValues(16.dp),
+                container = InvoicePayment.copy(alpha = 0.15f),
                 shape = shapes.large
             )
 

@@ -19,4 +19,7 @@ interface InstallmentDao {
 
     @Query("SELECT * FROM installments")
     suspend fun getAll(): List<InstallmentEntity>
+
+    @Query("DELETE FROM installments WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

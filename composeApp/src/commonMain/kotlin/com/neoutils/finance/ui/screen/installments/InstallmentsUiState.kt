@@ -38,4 +38,5 @@ data class InstallmentWithOperationsUi(
     val installmentAmount: Double,
     val remainingAmount: Double,
     val progress: Float,
+    val isDeletable: Boolean,
 )

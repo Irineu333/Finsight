@@ -11,4 +11,5 @@ interface IInstallmentRepository {
         count: Int,
         totalAmount: Double,
     ): Long
+    suspend fun deleteInstallmentById(id: Long)
 }

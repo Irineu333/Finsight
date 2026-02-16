@@ -37,6 +37,10 @@ class InstallmentRepository(
         )
     }
 
+    override suspend fun deleteInstallmentById(id: Long) {
+        installmentDao.deleteById(id)
+    }
+
     private fun toDomain(entity: InstallmentEntity): Installment {
         return Installment(
             id = entity.id,

@@ -66,6 +66,9 @@ class InstallmentsViewModel(
                         installmentAmount = installmentAmount,
                         remainingAmount = (installment.count - paidCount) * installmentAmount,
                         progress = currentNumber.toFloat() / installment.count,
+                        isDeletable = installmentOperations.all {
+                            it.targetInvoice?.status?.isEditable != false
+                        },
                     )
                 }
             }

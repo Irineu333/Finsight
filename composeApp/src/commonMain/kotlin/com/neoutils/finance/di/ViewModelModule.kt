@@ -15,6 +15,7 @@ import com.neoutils.finance.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finance.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finance.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finance.ui.modal.deleteTransaction.DeleteTransactionViewModel
+import com.neoutils.finance.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finance.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finance.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
@@ -154,6 +155,16 @@ val viewModelModule = module {
             transaction = it.get(),
             operationRepository = get(),
             modalManager = get()
+        )
+    }
+
+    viewModel {
+        DeleteInstallmentViewModel(
+            installment = it.get(),
+            operations = it.get(),
+            operationRepository = get(),
+            installmentRepository = get(),
+            modalManager = get(),
         )
     }
 

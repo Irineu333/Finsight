@@ -4,48 +4,73 @@ package com.neoutils.finance.ui.screen.installments
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
+
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.text.style.TextDecoration
+import com.neoutils.finance.domain.model.Category
+import com.neoutils.finance.domain.model.Invoice
 import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
+import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.OperationCard
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
-import com.neoutils.finance.util.DateFormats
+import com.neoutils.finance.ui.theme.Expense as ExpenseColor
+import com.neoutils.finance.ui.theme.Income as IncomeColor
+import com.neoutils.finance.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finance.ui.theme.Income
+import com.neoutils.finance.ui.theme.Info
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.viewmodel.koinViewModel
-
-private val formats = DateFormats()
 
 @Composable
 fun InstallmentsScreen(
@@ -105,30 +130,46 @@ private fun InstallmentsContent(
                     )
                 }
 
-                uiState.selectedInstallment?.let { selectedInstallment ->
-                    items(
-                        items = selectedInstallment.operations,
-                        key = Operation::id,
-                    ) { operation ->
-                        OperationCard(
-                            operation = operation,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .animateItem(),
-                            onClick = {
-                                when (operation.type) {
-                                    Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
-                                    }
+                item(key = "filters_row") {
+                    FiltersRow(
+                        uiState = uiState,
+                        onAction = onAction,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .animateItem(),
+                    )
+                }
 
-                                    else -> {
-                                        modalManager.show(ViewOperationModal(operation))
-                                    }
+                items(
+                    items = uiState.filteredOperations,
+                    key = Operation::id,
+                ) { operation ->
+                    OperationCard(
+                        operation = operation,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .fillMaxWidth()
+                            .animateItem(),
+                        amountDecoration = when (operation.targetInvoice?.status) {
+
+                            Invoice.Status.PAID,
+                            Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
+
+                            else -> TextDecoration.None
+                        },
+                        onClick = {
+                            when (operation.type) {
+                                Transaction.Type.ADJUSTMENT -> {
+                                    modalManager.show(ViewAdjustmentModal(operation))
                                 }
-                            },
-                        )
-                    }
+
+                                else -> {
+                                    modalManager.show(ViewOperationModal(operation))
+                                }
+                            }
+                        },
+                    )
                 }
             }
         }
@@ -182,7 +223,7 @@ private fun InstallmentSummaryCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor = colorScheme.surfaceContainer,
         ),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -190,23 +231,306 @@ private fun InstallmentSummaryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "${ui.installment.count} parcelas",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    if (ui.category != null) {
+                        CategoryIconBox(
+                            category = ui.category,
+                            contentPadding = PaddingValues(8.dp),
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = ui.title,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface,
+                        )
+                        if (ui.categoryName != null) {
+                            Text(
+                                text = ui.categoryName,
+                                fontSize = 12.sp,
+                                color = colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+
+                StatusBadge(isActive = ui.isActive)
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Valor Total",
+                    fontSize = 12.sp,
+                    color = colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = ui.installment.totalAmount.toMoneyFormat(),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text(
+                        text = "Parcela Atual",
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Row {
+                        Text(
+                            text = ui.currentNumber.toString().padStart(2, '0'),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onSurface,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                        Text(
+                            text = " / ${ui.installment.count}",
+                            fontSize = 16.sp,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                    }
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                ) {
+                    Text(
+                        text = "Restante",
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = ui.remainingAmount.toMoneyFormat(),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface,
+                    )
+                }
+            }
+
+            LinearProgressIndicator(
+                progress = { ui.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                color = colorScheme.primary,
+                trackColor = colorScheme.surfaceContainerHighest,
+                drawStopIndicator = {},
             )
-            Text(
-                text = "Valor total ${ui.installment.totalAmount.toMoneyFormat()}",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        }
+    }
+}
+
+@Composable
+private fun StatusBadge(
+    isActive: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val color = if (isActive) Income else Info
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.15f),
+            contentColor = color,
+        ),
+        shape = RoundedCornerShape(4.dp),
+    ) {
+        Text(
+            text = if (isActive) "Ativo" else "Concluído",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(
+                horizontal = 8.dp,
+                vertical = 4.dp,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun FiltersRow(
+    uiState: InstallmentsUiState,
+    onAction: (InstallmentsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(key = "category_filter") {
+            Box {
+                CategoryFilterChip(
+                    selectedCategory = uiState.selectedCategory,
+                    categories = uiState.categories,
+                    onAction = onAction,
+                )
+            }
+        }
+
+        item(key = "type_filter") {
+            Box {
+                TypeFilterChip(
+                    selectedType = uiState.selectedType,
+                    onAction = onAction,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterChip(
+    selectedCategory: Category?,
+    categories: List<Category>,
+    onAction: (InstallmentsAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val chipColor = selectedCategory?.let { category ->
+        when (category.type) {
+            Category.Type.INCOME -> IncomeColor
+            Category.Type.EXPENSE -> ExpenseColor
+        }
+    }
+
+    FilterChip(
+        selected = selectedCategory != null,
+        onClick = { expanded = true },
+        label = { Text(selectedCategory?.name ?: "Categoria") },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
             )
+        },
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color,
+            )
+        } ?: FilterChipDefaults.filterChipColors()
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+    ) {
+        DropdownMenuItem(
+            text = { Text("Todas") },
+            onClick = {
+                onAction(InstallmentsAction.SelectCategory(null))
+                expanded = false
+            },
+        )
+
+        categories.forEach { category ->
+            DropdownMenuItem(
+                text = { Text(category.name) },
+                onClick = {
+                    onAction(InstallmentsAction.SelectCategory(category))
+                    expanded = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun TypeFilterChip(
+    selectedType: Transaction.Type?,
+    onAction: (InstallmentsAction) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val chipColor = when (selectedType) {
+        Transaction.Type.EXPENSE -> ExpenseColor
+        Transaction.Type.ADJUSTMENT -> AdjustmentColor
+        Transaction.Type.INCOME -> IncomeColor
+        else -> null
+    }
+
+    FilterChip(
+        selected = selectedType != null,
+        onClick = { expanded = true },
+        label = {
             Text(
-                text = "Última parcela em ${formats.dayMonthYear.format(ui.latestOperationDate)}",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                when (selectedType) {
+                    Transaction.Type.EXPENSE -> "Despesa"
+                    Transaction.Type.ADJUSTMENT -> "Ajuste"
+                    Transaction.Type.INCOME -> "Receita"
+                    else -> "Tipo"
+                }
+            )
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+            )
+        },
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color,
+            )
+        } ?: FilterChipDefaults.filterChipColors()
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+    ) {
+        DropdownMenuItem(
+            text = { Text("Todos") },
+            onClick = {
+                onAction(InstallmentsAction.SelectType(null))
+                expanded = false
+            },
+        )
+
+        listOf(
+            Transaction.Type.EXPENSE to "Despesa",
+            Transaction.Type.INCOME to "Receita",
+            Transaction.Type.ADJUSTMENT to "Ajuste",
+        ).forEach { (type, label) ->
+            DropdownMenuItem(
+                text = { Text(label) },
+                onClick = {
+                    onAction(InstallmentsAction.SelectType(type))
+                    expanded = false
+                },
             )
         }
     }

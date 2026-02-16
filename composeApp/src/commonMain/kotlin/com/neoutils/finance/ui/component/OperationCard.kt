@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finance.domain.model.Operation
@@ -50,7 +51,8 @@ private val formats = DateFormats()
 fun OperationCard(
     operation: Operation,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    amountDecoration: TextDecoration = TextDecoration.None,
 ) = Card(
     onClick = onClick,
     modifier = modifier,
@@ -156,7 +158,8 @@ fun OperationCard(
             },
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = operation.color()
+            color = operation.color(),
+            textDecoration = amountDecoration,
         )
     }
 }

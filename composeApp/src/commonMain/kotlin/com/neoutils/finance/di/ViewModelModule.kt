@@ -29,6 +29,7 @@ import com.neoutils.finance.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finance.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finance.ui.screen.dashboard.DashboardViewModel
+import com.neoutils.finance.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finance.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finance.util.CreditCardPeriod
 import com.neoutils.finance.util.DebounceManager
@@ -112,6 +113,13 @@ val viewModelModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
+        )
+    }
+
+    viewModel {
+        InstallmentsViewModel(
+            installmentRepository = get(),
+            operationRepository = get(),
         )
     }
 

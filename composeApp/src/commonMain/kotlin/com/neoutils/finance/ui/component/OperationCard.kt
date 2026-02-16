@@ -172,7 +172,7 @@ private fun getTitle(
         else -> operation.label
     }
 
-    val installment = operation.primaryTransaction.installment
+    val installment = operation.installment
     if (installment != null) {
         return "$baseTitle • ${installment.label}"
     }

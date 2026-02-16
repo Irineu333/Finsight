@@ -5,6 +5,7 @@ package com.neoutils.finance.database.repository
 import com.neoutils.finance.database.dao.OperationDao
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.entity.OperationEntity
+import com.neoutils.finance.domain.model.Installment
 import com.neoutils.finance.database.mapper.TransactionMapper
 import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
@@ -12,6 +13,7 @@ import com.neoutils.finance.domain.repository.IAccountRepository
 import com.neoutils.finance.domain.repository.ICategoryRepository
 import com.neoutils.finance.domain.repository.ICreditCardRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
+import com.neoutils.finance.domain.repository.IInstallmentRepository
 import com.neoutils.finance.domain.repository.IOperationRepository
 import com.neoutils.finance.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +27,7 @@ class OperationRepository(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
     private val transactionMapper: TransactionMapper,
 ) : IOperationRepository {
@@ -32,6 +35,7 @@ class OperationRepository(
     private val categoriesFlow = categoryRepository.observeAllCategories().map { it.associateBy { category -> category.id } }
     private val creditCardsFlow = creditCardRepository.observeAllCreditCards().map { it.associateBy { card -> card.id } }
     private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
+    private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
     private val accountsFlow = accountRepository.observeAllAccounts().map { it.associateBy { account -> account.id } }
 
     override fun observeAllOperations(): Flow<List<Operation>> {
@@ -41,8 +45,9 @@ class OperationRepository(
             categoriesFlow,
             creditCardsFlow,
             invoicesFlow,
+            installmentsFlow,
             accountsFlow,
-        ) { operations, transactions, categories, creditCards, invoices, accounts ->
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
@@ -60,6 +65,7 @@ class OperationRepository(
                     categories = categories,
                     creditCards = creditCards,
                     invoices = invoices,
+                    installments = installments,
                     accounts = accounts,
                 )
             }
@@ -83,8 +89,9 @@ class OperationRepository(
             categoriesFlow,
             creditCardsFlow,
             invoicesFlow,
+            installmentsFlow,
             accountsFlow,
-        ) { operations, transactions, categories, creditCards, invoices, accounts ->
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
@@ -102,6 +109,7 @@ class OperationRepository(
                     categories = categories,
                     creditCards = creditCards,
                     invoices = invoices,
+                    installments = installments,
                     accounts = accounts,
                 )
             }
@@ -113,6 +121,7 @@ class OperationRepository(
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
+        val installments = installmentRepository.getAllInstallments().associateBy { it.id }
         val accounts = accountRepository.getAllAccounts().associateBy { it.id }
         return operations.mapNotNull { operation ->
             val transactions = transactionDao
@@ -132,6 +141,7 @@ class OperationRepository(
                 categories = categories,
                 creditCards = creditCards,
                 invoices = invoices,
+                installments = installments,
                 accounts = accounts,
             )
         }
@@ -142,6 +152,7 @@ class OperationRepository(
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
+        val installments = installmentRepository.getAllInstallments().associateBy { it.id }
         val accounts = accountRepository.getAllAccounts().associateBy { it.id }
         val transactions = transactionDao.getTransactionsByOperationId(id).map { entity ->
             transactionMapper.toDomain(
@@ -158,6 +169,7 @@ class OperationRepository(
             categories = categories,
             creditCards = creditCards,
             invoices = invoices,
+            installments = installments,
             accounts = accounts,
         )
     }
@@ -170,6 +182,8 @@ class OperationRepository(
         sourceAccountId: Long?,
         targetCreditCardId: Long?,
         targetInvoiceId: Long?,
+        installmentId: Long?,
+        installmentNumber: Int?,
         transactions: List<Transaction>,
     ): Operation {
         val operationId = operationDao.insert(
@@ -181,6 +195,8 @@ class OperationRepository(
                 sourceAccountId = sourceAccountId,
                 targetCreditCardId = targetCreditCardId,
                 targetInvoiceId = targetInvoiceId,
+                installmentId = installmentId,
+                installmentNumber = installmentNumber,
             )
         )
 
@@ -206,6 +222,7 @@ class OperationRepository(
         categories: Map<Long, com.neoutils.finance.domain.model.Category>,
         creditCards: Map<Long, com.neoutils.finance.domain.model.CreditCard>,
         invoices: Map<Long, com.neoutils.finance.domain.model.Invoice>,
+        installments: Map<Long, Installment>,
         accounts: Map<Long, com.neoutils.finance.domain.model.Account>,
     ): Operation? {
         if (transactions.isEmpty()) return null
@@ -222,6 +239,11 @@ class OperationRepository(
             sourceAccount = operation.sourceAccountId?.let { accounts[it] },
             targetCreditCard = operation.targetCreditCardId?.let { creditCards[it] },
             targetInvoice = operation.targetInvoiceId?.let { invoices[it] },
+            installment = operation.installmentNumber?.let { number ->
+                operation.installmentId?.let { installmentId ->
+                    installments[installmentId]?.copy(number = number)
+                }
+            },
             transactions = transactions.sortedByDescending { it.id },
         )
     }

@@ -14,8 +14,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material.icons.rounded.ArrowForwardIos
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -56,6 +56,7 @@ fun DashboardScreen(
     openCategories: () -> Unit = {},
     openCreditCards: () -> Unit = {},
     openAccounts: () -> Unit = {},
+    openInstallments: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,6 +69,7 @@ fun DashboardScreen(
         onOpenCategories = openCategories,
         onOpenCreditCards = openCreditCards,
         onOpenAccounts = openAccounts,
+        onOpenInstallments = openInstallments,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -79,6 +81,7 @@ private fun DashboardContent(
     onOpenCategories: () -> Unit,
     onOpenCreditCards: () -> Unit,
     onOpenAccounts: () -> Unit,
+    onOpenInstallments: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -380,7 +383,7 @@ private fun DashboardContent(
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                         modifier = Modifier.size(18.dp),
                         contentDescription = null,
                     )
@@ -412,7 +415,7 @@ private fun DashboardContent(
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                         modifier = Modifier.size(18.dp),
                         contentDescription = null,
                     )
@@ -444,7 +447,39 @@ private fun DashboardContent(
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = Icons.Rounded.ArrowForwardIos,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
+            key = "open_installments_action"
+        ) {
+            Card(
+                onClick = onOpenInstallments,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Parcelamentos",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
                         modifier = Modifier.size(18.dp),
                         contentDescription = null,
                     )

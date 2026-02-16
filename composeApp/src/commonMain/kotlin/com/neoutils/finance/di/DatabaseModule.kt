@@ -4,6 +4,7 @@ import com.neoutils.finance.database.AppDatabase
 import com.neoutils.finance.database.dao.AccountDao
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.InvoiceDao
+import com.neoutils.finance.database.dao.InstallmentDao
 import com.neoutils.finance.database.dao.OperationDao
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.getRoomDatabase
@@ -19,6 +20,7 @@ val databaseModule = module {
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single<InvoiceDao> { get<AppDatabase>().invoiceDao() }
     single<AccountDao> { get<AppDatabase>().accountDao() }
+    single<InstallmentDao> { get<AppDatabase>().installmentDao() }
 }
 
 expect val databasePlatformModule: Module

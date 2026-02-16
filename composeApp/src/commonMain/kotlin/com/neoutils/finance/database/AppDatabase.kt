@@ -9,12 +9,14 @@ import com.neoutils.finance.database.dao.AccountDao
 import com.neoutils.finance.database.dao.CategoryDao
 import com.neoutils.finance.database.dao.CreditCardDao
 import com.neoutils.finance.database.dao.InvoiceDao
+import com.neoutils.finance.database.dao.InstallmentDao
 import com.neoutils.finance.database.dao.OperationDao
 import com.neoutils.finance.database.dao.TransactionDao
 import com.neoutils.finance.database.entity.AccountEntity
 import com.neoutils.finance.database.entity.CategoryEntity
 import com.neoutils.finance.database.entity.CreditCardEntity
 import com.neoutils.finance.database.entity.InvoiceEntity
+import com.neoutils.finance.database.entity.InstallmentEntity
 import com.neoutils.finance.database.entity.OperationEntity
 import com.neoutils.finance.database.entity.TransactionEntity
 
@@ -25,9 +27,10 @@ import com.neoutils.finance.database.entity.TransactionEntity
         CreditCardEntity::class,
         InvoiceEntity::class,
         AccountEntity::class,
+        InstallmentEntity::class,
         OperationEntity::class,
     ],
-    version = 10,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -38,6 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun creditCardDao(): CreditCardDao
     abstract fun invoiceDao(): InvoiceDao
     abstract fun accountDao(): AccountDao
+    abstract fun installmentDao(): InstallmentDao
     abstract fun operationDao(): OperationDao
 }
 

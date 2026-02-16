@@ -245,7 +245,7 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.transaction.installment?.let { installment ->
+            uiState.operation.installment?.let { installment ->
                 DetailRow(
                     label = "Parcela",
                     value = "${installment.label} de ${installment.totalLabel}",
@@ -293,7 +293,7 @@ class ViewOperationModal(
             modifier = when {
                 uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
                 !uiState.operation.isEditable -> Modifier.fillMaxWidth()
-                uiState.transaction.installment != null -> Modifier.fillMaxWidth()
+                uiState.operation.installment != null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
             shape = RoundedCornerShape(12.dp),
@@ -321,7 +321,7 @@ class ViewOperationModal(
         when {
             uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
             !uiState.operation.isEditable -> Unit
-            uiState.transaction.installment != null -> Unit
+            uiState.operation.installment != null -> Unit
 
             else -> {
                 OutlinedButton(

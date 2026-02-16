@@ -15,7 +15,6 @@ data class Transaction(
     val creditCard: CreditCard? = null,
     val invoice: Invoice? = null,
     val account: Account? = null,
-    val installment: Installment? = null,
 ) {
     @Serializable
     enum class Type {

@@ -11,6 +11,7 @@ data class Operation(
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
     val targetInvoice: Invoice? = null,
+    val installment: Installment? = null,
     val transactions: List<Transaction>,
 ) {
     enum class Kind {
@@ -43,5 +44,5 @@ data class Operation(
         get() = transactions.size == 1
 
     val hasInstallment: Boolean
-        get() = primaryTransaction.installment != null
+        get() = installment != null
 }

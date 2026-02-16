@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package com.neoutils.finance.domain.usecase
 
 import arrow.core.Either
@@ -12,20 +10,20 @@ import arrow.core.right
 import com.neoutils.finance.domain.error.InstallmentError
 import com.neoutils.finance.domain.exception.InstallmentException
 import com.neoutils.finance.domain.model.CreditCard
-import com.neoutils.finance.domain.model.Installment
 import com.neoutils.finance.domain.model.Invoice
+import com.neoutils.finance.domain.model.Operation
 import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.domain.model.form.TransactionForm
+import com.neoutils.finance.domain.repository.IInstallmentRepository
 import com.neoutils.finance.domain.repository.IInvoiceRepository
 import com.neoutils.finance.domain.repository.IOperationRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class AddInstallmentUseCase(
     private val operationRepository: IOperationRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
@@ -121,36 +119,34 @@ class AddInstallmentUseCase(
         form: TransactionForm,
         invoices: List<Invoice>,
     ): Either<Throwable, List<Transaction>> {
-
-        val groupUuid = Uuid.random().toString()
-
         return either {
             val base = buildTransactionUseCase(form).bind()
+
+            val installmentId = installmentRepository.createInstallment(
+                count = invoices.size,
+                totalAmount = base.amount,
+            )
 
             val transactions = invoices.mapIndexed { index, invoice ->
                 base.copy(
                     amount = base.amount / invoices.size,
                     date = base.date.plus(index, DateTimeUnit.MONTH),
                     invoice = invoice,
-                    installment = Installment(
-                        count = invoices.size,
-                        number = index + 1,
-                        groupUuid = groupUuid,
-                        totalAmount = base.amount,
-                    ),
                 )
             }
 
             catch {
-                transactions.map { transaction ->
+                transactions.mapIndexed { index, transaction ->
                     operationRepository.createOperation(
-                        kind = com.neoutils.finance.domain.model.Operation.Kind.TRANSACTION,
+                        kind = Operation.Kind.TRANSACTION,
                         title = transaction.title,
                         date = transaction.date,
                         categoryId = transaction.category?.id,
                         sourceAccountId = transaction.account?.id,
                         targetCreditCardId = transaction.creditCard?.id,
                         targetInvoiceId = transaction.invoice?.id,
+                        installmentId = installmentId,
+                        installmentNumber = index + 1,
                         transactions = listOf(transaction),
                     ).primaryTransaction
                 }

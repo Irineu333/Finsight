@@ -215,6 +215,7 @@ val useCaseModules = module {
     factory {
         AddInstallmentUseCase(
             operationRepository = get(),
+            installmentRepository = get(),
             invoiceRepository = get(),
             buildTransactionUseCase = get(),
             getOrCreateInvoiceForMonthUseCase = get(),

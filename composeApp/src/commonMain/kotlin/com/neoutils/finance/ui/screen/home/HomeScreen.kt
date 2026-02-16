@@ -32,6 +32,7 @@ import com.neoutils.finance.ui.screen.accounts.AccountsScreen
 import com.neoutils.finance.ui.screen.categories.CategoriesScreen
 import com.neoutils.finance.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finance.ui.screen.dashboard.DashboardScreen
+import com.neoutils.finance.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finance.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finance.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -75,6 +76,9 @@ fun AppNavHost() = Surface {
                             },
                             openAccounts = {
                                 navController.navigate(AppRoute.Accounts())
+                            },
+                            openInstallments = {
+                                navController.navigate(AppRoute.Installments)
                             }
                         )
                     }
@@ -121,6 +125,14 @@ fun AppNavHost() = Surface {
                         }
                     )
                 }
+
+                composable<AppRoute.Installments> {
+                    InstallmentsScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }
@@ -131,6 +143,7 @@ fun HomeScreen(
     openCategories: () -> Unit = {},
     openCreditCards: () -> Unit = {},
     openAccounts: () -> Unit = {},
+    openInstallments: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -190,6 +203,7 @@ fun HomeScreen(
                     openCategories = openCategories,
                     openCreditCards = openCreditCards,
                     openAccounts = openAccounts,
+                    openInstallments = openInstallments,
                 )
             }
 

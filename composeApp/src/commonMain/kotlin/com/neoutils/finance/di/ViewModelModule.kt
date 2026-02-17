@@ -8,6 +8,7 @@ import com.neoutils.finance.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finance.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finance.ui.modal.creditCardForm.CreditCardFormViewModel
+import com.neoutils.finance.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finance.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finance.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finance.ui.modal.closeInvoice.CloseInvoiceViewModel
@@ -121,6 +122,16 @@ val viewModelModule = module {
         InstallmentsViewModel(
             installmentRepository = get(),
             operationRepository = get(),
+        )
+    }
+
+    viewModel {
+        AddInstallmentViewModel(
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            addInstallmentUseCase = get(),
+            modalManager = get(),
         )
     }
 

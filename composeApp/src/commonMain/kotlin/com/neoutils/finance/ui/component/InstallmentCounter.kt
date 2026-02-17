@@ -29,7 +29,6 @@ data class InstallmentState(
     val installment = total / count
 
     override fun toString(): String {
-
         if (count == 1) {
             return "${count}x"
         }
@@ -43,6 +42,7 @@ fun InstallmentCounter(
     state: InstallmentState,
     onInstallmentsChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    minCount: Int = 1,
 ) {
     AnimatedContent(
         targetState = state,
@@ -50,6 +50,8 @@ fun InstallmentCounter(
             fadeIn() togetherWith fadeOut()
         }
     ) { state ->
+        val canDecrease = state.count > minCount
+
         Row(
             modifier = modifier,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -57,17 +59,17 @@ fun InstallmentCounter(
         ) {
             IconButton(
                 onClick = {
-                    if (state.count > 1) {
+                    if (canDecrease) {
                         onInstallmentsChange(state.count - 1)
                     }
                 },
-                enabled = state.count > 1,
+                enabled = canDecrease,
                 modifier = Modifier.size(32.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
                     contentDescription = null,
-                    tint = if (state.count > 1) colorScheme.primary else colorScheme.outline,
+                    tint = if (canDecrease) colorScheme.primary else colorScheme.outline,
                     modifier = Modifier.size(18.dp)
                 )
             }

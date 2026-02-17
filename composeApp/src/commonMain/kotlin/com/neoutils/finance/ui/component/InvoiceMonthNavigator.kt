@@ -26,14 +26,15 @@ import kotlinx.datetime.plusMonth
 fun InvoiceMonthNavigator(
     selection: InvoiceMonthSelection,
     onNavigate: (YearMonth) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    label: String = "Fatura",
 ) {
     OutlinedTextField(
         value = selection.label,
         onValueChange = {},
         readOnly = true,
         label = {
-            Text(text = "Fatura")
+            Text(text = label)
         },
         leadingIcon = {
             Icon(

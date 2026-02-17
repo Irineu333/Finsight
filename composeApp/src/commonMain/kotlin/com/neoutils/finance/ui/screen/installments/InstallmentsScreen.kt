@@ -22,6 +22,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -33,6 +34,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -66,6 +68,7 @@ import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.ui.component.CategoryIconBox
 import com.neoutils.finance.ui.component.LocalModalManager
 import com.neoutils.finance.ui.component.OperationCard
+import com.neoutils.finance.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finance.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
@@ -114,6 +117,18 @@ private fun InstallmentsContent(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    modalManager.show(AddInstallmentModal())
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                )
+            }
         },
     ) { paddingValues ->
         LazyColumn(

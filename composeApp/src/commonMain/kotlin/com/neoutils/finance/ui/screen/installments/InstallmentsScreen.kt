@@ -393,6 +393,7 @@ private fun InstallmentSummaryCard(
                 color = colorScheme.primary,
                 trackColor = colorScheme.surfaceContainerHighest,
                 drawStopIndicator = {},
+                gapSize = (-4).dp,
             )
         }
     }

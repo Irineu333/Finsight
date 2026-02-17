@@ -117,7 +117,8 @@ private fun CategorySpendingItem(
                 },
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
-                drawStopIndicator = {}
+                drawStopIndicator = {},
+                gapSize = (-4).dp,
             )
         }
     }

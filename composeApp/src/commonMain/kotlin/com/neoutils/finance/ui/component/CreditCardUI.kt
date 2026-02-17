@@ -249,7 +249,8 @@ fun CreditCardUI(
                         .clip(RoundedCornerShape(4.dp)),
                     color = colorScheme.primary,
                     trackColor = colorScheme.surfaceContainerHighest,
-                    drawStopIndicator = {}
+                    drawStopIndicator = {},
+                    gapSize = (-4).dp,
                 )
             }
         }

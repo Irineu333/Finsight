@@ -31,7 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,11 +44,11 @@ import com.neoutils.finance.domain.model.Transaction
 import com.neoutils.finance.extension.toMoneyFormat
 import com.neoutils.finance.extension.toMoneyFormatWithSign
 import com.neoutils.finance.ui.component.LocalModalManager
+import com.neoutils.finance.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finance.ui.component.OperationCard
 import com.neoutils.finance.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finance.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finance.ui.modal.editAccountBalance.EditAccountBalanceModal
-import com.neoutils.finance.ui.modal.monthPicker.MonthPickerModal
 import com.neoutils.finance.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
 import com.neoutils.finance.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finance.ui.modal.viewTransaction.ViewOperationModal
@@ -109,15 +112,8 @@ private fun AccountsContent(
                     uiState.selectedMonth?.let { month ->
                         MonthSelector(
                             selectedMonth = month,
-                            onOpenPicker = {
-                                modalManager.show(
-                                    MonthPickerModal(
-                                        initialYearMonth = month,
-                                        onMonthSelected = { selected ->
-                                            onAction(AccountsAction.SelectMonth(selected))
-                                        }
-                                    )
-                                )
+                            onMonthSelected = { selected ->
+                                onAction(AccountsAction.SelectMonth(selected))
                             }
                         )
                     }
@@ -630,35 +626,55 @@ private fun FiltersRow(
 @Composable
 private fun MonthSelector(
     selectedMonth: YearMonth,
-    onOpenPicker: () -> Unit,
+    onMonthSelected: (YearMonth) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .padding(end = 8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .clickable { onOpenPicker() }
-            .padding(start = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    var isMonthPickerExpanded by remember { mutableStateOf(false) }
+    var anchorWidthPx by remember { mutableIntStateOf(0) }
+    val menuWidth = 320.dp
+    val menuOffsetX = with(LocalDensity.current) {
+        (anchorWidthPx.toDp() - menuWidth) / 2
+    }
+
+    Box(
+        modifier = modifier.padding(end = 8.dp)
     ) {
-        AnimatedContent(
-            targetState = selectedMonth,
-            transitionSpec = { fadeIn() togetherWith fadeOut() }
-        ) { month ->
-            Text(
-                text = formats.yearMonth.format(month),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
+        Row(
+            modifier = Modifier
+                .onSizeChanged { anchorWidthPx = it.width }
+                .clip(RoundedCornerShape(4.dp))
+                .clickable { isMonthPickerExpanded = true }
+                .padding(start = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            AnimatedContent(
+                targetState = selectedMonth,
+                transitionSpec = { fadeIn() togetherWith fadeOut() }
+            ) { month ->
+                Text(
+                    text = formats.yearMonth.format(month),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
 
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(20.dp)
+        MonthPickerDropdownMenu(
+            expanded = isMonthPickerExpanded,
+            selectedYearMonth = selectedMonth,
+            onDismissRequest = { isMonthPickerExpanded = false },
+            onMonthSelected = onMonthSelected,
+            menuWidth = menuWidth,
+            offset = DpOffset(x = menuOffsetX, y = 4.dp)
         )
     }
 }

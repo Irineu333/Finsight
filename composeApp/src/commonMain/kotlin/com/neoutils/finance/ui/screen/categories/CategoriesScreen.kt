@@ -8,9 +8,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,14 +40,16 @@ fun CategoriesScreen(
 
     CategoriesContent(
         uiState = uiState,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        onAction = viewModel::onAction,
     )
 }
 
 @Composable
 private fun CategoriesContent(
     uiState: CategoriesUiState,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onAction: (CategoriesAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
 
@@ -59,87 +70,155 @@ private fun CategoriesContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    modalManager.show(CategoryFormModal())
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
-                )
+            if (uiState.categories.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        modalManager.show(CategoryFormModal())
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+                }
             }
         }
     ) { paddingValues ->
-        LazyColumn(
+        if (uiState.categories.isEmpty()) {
+            EmptyCategoriesState(
+                onCreateDefaultCategories = {
+                    onAction(CategoriesAction.CreateDefaultCategories)
+                },
+                onCreateManualCategory = {
+                    modalManager.show(CategoryFormModal())
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val incomes = uiState.categories.filter { it.type.isIncome }
+                val expenses = uiState.categories.filter { it.type.isExpense }
+
+                if (incomes.isNotEmpty()) {
+                    item(
+                        key = "incomes_title"
+                    ) {
+                        Text(
+                            text = "Receitas",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+                }
+
+                items(
+                    items = incomes,
+                    key = { it.id },
+                ) { category ->
+                    CategoryCard(
+                        category = category,
+                        onClick = {
+                            modalManager.show(ViewCategoryModal(category))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                    )
+                }
+
+                if (expenses.isNotEmpty()) {
+                    item(
+                        key = "expenses_title"
+                    ) {
+                        Text(
+                            text = "Despesas",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        )
+                    }
+                }
+
+                items(
+                    items = expenses,
+                    key = { it.id },
+                ) { category ->
+                    CategoryCard(
+                        category = category,
+                        onClick = {
+                            modalManager.show(ViewCategoryModal(category))
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyCategoriesState(
+    onCreateDefaultCategories: () -> Unit,
+    onCreateManualCategory: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val incomes = uiState.categories.filter { it.type.isIncome }
-            val expenses = uiState.categories.filter { it.type.isExpense }
+            Text(
+                text = "Sem categorias",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
 
-            if (incomes.isNotEmpty()) {
-                item(
-                    key = "incomes_title"
-                ) {
-                    Text(
-                        text = "Receitas",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-            }
+            Spacer(Modifier.height(16.dp))
 
-            items(
-                items = incomes,
-                key = { it.id },
-            ) { category ->
-                CategoryCard(
-                    category = category,
-                    onClick = {
-                        modalManager.show(ViewCategoryModal(category))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
+            Button(
+                onClick = onCreateDefaultCategories,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                )
+
+                Spacer(modifier = Modifier.size(8.dp))
+
+                Text(
+                    text = "Usar padrao",
                 )
             }
 
-            if (expenses.isNotEmpty()) {
-                item(
-                    key = "expenses_title"
-                ) {
-                    Text(
-                        text = "Despesas",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-                    )
-                }
-            }
+            Spacer(Modifier.height(4.dp))
 
-            items(
-                items = expenses,
-                key = { it.id },
-            ) { category ->
-                CategoryCard(
-                    category = category,
-                    onClick = {
-                        modalManager.show(ViewCategoryModal(category))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                )
+            OutlinedButton(
+                onClick = onCreateManualCategory,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = "Criar manualmente")
             }
         }
     }

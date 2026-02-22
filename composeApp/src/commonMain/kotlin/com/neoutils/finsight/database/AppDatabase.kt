@@ -30,7 +30,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         InstallmentEntity::class,
         OperationEntity::class,
     ],
-    version = 12,
+    version = 1,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

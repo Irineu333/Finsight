@@ -1,4 +1,4 @@
-rootProject.name = "finance"
+rootProject.name = "finsight"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

@@ -1,9 +1,0 @@
-package com.neoutils.finance.ui.modal.viewAdjustment
-
-import com.neoutils.finance.domain.model.Operation
-
-data class ViewAdjustmentUiState(
-    val operation: Operation,
-) {
-    val transaction = operation.primaryTransaction
-}

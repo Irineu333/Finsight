@@ -89,11 +89,11 @@ room {
 }
 
 android {
-    namespace = "com.neoutils.finance"
+    namespace = "com.neoutils.finsight"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.neoutils.finance"
+        applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -127,11 +127,11 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "com.neoutils.finance.MainKt"
+        mainClass = "com.neoutils.finsight.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.neoutils.finance"
+            packageName = "com.neoutils.finsight"
             packageVersion = "1.0.0"
         }
     }
@@ -139,6 +139,6 @@ compose.desktop {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.neoutils.finance.resources"
+    packageOfResClass = "com.neoutils.finsight.resources"
     generateResClass = auto
 }

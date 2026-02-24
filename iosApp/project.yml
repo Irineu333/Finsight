@@ -33,6 +33,8 @@ targets:
       path: iosApp/Info.plist
       properties:
         CADisableMinimumFrameDurationOnPhone: true
+        CFBundleShortVersionString: "1.0.1"
+        CFBundleVersion: "2"
 
     scheme:
       testTargets: []

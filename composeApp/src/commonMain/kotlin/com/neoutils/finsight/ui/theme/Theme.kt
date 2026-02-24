@@ -1,9 +1,46 @@
 package com.neoutils.finsight.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+
+private val LightColorScheme = lightColorScheme(
+    primary = Primary1,
+    onPrimary = Color.White,
+    primaryContainer = Primary1,
+    onPrimaryContainer = Color.White,
+
+    secondary = Income,
+    onSecondary = Color.White,
+    secondaryContainer = IncomeCardBackgroundLight,
+    onSecondaryContainer = LightTextPrimary,
+
+    tertiary = Expense,
+    onTertiary = Color.White,
+    tertiaryContainer = ExpenseCardBackgroundLight,
+    onTertiaryContainer = LightTextPrimary,
+
+    background = LightSurface2,
+    onBackground = LightTextPrimary,
+
+    surface = LightCardBackground,
+    onSurface = LightTextPrimary,
+    surfaceVariant = LightSurface2,
+    onSurfaceVariant = LightTextSecondary,
+
+    surfaceContainer = LightCardBackground,
+    surfaceContainerLow = LightCardBackground,
+    surfaceContainerHighest = LightSurface2,
+
+    error = Error,
+    onError = Color.White,
+
+    outline = LightDivider,
+    outlineVariant = LightDividerVariant,
+)
 
 private val DarkColorScheme = darkColorScheme(
     primary = Primary1,
@@ -42,10 +79,11 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun FinsightTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = AppTypography,
         content = content,
     )

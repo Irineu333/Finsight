@@ -39,3 +39,21 @@ val Info = Color(0xFF3B82F6) // Blue - Informações
 
 // Category color
 val CategoryColor = Color(0xFF3B82F6)
+
+// Light theme surfaces
+val LightSurface1 = Color(0xFFF8FAFC)   // Slate-50
+val LightSurface2 = Color(0xFFF1F5F9)   // Slate-100
+val LightSurface3 = Color(0xFFE2E8F0)   // Slate-200
+
+// Light theme card backgrounds
+val IncomeCardBackgroundLight = Color(0xFFDCFCE7)       // Green-100
+val ExpenseCardBackgroundLight = Color(0xFFFEE2E2)      // Red-100
+val AdjustmentCardBackgroundLight = Color(0xFFFEF3C7)   // Amber-100
+
+// Light theme text / component
+val LightTextPrimary = Color(0xFF0F172A)    // Slate-900
+val LightTextSecondary = Color(0xFF475569)  // Slate-600
+val LightDivider = Color(0xFFCBD5E1)        // Slate-300
+val LightDividerVariant = Color(0xFF94A3B8) // Slate-400
+val LightIconTint = Color(0xFF64748B)       // Slate-500
+val LightCardBackground = Color(0xFFFFFFFF)

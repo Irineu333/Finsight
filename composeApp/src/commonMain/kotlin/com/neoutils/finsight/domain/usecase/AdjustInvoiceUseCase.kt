@@ -43,7 +43,7 @@ class AdjustInvoiceUseCase(
                     Transaction(
                         title = null,
                         type = Transaction.Type.ADJUSTMENT,
-                        amount = difference,
+                        amount = -difference,
                         date = adjustmentDate,
                         target = Transaction.Target.CREDIT_CARD,
                         creditCard = invoice.creditCard,
@@ -54,7 +54,7 @@ class AdjustInvoiceUseCase(
             return
         }
 
-        val newAmount = existingAdjustment.amount + difference
+        val newAmount = existingAdjustment.amount - difference
 
         if (newAmount == 0.0) {
             val operationId = existingAdjustment.operationId

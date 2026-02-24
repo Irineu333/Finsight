@@ -136,7 +136,7 @@ class ViewAdjustmentModal(
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
                         label = "Cartão",
-                        value = "(Excluído)",
+                        value = "Excluído",
                         valueColor = colorScheme.error,
                         modifier = Modifier
                             .padding(top = 8.dp)

@@ -13,6 +13,7 @@ import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
@@ -223,7 +224,7 @@ val viewModelModule = module {
     viewModel {
         DeleteCreditCardViewModel(
             creditCard = it.get(),
-            creditCardRepository = get(),
+            deleteCreditCardUseCase = get(),
             modalManager = get(),
         )
     }

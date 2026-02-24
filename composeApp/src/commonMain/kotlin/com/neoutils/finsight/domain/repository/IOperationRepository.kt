@@ -32,4 +32,5 @@ interface IOperationRepository {
     ): Operation
 
     suspend fun deleteOperationById(id: Long)
+    suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long)
 }

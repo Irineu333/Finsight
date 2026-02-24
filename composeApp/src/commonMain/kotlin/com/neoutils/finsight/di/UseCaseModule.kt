@@ -2,6 +2,7 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
@@ -202,6 +203,13 @@ val useCaseModules = module {
     factory {
         DeleteAccountUseCase(
             repository = get(),
+        )
+    }
+
+    factory {
+        DeleteCreditCardUseCase(
+            creditCardRepository = get(),
+            operationRepository = get(),
         )
     }
 

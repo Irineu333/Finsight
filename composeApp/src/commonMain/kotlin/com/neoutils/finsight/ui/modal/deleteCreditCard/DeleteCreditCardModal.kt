@@ -41,7 +41,7 @@ class DeleteCreditCardModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tem certeza que deseja excluir o cartão \"${creditCard.name}\"? As transações associadas não serão excluídas.",
+                text = "Tem certeza que deseja excluir o cartão \"${creditCard.name}\"? As faturas e transações associadas também serão excluídas.",
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )

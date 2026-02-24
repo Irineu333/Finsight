@@ -216,6 +216,10 @@ class OperationRepository(
         operationDao.deleteById(id)
     }
 
+    override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) {
+        operationDao.deleteTransactionsByCreditCardId(creditCardId)
+    }
+
     private fun toDomain(
         operation: OperationEntity,
         transactions: List<Transaction>,

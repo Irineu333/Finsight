@@ -294,6 +294,7 @@ class ViewOperationModal(
                 uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
                 !uiState.operation.isEditable -> Modifier.fillMaxWidth()
                 uiState.operation.installment != null -> Modifier.fillMaxWidth()
+                uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
             shape = RoundedCornerShape(12.dp),
@@ -322,6 +323,7 @@ class ViewOperationModal(
             uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
             !uiState.operation.isEditable -> Unit
             uiState.operation.installment != null -> Unit
+            uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Unit
 
             else -> {
                 OutlinedButton(

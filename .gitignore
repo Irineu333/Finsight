@@ -23,5 +23,6 @@ iosApp/iosApp.xcodeproj/
 node_modules/
 /composeApp/schemas/*
 /CLAUDE.md
+/.claude/
 /.agent/rules/code-style-guide.md
 /AGENTS.md

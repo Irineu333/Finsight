@@ -170,19 +170,6 @@ private fun DashboardContent(
                     )
                 }
 
-                if (uiState.balance.mustShowPayment) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        BalanceCard(
-                            balance = uiState.balance.payment,
-                            modifier = Modifier.weight(1f),
-                            config = BalanceCardConfig.Payment,
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
             }
         }
 

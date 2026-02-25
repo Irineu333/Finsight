@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.InvoiceDao
@@ -13,6 +14,8 @@ import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.entity.BudgetCategoryEntity
+import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
@@ -29,8 +32,10 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         AccountEntity::class,
         InstallmentEntity::class,
         OperationEntity::class,
+        BudgetEntity::class,
+        BudgetCategoryEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -43,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun installmentDao(): InstallmentDao
     abstract fun operationDao(): OperationDao
+    abstract fun budgetDao(): BudgetDao
 }
 
 // Room compiler generates the actual implementations

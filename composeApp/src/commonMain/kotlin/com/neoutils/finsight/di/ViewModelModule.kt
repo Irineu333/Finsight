@@ -32,6 +32,9 @@ import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
+import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
+import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
+import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
@@ -77,11 +80,38 @@ val viewModelModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),
+            budgetRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
+            calculateBudgetProgressUseCase = get(),
             ensureDefaultAccountUseCase = get(),
             invoiceUiMapper = get()
+        )
+    }
+
+    viewModel {
+        BudgetsViewModel(
+            budgetRepository = get(),
+            operationRepository = get(),
+            calculateBudgetProgressUseCase = get(),
+        )
+    }
+
+    viewModel {
+        BudgetFormViewModel(
+            budget = it.getOrNull(),
+            budgetRepository = get(),
+            categoryRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        DeleteBudgetViewModel(
+            budget = it.get(),
+            budgetRepository = get(),
+            modalManager = get(),
         )
     }
 

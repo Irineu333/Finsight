@@ -118,6 +118,7 @@ class EditTransactionViewModel(
         buildTransactionUseCase(
             form = form,
             id = transaction.id,
+            operationId = transaction.operationId,
         ).flatMap {
             catch {
                 transactionRepository.update(it)

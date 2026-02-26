@@ -29,7 +29,8 @@ class BuildTransactionUseCase(
 
     suspend operator fun invoke(
         form: TransactionForm,
-        id: Long = 0
+        id: Long = 0,
+        operationId: Long? = null
     ): Either<Throwable, Transaction> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)
@@ -61,6 +62,7 @@ class BuildTransactionUseCase(
 
             return@either Transaction(
                 id = id,
+                operationId = operationId,
                 type = form.type,
                 amount = form.amount.moneyToDouble(),
                 title = form.title,
@@ -97,6 +99,7 @@ class BuildTransactionUseCase(
 
         Transaction(
             id = id,
+            operationId = operationId,
             type = form.type,
             amount = form.amount.moneyToDouble(),
             title = form.title,

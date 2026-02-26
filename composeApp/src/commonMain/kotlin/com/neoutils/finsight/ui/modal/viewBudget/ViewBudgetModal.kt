@@ -29,6 +29,8 @@ import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.ui.theme.budgetProgressColor
 
 class ViewBudgetModal(
     private val budgetProgress: BudgetProgress,
@@ -38,6 +40,7 @@ class ViewBudgetModal(
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
         val budget = budgetProgress.budget
+        val accentColor = budgetProgressColor(budgetProgress.progress)
 
         Column(
             modifier = Modifier
@@ -109,13 +112,11 @@ class ViewBudgetModal(
                 DetailRow(
                     label = "Gasto",
                     value = budgetProgress.spent.toMoneyFormat(),
-                    valueColor = if (budgetProgress.isExceeded) colorScheme.error else colorScheme.onSurface,
                 )
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = "Excedido em",
                         value = (budgetProgress.spent - budget.amount).toMoneyFormat(),
-                        valueColor = colorScheme.error,
                     )
                 } else {
                     DetailRow(
@@ -130,7 +131,7 @@ class ViewBudgetModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = if (budgetProgress.isExceeded) colorScheme.error else Expense,
+                color = accentColor,
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},
@@ -165,10 +166,14 @@ class ViewBudgetModal(
                     )
                 }
 
-                Button(
+                OutlinedButton(
                     onClick = { manager.show(BudgetFormModal(budget)) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Info,
+                    ),
+                    border = BorderStroke(width = 1.dp, color = Info),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -179,7 +184,7 @@ class ViewBudgetModal(
                     Text(
                         text = "Editar",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }

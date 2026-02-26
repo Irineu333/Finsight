@@ -35,7 +35,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
-import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.util.DateFormats
 import kotlinx.datetime.YearMonth
 import org.koin.compose.viewmodel.koinViewModel
@@ -177,6 +177,8 @@ private fun BudgetProgressItem(
         ),
         shape = RoundedCornerShape(16.dp),
     ) {
+        val accentColor = budgetProgressColor(progress.progress)
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -192,6 +194,7 @@ private fun BudgetProgressItem(
                         category = category,
                         contentPadding = PaddingValues(8.dp),
                         modifier = Modifier.size(40.dp),
+                        color = accentColor,
                     )
                 }
 
@@ -239,7 +242,7 @@ private fun BudgetProgressItem(
                         text = progress.spent.toMoneyFormat(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (progress.isExceeded) colorScheme.error else colorScheme.onSurface,
+                        color = colorScheme.onSurface,
                     )
                 }
 
@@ -257,7 +260,7 @@ private fun BudgetProgressItem(
                         },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (progress.isExceeded) colorScheme.error else colorScheme.onSurface,
+                        color = colorScheme.onSurface,
                     )
                 }
             }
@@ -268,7 +271,7 @@ private fun BudgetProgressItem(
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
-                color = if (progress.isExceeded) colorScheme.error else Expense,
+                color = accentColor,
                 trackColor = colorScheme.surfaceContainerHighest,
                 drawStopIndicator = {},
                 gapSize = (-4).dp,

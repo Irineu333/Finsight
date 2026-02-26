@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.toMoneyFormat
-import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.budgetProgressColor
 
 @Composable
 fun BudgetProgressCard(
@@ -60,6 +60,8 @@ private fun BudgetProgressRow(
     progress: BudgetProgress,
     modifier: Modifier = Modifier,
 ) {
+    val accentColor = budgetProgressColor(progress.progress)
+
     Row(
         modifier = modifier
             .height(IntrinsicSize.Min)
@@ -73,6 +75,7 @@ private fun BudgetProgressRow(
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(8.dp),
                 modifier = Modifier.size(40.dp),
+                color = accentColor,
             )
         }
 
@@ -96,7 +99,7 @@ private fun BudgetProgressRow(
                     text = "${progress.spent.toMoneyFormat()} / ${progress.budget.amount.toMoneyFormat()}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (progress.isExceeded) colorScheme.error else colorScheme.onSurface,
+                    color = colorScheme.onSurface,
                 )
             }
 
@@ -105,7 +108,7 @@ private fun BudgetProgressRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = if (progress.isExceeded) colorScheme.error else Expense,
+                color = accentColor,
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},

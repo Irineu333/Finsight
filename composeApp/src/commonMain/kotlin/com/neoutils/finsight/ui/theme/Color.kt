@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 // Background colors
 val Surface1 = Color(0xFF0F172A)
@@ -36,6 +37,13 @@ val Success = Color(0xFF14B8A6) // Teal - Sucesso/Salvamento
 val Error = Color(0xFFDC2626) // Dark red - Erros críticos
 val Warning = Color(0xFFF59E0B) // Amber - Avisos
 val Info = Color(0xFF3B82F6) // Blue - Informações
+
+// Budget progress color: smooth gradient Success → Warning → Error
+fun budgetProgressColor(progress: Float): Color = when {
+    progress >= 1f -> Error
+    progress >= 0.5f -> lerp(Warning, Error, (progress - 0.5f) / 0.5f)
+    else -> lerp(Success, Warning, progress / 0.5f)
+}
 
 // Category color
 val CategoryColor = Color(0xFF3B82F6)

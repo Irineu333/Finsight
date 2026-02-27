@@ -20,19 +20,17 @@ class InstallmentsViewModel(
     private val selectedInstallmentIndex = MutableStateFlow(0)
     private val selectedCategory = MutableStateFlow<Category?>(null)
     private val selectedType = MutableStateFlow<Transaction.Type?>(null)
+    private val selectedFilter = MutableStateFlow(InstallmentFilter.ACTIVE)
 
-    val uiState = combine(
+    private val allInstallmentsUi = combine(
         installmentRepository.observeAllInstallments(),
         operationRepository.observeAllOperations(),
-        selectedInstallmentIndex,
-        selectedCategory,
-        selectedType,
-    ) { installments, operations, selectedIndex, category, type ->
+    ) { installments, operations ->
         val operationsByInstallmentId = operations
             .filter { it.installment != null }
             .groupBy { checkNotNull(it.installment).id }
 
-        val installmentsUi = installments
+        installments
             .mapNotNull { installment ->
                 val installmentOperations = operationsByInstallmentId[installment.id]
                     .orEmpty()
@@ -76,12 +74,26 @@ class InstallmentsViewModel(
                 compareByDescending<InstallmentWithOperationsUi> { it.latestOperationDate }
                     .thenByDescending { it.installment.id }
             )
+    }
+
+    val uiState = combine(
+        allInstallmentsUi,
+        selectedInstallmentIndex,
+        selectedCategory,
+        selectedType,
+        selectedFilter,
+    ) { installmentsAll, selectedIndex, category, type, filter ->
+        val filtered = when (filter) {
+            InstallmentFilter.ACTIVE -> installmentsAll.filter { it.isActive }
+            InstallmentFilter.COMPLETED -> installmentsAll.filter { !it.isActive }
+            InstallmentFilter.ALL -> installmentsAll
+        }
 
         val safeSelectedIndex = selectedIndex
             .coerceAtLeast(0)
-            .coerceAtMost((installmentsUi.size - 1).coerceAtLeast(0))
+            .coerceAtMost((filtered.size - 1).coerceAtLeast(0))
 
-        val selectedOperations = installmentsUi.getOrNull(safeSelectedIndex)
+        val selectedOperations = filtered.getOrNull(safeSelectedIndex)
             ?.operations.orEmpty()
 
         val categories = selectedOperations
@@ -89,10 +101,11 @@ class InstallmentsViewModel(
             .distinctBy { it.id }
 
         InstallmentsUiState(
-            installments = installmentsUi,
+            installments = filtered,
             selectedInstallmentIndex = safeSelectedIndex,
             selectedCategory = category,
             selectedType = type,
+            selectedFilter = filter,
             categories = categories,
         )
     }.stateIn(
@@ -113,6 +126,12 @@ class InstallmentsViewModel(
             }
             is InstallmentsAction.SelectType -> {
                 selectedType.value = action.type
+            }
+            is InstallmentsAction.SelectFilter -> {
+                selectedFilter.value = action.filter
+                selectedInstallmentIndex.value = 0
+                selectedCategory.value = null
+                selectedType.value = null
             }
         }
     }

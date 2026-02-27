@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -24,9 +25,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -115,6 +118,60 @@ private fun InstallmentsContent(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
                         )
+                    }
+                },
+                actions = {
+                    var menuExpanded by remember { mutableStateOf(false) }
+
+                    Box {
+                        TextButton(
+                            onClick = { menuExpanded = true },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = colorScheme.onSurface,
+                            ),
+                        ) {
+                            Text(
+                                text = when (uiState.selectedFilter) {
+                                    InstallmentFilter.ACTIVE -> "Ativos"
+                                    InstallmentFilter.COMPLETED -> "Concluídos"
+                                    InstallmentFilter.ALL -> "Todos"
+                                },
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                        ) {
+                            listOf(
+                                InstallmentFilter.ACTIVE to "Ativos",
+                                InstallmentFilter.COMPLETED to "Concluídos",
+                                InstallmentFilter.ALL to "Todos",
+                            ).forEach { (filter, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    trailingIcon = if (uiState.selectedFilter == filter) {
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                    } else null,
+                                    onClick = {
+                                        onAction(InstallmentsAction.SelectFilter(filter))
+                                        menuExpanded = false
+                                    },
+                                )
+                            }
+                        }
                     }
                 },
             )

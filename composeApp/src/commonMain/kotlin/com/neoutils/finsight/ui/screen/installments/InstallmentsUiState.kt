@@ -6,11 +6,16 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 
+enum class InstallmentFilter {
+    ACTIVE, COMPLETED, ALL
+}
+
 data class InstallmentsUiState(
     val installments: List<InstallmentWithOperationsUi> = emptyList(),
     val selectedInstallmentIndex: Int = 0,
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
+    val selectedFilter: InstallmentFilter = InstallmentFilter.ACTIVE,
     val categories: List<Category> = emptyList(),
 ) {
     val selectedInstallment: InstallmentWithOperationsUi?

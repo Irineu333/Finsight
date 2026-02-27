@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.viewTransaction
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
@@ -47,7 +49,9 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -73,6 +77,9 @@ class ViewOperationModal(
         val viewModel = koinViewModel<ViewOperationViewModel> { parametersOf(operation) }
 
         val uiState by viewModel.uiState.collectAsState()
+
+        val manager = LocalModalManager.current
+        val navigator = LocalNavigator.current
 
         Column(
             modifier = Modifier
@@ -223,7 +230,11 @@ class ViewOperationModal(
                 DetailRow(
                     label = "Cartão",
                     value = creditCard.name,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = {
+                        manager.dismissAll()
+                        navigator.navigate(NavigationAction.CreditCards(creditCard.id))
+                    }
                 )
             } ?: run {
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
@@ -237,11 +248,18 @@ class ViewOperationModal(
             }
 
             uiState.transaction.invoice?.let { invoice ->
+                val creditCardId = uiState.transaction.creditCard?.id
                 DetailRow(
                     label = "Fatura",
                     value = invoice.label,
                     valueColor = invoice.status.color,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = creditCardId?.let {
+                        {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.InvoiceTransactions(it))
+                        }
+                    }
                 )
             }
 
@@ -249,7 +267,11 @@ class ViewOperationModal(
                 DetailRow(
                     label = "Parcela",
                     value = "${installment.label} de ${installment.totalLabel}",
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = {
+                        manager.dismissAll()
+                        navigator.navigate(NavigationAction.Installments)
+                    }
                 )
             }
 
@@ -363,23 +385,39 @@ class ViewOperationModal(
         label: String,
         value: String,
         modifier: Modifier = Modifier,
-        valueColor: Color = colorScheme.onSurface
+        valueColor: Color = colorScheme.onSurface,
+        onClick: (() -> Unit)? = null,
     ) {
         Row(
             modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = label,
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
-            Text(
-                text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = valueColor
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            ) {
+                if (onClick != null) {
+                    Icon(
+                        imageVector = Icons.Default.OpenInNew,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                Text(
+                    text = value,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = valueColor
+                )
+            }
         }
     }
 

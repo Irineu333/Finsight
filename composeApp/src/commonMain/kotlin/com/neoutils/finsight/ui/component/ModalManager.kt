@@ -31,6 +31,7 @@ sealed class NavigationAction {
     data class InvoiceTransactions(val creditCardId: Long) : NavigationAction()
     data class CreditCards(val creditCardId: Long) : NavigationAction()
     data class Accounts(val accountId: Long? = null) : NavigationAction()
+    data object Installments : NavigationAction()
 }
 
 class ModalManager {

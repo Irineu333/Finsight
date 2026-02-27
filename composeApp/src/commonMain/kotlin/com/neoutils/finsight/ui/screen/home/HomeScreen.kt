@@ -55,6 +55,9 @@ fun AppNavHost() = Surface {
                 is NavigationAction.Accounts -> {
                     navController.navigate(AppRoute.Accounts(action.accountId))
                 }
+                is NavigationAction.Installments -> {
+                    navController.navigate(AppRoute.Installments)
+                }
             }
         }
     ) {

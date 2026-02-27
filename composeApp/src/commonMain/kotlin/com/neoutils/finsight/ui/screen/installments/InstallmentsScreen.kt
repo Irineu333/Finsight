@@ -77,6 +77,7 @@ import com.neoutils.finsight.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.ui.theme.Warning
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -419,7 +420,7 @@ private fun StatusBadge(
     isActive: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (isActive) Income else Info
+    val color = if (isActive) Warning else Income
 
     Card(
         modifier = modifier,

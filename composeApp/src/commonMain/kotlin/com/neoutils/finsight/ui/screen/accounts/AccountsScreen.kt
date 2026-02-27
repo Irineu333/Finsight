@@ -100,6 +100,12 @@ private fun AccountsContent(
                 title = {
                     Text(text = "Contas")
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                    actionIconContentColor = colorScheme.onBackground,
+                ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(

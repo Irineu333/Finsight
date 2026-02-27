@@ -54,6 +54,12 @@ fun BudgetsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = "Orçamentos") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                    actionIconContentColor = colorScheme.onBackground,
+                ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(

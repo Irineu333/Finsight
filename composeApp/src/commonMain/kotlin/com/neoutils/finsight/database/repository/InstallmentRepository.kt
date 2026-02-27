@@ -37,6 +37,10 @@ class InstallmentRepository(
         )
     }
 
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) {
+        installmentDao.updateById(id = id, count = count, totalAmount = totalAmount)
+    }
+
     override suspend fun deleteInstallmentById(id: Long) {
         installmentDao.deleteById(id)
     }

@@ -212,8 +212,33 @@ class OperationRepository(
     }
 
     override suspend fun deleteOperationById(id: Long) {
-        transactionDao.deleteByOperationId(id)
-        operationDao.deleteById(id)
+        val operation = operationDao.getById(id)
+        val installmentId = operation?.installmentId
+
+        if (installmentId != null) {
+            val transactions = transactionDao.getTransactionsByOperationId(id)
+            val operationAmount = transactions.sumOf { it.amount }
+            val remainingCount = operationDao.countByInstallmentId(installmentId) - 1
+
+            transactionDao.deleteByOperationId(id)
+            operationDao.deleteById(id)
+
+            if (remainingCount <= 0) {
+                installmentRepository.deleteInstallmentById(installmentId)
+            } else {
+                val installment = installmentRepository.getInstallmentById(installmentId)
+                if (installment != null) {
+                    installmentRepository.updateInstallment(
+                        id = installmentId,
+                        count = remainingCount,
+                        totalAmount = installment.totalAmount - operationAmount,
+                    )
+                }
+            }
+        } else {
+            transactionDao.deleteByOperationId(id)
+            operationDao.deleteById(id)
+        }
     }
 
     override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) {

@@ -22,4 +22,7 @@ interface InstallmentDao {
 
     @Query("DELETE FROM installments WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("UPDATE installments SET count = :count, totalAmount = :totalAmount WHERE id = :id")
+    suspend fun updateById(id: Long, count: Int, totalAmount: Double)
 }

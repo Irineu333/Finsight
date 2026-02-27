@@ -30,6 +30,9 @@ interface OperationDao {
     @Query("DELETE FROM operations WHERE targetCreditCardId = :creditCardId AND kind = 'TRANSACTION'")
     suspend fun deleteTransactionsByCreditCardId(creditCardId: Long)
 
+    @Query("SELECT COUNT(*) FROM operations WHERE installmentId = :installmentId")
+    suspend fun countByInstallmentId(installmentId: Long): Int
+
     @Query(
         """
         SELECT * FROM operations

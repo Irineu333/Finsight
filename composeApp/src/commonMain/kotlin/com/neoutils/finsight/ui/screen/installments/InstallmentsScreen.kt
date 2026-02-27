@@ -305,17 +305,17 @@ private fun InstallmentSummaryCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-
                     if (ui.category != null) {
                         CategoryIconBox(
                             category = ui.category,
                             contentPadding = PaddingValues(8.dp),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 

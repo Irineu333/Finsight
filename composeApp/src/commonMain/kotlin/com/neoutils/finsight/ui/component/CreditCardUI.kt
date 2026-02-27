@@ -198,19 +198,22 @@ fun CreditCardUI(
                         color = colorScheme.onSurfaceVariant
                     )
 
-                    ui.invoiceUi?.let {
+                    Row {
                         Text(
-                            text = it.availableLimit.toMoneyFormat(),
+                            text = ui.invoiceUi?.availableLimit?.toMoneyFormat()
+                                ?: ui.creditCard.limit.toMoneyFormat(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface
+                            color = colorScheme.onSurface,
+                            modifier = Modifier.alignByBaseline(),
                         )
-                    } ?: Text(
-                        text = ui.creditCard.limit.toMoneyFormat(),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface
-                    )
+                        Text(
+                            text = " / ${ui.creditCard.limit.toMoneyFormat()}",
+                            fontSize = 14.sp,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                    }
                 }
 
                 ui.invoiceUi?.let { invoiceUi ->

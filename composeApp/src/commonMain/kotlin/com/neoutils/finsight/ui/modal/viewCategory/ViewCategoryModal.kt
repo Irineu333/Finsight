@@ -64,7 +64,7 @@ class ViewCategoryModal(
                     viewModel.onAction(ViewCategoryAction.NextMonth)
                 },
                 modifier = Modifier
-                    .padding(vertical = 8.dp)
+                    .padding(bottom = 8.dp)
                     .fillMaxWidth()
             )
 

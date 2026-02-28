@@ -79,10 +79,12 @@ fun BudgetsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { modalManager.show(BudgetFormModal()) },
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+            if (uiState.budgetProgress.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { modalManager.show(BudgetFormModal()) },
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                }
             }
         }
     ) { paddingValues ->

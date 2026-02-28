@@ -284,7 +284,7 @@ private fun DashboardContent(
                     HorizontalPager(
                         state = pagerState,
                         contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 8.dp,
+                        pageSpacing = 16.dp,
                         modifier = Modifier.fillMaxWidth(),
                     ) { page ->
                         when (spendingPages[page]) {

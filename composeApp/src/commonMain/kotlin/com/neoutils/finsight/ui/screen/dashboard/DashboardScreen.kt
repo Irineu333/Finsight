@@ -41,6 +41,7 @@ import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
+import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.TextLight1
@@ -57,6 +58,7 @@ fun DashboardScreen(
     openCreditCards: () -> Unit = {},
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
+    openBudgets: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,6 +72,7 @@ fun DashboardScreen(
         onOpenCreditCards = openCreditCards,
         onOpenAccounts = openAccounts,
         onOpenInstallments = openInstallments,
+        onOpenBudgets = openBudgets,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -82,6 +85,7 @@ private fun DashboardContent(
     onOpenCreditCards: () -> Unit,
     onOpenAccounts: () -> Unit,
     onOpenInstallments: () -> Unit,
+    onOpenBudgets: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -250,21 +254,50 @@ private fun DashboardContent(
             }
         }
 
-        if (uiState.categorySpending.isNotEmpty()) {
-            item(
-                key = "category_spending"
-            ) {
-                CategorySpendingCard(
-                    categorySpending = uiState.categorySpending,
+        val spendingPages = buildList {
+            if (uiState.budgetProgress.isNotEmpty()) add(SpendingPage.Budgets)
+            if (uiState.categorySpending.isNotEmpty()) add(SpendingPage.Categories)
+        }
+
+        if (spendingPages.isNotEmpty()) {
+            item(key = "spending_pager") {
+                val pagerState = rememberPagerState(pageCount = { spendingPages.size })
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp)
                         .animateItem(),
-                    onCategoryClick = { category ->
-                        modalManager.show(ViewCategoryModal(category))
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        pageSpacing = 8.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { page ->
+                        when (spendingPages[page]) {
+                            SpendingPage.Categories -> CategorySpendingCard(
+                                categorySpending = uiState.categorySpending,
+                                modifier = Modifier.fillMaxWidth(),
+                                onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                            )
+                            SpendingPage.Budgets -> BudgetProgressCard(
+                                budgetProgress = uiState.budgetProgress,
+                                modifier = Modifier.fillMaxWidth(),
+                                onBudgetClick = { modalManager.show(ViewBudgetModal(it)) },
+                            )
+                        }
                     }
-                )
+
+                    if (spendingPages.size > 1) {
+                        PageIndicator(
+                            count = spendingPages.size,
+                            current = pagerState.currentPage,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
             }
         }
 
@@ -347,6 +380,38 @@ private fun DashboardContent(
         }
 
         item(
+            key = "open_budgets_action"
+        ) {
+            Card(
+                onClick = onOpenBudgets,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Orçamentos",
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
             key = "open_category_action"
         ) {
             Card(
@@ -357,7 +422,7 @@ private fun DashboardContent(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .padding(horizontal = 16.dp)
                     .animateItem(),
             ) {
@@ -475,6 +540,8 @@ private fun DashboardContent(
         }
     }
 }
+
+private enum class SpendingPage { Categories, Budgets }
 
 @Composable
 private fun PageIndicator(

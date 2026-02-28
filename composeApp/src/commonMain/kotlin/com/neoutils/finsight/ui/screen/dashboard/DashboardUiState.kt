@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -20,7 +21,8 @@ data class DashboardUiState(
     val balance: BalanceStats = BalanceStats(),
     val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val categorySpending: List<CategorySpending> = emptyList(),
-    val creditCards: List<CreditCardUi> = emptyList()
+    val creditCards: List<CreditCardUi> = emptyList(),
+    val budgetProgress: List<BudgetProgress> = emptyList(),
 ) {
     data class BalanceStats(
         val income: Double = 0.0,

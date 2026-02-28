@@ -41,21 +41,25 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -112,6 +116,12 @@ private fun InstallmentsContent(
                 title = {
                     Text(text = "Parcelamentos")
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                    actionIconContentColor = colorScheme.onBackground,
+                ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -124,25 +134,30 @@ private fun InstallmentsContent(
                     var menuExpanded by remember { mutableStateOf(false) }
 
                     Box {
-                        TextButton(
-                            onClick = { menuExpanded = true },
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = colorScheme.onSurface,
-                            ),
+                        CompositionLocalProvider(
+                            LocalContentColor provides colorScheme.onBackground,
+                            LocalTextStyle provides MaterialTheme.typography.labelLarge,
                         ) {
-                            Text(
-                                text = when (uiState.selectedFilter) {
-                                    InstallmentFilter.ACTIVE -> "Ativos"
-                                    InstallmentFilter.COMPLETED -> "Concluídos"
-                                    InstallmentFilter.ALL -> "Todos"
-                                },
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
+                            TextButton(
+                                onClick = { menuExpanded = true },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = Color.Unspecified,
+                                ),
+                            ) {
+                                Text(
+                                    text = when (uiState.selectedFilter) {
+                                        InstallmentFilter.ACTIVE -> "Ativos"
+                                        InstallmentFilter.COMPLETED -> "Concluídos"
+                                        InstallmentFilter.ALL -> "Todos"
+                                    },
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                         }
 
                         DropdownMenu(

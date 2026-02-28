@@ -2,6 +2,7 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
@@ -21,6 +22,7 @@ val databaseModule = module {
     single<InvoiceDao> { get<AppDatabase>().invoiceDao() }
     single<AccountDao> { get<AppDatabase>().accountDao() }
     single<InstallmentDao> { get<AppDatabase>().installmentDao() }
+    single<BudgetDao> { get<AppDatabase>().budgetDao() }
 }
 
 expect val databasePlatformModule: Module

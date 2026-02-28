@@ -20,22 +20,22 @@ fun CategoryIconBox(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
     contentPadding: PaddingValues = PaddingValues(12.dp),
+    color: androidx.compose.ui.graphics.Color? = null,
 ) {
+    val resolvedColor = color ?: when (category.type) {
+        Category.Type.INCOME -> Income
+        Category.Type.EXPENSE -> Expense
+    }
+
     Surface(
-        color = when (category.type) {
-            Category.Type.INCOME -> Income
-            Category.Type.EXPENSE -> Expense
-        }.copy(alpha = 0.2f),
+        color = resolvedColor.copy(alpha = 0.2f),
         shape = shape,
         modifier = modifier,
     ) {
         Icon(
             painter = category.icon(),
             contentDescription = null,
-            tint = when (category.type) {
-                Category.Type.INCOME -> Income
-                Category.Type.EXPENSE -> Expense
-            },
+            tint = resolvedColor,
             modifier = Modifier.padding(contentPadding)
         )
     }

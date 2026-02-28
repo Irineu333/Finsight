@@ -29,6 +29,7 @@ import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.util.TransactionTargetNavType
 import com.neoutils.finsight.util.TransactionTypeNavType
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
+import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
@@ -82,6 +83,9 @@ fun AppNavHost() = Surface {
                             },
                             openInstallments = {
                                 navController.navigate(AppRoute.Installments)
+                            },
+                            openBudgets = {
+                                navController.navigate(AppRoute.Budgets)
                             }
                         )
                     }
@@ -136,6 +140,14 @@ fun AppNavHost() = Surface {
                         }
                     )
                 }
+
+                composable<AppRoute.Budgets> {
+                    BudgetsScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }
@@ -147,6 +159,7 @@ fun HomeScreen(
     openCreditCards: () -> Unit = {},
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
+    openBudgets: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -207,6 +220,7 @@ fun HomeScreen(
                     openCreditCards = openCreditCards,
                     openAccounts = openAccounts,
                     openInstallments = openInstallments,
+                    openBudgets = openBudgets,
                 )
             }
 

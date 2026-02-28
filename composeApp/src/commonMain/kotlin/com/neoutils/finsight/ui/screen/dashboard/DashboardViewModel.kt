@@ -7,11 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -30,9 +32,11 @@ class DashboardViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
+    private val budgetRepository: IBudgetRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
+    private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
 ) : ViewModel() {
@@ -57,7 +61,8 @@ class DashboardViewModel(
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
         accountRepository.observeAllAccounts(),
-    ) { operations, creditCards, invoices, accounts ->
+        budgetRepository.observeAllBudgets(),
+    ) { operations, creditCards, invoices, accounts, budgets ->
         val transactions = operations.flatMap { it.transactions }
         val transactionsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
@@ -114,6 +119,10 @@ class DashboardViewModel(
             yearMonth = currentMonth,
             categorySpending = categorySpending,
             creditCards = creditCardsWithBills,
+            budgetProgress = calculateBudgetProgressUseCase(
+                budgets = budgets,
+                transactions = transactions,
+            ),
         )
     }.stateIn(
         scope = viewModelScope,

@@ -41,8 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
-import com.neoutils.finsight.extension.toMoneyFormatWithSign
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.OperationCard
@@ -448,6 +447,8 @@ private fun AccountSummaryRow(
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -462,16 +463,16 @@ private fun AccountSummaryRow(
 
         val formattedAmount = when (signDisplay) {
             AccountSignDisplay.ALWAYS_POSITIVE -> {
-                "+${amount.absoluteValue.toMoneyFormat()}"
+                "+${formatter.format(amount.absoluteValue)}"
             }
 
             AccountSignDisplay.ALWAYS_NEGATIVE -> {
-                "-${amount.absoluteValue.toMoneyFormat()}"
+                "-${formatter.format(amount.absoluteValue)}"
             }
 
-            AccountSignDisplay.SHOW_ONLY_NEGATIVE -> amount.toMoneyFormat()
+            AccountSignDisplay.SHOW_ONLY_NEGATIVE -> formatter.format(amount)
 
-            AccountSignDisplay.SHOW_ALWAYS -> amount.toMoneyFormatWithSign()
+            AccountSignDisplay.SHOW_ALWAYS -> formatter.formatWithSign(amount)
         }
 
         Row(

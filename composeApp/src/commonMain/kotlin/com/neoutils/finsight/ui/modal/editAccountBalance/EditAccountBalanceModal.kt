@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.extension.toMoneyFormatWithSign
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -176,6 +176,7 @@ class EditAccountBalanceModal(
         adjustment: Double,
         modifier: Modifier = Modifier
     ) {
+        val formatter = LocalCurrencyFormatter.current
         val isIncome = adjustment > 0
         val color = if (isIncome) Income else Expense
         val icon = if (isIncome) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
@@ -192,7 +193,7 @@ class EditAccountBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = adjustment.toMoneyFormatWithSign(),
+                text = formatter.formatWithSign(adjustment),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium

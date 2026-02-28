@@ -40,7 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -588,6 +588,8 @@ private fun SummaryRow(
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -601,10 +603,10 @@ private fun SummaryRow(
         )
 
         val formattedAmount = when {
-            isPositive -> "+${amount.absoluteValue.toMoneyFormat()}"
-            isNegative -> "-${amount.absoluteValue.toMoneyFormat()}"
-            showSign && amount > 0 -> "+${amount.toMoneyFormat()}"
-            else -> amount.toMoneyFormat()
+            isPositive -> "+${formatter.format(amount.absoluteValue)}"
+            isNegative -> "-${formatter.format(amount.absoluteValue)}"
+            showSign && amount > 0 -> "+${formatter.format(amount)}"
+            else -> formatter.format(amount)
         }
 
         Row(

@@ -21,7 +21,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
@@ -139,6 +139,8 @@ private fun SummaryRow(
     config: SummaryRowConfig = SummaryRowConfig.Default,
     signDisplay: SignDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -193,18 +195,18 @@ private fun SummaryRow(
             }
 
             val formattedAmount = when (signDisplay) {
-                SignDisplay.ALWAYS_POSITIVE -> "+${amount.toMoneyFormat()}"
-                SignDisplay.ALWAYS_NEGATIVE -> "-${amount.toMoneyFormat()}"
+                SignDisplay.ALWAYS_POSITIVE -> "+${formatter.format(amount)}"
+                SignDisplay.ALWAYS_NEGATIVE -> "-${formatter.format(amount)}"
                 SignDisplay.SHOW_ALWAYS -> {
                     when {
-                        amount > 0 -> "+${amount.toMoneyFormat()}"
-                        amount < 0 -> amount.toMoneyFormat() // já tem o sinal negativo
-                        else -> amount.toMoneyFormat()
+                        amount > 0 -> "+${formatter.format(amount)}"
+                        amount < 0 -> formatter.format(amount)
+                        else -> formatter.format(amount)
                     }
                 }
 
                 SignDisplay.SHOW_ONLY_NEGATIVE -> {
-                    if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
+                    if (amount < 0) formatter.format(amount) else formatter.format(amount)
                 }
             }
 

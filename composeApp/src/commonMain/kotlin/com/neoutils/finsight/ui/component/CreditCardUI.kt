@@ -38,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardUi
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.resources.Res
@@ -56,6 +56,7 @@ fun CreditCardUI(
     onClick: (() -> Unit)? = null,
     onEditInvoice: ((invoice: Invoice) -> Unit)? = null,
 ) {
+    val formatter = LocalCurrencyFormatter.current
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
 
@@ -163,7 +164,7 @@ fun CreditCardUI(
                                 )
                         ) {
                             Text(
-                                text = invoiceUi.amount.toMoneyFormat(),
+                                text = formatter.format(invoiceUi.amount),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface
@@ -207,15 +208,15 @@ fun CreditCardUI(
 
                     Row {
                         Text(
-                            text = ui.invoiceUi?.availableLimit?.toMoneyFormat()
-                                ?: ui.creditCard.limit.toMoneyFormat(),
+                            text = ui.invoiceUi?.availableLimit?.let { formatter.format(it) }
+                                ?: formatter.format(ui.creditCard.limit),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,
                             modifier = Modifier.alignByBaseline(),
                         )
                         Text(
-                            text = " / ${ui.creditCard.limit.toMoneyFormat()}",
+                            text = " / ${formatter.format(ui.creditCard.limit)}",
                             fontSize = 14.sp,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.alignByBaseline(),

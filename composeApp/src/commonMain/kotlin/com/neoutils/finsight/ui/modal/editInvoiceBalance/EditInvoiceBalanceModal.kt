@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.extension.toMoneyFormatWithSign
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.InvoiceSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -177,6 +177,7 @@ class EditInvoiceBalanceModal(
         adjustment: Double,
         modifier: Modifier = Modifier
     ) {
+        val formatter = LocalCurrencyFormatter.current
         val isPayment = adjustment < 0
         val color = if (isPayment) Income else Expense
         val icon = if (isPayment) Icons.Default.CreditCard else Icons.Default.ArrowDownward
@@ -193,7 +194,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.size(16.dp)
             )
             Text(
-                text = adjustment.toMoneyFormatWithSign(),
+                text = formatter.formatWithSign(adjustment),
                 color = color,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium

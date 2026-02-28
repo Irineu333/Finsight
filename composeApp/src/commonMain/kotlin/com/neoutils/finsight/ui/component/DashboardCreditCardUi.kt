@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.screen.dashboard.CreditCardUi
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_credit_card_advance
@@ -66,6 +66,7 @@ fun DashboardCreditCardUI(
     onEditAmount: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val formatter = LocalCurrencyFormatter.current
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
 
@@ -166,7 +167,7 @@ fun DashboardCreditCardUI(
                     ) {
                         ui.invoiceUi?.let {
                             Text(
-                                text = it.amount.toMoneyFormat(),
+                                text = formatter.format(it.amount),
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colorScheme.onSurface
@@ -209,15 +210,15 @@ fun DashboardCreditCardUI(
 
                     Row {
                         Text(
-                            text = ui.invoiceUi?.availableLimit?.toMoneyFormat()
-                                ?: ui.creditCard.limit.toMoneyFormat(),
+                            text = ui.invoiceUi?.availableLimit?.let { formatter.format(it) }
+                                ?: formatter.format(ui.creditCard.limit),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,
                             modifier = Modifier.alignByBaseline(),
                         )
                         Text(
-                            text = " / ${ui.creditCard.limit.toMoneyFormat()}",
+                            text = " / ${formatter.format(ui.creditCard.limit)}",
                             fontSize = 14.sp,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.alignByBaseline(),

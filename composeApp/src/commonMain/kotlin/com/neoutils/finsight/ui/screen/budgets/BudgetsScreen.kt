@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
@@ -189,6 +189,8 @@ private fun BudgetProgressItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Card(
         modifier = modifier.clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
@@ -240,7 +242,7 @@ private fun BudgetProgressItem(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = progress.budget.amount.toMoneyFormat(),
+                    text = formatter.format(progress.budget.amount),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -258,7 +260,7 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = progress.spent.toMoneyFormat(),
+                        text = formatter.format(progress.spent),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
@@ -273,9 +275,9 @@ private fun BudgetProgressItem(
                     )
                     Text(
                         text = if (progress.isExceeded) {
-                            (progress.spent - progress.budget.amount).toMoneyFormat()
+                            formatter.format(progress.spent - progress.budget.amount)
                         } else {
-                            progress.remaining.toMoneyFormat()
+                            formatter.format(progress.remaining)
                         },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,

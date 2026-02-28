@@ -33,7 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
@@ -618,6 +618,7 @@ private fun DashboardAccountCard(
     onEditBalance: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val formatter = LocalCurrencyFormatter.current
     val account = accountUi.account
     val balance = accountUi.balance
 
@@ -683,7 +684,7 @@ private fun DashboardAccountCard(
                         .clickable { onEditBalance() }
                 ) {
                     Text(
-                        text = balance.toMoneyFormat(),
+                        text = formatter.format(balance),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface

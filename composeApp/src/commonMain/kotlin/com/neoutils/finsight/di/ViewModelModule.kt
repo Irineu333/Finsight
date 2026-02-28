@@ -100,6 +100,7 @@ val viewModelModule = module {
 
     viewModel {
         BudgetFormViewModel(
+            formatter = get(),
             budget = it.getOrNull(),
             budgetRepository = get(),
             categoryRepository = get(),
@@ -241,6 +242,7 @@ val viewModelModule = module {
 
     viewModel {
         CreditCardFormViewModel(
+            formatter = get(),
             creditCard = it.getOrNull(),
             addCreditCardUseCase = get(),
             updateCreditCardUseCase = get(),

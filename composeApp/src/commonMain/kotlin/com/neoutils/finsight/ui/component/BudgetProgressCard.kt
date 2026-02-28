@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
@@ -63,6 +63,7 @@ private fun BudgetProgressRow(
     progress: BudgetProgress,
     modifier: Modifier = Modifier,
 ) {
+    val formatter = LocalCurrencyFormatter.current
     val accentColor = budgetProgressColor(progress.progress)
 
     Row(
@@ -99,7 +100,7 @@ private fun BudgetProgressRow(
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "${progress.spent.toMoneyFormat()} / ${progress.budget.amount.toMoneyFormat()}",
+                    text = "${formatter.format(progress.spent)} / ${formatter.format(progress.budget.amount)}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,

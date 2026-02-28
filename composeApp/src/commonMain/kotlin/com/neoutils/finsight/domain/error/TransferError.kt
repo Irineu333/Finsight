@@ -10,12 +10,12 @@ import com.neoutils.finsight.resources.transfer_error_unknown
 import com.neoutils.finsight.util.UiText
 
 sealed class TransferError(val message: String) {
-    data object InvalidAmount : TransferError("O valor da transferência deve ser maior que zero.")
-    data object SameAccount : TransferError("A conta de origem deve ser diferente da conta de destino.")
-    data object SourceAccountNotFound : TransferError("Conta de origem não encontrada.")
-    data object DestinationAccountNotFound : TransferError("Conta de destino não encontrada.")
-    data object FutureDate : TransferError("A data da transferência não pode ser futura.")
-    data object Unknown : TransferError("Não foi possível concluir a transferência.")
+    data object InvalidAmount : TransferError("Transfer amount must be greater than zero.")
+    data object SameAccount : TransferError("Source account must be different from destination account.")
+    data object SourceAccountNotFound : TransferError("Source account not found.")
+    data object DestinationAccountNotFound : TransferError("Destination account not found.")
+    data object FutureDate : TransferError("Transfer date cannot be in the future.")
+    data object Unknown : TransferError("Could not complete the transfer.")
 }
 
 class TransferException(val error: TransferError) : Exception(error.message)

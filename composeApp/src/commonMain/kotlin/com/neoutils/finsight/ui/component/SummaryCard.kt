@@ -28,6 +28,16 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.summary_card_adjustments
+import com.neoutils.finsight.resources.summary_card_current_balance
+import com.neoutils.finsight.resources.summary_card_final_balance
+import com.neoutils.finsight.resources.summary_card_income
+import com.neoutils.finsight.resources.summary_card_initial_balance
+import com.neoutils.finsight.resources.summary_card_invoices
+import com.neoutils.finsight.resources.summary_card_outgoing
+import com.neoutils.finsight.resources.summary_card_see_invoices
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SummaryCard(
@@ -62,7 +72,7 @@ fun SummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     SummaryRow(
-                        label = "Saldo Inicial",
+                        label = stringResource(Res.string.summary_card_initial_balance),
                         amount = balanceOverview.initialBalance,
                         color = colorScheme.onSurface,
                         onEditClick = onEditInitialBalance,
@@ -70,14 +80,14 @@ fun SummaryCard(
                     )
 
                     SummaryRow(
-                        label = "Entradas",
+                        label = stringResource(Res.string.summary_card_income),
                         amount = balanceOverview.income,
                         color = Income,
                         signDisplay = SignDisplay.ALWAYS_POSITIVE
                     )
 
                     SummaryRow(
-                        label = "Saídas",
+                        label = stringResource(Res.string.summary_card_outgoing),
                         amount = balanceOverview.expense,
                         color = Expense,
                         signDisplay = SignDisplay.ALWAYS_NEGATIVE
@@ -85,7 +95,7 @@ fun SummaryCard(
 
                     if (balanceOverview.mustShowPayment) {
                         SummaryRow(
-                            label = "Faturas",
+                            label = stringResource(Res.string.summary_card_invoices),
                             amount = balanceOverview.payment,
                             color = InvoicePayment,
                             onNavigateClick = onInvoiceClick,
@@ -95,7 +105,7 @@ fun SummaryCard(
 
                     if (balanceOverview.mustShowAccountAdjustment) {
                         SummaryRow(
-                            label = "Ajustes",
+                            label = stringResource(Res.string.summary_card_adjustments),
                             amount = balanceOverview.adjustment,
                             color = Adjustment,
                             signDisplay = SignDisplay.SHOW_ALWAYS
@@ -107,7 +117,7 @@ fun SummaryCard(
             HorizontalDivider()
 
             SummaryRow(
-                label = if (isCurrentMonth) "Saldo Atual" else "Saldo Final",
+                label = if (isCurrentMonth) stringResource(Res.string.summary_card_current_balance) else stringResource(Res.string.summary_card_final_balance),
                 amount = balanceOverview.finalBalance,
                 color = colorScheme.onSurface,
                 config = SummaryRowConfig.Total,
@@ -153,7 +163,7 @@ private fun SummaryRow(
             if (onNavigateClick != null) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = "Ver faturas",
+                    contentDescription = stringResource(Res.string.summary_card_see_invoices),
                     tint = config.labelStyle.color.copy(alpha = 0.7f),
                     modifier = Modifier.size(18.dp)
                 )

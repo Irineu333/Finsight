@@ -35,8 +35,17 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.edit_transaction_amount_label
+import com.neoutils.finsight.resources.edit_transaction_date_label
+import com.neoutils.finsight.resources.edit_transaction_expense
+import com.neoutils.finsight.resources.edit_transaction_income
+import com.neoutils.finsight.resources.edit_transaction_save
+import com.neoutils.finsight.resources.edit_transaction_title
+import com.neoutils.finsight.resources.edit_transaction_title_label
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -97,7 +106,7 @@ class EditTransactionModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Editar Transação",
+                text = stringResource(Res.string.edit_transaction_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface
@@ -117,7 +126,7 @@ class EditTransactionModal(
             OutlinedTextField(
                 state = title,
                 label = {
-                    Text(text = "Título")
+                    Text(text = stringResource(Res.string.edit_transaction_title_label))
                 },
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
@@ -200,7 +209,7 @@ class EditTransactionModal(
             OutlinedTextField(
                 state = amount,
                 label = {
-                    Text(text = "Valor")
+                    Text(text = stringResource(Res.string.edit_transaction_amount_label))
                 },
                 inputTransformation = MoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -217,7 +226,7 @@ class EditTransactionModal(
             OutlinedTextField(
                 state = date,
                 label = {
-                    Text(text = "Data")
+                    Text(text = stringResource(Res.string.edit_transaction_date_label))
                 },
                 inputTransformation = DateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -265,7 +274,7 @@ class EditTransactionModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.edit_transaction_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -303,7 +312,7 @@ class EditTransactionModal(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Despesa",
+                text = stringResource(Res.string.edit_transaction_expense),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -331,7 +340,7 @@ class EditTransactionModal(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Receita",
+                text = stringResource(Res.string.edit_transaction_income),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )

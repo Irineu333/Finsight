@@ -38,7 +38,14 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.ui.util.stringUiText
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.account_form_default_label
+import com.neoutils.finsight.resources.account_form_edit_title
+import com.neoutils.finsight.resources.account_form_name_label
+import com.neoutils.finsight.resources.account_form_new_title
+import com.neoutils.finsight.resources.account_form_save
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -72,7 +79,7 @@ class AccountFormModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = if (uiState.isEditMode) "Editar Conta" else "Nova Conta",
+                text = if (uiState.isEditMode) stringResource(Res.string.account_form_edit_title) else stringResource(Res.string.account_form_new_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -80,7 +87,7 @@ class AccountFormModal(
             OutlinedTextField(
                 state = name,
                 label = {
-                    Text(text = "Nome")
+                    Text(text = stringResource(Res.string.account_form_name_label))
                 },
                 trailingIcon = when (uiState.validation[AccountField.NAME]) {
                     Validation.Validating -> {
@@ -121,7 +128,7 @@ class AccountFormModal(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Conta Padrão",
+                    text = stringResource(Res.string.account_form_default_label),
                     fontSize = 16.sp,
                 )
 
@@ -148,7 +155,7 @@ class AccountFormModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.account_form_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

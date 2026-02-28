@@ -19,6 +19,11 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.delete_installment_confirm
+import com.neoutils.finsight.resources.delete_installment_message
+import com.neoutils.finsight.resources.delete_installment_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -40,7 +45,7 @@ class DeleteInstallmentModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Excluir Parcelamento",
+                text = stringResource(Res.string.delete_installment_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,
@@ -49,9 +54,7 @@ class DeleteInstallmentModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tem certeza que deseja excluir este parcelamento? " +
-                        "Todas as ${operations.size} parcelas serão removidas. " +
-                        "Esta ação não pode ser desfeita.",
+                text = stringResource(Res.string.delete_installment_message, operations.size),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
@@ -67,7 +70,7 @@ class DeleteInstallmentModal(
                 ),
             ) {
                 Text(
-                    text = "Excluir",
+                    text = stringResource(Res.string.delete_installment_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )

@@ -38,6 +38,14 @@ import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.budget_form_edit_title
+import com.neoutils.finsight.resources.budget_form_icon_label
+import com.neoutils.finsight.resources.budget_form_limit_label
+import com.neoutils.finsight.resources.budget_form_new_title
+import com.neoutils.finsight.resources.budget_form_save
+import com.neoutils.finsight.resources.budget_form_title_label
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -69,14 +77,14 @@ class BudgetFormModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = if (uiState.isEditMode) "Editar Orçamento" else "Novo Orçamento",
+                text = if (uiState.isEditMode) stringResource(Res.string.budget_form_edit_title) else stringResource(Res.string.budget_form_new_title),
                 style = MaterialTheme.typography.titleLarge,
             )
 
             OutlinedTextField(
                 value = uiState.title,
                 onValueChange = { viewModel.onAction(BudgetFormAction.TitleChanged(it)) },
-                label = { Text(text = "Título") },
+                label = { Text(text = stringResource(Res.string.budget_form_title_label)) },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -97,7 +105,7 @@ class BudgetFormModal(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "Ícone do orçamento",
+                        text = stringResource(Res.string.budget_form_icon_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -151,7 +159,7 @@ class BudgetFormModal(
 
             OutlinedTextField(
                 state = amount,
-                label = { Text(text = "Limite") },
+                label = { Text(text = stringResource(Res.string.budget_form_limit_label)) },
                 inputTransformation = MoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(12.dp),
@@ -168,7 +176,7 @@ class BudgetFormModal(
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.budget_form_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )

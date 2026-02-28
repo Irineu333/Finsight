@@ -25,7 +25,14 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_summary_card_advance_payments
+import com.neoutils.finsight.resources.invoice_summary_card_adjustments
+import com.neoutils.finsight.resources.invoice_summary_card_edit_invoice
+import com.neoutils.finsight.resources.invoice_summary_card_expenses
+import com.neoutils.finsight.resources.invoice_summary_card_invoice
 import kotlin.math.absoluteValue
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvoiceSummaryCard(
@@ -84,14 +91,14 @@ fun InvoiceSummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     InvoiceSummaryRow(
-                        label = "Gastos",
+                        label = stringResource(Res.string.invoice_summary_card_expenses),
                         amount = currentOverview.expense,
                         color = Expense,
                         signDisplay = InvoiceSignDisplay.ALWAYS_NEGATIVE
                     )
 
                     InvoiceSummaryRow(
-                        label = "Adiantamentos",
+                        label = stringResource(Res.string.invoice_summary_card_advance_payments),
                         amount = currentOverview.advancePayment,
                         color = InvoicePayment,
                         signDisplay = InvoiceSignDisplay.ALWAYS_POSITIVE
@@ -99,7 +106,7 @@ fun InvoiceSummaryCard(
 
                     if (currentOverview.mustShowAdjustment) {
                         InvoiceSummaryRow(
-                            label = "Ajustes",
+                            label = stringResource(Res.string.invoice_summary_card_adjustments),
                             amount = currentOverview.adjustment,
                             color = Adjustment,
                             signDisplay = InvoiceSignDisplay.SHOW_ALWAYS
@@ -109,7 +116,7 @@ fun InvoiceSummaryCard(
                     HorizontalDivider()
 
                     InvoiceSummaryRow(
-                        label = "Fatura",
+                        label = stringResource(Res.string.invoice_summary_card_invoice),
                         amount = currentOverview.total,
                         color = colorScheme.onSurface,
                         signDisplay = InvoiceSignDisplay.SHOW_ONLY_NEGATIVE,
@@ -182,7 +189,7 @@ private fun InvoiceSummaryRow(
             if (onEditClick != null) {
                 Icon(
                     imageVector = Icons.Rounded.ModeEdit,
-                    contentDescription = "Editar fatura",
+                    contentDescription = stringResource(Res.string.invoice_summary_card_edit_invoice),
                     tint = color.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )

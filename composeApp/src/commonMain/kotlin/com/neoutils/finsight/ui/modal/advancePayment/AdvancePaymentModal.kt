@@ -38,9 +38,16 @@ import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.advance_payment_amount_label
+import com.neoutils.finsight.resources.advance_payment_confirm
+import com.neoutils.finsight.resources.advance_payment_date_label
+import com.neoutils.finsight.resources.advance_payment_description
+import com.neoutils.finsight.resources.advance_payment_title
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -79,14 +86,14 @@ class AdvancePaymentModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Antecipar Pagamento",
+                text = stringResource(Res.string.advance_payment_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Text(
-                text = "Pague parte da fatura antes do fechamento.",
+                text = stringResource(Res.string.advance_payment_description),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -95,7 +102,7 @@ class AdvancePaymentModal(
             OutlinedTextField(
                 state = amount,
                 label = {
-                    Text(text = "Valor")
+                    Text(text = stringResource(Res.string.advance_payment_amount_label))
                 },
                 inputTransformation = MoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -121,7 +128,7 @@ class AdvancePaymentModal(
             OutlinedTextField(
                 state = date,
                 label = {
-                    Text(text = "Data")
+                    Text(text = stringResource(Res.string.advance_payment_date_label))
                 },
                 inputTransformation = DateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -181,7 +188,7 @@ class AdvancePaymentModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Antecipar Pagamento",
+                    text = stringResource(Res.string.advance_payment_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

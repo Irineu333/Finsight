@@ -41,6 +41,13 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardUi
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_card_ui_available_limit
+import com.neoutils.finsight.resources.credit_card_ui_closes_on
+import com.neoutils.finsight.resources.credit_card_ui_current_invoice
+import com.neoutils.finsight.resources.credit_card_ui_due_on
+import com.neoutils.finsight.resources.credit_card_ui_edit_invoice
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CreditCardUI(
@@ -134,7 +141,7 @@ fun CreditCardUI(
             ) {
                 Column {
                     Text(
-                        text = "Fatura Atual",
+                        text = stringResource(Res.string.credit_card_ui_current_invoice),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -165,7 +172,7 @@ fun CreditCardUI(
                             if (invoiceUi.status.isEditable && onEditInvoice != null) {
                                 Icon(
                                     imageVector = Icons.Rounded.ModeEdit,
-                                    contentDescription = "Editar fatura",
+                                    contentDescription = stringResource(Res.string.credit_card_ui_edit_invoice),
                                     tint = colorScheme.onSurface.copy(alpha = 0.5f),
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -193,7 +200,7 @@ fun CreditCardUI(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Limite Disponível",
+                        text = stringResource(Res.string.credit_card_ui_available_limit),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -217,9 +224,11 @@ fun CreditCardUI(
                 }
 
                 ui.invoiceUi?.let { invoiceUi ->
+                    val closesOnLabel = stringResource(Res.string.credit_card_ui_closes_on)
+                    val dueOnLabel = stringResource(Res.string.credit_card_ui_due_on)
                     val dateInfo = when {
-                        invoiceUi.status.isOpen -> "Fecha em" to invoiceUi.closingDate
-                        invoiceUi.status.isClosed || invoiceUi.status.isRetroactive -> "Vence em" to invoiceUi.dueDate
+                        invoiceUi.status.isOpen -> closesOnLabel to invoiceUi.closingDate
+                        invoiceUi.status.isClosed || invoiceUi.status.isRetroactive -> dueOnLabel to invoiceUi.dueDate
                         else -> null
                     }
 

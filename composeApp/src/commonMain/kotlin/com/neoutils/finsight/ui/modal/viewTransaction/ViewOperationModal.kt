@@ -60,7 +60,27 @@ import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.view_operation_account_label
+import com.neoutils.finsight.resources.view_operation_amount_label
+import com.neoutils.finsight.resources.view_operation_card_label
+import com.neoutils.finsight.resources.view_operation_closed_invoice_message
+import com.neoutils.finsight.resources.view_operation_date_label
+import com.neoutils.finsight.resources.view_operation_delete
+import com.neoutils.finsight.resources.view_operation_deleted
+import com.neoutils.finsight.resources.view_operation_destination_account_label
+import com.neoutils.finsight.resources.view_operation_edit
+import com.neoutils.finsight.resources.view_operation_installment_label
+import com.neoutils.finsight.resources.view_operation_invoice_label
+import com.neoutils.finsight.resources.view_operation_origin_account
+import com.neoutils.finsight.resources.view_operation_origin_credit_card
+import com.neoutils.finsight.resources.view_operation_origin_label
+import com.neoutils.finsight.resources.view_operation_source_account_label
+import com.neoutils.finsight.resources.view_operation_type_adjustment
+import com.neoutils.finsight.resources.view_operation_type_expense
+import com.neoutils.finsight.resources.view_operation_type_income
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
@@ -146,9 +166,9 @@ class ViewOperationModal(
                 Column {
                     Text(
                         text = when (uiState.transaction.type) {
-                            Transaction.Type.INCOME -> "Receita"
-                            Transaction.Type.EXPENSE -> "Despesa"
-                            Transaction.Type.ADJUSTMENT -> "Ajuste"
+                            Transaction.Type.INCOME -> stringResource(Res.string.view_operation_type_income)
+                            Transaction.Type.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
+                            Transaction.Type.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
@@ -168,7 +188,7 @@ class ViewOperationModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
-                label = "Valor",
+                label = stringResource(Res.string.view_operation_amount_label),
                 value = uiState.transaction.amount.toMoneyFormat(),
                 valueColor = uiState.operationColor()
             )
@@ -176,16 +196,18 @@ class ViewOperationModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
-                label = "Data",
+                label = stringResource(Res.string.view_operation_date_label),
                 value = formats.dayMonthYear.format(uiState.transaction.date)
             )
 
+            val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
+            val originCreditCardLabel = stringResource(Res.string.view_operation_origin_credit_card)
             if (uiState.transaction.type.isExpense) {
                 DetailRow(
-                    label = "Origem",
+                    label = stringResource(Res.string.view_operation_origin_label),
                     value = when (uiState.transaction.target) {
-                        Transaction.Target.ACCOUNT -> "Conta"
-                        Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                        Transaction.Target.ACCOUNT -> originAccountLabel
+                        Transaction.Target.CREDIT_CARD -> originCreditCardLabel
                     },
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -201,7 +223,7 @@ class ViewOperationModal(
 
                 sourceAccount?.let { account ->
                     DetailRow(
-                        label = "Conta origem",
+                        label = stringResource(Res.string.view_operation_source_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -209,7 +231,7 @@ class ViewOperationModal(
 
                 destinationAccount?.let { account ->
                     DetailRow(
-                        label = "Conta destino",
+                        label = stringResource(Res.string.view_operation_destination_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -219,16 +241,17 @@ class ViewOperationModal(
             if (uiState.operation.kind != Operation.Kind.TRANSFER) {
                 uiState.transaction.account?.let { account ->
                     DetailRow(
-                        label = "Conta",
+                        label = stringResource(Res.string.view_operation_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
 
+            val deletedLabel = stringResource(Res.string.view_operation_deleted)
             uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
-                    label = "Cartão",
+                    label = stringResource(Res.string.view_operation_card_label),
                     value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
@@ -239,8 +262,8 @@ class ViewOperationModal(
             } ?: run {
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
-                        label = "Cartão",
-                        value = "Excluído",
+                        label = stringResource(Res.string.view_operation_card_label),
+                        value = deletedLabel,
                         valueColor = colorScheme.error,
                         modifier = Modifier.padding(top = 8.dp)
                     )
@@ -250,7 +273,7 @@ class ViewOperationModal(
             uiState.transaction.invoice?.let { invoice ->
                 val creditCardId = uiState.transaction.creditCard?.id
                 DetailRow(
-                    label = "Fatura",
+                    label = stringResource(Res.string.view_operation_invoice_label),
                     value = invoice.label,
                     valueColor = invoice.status.color,
                     modifier = Modifier.padding(top = 8.dp),
@@ -265,7 +288,7 @@ class ViewOperationModal(
 
             uiState.operation.installment?.let { installment ->
                 DetailRow(
-                    label = "Parcela",
+                    label = stringResource(Res.string.view_operation_installment_label),
                     value = "${installment.label} de ${installment.totalLabel}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
@@ -285,7 +308,7 @@ class ViewOperationModal(
 
                     Invoice.Status.CLOSED, Invoice.Status.PAID -> {
                         Text(
-                            text = "Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.",
+                            text = stringResource(Res.string.view_operation_closed_invoice_message),
                             fontSize = 14.sp,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth()
@@ -335,7 +358,7 @@ class ViewOperationModal(
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
-                text = "Excluir",
+                text = stringResource(Res.string.view_operation_delete),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -371,7 +394,7 @@ class ViewOperationModal(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Editar",
+                        text = stringResource(Res.string.view_operation_edit),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

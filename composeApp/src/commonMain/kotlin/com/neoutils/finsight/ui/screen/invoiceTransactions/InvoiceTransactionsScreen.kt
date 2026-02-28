@@ -62,7 +62,27 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_transactions_advance_payment
+import com.neoutils.finsight.resources.invoice_transactions_advance_payments
+import com.neoutils.finsight.resources.invoice_transactions_adjustments
+import com.neoutils.finsight.resources.invoice_transactions_close_invoice
+import com.neoutils.finsight.resources.invoice_transactions_delete_card
+import com.neoutils.finsight.resources.invoice_transactions_delete_invoice
+import com.neoutils.finsight.resources.invoice_transactions_edit_card
+import com.neoutils.finsight.resources.invoice_transactions_expenses
+import com.neoutils.finsight.resources.invoice_transactions_filter_category
+import com.neoutils.finsight.resources.invoice_transactions_filter_category_all
+import com.neoutils.finsight.resources.invoice_transactions_filter_type
+import com.neoutils.finsight.resources.invoice_transactions_filter_type_adjustment
+import com.neoutils.finsight.resources.invoice_transactions_filter_type_all
+import com.neoutils.finsight.resources.invoice_transactions_filter_type_expense
+import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
+import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
+import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
+import com.neoutils.finsight.resources.invoice_transactions_total
 import kotlin.math.absoluteValue
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -131,7 +151,7 @@ private fun InvoiceTransactionsContent(
                                 onDismissRequest = { menuExpanded = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Editar Cartão") },
+                                    text = { Text(stringResource(Res.string.invoice_transactions_edit_card)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
@@ -144,7 +164,7 @@ private fun InvoiceTransactionsContent(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Excluir Cartão") },
+                                    text = { Text(stringResource(Res.string.invoice_transactions_delete_card)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
@@ -362,14 +382,14 @@ private fun InvoiceSummaryItem(
             }
 
             SummaryRow(
-                label = "Gastos",
+                label = stringResource(Res.string.invoice_transactions_expenses),
                 amount = summary.expense,
                 color = Expense,
                 isNegative = true
             )
 
             SummaryRow(
-                label = "Adiantamentos",
+                label = stringResource(Res.string.invoice_transactions_advance_payments),
                 amount = summary.advancePayment,
                 color = InvoicePayment,
                 isPositive = true
@@ -377,7 +397,7 @@ private fun InvoiceSummaryItem(
 
             if (summary.mustShowAdjustment) {
                 SummaryRow(
-                    label = "Ajustes",
+                    label = stringResource(Res.string.invoice_transactions_adjustments),
                     amount = summary.adjustment,
                     color = Adjustment,
                     showSign = true
@@ -387,7 +407,7 @@ private fun InvoiceSummaryItem(
             HorizontalDivider()
 
             SummaryRow(
-                label = "Total",
+                label = stringResource(Res.string.invoice_transactions_total),
                 amount = summary.total,
                 color = colorScheme.onSurface,
                 isTotal = true,
@@ -440,7 +460,7 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Antecipar Pagamento",
+                    text = stringResource(Res.string.invoice_transactions_advance_payment),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -467,7 +487,7 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Fechar Fatura",
+                    text = stringResource(Res.string.invoice_transactions_close_invoice),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -494,7 +514,7 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Excluir Fatura",
+                    text = stringResource(Res.string.invoice_transactions_delete_invoice),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -521,7 +541,7 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Reabrir Fatura",
+                    text = stringResource(Res.string.invoice_transactions_reopen_invoice),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -547,7 +567,7 @@ private fun InvoiceActions(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Pagar Fatura",
+                    text = stringResource(Res.string.invoice_transactions_pay_invoice),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -603,7 +623,7 @@ private fun SummaryRow(
             if (onEditClick != null) {
                 Icon(
                     imageVector = Icons.Rounded.ModeEdit,
-                    contentDescription = "Editar fatura",
+                    contentDescription = stringResource(Res.string.invoice_transactions_total),
                     tint = color.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
@@ -670,7 +690,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedCategory != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: "Categoria") },
+        label = { Text(selectedCategory?.name ?: stringResource(Res.string.invoice_transactions_filter_category)) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -690,7 +710,7 @@ private fun CategoryFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.invoice_transactions_filter_category_all)) },
             onClick = {
                 onAction(InvoiceTransactionsAction.SelectCategory(null))
                 expanded = false
@@ -730,10 +750,10 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> "Despesa"
-                    Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.INCOME -> "Pagamento"
-                    else -> "Tipo"
+                    Transaction.Type.EXPENSE -> stringResource(Res.string.invoice_transactions_filter_type_expense)
+                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.invoice_transactions_filter_type_adjustment)
+                    Transaction.Type.INCOME -> stringResource(Res.string.invoice_transactions_filter_type_payment)
+                    else -> stringResource(Res.string.invoice_transactions_filter_type)
                 }
             )
         },
@@ -756,7 +776,7 @@ private fun TypeFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todos") },
+            text = { Text(stringResource(Res.string.invoice_transactions_filter_type_all)) },
             onClick = {
                 onAction(InvoiceTransactionsAction.SelectType(null))
                 expanded = false
@@ -764,9 +784,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to "Despesa",
-            Transaction.Type.ADJUSTMENT to "Ajuste",
-            Transaction.Type.INCOME to "Pagamento",
+            Transaction.Type.EXPENSE to stringResource(Res.string.invoice_transactions_filter_type_expense),
+            Transaction.Type.ADJUSTMENT to stringResource(Res.string.invoice_transactions_filter_type_adjustment),
+            Transaction.Type.INCOME to stringResource(Res.string.invoice_transactions_filter_type_payment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

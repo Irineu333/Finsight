@@ -38,9 +38,16 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.pay_invoice_amount_label
+import com.neoutils.finsight.resources.pay_invoice_confirm
+import com.neoutils.finsight.resources.pay_invoice_date_label
+import com.neoutils.finsight.resources.pay_invoice_message
+import com.neoutils.finsight.resources.pay_invoice_title
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -84,14 +91,14 @@ class PayInvoiceModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Pagar Fatura",
+                text = stringResource(Res.string.pay_invoice_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Text(
-                text = "O pagamento será do valor total da fatura.",
+                text = stringResource(Res.string.pay_invoice_message),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -101,7 +108,7 @@ class PayInvoiceModal(
                 value = amount,
                 onValueChange = { },
                 label = {
-                    Text(text = "Valor da Fatura")
+                    Text(text = stringResource(Res.string.pay_invoice_amount_label))
                 },
                 readOnly = true,
                 enabled = false,
@@ -122,7 +129,7 @@ class PayInvoiceModal(
             OutlinedTextField(
                 state = date,
                 label = {
-                    Text(text = "Data do Pagamento")
+                    Text(text = stringResource(Res.string.pay_invoice_date_label))
                 },
                 inputTransformation = DateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -176,7 +183,7 @@ class PayInvoiceModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Pagar Fatura",
+                    text = stringResource(Res.string.pay_invoice_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

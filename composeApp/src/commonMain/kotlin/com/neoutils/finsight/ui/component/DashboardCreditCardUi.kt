@@ -26,6 +26,13 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.screen.dashboard.CreditCardUi
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.dashboard_credit_card_advance
+import com.neoutils.finsight.resources.dashboard_credit_card_available_limit
+import com.neoutils.finsight.resources.dashboard_credit_card_close_invoice
+import com.neoutils.finsight.resources.dashboard_credit_card_current_invoice
+import com.neoutils.finsight.resources.dashboard_credit_card_pay_invoice
+import org.jetbrains.compose.resources.stringResource
 
 data class CreditCardUiConfig(
     val canEditAmount: Boolean = false,
@@ -139,7 +146,7 @@ fun DashboardCreditCardUI(
             ) {
                 Column {
                     Text(
-                        text = "Fatura Atual",
+                        text = stringResource(Res.string.dashboard_credit_card_current_invoice),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -195,7 +202,7 @@ fun DashboardCreditCardUI(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Limite Disponível",
+                        text = stringResource(Res.string.dashboard_credit_card_available_limit),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -254,7 +261,7 @@ fun DashboardCreditCardUI(
                         )
                     ) {
                         Text(
-                            text = "Fechar Fatura",
+                            text = stringResource(Res.string.dashboard_credit_card_close_invoice),
                             fontSize = 14.sp
                         )
                     }
@@ -274,7 +281,7 @@ fun DashboardCreditCardUI(
                         )
                     ) {
                         Text(
-                            text = "Pagar Fatura",
+                            text = stringResource(Res.string.dashboard_credit_card_pay_invoice),
                             fontSize = 14.sp
                         )
                     }
@@ -294,7 +301,7 @@ fun DashboardCreditCardUI(
                         )
                     ) {
                         Text(
-                            text = "Antecipar",
+                            text = stringResource(Res.string.dashboard_credit_card_advance),
                             fontSize = 14.sp
                         )
                     }

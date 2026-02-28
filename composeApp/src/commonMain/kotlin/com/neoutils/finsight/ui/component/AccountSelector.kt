@@ -10,13 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.account_selector_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountSelector(
     selectedAccount: Account?,
     accounts: List<Account>,
     onAccountSelected: (Account?) -> Unit,
-    label: String = "Conta",
+    label: String = "",
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -35,7 +38,7 @@ fun AccountSelector(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = label)
+                Text(text = label.ifEmpty { stringResource(Res.string.account_selector_label) })
             },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)

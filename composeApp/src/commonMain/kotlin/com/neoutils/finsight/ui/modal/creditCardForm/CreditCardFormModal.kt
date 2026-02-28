@@ -27,7 +27,16 @@ import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.DayInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
 import com.neoutils.finsight.util.Validation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_card_form_closing_day_label
+import com.neoutils.finsight.resources.credit_card_form_due_day_label
+import com.neoutils.finsight.resources.credit_card_form_edit_title
+import com.neoutils.finsight.resources.credit_card_form_limit_label
+import com.neoutils.finsight.resources.credit_card_form_name_label
+import com.neoutils.finsight.resources.credit_card_form_new_title
+import com.neoutils.finsight.resources.credit_card_form_save
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -86,14 +95,14 @@ class CreditCardFormModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = if (uiState.isEditMode) "Editar Cartão" else "Novo Cartão",
+                text = if (uiState.isEditMode) stringResource(Res.string.credit_card_form_edit_title) else stringResource(Res.string.credit_card_form_new_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
 
             OutlinedTextField(
                 state = name,
-                label = { Text(text = "Nome do Cartão") },
+                label = { Text(text = stringResource(Res.string.credit_card_form_name_label)) },
                 trailingIcon = when (uiState.validation[CreditCardField.NAME]) {
                     Validation.Validating -> {
                         {
@@ -129,7 +138,7 @@ class CreditCardFormModal(
 
             OutlinedTextField(
                 state = limit,
-                label = { Text(text = "Limite") },
+                label = { Text(text = stringResource(Res.string.credit_card_form_limit_label)) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -146,7 +155,7 @@ class CreditCardFormModal(
                     alwaysMinimize = uiState.form.closingDayCalc != null
                 ),
                 label = {
-                    Text(text = "Dia de Fechamento")
+                    Text(text = stringResource(Res.string.credit_card_form_closing_day_label))
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
@@ -169,7 +178,7 @@ class CreditCardFormModal(
                     alwaysMinimize = uiState.form.dueDayCalc != null
                 ),
                 label = {
-                    Text(text = "Dia de Vencimento")
+                    Text(text = stringResource(Res.string.credit_card_form_due_day_label))
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
@@ -197,7 +206,7 @@ class CreditCardFormModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.credit_card_form_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

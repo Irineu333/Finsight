@@ -86,7 +86,28 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.installments_create
+import com.neoutils.finsight.resources.installments_current_installment
+import com.neoutils.finsight.resources.installments_delete
+import com.neoutils.finsight.resources.installments_empty
+import com.neoutils.finsight.resources.installments_filter_category
+import com.neoutils.finsight.resources.installments_filter_category_all
+import com.neoutils.finsight.resources.installments_filter_type
+import com.neoutils.finsight.resources.installments_filter_type_adjustment
+import com.neoutils.finsight.resources.installments_filter_type_all
+import com.neoutils.finsight.resources.installments_filter_type_expense
+import com.neoutils.finsight.resources.installments_filter_type_income
+import com.neoutils.finsight.resources.installments_remaining
+import com.neoutils.finsight.resources.installments_status_active
+import com.neoutils.finsight.resources.installments_status_completed
+import com.neoutils.finsight.resources.installments_tab_active
+import com.neoutils.finsight.resources.installments_tab_all
+import com.neoutils.finsight.resources.installments_tab_completed
+import com.neoutils.finsight.resources.installments_title
+import com.neoutils.finsight.resources.installments_total_value
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -115,7 +136,7 @@ private fun InstallmentsContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Parcelamentos")
+                    Text(text = stringResource(Res.string.installments_title))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorScheme.background,
@@ -147,9 +168,9 @@ private fun InstallmentsContent(
                             ) {
                                 Text(
                                     text = when (uiState.selectedFilter) {
-                                        InstallmentFilter.ACTIVE -> "Ativos"
-                                        InstallmentFilter.COMPLETED -> "Concluídos"
-                                        InstallmentFilter.ALL -> "Todos"
+                                        InstallmentFilter.ACTIVE -> stringResource(Res.string.installments_tab_active)
+                                        InstallmentFilter.COMPLETED -> stringResource(Res.string.installments_tab_completed)
+                                        InstallmentFilter.ALL -> stringResource(Res.string.installments_tab_all)
                                     },
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -166,9 +187,9 @@ private fun InstallmentsContent(
                             onDismissRequest = { menuExpanded = false },
                         ) {
                             listOf(
-                                InstallmentFilter.ACTIVE to "Ativos",
-                                InstallmentFilter.COMPLETED to "Concluídos",
-                                InstallmentFilter.ALL to "Todos",
+                                InstallmentFilter.ACTIVE to stringResource(Res.string.installments_tab_active),
+                                InstallmentFilter.COMPLETED to stringResource(Res.string.installments_tab_completed),
+                                InstallmentFilter.ALL to stringResource(Res.string.installments_tab_all),
                             ).forEach { (filter, label) ->
                                 DropdownMenuItem(
                                     text = { Text(label) },
@@ -267,7 +288,7 @@ private fun InstallmentsContent(
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
                                 Text(
-                                    text = "Excluir Parcelamento",
+                                    text = stringResource(Res.string.installments_delete),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                 )
@@ -338,7 +359,7 @@ private fun EmptyInstallmentsState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Sem parcelamentos",
+                text = stringResource(Res.string.installments_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -351,7 +372,7 @@ private fun EmptyInstallmentsState(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "Criar parcelamento")
+                Text(text = stringResource(Res.string.installments_create))
             }
         }
     }
@@ -461,7 +482,7 @@ private fun InstallmentSummaryCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "Valor Total",
+                    text = stringResource(Res.string.installments_total_value),
                     fontSize = 12.sp,
                     color = colorScheme.onSurfaceVariant,
                 )
@@ -479,7 +500,7 @@ private fun InstallmentSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Parcela Atual",
+                        text = stringResource(Res.string.installments_current_installment),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -504,7 +525,7 @@ private fun InstallmentSummaryCard(
                     horizontalAlignment = Alignment.End,
                 ) {
                     Text(
-                        text = "Restante",
+                        text = stringResource(Res.string.installments_remaining),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -548,7 +569,7 @@ private fun StatusBadge(
         shape = RoundedCornerShape(4.dp),
     ) {
         Text(
-            text = if (isActive) "Ativo" else "Concluído",
+            text = if (isActive) stringResource(Res.string.installments_status_active) else stringResource(Res.string.installments_status_completed),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(
@@ -608,7 +629,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedCategory != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: "Categoria") },
+        label = { Text(selectedCategory?.name ?: stringResource(Res.string.installments_filter_category)) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -629,7 +650,7 @@ private fun CategoryFilterChip(
         onDismissRequest = { expanded = false },
     ) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.installments_filter_category_all)) },
             onClick = {
                 onAction(InstallmentsAction.SelectCategory(null))
                 expanded = false
@@ -668,10 +689,10 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> "Despesa"
-                    Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.INCOME -> "Receita"
-                    else -> "Tipo"
+                    Transaction.Type.EXPENSE -> stringResource(Res.string.installments_filter_type_expense)
+                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.installments_filter_type_adjustment)
+                    Transaction.Type.INCOME -> stringResource(Res.string.installments_filter_type_income)
+                    else -> stringResource(Res.string.installments_filter_type)
                 }
             )
         },
@@ -695,7 +716,7 @@ private fun TypeFilterChip(
         onDismissRequest = { expanded = false },
     ) {
         DropdownMenuItem(
-            text = { Text("Todos") },
+            text = { Text(stringResource(Res.string.installments_filter_type_all)) },
             onClick = {
                 onAction(InstallmentsAction.SelectType(null))
                 expanded = false
@@ -703,9 +724,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to "Despesa",
-            Transaction.Type.INCOME to "Receita",
-            Transaction.Type.ADJUSTMENT to "Ajuste",
+            Transaction.Type.EXPENSE to stringResource(Res.string.installments_filter_type_expense),
+            Transaction.Type.INCOME to stringResource(Res.string.installments_filter_type_income),
+            Transaction.Type.ADJUSTMENT to stringResource(Res.string.installments_filter_type_adjustment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

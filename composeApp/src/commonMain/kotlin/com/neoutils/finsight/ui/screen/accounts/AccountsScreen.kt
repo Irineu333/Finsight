@@ -61,6 +61,27 @@ import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.util.DateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.accounts_advance_payments
+import com.neoutils.finsight.resources.accounts_adjustments
+import com.neoutils.finsight.resources.accounts_balance
+import com.neoutils.finsight.resources.accounts_default
+import com.neoutils.finsight.resources.accounts_delete
+import com.neoutils.finsight.resources.accounts_edit
+import com.neoutils.finsight.resources.accounts_expenses
+import com.neoutils.finsight.resources.accounts_filter_category
+import com.neoutils.finsight.resources.accounts_filter_category_all
+import com.neoutils.finsight.resources.accounts_filter_type
+import com.neoutils.finsight.resources.accounts_filter_type_adjustment
+import com.neoutils.finsight.resources.accounts_filter_type_all
+import com.neoutils.finsight.resources.accounts_filter_type_expense
+import com.neoutils.finsight.resources.accounts_filter_type_income
+import com.neoutils.finsight.resources.accounts_income
+import com.neoutils.finsight.resources.accounts_initial_balance
+import com.neoutils.finsight.resources.accounts_invoices
+import com.neoutils.finsight.resources.accounts_title
+import com.neoutils.finsight.resources.accounts_transfer
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.absoluteValue
@@ -98,7 +119,7 @@ private fun AccountsContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Contas")
+                    Text(text = stringResource(Res.string.accounts_title))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorScheme.background,
@@ -346,7 +367,7 @@ private fun AccountCard(
 
                 if (account.isDefault) {
                     Text(
-                        text = "Padrão",
+                        text = stringResource(Res.string.accounts_default),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextLight1,
@@ -355,7 +376,7 @@ private fun AccountCard(
             }
 
             AccountSummaryRow(
-                label = "Saldo Inicial",
+                label = stringResource(Res.string.accounts_initial_balance),
                 amount = initialBalance,
                 color = Color.White,
                 signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
@@ -363,14 +384,14 @@ private fun AccountCard(
             )
 
             AccountSummaryRow(
-                label = "Receitas",
+                label = stringResource(Res.string.accounts_income),
                 amount = income,
                 color = Income,
                 signDisplay = AccountSignDisplay.ALWAYS_POSITIVE
             )
 
             AccountSummaryRow(
-                label = "Despesas",
+                label = stringResource(Res.string.accounts_expenses),
                 amount = expense,
                 color = Expense,
                 signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
@@ -378,7 +399,7 @@ private fun AccountCard(
 
             if (adjustment != 0.0) {
                 AccountSummaryRow(
-                    label = "Ajustes",
+                    label = stringResource(Res.string.accounts_adjustments),
                     amount = adjustment,
                     color = Adjustment,
                     signDisplay = AccountSignDisplay.SHOW_ALWAYS
@@ -387,7 +408,7 @@ private fun AccountCard(
 
             if (invoicePayment != 0.0) {
                 AccountSummaryRow(
-                    label = "Faturas",
+                    label = stringResource(Res.string.accounts_invoices),
                     amount = invoicePayment,
                     color = InvoicePayment,
                     signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
@@ -396,7 +417,7 @@ private fun AccountCard(
 
             if (advancePayment != 0.0) {
                 AccountSummaryRow(
-                    label = "Adiantamentos",
+                    label = stringResource(Res.string.accounts_advance_payments),
                     amount = advancePayment,
                     color = InvoicePayment,
                     signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
@@ -406,7 +427,7 @@ private fun AccountCard(
             HorizontalDivider()
 
             AccountSummaryRow(
-                label = "Saldo",
+                label = stringResource(Res.string.accounts_balance),
                 amount = balance,
                 color = colorScheme.onSurface,
                 isTotal = true,
@@ -531,7 +552,7 @@ private fun AccountActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Excluir",
+                    text = stringResource(Res.string.accounts_delete),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -558,7 +579,7 @@ private fun AccountActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Editar",
+                    text = stringResource(Res.string.accounts_edit),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -588,7 +609,7 @@ private fun AccountActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Transferir",
+                    text = stringResource(Res.string.accounts_transfer),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -704,7 +725,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedCategory != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: "Categoria") },
+        label = { Text(selectedCategory?.name ?: stringResource(Res.string.accounts_filter_category)) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -725,7 +746,7 @@ private fun CategoryFilterChip(
         onDismissRequest = { expanded = false }
     ) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.accounts_filter_category_all)) },
             onClick = {
                 onAction(AccountsAction.SelectCategory(null))
                 expanded = false
@@ -765,10 +786,10 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.INCOME -> "Receita"
-                    Transaction.Type.EXPENSE -> "Despesa"
-                    Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    null -> "Tipo"
+                    Transaction.Type.INCOME -> stringResource(Res.string.accounts_filter_type_income)
+                    Transaction.Type.EXPENSE -> stringResource(Res.string.accounts_filter_type_expense)
+                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.accounts_filter_type_adjustment)
+                    null -> stringResource(Res.string.accounts_filter_type)
                 }
             )
         },
@@ -792,7 +813,7 @@ private fun TypeFilterChip(
         onDismissRequest = { expanded = false }
     ) {
         DropdownMenuItem(
-            text = { Text("Todos") },
+            text = { Text(stringResource(Res.string.accounts_filter_type_all)) },
             onClick = {
                 onAction(AccountsAction.SelectType(null))
                 expanded = false
@@ -800,7 +821,7 @@ private fun TypeFilterChip(
         )
 
         DropdownMenuItem(
-            text = { Text("Receita") },
+            text = { Text(stringResource(Res.string.accounts_filter_type_income)) },
             onClick = {
                 onAction(AccountsAction.SelectType(Transaction.Type.INCOME))
                 expanded = false
@@ -808,7 +829,7 @@ private fun TypeFilterChip(
         )
 
         DropdownMenuItem(
-            text = { Text("Despesa") },
+            text = { Text(stringResource(Res.string.accounts_filter_type_expense)) },
             onClick = {
                 onAction(AccountsAction.SelectType(Transaction.Type.EXPENSE))
                 expanded = false
@@ -816,7 +837,7 @@ private fun TypeFilterChip(
         )
 
         DropdownMenuItem(
-            text = { Text("Ajuste") },
+            text = { Text(stringResource(Res.string.accounts_filter_type_adjustment)) },
             onClick = {
                 onAction(AccountsAction.SelectType(Transaction.Type.ADJUSTMENT))
                 expanded = false

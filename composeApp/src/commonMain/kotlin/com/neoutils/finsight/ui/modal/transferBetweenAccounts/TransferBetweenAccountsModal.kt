@@ -44,8 +44,16 @@ import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.transfer_amount_label
+import com.neoutils.finsight.resources.transfer_confirm
+import com.neoutils.finsight.resources.transfer_date_label
+import com.neoutils.finsight.resources.transfer_destination_account_label
+import com.neoutils.finsight.resources.transfer_source_account_label
+import com.neoutils.finsight.resources.transfer_title
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -88,7 +96,7 @@ class TransferBetweenAccountsModal(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Transferir entre contas",
+                    text = stringResource(Res.string.transfer_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -98,7 +106,7 @@ class TransferBetweenAccountsModal(
                     selectedAccount = uiState.selectedSourceAccount,
                     accounts = uiState.accounts,
                     onAccountSelected = { viewModel.selectSourceAccount(it) },
-                    label = "Conta de origem",
+                    label = stringResource(Res.string.transfer_source_account_label),
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -108,7 +116,7 @@ class TransferBetweenAccountsModal(
                     selectedAccount = uiState.selectedDestinationAccount,
                     accounts = uiState.destinationAccounts,
                     onAccountSelected = { viewModel.selectDestinationAccount(it) },
-                    label = "Conta de destino",
+                    label = stringResource(Res.string.transfer_destination_account_label),
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -117,7 +125,7 @@ class TransferBetweenAccountsModal(
                 OutlinedTextField(
                     state = amount,
                     label = {
-                        Text(text = "Valor")
+                        Text(text = stringResource(Res.string.transfer_amount_label))
                     },
                     inputTransformation = MoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -134,7 +142,7 @@ class TransferBetweenAccountsModal(
                 OutlinedTextField(
                     state = date,
                     label = {
-                        Text(text = "Data")
+                        Text(text = stringResource(Res.string.transfer_date_label))
                     },
                     inputTransformation = DateInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -189,7 +197,7 @@ class TransferBetweenAccountsModal(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Transferir",
+                        text = stringResource(Res.string.transfer_confirm),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

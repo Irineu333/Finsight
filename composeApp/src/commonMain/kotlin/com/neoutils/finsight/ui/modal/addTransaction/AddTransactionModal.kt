@@ -36,8 +36,16 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.add_transaction_amount_label
+import com.neoutils.finsight.resources.add_transaction_date_label
+import com.neoutils.finsight.resources.add_transaction_expense
+import com.neoutils.finsight.resources.add_transaction_income
+import com.neoutils.finsight.resources.add_transaction_save
+import com.neoutils.finsight.resources.add_transaction_title_label
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -119,7 +127,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = title,
                     label = {
-                        Text(text = "Título")
+                        Text(text = stringResource(Res.string.add_transaction_title_label))
                     },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -202,7 +210,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = amount,
                     label = {
-                        Text(text = "Valor")
+                        Text(text = stringResource(Res.string.add_transaction_amount_label))
                     },
                     inputTransformation = MoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -231,7 +239,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = date,
                     label = {
-                        Text(text = "Data")
+                        Text(text = stringResource(Res.string.add_transaction_date_label))
                     },
                     inputTransformation = DateInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -277,7 +285,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Salvar",
+                        text = stringResource(Res.string.add_transaction_save),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -323,7 +331,7 @@ class AddTransactionModal : ModalBottomSheet() {
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Despesa",
+                text = stringResource(Res.string.add_transaction_expense),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -351,7 +359,7 @@ class AddTransactionModal : ModalBottomSheet() {
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Receita",
+                text = stringResource(Res.string.add_transaction_income),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )

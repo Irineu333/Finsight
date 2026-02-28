@@ -13,6 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.multi_category_selector_label
+import com.neoutils.finsight.resources.multi_category_selector_none
+import com.neoutils.finsight.resources.multi_category_selector_plural
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MultiCategorySelector(
@@ -23,10 +28,12 @@ fun MultiCategorySelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    val noneLabel = stringResource(Res.string.multi_category_selector_none)
+    val pluralLabel = stringResource(Res.string.multi_category_selector_plural, selectedCategories.size)
     val displayText = when {
-        selectedCategories.isEmpty() -> "Nenhuma"
+        selectedCategories.isEmpty() -> noneLabel
         selectedCategories.size == 1 -> selectedCategories.first().name
-        else -> "${selectedCategories.size} categorias"
+        else -> pluralLabel
     }
 
     ExposedDropdownMenuBox(
@@ -42,7 +49,7 @@ fun MultiCategorySelector(
             value = displayText,
             onValueChange = {},
             readOnly = true,
-            label = { Text(text = "Categorias") },
+            label = { Text(text = stringResource(Res.string.multi_category_selector_label)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },

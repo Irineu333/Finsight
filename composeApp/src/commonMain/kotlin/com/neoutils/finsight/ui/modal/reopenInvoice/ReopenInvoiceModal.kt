@@ -23,6 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.reopen_invoice_cancel
+import com.neoutils.finsight.resources.reopen_invoice_confirm
+import com.neoutils.finsight.resources.reopen_invoice_confirm_message
+import com.neoutils.finsight.resources.reopen_invoice_description
+import com.neoutils.finsight.resources.reopen_invoice_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -43,14 +50,14 @@ class ReopenInvoiceModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Reabrir Fatura",
+                text = stringResource(Res.string.reopen_invoice_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             Text(
-                text = "Tem certeza que deseja reabrir esta fatura?",
+                text = stringResource(Res.string.reopen_invoice_confirm_message),
                 fontSize = 16.sp,
                 color = colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -58,7 +65,7 @@ class ReopenInvoiceModal(
             )
 
             Text(
-                text = "A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.",
+                text = stringResource(Res.string.reopen_invoice_description),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -74,7 +81,7 @@ class ReopenInvoiceModal(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Cancelar",
+                        text = stringResource(Res.string.reopen_invoice_cancel),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -91,7 +98,7 @@ class ReopenInvoiceModal(
                     )
                 ) {
                     Text(
-                        text = "Reabrir",
+                        text = stringResource(Res.string.reopen_invoice_confirm),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

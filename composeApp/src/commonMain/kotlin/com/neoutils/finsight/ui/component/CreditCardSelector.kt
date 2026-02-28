@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_card_selector_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CreditCardSelector(
@@ -41,7 +44,7 @@ fun CreditCardSelector(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Cartão")
+                Text(text = stringResource(Res.string.credit_card_selector_label))
             },
             leadingIcon = creditCard?.let {
                 {

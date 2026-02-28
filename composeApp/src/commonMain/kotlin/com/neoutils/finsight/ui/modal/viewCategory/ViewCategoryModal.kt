@@ -30,6 +30,15 @@ import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.view_category_delete
+import com.neoutils.finsight.resources.view_category_edit
+import com.neoutils.finsight.resources.view_category_total_received
+import com.neoutils.finsight.resources.view_category_total_spent
+import com.neoutils.finsight.resources.view_category_transactions_month
+import com.neoutils.finsight.resources.view_category_type_expense
+import com.neoutils.finsight.resources.view_category_type_income
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
@@ -82,7 +91,7 @@ class ViewCategoryModal(
 
                 Column {
                     Text(
-                        text = if (uiState.category.type.isIncome) "Receita" else "Despesa",
+                        text = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_type_income) else stringResource(Res.string.view_category_type_expense),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = if (uiState.category.type.isIncome) Income else Expense
@@ -102,7 +111,7 @@ class ViewCategoryModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
-                label = if (uiState.category.type.isIncome) "Total Recebido" else "Total Gasto",
+                label = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_total_received) else stringResource(Res.string.view_category_total_spent),
                 value = uiState.totalAmount.toMoneyFormat(),
                 valueColor = if (uiState.category.type.isIncome) Income else Expense
             )
@@ -110,7 +119,7 @@ class ViewCategoryModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
-                label = "Transações no Mês",
+                label = stringResource(Res.string.view_category_transactions_month),
                 value = uiState.transactionCount.toString()
             )
 
@@ -141,7 +150,7 @@ class ViewCategoryModal(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Excluir",
+                        text = stringResource(Res.string.view_category_delete),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -168,7 +177,7 @@ class ViewCategoryModal(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Editar",
+                        text = stringResource(Res.string.view_category_edit),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

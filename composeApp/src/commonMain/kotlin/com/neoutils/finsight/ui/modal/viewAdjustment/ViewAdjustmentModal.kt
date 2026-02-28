@@ -35,7 +35,20 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.view_adjustment_account_label
+import com.neoutils.finsight.resources.view_adjustment_adjusted_value_label
+import com.neoutils.finsight.resources.view_adjustment_balance_adjust
+import com.neoutils.finsight.resources.view_adjustment_card_label
+import com.neoutils.finsight.resources.view_adjustment_credit_card_label
+import com.neoutils.finsight.resources.view_adjustment_date_label
+import com.neoutils.finsight.resources.view_adjustment_delete_label
+import com.neoutils.finsight.resources.view_adjustment_deleted
+import com.neoutils.finsight.resources.view_adjustment_invoice_adjust
+import com.neoutils.finsight.resources.view_adjustment_type_label
+import com.neoutils.finsight.resources.view_adjustment_type_row_label
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -69,7 +82,7 @@ class ViewAdjustmentModal(
 
                 Column {
                     Text(
-                        text = "Ajuste",
+                        text = stringResource(Res.string.view_adjustment_type_label),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Adjustment
@@ -77,10 +90,12 @@ class ViewAdjustmentModal(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    val balanceAdjust = stringResource(Res.string.view_adjustment_balance_adjust)
+                    val invoiceAdjust = stringResource(Res.string.view_adjustment_invoice_adjust)
                     Text(
                         text = uiState.transaction.title ?: when (uiState.transaction.target) {
-                            Transaction.Target.ACCOUNT -> "Ajuste de Saldo"
-                            Transaction.Target.CREDIT_CARD -> "Ajuste de Fatura"
+                            Transaction.Target.ACCOUNT -> balanceAdjust
+                            Transaction.Target.CREDIT_CARD -> invoiceAdjust
                         },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
@@ -92,7 +107,7 @@ class ViewAdjustmentModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
-                label = "Valor Ajustado",
+                label = stringResource(Res.string.view_adjustment_adjusted_value_label),
                 value = uiState.transaction.amount.toMoneyFormatWithSign(),
                 valueColor = Adjustment
             )
@@ -100,23 +115,25 @@ class ViewAdjustmentModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
-                label = "Data",
+                label = stringResource(Res.string.view_adjustment_date_label),
                 value = formats.dayMonthYear.format(uiState.transaction.date)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val creditCardLabel = stringResource(Res.string.view_adjustment_credit_card_label)
+            val accountTypeLabel = stringResource(Res.string.view_adjustment_account_label)
             DetailRow(
-                label = "Tipo",
+                label = stringResource(Res.string.view_adjustment_type_row_label),
                 value = when (uiState.transaction.target) {
-                    Transaction.Target.ACCOUNT -> "Conta"
-                    Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                    Transaction.Target.ACCOUNT -> accountTypeLabel
+                    Transaction.Target.CREDIT_CARD -> creditCardLabel
                 }
             )
 
             uiState.transaction.account?.let { account ->
                 DetailRow(
-                    label = "Conta",
+                    label = stringResource(Res.string.view_adjustment_account_label),
                     value = account.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -124,9 +141,10 @@ class ViewAdjustmentModal(
                 )
             }
 
+            val deletedLabel = stringResource(Res.string.view_adjustment_deleted)
             uiState.transaction.creditCard?.let { creditCard ->
                 DetailRow(
-                    label = "Cartão",
+                    label = stringResource(Res.string.view_adjustment_card_label),
                     value = creditCard.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -135,8 +153,8 @@ class ViewAdjustmentModal(
             } ?: run {
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
-                        label = "Cartão",
-                        value = "Excluído",
+                        label = stringResource(Res.string.view_adjustment_card_label),
+                        value = deletedLabel,
                         valueColor = colorScheme.error,
                         modifier = Modifier
                             .padding(top = 8.dp)
@@ -168,7 +186,7 @@ class ViewAdjustmentModal(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Excluir Ajuste",
+                    text = stringResource(Res.string.view_adjustment_delete_label),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

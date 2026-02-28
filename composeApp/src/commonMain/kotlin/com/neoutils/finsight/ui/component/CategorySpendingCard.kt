@@ -18,6 +18,9 @@ import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.category_spending_card_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CategorySpendingCard(
@@ -40,7 +43,7 @@ fun CategorySpendingCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Gastos por Categoria",
+                text = stringResource(Res.string.category_spending_card_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp)

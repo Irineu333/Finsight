@@ -29,8 +29,16 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.edit_account_balance_current_title
+import com.neoutils.finsight.resources.edit_account_balance_final_title
+import com.neoutils.finsight.resources.edit_account_balance_initial_title
+import com.neoutils.finsight.resources.edit_account_balance_label
+import com.neoutils.finsight.resources.edit_account_balance_save
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.YearMonth
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
@@ -84,7 +92,7 @@ class EditAccountBalanceModal(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = type.title,
+                text = stringResource(type.titleRes),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -112,7 +120,7 @@ class EditAccountBalanceModal(
             )
 
             OutlinedTextField(
-                label = { Text("Saldo") },
+                label = { Text(stringResource(Res.string.edit_account_balance_label)) },
                 state = balanceState,
                 inputTransformation = MoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
@@ -155,7 +163,7 @@ class EditAccountBalanceModal(
                 colors = ButtonDefaults.buttonColors(containerColor = Adjustment),
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.edit_account_balance_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -218,9 +226,9 @@ class EditAccountBalanceModal(
         return if (isNegative) -value else value
     }
 
-    enum class Type(val title: String) {
-        CURRENT("Editar Saldo Atual"),
-        FINAL("Editar Saldo Final"),
-        INITIAL("Editar Saldo Inicial")
+    enum class Type(val titleRes: StringResource) {
+        CURRENT(Res.string.edit_account_balance_current_title),
+        FINAL(Res.string.edit_account_balance_final_title),
+        INITIAL(Res.string.edit_account_balance_initial_title)
     }
 }

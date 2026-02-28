@@ -32,7 +32,18 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.category_form_edit_title
+import com.neoutils.finsight.resources.category_form_expense
+import com.neoutils.finsight.resources.category_form_icon_label
+import com.neoutils.finsight.resources.category_form_income
+import com.neoutils.finsight.resources.category_form_name_label
+import com.neoutils.finsight.resources.category_form_new_title
+import com.neoutils.finsight.resources.category_form_save
+import com.neoutils.finsight.resources.category_form_see_less
+import com.neoutils.finsight.resources.category_form_see_more
 import kotlinx.coroutines.flow.drop
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -67,7 +78,7 @@ class CategoryFormModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = if (uiState.isEditMode) "Editar Categoria" else "Nova Categoria",
+                text = if (uiState.isEditMode) stringResource(Res.string.category_form_edit_title) else stringResource(Res.string.category_form_new_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -84,7 +95,7 @@ class CategoryFormModal(
             OutlinedTextField(
                 state = name,
                 label = {
-                    Text(text = "Nome")
+                    Text(text = stringResource(Res.string.category_form_name_label))
                 },
                 trailingIcon = when (uiState.validation[CategoryField.NAME]) {
                     Validation.Validating -> {
@@ -120,7 +131,7 @@ class CategoryFormModal(
             )
 
             Text(
-                text = "Ícone",
+                text = stringResource(Res.string.category_form_icon_label),
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -147,7 +158,7 @@ class CategoryFormModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.category_form_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -184,7 +195,7 @@ class CategoryFormModal(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Despesa",
+                text = stringResource(Res.string.category_form_expense),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -211,7 +222,7 @@ class CategoryFormModal(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = "Receita",
+                text = stringResource(Res.string.category_form_income),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -291,7 +302,7 @@ class CategoryFormModal(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (isExpanded) "Ver menos" else "Ver mais ($hiddenCount)",
+                    text = if (isExpanded) stringResource(Res.string.category_form_see_less) else stringResource(Res.string.category_form_see_more, hiddenCount),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

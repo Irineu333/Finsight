@@ -44,7 +44,12 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.resources.operation_card_transfer
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import org.jetbrains.compose.resources.stringResource
 
 private val formats = DateFormats()
 
@@ -124,11 +129,15 @@ fun OperationCard(
             }
         }
 
+        val transferLabel = stringResource(Res.string.operation_card_transfer)
+        val balanceAdjustLabel = stringResource(Res.string.operation_card_balance_adjustment)
+        val invoiceAdjustLabel = stringResource(Res.string.operation_card_invoice_adjustment)
+
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = getTitle(operation),
+                text = getTitle(operation, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -169,12 +178,15 @@ fun OperationCard(
 
 private fun getTitle(
     operation: Operation,
+    transferLabel: String,
+    balanceAdjustLabel: String,
+    invoiceAdjustLabel: String,
 ): String {
     val baseTitle = when {
         operation.kind == Operation.Kind.PAYMENT -> operation.label
-        operation.kind == Operation.Kind.TRANSFER -> "Transferência"
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> "Ajuste de Saldo"
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> "Ajuste de Fatura"
+        operation.kind == Operation.Kind.TRANSFER -> transferLabel
+        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> balanceAdjustLabel
+        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> invoiceAdjustLabel
         else -> operation.label
     }
 

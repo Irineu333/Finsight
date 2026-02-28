@@ -31,6 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.theme.InvoicePayment
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.balance_card_current_balance
+import com.neoutils.finsight.resources.balance_card_current_invoice
+import com.neoutils.finsight.resources.balance_card_expense
+import com.neoutils.finsight.resources.balance_card_income
+import com.neoutils.finsight.resources.balance_card_invoices
+import com.neoutils.finsight.resources.balance_card_pay_invoice
+import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
@@ -138,7 +146,7 @@ fun BalanceCard(
                 )
             ) {
                 Text(
-                    text = "Pagar Fatura",
+                    text = stringResource(Res.string.balance_card_pay_invoice),
                     fontSize = 14.sp
                 )
             }
@@ -159,7 +167,7 @@ data class BalanceCardConfig(
         val Default
             @Composable
             get() = BalanceCardConfig(
-                title = "Saldo Atual",
+                title = stringResource(Res.string.balance_card_current_balance),
                 style = TextStyle(
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
@@ -179,7 +187,7 @@ data class BalanceCardConfig(
             @Composable
             get() = BalanceCardConfig(
                 icon = Icons.Default.ArrowUpward,
-                title = "Receitas",
+                title = stringResource(Res.string.balance_card_income),
                 style = TextStyle(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -198,7 +206,7 @@ data class BalanceCardConfig(
             @Composable
             get() = BalanceCardConfig(
                 icon = Icons.Default.ArrowDownward,
-                title = "Despesas",
+                title = stringResource(Res.string.balance_card_expense),
                 style = TextStyle(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -217,7 +225,7 @@ data class BalanceCardConfig(
             @Composable
             get() = BalanceCardConfig(
                 icon = Icons.Default.CreditCard,
-                title = "Faturas",
+                title = stringResource(Res.string.balance_card_invoices),
                 style = TextStyle(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -236,7 +244,7 @@ data class BalanceCardConfig(
             @Composable
             get() = BalanceCardConfig(
                 icon = Icons.Default.CreditCard,
-                title = "Fatura Atual",
+                title = stringResource(Res.string.balance_card_current_invoice),
                 style = TextStyle(
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,

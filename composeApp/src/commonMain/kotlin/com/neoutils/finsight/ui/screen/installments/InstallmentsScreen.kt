@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Card
@@ -192,26 +193,35 @@ private fun InstallmentsContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    modalManager.show(AddInstallmentModal())
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                )
+            if (uiState.installments.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        modalManager.show(AddInstallmentModal())
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                    )
+                }
             }
         },
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (uiState.installments.isNotEmpty()) {
+        if (uiState.installments.isEmpty()) {
+            EmptyInstallmentsState(
+                onCreateInstallment = { modalManager.show(AddInstallmentModal()) },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 item(key = "installments_pager") {
                     InstallmentPager(
                         installments = uiState.installments,
@@ -307,6 +317,41 @@ private fun InstallmentsContent(
                         },
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyInstallmentsState(
+    onCreateInstallment: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Sem parcelamentos",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = onCreateInstallment,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = "Criar parcelamento")
             }
         }
     }

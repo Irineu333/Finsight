@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -95,66 +96,75 @@ private fun CreditCardsContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    modalManager.show(CreditCardFormModal())
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null
-                )
+            if (uiState.creditCards.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        modalManager.show(CreditCardFormModal())
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+                }
             }
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item(
-                key = "credit_card_pager"
+        if (uiState.creditCards.isEmpty()) {
+            EmptyCreditCardsState(
+                onCreateCreditCard = { modalManager.show(CreditCardFormModal()) },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                CreditCardPager(
-                    creditCards = uiState.creditCards,
-                    selectedIndex = uiState.selectedCardIndex,
-                    onSelectCard = { index ->
-                        onAction(CreditCardsAction.SelectCard(index))
-                    },
-                    onCardClick = { creditCardUi ->
-                        navigator.navigate(
-                            NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
-                        )
-                    },
-                    onEditInvoice = { invoice ->
-                        modalManager.show(
-                            EditInvoiceBalanceModal(
-                                initialInvoice = invoice
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
                 item(
-                    key = "card_actions"
+                    key = "credit_card_pager"
                 ) {
-                    CardActions(
-                        creditCardUi = selectedCard,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateContentSize()
+                    CreditCardPager(
+                        creditCards = uiState.creditCards,
+                        selectedIndex = uiState.selectedCardIndex,
+                        onSelectCard = { index ->
+                            onAction(CreditCardsAction.SelectCard(index))
+                        },
+                        onCardClick = { creditCardUi ->
+                            navigator.navigate(
+                                NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
+                            )
+                        },
+                        onEditInvoice = { invoice ->
+                            modalManager.show(
+                                EditInvoiceBalanceModal(
+                                    initialInvoice = invoice
+                                )
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
-            }
 
-            if (uiState.creditCards.isNotEmpty()) {
+                uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
+                    item(
+                        key = "card_actions"
+                    ) {
+                        CardActions(
+                            creditCardUi = selectedCard,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateContentSize()
+                        )
+                    }
+                }
+
                 item(
                     key = "filters_row"
                 ) {
@@ -167,46 +177,81 @@ private fun CreditCardsContent(
                             .animateItem()
                     )
                 }
-            }
 
-            uiState.operations.forEach { (date, operations) ->
-                item(
-                    key = "date_title_$date"
-                ) {
-                    Text(
-                        text = formats.formatRelativeDate(date),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .padding(horizontal = 16.dp)
-                            .animateItem()
-                    )
-                }
+                uiState.operations.forEach { (date, operations) ->
+                    item(
+                        key = "date_title_$date"
+                    ) {
+                        Text(
+                            text = formats.formatRelativeDate(date),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .padding(horizontal = 16.dp)
+                                .animateItem()
+                        )
+                    }
 
-                items(
-                    items = operations,
-                    key = { it.id }
-                ) { operation ->
-                    OperationCard(
-                        operation = operation,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        onClick = {
-                            when (operation.type) {
-                                Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
-                                }
+                    items(
+                        items = operations,
+                        key = { it.id }
+                    ) { operation ->
+                        OperationCard(
+                            operation = operation,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateItem(),
+                            onClick = {
+                                when (operation.type) {
+                                    Transaction.Type.ADJUSTMENT -> {
+                                        modalManager.show(ViewAdjustmentModal(operation))
+                                    }
 
-                                else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    else -> {
+                                        modalManager.show(ViewOperationModal(operation))
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyCreditCardsState(
+    onCreateCreditCard: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "Sem cartões de crédito",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = onCreateCreditCard,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = "Criar cartão")
             }
         }
     }

@@ -69,7 +69,7 @@ private fun BudgetProgressRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        progress.budget.categories.firstOrNull()?.let { category ->
+        progress.budget.iconCategory?.let { category ->
             CategoryIconBox(
                 category = category,
                 shape = RoundedCornerShape(8.dp),

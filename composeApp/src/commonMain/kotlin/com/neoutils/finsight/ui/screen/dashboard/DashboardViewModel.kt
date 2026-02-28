@@ -12,6 +12,8 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.toYearMonth
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
@@ -100,10 +102,13 @@ class DashboardViewModel(
             )
         }
 
+        val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val presentOperations = operations.filter { it.date <= today }
+
         DashboardUiState(
             accounts = accountsUi,
-            recents = operations.sortedByDescending { it.date }.take(4),
-            hasMoreRecents = operations.size > 3,
+            recents = presentOperations.sortedByDescending { it.date }.take(4),
+            hasMoreRecents = presentOperations.size > 3,
             balance = DashboardUiState.BalanceStats(
                 income = stats.income,
                 expense = stats.expense,

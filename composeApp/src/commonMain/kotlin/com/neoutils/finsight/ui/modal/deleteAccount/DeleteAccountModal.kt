@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.delete_account_confirm
+import com.neoutils.finsight.resources.delete_account_message
+import com.neoutils.finsight.resources.delete_account_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -37,7 +42,7 @@ class DeleteAccountModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Excluir Conta",
+                text = stringResource(Res.string.delete_account_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface
@@ -46,7 +51,7 @@ class DeleteAccountModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.",
+                text = stringResource(Res.string.delete_account_message),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -64,7 +69,7 @@ class DeleteAccountModal(
                 )
             ) {
                 Text(
-                    text = "Excluir",
+                    text = stringResource(Res.string.delete_account_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

@@ -13,6 +13,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.theme.Primary1
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.nav_dashboard
+import com.neoutils.finsight.resources.nav_transactions
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BottomNavigationBar(
@@ -30,16 +35,17 @@ fun BottomNavigationBar(
             modifier = Modifier.fillMaxWidth()
         ) {
             NavigationItem.entries.forEach { item ->
+                val label = stringResource(item.labelRes)
                 NavigationBarItem(
                     selected = selectedItem == item,
                     onClick = { onItemSelected(item) },
                     icon = {
                         Icon(
                             imageVector = item.icon,
-                            contentDescription = item.label
+                            contentDescription = label
                         )
                     },
-                    label = { Text(item.label) },
+                    label = { Text(label) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Primary1,
                         selectedTextColor = Primary1,
@@ -60,7 +66,7 @@ fun BottomNavigationBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "Add Transaction",
+                contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -69,8 +75,8 @@ fun BottomNavigationBar(
 
 enum class NavigationItem(
     val icon: ImageVector,
-    val label: String
+    val labelRes: StringResource
 ) {
-    Dashboard(Icons.Default.Dashboard, "Dashboard"),
-    Transactions(Icons.Default.Receipt, "Transações")
+    Dashboard(Icons.Default.Dashboard, Res.string.nav_dashboard),
+    Transactions(Icons.Default.Receipt, Res.string.nav_transactions)
 }

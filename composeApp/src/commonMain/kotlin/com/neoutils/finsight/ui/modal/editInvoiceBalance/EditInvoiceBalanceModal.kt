@@ -33,7 +33,12 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.edit_invoice_balance_label
+import com.neoutils.finsight.resources.edit_invoice_balance_save
+import com.neoutils.finsight.resources.edit_invoice_balance_title
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.math.abs
@@ -83,7 +88,7 @@ class EditInvoiceBalanceModal(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Editar Fatura",
+                text = stringResource(Res.string.edit_invoice_balance_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -113,7 +118,7 @@ class EditInvoiceBalanceModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                label = { Text("Valor") },
+                label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                 state = balanceState,
                 inputTransformation = MoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
@@ -159,7 +164,7 @@ class EditInvoiceBalanceModal(
                 colors = ButtonDefaults.buttonColors(containerColor = Adjustment),
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.edit_invoice_balance_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

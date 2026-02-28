@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Invoice date labels -->
+    <string name="invoice_opens_on">opens on %1$s</string>
+    <string name="invoice_closes_on">closes on %1$s</string>
+    <string name="invoice_due_on">due on %1$s</string>
+    <string name="invoice_paid_on">paid on %1$s</string>
+
+    <!-- Account errors -->
+    <string name="account_error_empty_name">Account name cannot be empty.</string>
+    <string name="account_error_already_exist">An account with this name already exists.</string>
+    <string name="account_error_not_found">Account not found.</string>
+
+    <!-- Category errors -->
+    <string name="category_error_empty_name">Category name cannot be empty.</string>
+    <string name="category_error_already_exist">A category with this name already exists.</string>
+
+    <!-- Credit card errors -->
+    <string name="credit_card_error_empty_name">Card name is required.</string>
+    <string name="credit_card_error_already_exist_name">A card with this name already exists.</string>
+    <string name="credit_card_error_negative_limit">Limit cannot be negative.</string>
+    <string name="credit_card_error_missing_closing_day">Closing day is required.</string>
+    <string name="credit_card_error_invalid_closing_day">Closing day must be between 1 and 31.</string>
+    <string name="credit_card_error_missing_due_day">Due day is required.</string>
+    <string name="credit_card_error_invalid_due_day">Due day must be between 1 and 31.</string>
+    <string name="credit_card_error_not_found">Credit card not found.</string>
+
+    <!-- Transfer errors -->
+    <string name="transfer_error_invalid_amount">Transfer amount must be greater than zero.</string>
+    <string name="transfer_error_same_account">Source account must be different from destination account.</string>
+    <string name="transfer_error_source_account_not_found">Source account not found.</string>
+    <string name="transfer_error_destination_account_not_found">Destination account not found.</string>
+    <string name="transfer_error_future_date">Transfer date cannot be in the future.</string>
+    <string name="transfer_error_unknown">Unable to complete the transfer.</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_transactions">Transactions</string>
+
+    <!-- Dashboard Screen -->
+    <string name="dashboard_recents">Recent</string>
+    <string name="dashboard_see_all">See All</string>
+    <string name="dashboard_budgets">Budgets</string>
+    <string name="dashboard_categories">Categories</string>
+    <string name="dashboard_credit_cards">Credit Cards</string>
+    <string name="dashboard_accounts">Accounts</string>
+    <string name="dashboard_installments">Installments</string>
+    <string name="dashboard_default">Default</string>
+    <string name="dashboard_current_balance">Current Balance</string>
+
+    <!-- Transactions Screen -->
+    <string name="transactions_filter_category">Category</string>
+    <string name="transactions_filter_category_all">All</string>
+    <string name="transactions_filter_type">Type</string>
+    <string name="transactions_filter_type_all">All</string>
+    <string name="transactions_filter_type_income">Income</string>
+    <string name="transactions_filter_type_expense">Expense</string>
+    <string name="transactions_filter_type_adjustment">Adjustment</string>
+    <string name="transactions_filter_account">Account</string>
+    <string name="transactions_filter_credit_card">Card</string>
+    <string name="transactions_filter_credit_card_label">Credit Card</string>
+
+    <!-- Installments Screen -->
+    <string name="installments_title">Installments</string>
+    <string name="installments_tab_active">Active</string>
+    <string name="installments_tab_completed">Completed</string>
+    <string name="installments_tab_all">All</string>
+    <string name="installments_delete">Delete Installment</string>
+    <string name="installments_empty">No installments</string>
+    <string name="installments_create">Create installment</string>
+    <string name="installments_total_value">Total Value</string>
+    <string name="installments_current_installment">Current Installment</string>
+    <string name="installments_remaining">Remaining</string>
+    <string name="installments_status_active">Active</string>
+    <string name="installments_status_completed">Completed</string>
+    <string name="installments_filter_category">Category</string>
+    <string name="installments_filter_category_all">All</string>
+    <string name="installments_filter_type">Type</string>
+    <string name="installments_filter_type_all">All</string>
+    <string name="installments_filter_type_expense">Expense</string>
+    <string name="installments_filter_type_adjustment">Adjustment</string>
+    <string name="installments_filter_type_income">Income</string>
+
+    <!-- Credit Cards Screen -->
+    <string name="credit_cards_title">Credit Cards</string>
+    <string name="credit_cards_empty">No credit cards</string>
+    <string name="credit_cards_create">Create card</string>
+    <string name="credit_cards_delete">Delete</string>
+    <string name="credit_cards_edit">Edit</string>
+    <string name="credit_cards_advance_payment">Advance Payment</string>
+    <string name="credit_cards_close_invoice">Close Invoice</string>
+    <string name="credit_cards_reopen_invoice">Reopen Invoice</string>
+    <string name="credit_cards_pay_invoice">Pay Invoice</string>
+    <string name="credit_cards_filter_category">Category</string>
+    <string name="credit_cards_filter_category_all">All</string>
+    <string name="credit_cards_filter_type">Type</string>
+    <string name="credit_cards_filter_type_all">All</string>
+    <string name="credit_cards_filter_type_expense">Expense</string>
+    <string name="credit_cards_filter_type_adjustment">Adjustment</string>
+    <string name="credit_cards_filter_type_payment">Payment</string>
+
+    <!-- Accounts Screen -->
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_default">Default</string>
+    <string name="accounts_initial_balance">Initial Balance</string>
+    <string name="accounts_income">Income</string>
+    <string name="accounts_expenses">Expenses</string>
+    <string name="accounts_adjustments">Adjustments</string>
+    <string name="accounts_invoices">Invoices</string>
+    <string name="accounts_advance_payments">Advance Payments</string>
+    <string name="accounts_balance">Balance</string>
+    <string name="accounts_delete">Delete</string>
+    <string name="accounts_edit">Edit</string>
+    <string name="accounts_transfer">Transfer</string>
+    <string name="accounts_filter_category">Category</string>
+    <string name="accounts_filter_category_all">All</string>
+    <string name="accounts_filter_type">Type</string>
+    <string name="accounts_filter_type_all">All</string>
+    <string name="accounts_filter_type_income">Income</string>
+    <string name="accounts_filter_type_expense">Expense</string>
+    <string name="accounts_filter_type_adjustment">Adjustment</string>
+
+    <!-- Categories Screen -->
+    <string name="categories_title">Categories</string>
+    <string name="categories_income">Income</string>
+    <string name="categories_expense">Expenses</string>
+    <string name="categories_empty">No categories</string>
+    <string name="categories_create_default">Use default</string>
+    <string name="categories_create_manual">Create manually</string>
+
+    <!-- Budgets Screen -->
+    <string name="budgets_title">Budgets</string>
+    <string name="budgets_limit">Limit</string>
+    <string name="budgets_spent">Spent</string>
+    <string name="budgets_remaining">Remaining</string>
+    <string name="budgets_exceeded_by">Exceeded by</string>
+    <string name="budgets_category_singular">1 category</string>
+    <string name="budgets_category_plural">%1$d categories</string>
+    <string name="budgets_empty">No budgets</string>
+    <string name="budgets_create">Create budget</string>
+
+    <!-- Invoice Transactions Screen -->
+    <string name="invoice_transactions_edit_card">Edit Card</string>
+    <string name="invoice_transactions_delete_card">Delete Card</string>
+    <string name="invoice_transactions_expenses">Expenses</string>
+    <string name="invoice_transactions_advance_payments">Advance Payments</string>
+    <string name="invoice_transactions_adjustments">Adjustments</string>
+    <string name="invoice_transactions_total">Total</string>
+    <string name="invoice_transactions_advance_payment">Advance Payment</string>
+    <string name="invoice_transactions_close_invoice">Close Invoice</string>
+    <string name="invoice_transactions_delete_invoice">Delete Invoice</string>
+    <string name="invoice_transactions_reopen_invoice">Reopen Invoice</string>
+    <string name="invoice_transactions_pay_invoice">Pay Invoice</string>
+    <string name="invoice_transactions_filter_category">Category</string>
+    <string name="invoice_transactions_filter_category_all">All</string>
+    <string name="invoice_transactions_filter_type">Type</string>
+    <string name="invoice_transactions_filter_type_all">All</string>
+    <string name="invoice_transactions_filter_type_expense">Expense</string>
+    <string name="invoice_transactions_filter_type_adjustment">Adjustment</string>
+    <string name="invoice_transactions_filter_type_payment">Payment</string>
+
+    <!-- Account Form Modal -->
+    <string name="account_form_edit_title">Edit Account</string>
+    <string name="account_form_new_title">New Account</string>
+    <string name="account_form_name_label">Name</string>
+    <string name="account_form_default_label">Default Account</string>
+    <string name="account_form_save">Save</string>
+
+    <!-- Credit Card Form Modal -->
+    <string name="credit_card_form_edit_title">Edit Card</string>
+    <string name="credit_card_form_new_title">New Card</string>
+    <string name="credit_card_form_name_label">Card Name</string>
+    <string name="credit_card_form_limit_label">Limit</string>
+    <string name="credit_card_form_closing_day_label">Closing Day</string>
+    <string name="credit_card_form_due_day_label">Due Day</string>
+    <string name="credit_card_form_save">Save</string>
+
+    <!-- Category Form Modal -->
+    <string name="category_form_edit_title">Edit Category</string>
+    <string name="category_form_new_title">New Category</string>
+    <string name="category_form_name_label">Name</string>
+    <string name="category_form_icon_label">Icon</string>
+    <string name="category_form_expense">Expense</string>
+    <string name="category_form_income">Income</string>
+    <string name="category_form_save">Save</string>
+    <string name="category_form_see_less">See less</string>
+    <string name="category_form_see_more">See more (%1$d)</string>
+
+    <!-- Budget Form Modal -->
+    <string name="budget_form_edit_title">Edit Budget</string>
+    <string name="budget_form_new_title">New Budget</string>
+    <string name="budget_form_title_label">Title</string>
+    <string name="budget_form_icon_label">Budget icon</string>
+    <string name="budget_form_limit_label">Limit</string>
+    <string name="budget_form_save">Save</string>
+
+    <!-- Add Transaction Modal -->
+    <string name="add_transaction_title_label">Title</string>
+    <string name="add_transaction_amount_label">Amount</string>
+    <string name="add_transaction_date_label">Date</string>
+    <string name="add_transaction_save">Save</string>
+    <string name="add_transaction_expense">Expense</string>
+    <string name="add_transaction_income">Income</string>
+
+    <!-- Add Installment Modal -->
+    <string name="add_installment_title">Register installment</string>
+    <string name="add_installment_title_label">Title</string>
+    <string name="add_installment_amount_label">Amount</string>
+    <string name="add_installment_date_label">Date</string>
+    <string name="add_installment_save">Save</string>
+    <string name="add_installment_initial_invoice">Initial Invoice</string>
+
+    <!-- Delete Modals -->
+    <string name="delete_transaction_title">Delete Transaction</string>
+    <string name="delete_transaction_message">Are you sure you want to delete this transaction? This action cannot be undone.</string>
+    <string name="delete_transaction_confirm">Delete</string>
+
+    <string name="delete_account_title">Delete Account</string>
+    <string name="delete_account_message">Are you sure you want to delete this account? Associated transactions will not be deleted.</string>
+    <string name="delete_account_confirm">Delete</string>
+
+    <string name="delete_credit_card_title">Delete Card</string>
+    <string name="delete_credit_card_message">Are you sure you want to delete the card \"%1$s\"? Associated invoices and transactions will also be deleted.</string>
+    <string name="delete_credit_card_confirm">Delete</string>
+
+    <string name="delete_category_title">Delete Category</string>
+    <string name="delete_category_message">Are you sure you want to delete this category? Associated transactions will not be deleted.</string>
+    <string name="delete_category_confirm">Delete</string>
+
+    <string name="delete_budget_title">Delete Budget</string>
+    <string name="delete_budget_message">Are you sure you want to delete the budget \"%1$s\"? This action cannot be undone.</string>
+    <string name="delete_budget_confirm">Delete</string>
+
+    <string name="delete_installment_title">Delete Installment</string>
+    <string name="delete_installment_message">Are you sure you want to delete this installment? All %1$d installments will be removed. This action cannot be undone.</string>
+    <string name="delete_installment_confirm">Delete</string>
+
+    <string name="delete_future_invoice_title">Delete Invoice</string>
+    <string name="delete_future_invoice_message">Are you sure you want to delete this future invoice? This action cannot be undone.</string>
+    <string name="delete_future_invoice_confirm">Delete</string>
+
+    <!-- Pay Invoice Modal -->
+    <string name="pay_invoice_title">Pay Invoice</string>
+    <string name="pay_invoice_message">The payment will be the total amount of the invoice.</string>
+    <string name="pay_invoice_amount_label">Invoice Amount</string>
+    <string name="pay_invoice_date_label">Payment Date</string>
+    <string name="pay_invoice_confirm">Pay Invoice</string>
+
+    <!-- Close Invoice Modal -->
+    <string name="close_invoice_title">Close Invoice</string>
+    <string name="close_invoice_message">After closing, the invoice will not be able to receive new charges.</string>
+    <string name="close_invoice_date_label">Closing Date</string>
+    <string name="close_invoice_confirm">Close Invoice</string>
+
+    <!-- Reopen Invoice Modal -->
+    <string name="reopen_invoice_title">Reopen Invoice</string>
+    <string name="reopen_invoice_confirm_message">Are you sure you want to reopen this invoice?</string>
+    <string name="reopen_invoice_description">The invoice will return to \"Open\" status and you can add new transactions.</string>
+    <string name="reopen_invoice_cancel">Cancel</string>
+    <string name="reopen_invoice_confirm">Reopen</string>
+
+    <!-- Advance Payment Modal -->
+    <string name="advance_payment_title">Advance Payment</string>
+    <string name="advance_payment_description">Pay part of the invoice before closing.</string>
+    <string name="advance_payment_amount_label">Amount</string>
+    <string name="advance_payment_date_label">Date</string>
+    <string name="advance_payment_confirm">Advance Payment</string>
+
+    <!-- Transfer Between Accounts Modal -->
+    <string name="transfer_title">Transfer between accounts</string>
+    <string name="transfer_source_account_label">Source account</string>
+    <string name="transfer_destination_account_label">Destination account</string>
+    <string name="transfer_amount_label">Amount</string>
+    <string name="transfer_date_label">Date</string>
+    <string name="transfer_confirm">Transfer</string>
+
+    <!-- Edit Account Balance Modal -->
+    <string name="edit_account_balance_current_title">Edit Current Balance</string>
+    <string name="edit_account_balance_final_title">Edit Final Balance</string>
+    <string name="edit_account_balance_initial_title">Edit Initial Balance</string>
+    <string name="edit_account_balance_label">Balance</string>
+    <string name="edit_account_balance_save">Save</string>
+
+    <!-- Edit Invoice Balance Modal -->
+    <string name="edit_invoice_balance_title">Edit Invoice</string>
+    <string name="edit_invoice_balance_label">Amount</string>
+    <string name="edit_invoice_balance_save">Save</string>
+
+    <!-- Edit Invoice Payment Modal -->
+    <string name="edit_invoice_payment_title">Edit Invoice Payment</string>
+    <string name="edit_invoice_payment_amount_label">Amount</string>
+    <string name="edit_invoice_payment_date_label">Date</string>
+    <string name="edit_invoice_payment_save">Save</string>
+
+    <!-- Edit Transaction Modal -->
+    <string name="edit_transaction_title">Edit Transaction</string>
+    <string name="edit_transaction_title_label">Title</string>
+    <string name="edit_transaction_amount_label">Amount</string>
+    <string name="edit_transaction_date_label">Date</string>
+    <string name="edit_transaction_save">Save</string>
+    <string name="edit_transaction_expense">Expense</string>
+    <string name="edit_transaction_income">Income</string>
+
+    <!-- View Operation Modal -->
+    <string name="view_operation_type_income">Income</string>
+    <string name="view_operation_type_expense">Expense</string>
+    <string name="view_operation_type_adjustment">Adjustment</string>
+    <string name="view_operation_amount_label">Amount</string>
+    <string name="view_operation_date_label">Date</string>
+    <string name="view_operation_origin_label">Origin</string>
+    <string name="view_operation_origin_account">Account</string>
+    <string name="view_operation_origin_credit_card">Credit Card</string>
+    <string name="view_operation_source_account_label">Source account</string>
+    <string name="view_operation_destination_account_label">Destination account</string>
+    <string name="view_operation_account_label">Account</string>
+    <string name="view_operation_card_label">Card</string>
+    <string name="view_operation_invoice_label">Invoice</string>
+    <string name="view_operation_installment_label">Installment</string>
+    <string name="view_operation_deleted">Deleted</string>
+    <string name="view_operation_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
+    <string name="view_operation_delete">Delete</string>
+    <string name="view_operation_edit">Edit</string>
+
+    <!-- View Adjustment Modal -->
+    <string name="view_adjustment_type_label">Adjustment</string>
+    <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
+    <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
+    <string name="view_adjustment_adjusted_value_label">Adjusted Value</string>
+    <string name="view_adjustment_date_label">Date</string>
+    <string name="view_adjustment_type_row_label">Type</string>
+    <string name="view_adjustment_account_label">Account</string>
+    <string name="view_adjustment_card_label">Card</string>
+    <string name="view_adjustment_credit_card_label">Credit Card</string>
+    <string name="view_adjustment_deleted">Deleted</string>
+    <string name="view_adjustment_delete_label">Delete Adjustment</string>
+
+    <!-- View Category Modal -->
+    <string name="view_category_type_income">Income</string>
+    <string name="view_category_type_expense">Expense</string>
+    <string name="view_category_total_received">Total Received</string>
+    <string name="view_category_total_spent">Total Spent</string>
+    <string name="view_category_transactions_month">Transactions this Month</string>
+    <string name="view_category_delete">Delete</string>
+    <string name="view_category_edit">Edit</string>
+
+    <!-- View Budget Modal -->
+    <string name="view_budget_limit_label">Limit</string>
+    <string name="view_budget_spent_label">Spent</string>
+    <string name="view_budget_exceeded_by_label">Exceeded by</string>
+    <string name="view_budget_remaining_label">Remaining</string>
+    <string name="view_budget_delete">Delete</string>
+    <string name="view_budget_edit">Edit</string>
+
+    <!-- Components -->
+    <string name="balance_card_pay_invoice">Pay Invoice</string>
+    <string name="balance_card_current_balance">Current Balance</string>
+    <string name="balance_card_income">Income</string>
+    <string name="balance_card_expense">Expenses</string>
+    <string name="balance_card_invoices">Invoices</string>
+    <string name="balance_card_current_invoice">Current Invoice</string>
+
+    <string name="summary_card_initial_balance">Initial Balance</string>
+    <string name="summary_card_income">Income</string>
+    <string name="summary_card_outgoing">Outgoing</string>
+    <string name="summary_card_invoices">Invoices</string>
+    <string name="summary_card_adjustments">Adjustments</string>
+    <string name="summary_card_current_balance">Current Balance</string>
+    <string name="summary_card_final_balance">Final Balance</string>
+    <string name="summary_card_see_invoices">See invoices</string>
+
+    <string name="operation_card_transfer">Transfer</string>
+    <string name="operation_card_balance_adjustment">Balance Adjustment</string>
+    <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
+
+    <string name="target_selector_account">Account</string>
+    <string name="target_selector_credit_card">Credit Card</string>
+    <string name="target_selector_label">Type</string>
+
+    <string name="category_selector_label">Category</string>
+    <string name="category_selector_none">None</string>
+
+    <string name="account_selector_label">Account</string>
+
+    <string name="credit_card_selector_label">Card</string>
+
+    <string name="invoice_navigator_label">Invoice</string>
+
+    <string name="multi_category_selector_none">None</string>
+    <string name="multi_category_selector_plural">%1$d categories</string>
+    <string name="multi_category_selector_label">Categories</string>
+
+    <string name="credit_card_ui_current_invoice">Current Invoice</string>
+    <string name="credit_card_ui_available_limit">Available Limit</string>
+    <string name="credit_card_ui_closes_on">Closes on</string>
+    <string name="credit_card_ui_due_on">Due on</string>
+    <string name="credit_card_ui_edit_invoice">Edit invoice</string>
+
+    <string name="dashboard_credit_card_current_invoice">Current Invoice</string>
+    <string name="dashboard_credit_card_available_limit">Available Limit</string>
+    <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
+    <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
+    <string name="dashboard_credit_card_advance">Advance</string>
+
+    <string name="invoice_summary_card_expenses">Expenses</string>
+    <string name="invoice_summary_card_advance_payments">Advance Payments</string>
+    <string name="invoice_summary_card_adjustments">Adjustments</string>
+    <string name="invoice_summary_card_invoice">Invoice</string>
+    <string name="invoice_summary_card_edit_invoice">Edit invoice</string>
+
+    <string name="credit_card_total_title">Credit Cards</string>
+    <string name="credit_card_total_invoice_singular">%1$d invoice</string>
+    <string name="credit_card_total_invoice_plural">%1$d invoices</string>
+    <string name="credit_card_total_expenses">Expenses</string>
+    <string name="credit_card_total_advance_payments">Advance Payments</string>
+    <string name="credit_card_total_invoices">Invoices</string>
+
+    <string name="category_spending_card_title">Spending by Category</string>
+
+    <string name="budget_progress_card_title">Budgets</string>
+
+    <!-- Invoice selector -->
+    <string name="invoice_selector_label">Invoice</string>
+
+    <!-- Date picker -->
+    <string name="date_picker_confirm">OK</string>
+    <string name="date_picker_cancel">Cancel</string>
+</resources>

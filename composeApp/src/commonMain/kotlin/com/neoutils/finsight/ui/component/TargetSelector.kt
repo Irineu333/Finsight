@@ -20,6 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.target_selector_account
+import com.neoutils.finsight.resources.target_selector_credit_card
+import com.neoutils.finsight.resources.target_selector_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TargetSelector(
@@ -37,13 +42,13 @@ fun TargetSelector(
     ) {
         OutlinedTextField(
             value = when (selectedTarget) {
-                Transaction.Target.ACCOUNT -> "Conta"
-                Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                Transaction.Target.ACCOUNT -> stringResource(Res.string.target_selector_account)
+                Transaction.Target.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
             },
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Tipo")
+                Text(text = stringResource(Res.string.target_selector_label))
             },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
@@ -64,8 +69,8 @@ fun TargetSelector(
                     text = {
                         Text(
                             text = when (target) {
-                                Transaction.Target.ACCOUNT -> "Conta"
-                                Transaction.Target.CREDIT_CARD -> "Cartão de Crédito"
+                                Transaction.Target.ACCOUNT -> stringResource(Res.string.target_selector_account)
+                                Transaction.Target.CREDIT_CARD -> stringResource(Res.string.target_selector_credit_card)
                             },
                             fontSize = 14.sp
                         )

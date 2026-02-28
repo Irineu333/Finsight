@@ -18,23 +18,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_navigator_label
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvoiceMonthNavigator(
     selection: InvoiceMonthSelection,
     onNavigate: (YearMonth) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Fatura",
+    label: String = "",
 ) {
     OutlinedTextField(
         value = selection.label,
         onValueChange = {},
         readOnly = true,
         label = {
-            Text(text = label)
+            Text(text = label.ifEmpty { stringResource(Res.string.invoice_navigator_label) })
         },
         leadingIcon = {
             Icon(

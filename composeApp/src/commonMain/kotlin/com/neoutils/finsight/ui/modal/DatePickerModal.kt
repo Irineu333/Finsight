@@ -15,6 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.Modal
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.date_picker_cancel
+import com.neoutils.finsight.resources.date_picker_confirm
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -65,7 +69,7 @@ class DatePickerModal(
                     },
                     enabled = confirmEnabled
                 ) {
-                    Text("OK")
+                    Text(stringResource(Res.string.date_picker_confirm))
                 }
             },
             dismissButton = {
@@ -74,7 +78,7 @@ class DatePickerModal(
                         manager.dismiss()
                     }
                 ) {
-                    Text("Cancelar")
+                    Text(stringResource(Res.string.date_picker_cancel))
                 }
             }
         ) {

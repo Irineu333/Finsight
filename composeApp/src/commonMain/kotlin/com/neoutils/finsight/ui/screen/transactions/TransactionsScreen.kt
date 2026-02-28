@@ -37,6 +37,18 @@ import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.util.DateFormats
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.transactions_filter_account
+import com.neoutils.finsight.resources.transactions_filter_category
+import com.neoutils.finsight.resources.transactions_filter_category_all
+import com.neoutils.finsight.resources.transactions_filter_credit_card
+import com.neoutils.finsight.resources.transactions_filter_credit_card_label
+import com.neoutils.finsight.resources.transactions_filter_type
+import com.neoutils.finsight.resources.transactions_filter_type_adjustment
+import com.neoutils.finsight.resources.transactions_filter_type_all
+import com.neoutils.finsight.resources.transactions_filter_type_expense
+import com.neoutils.finsight.resources.transactions_filter_type_income
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -219,7 +231,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedCategory != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: "Categoria") },
+        label = { Text(selectedCategory?.name ?: stringResource(Res.string.transactions_filter_category)) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -239,7 +251,7 @@ private fun CategoryFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.transactions_filter_category_all)) },
             onClick = {
                 onAction(TransactionsAction.SelectCategory(null))
                 expanded = false
@@ -280,10 +292,10 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.INCOME -> "Entrada"
-                    Transaction.Type.EXPENSE -> "Despesa"
-                    Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    null -> "Tipo"
+                    Transaction.Type.INCOME -> stringResource(Res.string.transactions_filter_type_income)
+                    Transaction.Type.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
+                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
+                    null -> stringResource(Res.string.transactions_filter_type)
                 }
             )
         },
@@ -306,7 +318,7 @@ private fun TypeFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todos") },
+            text = { Text(stringResource(Res.string.transactions_filter_type_all)) },
             onClick = {
                 onAction(TransactionsAction.SelectType(null))
                 expanded = false
@@ -318,9 +330,9 @@ private fun TypeFilterChip(
                 text = {
                     Text(
                         text = when (type) {
-                            Transaction.Type.INCOME -> "Entrada"
-                            Transaction.Type.EXPENSE -> "Despesa"
-                            Transaction.Type.ADJUSTMENT -> "Ajuste"
+                            Transaction.Type.INCOME -> stringResource(Res.string.transactions_filter_type_income)
+                            Transaction.Type.EXPENSE -> stringResource(Res.string.transactions_filter_type_expense)
+                            Transaction.Type.ADJUSTMENT -> stringResource(Res.string.transactions_filter_type_adjustment)
                         }
                     )
                 },
@@ -346,9 +358,9 @@ private fun TargetFilterChip(
         label = {
             Text(
                 when (selectedTarget) {
-                    Transaction.Target.ACCOUNT -> "Conta"
-                    Transaction.Target.CREDIT_CARD -> "Cartão"
-                    null -> "Conta"
+                    Transaction.Target.ACCOUNT -> stringResource(Res.string.transactions_filter_account)
+                    Transaction.Target.CREDIT_CARD -> stringResource(Res.string.transactions_filter_credit_card)
+                    null -> stringResource(Res.string.transactions_filter_account)
                 }
             )
         },
@@ -365,7 +377,7 @@ private fun TargetFilterChip(
         onDismissRequest = { expanded = false }
     ) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.transactions_filter_category_all)) },
             onClick = {
                 onAction(TransactionsAction.SelectTarget(null))
                 expanded = false
@@ -373,7 +385,7 @@ private fun TargetFilterChip(
         )
 
         DropdownMenuItem(
-            text = { Text("Conta") },
+            text = { Text(stringResource(Res.string.transactions_filter_account)) },
             onClick = {
                 onAction(TransactionsAction.SelectTarget(Transaction.Target.ACCOUNT))
                 expanded = false
@@ -381,7 +393,7 @@ private fun TargetFilterChip(
         )
 
         DropdownMenuItem(
-            text = { Text("Cartão de Crédito") },
+            text = { Text(stringResource(Res.string.transactions_filter_credit_card_label)) },
             onClick = {
                 onAction(TransactionsAction.SelectTarget(Transaction.Target.CREDIT_CARD))
                 expanded = false

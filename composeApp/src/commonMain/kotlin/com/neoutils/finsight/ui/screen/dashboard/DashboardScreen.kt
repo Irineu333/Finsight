@@ -46,6 +46,17 @@ import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.dashboard_accounts
+import com.neoutils.finsight.resources.dashboard_budgets
+import com.neoutils.finsight.resources.dashboard_categories
+import com.neoutils.finsight.resources.dashboard_credit_cards
+import com.neoutils.finsight.resources.dashboard_current_balance
+import com.neoutils.finsight.resources.dashboard_default
+import com.neoutils.finsight.resources.dashboard_installments
+import com.neoutils.finsight.resources.dashboard_recents
+import com.neoutils.finsight.resources.dashboard_see_all
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
@@ -315,7 +326,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recentes",
+                        text = stringResource(Res.string.dashboard_recents),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -325,7 +336,7 @@ private fun DashboardContent(
                             openTransactions(null, null)
                         }
                     ) {
-                        Text(text = "Ver Tudo")
+                        Text(text = stringResource(Res.string.dashboard_see_all))
                     }
                 }
             }
@@ -399,7 +410,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Orçamentos",
+                        text = stringResource(Res.string.dashboard_budgets),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -431,7 +442,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Categorias",
+                        text = stringResource(Res.string.dashboard_categories),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -463,7 +474,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Cartões de Crédito",
+                        text = stringResource(Res.string.dashboard_credit_cards),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -495,7 +506,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Contas",
+                        text = stringResource(Res.string.dashboard_accounts),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -527,7 +538,7 @@ private fun DashboardContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Parcelamentos",
+                        text = stringResource(Res.string.dashboard_installments),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -650,7 +661,7 @@ private fun DashboardAccountCard(
 
                 if (account.isDefault) {
                     Text(
-                        text = "Padrão",
+                        text = stringResource(Res.string.dashboard_default),
                         fontSize = 12.sp,
                         color = TextLight1,
                     )
@@ -659,7 +670,7 @@ private fun DashboardAccountCard(
 
             Column {
                 Text(
-                    text = "Saldo Atual",
+                    text = stringResource(Res.string.dashboard_current_balance),
                     fontSize = 12.sp,
                     color = TextLight1
                 )

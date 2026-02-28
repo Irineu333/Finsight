@@ -44,6 +44,24 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_cards_advance_payment
+import com.neoutils.finsight.resources.credit_cards_close_invoice
+import com.neoutils.finsight.resources.credit_cards_create
+import com.neoutils.finsight.resources.credit_cards_delete
+import com.neoutils.finsight.resources.credit_cards_edit
+import com.neoutils.finsight.resources.credit_cards_empty
+import com.neoutils.finsight.resources.credit_cards_filter_category
+import com.neoutils.finsight.resources.credit_cards_filter_category_all
+import com.neoutils.finsight.resources.credit_cards_filter_type
+import com.neoutils.finsight.resources.credit_cards_filter_type_adjustment
+import com.neoutils.finsight.resources.credit_cards_filter_type_all
+import com.neoutils.finsight.resources.credit_cards_filter_type_expense
+import com.neoutils.finsight.resources.credit_cards_filter_type_payment
+import com.neoutils.finsight.resources.credit_cards_pay_invoice
+import com.neoutils.finsight.resources.credit_cards_reopen_invoice
+import com.neoutils.finsight.resources.credit_cards_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
@@ -83,7 +101,7 @@ private fun CreditCardsContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Cartões de Crédito")
+                    Text(text = stringResource(Res.string.credit_cards_title))
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -238,7 +256,7 @@ private fun EmptyCreditCardsState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Sem cartões de crédito",
+                text = stringResource(Res.string.credit_cards_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -251,7 +269,7 @@ private fun EmptyCreditCardsState(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "Criar cartão")
+                Text(text = stringResource(Res.string.credit_cards_create))
             }
         }
     }
@@ -340,7 +358,7 @@ private fun CardActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Excluir",
+                    text = stringResource(Res.string.credit_cards_delete),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -367,7 +385,7 @@ private fun CardActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Editar",
+                    text = stringResource(Res.string.credit_cards_edit),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -402,7 +420,7 @@ private fun CardActions(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Antecipar Pagamento",
+                        text = stringResource(Res.string.credit_cards_advance_payment),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -431,7 +449,7 @@ private fun CardActions(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Fechar Fatura",
+                        text = stringResource(Res.string.credit_cards_close_invoice),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -460,7 +478,7 @@ private fun CardActions(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Reabrir Fatura",
+                        text = stringResource(Res.string.credit_cards_reopen_invoice),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -486,7 +504,7 @@ private fun CardActions(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Pagar Fatura",
+                        text = stringResource(Res.string.credit_cards_pay_invoice),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -547,7 +565,7 @@ private fun CategoryFilterChip(
     FilterChip(
         selected = selectedCategory != null,
         onClick = { expanded = true },
-        label = { Text(selectedCategory?.name ?: "Categoria") },
+        label = { Text(selectedCategory?.name ?: stringResource(Res.string.credit_cards_filter_category)) },
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -567,7 +585,7 @@ private fun CategoryFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todas") },
+            text = { Text(stringResource(Res.string.credit_cards_filter_category_all)) },
             onClick = {
                 onAction(CreditCardsAction.SelectCategory(null))
                 expanded = false
@@ -607,10 +625,10 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> "Despesa"
-                    Transaction.Type.ADJUSTMENT -> "Ajuste"
-                    Transaction.Type.INCOME -> "Pagamento"
-                    else -> "Tipo"
+                    Transaction.Type.EXPENSE -> stringResource(Res.string.credit_cards_filter_type_expense)
+                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.credit_cards_filter_type_adjustment)
+                    Transaction.Type.INCOME -> stringResource(Res.string.credit_cards_filter_type_payment)
+                    else -> stringResource(Res.string.credit_cards_filter_type)
                 }
             )
         },
@@ -633,7 +651,7 @@ private fun TypeFilterChip(
         expanded = expanded,
         onDismissRequest = { expanded = false }) {
         DropdownMenuItem(
-            text = { Text("Todos") },
+            text = { Text(stringResource(Res.string.credit_cards_filter_type_all)) },
             onClick = {
                 onAction(CreditCardsAction.SelectType(null))
                 expanded = false
@@ -641,9 +659,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to "Despesa",
-            Transaction.Type.ADJUSTMENT to "Ajuste",
-            Transaction.Type.INCOME to "Pagamento",
+            Transaction.Type.EXPENSE to stringResource(Res.string.credit_cards_filter_type_expense),
+            Transaction.Type.ADJUSTMENT to stringResource(Res.string.credit_cards_filter_type_adjustment),
+            Transaction.Type.INCOME to stringResource(Res.string.credit_cards_filter_type_payment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

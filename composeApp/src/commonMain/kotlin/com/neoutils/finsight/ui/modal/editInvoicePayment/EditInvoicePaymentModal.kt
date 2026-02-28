@@ -35,9 +35,15 @@ import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.edit_invoice_payment_amount_label
+import com.neoutils.finsight.resources.edit_invoice_payment_date_label
+import com.neoutils.finsight.resources.edit_invoice_payment_save
+import com.neoutils.finsight.resources.edit_invoice_payment_title
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Clock
@@ -76,7 +82,7 @@ class EditInvoicePaymentModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Editar Pagamento de Fatura",
+                text = stringResource(Res.string.edit_invoice_payment_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -85,7 +91,7 @@ class EditInvoicePaymentModal(
             OutlinedTextField(
                 state = amount,
                 label = {
-                    Text(text = "Valor")
+                    Text(text = stringResource(Res.string.edit_invoice_payment_amount_label))
                 },
                 inputTransformation = MoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -102,7 +108,7 @@ class EditInvoicePaymentModal(
             OutlinedTextField(
                 state = date,
                 label = {
-                    Text(text = "Data")
+                    Text(text = stringResource(Res.string.edit_invoice_payment_date_label))
                 },
                 inputTransformation = DateInputTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -157,7 +163,7 @@ class EditInvoicePaymentModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Salvar",
+                    text = stringResource(Res.string.edit_invoice_payment_save),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

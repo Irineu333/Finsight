@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_selector_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvoiceSelector(
@@ -41,7 +44,7 @@ fun InvoiceSelector(
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = "Fatura")
+                Text(text = stringResource(Res.string.invoice_selector_label))
             },
             leadingIcon = invoice?.let {
                 {

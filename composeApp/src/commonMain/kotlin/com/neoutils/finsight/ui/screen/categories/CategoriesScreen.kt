@@ -29,6 +29,14 @@ import com.neoutils.finsight.ui.component.CategoryCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.categories_create_default
+import com.neoutils.finsight.resources.categories_create_manual
+import com.neoutils.finsight.resources.categories_empty
+import com.neoutils.finsight.resources.categories_expense
+import com.neoutils.finsight.resources.categories_income
+import com.neoutils.finsight.resources.categories_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -57,7 +65,7 @@ private fun CategoriesContent(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Categorias")
+                    Text(text = stringResource(Res.string.categories_title))
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -117,7 +125,7 @@ private fun CategoriesContent(
                         key = "incomes_title"
                     ) {
                         Text(
-                            text = "Receitas",
+                            text = stringResource(Res.string.categories_income),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 4.dp)
@@ -145,7 +153,7 @@ private fun CategoriesContent(
                         key = "expenses_title"
                     ) {
                         Text(
-                            text = "Despesas",
+                            text = stringResource(Res.string.categories_expense),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
@@ -189,7 +197,7 @@ private fun EmptyCategoriesState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Sem categorias",
+                text = stringResource(Res.string.categories_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -208,7 +216,7 @@ private fun EmptyCategoriesState(
                 Spacer(modifier = Modifier.size(8.dp))
 
                 Text(
-                    text = "Usar padrao",
+                    text = stringResource(Res.string.categories_create_default),
                 )
             }
 
@@ -218,7 +226,7 @@ private fun EmptyCategoriesState(
                 onClick = onCreateManualCategory,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(text = "Criar manualmente")
+                Text(text = stringResource(Res.string.categories_create_manual))
             }
         }
     }

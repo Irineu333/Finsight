@@ -57,8 +57,16 @@ import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.add_installment_amount_label
+import com.neoutils.finsight.resources.add_installment_date_label
+import com.neoutils.finsight.resources.add_installment_initial_invoice
+import com.neoutils.finsight.resources.add_installment_save
+import com.neoutils.finsight.resources.add_installment_title
+import com.neoutils.finsight.resources.add_installment_title_label
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -117,7 +125,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     .padding(bottom = 32.dp),
             ) {
                 Text(
-                    text = "Registrar parcelamento",
+                    text = stringResource(Res.string.add_installment_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -129,7 +137,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = title,
                     label = {
-                        Text(text = "Título")
+                        Text(text = stringResource(Res.string.add_installment_title_label))
                     },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -166,7 +174,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                         selection = selection,
                         onNavigate = { viewModel.navigateToMonth(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = "Fatura Inicial",
+                        label = stringResource(Res.string.add_installment_initial_invoice),
                     )
                 }
 
@@ -175,7 +183,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = amount,
                     label = {
-                        Text(text = "Valor")
+                        Text(text = stringResource(Res.string.add_installment_amount_label))
                     },
                     inputTransformation = MoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -205,7 +213,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                 OutlinedTextField(
                     state = date,
                     label = {
-                        Text(text = "Data")
+                        Text(text = stringResource(Res.string.add_installment_date_label))
                     },
                     inputTransformation = DateInputTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -261,7 +269,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(
-                        text = "Salvar",
+                        text = stringResource(Res.string.add_installment_save),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                     )

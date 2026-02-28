@@ -37,7 +37,18 @@ import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.budgets_category_plural
+import com.neoutils.finsight.resources.budgets_category_singular
+import com.neoutils.finsight.resources.budgets_create
+import com.neoutils.finsight.resources.budgets_empty
+import com.neoutils.finsight.resources.budgets_exceeded_by
+import com.neoutils.finsight.resources.budgets_limit
+import com.neoutils.finsight.resources.budgets_remaining
+import com.neoutils.finsight.resources.budgets_spent
+import com.neoutils.finsight.resources.budgets_title
 import kotlinx.datetime.YearMonth
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 private val formats = DateFormats()
@@ -53,7 +64,7 @@ fun BudgetsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Orçamentos") },
+                title = { Text(text = stringResource(Res.string.budgets_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorScheme.background,
                     titleContentColor = colorScheme.onBackground,
@@ -215,7 +226,7 @@ private fun BudgetProgressItem(
                     )
                     val categoryCount = progress.budget.categories.size
                     Text(
-                        text = if (categoryCount == 1) "1 categoria" else "$categoryCount categorias",
+                        text = if (categoryCount == 1) stringResource(Res.string.budgets_category_singular) else stringResource(Res.string.budgets_category_plural, categoryCount),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -224,7 +235,7 @@ private fun BudgetProgressItem(
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Limite",
+                    text = stringResource(Res.string.budgets_limit),
                     fontSize = 12.sp,
                     color = colorScheme.onSurfaceVariant,
                 )
@@ -242,7 +253,7 @@ private fun BudgetProgressItem(
             ) {
                 Column {
                     Text(
-                        text = "Gasto",
+                        text = stringResource(Res.string.budgets_spent),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -256,7 +267,7 @@ private fun BudgetProgressItem(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (progress.isExceeded) "Excedido em" else "Restante",
+                        text = if (progress.isExceeded) stringResource(Res.string.budgets_exceeded_by) else stringResource(Res.string.budgets_remaining),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -305,7 +316,7 @@ private fun EmptyBudgetsState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Sem orçamentos",
+                text = stringResource(Res.string.budgets_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -318,7 +329,7 @@ private fun EmptyBudgetsState(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = "Criar orçamento")
+                Text(text = stringResource(Res.string.budgets_create))
             }
         }
     }

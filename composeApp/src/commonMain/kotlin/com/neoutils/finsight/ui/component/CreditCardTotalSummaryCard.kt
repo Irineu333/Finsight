@@ -20,7 +20,15 @@ import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_card_total_advance_payments
+import com.neoutils.finsight.resources.credit_card_total_expenses
+import com.neoutils.finsight.resources.credit_card_total_invoice_plural
+import com.neoutils.finsight.resources.credit_card_total_invoice_singular
+import com.neoutils.finsight.resources.credit_card_total_invoices
+import com.neoutils.finsight.resources.credit_card_total_title
 import kotlin.math.absoluteValue
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CreditCardTotalSummaryCard(
@@ -47,7 +55,7 @@ fun CreditCardTotalSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Cartões de Crédito",
+                    text = stringResource(Res.string.credit_card_total_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface
@@ -55,7 +63,11 @@ fun CreditCardTotalSummaryCard(
 
                 if (invoiceCount > 0) {
                     Text(
-                        text = "$invoiceCount ${if (invoiceCount == 1) "fatura" else "faturas"}",
+                        text = if (invoiceCount == 1) {
+                            stringResource(Res.string.credit_card_total_invoice_singular, invoiceCount)
+                        } else {
+                            stringResource(Res.string.credit_card_total_invoice_plural, invoiceCount)
+                        },
                         fontSize = 14.sp,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -71,7 +83,7 @@ fun CreditCardTotalSummaryCard(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CreditCardTotalRow(
-                        label = "Gastos",
+                        label = stringResource(Res.string.credit_card_total_expenses),
                         amount = currentOverview.expense,
                         color = Expense,
                         signDisplay = CreditCardTotalSignDisplay.ALWAYS_NEGATIVE
@@ -79,7 +91,7 @@ fun CreditCardTotalSummaryCard(
 
                     if (currentOverview.mustShowAdvancePayment) {
                         CreditCardTotalRow(
-                            label = "Adiantamentos",
+                            label = stringResource(Res.string.credit_card_total_advance_payments),
                             amount = currentOverview.advancePayment,
                             color = InvoicePayment,
                             signDisplay = CreditCardTotalSignDisplay.ALWAYS_POSITIVE
@@ -89,7 +101,7 @@ fun CreditCardTotalSummaryCard(
                     HorizontalDivider()
 
                     CreditCardTotalRow(
-                        label = "Faturas",
+                        label = stringResource(Res.string.credit_card_total_invoices),
                         amount = currentOverview.total,
                         color = colorScheme.onSurface,
                         signDisplay = CreditCardTotalSignDisplay.SHOW_ONLY_NEGATIVE,

@@ -21,7 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.close_invoice_confirm
+import com.neoutils.finsight.resources.close_invoice_date_label
+import com.neoutils.finsight.resources.close_invoice_message
+import com.neoutils.finsight.resources.close_invoice_title
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -45,14 +51,14 @@ class CloseInvoiceModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Fechar Fatura",
+                text = stringResource(Res.string.close_invoice_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Text(
-                text = "Após o fechamento, a fatura não poderá receber novos gastos.",
+                text = stringResource(Res.string.close_invoice_message),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -60,7 +66,7 @@ class CloseInvoiceModal(
 
             OutlinedTextField(
                 state = date,
-                label = { Text(text = "Data de Fechamento") },
+                label = { Text(text = stringResource(Res.string.close_invoice_date_label)) },
                 enabled = false,
                 readOnly = true,
                 shape = RoundedCornerShape(12.dp),
@@ -76,7 +82,7 @@ class CloseInvoiceModal(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Fechar Fatura",
+                    text = stringResource(Res.string.close_invoice_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

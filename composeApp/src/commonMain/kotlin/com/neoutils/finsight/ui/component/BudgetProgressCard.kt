@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.theme.budgetProgressColor
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.budget_progress_card_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BudgetProgressCard(
@@ -37,7 +40,7 @@ fun BudgetProgressCard(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "Orçamentos",
+                text = stringResource(Res.string.budget_progress_card_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp),

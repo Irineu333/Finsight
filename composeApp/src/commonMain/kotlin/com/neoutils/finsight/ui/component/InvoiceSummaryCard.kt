@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
@@ -139,6 +139,8 @@ private fun InvoiceSummaryRow(
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -153,23 +155,23 @@ private fun InvoiceSummaryRow(
 
         val formattedAmount = when (signDisplay) {
             InvoiceSignDisplay.ALWAYS_POSITIVE -> {
-                "+${amount.absoluteValue.toMoneyFormat()}"
+                "+${formatter.format(amount.absoluteValue)}"
             }
 
             InvoiceSignDisplay.ALWAYS_NEGATIVE -> {
-                "-${amount.absoluteValue.toMoneyFormat()}"
+                "-${formatter.format(amount.absoluteValue)}"
             }
 
             InvoiceSignDisplay.SHOW_ALWAYS -> {
                 when {
-                    amount > 0 -> "+${amount.toMoneyFormat()}"
-                    amount < 0 -> amount.toMoneyFormat()
-                    else -> amount.toMoneyFormat()
+                    amount > 0 -> "+${formatter.format(amount)}"
+                    amount < 0 -> formatter.format(amount)
+                    else -> formatter.format(amount)
                 }
             }
 
             InvoiceSignDisplay.SHOW_ONLY_NEGATIVE -> {
-                if (amount < 0) amount.toMoneyFormat() else amount.toMoneyFormat()
+                if (amount < 0) formatter.format(amount) else formatter.format(amount)
             }
         }
 

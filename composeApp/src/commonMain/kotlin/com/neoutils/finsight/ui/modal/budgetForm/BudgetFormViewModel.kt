@@ -8,8 +8,8 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +21,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class BudgetFormViewModel(
+    private val formatter: CurrencyFormatter,
     private val budget: Budget? = null,
     private val budgetRepository: IBudgetRepository,
     private val categoryRepository: ICategoryRepository,
@@ -30,7 +31,7 @@ class BudgetFormViewModel(
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
     private val iconCategoryId = MutableStateFlow(budget?.iconCategoryId ?: budget?.categories?.firstOrNull()?.id ?: 0)
     private val title = MutableStateFlow(budget?.title ?: "")
-    private val amount = MutableStateFlow(budget?.amount?.toMoneyFormat() ?: "")
+    private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
 
     private data class FormFields(
         val selectedCategories: List<Category>,
@@ -70,7 +71,7 @@ class BudgetFormViewModel(
             selectedCategories = budget?.categories ?: emptyList(),
             iconCategoryId = budget?.iconCategoryId ?: budget?.categories?.firstOrNull()?.id ?: 0,
             title = budget?.title ?: "",
-            amount = budget?.amount?.toMoneyFormat() ?: "",
+            amount = budget?.amount?.let { formatter.format(it) } ?: "",
             isEditMode = budget != null,
         ),
     )

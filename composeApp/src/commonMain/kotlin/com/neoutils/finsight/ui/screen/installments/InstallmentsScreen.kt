@@ -72,7 +72,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
@@ -422,6 +422,8 @@ private fun InstallmentSummaryCard(
     ui: InstallmentWithOperationsUi,
     modifier: Modifier = Modifier,
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -487,7 +489,7 @@ private fun InstallmentSummaryCard(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = ui.installment.totalAmount.toMoneyFormat(),
+                    text = formatter.format(ui.installment.totalAmount),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -530,7 +532,7 @@ private fun InstallmentSummaryCard(
                         color = colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        text = ui.remainingAmount.toMoneyFormat(),
+                        text = formatter.format(ui.remainingAmount),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface,

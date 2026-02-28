@@ -29,7 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.balance_card_current_balance
@@ -50,7 +50,9 @@ fun BalanceCard(
     onEditClick: (() -> Unit)? = null,
     onPayClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
-) = Card(
+) {
+    val formatter = LocalCurrencyFormatter.current
+    Card(
     modifier = modifier.then(
         if (onClick != null) {
             Modifier
@@ -116,7 +118,7 @@ fun BalanceCard(
                 )
         ) {
             Text(
-                text = balance.toMoneyFormat(),
+                text = formatter.format(balance),
                 style = config.style,
             )
 
@@ -152,6 +154,7 @@ fun BalanceCard(
             }
         }
     }
+}
 }
 
 data class BalanceCardConfig(

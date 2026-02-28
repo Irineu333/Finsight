@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormatWithSign
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
@@ -61,6 +61,7 @@ class ViewAdjustmentModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
+        val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
         val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -108,7 +109,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                value = uiState.transaction.amount.toMoneyFormatWithSign(),
+                value = formatter.formatWithSign(uiState.transaction.amount),
                 valueColor = Adjustment
             )
 

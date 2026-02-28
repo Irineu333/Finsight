@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -64,10 +66,12 @@ fun ModalManagerHost(
 
     val modalManager = koinInject<ModalManager>()
     val navigator = Navigator(onNavigate)
+    val formatter = koinInject<CurrencyFormatter>()
 
     CompositionLocalProvider(
         LocalModalManager provides modalManager,
         LocalNavigator provides navigator,
+        LocalCurrencyFormatter provides formatter,
     ) {
         content()
         modalManager.Content()

@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -51,6 +51,7 @@ class ViewCategoryModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
 
         val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(category) }
@@ -112,7 +113,7 @@ class ViewCategoryModal(
 
             DetailRow(
                 label = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_total_received) else stringResource(Res.string.view_category_total_spent),
-                value = uiState.totalAmount.toMoneyFormat(),
+                value = formatter.format(uiState.totalAmount),
                 valueColor = if (uiState.category.type.isIncome) Income else Expense
             )
 

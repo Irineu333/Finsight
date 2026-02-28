@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -94,6 +94,7 @@ class ViewOperationModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
+        val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<ViewOperationViewModel> { parametersOf(operation) }
 
         val uiState by viewModel.uiState.collectAsState()
@@ -189,7 +190,7 @@ class ViewOperationModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_operation_amount_label),
-                value = uiState.transaction.amount.toMoneyFormat(),
+                value = formatter.format(uiState.transaction.amount),
                 valueColor = uiState.operationColor()
             )
 
@@ -289,7 +290,7 @@ class ViewOperationModal(
             uiState.operation.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_installment_label),
-                    value = "${installment.label} de ${installment.totalLabel}",
+                    value = "${installment.label} de ${formatter.format(installment.totalAmount)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()

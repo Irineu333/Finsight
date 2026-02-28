@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Budget
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
@@ -55,10 +55,11 @@ class BudgetFormModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        val amount = rememberTextFieldState(budget?.amount?.toMoneyFormat() ?: "")
+        val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {

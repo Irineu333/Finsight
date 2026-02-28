@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -46,6 +46,7 @@ class ViewBudgetModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
         val budget = budgetProgress.budget
         val accentColor = budgetProgressColor(budgetProgress.progress)
@@ -115,21 +116,21 @@ class ViewBudgetModal(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
-                    value = budget.amount.toMoneyFormat(),
+                    value = formatter.format(budget.amount),
                 )
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
-                    value = budgetProgress.spent.toMoneyFormat(),
+                    value = formatter.format(budgetProgress.spent),
                 )
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
-                        value = (budgetProgress.spent - budget.amount).toMoneyFormat(),
+                        value = formatter.format(budgetProgress.spent - budget.amount),
                     )
                 } else {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_remaining_label),
-                        value = budgetProgress.remaining.toMoneyFormat(),
+                        value = formatter.format(budgetProgress.remaining),
                     )
                 }
             }

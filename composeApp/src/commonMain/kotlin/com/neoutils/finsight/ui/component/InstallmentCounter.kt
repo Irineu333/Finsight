@@ -20,7 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.CurrencyFormatter
 
 data class InstallmentState(
     val count: Int,
@@ -28,12 +29,12 @@ data class InstallmentState(
 ) {
     val installment = total / count
 
-    override fun toString(): String {
+    fun format(formatter: CurrencyFormatter): String {
         if (count == 1) {
             return "${count}x"
         }
 
-        return "${count}x de ${installment.toMoneyFormat()}"
+        return "${count}x de ${formatter.format(installment)}"
     }
 }
 
@@ -44,6 +45,8 @@ fun InstallmentCounter(
     modifier: Modifier = Modifier,
     minCount: Int = 1,
 ) {
+    val formatter = LocalCurrencyFormatter.current
+
     AnimatedContent(
         targetState = state,
         transitionSpec = {
@@ -75,7 +78,7 @@ fun InstallmentCounter(
             }
 
             Text(
-                text = state.toString(),
+                text = state.format(formatter),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = colorScheme.primary

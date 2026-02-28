@@ -36,8 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.toMoneyFormat
-import com.neoutils.finsight.extension.toMoneyFormatWithSign
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -59,7 +58,9 @@ fun OperationCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     amountDecoration: TextDecoration = TextDecoration.None,
-) = Card(
+) {
+    val formatter = LocalCurrencyFormatter.current
+    Card(
     onClick = onClick,
     modifier = modifier,
     colors = CardDefaults.cardColors(
@@ -153,19 +154,19 @@ fun OperationCard(
         Text(
             text = when (operation.type) {
                 Transaction.Type.ADJUSTMENT -> {
-                    operation.amount.toMoneyFormatWithSign()
+                    formatter.formatWithSign(operation.amount)
                 }
 
                 Transaction.Type.EXPENSE -> {
                     if (operation.kind == Operation.Kind.TRANSFER) {
-                        "-${operation.amount.toMoneyFormat()}"
+                        "-${formatter.format(operation.amount)}"
                     } else {
-                        operation.amount.toMoneyFormat()
+                        formatter.format(operation.amount)
                     }
                 }
 
                 else -> {
-                    operation.amount.toMoneyFormat()
+                    formatter.format(operation.amount)
                 }
             },
             fontSize = 16.sp,
@@ -174,6 +175,7 @@ fun OperationCard(
             textDecoration = amountDecoration,
         )
     }
+}
 }
 
 private fun getTitle(

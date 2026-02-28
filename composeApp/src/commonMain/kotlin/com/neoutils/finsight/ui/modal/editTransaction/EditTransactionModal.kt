@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.extension.toMoneyFormat
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.ui.theme.Expense

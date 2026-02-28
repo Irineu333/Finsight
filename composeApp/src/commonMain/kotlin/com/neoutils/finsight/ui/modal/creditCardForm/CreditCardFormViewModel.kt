@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
-import com.neoutils.finsight.extension.toMoneyFormat
+import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CreditCardFormViewModel(
+    private val formatter: CurrencyFormatter,
     private val creditCard: CreditCard?,
     private val addCreditCardUseCase: AddCreditCardUseCase,
     private val updateCreditCardUseCase: UpdateCreditCardUseCase,
@@ -43,7 +44,7 @@ class CreditCardFormViewModel(
     )
 
     private val limit = MutableStateFlow(
-        creditCard?.limit?.toMoneyFormat().orEmpty()
+        creditCard?.limit?.let { formatter.format(it) }.orEmpty()
     )
 
     private val closingDay = MutableStateFlow(
@@ -77,7 +78,7 @@ class CreditCardFormViewModel(
         initialValue = creditCard?.let {
             CreditCardForm(
                 name = it.name,
-                limit = it.limit.toMoneyFormat(),
+                limit = formatter.format(it.limit),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
             )

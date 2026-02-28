@@ -7,9 +7,9 @@ sealed class InvoiceError(val message: String) {
     data object NotFound : InvoiceError("Invoice not found")
     data object CreditCardNotFound : InvoiceError("Credit card not found")
     data object PeriodCollision : InvoiceError("Collision of invoice periods")
-    data class BlockedInvoice(val status: Invoice.Status) : InvoiceError("Fatura $status não permite lançamentos")
-    data object NoOpenInvoice : InvoiceError("Nenhuma fatura aberta encontrada")
-    data object AlreadyExists : InvoiceError("Já existe uma fatura para este mês")
+    data class BlockedInvoice(val status: Invoice.Status) : InvoiceError("Invoice with status $status does not allow transactions")
+    data object NoOpenInvoice : InvoiceError("No open invoice found")
+    data object AlreadyExists : InvoiceError("An invoice already exists for this month")
 
     // Close
     data object CannotClosePaidInvoice : InvoiceError("Cannot close a paid invoice")
@@ -39,7 +39,7 @@ sealed class InvoiceError(val message: String) {
     data object CannotReopenPaidInvoice : InvoiceError("Cannot reopen a paid invoice")
 
     // Delete
-    data object CannotDeleteInvoice : InvoiceError("Apenas faturas futuras ou retroativas podem ser excluídas")
+    data object CannotDeleteInvoice : InvoiceError("Only future or retroactive invoices can be deleted")
 }
 
 class InvoiceException(val error: InvoiceError) : Exception(error.message)

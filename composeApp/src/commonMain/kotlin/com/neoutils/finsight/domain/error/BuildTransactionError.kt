@@ -3,42 +3,42 @@ package com.neoutils.finsight.domain.error
 sealed class BuildTransactionError(val message: String) {
 
     data object AmountRequired : BuildTransactionError(
-        message = "O valor é obrigatório."
+        message = "Amount is required."
     )
 
     data object AmountZero : BuildTransactionError(
-        message = "O valor não pode ser zero."
+        message = "Amount cannot be zero."
     )
 
     data object DateRequired : BuildTransactionError(
-        message = "A data é obrigatória."
+        message = "Date is required."
     )
 
     data object DateFuture : BuildTransactionError(
-        message = "A data não pode ser no futuro."
+        message = "Date cannot be in the future."
     )
 
     data object TitleOrCategoryRequired : BuildTransactionError(
-        message = "Informe um título ou selecione uma categoria."
+        message = "Title or category is required."
     )
 
     data object CreditCardExpenseOnly : BuildTransactionError(
-        message = "Apenas despesas podem ser associadas a cartões de crédito."
+        message = "Only expenses can be associated with credit cards."
     )
 
     data object InvoiceRequired : BuildTransactionError(
-        message = "Fatura é obrigatória para transações de cartão."
+        message = "Invoice is required for credit card transactions."
     )
 
     data object CreditCardRequired : BuildTransactionError(
-        message = "Cartão de crédito é obrigatório."
+        message = "Credit card is required."
     )
 
     data object AccountRequired : BuildTransactionError(
-        message = "Conta é obrigatória para transações de conta."
+        message = "Account is required for account transactions."
     )
 
     data object ClosedInvoice : BuildTransactionError(
-        message = "Não é possível adicionar transações em faturas fechadas."
+        message = "Cannot add transactions to closed invoices."
     )
 }

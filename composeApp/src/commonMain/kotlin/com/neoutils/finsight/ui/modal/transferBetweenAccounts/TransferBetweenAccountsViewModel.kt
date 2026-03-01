@@ -68,7 +68,6 @@ class TransferBetweenAccountsViewModel(
     fun transfer(
         amount: Double,
         date: LocalDate,
-        title: String?,
     ) = viewModelScope.launch {
         val sourceAccount = uiState.value.selectedSourceAccount ?: return@launch
         val destinationAccount = uiState.value.selectedDestinationAccount ?: return@launch
@@ -78,7 +77,6 @@ class TransferBetweenAccountsViewModel(
             destinationAccountId = destinationAccount.id,
             amount = amount,
             date = date,
-            title = title,
         ).onLeft {
             _errorMessage.emit(it.error.toUiText().asString())
         }.onRight {

@@ -46,7 +46,7 @@ class PayInvoicePaymentUseCase(
 
         operationRepository.createOperation(
             kind = Operation.Kind.PAYMENT,
-            title = "Pagamento de Fatura",
+            title = null,
             date = date,
             categoryId = null,
             sourceAccountId = account.id,
@@ -55,7 +55,7 @@ class PayInvoicePaymentUseCase(
             transactions = listOf(
                 Transaction(
                     category = null,
-                    title = "Pagamento de Fatura",
+                    title = null,
                     type = Transaction.Type.EXPENSE,
                     amount = currentBillAmount,
                     date = date,
@@ -66,7 +66,7 @@ class PayInvoicePaymentUseCase(
                 ),
                 Transaction(
                     category = null,
-                    title = "Pagamento de Fatura",
+                    title = null,
                     type = Transaction.Type.INCOME,
                     amount = currentBillAmount,
                     date = date,

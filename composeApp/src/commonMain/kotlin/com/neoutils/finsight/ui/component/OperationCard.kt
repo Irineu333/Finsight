@@ -28,6 +28,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.operation_card_balance_adjustment
 import com.neoutils.finsight.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.resources.operation_card_payment
 import com.neoutils.finsight.resources.operation_card_transfer
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
@@ -113,6 +114,7 @@ fun OperationCard(
                 }
             }
 
+            val paymentLabel = stringResource(Res.string.operation_card_payment)
             val transferLabel = stringResource(Res.string.operation_card_transfer)
             val balanceAdjustLabel = stringResource(Res.string.operation_card_balance_adjustment)
             val invoiceAdjustLabel = stringResource(Res.string.operation_card_invoice_adjustment)
@@ -121,7 +123,7 @@ fun OperationCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = getTitle(operation, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = getTitle(operation, paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -163,12 +165,13 @@ fun OperationCard(
 
 private fun getTitle(
     operation: Operation,
+    paymentLabel: String,
     transferLabel: String,
     balanceAdjustLabel: String,
     invoiceAdjustLabel: String,
 ): String {
     val baseTitle = when {
-        operation.kind == Operation.Kind.PAYMENT -> operation.label
+        operation.kind == Operation.Kind.PAYMENT -> paymentLabel
         operation.kind == Operation.Kind.TRANSFER -> transferLabel
         operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> balanceAdjustLabel
         operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> invoiceAdjustLabel

@@ -65,7 +65,7 @@ class AdvanceInvoicePaymentUseCase(
         catch {
             operationRepository.createOperation(
                 kind = Operation.Kind.PAYMENT,
-                title = "Pagamento de Fatura",
+                title = null,
                 date = date,
                 categoryId = null,
                 sourceAccountId = account.id,
@@ -74,7 +74,7 @@ class AdvanceInvoicePaymentUseCase(
                 transactions = listOf(
                     Transaction(
                         category = null,
-                        title = "Pagamento de Fatura",
+                        title = null,
                         type = Transaction.Type.EXPENSE,
                         amount = amount,
                         date = date,
@@ -85,7 +85,7 @@ class AdvanceInvoicePaymentUseCase(
                     ),
                     Transaction(
                         category = null,
-                        title = "Pagamento de Fatura",
+                        title = null,
                         type = Transaction.Type.INCOME,
                         amount = amount,
                         date = date,

@@ -37,5 +37,7 @@ data class Transaction(
         val isCreditCard: Boolean
             get() = this == CREDIT_CARD
     }
+
+    val isInvoicePayment: Boolean get() = invoice != null
 }
 

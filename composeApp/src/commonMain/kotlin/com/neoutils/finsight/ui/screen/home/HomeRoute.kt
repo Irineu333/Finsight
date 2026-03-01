@@ -36,4 +36,7 @@ sealed class AppRoute {
 
     @Serializable
     data object Budgets : AppRoute()
+
+    @Serializable
+    data object Recurring : AppRoute()
 }

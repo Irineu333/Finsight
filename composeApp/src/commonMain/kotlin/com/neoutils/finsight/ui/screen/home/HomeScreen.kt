@@ -35,6 +35,7 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
+import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
@@ -86,6 +87,9 @@ fun AppNavHost() = Surface {
                             },
                             openBudgets = {
                                 navController.navigate(AppRoute.Budgets)
+                            },
+                            openRecurring = {
+                                navController.navigate(AppRoute.Recurring)
                             }
                         )
                     }
@@ -148,6 +152,14 @@ fun AppNavHost() = Surface {
                         }
                     )
                 }
+
+                composable<AppRoute.Recurring> {
+                    RecurringScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }
@@ -160,6 +172,7 @@ fun HomeScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openRecurring: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -221,6 +234,7 @@ fun HomeScreen(
                     openAccounts = openAccounts,
                     openInstallments = openInstallments,
                     openBudgets = openBudgets,
+                    openRecurring = openRecurring,
                 )
             }
 

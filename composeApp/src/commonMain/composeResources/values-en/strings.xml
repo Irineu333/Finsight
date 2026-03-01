@@ -474,4 +474,7 @@
     <!-- Date picker -->
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancel</string>
+
+    <!-- Recurring Card -->
+    <string name="recurring_card_monthly_amount">Monthly amount</string>
 </resources>

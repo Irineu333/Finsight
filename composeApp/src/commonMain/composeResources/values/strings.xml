@@ -475,4 +475,56 @@
     <!-- Date picker -->
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancelar</string>
+
+    <!-- Dashboard - Recurring -->
+    <string name="dashboard_recurring">Recorrentes</string>
+    <string name="dashboard_pending_recurring">Recorrentes Pendentes</string>
+
+    <!-- Recurring Screen -->
+    <string name="recurring_screen_title">Recorrentes</string>
+    <string name="recurring_screen_empty">Sem recorrentes</string>
+    <string name="recurring_screen_create">Criar recorrente</string>
+    <string name="recurring_screen_day">Dia %1$d</string>
+    <string name="recurring_expense">Despesa</string>
+    <string name="recurring_income">Receita</string>
+    <string name="recurring_card_monthly_amount">Valor mensal</string>
+
+    <!-- Recurring Form Modal -->
+    <string name="recurring_form_title_label">Título</string>
+    <string name="recurring_form_amount_label">Valor</string>
+    <string name="recurring_form_day_label">Dia do mês</string>
+    <string name="recurring_form_save">Salvar</string>
+    <string name="recurring_form_delete">Excluir Recorrente</string>
+
+    <!-- Confirm Recurring Modal -->
+    <string name="recurring_confirm_subtitle">Revise e confirme o lançamento</string>
+    <string name="recurring_confirm_amount_label">Valor</string>
+    <string name="recurring_confirm_date_label">Data</string>
+    <string name="recurring_confirm_button">Confirmar</string>
+    <string name="recurring_confirm_skip">Ignorar</string>
+
+    <!-- Recurring status -->
+    <string name="recurring_status_pending">Pendente</string>
+
+    <!-- View Recurring Modal -->
+    <string name="view_recurring_type_label">Tipo</string>
+    <string name="view_recurring_amount_label">Valor</string>
+    <string name="view_recurring_day_label">Dia do mês</string>
+    <string name="view_recurring_account_label">Conta</string>
+    <string name="view_recurring_credit_card_label">Cartão de crédito</string>
+    <string name="view_recurring_category_label">Categoria</string>
+    <string name="view_recurring_delete">Excluir</string>
+    <string name="view_recurring_edit">Editar</string>
+
+    <!-- Delete Recurring Modal -->
+    <string name="delete_recurring_title">Excluir recorrente</string>
+    <string name="delete_recurring_message">Deseja excluir "%1$s"? Esta ação não pode ser desfeita.</string>
+    <string name="delete_recurring_confirm">Excluir</string>
+
+    <!-- Recurring Errors -->
+    <string name="recurring_error_amount_required">O valor é obrigatório.</string>
+    <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
+    <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 28.</string>
+    <string name="recurring_error_account_required">A conta é obrigatória.</string>
 </resources>

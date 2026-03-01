@@ -34,7 +34,11 @@ import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
+import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
+import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
+import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
@@ -80,11 +84,13 @@ val viewModelModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             budgetRepository = get(),
+            recurringRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
             calculateBudgetProgressUseCase = get(),
             ensureDefaultAccountUseCase = get(),
+            getPendingRecurringUseCase = get(),
             invoiceUiMapper = get()
         )
     }
@@ -360,6 +366,42 @@ val viewModelModule = module {
             invoiceRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
+        )
+    }
+
+    viewModel {
+        RecurringViewModel(
+            recurringRepository = get(),
+        )
+    }
+
+    viewModel {
+        RecurringFormViewModel(
+            recurring = it.getOrNull(),
+            categoryRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+            saveRecurringUseCase = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        DeleteRecurringViewModel(
+            recurring = it.get(),
+            recurringRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        ConfirmRecurringViewModel(
+            recurring = it.get(),
+            targetDate = it.get(),
+            invoiceRepository = get(),
+            confirmRecurringUseCase = get(),
+            skipRecurringUseCase = get(),
+            modalManager = get(),
         )
     }
 }

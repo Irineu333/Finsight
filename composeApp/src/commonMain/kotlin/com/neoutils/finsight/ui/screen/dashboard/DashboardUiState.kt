@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.InvoiceUi
 import kotlinx.datetime.YearMonth
@@ -23,6 +24,7 @@ data class DashboardUiState(
     val categorySpending: List<CategorySpending> = emptyList(),
     val creditCards: List<CreditCardUi> = emptyList(),
     val budgetProgress: List<BudgetProgress> = emptyList(),
+    val pendingRecurring: List<Recurring> = emptyList(),
 ) {
     data class BalanceStats(
         val income: Double = 0.0,

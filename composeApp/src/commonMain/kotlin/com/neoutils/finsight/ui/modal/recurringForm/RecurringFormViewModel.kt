@@ -86,6 +86,8 @@ class RecurringFormViewModel(
             category = selectedCategory.value,
             account = if (target.isAccount) (selectedAccount.value ?: uiState.value.selectedAccount) else null,
             creditCard = if (target.isCreditCard) selectedCreditCard.value else null,
+            createdAt = recurring?.createdAt,
+            lastHandledYearMonth = recurring?.lastHandledYearMonth,
         ).onRight {
             modalManager.dismissAll()
         }

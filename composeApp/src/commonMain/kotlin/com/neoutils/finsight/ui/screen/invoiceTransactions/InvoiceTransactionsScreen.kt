@@ -7,14 +7,12 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,6 +40,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.extension.toUiText
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
@@ -61,7 +60,7 @@ import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.ui.util.stringUiText
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
@@ -85,8 +84,6 @@ import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-private val formats = DateFormats()
 
 @Composable
 fun InvoiceTransactionsScreen(
@@ -112,6 +109,7 @@ private fun InvoiceTransactionsContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val dateFormats = LocalDateFormats.current
 
     Scaffold(
         topBar = {
@@ -244,7 +242,7 @@ private fun InvoiceTransactionsContent(
                     key = "date_title_$date"
                 ) {
                     Text(
-                        text = formats.formatRelativeDate(date),
+                        text = dateFormats.formatRelativeDate(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -330,6 +328,8 @@ private fun InvoiceSummaryItem(
     modifier: Modifier = Modifier,
     onEditClick: ((invoice: Invoice) -> Unit)? = null
 ) {
+    val formats = LocalDateFormats.current
+
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
@@ -350,7 +350,7 @@ private fun InvoiceSummaryItem(
             ) {
                 Column {
                     Text(
-                        text = summary.dueMonthLabel,
+                        text = formats.yearMonth.format(summary.dueMonth),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface
@@ -369,7 +369,7 @@ private fun InvoiceSummaryItem(
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = summary.status.label,
+                        text = stringResource(summary.status.toUiText()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = summary.status.color,

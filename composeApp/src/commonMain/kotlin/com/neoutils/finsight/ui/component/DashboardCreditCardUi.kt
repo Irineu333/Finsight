@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.extension.toUiText
 import com.neoutils.finsight.ui.screen.dashboard.CreditCardUi
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_credit_card_advance
@@ -126,7 +127,7 @@ fun DashboardCreditCardUI(
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = it.status.label,
+                            text = stringResource(it.status.toUiText()),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(

@@ -37,7 +37,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
-import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_form_edit_title
 import com.neoutils.finsight.resources.budget_form_icon_label
@@ -161,7 +161,7 @@ class BudgetFormModal(
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.budget_form_limit_label)) },
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,

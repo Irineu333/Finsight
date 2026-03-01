@@ -57,7 +57,7 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
@@ -86,8 +86,6 @@ import org.koin.core.parameter.parametersOf
 import kotlin.math.absoluteValue
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
-
-private val formats = DateFormats()
 
 @Composable
 fun AccountsScreen(
@@ -237,7 +235,7 @@ private fun AccountsContent(
                     key = "date_title_$date"
                 ) {
                     Text(
-                        text = formats.formatRelativeDate(date),
+                        text = LocalDateFormats.current.formatRelativeDate(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -681,7 +679,7 @@ private fun MonthSelector(
                 transitionSpec = { fadeIn() togetherWith fadeOut() }
             ) { month ->
                 Text(
-                    text = formats.yearMonth.format(month),
+                    text = LocalDateFormats.current.yearMonth.format(month),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White

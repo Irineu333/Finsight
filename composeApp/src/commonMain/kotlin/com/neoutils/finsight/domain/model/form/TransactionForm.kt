@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
@@ -17,8 +17,6 @@ import kotlin.time.ExperimentalTime
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-private val formats = DateFormats()
 
 data class TransactionForm(
     val type: Transaction.Type,
@@ -39,7 +37,7 @@ data class TransactionForm(
         if (title.isNullOrEmpty() && category == null) return false
 
         val date = runCatching {
-            formats.dayMonthYear.parse(this.date)
+            dayMonthYear.parse(date)
         }.getOrElse { return false }
 
         if (date > currentDate) return false

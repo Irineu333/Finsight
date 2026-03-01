@@ -27,21 +27,16 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.edit_transaction_amount_label
-import com.neoutils.finsight.resources.edit_transaction_date_label
-import com.neoutils.finsight.resources.edit_transaction_expense
-import com.neoutils.finsight.resources.edit_transaction_income
-import com.neoutils.finsight.resources.edit_transaction_save
-import com.neoutils.finsight.resources.edit_transaction_title
-import com.neoutils.finsight.resources.edit_transaction_title_label
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -57,20 +52,21 @@ class EditTransactionModal(
     private val transaction: Transaction,
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
+
         val manager = LocalModalManager.current
+
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(transaction.type) }
         var target by remember { mutableStateOf(transaction.target) }
 
-        val amount = rememberTextFieldState(formatMoneyFromDouble(transaction.amount))
+        val currencyFormatter = LocalCurrencyFormatter.current
+        val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount))
         val title = rememberTextFieldState(transaction.title.orEmpty())
-        val date = rememberTextFieldState(formats.dayMonthYear.format(transaction.date))
+        val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
         var selectedCategory by remember { mutableStateOf(transaction.category) }
 
@@ -210,7 +206,7 @@ class EditTransactionModal(
                 label = {
                     Text(text = stringResource(Res.string.edit_transaction_amount_label))
                 },
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -237,11 +233,11 @@ class EditTransactionModal(
                         onClick = {
                             manager.show(
                                 DatePickerModal(
-                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    initialDate = dayMonthYear.parse(date.text.toString()),
                                     maxDate = currentDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
-                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                            replace(0, length, dayMonthYear.format(selectedDate))
                                         }
                                     }
                                 )
@@ -353,17 +349,4 @@ class EditTransactionModal(
         }
     }
 
-    private fun formatMoneyFromDouble(value: Double): String {
-        val cents = (value * 100).toLong()
-        val reais = cents / 100
-        val centavos = cents % 100
-
-        val reaisFormatted = reais.toString()
-            .reversed()
-            .chunked(3)
-            .joinToString(".")
-            .reversed()
-
-        return "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
-    }
 }

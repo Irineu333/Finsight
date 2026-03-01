@@ -4,9 +4,15 @@ import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.placeCursorAtEnd
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import kotlin.math.abs
 
-class MoneyInputTransformation : InputTransformation {
+class MoneyInputTransformation(
+    private val formatter: CurrencyFormatter = CurrencyFormatter()
+) : InputTransformation {
 
     override fun TextFieldBuffer.transformInput() {
         val text = asCharSequence().toString()
@@ -35,19 +41,13 @@ class MoneyInputTransformation : InputTransformation {
 
     private fun formatMoney(cents: Long): String {
         val isNegative = cents < 0
-        val absoluteCents = abs(cents)
-
-        val reais = absoluteCents / 100
-        val centavos = absoluteCents % 100
-
-        val reaisFormatted = reais.toString()
-            .reversed()
-            .chunked(3)
-            .joinToString(".")
-            .reversed()
-
-        val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
-
+        val formatted = formatter.format(abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted
     }
+}
+
+@Composable
+fun rememberMoneyInputTransformation(): MoneyInputTransformation {
+    val formatter = LocalCurrencyFormatter.current
+    return remember(formatter) { MoneyInputTransformation(formatter) }
 }

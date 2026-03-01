@@ -28,13 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
@@ -43,24 +43,7 @@ import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.util.DateFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.credit_cards_advance_payment
-import com.neoutils.finsight.resources.credit_cards_close_invoice
-import com.neoutils.finsight.resources.credit_cards_create
-import com.neoutils.finsight.resources.credit_cards_delete
-import com.neoutils.finsight.resources.credit_cards_edit
-import com.neoutils.finsight.resources.credit_cards_empty
-import com.neoutils.finsight.resources.credit_cards_filter_category
-import com.neoutils.finsight.resources.credit_cards_filter_category_all
-import com.neoutils.finsight.resources.credit_cards_filter_type
-import com.neoutils.finsight.resources.credit_cards_filter_type_adjustment
-import com.neoutils.finsight.resources.credit_cards_filter_type_all
-import com.neoutils.finsight.resources.credit_cards_filter_type_expense
-import com.neoutils.finsight.resources.credit_cards_filter_type_payment
-import com.neoutils.finsight.resources.credit_cards_pay_invoice
-import com.neoutils.finsight.resources.credit_cards_reopen_invoice
-import com.neoutils.finsight.resources.credit_cards_title
+import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -68,8 +51,6 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
-
-private val formats = DateFormats()
 
 @Composable
 fun CreditCardsScreen(
@@ -201,7 +182,7 @@ private fun CreditCardsContent(
                         key = "date_title_$date"
                     ) {
                         Text(
-                            text = formats.formatRelativeDate(date),
+                            text = LocalDateFormats.current.formatRelativeDate(date),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier

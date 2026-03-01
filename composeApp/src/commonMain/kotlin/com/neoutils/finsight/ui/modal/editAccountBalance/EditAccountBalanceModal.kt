@@ -27,8 +27,8 @@ import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.util.DateFormats
-import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.edit_account_balance_current_title
 import com.neoutils.finsight.resources.edit_account_balance_final_title
@@ -50,8 +50,6 @@ class EditAccountBalanceModal(
     private val account: Account,
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditAccountBalanceViewModel> {
@@ -59,8 +57,9 @@ class EditAccountBalanceModal(
         }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+        val currencyFormatter = LocalCurrencyFormatter.current
         val initialCents = (uiState.currentBalance * 100).toLong()
-        val balanceState = rememberTextFieldState(formatMoney(initialCents))
+        val balanceState = rememberTextFieldState(formatMoney(initialCents, currencyFormatter))
 
         val newBalance by remember {
             derivedStateOf {
@@ -79,7 +78,7 @@ class EditAccountBalanceModal(
                 uiState.currentBalance
             }.collectLatest {
                 balanceState.edit {
-                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong()))
+                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong(), currencyFormatter))
                 }
             }
         }
@@ -99,7 +98,7 @@ class EditAccountBalanceModal(
 
             if (targetMonth != null) {
                 Text(
-                    text = formats.yearMonth.format(targetMonth),
+                    text = LocalDateFormats.current.yearMonth.format(targetMonth),
                     fontSize = 14.sp,
                     color = TextLight1,
                     modifier = Modifier.padding(top = 4.dp)
@@ -122,7 +121,7 @@ class EditAccountBalanceModal(
             OutlinedTextField(
                 label = { Text(stringResource(Res.string.edit_account_balance_label)) },
                 state = balanceState,
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 keyboardOptions = KeyboardOptions(
@@ -201,30 +200,17 @@ class EditAccountBalanceModal(
         }
     }
 
-    private fun formatMoney(cents: Long): String {
+    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
         val isNegative = cents < 0
-        val absoluteCents = abs(cents)
-        val reais = absoluteCents / 100
-        val centavos = absoluteCents % 100
-        val reaisFormatted = reais.toString()
-            .reversed()
-            .chunked(3)
-            .joinToString(".")
-            .reversed()
-        val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {
         val isNegative = formatted.startsWith("-")
-        val digitsOnly = formatted
-            .replace("-", "")
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-        val value = digitsOnly.toDoubleOrNull() ?: 0.0
-        return if (isNegative) -value else value
+        val digits = formatted.filter { it.isDigit() }
+        val cents = digits.toLongOrNull() ?: return 0.0
+        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 
     enum class Type(val titleRes: StringResource) {

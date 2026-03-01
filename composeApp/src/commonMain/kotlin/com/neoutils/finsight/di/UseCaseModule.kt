@@ -1,6 +1,7 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
+import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
@@ -250,6 +251,12 @@ val useCaseModules = module {
     factory {
         BuildTransactionUseCase(
             getOrCreateInvoiceForMonthUseCase = get(),
+        )
+    }
+
+    factory {
+        CreateDefaultCategoriesUseCase(
+            categoryRepository = get(),
         )
     }
 

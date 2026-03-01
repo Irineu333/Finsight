@@ -4,14 +4,11 @@ package com.neoutils.finsight.domain.model
 
 import androidx.compose.ui.graphics.Color
 import com.neoutils.finsight.extension.safeOnDay
-import com.neoutils.finsight.util.DateFormats
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-
-private val formats = DateFormats()
 
 data class Invoice(
     val id: Long = 0,
@@ -25,7 +22,6 @@ data class Invoice(
     val closedAt: LocalDate? = null,
     val paidAt: LocalDate? = null
 ) {
-    val label get() = "${formats.yearMonth.format(dueMonth)} • ${status.label}"
     val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)
     val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
     val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
@@ -43,29 +39,13 @@ data class Invoice(
     }
 
     enum class Status(
-        val label: String,
         val color: Color,
     ) {
-        FUTURE(
-            label = "Futura",
-            color = Color(0xFF42A5F5)
-        ),
-        OPEN(
-            label = "Aberta",
-            color = Color(0xFFFFA726)
-        ),
-        CLOSED(
-            label = "Fechada",
-            color = Color(0xFFEF5350)
-        ),
-        PAID(
-            label = "Paga",
-            color = Color(0xFF66BB6A)
-        ),
-        RETROACTIVE(
-            label = "Retroativa",
-            color = Color(0xFF5C6BC0)
-        );
+        FUTURE(color = Color(0xFF42A5F5)),
+        OPEN(color = Color(0xFFFFA726)),
+        CLOSED(color = Color(0xFFEF5350)),
+        PAID(color = Color(0xFF66BB6A)),
+        RETROACTIVE(color = Color(0xFF5C6BC0));
 
         val isFuture: Boolean
             get() = this == FUTURE

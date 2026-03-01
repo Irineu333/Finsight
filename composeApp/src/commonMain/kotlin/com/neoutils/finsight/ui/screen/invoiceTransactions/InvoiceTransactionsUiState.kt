@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
@@ -25,7 +26,7 @@ data class InvoiceTransactionsUiState(
         val advancePayment: Double,
         val adjustment: Double,
         val total: Double,
-        val dueMonthLabel: String,
+        val dueMonth: YearMonth,
         val nextDateLabel: UiText?,
         val closingDate: LocalDate,
         val isClosable: Boolean,

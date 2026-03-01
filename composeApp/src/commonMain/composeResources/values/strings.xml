@@ -418,6 +418,56 @@
 
     <string name="budget_progress_card_title">Orçamentos</string>
 
+    <!-- Invoice statuses -->
+    <string name="invoice_status_future">Futura</string>
+    <string name="invoice_status_open">Aberta</string>
+    <string name="invoice_status_closed">Fechada</string>
+    <string name="invoice_status_paid">Paga</string>
+    <string name="invoice_status_retroactive">Retroativa</string>
+    <string name="invoice_status_new">Nova</string>
+
+    <!-- Default category names -->
+    <string name="category_default_salary">Salário</string>
+    <string name="category_default_freelance">Freelance</string>
+    <string name="category_default_investments">Investimentos</string>
+    <string name="category_default_benefits">Benefícios</string>
+    <string name="category_default_refund">Reembolso</string>
+    <string name="category_default_housing">Moradia</string>
+    <string name="category_default_food">Alimentação</string>
+    <string name="category_default_market">Mercado</string>
+    <string name="category_default_transport">Transporte</string>
+    <string name="category_default_health">Saúde</string>
+    <string name="category_default_education">Educação</string>
+    <string name="category_default_entertainment">Lazer</string>
+    <string name="category_default_subscriptions">Assinaturas</string>
+    <string name="category_default_travel">Viagem</string>
+
+    <!-- Default account name -->
+    <string name="account_default_name">Carteira</string>
+
+    <!-- Month names -->
+    <string name="month_january">Janeiro</string>
+    <string name="month_february">Fevereiro</string>
+    <string name="month_march">Março</string>
+    <string name="month_april">Abril</string>
+    <string name="month_may">Maio</string>
+    <string name="month_june">Junho</string>
+    <string name="month_july">Julho</string>
+    <string name="month_august">Agosto</string>
+    <string name="month_september">Setembro</string>
+    <string name="month_october">Outubro</string>
+    <string name="month_november">Novembro</string>
+    <string name="month_december">Dezembro</string>
+
+    <!-- Day of week names -->
+    <string name="day_of_week_monday">Seg</string>
+    <string name="day_of_week_tuesday">Ter</string>
+    <string name="day_of_week_wednesday">Qua</string>
+    <string name="day_of_week_thursday">Qui</string>
+    <string name="day_of_week_friday">Sex</string>
+    <string name="day_of_week_saturday">Sáb</string>
+    <string name="day_of_week_sunday">Dom</string>
+
     <!-- Invoice selector -->
     <string name="invoice_selector_label">Fatura</string>
 

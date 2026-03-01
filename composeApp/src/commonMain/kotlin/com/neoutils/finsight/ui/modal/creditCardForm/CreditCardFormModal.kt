@@ -25,7 +25,7 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryField
 import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.DayInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_form_closing_day_label
@@ -143,7 +143,7 @@ class CreditCardFormModal(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),

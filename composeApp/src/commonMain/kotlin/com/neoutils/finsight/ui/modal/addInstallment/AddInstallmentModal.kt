@@ -2,13 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.addInstallment
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,22 +11,8 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -46,32 +26,18 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.ui.component.CategorySelector
-import com.neoutils.finsight.ui.component.CreditCardSelector
-import com.neoutils.finsight.ui.component.InstallmentCounter
-import com.neoutils.finsight.ui.component.InstallmentState
-import com.neoutils.finsight.ui.component.InvoiceMonthNavigator
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.add_installment_amount_label
-import com.neoutils.finsight.resources.add_installment_date_label
-import com.neoutils.finsight.resources.add_installment_initial_invoice
-import com.neoutils.finsight.resources.add_installment_save
-import com.neoutils.finsight.resources.add_installment_title
-import com.neoutils.finsight.resources.add_installment_title_label
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val formats = DateFormats()
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -84,11 +50,12 @@ class AddInstallmentModal : ModalBottomSheet() {
         val uiState by viewModel.uiState.collectAsState()
 
         val modalManager = LocalModalManager.current
+
         val snackbarHostState = remember { SnackbarHostState() }
 
         val title = rememberTextFieldState()
         val amount = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
+        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
         var selectedCategory by remember { mutableStateOf<Category?>(null) }
         var installments by remember { mutableStateOf(2) }
@@ -185,7 +152,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     label = {
                         Text(text = stringResource(Res.string.add_installment_amount_label))
                     },
-                    inputTransformation = MoneyInputTransformation(),
+                    inputTransformation = rememberMoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next,
@@ -225,14 +192,14 @@ class AddInstallmentModal : ModalBottomSheet() {
                             onClick = {
                                 modalManager.show(
                                     DatePickerModal(
-                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                        initialDate = dayMonthYear.parse(date.text.toString()),
                                         maxDate = currentDate,
                                         onDateSelected = { selectedDate ->
                                             date.edit {
                                                 replace(
                                                     0,
                                                     length,
-                                                    formats.dayMonthYear.format(selectedDate),
+                                                    dayMonthYear.format(selectedDate),
                                                 )
                                             }
                                         },
@@ -262,9 +229,9 @@ class AddInstallmentModal : ModalBottomSheet() {
                         )
                     },
                     enabled = form.isValid()
-                        && uiState.invoiceSelection != null
-                        && !uiState.isInvoiceBlocked
-                        && installments > 1,
+                            && uiState.invoiceSelection != null
+                            && !uiState.isInvoiceBlocked
+                            && installments > 1,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                 ) {

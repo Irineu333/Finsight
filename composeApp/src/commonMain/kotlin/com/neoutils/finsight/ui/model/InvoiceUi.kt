@@ -27,5 +27,4 @@ data class InvoiceUi(
     val closingMonth = invoice.closingMonth
     val dueMonth = invoice.dueMonth
     val dueDate = invoice.dueDate
-    val label = invoice.label
 }

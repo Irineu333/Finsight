@@ -38,7 +38,7 @@ data class Operation(
     val amount: Double
         get() = primaryTransaction.amount
 
-    val label get() = checkNotNull(title ?: category?.name)
+    val label get() = checkNotNull(title ?: category?.name ?: "Unnamed")
 
     val isEditable: Boolean
         get() = transactions.size == 1

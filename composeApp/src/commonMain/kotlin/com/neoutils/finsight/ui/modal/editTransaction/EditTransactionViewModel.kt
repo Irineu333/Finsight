@@ -24,6 +24,7 @@ import kotlinx.datetime.YearMonth
 class EditTransactionViewModel(
     private val transaction: Transaction,
     private val transactionRepository: ITransactionRepository,
+    private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -122,6 +123,9 @@ class EditTransactionViewModel(
         ).flatMap {
             catch {
                 transactionRepository.update(it)
+                it.operationId?.let { operationId ->
+                    operationRepository.updateOperation(operationId, it)
+                }
             }
         }.onRight {
             modalManager.dismissAll()

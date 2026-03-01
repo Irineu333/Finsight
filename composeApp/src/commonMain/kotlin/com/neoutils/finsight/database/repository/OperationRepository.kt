@@ -211,6 +211,18 @@ class OperationRepository(
         return getOperationById(operationId)!!
     }
 
+    override suspend fun updateOperation(id: Long, transaction: Transaction) {
+        operationDao.update(
+            id = id,
+            title = transaction.title,
+            date = transaction.date,
+            categoryId = transaction.category?.id,
+            sourceAccountId = transaction.account?.id,
+            targetCreditCardId = transaction.creditCard?.id,
+            targetInvoiceId = transaction.invoice?.id,
+        )
+    }
+
     override suspend fun deleteOperationById(id: Long) {
         val operation = operationDao.getById(id)
         val installmentId = operation?.installmentId

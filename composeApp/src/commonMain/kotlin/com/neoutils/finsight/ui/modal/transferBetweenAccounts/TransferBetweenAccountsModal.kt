@@ -162,7 +162,6 @@ class TransferBetweenAccountsModal(
                         viewModel.transfer(
                             amount = amount.text.toString().moneyToDouble(),
                             date = dayMonthYear.parse(date.text.toString()),
-                            title = null,
                         )
                     },
                     enabled = isValidTransfer(

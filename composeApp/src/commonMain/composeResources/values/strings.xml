@@ -369,6 +369,7 @@
     <string name="summary_card_see_invoices">Ver faturas</string>
 
     <string name="operation_card_transfer">Transferência</string>
+    <string name="operation_card_payment">Pagamento de Fatura</string>
     <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
     <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
 

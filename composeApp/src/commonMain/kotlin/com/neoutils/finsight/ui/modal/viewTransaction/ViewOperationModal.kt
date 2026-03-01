@@ -133,7 +133,11 @@ class ViewOperationModal(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = uiState.title,
+                        text = when (uiState.operation.kind) {
+                            Operation.Kind.PAYMENT -> stringResource(Res.string.operation_card_payment)
+                            Operation.Kind.TRANSFER -> stringResource(Res.string.operation_card_transfer)
+                            else -> uiState.operation.label
+                        },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface

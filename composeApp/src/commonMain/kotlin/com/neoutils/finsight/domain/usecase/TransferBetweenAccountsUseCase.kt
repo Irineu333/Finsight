@@ -31,7 +31,6 @@ class TransferBetweenAccountsUseCase(
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
-        title: String?,
     ): Either<TransferException, Operation> = either {
         ensure(amount > 0.0) {
             TransferException(TransferError.InvalidAmount)
@@ -58,7 +57,7 @@ class TransferBetweenAccountsUseCase(
         catch {
             operationRepository.createOperation(
                 kind = Operation.Kind.TRANSFER,
-                title = title?.ifBlank { null } ?: "Transferência entre contas",
+                title = null,
                 date = date,
                 categoryId = null,
                 sourceAccountId = sourceAccount.id,
@@ -68,7 +67,7 @@ class TransferBetweenAccountsUseCase(
                     Transaction(
                         type = Transaction.Type.EXPENSE,
                         amount = amount,
-                        title = title?.ifBlank { null } ?: "Transferência entre contas",
+                        title = null,
                         date = date,
                         target = Transaction.Target.ACCOUNT,
                         account = sourceAccount,
@@ -76,7 +75,7 @@ class TransferBetweenAccountsUseCase(
                     Transaction(
                         type = Transaction.Type.INCOME,
                         amount = amount,
-                        title = title?.ifBlank { null } ?: "Transferência entre contas",
+                        title = null,
                         date = date,
                         target = Transaction.Target.ACCOUNT,
                         account = destinationAccount,

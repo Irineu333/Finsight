@@ -111,25 +111,34 @@ class AccountsViewModel(
         AccountsUiState(
             accounts = accounts.map { account ->
                 val allAccountTransactions = transactions.filter { it.account?.id == account.id }
+
                 val initialBalance = allAccountTransactions
                     .filter { it.date.yearMonth < month }
                     .sumOf { it.signedImpact() }
+
                 val accountTransactions = allAccountTransactions
                     .filter { it.date.yearMonth <= month }
+
                 val balance = accountTransactions.sumOf { it.signedImpact() }
+
                 val monthTransactions = accountTransactions.filter { it.date.yearMonth == month }
+
                 val income = monthTransactions
                     .filter { it.type == Transaction.Type.INCOME }
                     .sumOf { it.amount }
+
                 val expense = monthTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE && it.title != "Pagamento de Fatura" }
+                    .filter { it.type == Transaction.Type.EXPENSE && !it.isInvoicePayment }
                     .sumOf { it.amount }
+
                 val adjustment = monthTransactions
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
                     .sumOf { it.signedImpact() }
+
                 val invoicePayment = monthTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE && it.title == "Pagamento de Fatura" }
+                    .filter { it.type == Transaction.Type.EXPENSE && it.isInvoicePayment }
                     .sumOf { it.amount }
+
                 AccountUi(
                     account = account,
                     initialBalance = initialBalance,

@@ -22,7 +22,7 @@ class CalculateInvoiceOverviewsUseCase {
                     .filter { it.type.isExpense }
                     .sumOf { it.amount }
                 val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.title == "Pagamento de Fatura" }
+                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.isInvoicePayment }
                     .sumOf { it.amount }
                 val adjustment = invoiceTransactions
                     .filter { it.type.isAdjustment }

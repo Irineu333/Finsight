@@ -2,24 +2,15 @@
 
 package com.neoutils.finsight.ui.modal.payInvoice
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,19 +22,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.pay_invoice_amount_label
-import com.neoutils.finsight.resources.pay_invoice_confirm
-import com.neoutils.finsight.resources.pay_invoice_date_label
-import com.neoutils.finsight.resources.pay_invoice_message
-import com.neoutils.finsight.resources.pay_invoice_title
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -61,8 +49,6 @@ class PayInvoiceModal(
     private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<PayInvoiceViewModel> {
@@ -77,11 +63,15 @@ class PayInvoiceModal(
         } else {
             currentBillAmount
         }.coerceAtLeast(0.0)
-        val amount = formatMoneyFromDouble(outstandingDebt)
+        val amount = LocalCurrencyFormatter.current.format(outstandingDebt)
 
         val maxDate = invoice.dueDate.coerceAtMost(currentDate)
 
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate.coerceIn(invoice.closingDate, maxDate)))
+        val date = rememberTextFieldState(
+             dayMonthYear.format(
+                currentDate.coerceIn(invoice.closingDate, maxDate)
+            )
+        )
 
         Column(
             modifier = Modifier
@@ -141,12 +131,12 @@ class PayInvoiceModal(
                         onClick = {
                             manager.show(
                                 DatePickerModal(
-                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    initialDate = dayMonthYear.parse(date.text.toString()),
                                     minDate = invoice.closingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
-                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                            replace(0, length, dayMonthYear.format(selectedDate))
                                         }
                                     }
                                 )
@@ -170,7 +160,7 @@ class PayInvoiceModal(
             Button(
                 onClick = {
                     viewModel.payInvoice(
-                        date = formats.dayMonthYear.parse(date.text.toString()),
+                        date = dayMonthYear.parse(date.text.toString()),
                     )
                 },
                 enabled = isValidPayment(
@@ -201,17 +191,11 @@ class PayInvoiceModal(
 
         if (outstandingDebt <= 0.0) return false
 
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+        val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
 
         return parsedDate in minDate..maxDate
     }
 
-    private fun formatMoneyFromDouble(value: Double): String {
-        val intValue = (value * 100).toInt()
-        val reais = intValue / 100
-        val centavos = (intValue % 100).toString().padStart(2, '0')
-        return "R$ $reais,$centavos"
-    }
 }
 
 

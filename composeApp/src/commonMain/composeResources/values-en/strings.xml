@@ -418,6 +418,56 @@
 
     <string name="budget_progress_card_title">Budgets</string>
 
+    <!-- Invoice statuses -->
+    <string name="invoice_status_future">Future</string>
+    <string name="invoice_status_open">Open</string>
+    <string name="invoice_status_closed">Closed</string>
+    <string name="invoice_status_paid">Paid</string>
+    <string name="invoice_status_retroactive">Retroactive</string>
+    <string name="invoice_status_new">New</string>
+
+    <!-- Default category names -->
+    <string name="category_default_salary">Salary</string>
+    <string name="category_default_freelance">Freelance</string>
+    <string name="category_default_investments">Investments</string>
+    <string name="category_default_benefits">Benefits</string>
+    <string name="category_default_refund">Refund</string>
+    <string name="category_default_housing">Housing</string>
+    <string name="category_default_food">Food</string>
+    <string name="category_default_market">Supermarket</string>
+    <string name="category_default_transport">Transport</string>
+    <string name="category_default_health">Health</string>
+    <string name="category_default_education">Education</string>
+    <string name="category_default_entertainment">Entertainment</string>
+    <string name="category_default_subscriptions">Subscriptions</string>
+    <string name="category_default_travel">Travel</string>
+
+    <!-- Default account name -->
+    <string name="account_default_name">Wallet</string>
+
+    <!-- Month names -->
+    <string name="month_january">January</string>
+    <string name="month_february">February</string>
+    <string name="month_march">March</string>
+    <string name="month_april">April</string>
+    <string name="month_may">May</string>
+    <string name="month_june">June</string>
+    <string name="month_july">July</string>
+    <string name="month_august">August</string>
+    <string name="month_september">September</string>
+    <string name="month_october">October</string>
+    <string name="month_november">November</string>
+    <string name="month_december">December</string>
+
+    <!-- Day of week names -->
+    <string name="day_of_week_monday">Mon</string>
+    <string name="day_of_week_tuesday">Tue</string>
+    <string name="day_of_week_wednesday">Wed</string>
+    <string name="day_of_week_thursday">Thu</string>
+    <string name="day_of_week_friday">Fri</string>
+    <string name="day_of_week_saturday">Sat</string>
+    <string name="day_of_week_sunday">Sun</string>
+
     <!-- Invoice selector -->
     <string name="invoice_selector_label">Invoice</string>
 

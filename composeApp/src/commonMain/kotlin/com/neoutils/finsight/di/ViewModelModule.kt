@@ -20,7 +20,6 @@ import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewMod
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finsight.ui.modal.editInvoicePayment.EditInvoicePaymentViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
@@ -128,7 +127,12 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { CategoriesViewModel(categoryRepository = get()) }
+    viewModel {
+        CategoriesViewModel(
+            categoryRepository = get(),
+            createDefaultCategories = get()
+        )
+    }
 
     viewModel {
         AccountsViewModel(
@@ -311,14 +315,6 @@ val viewModelModule = module {
             calculateInvoiceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
-        )
-    }
-
-    viewModel {
-        EditInvoicePaymentViewModel(
-            transaction = it.get(),
-            transactionRepository = get(),
-            modalManager = get()
         )
     }
 

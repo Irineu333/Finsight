@@ -2,9 +2,13 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.account_default_name
+import com.neoutils.finsight.util.UiText
 
 class EnsureDefaultAccountUseCase(
-    private val repository: IAccountRepository
+    private val repository: IAccountRepository,
+    private val name: UiText = UiText.Res(Res.string.account_default_name)
 ) {
     suspend operator fun invoke(): Account {
         val existingDefault = repository.getDefaultAccount()
@@ -21,10 +25,9 @@ class EnsureDefaultAccountUseCase(
         }
 
         val newAccount = Account(
-            name = "Carteira",
+            name = name.asString(),
             isDefault = true
         )
-        val id = repository.insert(newAccount)
-        return newAccount.copy(id = id)
+        return newAccount.copy(id = repository.insert(newAccount))
     }
 }

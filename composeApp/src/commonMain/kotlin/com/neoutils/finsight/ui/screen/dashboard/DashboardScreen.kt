@@ -45,7 +45,7 @@ import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
@@ -60,7 +60,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
-private val formats = DateFormats()
 
 @Composable
 fun DashboardScreen(
@@ -104,7 +103,7 @@ private fun DashboardContent(
     topBar = {
         TopAppBar(
             title = {
-                Text(text = formats.yearMonth.format(uiState.yearMonth))
+                Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = colorScheme.background,

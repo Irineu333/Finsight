@@ -4,19 +4,15 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.signedImpact
+import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.util.dayMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
@@ -37,8 +33,6 @@ class InvoiceTransactionsViewModel(
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
 ) : ViewModel() {
-
-    private val formats = DateFormats()
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
 
@@ -100,24 +94,24 @@ class InvoiceTransactionsViewModel(
                 val nextDateLabel = when (invoice.status) {
                     Invoice.Status.OPEN -> UiText.ResWithArgs(
                         Res.string.invoice_closes_on,
-                        formats.dayMonth.format(invoice.closingDate)
+                        dayMonth.format(invoice.closingDate)
                     )
 
                     Invoice.Status.CLOSED -> UiText.ResWithArgs(
                         Res.string.invoice_due_on,
-                        formats.dayMonth.format(invoice.dueDate)
+                        dayMonth.format(invoice.dueDate)
                     )
 
                     Invoice.Status.PAID -> invoice.paidAt?.let { paidDate ->
                         UiText.ResWithArgs(
                             Res.string.invoice_paid_on,
-                            formats.dayMonth.format(paidDate)
+                            dayMonth.format(paidDate)
                         )
                     }
 
                     Invoice.Status.FUTURE -> UiText.ResWithArgs(
                         Res.string.invoice_opens_on,
-                        formats.dayMonth.format(invoice.openingDate)
+                        dayMonth.format(invoice.openingDate)
                     )
 
                     Invoice.Status.RETROACTIVE -> null
@@ -129,7 +123,7 @@ class InvoiceTransactionsViewModel(
                     advancePayment = advancePayment,
                     adjustment = adjustment,
                     total = invoiceTransactions.sumOf { -it.signedImpact() },
-                    dueMonthLabel = formats.yearMonth.format(invoice.dueMonth),
+                    dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
                     isClosable = invoice.isClosable && currentDate >= invoice.closingDate,

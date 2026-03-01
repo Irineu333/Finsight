@@ -2,24 +2,15 @@
 
 package com.neoutils.finsight.ui.modal.advancePayment
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,19 +22,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.advance_payment_amount_label
-import com.neoutils.finsight.resources.advance_payment_confirm
-import com.neoutils.finsight.resources.advance_payment_date_label
-import com.neoutils.finsight.resources.advance_payment_description
-import com.neoutils.finsight.resources.advance_payment_title
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -61,22 +48,26 @@ class AdvancePaymentModal(
     private val currentBillAmount: Double
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+
         val viewModel = koinViewModel<AdvancePaymentViewModel> {
             parametersOf(invoice.id)
         }
 
         val uiState by viewModel.uiState.collectAsState()
+
         val manager = LocalModalManager.current
 
         val amount = rememberTextFieldState()
 
         val maxDate = invoice.closingDate.coerceAtMost(currentDate)
 
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate.coerceIn(invoice.openingDate, maxDate)))
+        val date = rememberTextFieldState(
+            dayMonthYear.format(
+                currentDate.coerceIn(invoice.openingDate, maxDate)
+            )
+        )
 
         Column(
             modifier = Modifier
@@ -104,7 +95,7 @@ class AdvancePaymentModal(
                 label = {
                     Text(text = stringResource(Res.string.advance_payment_amount_label))
                 },
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
@@ -140,12 +131,12 @@ class AdvancePaymentModal(
                         onClick = {
                             manager.show(
                                 DatePickerModal(
-                                    initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                    initialDate = dayMonthYear.parse(date.text.toString()),
                                     minDate = invoice.openingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
-                                            replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                            replace(0, length, dayMonthYear.format(selectedDate))
                                         }
                                     }
                                 )
@@ -170,7 +161,7 @@ class AdvancePaymentModal(
                 onClick = {
                     viewModel.advancePayment(
                         amount = parseMoneyToDouble(amount.text.toString()),
-                        date = formats.dayMonthYear.parse(date.text.toString()),
+                        date = dayMonthYear.parse(date.text.toString()),
                     )
                 },
                 enabled = isValidPayment(
@@ -209,17 +200,14 @@ class AdvancePaymentModal(
         if (outstandingDebt <= 0.0) return false
         if (parsedAmount > outstandingDebt) return false
         if (date.isEmpty()) return false
-        val parsedDate = runCatching { formats.dayMonthYear.parse(date) }.getOrElse { return false }
+        val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
         return parsedDate in minDate..maxDate
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {
-        val digitsOnly = formatted
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-
-        return digitsOnly.toDoubleOrNull() ?: 0.0
+        val isNegative = formatted.startsWith("-")
+        val digits = formatted.filter { it.isDigit() }
+        val cents = digits.toLongOrNull() ?: return 0.0
+        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 }

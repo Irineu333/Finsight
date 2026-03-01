@@ -10,13 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,23 +24,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.util.DateFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.view_adjustment_account_label
-import com.neoutils.finsight.resources.view_adjustment_adjusted_value_label
-import com.neoutils.finsight.resources.view_adjustment_balance_adjust
-import com.neoutils.finsight.resources.view_adjustment_card_label
-import com.neoutils.finsight.resources.view_adjustment_credit_card_label
-import com.neoutils.finsight.resources.view_adjustment_date_label
-import com.neoutils.finsight.resources.view_adjustment_delete_label
-import com.neoutils.finsight.resources.view_adjustment_deleted
-import com.neoutils.finsight.resources.view_adjustment_invoice_adjust
-import com.neoutils.finsight.resources.view_adjustment_type_label
-import com.neoutils.finsight.resources.view_adjustment_type_row_label
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,8 +39,6 @@ import org.koin.core.parameter.parametersOf
 class ViewAdjustmentModal(
     private val operation: Operation
 ) : ModalBottomSheet() {
-
-    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -117,7 +99,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_date_label),
-                value = formats.dayMonthYear.format(uiState.transaction.date)
+                value = dayMonthYear.format(uiState.transaction.date)
             )
 
             Spacer(modifier = Modifier.height(8.dp))

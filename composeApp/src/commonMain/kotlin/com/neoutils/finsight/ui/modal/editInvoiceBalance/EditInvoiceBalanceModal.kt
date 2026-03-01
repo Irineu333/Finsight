@@ -32,7 +32,7 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.MoneyInputTransformation
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.edit_invoice_balance_label
 import com.neoutils.finsight.resources.edit_invoice_balance_save
@@ -56,7 +56,8 @@ class EditInvoiceBalanceModal(
 
         val uiState by viewModel.uiState.collectAsState()
 
-        val balanceState = rememberTextFieldState(formatMoney((uiState.currentBalance * 100).toLong()))
+        val currencyFormatter = LocalCurrencyFormatter.current
+        val balanceState = rememberTextFieldState(formatMoney((uiState.currentBalance * 100).toLong(), currencyFormatter))
 
         val newBalance by remember {
             derivedStateOf {
@@ -75,7 +76,7 @@ class EditInvoiceBalanceModal(
                 uiState.currentBalance
             }.collectLatest {
                 balanceState.edit {
-                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong()))
+                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong(), currencyFormatter))
                 }
             }
         }
@@ -120,7 +121,7 @@ class EditInvoiceBalanceModal(
             OutlinedTextField(
                 label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
                 state = balanceState,
-                inputTransformation = MoneyInputTransformation(),
+                inputTransformation = rememberMoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 keyboardOptions = KeyboardOptions(
@@ -202,29 +203,16 @@ class EditInvoiceBalanceModal(
         }
     }
 
-    private fun formatMoney(cents: Long): String {
+    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
         val isNegative = cents < 0
-        val absoluteCents = abs(cents)
-        val reais = absoluteCents / 100
-        val centavos = absoluteCents % 100
-        val reaisFormatted = reais.toString()
-            .reversed()
-            .chunked(3)
-            .joinToString(".")
-            .reversed()
-        val formatted = "R$ $reaisFormatted,${centavos.toString().padStart(2, '0')}"
+        val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {
         val isNegative = formatted.startsWith("-")
-        val digitsOnly = formatted
-            .replace("-", "")
-            .replace("R$", "")
-            .replace(".", "")
-            .replace(",", ".")
-            .trim()
-        val value = digitsOnly.toDoubleOrNull() ?: 0.0
-        return if (isNegative) -value else value
+        val digits = formatted.filter { it.isDigit() }
+        val cents = digits.toLongOrNull() ?: return 0.0
+        return (if (isNegative) -cents else cents).toDouble() / 100
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_selector_label
+import com.neoutils.finsight.ui.extension.toLabel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -40,7 +41,7 @@ fun InvoiceSelector(
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = invoice?.label.orEmpty(),
+            value = invoice?.toLabel().orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
@@ -86,7 +87,7 @@ fun InvoiceSelector(
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = invoice.label,
+                                text = invoice.toLabel(),
                                 fontSize = 14.sp
                             )
                         }

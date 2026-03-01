@@ -26,10 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
-
-private val formats = DateFormats()
 
 @Composable
 fun MonthSelector(
@@ -64,7 +62,7 @@ fun MonthSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = formats.yearMonth.format(selectedYearMonth),
+                text = LocalDateFormats.current.yearMonth.format(selectedYearMonth),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = if (onMonthSelected != null) {

@@ -2,32 +2,16 @@
 
 package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,20 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.transfer_amount_label
-import com.neoutils.finsight.resources.transfer_confirm
-import com.neoutils.finsight.resources.transfer_date_label
-import com.neoutils.finsight.resources.transfer_destination_account_label
-import com.neoutils.finsight.resources.transfer_source_account_label
-import com.neoutils.finsight.resources.transfer_title
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
@@ -66,8 +46,6 @@ class TransferBetweenAccountsModal(
     private val sourceAccount: Account,
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<TransferBetweenAccountsViewModel> {
@@ -79,7 +57,7 @@ class TransferBetweenAccountsModal(
         val snackbarHostState = remember { SnackbarHostState() }
 
         val amount = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
+        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
         LaunchedEffect(Unit) {
             viewModel.errorMessage.collect { message ->
@@ -127,7 +105,7 @@ class TransferBetweenAccountsModal(
                     label = {
                         Text(text = stringResource(Res.string.transfer_amount_label))
                     },
-                    inputTransformation = MoneyInputTransformation(),
+                    inputTransformation = rememberMoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -154,11 +132,11 @@ class TransferBetweenAccountsModal(
                             onClick = {
                                 modalManager.show(
                                     DatePickerModal(
-                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                        initialDate = dayMonthYear.parse(date.text.toString()),
                                         maxDate = currentDate,
                                         onDateSelected = { selectedDate ->
                                             date.edit {
-                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                                replace(0, length, dayMonthYear.format(selectedDate))
                                             }
                                         }
                                     )
@@ -183,7 +161,7 @@ class TransferBetweenAccountsModal(
                     onClick = {
                         viewModel.transfer(
                             amount = amount.text.toString().moneyToDouble(),
-                            date = formats.dayMonthYear.parse(date.text.toString()),
+                            date = dayMonthYear.parse(date.text.toString()),
                             title = null,
                         )
                     },
@@ -226,7 +204,7 @@ class TransferBetweenAccountsModal(
         if (sourceAccount.id == destinationAccount.id) return false
 
         val parsedDate = runCatching {
-            formats.dayMonthYear.parse(date)
+            dayMonthYear.parse(date)
         }.getOrElse { return false }
 
         return parsedDate <= currentDate

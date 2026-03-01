@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -20,8 +21,6 @@ import kotlin.time.ExperimentalTime
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-private val formats = DateFormats()
 
 class BuildTransactionUseCase(
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
@@ -48,7 +47,7 @@ class BuildTransactionUseCase(
             BuildTransactionException(BuildTransactionError.TitleOrCategoryRequired)
         }
 
-        val date = catch { formats.dayMonthYear.parse(form.date) }.bind()
+        val date = catch { dayMonthYear.parse(form.date) }.bind()
 
         ensure(date <= currentDate) {
             BuildTransactionException(BuildTransactionError.DateFuture)

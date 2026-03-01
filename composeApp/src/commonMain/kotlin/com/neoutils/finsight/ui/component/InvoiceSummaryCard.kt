@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.extension.toUiText
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
@@ -70,7 +71,7 @@ fun InvoiceSummaryCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = overview.invoiceStatus.label,
+                        text = stringResource(overview.invoiceStatus.toUiText()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = overview.invoiceStatus.color,

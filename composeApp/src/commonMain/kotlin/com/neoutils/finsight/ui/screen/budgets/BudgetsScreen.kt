@@ -36,7 +36,7 @@ import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.theme.budgetProgressColor
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budgets_category_plural
 import com.neoutils.finsight.resources.budgets_category_singular
@@ -51,7 +51,6 @@ import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-private val formats = DateFormats()
 
 @Composable
 fun BudgetsScreen(
@@ -159,7 +158,7 @@ private fun MonthSelector(
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
             ) { month ->
                 Text(
-                    text = formats.yearMonth.format(month),
+                    text = LocalDateFormats.current.yearMonth.format(month),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                 )

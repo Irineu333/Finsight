@@ -13,46 +13,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
-import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
-import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
-import com.neoutils.finsight.util.DateFormats
-import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.transactions_filter_account
-import com.neoutils.finsight.resources.transactions_filter_category
-import com.neoutils.finsight.resources.transactions_filter_category_all
-import com.neoutils.finsight.resources.transactions_filter_credit_card
-import com.neoutils.finsight.resources.transactions_filter_credit_card_label
-import com.neoutils.finsight.resources.transactions_filter_type
-import com.neoutils.finsight.resources.transactions_filter_type_adjustment
-import com.neoutils.finsight.resources.transactions_filter_type_all
-import com.neoutils.finsight.resources.transactions_filter_type_expense
-import com.neoutils.finsight.resources.transactions_filter_type_income
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-private val formats = DateFormats()
+import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
 @Composable
 fun TransactionsScreen(
@@ -76,6 +60,7 @@ private fun TransactionsContent(
     onAction: (TransactionsAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val dateFormats = LocalDateFormats.current
 
     Scaffold(
         topBar = {
@@ -131,7 +116,7 @@ private fun TransactionsContent(
                     key = "date_title_$date"
                 ) {
                     Text(
-                        text = formats.formatRelativeDate(date),
+                        text = dateFormats.formatRelativeDate(date),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier

@@ -4,36 +4,14 @@ package com.neoutils.finsight.ui.modal.viewTransaction
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Payment
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,37 +26,16 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationAction
+import com.neoutils.finsight.ui.extension.toLabel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.util.DateFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.view_operation_account_label
-import com.neoutils.finsight.resources.view_operation_amount_label
-import com.neoutils.finsight.resources.view_operation_card_label
-import com.neoutils.finsight.resources.view_operation_closed_invoice_message
-import com.neoutils.finsight.resources.view_operation_date_label
-import com.neoutils.finsight.resources.view_operation_delete
-import com.neoutils.finsight.resources.view_operation_deleted
-import com.neoutils.finsight.resources.view_operation_destination_account_label
-import com.neoutils.finsight.resources.view_operation_edit
-import com.neoutils.finsight.resources.view_operation_installment_label
-import com.neoutils.finsight.resources.view_operation_invoice_label
-import com.neoutils.finsight.resources.view_operation_origin_account
-import com.neoutils.finsight.resources.view_operation_origin_credit_card
-import com.neoutils.finsight.resources.view_operation_origin_label
-import com.neoutils.finsight.resources.view_operation_source_account_label
-import com.neoutils.finsight.resources.view_operation_type_adjustment
-import com.neoutils.finsight.resources.view_operation_type_expense
-import com.neoutils.finsight.resources.view_operation_type_income
+import com.neoutils.finsight.ui.theme.*
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -88,8 +45,6 @@ import kotlin.uuid.ExperimentalUuidApi
 class ViewOperationModal(
     private val operation: Operation
 ) : ModalBottomSheet() {
-
-    private val formats = DateFormats()
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -111,7 +66,7 @@ class ViewOperationModal(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                androidx.compose.foundation.layout.Box {
+                Box {
                     Surface(
                         color = uiState.operationColor().copy(alpha = 0.2f),
                         shape = RoundedCornerShape(16.dp),
@@ -198,7 +153,7 @@ class ViewOperationModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_operation_date_label),
-                value = formats.dayMonthYear.format(uiState.transaction.date)
+                value = dayMonthYear.format(uiState.transaction.date)
             )
 
             val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
@@ -275,7 +230,7 @@ class ViewOperationModal(
                 val creditCardId = uiState.transaction.creditCard?.id
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
-                    value = invoice.label,
+                    value = invoice.toLabel(),
                     valueColor = invoice.status.color,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = creditCardId?.let {

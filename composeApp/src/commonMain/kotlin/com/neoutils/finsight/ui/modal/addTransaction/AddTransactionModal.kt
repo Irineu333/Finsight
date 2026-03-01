@@ -29,28 +29,20 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.MoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.add_transaction_amount_label
-import com.neoutils.finsight.resources.add_transaction_date_label
-import com.neoutils.finsight.resources.add_transaction_expense
-import com.neoutils.finsight.resources.add_transaction_income
-import com.neoutils.finsight.resources.add_transaction_save
-import com.neoutils.finsight.resources.add_transaction_title_label
+import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-private val formats = DateFormats()
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -78,7 +70,7 @@ class AddTransactionModal : ModalBottomSheet() {
 
         val amount = rememberTextFieldState()
         val title = rememberTextFieldState()
-        val date = rememberTextFieldState(formats.dayMonthYear.format(currentDate))
+        val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
         var selectedCategory by remember { mutableStateOf<Category?>(null) }
         var installments by remember { mutableStateOf(1) }
@@ -212,7 +204,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     label = {
                         Text(text = stringResource(Res.string.add_transaction_amount_label))
                     },
-                    inputTransformation = MoneyInputTransformation(),
+                    inputTransformation = rememberMoneyInputTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -251,11 +243,11 @@ class AddTransactionModal : ModalBottomSheet() {
                             onClick = {
                                 manager.show(
                                     DatePickerModal(
-                                        initialDate = formats.dayMonthYear.parse(date.text.toString()),
+                                        initialDate = dayMonthYear.parse(date.text.toString()),
                                         maxDate = currentDate,
                                         onDateSelected = { selectedDate ->
                                             date.edit {
-                                                replace(0, length, formats.dayMonthYear.format(selectedDate))
+                                                replace(0, length, dayMonthYear.format(selectedDate))
                                             }
                                         }
                                     )

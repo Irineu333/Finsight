@@ -1,11 +1,6 @@
 package com.neoutils.finsight.ui.modal.closeInvoice
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -19,13 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.util.DateFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.close_invoice_confirm
-import com.neoutils.finsight.resources.close_invoice_date_label
-import com.neoutils.finsight.resources.close_invoice_message
-import com.neoutils.finsight.resources.close_invoice_title
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -36,12 +28,11 @@ class CloseInvoiceModal(
     private val closingDate: LocalDate,
 ) : ModalBottomSheet() {
 
-    private val formats = DateFormats()
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+
         val viewModel = koinViewModel<CloseInvoiceViewModel> { parametersOf(invoiceId) }
-        val date = rememberTextFieldState(formats.dayMonthYear.format(closingDate))
+        val date = rememberTextFieldState(dayMonthYear.format(closingDate))
 
         Column(
             modifier = Modifier

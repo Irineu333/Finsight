@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.extension.toUiText
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardUi
 import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.resources.Res
@@ -47,6 +48,8 @@ import com.neoutils.finsight.resources.credit_card_ui_closes_on
 import com.neoutils.finsight.resources.credit_card_ui_current_invoice
 import com.neoutils.finsight.resources.credit_card_ui_due_on
 import com.neoutils.finsight.resources.credit_card_ui_edit_invoice
+import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -121,7 +124,7 @@ fun CreditCardUI(
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = it.status.label,
+                            text = stringResource(it.status.toUiText()),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(
@@ -241,7 +244,7 @@ fun CreditCardUI(
                                 color = colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = DateFormats().dayMonth.format(date),
+                                text = dayMonth.format(date),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colorScheme.onSurface

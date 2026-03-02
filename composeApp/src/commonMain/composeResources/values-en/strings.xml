@@ -15,6 +15,10 @@
     <string name="category_error_empty_name">Category name cannot be empty.</string>
     <string name="category_error_already_exist">A category with this name already exists.</string>
 
+    <!-- Budget errors -->
+    <string name="budget_error_empty_title">Budget title cannot be empty.</string>
+    <string name="budget_error_already_exist">A budget with this title already exists.</string>
+
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">Card name is required.</string>
     <string name="credit_card_error_already_exist_name">A card with this name already exists.</string>

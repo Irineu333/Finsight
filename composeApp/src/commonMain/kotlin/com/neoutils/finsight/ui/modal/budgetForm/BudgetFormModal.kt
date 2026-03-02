@@ -37,6 +37,8 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.util.stringUiText
+import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_form_edit_title
@@ -86,6 +88,28 @@ class BudgetFormModal(
                 value = uiState.title,
                 onValueChange = { viewModel.onAction(BudgetFormAction.TitleChanged(it)) },
                 label = { Text(text = stringResource(Res.string.budget_form_title_label)) },
+                trailingIcon = when (uiState.validation[BudgetField.TITLE]) {
+                    Validation.Validating -> {
+                        {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
+
+                    else -> null
+                },
+                isError = uiState.validation[BudgetField.TITLE] is Validation.Error,
+                supportingText = when (val validation = uiState.validation[BudgetField.TITLE]) {
+                    is Validation.Error -> {
+                        {
+                            Text(text = stringUiText(validation.error))
+                        }
+                    }
+
+                    else -> null
+                },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

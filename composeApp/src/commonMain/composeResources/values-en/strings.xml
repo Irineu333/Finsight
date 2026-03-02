@@ -477,7 +477,7 @@
 
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recurring</string>
-    <string name="dashboard_pending_recurring">Pending recurring</string>
+    <string name="dashboard_pending_recurring">Pending</string>
 
     <!-- Recurring Screen -->
     <string name="recurring_screen_title">Recurring</string>

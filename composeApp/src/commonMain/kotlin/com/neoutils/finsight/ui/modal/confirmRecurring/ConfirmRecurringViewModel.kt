@@ -73,6 +73,9 @@ class ConfirmRecurringViewModel(
     }
 
     private fun skip() = viewModelScope.launch {
-        skipRecurringUseCase(recurring).onRight { modalManager.dismiss() }
+        skipRecurringUseCase(
+            recurring = recurring,
+            date = confirmDate.value,
+        ).onRight { modalManager.dismiss() }
     }
 }

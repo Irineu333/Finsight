@@ -12,10 +12,8 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class ConfirmRecurringUseCase(
@@ -83,7 +81,7 @@ class ConfirmRecurringUseCase(
         }.flatMap { operation ->
             catch {
                 recurringRepository.update(
-                    recurring.copy(lastHandledYearMonth = Clock.System.now().toYearMonth())
+                    recurring.copy(lastHandledYearMonth = date.yearMonth)
                 )
                 operation
             }

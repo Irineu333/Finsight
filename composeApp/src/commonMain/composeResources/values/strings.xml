@@ -77,6 +77,10 @@
     <string name="reports_preview_title">Prévia do relatório</string>
     <string name="reports_preview_file_name">Nome sugerido do arquivo</string>
     <string name="reports_preview_content">Conteúdo gerado</string>
+    <string name="reports_preview_share">Compartilhar arquivo</string>
+    <string name="reports_preview_share_success">Arquivo preparado para compartilhamento: %1$s</string>
+    <string name="reports_preview_share_unsupported">%1$s</string>
+    <string name="reports_preview_share_failed">Não foi possível compartilhar o arquivo: %1$s</string>
     <string name="reports_pdf">PDF</string>
     <string name="reports_csv">CSV</string>
     <string name="reports_account_balance_title">Balanço da conta</string>

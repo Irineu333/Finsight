@@ -682,14 +682,14 @@ private fun MonthSelector(
                     text = LocalDateFormats.current.yearMonth.format(month),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = colorScheme.onBackground
                 )
             }
 
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
-                tint = Color.White,
+                tint = colorScheme.onBackground,
                 modifier = Modifier.size(20.dp)
             )
         }

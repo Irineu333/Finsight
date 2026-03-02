@@ -229,6 +229,7 @@ val viewModelModule = module {
     viewModel {
         CategoryFormViewModel(
             category = it.getOrNull(),
+            initialType = it.getOrNull(),
             repository = get(),
             validateCategoryName = get(),
             modalManager = get(),

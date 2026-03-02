@@ -49,12 +49,13 @@ import org.koin.core.parameter.parametersOf
 
 class CategoryFormModal(
     private val category: Category? = null,
+    private val initialType: Category.Type? = null,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category) }
+        val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category, initialType) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val name = rememberTextFieldState(uiState.name)

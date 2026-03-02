@@ -82,7 +82,7 @@ private fun CategoriesContent(
             if (uiState.categories.isNotEmpty()) {
                 FloatingActionButton(
                     onClick = {
-                        modalManager.show(CategoryFormModal())
+                        modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
                     },
                 ) {
                     Icon(
@@ -99,7 +99,7 @@ private fun CategoriesContent(
                     onAction(CategoriesAction.CreateDefaultCategories)
                 },
                 onCreateManualCategory = {
-                    modalManager.show(CategoryFormModal())
+                    modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
                 },
                 modifier = Modifier
                     .fillMaxSize()

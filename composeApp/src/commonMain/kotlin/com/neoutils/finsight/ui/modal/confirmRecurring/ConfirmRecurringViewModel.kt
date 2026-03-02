@@ -11,6 +11,9 @@ import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class ConfirmRecurringViewModel(
     val recurring: Recurring,
@@ -21,7 +24,8 @@ class ConfirmRecurringViewModel(
     private val modalManager: ModalManager,
 ) : ViewModel() {
 
-    private val confirmDate = MutableStateFlow(targetDate)
+    private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
     private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
 
@@ -48,13 +52,15 @@ class ConfirmRecurringViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ConfirmRecurringUiState(
             recurring = recurring,
-            confirmDate = targetDate,
+            confirmDate = targetDate.takeIf { it <= currentDate } ?: currentDate,
         ),
     )
 
     fun onAction(action: ConfirmRecurringAction, amount: String = "") {
         when (action) {
-            is ConfirmRecurringAction.DateChanged -> confirmDate.value = action.date
+            is ConfirmRecurringAction.DateChanged -> {
+                confirmDate.value = action.date.takeIf { it <= currentDate } ?: currentDate
+            }
             is ConfirmRecurringAction.InvoiceSelected -> selectedInvoice.value = action.invoice
             is ConfirmRecurringAction.Confirm -> confirm(amount)
             is ConfirmRecurringAction.Skip -> skip()
@@ -62,20 +68,22 @@ class ConfirmRecurringViewModel(
     }
 
     private fun confirm(amount: String) = viewModelScope.launch {
+        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
         val parsedAmount = amount.filter { it.isDigit() }.toLongOrNull()?.toDouble()?.div(100)
             ?: recurring.amount
         confirmRecurringUseCase(
             recurring = recurring,
-            date = confirmDate.value,
+            date = date,
             amount = parsedAmount,
             invoice = selectedInvoice.value,
         ).onRight { modalManager.dismiss() }
     }
 
     private fun skip() = viewModelScope.launch {
+        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
         skipRecurringUseCase(
             recurring = recurring,
-            date = confirmDate.value,
+            date = date,
         ).onRight { modalManager.dismiss() }
     }
 }

@@ -42,10 +42,16 @@ import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+
+private val currentDate
+    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class ConfirmRecurringModal(
     private val recurring: Recurring,
@@ -178,6 +184,7 @@ class ConfirmRecurringModal(
                             modalManager.show(
                                 DatePickerModal(
                                     initialDate = uiState.confirmDate,
+                                    maxDate = currentDate,
                                     onDateSelected = { date ->
                                         viewModel.onAction(ConfirmRecurringAction.DateChanged(date), amount.text.toString())
                                     }

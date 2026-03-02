@@ -485,6 +485,7 @@
     <string name="recurring_screen_empty">Sem recorrentes</string>
     <string name="recurring_screen_create">Criar recorrente</string>
     <string name="recurring_screen_day">Dia %1$d</string>
+    <string name="recurring_filter_all">Todas</string>
     <string name="recurring_expense">Despesa</string>
     <string name="recurring_income">Receita</string>
     <string name="recurring_card_monthly_amount">Valor mensal</string>

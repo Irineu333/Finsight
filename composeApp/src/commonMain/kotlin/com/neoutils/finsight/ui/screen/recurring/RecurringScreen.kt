@@ -13,11 +13,17 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +37,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_card_monthly_amount
 import com.neoutils.finsight.resources.recurring_expense
+import com.neoutils.finsight.resources.recurring_filter_all
 import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
@@ -72,17 +79,25 @@ fun RecurringScreen(
                         )
                     }
                 },
+                actions = {
+                    RecurringFilterMenu(
+                        selectedFilter = uiState.selectedFilter,
+                        onFilterSelected = { viewModel.onAction(RecurringAction.SelectFilter(it)) },
+                    )
+                }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { modalManager.show(RecurringFormModal()) },
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+            if (uiState.filteredRecurring.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { modalManager.show(RecurringFormModal()) },
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                }
             }
         },
     ) { paddingValues ->
-        if (uiState.recurring.isEmpty()) {
+        if (uiState.filteredRecurring.isEmpty()) {
             RecurringEmptyState(
                 onCreateClick = { modalManager.show(RecurringFormModal()) },
                 modifier = Modifier
@@ -98,7 +113,7 @@ fun RecurringScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(
-                    items = uiState.recurring,
+                    items = uiState.filteredRecurring,
                     key = { "recurring_${it.id}" },
                 ) { recurring ->
                     RecurringCard(
@@ -110,6 +125,71 @@ fun RecurringScreen(
                             .animateItem(),
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecurringFilterMenu(
+    selectedFilter: RecurringFilter,
+    onFilterSelected: (RecurringFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        CompositionLocalProvider(
+            LocalContentColor provides colorScheme.onBackground,
+            LocalTextStyle provides MaterialTheme.typography.labelLarge,
+        ) {
+            TextButton(
+                onClick = { menuExpanded = true },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Unspecified,
+                ),
+            ) {
+                Text(
+                    text = when (selectedFilter) {
+                        RecurringFilter.ALL -> stringResource(Res.string.recurring_filter_all)
+                        RecurringFilter.INCOME -> stringResource(Res.string.recurring_income)
+                        RecurringFilter.EXPENSE -> stringResource(Res.string.recurring_expense)
+                    },
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+        ) {
+            listOf(
+                RecurringFilter.ALL to stringResource(Res.string.recurring_filter_all),
+                RecurringFilter.INCOME to stringResource(Res.string.recurring_income),
+                RecurringFilter.EXPENSE to stringResource(Res.string.recurring_expense),
+            ).forEach { (filter, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    trailingIcon = if (selectedFilter == filter) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else null,
+                    onClick = {
+                        onFilterSelected(filter)
+                        menuExpanded = false
+                    },
+                )
             }
         }
     }

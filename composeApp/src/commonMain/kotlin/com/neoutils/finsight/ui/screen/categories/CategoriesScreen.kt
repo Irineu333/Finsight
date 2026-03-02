@@ -14,17 +14,18 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
@@ -105,75 +106,53 @@ private fun CategoriesContent(
                     .padding(paddingValues)
             )
         } else {
-            LazyColumn(
+            val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
+            val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
+            val visibleCategories = uiState.categories.filter { it.type == uiState.selectedType }
+
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(paddingValues)
             ) {
-                val incomes = uiState.categories.filter { it.type.isIncome }
-                val expenses = uiState.categories.filter { it.type.isExpense }
+                PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
+                    tabs.forEachIndexed { index, type ->
+                        val title = when (type) {
+                            Category.Type.EXPENSE -> stringResource(Res.string.categories_expense)
+                            Category.Type.INCOME -> stringResource(Res.string.categories_income)
+                        }
 
-                if (incomes.isNotEmpty()) {
-                    item(
-                        key = "incomes_title"
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.categories_income),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 4.dp)
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = {
+                                onAction(CategoriesAction.SelectType(type))
+                            },
+                            text = {
+                                Text(text = title)
+                            }
                         )
                     }
                 }
 
-                items(
-                    items = incomes,
-                    key = { it.id },
-                ) { category ->
-                    CategoryCard(
-                        category = category,
-                        onClick = {
-                            modalManager.show(ViewCategoryModal(category))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                    )
-                }
-
-                if (expenses.isNotEmpty()) {
-                    item(
-                        key = "expenses_title"
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.categories_expense),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = visibleCategories,
+                        key = { it.id },
+                    ) { category ->
+                        CategoryCard(
+                            category = category,
+                            onClick = {
+                                modalManager.show(ViewCategoryModal(category))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem()
                         )
                     }
-                }
-
-                items(
-                    items = expenses,
-                    key = { it.id },
-                ) { category ->
-                    CategoryCard(
-                        category = category,
-                        onClick = {
-                            modalManager.show(ViewCategoryModal(category))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                    )
                 }
             }
         }
@@ -198,8 +177,6 @@ private fun EmptyCategoriesState(
         ) {
             Text(
                 text = stringResource(Res.string.categories_empty),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
             )
 
             Spacer(Modifier.height(16.dp))

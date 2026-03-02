@@ -53,8 +53,11 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
                 "`categoryId` INTEGER, " +
                 "`accountId` INTEGER, " +
                 "`createdAt` INTEGER NOT NULL, " +
+                "`lastHandledYearMonth` TEXT, " +
+                "`creditCardId` INTEGER, " +
                 "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
-                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
+                "FOREIGN KEY(`creditCardId`) REFERENCES `credit_cards`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
                 ")"
         )
         connection.execSQL(
@@ -62,22 +65,6 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
         connection.execSQL(
             "CREATE INDEX IF NOT EXISTS `index_recurring_accountId` ON `recurring` (`accountId`)"
-        )
-    }
-}
-
-val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(connection: SQLiteConnection) {
-        connection.execSQL(
-            "ALTER TABLE `recurring` ADD COLUMN `lastHandledYearMonth` TEXT"
-        )
-    }
-}
-
-val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(connection: SQLiteConnection) {
-        connection.execSQL(
-            "ALTER TABLE `recurring` ADD COLUMN `creditCardId` INTEGER"
         )
         connection.execSQL(
             "CREATE INDEX IF NOT EXISTS `index_recurring_creditCardId` ON `recurring` (`creditCardId`)"
@@ -89,7 +76,7 @@ fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

@@ -57,7 +57,13 @@ class RecurringFormViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = RecurringFormUiState(isEditing = recurring != null),
+        initialValue = RecurringFormUiState(
+            type = recurring?.type ?: Transaction.Type.EXPENSE,
+            isEditing = recurring != null,
+            selectedAccount = recurring?.account,
+            selectedCreditCard = recurring?.creditCard,
+            selectedCategory = recurring?.category,
+        ),
     )
 
     fun onAction(action: RecurringFormAction, amount: String, title: String, dayOfMonth: String) {

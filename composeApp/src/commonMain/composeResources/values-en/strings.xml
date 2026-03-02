@@ -525,6 +525,6 @@
     <string name="recurring_error_amount_required">Amount is required.</string>
     <string name="recurring_error_amount_zero">Amount cannot be zero.</string>
     <string name="recurring_error_title_or_category_required">Provide a title or category.</string>
-    <string name="recurring_error_invalid_day">Day must be between 1 and 28.</string>
+    <string name="recurring_error_invalid_day">Day must be between 1 and 31.</string>
     <string name="recurring_error_account_required">Account is required.</string>
 </resources>

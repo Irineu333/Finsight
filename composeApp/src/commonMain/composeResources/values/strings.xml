@@ -526,6 +526,6 @@
     <string name="recurring_error_amount_required">O valor é obrigatório.</string>
     <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
     <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
-    <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 28.</string>
+    <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 31.</string>
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
 </resources>

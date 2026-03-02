@@ -62,14 +62,13 @@ class ViewBudgetModal(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                budget.iconCategory?.let { category ->
-                    CategoryIconBox(
-                        category = category,
-                        modifier = Modifier.size(64.dp),
-                        contentPadding = PaddingValues(16.dp),
-                        shape = RoundedCornerShape(16.dp),
-                    )
-                }
+                CategoryIconBox(
+                    icon = budget.icon,
+                    tint = accentColor,
+                    modifier = Modifier.size(64.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                )
 
                 Text(
                     text = budget.title,

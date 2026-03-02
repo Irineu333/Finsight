@@ -209,14 +209,12 @@ private fun BudgetProgressItem(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                progress.budget.iconCategory?.let { category ->
-                    CategoryIconBox(
-                        category = category,
-                        contentPadding = PaddingValues(8.dp),
-                        modifier = Modifier.size(40.dp),
-                        color = accentColor,
-                    )
-                }
+                CategoryIconBox(
+                    icon = progress.budget.icon,
+                    tint = accentColor,
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.size(40.dp),
+                )
 
                 Column {
                     Text(

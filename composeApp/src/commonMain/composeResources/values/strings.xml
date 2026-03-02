@@ -184,6 +184,9 @@
     <string name="category_form_new_title">Nova Categoria</string>
     <string name="category_form_name_label">Nome</string>
     <string name="category_form_icon_label">Ícone</string>
+    <string name="category_form_icon_select">Selecionar ícone</string>
+    <string name="category_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="category_form_icon_modal_title">Escolha um ícone</string>
     <string name="category_form_expense">Despesa</string>
     <string name="category_form_income">Receita</string>
     <string name="category_form_save">Salvar</string>

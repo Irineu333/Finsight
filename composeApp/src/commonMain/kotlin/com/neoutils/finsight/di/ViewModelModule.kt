@@ -43,6 +43,8 @@ import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
+import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
+import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
@@ -175,6 +177,19 @@ val viewModelModule = module {
             installmentRepository = get(),
             operationRepository = get(),
             installmentUiMapper = get(),
+        )
+    }
+
+    viewModel {
+        SupportViewModel(
+            supportRepository = get(),
+        )
+    }
+
+    viewModel {
+        SupportIssueViewModel(
+            issueId = it.get(),
+            supportRepository = get(),
         )
     }
 

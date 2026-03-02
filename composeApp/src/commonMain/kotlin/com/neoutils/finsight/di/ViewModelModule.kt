@@ -35,6 +35,8 @@ import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
+import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
+import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
@@ -160,6 +162,19 @@ val viewModelModule = module {
         InstallmentsViewModel(
             installmentRepository = get(),
             operationRepository = get(),
+        )
+    }
+
+    viewModel {
+        SupportViewModel(
+            supportRepository = get(),
+        )
+    }
+
+    viewModel {
+        SupportIssueViewModel(
+            issueId = it.get(),
+            supportRepository = get(),
         )
     }
 

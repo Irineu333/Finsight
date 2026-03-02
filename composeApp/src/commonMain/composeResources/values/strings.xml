@@ -49,8 +49,36 @@
     <string name="dashboard_credit_cards">Cartões de Crédito</string>
     <string name="dashboard_accounts">Contas</string>
     <string name="dashboard_installments">Parcelamentos</string>
+    <string name="dashboard_support">Suporte</string>
     <string name="dashboard_default">Padrão</string>
     <string name="dashboard_current_balance">Saldo Atual</string>
+
+    <!-- Support Screen -->
+    <string name="support_empty_title">Abra um canal direto com você</string>
+    <string name="support_empty_body">Permita que o usuário relate bugs, peça melhorias e acompanhe seu retorno sem sair do app.</string>
+    <string name="support_empty_cta">Abrir primeira issue</string>
+    <string name="support_integration_title">Camada de dados provisória</string>
+    <string name="support_integration_body">As issues desta tela ainda estao em memoria. TODO: conectar o backend de suporte escolhido.</string>
+    <string name="support_overview_waiting">%1$d aguardando resposta</string>
+    <string name="support_overview_total">%1$d issues no total</string>
+    <string name="support_type_bug">Bug</string>
+    <string name="support_type_feature">Feature</string>
+    <string name="support_type_question">Duvida</string>
+    <string name="support_status_open">Aberta</string>
+    <string name="support_status_in_review">Em analise</string>
+    <string name="support_status_answered">Respondida</string>
+    <string name="support_status_planned">Planejada</string>
+    <string name="support_status_resolved">Resolvida</string>
+    <string name="support_form_title">Nova issue</string>
+    <string name="support_form_type">Tipo</string>
+    <string name="support_form_title_label">Titulo</string>
+    <string name="support_form_description_label">Mensagem</string>
+    <string name="support_form_submit">Enviar</string>
+    <string name="support_detail_empty">Issue nao encontrada.</string>
+    <string name="support_detail_fallback_title">Issue</string>
+    <string name="support_reply_send">Responder</string>
+    <string name="support_author_you">Voce</string>
+    <string name="support_author_support">Suporte</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

@@ -35,6 +35,8 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
+import com.neoutils.finsight.ui.screen.support.SupportIssueScreen
+import com.neoutils.finsight.ui.screen.support.SupportScreen
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
@@ -86,6 +88,9 @@ fun AppNavHost() = Surface {
                             },
                             openBudgets = {
                                 navController.navigate(AppRoute.Budgets)
+                            },
+                            openSupport = {
+                                navController.navigate(AppRoute.Support)
                             }
                         )
                     }
@@ -148,6 +153,27 @@ fun AppNavHost() = Surface {
                         }
                     )
                 }
+
+                composable<AppRoute.Support> {
+                    SupportScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        },
+                        onOpenIssue = { issueId ->
+                            navController.navigate(AppRoute.SupportIssue(issueId))
+                        }
+                    )
+                }
+
+                composable<AppRoute.SupportIssue> { backStackEntry ->
+                    val route = backStackEntry.toRoute<AppRoute.SupportIssue>()
+                    SupportIssueScreen(
+                        issueId = route.issueId,
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
             }
         }
     }
@@ -160,6 +186,7 @@ fun HomeScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openSupport: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -221,6 +248,7 @@ fun HomeScreen(
                     openAccounts = openAccounts,
                     openInstallments = openInstallments,
                     openBudgets = openBudgets,
+                    openSupport = openSupport,
                 )
             }
 
@@ -240,4 +268,3 @@ fun HomeScreen(
         }
     }
 }
-

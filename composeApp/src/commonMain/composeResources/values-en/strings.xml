@@ -49,8 +49,36 @@
     <string name="dashboard_credit_cards">Credit Cards</string>
     <string name="dashboard_accounts">Accounts</string>
     <string name="dashboard_installments">Installments</string>
+    <string name="dashboard_support">Support</string>
     <string name="dashboard_default">Default</string>
     <string name="dashboard_current_balance">Current Balance</string>
+
+    <!-- Support Screen -->
+    <string name="support_empty_title">Open a direct support channel</string>
+    <string name="support_empty_body">Let users report bugs, request improvements, and follow your reply without leaving the app.</string>
+    <string name="support_empty_cta">Open first issue</string>
+    <string name="support_integration_title">Temporary data layer</string>
+    <string name="support_integration_body">Issues on this screen are still in memory only. TODO: connect the chosen support backend.</string>
+    <string name="support_overview_waiting">%1$d waiting for a reply</string>
+    <string name="support_overview_total">%1$d issues total</string>
+    <string name="support_type_bug">Bug</string>
+    <string name="support_type_feature">Feature</string>
+    <string name="support_type_question">Question</string>
+    <string name="support_status_open">Open</string>
+    <string name="support_status_in_review">In review</string>
+    <string name="support_status_answered">Answered</string>
+    <string name="support_status_planned">Planned</string>
+    <string name="support_status_resolved">Resolved</string>
+    <string name="support_form_title">New issue</string>
+    <string name="support_form_type">Type</string>
+    <string name="support_form_title_label">Title</string>
+    <string name="support_form_description_label">Message</string>
+    <string name="support_form_submit">Send</string>
+    <string name="support_detail_empty">Issue not found.</string>
+    <string name="support_detail_fallback_title">Issue</string>
+    <string name="support_reply_send">Reply</string>
+    <string name="support_author_you">You</string>
+    <string name="support_author_support">Support</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>

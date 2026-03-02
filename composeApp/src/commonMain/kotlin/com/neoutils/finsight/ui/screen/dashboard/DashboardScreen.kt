@@ -56,6 +56,7 @@ import com.neoutils.finsight.resources.dashboard_default
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_recents
 import com.neoutils.finsight.resources.dashboard_see_all
+import com.neoutils.finsight.resources.dashboard_support
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
@@ -69,6 +70,7 @@ fun DashboardScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openSupport: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,6 +85,7 @@ fun DashboardScreen(
         onOpenAccounts = openAccounts,
         onOpenInstallments = openInstallments,
         onOpenBudgets = openBudgets,
+        onOpenSupport = openSupport,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -96,6 +99,7 @@ private fun DashboardContent(
     onOpenAccounts: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenBudgets: () -> Unit,
+    onOpenSupport: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -538,6 +542,38 @@ private fun DashboardContent(
                 ) {
                     Text(
                         text = stringResource(Res.string.dashboard_installments),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
+            key = "open_support_action"
+        ) {
+            Card(
+                onClick = onOpenSupport,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_support),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(

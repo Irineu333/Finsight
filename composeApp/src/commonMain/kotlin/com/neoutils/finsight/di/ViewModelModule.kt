@@ -180,7 +180,7 @@ val viewModelModule = module {
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            generateReportPreviewUseCase = get(),
+            generateReportDocumentUseCase = get(),
         )
     }
 

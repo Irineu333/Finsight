@@ -21,14 +21,14 @@ class AndroidReportExportService(
     private val context: Context,
 ) : ReportExportService {
 
-    override suspend fun exportAndShare(preview: GeneratedReportPreview): ReportExportResult {
+    override suspend fun exportAndShare(document: ReportDocument): ReportExportResult {
         return try {
             val file = withContext(Dispatchers.IO) {
                 val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
-                File(reportsDir, sanitizeFileName(preview.suggestedFileName)).apply {
-                    when (preview.requestedFormat) {
-                        ReportFormat.CSV -> writeText(preview.content)
-                        ReportFormat.PDF -> writePdf(preview = preview, file = this)
+                File(reportsDir, sanitizeFileName(document.fileName)).apply {
+                    when (document) {
+                        is ReportDocument.Csv -> writeText(document.content)
+                        is ReportDocument.Pdf -> writePdf(report = document, file = this)
                     }
                 }
             }
@@ -41,14 +41,14 @@ class AndroidReportExportService(
 
             withContext(Dispatchers.Main) {
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = fileMimeType(preview.requestedFormat)
+                    type = document.mimeType
                     putExtra(Intent.EXTRA_STREAM, uri)
-                    putExtra(Intent.EXTRA_SUBJECT, preview.title)
-                    putExtra(Intent.EXTRA_TEXT, preview.title)
+                    putExtra(Intent.EXTRA_SUBJECT, document.title)
+                    putExtra(Intent.EXTRA_TEXT, document.title)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
 
-                val chooserIntent = Intent.createChooser(shareIntent, preview.title).apply {
+                val chooserIntent = Intent.createChooser(shareIntent, document.title).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
@@ -65,10 +65,10 @@ class AndroidReportExportService(
     }
 
     private fun writePdf(
-        preview: GeneratedReportPreview,
+        report: ReportDocument.Pdf,
         file: File,
     ) {
-        val document = PdfDocument()
+        val pdfDocument = PdfDocument()
         val pageWidth = 595
         val pageHeight = 842
         val margin = 36
@@ -77,10 +77,6 @@ class AndroidReportExportService(
         val bottomLimit = pageHeight - margin - footerHeight
         val generatedAt = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
 
-        val accentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(96, 103, 112)
-            style = Paint.Style.FILL
-        }
         val headerSurfacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             style = Paint.Style.FILL
@@ -138,14 +134,14 @@ class AndroidReportExportService(
             color = Color.WHITE
             style = Paint.Style.FILL
         }
+        val sectionSurfacePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.rgb(250, 250, 250)
+            style = Paint.Style.FILL
+        }
         val cardBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.rgb(220, 224, 228)
             style = Paint.Style.STROKE
             strokeWidth = 1f
-        }
-        val sectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.rgb(250, 250, 250)
-            style = Paint.Style.FILL
         }
         val sectionAccentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.rgb(160, 165, 171)
@@ -173,7 +169,7 @@ class AndroidReportExportService(
         }
 
         var pageNumber = 1
-        var page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
+        var page = pdfDocument.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
         var canvas = page.canvas
         var y = margin.toFloat()
 
@@ -188,21 +184,20 @@ class AndroidReportExportService(
                 footerPaint = footerPaint,
                 dividerPaint = dividerPaint,
             )
-            document.finishPage(page)
+            pdfDocument.finishPage(page)
             pageNumber += 1
-            page = document.startPage(
+            page = pdfDocument.startPage(
                 PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
             )
             canvas = page.canvas
             y = margin.toFloat()
             y = drawHeader(
                 canvas = canvas,
-                preview = preview,
+                document = report,
                 margin = margin,
                 pageWidth = pageWidth,
                 top = y,
                 generatedAt = generatedAt,
-                accentPaint = accentPaint,
                 headerSurfacePaint = headerSurfacePaint,
                 headerBorderPaint = headerBorderPaint,
                 titlePaint = titlePaint,
@@ -215,12 +210,11 @@ class AndroidReportExportService(
 
         y = drawHeader(
             canvas = canvas,
-            preview = preview,
+            document = report,
             margin = margin,
             pageWidth = pageWidth,
             top = y,
             generatedAt = generatedAt,
-            accentPaint = accentPaint,
             headerSurfacePaint = headerSurfacePaint,
             headerBorderPaint = headerBorderPaint,
             titlePaint = titlePaint,
@@ -230,7 +224,7 @@ class AndroidReportExportService(
             formatChipPaint = formatChipPaint,
         ) + 18f
 
-        preview.highlights.chunked(2).forEach { row ->
+        report.highlights.chunked(2).forEach { row ->
             val cardWidth = (contentWidth - 12) / 2f
             val cardHeight = row.maxOf { item ->
                 val wrappedValue = wrapLine(item.value, valuePaint, (cardWidth - 28f).toInt()).take(2)
@@ -253,7 +247,7 @@ class AndroidReportExportService(
             y += cardHeight + 12f
         }
 
-        preview.sections.forEach { section ->
+        report.sections.forEach { section ->
             if (y + 54f > bottomLimit) newPage()
             y = drawSectionHeader(
                 canvas = canvas,
@@ -261,7 +255,6 @@ class AndroidReportExportService(
                 margin = margin,
                 contentWidth = contentWidth.toFloat(),
                 top = y,
-                sectionPaint = sectionPaint,
                 sectionAccentPaint = sectionAccentPaint,
                 sectionTitlePaint = sectionTitlePaint,
             )
@@ -284,7 +277,6 @@ class AndroidReportExportService(
                         margin = margin,
                         contentWidth = contentWidth.toFloat(),
                         top = y,
-                        sectionPaint = sectionPaint,
                         sectionAccentPaint = sectionAccentPaint,
                         sectionTitlePaint = sectionTitlePaint,
                     )
@@ -293,7 +285,7 @@ class AndroidReportExportService(
                     RectF(margin.toFloat(), y, (margin + contentWidth).toFloat(), y + bodyHeight),
                     14f,
                     14f,
-                    sectionPaint,
+                    sectionSurfacePaint,
                 )
                 canvas.drawRoundRect(
                     RectF(margin.toFloat(), y, (margin + contentWidth).toFloat(), y + bodyHeight),
@@ -314,11 +306,11 @@ class AndroidReportExportService(
                 y += bodyHeight + 12f
             }
 
-            if (section.columns.isNotEmpty() && section.rows.isNotEmpty()) {
-                val tableLayout = resolveTableLayout(section.columns, contentWidth.toFloat())
+            section.table?.let { table ->
+                val tableLayout = resolveTableLayout(table.columns, contentWidth.toFloat())
                 y = drawTable(
                     canvas = canvas,
-                    section = section,
+                    table = table,
                     tableLayout = tableLayout,
                     margin = margin,
                     top = y,
@@ -332,7 +324,6 @@ class AndroidReportExportService(
                             margin = margin,
                             contentWidth = contentWidth.toFloat(),
                             top = y,
-                            sectionPaint = sectionPaint,
                             sectionAccentPaint = sectionAccentPaint,
                             sectionTitlePaint = sectionTitlePaint,
                         )
@@ -360,21 +351,20 @@ class AndroidReportExportService(
             footerPaint = footerPaint,
             dividerPaint = dividerPaint,
         )
-        document.finishPage(page)
+        pdfDocument.finishPage(page)
         FileOutputStream(file).use { output ->
-            document.writeTo(output)
+            pdfDocument.writeTo(output)
         }
-        document.close()
+        pdfDocument.close()
     }
 
     private fun drawHeader(
         canvas: Canvas,
-        preview: GeneratedReportPreview,
+        document: ReportDocument.Pdf,
         margin: Int,
         pageWidth: Int,
         top: Float,
         generatedAt: String,
-        accentPaint: Paint,
         headerSurfacePaint: Paint,
         headerBorderPaint: Paint,
         titlePaint: Paint,
@@ -398,9 +388,9 @@ class AndroidReportExportService(
         )
 
         val left = margin + 18f
-        canvas.drawText(preview.title, left, top + 26f, titlePaint)
-        canvas.drawText(preview.subtitle, left, top + 44f, subtitlePaint)
-        canvas.drawText("Arquivo: ${preview.suggestedFileName}", left, top + 64f, metaPaint)
+        canvas.drawText(document.title, left, top + 26f, titlePaint)
+        canvas.drawText(document.subtitle, left, top + 44f, subtitlePaint)
+        canvas.drawText("Arquivo: ${document.fileName}", left, top + 64f, metaPaint)
         canvas.drawText("Gerado em $generatedAt", left, top + 78f, metaPaint)
 
         val chipWidth = 58f
@@ -413,7 +403,7 @@ class AndroidReportExportService(
             formatChipPaint,
         )
         canvas.drawText(
-            preview.requestedFormat.name,
+            document.format.name,
             chipLeft + chipWidth / 2f,
             chipTop + 15f,
             formatPaint,
@@ -428,7 +418,6 @@ class AndroidReportExportService(
         margin: Int,
         contentWidth: Float,
         top: Float,
-        sectionPaint: Paint,
         sectionAccentPaint: Paint,
         sectionTitlePaint: Paint,
     ): Float {
@@ -463,7 +452,7 @@ class AndroidReportExportService(
 
     private fun drawTable(
         canvas: Canvas,
-        section: ReportSection,
+        table: ReportTable,
         tableLayout: PdfTableLayout,
         margin: Int,
         top: Float,
@@ -488,7 +477,7 @@ class AndroidReportExportService(
                 tableHeaderPaint,
             )
             var currentX = margin.toFloat()
-            section.columns.forEachIndexed { index, column ->
+            table.columns.forEachIndexed { index, column ->
                 val cellWidth = tableLayout.columnWidths[index]
                 drawCellText(
                     canvas = canvas,
@@ -507,7 +496,7 @@ class AndroidReportExportService(
 
         drawHeaderRow()
 
-        section.rows.forEachIndexed { rowIndex, row ->
+        table.rows.forEachIndexed { rowIndex, row ->
             val wrappedCells = row.mapIndexed { index, cell ->
                 wrapLine(
                     cell,
@@ -721,13 +710,6 @@ class AndroidReportExportService(
         }
 
         return wrapped
-    }
-
-    private fun fileMimeType(format: ReportFormat): String {
-        return when (format) {
-            ReportFormat.CSV -> "text/csv"
-            ReportFormat.PDF -> "application/pdf"
-        }
     }
 
     private fun sanitizeFileName(fileName: String): String {

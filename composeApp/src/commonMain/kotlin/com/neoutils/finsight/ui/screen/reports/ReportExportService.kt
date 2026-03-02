@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.reports
 
 interface ReportExportService {
-    suspend fun exportAndShare(preview: GeneratedReportPreview): ReportExportResult
+    suspend fun exportAndShare(document: ReportDocument): ReportExportResult
 }
 
 sealed interface ReportExportResult {
@@ -13,7 +13,7 @@ sealed interface ReportExportResult {
 class UnsupportedReportExportService(
     private val reason: String,
 ) : ReportExportService {
-    override suspend fun exportAndShare(preview: GeneratedReportPreview): ReportExportResult {
+    override suspend fun exportAndShare(document: ReportDocument): ReportExportResult {
         return ReportExportResult.Unsupported(reason)
     }
 }

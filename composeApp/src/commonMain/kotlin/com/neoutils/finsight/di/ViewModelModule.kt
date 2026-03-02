@@ -103,7 +103,9 @@ val viewModelModule = module {
             budget = it.getOrNull(),
             budgetRepository = get(),
             categoryRepository = get(),
+            validateBudgetTitle = get(),
             modalManager = get(),
+            debounceManager = get(),
         )
     }
 

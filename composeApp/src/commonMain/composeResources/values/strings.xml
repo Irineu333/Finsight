@@ -15,6 +15,10 @@
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
 
+    <!-- Budget errors -->
+    <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
+    <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
+
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
     <string name="credit_card_error_already_exist_name">Já existe um cartão com esse nome.</string>

@@ -14,6 +14,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                 "`categoryId` INTEGER NOT NULL, " +
                 "`iconCategoryId` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL DEFAULT 'default', " +
                 "`title` TEXT NOT NULL, " +
                 "`amount` REAL NOT NULL, " +
                 "`period` TEXT NOT NULL, " +
@@ -41,11 +42,26 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `budgets` ADD COLUMN `iconKey` TEXT NOT NULL DEFAULT 'default'"
+        )
+        connection.execSQL(
+            "UPDATE `budgets` " +
+                "SET `iconKey` = COALESCE((" +
+                "SELECT `iconKey` FROM `categories` " +
+                "WHERE `categories`.`id` = `budgets`.`iconCategoryId`" +
+                "), 'default')"
+        )
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

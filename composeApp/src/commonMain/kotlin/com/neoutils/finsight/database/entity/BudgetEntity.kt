@@ -26,6 +26,7 @@ data class BudgetEntity(
     val id: Long = 0,
     val categoryId: Long,
     val iconCategoryId: Long,
+    val iconKey: String,
     val title: String,
     val amount: Double,
     val period: String,

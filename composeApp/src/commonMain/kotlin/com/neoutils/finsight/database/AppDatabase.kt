@@ -35,7 +35,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         BudgetEntity::class,
         BudgetCategoryEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

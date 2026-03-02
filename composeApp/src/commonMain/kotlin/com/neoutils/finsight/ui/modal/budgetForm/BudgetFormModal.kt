@@ -1,32 +1,33 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.neoutils.finsight.ui.modal.budgetForm
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -34,19 +35,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.budget_form_edit_title
+import com.neoutils.finsight.resources.budget_form_icon_helper
+import com.neoutils.finsight.resources.budget_form_icon_label
+import com.neoutils.finsight.resources.budget_form_icon_modal_title
+import com.neoutils.finsight.resources.budget_form_limit_label
+import com.neoutils.finsight.resources.budget_form_new_title
+import com.neoutils.finsight.resources.budget_form_save
+import com.neoutils.finsight.resources.budget_form_title_label
+import com.neoutils.finsight.ui.component.IconPickerBottomSheet
+import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
 import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.budget_form_edit_title
-import com.neoutils.finsight.resources.budget_form_icon_label
-import com.neoutils.finsight.resources.budget_form_limit_label
-import com.neoutils.finsight.resources.budget_form_new_title
-import com.neoutils.finsight.resources.budget_form_save
-import com.neoutils.finsight.resources.budget_form_title_label
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -62,6 +66,7 @@ class BudgetFormModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
+        var isIconPickerVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -80,7 +85,11 @@ class BudgetFormModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = if (uiState.isEditMode) stringResource(Res.string.budget_form_edit_title) else stringResource(Res.string.budget_form_new_title),
+                text = if (uiState.isEditMode) {
+                    stringResource(Res.string.budget_form_edit_title)
+                } else {
+                    stringResource(Res.string.budget_form_new_title)
+                },
                 style = MaterialTheme.typography.titleLarge,
             )
 
@@ -118,69 +127,9 @@ class BudgetFormModal(
             MultiCategorySelector(
                 selectedCategories = uiState.selectedCategories,
                 categories = uiState.availableCategories,
-                onCategoryToggled = { category ->
-                    viewModel.onAction(BudgetFormAction.CategoryToggled(category))
-                },
+                onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
                 modifier = Modifier.fillMaxWidth(),
             )
-
-            AnimatedVisibility(visible = uiState.selectedCategories.size > 1) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.budget_form_icon_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        items(uiState.selectedCategories, key = { it.id }) { category ->
-                            val isSelected = category.id == uiState.iconCategory?.id
-                            Box {
-                                CategoryIconBox(
-                                    category = category,
-                                    contentPadding = PaddingValues(10.dp),
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .alpha(if (isSelected) 1f else 0.4f)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .then(
-                                            if (isSelected) Modifier.border(
-                                                width = 2.dp,
-                                                color = MaterialTheme.colorScheme.primary,
-                                                shape = RoundedCornerShape(12.dp),
-                                            ) else Modifier
-                                        )
-                                        .clickable {
-                                            viewModel.onAction(BudgetFormAction.IconCategorySelected(category.id))
-                                        },
-                                )
-                                if (isSelected) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(2.dp)
-                                            .size(16.dp)
-                                            .background(MaterialTheme.colorScheme.primary, CircleShape),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(10.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
 
             OutlinedTextField(
                 state = amount,
@@ -190,6 +139,14 @@ class BudgetFormModal(
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
+            )
+
+            IconPickerSelector(
+                selectedIcon = uiState.selectedIcon,
+                accentColor = MaterialTheme.colorScheme.primary,
+                title = stringResource(Res.string.budget_form_icon_label),
+                helperText = stringResource(Res.string.budget_form_icon_helper),
+                onClick = { isIconPickerVisible = true },
             )
 
             HorizontalDivider()
@@ -206,6 +163,19 @@ class BudgetFormModal(
                     fontWeight = FontWeight.Bold,
                 )
             }
+        }
+
+        if (isIconPickerVisible) {
+            IconPickerBottomSheet(
+                title = stringResource(Res.string.budget_form_icon_modal_title),
+                selectedIcon = uiState.selectedIcon,
+                accentColor = MaterialTheme.colorScheme.primary,
+                onDismiss = { isIconPickerVisible = false },
+                onIconSelected = { icon ->
+                    viewModel.onAction(BudgetFormAction.IconSelected(icon))
+                    isIconPickerVisible = false
+                },
+            )
         }
     }
 }

@@ -14,15 +14,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationItem
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.util.TransactionTargetNavType
-import com.neoutils.finsight.util.TransactionTypeNavType
+import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
+import com.neoutils.finsight.util.TransactionTargetNavType
+import com.neoutils.finsight.util.TransactionTypeNavType
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
 

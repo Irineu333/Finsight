@@ -1,7 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.neoutils.finsight.ui.screen.reports
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,8 +20,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,8 +46,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +91,8 @@ import com.neoutils.finsight.ui.extension.toLabel
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -93,6 +105,26 @@ fun ReportsScreen(
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val modalManager = LocalModalManager.current
+    val reportTypes = ReportType.entries
+    val selectedPage = reportTypes.indexOf(uiState.reportType).coerceAtLeast(0)
+    val pagerState = rememberPagerState(
+        initialPage = selectedPage,
+        pageCount = { reportTypes.size }
+    )
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                reportTypes.getOrNull(page)?.let(viewModel::selectReportType)
+            }
+    }
+
+    LaunchedEffect(selectedPage) {
+        if (pagerState.currentPage != selectedPage) {
+            pagerState.animateScrollToPage(selectedPage)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -120,21 +152,23 @@ fun ReportsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "reports_intro") {
-                IntroCard()
+                IntroCard(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem()
+                )
             }
 
-            items(
-                items = ReportType.entries,
-                key = { it.name },
-            ) { reportType ->
-                ReportTypeCard(
-                    reportType = reportType,
-                    isSelected = uiState.reportType == reportType,
-                    onClick = { viewModel.selectReportType(reportType) },
+            item(key = "reports_type_pager") {
+                ReportTypePager(
+                    reportTypes = reportTypes,
+                    selectedReportType = uiState.reportType,
+                    pagerState = pagerState,
+                    modifier = Modifier.animateItem(),
                 )
             }
 
@@ -162,11 +196,19 @@ fun ReportsScreen(
                             )
                         )
                     },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 )
             }
 
             item(key = "reports_summary") {
-                SummaryCard(uiState = uiState)
+                SummaryCard(
+                    uiState = uiState,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                )
             }
 
             item(key = "reports_action") {
@@ -179,7 +221,10 @@ fun ReportsScreen(
                     },
                     enabled = uiState.canGenerate,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .animateItem()
                 ) {
                     Text(text = stringResource(Res.string.reports_generate))
                 }
@@ -190,6 +235,9 @@ fun ReportsScreen(
                     text = stringResource(Res.string.reports_generate_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 )
             }
         }
@@ -197,8 +245,11 @@ fun ReportsScreen(
 }
 
 @Composable
-private fun IntroCard() {
+private fun IntroCard(
+    modifier: Modifier = Modifier,
+) {
     Card(
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -208,6 +259,7 @@ private fun IntroCard() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -223,7 +275,7 @@ private fun IntroCard() {
 private fun ReportTypeCard(
     reportType: ReportType,
     isSelected: Boolean,
-    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = if (isSelected) {
         CardDefaults.cardColors(
@@ -238,9 +290,9 @@ private fun ReportTypeCard(
     }
 
     Card(
-        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         colors = colors,
+        modifier = modifier.animateContentSize(),
     ) {
         Column(
             modifier = Modifier
@@ -303,6 +355,65 @@ private fun ReportTypeCard(
 }
 
 @Composable
+private fun ReportTypePager(
+    reportTypes: List<ReportType>,
+    selectedReportType: ReportType,
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 8.dp,
+        ) { page ->
+            val reportType = reportTypes[page]
+            val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+            ReportTypeCard(
+                reportType = reportType,
+                isSelected = reportType == selectedReportType,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        val scale = 1f - (pageOffset.coerceIn(0f, 1f) * 0.06f)
+                        scaleX = scale
+                        scaleY = scale
+                        alpha = 1f - (pageOffset.coerceIn(0f, 1f) * 0.18f)
+                    },
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(
+                space = 6.dp,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            reportTypes.forEachIndexed { index, _ ->
+                Box(
+                    modifier = Modifier
+                        .size(if (index == pagerState.currentPage) 8.dp else 6.dp)
+                        .background(
+                            color = if (index == pagerState.currentPage) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+                            },
+                            shape = CircleShape,
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun FiltersCard(
     uiState: ReportsUiState,
     onAccountSelected: (com.neoutils.finsight.domain.model.Account?) -> Unit,
@@ -310,8 +421,10 @@ private fun FiltersCard(
     onInvoiceSelected: (com.neoutils.finsight.domain.model.Invoice) -> Unit,
     onPickStartDate: () -> Unit,
     onPickEndDate: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Card(
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -320,6 +433,7 @@ private fun FiltersCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -329,64 +443,74 @@ private fun FiltersCard(
                 fontWeight = FontWeight.SemiBold,
             )
 
-            when (uiState.reportType) {
-                ReportType.ACCOUNT_BALANCE -> {
-                    if (uiState.accounts.isEmpty()) {
-                        EmptyFilterState(
-                            text = stringResource(Res.string.reports_no_accounts),
-                        )
-                    } else {
-                        AccountSelector(
-                            selectedAccount = uiState.selectedAccount,
-                            accounts = uiState.accounts,
-                            onAccountSelected = onAccountSelected,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+            AnimatedContent(
+                targetState = uiState.reportType,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "report-filters",
+            ) { reportType ->
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    when (reportType) {
+                        ReportType.ACCOUNT_BALANCE -> {
+                            if (uiState.accounts.isEmpty()) {
+                                EmptyFilterState(
+                                    text = stringResource(Res.string.reports_no_accounts),
+                                )
+                            } else {
+                                AccountSelector(
+                                    selectedAccount = uiState.selectedAccount,
+                                    accounts = uiState.accounts,
+                                    onAccountSelected = onAccountSelected,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+
+                            PeriodFields(
+                                startDate = uiState.startDate,
+                                endDate = uiState.endDate,
+                                onPickStartDate = onPickStartDate,
+                                onPickEndDate = onPickEndDate,
+                            )
+                        }
+
+                        ReportType.INVOICE -> {
+                            if (uiState.creditCards.isEmpty()) {
+                                EmptyFilterState(
+                                    text = stringResource(Res.string.reports_no_credit_cards),
+                                )
+                            } else {
+                                CreditCardSelector(
+                                    creditCards = uiState.creditCards,
+                                    creditCard = uiState.selectedCreditCard,
+                                    onCreditCardSelected = onCreditCardSelected,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+
+                            if (uiState.invoices.isEmpty()) {
+                                EmptyFilterState(
+                                    text = stringResource(Res.string.reports_no_invoices),
+                                )
+                            } else {
+                                InvoiceSelector(
+                                    invoices = uiState.invoices,
+                                    invoice = uiState.selectedInvoice,
+                                    onInvoiceSelected = onInvoiceSelected,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+
+                        ReportType.TRANSACTIONS -> {
+                            PeriodFields(
+                                startDate = uiState.startDate,
+                                endDate = uiState.endDate,
+                                onPickStartDate = onPickStartDate,
+                                onPickEndDate = onPickEndDate,
+                            )
+                        }
                     }
-
-                    PeriodFields(
-                        startDate = uiState.startDate,
-                        endDate = uiState.endDate,
-                        onPickStartDate = onPickStartDate,
-                        onPickEndDate = onPickEndDate,
-                    )
-                }
-
-                ReportType.INVOICE -> {
-                    if (uiState.creditCards.isEmpty()) {
-                        EmptyFilterState(
-                            text = stringResource(Res.string.reports_no_credit_cards),
-                        )
-                    } else {
-                        CreditCardSelector(
-                            creditCards = uiState.creditCards,
-                            creditCard = uiState.selectedCreditCard,
-                            onCreditCardSelected = onCreditCardSelected,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-
-                    if (uiState.invoices.isEmpty()) {
-                        EmptyFilterState(
-                            text = stringResource(Res.string.reports_no_invoices),
-                        )
-                    } else {
-                        InvoiceSelector(
-                            invoices = uiState.invoices,
-                            invoice = uiState.selectedInvoice,
-                            onInvoiceSelected = onInvoiceSelected,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-
-                ReportType.TRANSACTIONS -> {
-                    PeriodFields(
-                        startDate = uiState.startDate,
-                        endDate = uiState.endDate,
-                        onPickStartDate = onPickStartDate,
-                        onPickEndDate = onPickEndDate,
-                    )
                 }
             }
         }
@@ -443,8 +567,10 @@ private fun DateField(
 @Composable
 private fun SummaryCard(
     uiState: ReportsUiState,
+    modifier: Modifier = Modifier,
 ) {
     Card(
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -453,6 +579,7 @@ private fun SummaryCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -462,54 +589,64 @@ private fun SummaryCard(
                 fontWeight = FontWeight.SemiBold,
             )
 
-            when (val request = uiState.reportRequest) {
-                is ReportRequest.AccountBalance -> {
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_account),
-                        value = request.account.name,
-                    )
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_period),
-                        value = "${dayMonthYear.format(request.startDate)} - ${dayMonthYear.format(request.endDate)}",
-                    )
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_format),
-                        value = stringResource(request.format.labelRes()),
-                    )
-                }
+            AnimatedContent(
+                targetState = uiState.reportRequest,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "report-summary",
+            ) { request ->
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    when (request) {
+                        is ReportRequest.AccountBalance -> {
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_account),
+                                value = request.account.name,
+                            )
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_period),
+                                value = "${dayMonthYear.format(request.startDate)} - ${dayMonthYear.format(request.endDate)}",
+                            )
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_format),
+                                value = stringResource(request.format.labelRes()),
+                            )
+                        }
 
-                is ReportRequest.InvoiceStatement -> {
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_card),
-                        value = request.creditCard.name,
-                    )
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_invoice),
-                        value = request.invoice.toLabel(),
-                    )
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_format),
-                        value = stringResource(request.format.labelRes()),
-                    )
-                }
+                        is ReportRequest.InvoiceStatement -> {
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_card),
+                                value = request.creditCard.name,
+                            )
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_invoice),
+                                value = request.invoice.toLabel(),
+                            )
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_format),
+                                value = stringResource(request.format.labelRes()),
+                            )
+                        }
 
-                is ReportRequest.TransactionsByPeriod -> {
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_period),
-                        value = "${dayMonthYear.format(request.startDate)} - ${dayMonthYear.format(request.endDate)}",
-                    )
-                    SummaryLine(
-                        label = stringResource(Res.string.reports_summary_format),
-                        value = stringResource(request.format.labelRes()),
-                    )
-                }
+                        is ReportRequest.TransactionsByPeriod -> {
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_period),
+                                value = "${dayMonthYear.format(request.startDate)} - ${dayMonthYear.format(request.endDate)}",
+                            )
+                            SummaryLine(
+                                label = stringResource(Res.string.reports_summary_format),
+                                value = stringResource(request.format.labelRes()),
+                            )
+                        }
 
-                null -> {
-                    Text(
-                        text = stringResource(Res.string.reports_generate_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                        null -> {
+                            Text(
+                                text = stringResource(Res.string.reports_generate_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
 

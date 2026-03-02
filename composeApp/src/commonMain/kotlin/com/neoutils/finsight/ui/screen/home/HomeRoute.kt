@@ -39,4 +39,7 @@ sealed class AppRoute {
 
     @Serializable
     data object Recurring : AppRoute()
+
+    @Serializable
+    data object Reports : AppRoute()
 }

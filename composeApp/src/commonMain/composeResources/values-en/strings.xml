@@ -395,6 +395,7 @@
     <string name="invoice_navigator_label">Invoice</string>
 
     <string name="multi_category_selector_none">None</string>
+    <string name="multi_category_selector_and">and</string>
     <string name="multi_category_selector_plural">%1$d categories</string>
     <string name="multi_category_selector_label">Categories</string>
 

@@ -396,6 +396,7 @@
     <string name="invoice_navigator_label">Fatura</string>
 
     <string name="multi_category_selector_none">Nenhuma</string>
+    <string name="multi_category_selector_and">e</string>
     <string name="multi_category_selector_plural">%1$d categorias</string>
     <string name="multi_category_selector_label">Categorias</string>
 

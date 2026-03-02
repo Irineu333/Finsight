@@ -53,7 +53,7 @@ class SaveRecurringUseCase(
             RecurringException(RecurringError.INVALID_DAY)
         }
 
-        ensure(day in 1..28) {
+        ensure(day in 1..31) {
             RecurringException(RecurringError.INVALID_DAY)
         }
 

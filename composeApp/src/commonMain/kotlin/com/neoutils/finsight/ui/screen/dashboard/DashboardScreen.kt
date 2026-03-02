@@ -36,6 +36,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
@@ -66,6 +67,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -360,8 +362,7 @@ private fun DashboardContent(
                         .padding(horizontal = 16.dp)
                         .animateItem(),
                     onClick = {
-                        val targetDay = minOf(recurring.dayOfMonth, today.dayOfMonth)
-                        val targetDate = kotlinx.datetime.LocalDate(today.year, today.month, targetDay)
+                        val targetDate = today.yearMonth.safeOnDay(recurring.dayOfMonth)
                         modalManager.show(ConfirmRecurringModal(recurring, targetDate))
                     }
                 )

@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.extension.effectiveDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
@@ -10,7 +11,7 @@ class GetPendingRecurringUseCase {
         today: LocalDate,
     ): List<Recurring> {
         return recurringList.filter { recurring ->
-            recurring.dayOfMonth <= today.dayOfMonth &&
+            today.yearMonth.effectiveDay(recurring.dayOfMonth) <= today.day &&
                 recurring.lastHandledYearMonth != today.yearMonth
         }
     }

@@ -78,7 +78,7 @@ class ViewBudgetModal(
                 )
             }
 
-            if (budget.categories.size > 1) {
+            if (budget.categories.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {

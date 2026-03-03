@@ -9,6 +9,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelStore
@@ -71,14 +72,24 @@ class ModalManager {
 
     @Composable
     fun Content() {
-        modalState.forEach { it.Content() }
+        modalState.forEach { modal ->
+            key(modal.key) {
+                modal.Content()
+            }
+        }
     }
 
     fun dismiss() {
-        modalState.removeAt(modalState.lastIndex)
+        modalState.lastOrNull()?.let(::dismiss)
+    }
+
+    fun dismiss(modal: Modal) {
+        if (!modalState.remove(modal)) return
+        modal.onDismissed()
     }
 
     fun dismissAll() {
+        modalState.forEach(Modal::onDismissed)
         modalState.clear()
     }
 }
@@ -133,6 +144,8 @@ abstract class Modal {
 
     val key = Uuid.random().toString()
 
+    open fun onDismissed() = Unit
+
     @Composable
     abstract fun Content()
 }
@@ -150,7 +163,7 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
 
         ModalBottomSheet(
             onDismissRequest = {
-                manager.dismiss()
+                manager.dismiss(this@ModalBottomSheet)
             },
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
@@ -167,6 +180,10 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top)
             }
         )
+    }
+
+    override fun onDismissed() {
+        viewModelStore.clear()
     }
 
     @Composable

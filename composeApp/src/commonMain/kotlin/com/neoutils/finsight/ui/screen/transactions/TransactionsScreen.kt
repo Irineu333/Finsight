@@ -399,9 +399,7 @@ private fun RecurringFilterChip(
         recurring.forEach { item ->
             DropdownMenuItem(
                 text = {
-                    Text(
-                        item.title ?: item.category?.name ?: stringResource(Res.string.transactions_filter_recurring)
-                    )
+                    Text(item.label)
                 },
                 onClick = {
                     onAction(TransactionsAction.SelectRecurring(item))

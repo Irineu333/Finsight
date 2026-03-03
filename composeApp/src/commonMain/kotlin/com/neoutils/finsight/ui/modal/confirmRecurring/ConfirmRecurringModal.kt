@@ -92,7 +92,7 @@ class ConfirmRecurringModal(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = recurring.title ?: recurring.category?.name ?: "",
+                text = recurring.label,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,

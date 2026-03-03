@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import android.app.Application
 import com.neoutils.finsight.di.databaseModule
 import com.neoutils.finsight.di.mapperModule
+import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
@@ -21,6 +22,7 @@ class AndroidApp : Application() {
             modules(
                 databaseModule,
                 mapperModule,
+                reportModule,
                 repositoryModule,
                 useCaseModules,
                 viewModelModule,

@@ -49,10 +49,50 @@
     <string name="dashboard_credit_cards">Credit Cards</string>
     <string name="dashboard_accounts">Accounts</string>
     <string name="dashboard_installments">Installments</string>
+    <string name="dashboard_reports">Reports</string>
     <string name="dashboard_default">Default</string>
     <string name="dashboard_current_balance">Current Balance</string>
     <string name="dashboard_total_balance">Total balance</string>
     <string name="dashboard_add_account">Add account</string>
+
+    <!-- Reports Screen -->
+    <string name="reports_title">Reports</string>
+    <string name="reports_subtitle">Choose the report type you want to generate. The next step will open the specific filters for account, invoice, or period.</string>
+    <string name="reports_selected_requirements">Expected filters for this report</string>
+    <string name="reports_available_formats">Expected formats</string>
+    <string name="reports_filters_title">Filters</string>
+    <string name="reports_start_date">Start date</string>
+    <string name="reports_end_date">End date</string>
+    <string name="reports_generate">Generate report</string>
+    <string name="reports_generate_in_progress">Generating file...</string>
+    <string name="reports_generate_hint">When generated, the app creates the final file and opens sharing directly.</string>
+    <string name="reports_summary_title">Selection summary</string>
+    <string name="reports_summary_account">Account</string>
+    <string name="reports_summary_card">Card</string>
+    <string name="reports_summary_invoice">Invoice</string>
+    <string name="reports_summary_period">Period</string>
+    <string name="reports_summary_format">Format</string>
+    <string name="reports_no_accounts">No account available to generate the balance report.</string>
+    <string name="reports_no_credit_cards">No card available to generate the invoice report.</string>
+    <string name="reports_no_invoices">No invoice available for the selected card.</string>
+    <string name="reports_preview_title">Report preview</string>
+    <string name="reports_preview_file_name">Suggested file name</string>
+    <string name="reports_preview_content">Generated content</string>
+    <string name="reports_preview_share">Share file</string>
+    <string name="reports_preview_share_success">File prepared for sharing: %1$s</string>
+    <string name="reports_preview_share_unsupported">%1$s</string>
+    <string name="reports_preview_share_failed">Could not share the file: %1$s</string>
+    <string name="reports_pdf">PDF</string>
+    <string name="reports_csv">CSV</string>
+    <string name="reports_account_balance_title">Account balance</string>
+    <string name="reports_account_balance_description">Account summary for a period, including income, expenses, adjustments, and ending balance.</string>
+    <string name="reports_account_balance_requirements">Account, start date, and end date, focused on a consolidated report for review and sharing.</string>
+    <string name="reports_invoice_title">Invoice</string>
+    <string name="reports_invoice_description">Credit card invoice detail with expenses, adjustments, payments, and consolidated total.</string>
+    <string name="reports_invoice_requirements">Card, invoice or billing period, with closing date, due date, status, and charge composition.</string>
+    <string name="reports_transactions_title">Transactions by period</string>
+    <string name="reports_transactions_description">Analytical list of entries in a date range, ideal for spreadsheets and detailed review.</string>
+    <string name="reports_transactions_requirements">Start and end date, with future support for account, card, category, and type filters.</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>

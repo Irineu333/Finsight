@@ -9,7 +9,6 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
@@ -33,7 +32,6 @@ class InvoiceTransactionsViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
-    private val recurringRepository: IRecurringRepository,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -42,7 +40,7 @@ class InvoiceTransactionsViewModel(
         InvoiceTransactionsFilters(
             category = null,
             type = null,
-            recurringId = null,
+            recurringOnly = false,
         )
     )
 
@@ -61,23 +59,19 @@ class InvoiceTransactionsViewModel(
         invoicesFlow,
         operationsFlow,
         categoryRepository.observeAllCategories(),
-        recurringRepository.observeAllRecurring(),
         selectedInvoiceIndex,
         filters,
-    ) { creditCard, invoices, operations, categories, recurring, index, currentFilters ->
+    ) { creditCard, invoices, operations, categories, index, currentFilters ->
         val transactions = operations.flatMap { it.transactions }
 
         val invoice = invoices.getOrNull(index)
 
         val invoiceOperations = operations
             .filter { it.targetInvoice?.id == invoice?.id || it.transactions.any { tx -> tx.invoice?.id == invoice?.id } }
-        val availableRecurringIds = invoiceOperations.mapNotNull { it.recurring?.id }.toSet()
-        val availableRecurring = recurring.filter { it.id in availableRecurringIds }
-        val selectedRecurring = recurring.firstOrNull { it.id == currentFilters.recurringId }
         val filteredOperations = invoiceOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
-            .filter(currentFilters.recurringId)
+            .filter(currentFilters.recurringOnly)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -143,8 +137,7 @@ class InvoiceTransactionsViewModel(
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
-            recurring = availableRecurring,
-            selectedRecurring = selectedRecurring,
+            showRecurringOnly = currentFilters.recurringOnly,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -184,8 +177,8 @@ class InvoiceTransactionsViewModel(
                 filters.value = filters.value.copy(type = action.type)
             }
 
-            is InvoiceTransactionsAction.SelectRecurring -> {
-                filters.value = filters.value.copy(recurringId = action.recurring?.id)
+            is InvoiceTransactionsAction.ToggleRecurring -> {
+                filters.value = filters.value.copy(recurringOnly = action.enabled)
             }
         }
     }
@@ -194,7 +187,7 @@ class InvoiceTransactionsViewModel(
 private data class InvoiceTransactionsFilters(
     val category: Category?,
     val type: Transaction.Type?,
-    val recurringId: Long?,
+    val recurringOnly: Boolean,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -209,7 +202,7 @@ private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     return filter { operation -> operation.type == type }
 }
 
-private fun List<Operation>.filter(recurringId: Long?): List<Operation> {
-    if (recurringId == null) return this
-    return filter { operation -> operation.recurring?.id == recurringId }
+private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+    if (!recurringOnly) return this
+    return filter { operation -> operation.recurring != null }
 }

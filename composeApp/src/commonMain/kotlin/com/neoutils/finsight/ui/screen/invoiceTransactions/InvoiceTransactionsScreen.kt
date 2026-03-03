@@ -678,8 +678,7 @@ private fun FiltersRow(
         ) {
             Box {
                 RecurringFilterChip(
-                    selectedRecurring = uiState.selectedRecurring,
-                    recurring = uiState.recurring,
+                    enabled = uiState.showRecurringOnly,
                     onAction = onAction
                 )
             }
@@ -817,67 +816,14 @@ private fun TypeFilterChip(
 
 @Composable
 private fun RecurringFilterChip(
-    selectedRecurring: Recurring?,
-    recurring: List<Recurring>,
+    enabled: Boolean,
     onAction: (InvoiceTransactionsAction) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    val chipColor = selectedRecurring?.let { item ->
-        when (item.type) {
-            Transaction.Type.INCOME -> IncomeColor
-            Transaction.Type.EXPENSE -> ExpenseColor
-            Transaction.Type.ADJUSTMENT -> AdjustmentColor
-        }
-    }
-
     FilterChip(
-        selected = selectedRecurring != null,
-        onClick = { expanded = true },
+        selected = enabled,
+        onClick = { onAction(InvoiceTransactionsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(
-                selectedRecurring?.title
-                    ?: selectedRecurring?.category?.name
-                    ?: stringResource(Res.string.transactions_filter_recurring)
-            )
+            Text(stringResource(Res.string.transactions_filter_recurring))
         },
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null
-            )
-        },
-        colors = chipColor?.let { color ->
-            FilterChipDefaults.filterChipColors(
-                selectedContainerColor = color.copy(alpha = 0.2f),
-                selectedLabelColor = color,
-                selectedLeadingIconColor = color
-            )
-        } ?: FilterChipDefaults.filterChipColors()
     )
-
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false }
-    ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(Res.string.invoice_transactions_filter_type_all)) },
-            onClick = {
-                onAction(InvoiceTransactionsAction.SelectRecurring(null))
-                expanded = false
-            }
-        )
-
-        recurring.forEach { item ->
-            DropdownMenuItem(
-                text = {
-                    Text(item.label)
-                },
-                onClick = {
-                    onAction(InvoiceTransactionsAction.SelectRecurring(item))
-                    expanded = false
-                }
-            )
-        }
-    }
 }

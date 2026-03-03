@@ -46,17 +46,4 @@ class ViewOperationViewModel(
                 operation = operation
             )
         )
-
-    fun onAction(action: ViewOperationAction) {
-        when (action) {
-            ViewOperationAction.OpenRecurring -> {
-                val recurringId = uiState.value.operation.recurring?.id ?: return
-                val recurring = recurringList.value.firstOrNull { it.id == recurringId } ?: return
-
-                viewModelScope.launch {
-                    _event.emit(ViewOperationEvent.OpenRecurring(recurring))
-                }
-            }
-        }
-    }
 }

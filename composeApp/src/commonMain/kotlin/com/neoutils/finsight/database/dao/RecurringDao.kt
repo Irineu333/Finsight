@@ -14,6 +14,9 @@ interface RecurringDao {
     @Query("SELECT * FROM recurring ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<RecurringEntity>>
 
+    @Query("SELECT * FROM recurring ORDER BY createdAt ASC")
+    suspend fun getAll(): List<RecurringEntity>
+
     @Insert
     suspend fun insert(entity: RecurringEntity): Long
 

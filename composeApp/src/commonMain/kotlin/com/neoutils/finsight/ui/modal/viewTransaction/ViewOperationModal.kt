@@ -271,10 +271,12 @@ class ViewOperationModal(
             uiState.operation.recurring?.let { recurring ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_recurring_label),
-                    value = stringResource(Res.string.view_operation_recurring_cycle_value, recurring.cycleNumber),
+                    value = recurring.label,
                     valueColor = colorScheme.onSurface,
                     modifier = Modifier.padding(top = 8.dp),
-                    onClick = { viewModel.onAction(ViewOperationAction.OpenRecurring) }
+                    onClick = {
+                        manager.show(ViewRecurringModal(recurring.instance))
+                    }
                 )
             }
 

@@ -7,7 +7,7 @@ data class Operation(
     val kind: Kind,
     val title: String?,
     val date: LocalDate,
-    val recurring: Recurring? = null,
+    val recurring: OperationRecurring? = null,
     val category: Category? = null,
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
@@ -46,9 +46,4 @@ data class Operation(
         PAYMENT,
         TRANSFER,
     }
-
-    data class Recurring(
-        val id: Long,
-        val cycleNumber: Int,
-    )
 }

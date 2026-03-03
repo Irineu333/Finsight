@@ -5,6 +5,7 @@ import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.database.mapper.CategoryMapper
 import com.neoutils.finsight.database.mapper.CreditCardMapper
 import com.neoutils.finsight.database.mapper.InvoiceMapper
+import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
@@ -17,6 +18,7 @@ val mapperModule = module {
     factory { CategoryMapper() }
     factory { CreditCardMapper() }
     factory { InvoiceMapper() }
+    factory { OperationMapper() }
     factory { RecurringMapper() }
     factory { RecurringOccurrenceMapper() }
     factory { TransactionMapper() }

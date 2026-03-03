@@ -695,7 +695,7 @@ private fun PendingRecurringCard(
 
                 Column {
                     Text(
-                        text = recurring.title ?: recurring.category?.name ?: "",
+                        text = recurring.label,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = colorScheme.onSurface,

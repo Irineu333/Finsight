@@ -34,7 +34,7 @@ class ReactivateRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<ReactivateRecurringViewModel> { parametersOf(recurring) }
-        val label = recurring.title ?: recurring.category?.name ?: ""
+        val label = recurring.label
 
         Column(
             modifier = Modifier

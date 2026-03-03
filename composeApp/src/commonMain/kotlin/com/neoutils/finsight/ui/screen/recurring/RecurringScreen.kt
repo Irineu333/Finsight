@@ -372,14 +372,14 @@ private fun RecurringCard(
 
                     Column {
                         Text(
-                            text = recurring.title ?: recurring.category?.name ?: "",
+                            text = recurring.label,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (recurring.title != null && recurring.category != null) {
+                        if (!recurring.title.isNullOrBlank() && recurring.category != null) {
                             Text(
                                 text = recurring.category.name,
                                 fontSize = 12.sp,

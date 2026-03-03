@@ -15,7 +15,7 @@ data class Operation(
     val installment: Installment? = null,
     val transactions: List<Transaction>,
 ) {
-    val label get() = checkNotNull(title ?: category?.name ?: "Unnamed")
+    val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
 
     val accountTransaction: Transaction?
         get() = transactions.firstOrNull { it.target == Transaction.Target.ACCOUNT }

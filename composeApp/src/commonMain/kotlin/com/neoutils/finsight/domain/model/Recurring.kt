@@ -11,4 +11,6 @@ data class Recurring(
     val creditCard: CreditCard?,
     val createdAt: Long,
     val isActive: Boolean = true,
-)
+) {
+    val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
+}

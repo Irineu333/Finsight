@@ -26,7 +26,7 @@ class DeleteRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<DeleteRecurringViewModel> { parametersOf(recurring) }
-        val label = recurring.title ?: recurring.category?.name ?: ""
+        val label = recurring.label
 
         Column(
             modifier = Modifier

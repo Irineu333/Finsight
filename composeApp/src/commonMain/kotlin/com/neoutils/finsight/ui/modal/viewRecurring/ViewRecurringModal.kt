@@ -106,7 +106,7 @@ class ViewRecurringModal(
                 }
 
                 Text(
-                    text = recurring.title ?: recurring.category?.name ?: "",
+                    text = recurring.label,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,

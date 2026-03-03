@@ -89,10 +89,39 @@ class GenerateReportPreviewUseCase(
 
         return GeneratedReportPreview(
             title = "Balanco da conta",
+            subtitle = "${request.account.name} • ${formatDate(request.startDate)} a ${formatDate(request.endDate)}",
             requestedFormat = request.format,
             suggestedFileName = "balanco-conta-${slug(request.account.name)}-${request.startDate}-${request.endDate}.pdf",
             mimeType = "application/pdf",
             content = content,
+            highlights = listOf(
+                ReportHighlight("Saldo inicial", formatter.format(initialBalance)),
+                ReportHighlight("Entradas", formatter.format(income)),
+                ReportHighlight("Saidas", formatter.format(expense)),
+                ReportHighlight("Saldo final", formatter.format(finalBalance)),
+            ),
+            sections = listOf(
+                ReportSection(
+                    title = "Resumo",
+                    body = listOf(
+                        "Conta: ${request.account.name}",
+                        "Periodo: ${formatDate(request.startDate)} a ${formatDate(request.endDate)}",
+                        "Ajustes: ${formatter.formatWithSign(adjustment)}",
+                    ),
+                ),
+                ReportSection(
+                    title = "Movimentacoes",
+                    columns = listOf("Data", "Tipo", "Descricao", "Impacto"),
+                    rows = periodTransactions.map { (operation, transaction) ->
+                        listOf(
+                            formatDate(transaction.date),
+                            "${operation.kind.name} ${transaction.type.name}",
+                            operation.label,
+                            formatter.formatWithSign(transaction.signedImpact()),
+                        )
+                    }
+                ),
+            ),
         )
     }
 
@@ -157,10 +186,45 @@ class GenerateReportPreviewUseCase(
 
         return GeneratedReportPreview(
             title = "Fatura",
+            subtitle = "${request.creditCard.name} • ${formatYearMonth(request.invoice.dueMonth)}",
             requestedFormat = request.format,
             suggestedFileName = "fatura-${slug(request.creditCard.name)}-${request.invoice.dueMonth}.pdf",
             mimeType = "application/pdf",
             content = content,
+            highlights = listOf(
+                ReportHighlight("Gastos", formatter.format(expense)),
+                ReportHighlight("Adiantamentos", formatter.format(advancePayment)),
+                ReportHighlight("Ajustes", formatter.formatWithSign(adjustment)),
+                ReportHighlight("Total", formatter.format(total)),
+            ),
+            sections = listOf(
+                ReportSection(
+                    title = "Resumo",
+                    body = listOf(
+                        "Cartao: ${request.creditCard.name}",
+                        "Competencia: ${formatYearMonth(request.invoice.dueMonth)}",
+                        "Status: ${request.invoice.status.name}",
+                        "Fechamento: ${formatDate(request.invoice.closingDate)}",
+                        "Vencimento: ${formatDate(request.invoice.dueDate)}",
+                    ),
+                ),
+                ReportSection(
+                    title = "Lancamentos",
+                    columns = listOf("Data", "Tipo", "Descricao", "Valor"),
+                    rows = operations.flatMap { operation ->
+                        operation.transactions
+                            .filter { it.invoice?.id == request.invoice.id }
+                            .map { transaction ->
+                                listOf(
+                                    formatDate(transaction.date),
+                                    "${operation.kind.name} ${transaction.type.name}",
+                                    operation.label,
+                                    formatter.formatWithSign(transaction.signedImpact()),
+                                )
+                            }
+                    }
+                ),
+            ),
         )
     }
 
@@ -219,10 +283,39 @@ class GenerateReportPreviewUseCase(
 
         return GeneratedReportPreview(
             title = "Transacoes por periodo",
+            subtitle = "${formatDate(request.startDate)} a ${formatDate(request.endDate)}",
             requestedFormat = request.format,
             suggestedFileName = "transacoes-${request.startDate}-${request.endDate}.csv",
             mimeType = "text/csv",
             content = content,
+            highlights = listOf(
+                ReportHighlight("Periodo", "${formatDate(request.startDate)} - ${formatDate(request.endDate)}"),
+                ReportHighlight("Linhas", transactions.size.toString()),
+                ReportHighlight(
+                    "Entradas",
+                    formatter.format(transactions.filter { it.type.isIncome }.sumOf { it.amount })
+                ),
+                ReportHighlight(
+                    "Saidas",
+                    formatter.format(transactions.filter { it.type.isExpense }.sumOf { it.amount })
+                ),
+            ),
+            sections = listOf(
+                ReportSection(
+                    title = "Preview do CSV",
+                    columns = listOf("Data", "Tipo", "Descricao", "Conta/Cartao", "Valor"),
+                    rows = transactions.take(12).map { transaction ->
+                        val operation = transaction.operationId?.let { operationById[it] }
+                        listOf(
+                            formatDate(transaction.date),
+                            "${transaction.target.name} ${transaction.type.name}",
+                            operation?.title ?: transaction.title ?: transaction.category?.name.orEmpty(),
+                            transaction.account?.name ?: transaction.creditCard?.name.orEmpty(),
+                            formatter.formatWithSign(transaction.signedImpact()),
+                        )
+                    }
+                )
+            ),
         )
     }
 
@@ -248,8 +341,23 @@ class GenerateReportPreviewUseCase(
 
 data class GeneratedReportPreview(
     val title: String,
+    val subtitle: String,
     val requestedFormat: ReportFormat,
     val suggestedFileName: String,
     val mimeType: String,
     val content: String,
+    val highlights: List<ReportHighlight>,
+    val sections: List<ReportSection>,
+)
+
+data class ReportHighlight(
+    val label: String,
+    val value: String,
+)
+
+data class ReportSection(
+    val title: String,
+    val body: List<String> = emptyList(),
+    val columns: List<String> = emptyList(),
+    val rows: List<List<String>> = emptyList(),
 )

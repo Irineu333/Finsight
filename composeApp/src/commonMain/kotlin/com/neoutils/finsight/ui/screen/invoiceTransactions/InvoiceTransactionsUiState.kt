@@ -5,7 +5,6 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
@@ -20,8 +19,7 @@ data class InvoiceTransactionsUiState(
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
-    val recurring: List<Recurring> = emptyList(),
-    val selectedRecurring: Recurring? = null,
+    val showRecurringOnly: Boolean = false,
 ) {
     data class InvoiceSummary(
         val invoice: Invoice,

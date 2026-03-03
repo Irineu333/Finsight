@@ -9,7 +9,6 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
@@ -30,7 +29,6 @@ class TransactionsViewModel(
     private val filterTarget: Transaction.Target?,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
-    private val recurringRepository: IRecurringRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
 ) : ViewModel() {
@@ -48,12 +46,10 @@ class TransactionsViewModel(
     val uiState = combine(
         operationRepository.observeAllOperations(),
         categoryRepository.observeAllCategories(),
-        recurringRepository.observeAllRecurring(),
         selectedYearMonth,
         filters
-    ) { operations, categories, recurring, yearMonth, filters ->
+    ) { operations, categories, yearMonth, filters ->
         val transactions = operations.flatMap { it.transactions }
-        val selectedRecurring = recurring.firstOrNull { it.id == filters.recurringId }
 
         val transactionsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER }
@@ -88,11 +84,9 @@ class TransactionsViewModel(
             selectedCategory = filters.category,
             selectedType = filters.type,
             selectedTarget = filters.target,
-            recurring = recurring,
-            selectedRecurring = selectedRecurring,
-            selectedRecurringId = filters.recurringId,
+            showRecurringOnly = filters.recurringOnly,
             operations = operations
-                .filter(filters.recurringId)
+                .filter(filters.recurringOnly)
                 .filter(filters.category)
                 .filter(filters.type)
                 .filter(filters.target)
@@ -132,16 +126,16 @@ class TransactionsViewModel(
                 filters.value = filters.value.copy(target = action.target)
             }
 
-            is TransactionsAction.SelectRecurring -> {
-                filters.value = filters.value.copy(recurringId = action.recurring?.id)
+            is TransactionsAction.ToggleRecurring -> {
+                filters.value = filters.value.copy(recurringOnly = action.enabled)
             }
         }
     }
 }
 
-private fun List<Operation>.filter(recurringId: Long?): List<Operation> {
-    if (recurringId == null) return this
-    return filter { operation -> operation.recurring?.id == recurringId }
+private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+    if (!recurringOnly) return this
+    return filter { operation -> operation.recurring != null }
 }
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {

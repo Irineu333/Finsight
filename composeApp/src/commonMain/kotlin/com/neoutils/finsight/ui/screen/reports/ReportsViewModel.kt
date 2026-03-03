@@ -29,7 +29,7 @@ class ReportsViewModel(
     accountRepository: IAccountRepository,
     creditCardRepository: ICreditCardRepository,
     invoiceRepository: IInvoiceRepository,
-    private val generateReportPreviewUseCase: GenerateReportPreviewUseCase,
+    private val generateReportDocumentUseCase: GenerateReportDocumentUseCase,
 ) : ViewModel() {
 
     private val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -149,8 +149,8 @@ class ReportsViewModel(
 
     suspend fun generateReport(
         request: ReportRequest,
-    ): GeneratedReportPreview {
-        return generateReportPreviewUseCase(request)
+    ): ReportDocument {
+        return generateReportDocumentUseCase(request)
     }
 
     private fun buildRequest(

@@ -21,16 +21,17 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.add_transaction_expense
 import com.neoutils.finsight.resources.add_transaction_income
 import com.neoutils.finsight.resources.recurring_form_amount_label
 import com.neoutils.finsight.resources.recurring_form_day_label
-import com.neoutils.finsight.resources.recurring_form_delete
 import com.neoutils.finsight.resources.recurring_form_save
 import com.neoutils.finsight.resources.recurring_form_title_label
 import com.neoutils.finsight.ui.component.AccountSelector
@@ -46,7 +47,19 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottomSheet() {
+class RecurringFormModal(
+    private val recurring: Recurring? = null
+) : ModalBottomSheet() {
+
+    private val initialCreditCard
+        get() = if (recurring?.creditCard != null) {
+            Transaction.Target.CREDIT_CARD
+        } else {
+            Transaction.Target.ACCOUNT
+        }
+
+    private val initialType
+        get() = recurring?.type ?: Transaction.Type.EXPENSE
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -57,33 +70,37 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
 
         val currencyFormatter = LocalCurrencyFormatter.current
 
-        val title = rememberTextFieldState(recurring?.title ?: "")
+        var type by remember { mutableStateOf(initialType) }
+
+        val title = rememberTextFieldState(recurring?.title.orEmpty())
+
         val amount = rememberTextFieldState(
-            if (recurring != null) currencyFormatter.format(recurring.amount) else ""
+            recurring?.let {
+                currencyFormatter.format(recurring.amount)
+            }.orEmpty()
         )
-        val dayOfMonth = rememberTextFieldState(recurring?.dayOfMonth?.toString() ?: "")
 
-        var target by remember {
-            mutableStateOf(
-                if (recurring?.creditCard != null) Transaction.Target.CREDIT_CARD
-                else Transaction.Target.ACCOUNT
-            )
-        }
+        val dayOfMonth = rememberTextFieldState(recurring?.dayOfMonth?.toString().orEmpty())
 
-        LaunchedEffect(uiState.type) {
-            if (uiState.type.isIncome) target = Transaction.Target.ACCOUNT
+        var target by remember { mutableStateOf(initialCreditCard) }
+
+        var selectedCategory by remember { mutableStateOf(recurring?.category) }
+
+        LaunchedEffect(type) {
+            selectedCategory = selectedCategory?.takeIf { it.type.isAccept(type) }
         }
 
         val form by remember {
             derivedStateOf {
-                RecurringForm(
-                    type = uiState.type,
+                RecurringForm.from(
+                    type = type,
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     dayOfMonth = dayOfMonth.text.toString(),
-                    account = if (target.isAccount) uiState.selectedAccount else null,
-                    creditCard = if (target.isCreditCard) uiState.selectedCreditCard else null,
-                    category = uiState.selectedCategory,
+                    category = selectedCategory,
+                    target = target,
+                    account = uiState.selectedAccount,
+                    creditCard = uiState.selectedCreditCard,
                 )
             }
         }
@@ -97,15 +114,8 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TypeToggle(
-                selectedType = uiState.type,
-                onTypeSelected = {
-                    viewModel.onAction(
-                        RecurringFormAction.TypeChanged(it),
-                        amount.text.toString(),
-                        title.text.toString(),
-                        dayOfMonth.text.toString(),
-                    )
-                },
+                selectedType = type,
+                onTypeSelected = { type = it },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -123,7 +133,7 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            AnimatedVisibility(uiState.type.isExpense) {
+            AnimatedVisibility(type.isExpense) {
                 TargetSelector(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
@@ -132,49 +142,32 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
                 )
             }
 
-            AnimatedVisibility(target.isAccount || uiState.type.isIncome) {
+            AnimatedVisibility(target.isAccount || type.isIncome) {
                 AccountSelector(
                     selectedAccount = uiState.selectedAccount,
                     accounts = uiState.accounts,
-                    onAccountSelected = {
-                        viewModel.onAction(
-                            RecurringFormAction.AccountSelected(it),
-                            amount.text.toString(),
-                            title.text.toString(),
-                            dayOfMonth.text.toString(),
-                        )
-                    },
+                    onAccountSelected = { viewModel.selectAccount(it) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
 
-            AnimatedVisibility(uiState.type.isExpense && target.isCreditCard) {
+            AnimatedVisibility(type.isExpense && target.isCreditCard) {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = {
-                        viewModel.onAction(
-                            RecurringFormAction.CreditCardSelected(it),
-                            amount.text.toString(),
-                            title.text.toString(),
-                            dayOfMonth.text.toString(),
-                        )
-                    },
+                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
 
             CategorySelector(
-                selectedCategory = uiState.selectedCategory,
-                categories = uiState.activeCategories,
-                onCategorySelected = {
-                    viewModel.onAction(
-                        RecurringFormAction.CategorySelected(it),
-                        amount.text.toString(),
-                        title.text.toString(),
-                        dayOfMonth.text.toString(),
-                    )
+                selectedCategory = selectedCategory,
+                categories = when (type) {
+                    Transaction.Type.INCOME -> uiState.incomeCategories
+                    Transaction.Type.EXPENSE -> uiState.expenseCategories
+                    else -> emptyList()
                 },
+                onCategorySelected = { selectedCategory = it },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -207,14 +200,7 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = {
-                    viewModel.onAction(
-                        RecurringFormAction.Save(target),
-                        amount.text.toString(),
-                        title.text.toString(),
-                        dayOfMonth.text.toString(),
-                    )
-                },
+                onClick = { viewModel.save(form) },
                 enabled = form.isValid(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -244,6 +230,7 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
                     containerColor = Expense,
                     contentColor = Color.White,
                 )
+
                 else -> ButtonDefaults.buttonColors(
                     containerColor = colorScheme.surfaceContainerHighest,
                     contentColor = colorScheme.onSurfaceVariant,
@@ -266,6 +253,7 @@ class RecurringFormModal(private val recurring: Recurring? = null) : ModalBottom
                     containerColor = Income,
                     contentColor = Color.White,
                 )
+
                 else -> ButtonDefaults.buttonColors(
                     containerColor = colorScheme.surfaceContainerHighest,
                     contentColor = colorScheme.onSurfaceVariant,

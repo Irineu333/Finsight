@@ -59,13 +59,6 @@ class EditTransactionModal(
         val manager = LocalModalManager.current
 
         val uiState by viewModel.uiState.collectAsState()
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        LaunchedEffect(Unit) {
-            viewModel.errorMessage.collect { message ->
-                snackbarHostState.showSnackbar(message)
-            }
-        }
 
         var type by remember { mutableStateOf(transaction.type) }
         var target by remember { mutableStateOf(transaction.target) }
@@ -283,11 +276,6 @@ class EditTransactionModal(
                     )
                 }
             }
-
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
         }
     }
 

@@ -36,9 +36,6 @@ class AddTransactionViewModel(
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
     private val selectedAccount = MutableStateFlow<Account?>(null)
 
-    private val _errorMessage = MutableSharedFlow<String>()
-    val errorMessage = _errorMessage.asSharedFlow()
-
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
             invoiceRepository.getInvoicesByCreditCard(card.id)

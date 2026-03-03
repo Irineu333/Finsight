@@ -36,8 +36,6 @@ class EditTransactionViewModel(
     private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
     private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
     private val selectedAccount = MutableStateFlow(transaction.account)
-    private val _errorMessage = MutableSharedFlow<String>()
-    val errorMessage = _errorMessage.asSharedFlow()
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -129,13 +127,8 @@ class EditTransactionViewModel(
                     operationRepository.updateOperation(operationId, it)
                 }
             }
-        }.onLeft { throwable ->
-            val message = (throwable as? BuildTransactionException)
-                ?.error
-                ?.message
-                ?: throwable.message
-                ?: "Failed to update transaction."
-            _errorMessage.emit(message)
+        }.onLeft {
+            // TODO: register exception
         }.onRight {
             modalManager.dismissAll()
         }

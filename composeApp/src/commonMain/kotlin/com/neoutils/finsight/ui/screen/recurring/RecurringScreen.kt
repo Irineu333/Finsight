@@ -386,18 +386,22 @@ private fun RecurringCard(
                                 color = colorScheme.onSurfaceVariant,
                             )
                         }
-                        if (!recurring.isActive) {
-                            Text(
-                                text = stringResource(Res.string.recurring_status_inactive),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Warning,
-                            )
-                        }
                     }
                 }
 
-                RecurringTypeBadge(label = typeLabel, color = typeColor)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (!recurring.isActive) {
+                        RecurringBadge(
+                            label = stringResource(Res.string.recurring_status_inactive),
+                            color = Warning,
+                        )
+                    }
+
+                    RecurringBadge(label = typeLabel, color = typeColor)
+                }
             }
 
             Column(
@@ -483,7 +487,7 @@ private fun RecurringCard(
 }
 
 @Composable
-private fun RecurringTypeBadge(
+private fun RecurringBadge(
     label: String,
     color: Color,
     modifier: Modifier = Modifier,

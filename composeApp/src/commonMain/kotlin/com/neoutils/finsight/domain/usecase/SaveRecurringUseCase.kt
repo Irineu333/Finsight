@@ -16,7 +16,6 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.moneyToDouble
-import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -33,7 +32,6 @@ class SaveRecurringUseCase(
         account: Account?,
         creditCard: CreditCard?,
         createdAt: Long? = null,
-        lastHandledYearMonth: YearMonth? = null,
         isActive: Boolean = true,
     ): Either<Throwable, Unit> = either {
         ensure(amount.isNotEmpty()) {
@@ -78,7 +76,6 @@ class SaveRecurringUseCase(
             account = account,
             creditCard = if (type.isIncome) null else creditCard,
             createdAt = createdAt ?: Clock.System.now().toEpochMilliseconds(),
-            lastHandledYearMonth = lastHandledYearMonth,
             isActive = isActive,
         )
 

@@ -6,7 +6,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
-import kotlinx.datetime.YearMonth
 
 class RecurringMapper {
 
@@ -28,7 +27,6 @@ class RecurringMapper {
         account = account,
         creditCard = creditCard,
         createdAt = entity.createdAt,
-        lastHandledYearMonth = entity.lastHandledYearMonth?.let { YearMonth.parse(it) },
         isActive = entity.isActive,
     )
 
@@ -46,7 +44,6 @@ class RecurringMapper {
         accountId = recurring.account?.id,
         creditCardId = recurring.creditCard?.id,
         createdAt = recurring.createdAt,
-        lastHandledYearMonth = recurring.lastHandledYearMonth?.toString(),
         isActive = recurring.isActive,
     )
 }

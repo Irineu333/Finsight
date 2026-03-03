@@ -41,7 +41,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         RecurringEntity::class,
         RecurringOccurrenceEntity::class,
     ],
-    version = 11,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

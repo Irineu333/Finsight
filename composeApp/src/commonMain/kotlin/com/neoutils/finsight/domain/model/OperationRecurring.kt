@@ -5,5 +5,5 @@ data class OperationRecurring(
     val cycleNumber: Int,
 ) {
     val id = instance.id
-    val label = "${instance.title} • $cycleNumber"
+    val label = "${instance.label} • $cycleNumber"
 }

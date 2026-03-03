@@ -89,11 +89,13 @@ val repositoryModule = module {
         OperationRepository(
             operationDao = get(),
             transactionDao = get(),
+            recurringDao = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             installmentRepository = get(),
             accountRepository = get(),
+            recurringMapper = get(),
             transactionMapper = get(),
         )
     }

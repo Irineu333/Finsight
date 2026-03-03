@@ -95,6 +95,7 @@ val repositoryModule = module {
             invoiceRepository = get(),
             installmentRepository = get(),
             accountRepository = get(),
+            operationMapper = get(),
             recurringMapper = get(),
             transactionMapper = get(),
         )

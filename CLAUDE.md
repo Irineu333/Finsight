@@ -13,14 +13,14 @@ The iOS project uses **XcodeGen** (`iosApp/project.yml`).
 ```
 
 ## Architecture
-Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels → UiState + Actions
+Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Layers:**
 - `/domain/`: Repositories (interfaces), UseCases, Error types (business rules, framework-independent)
 - `/database/`: Room entities, DAOs, Mappers, Repository implementations (data sources)
 - `/ui/`: Screens (composables, ViewModels, UiState), Modals, Components (presentation)
 
-**Dependency Rule:** Domain ← Database, Domain ← UI (domain has no dependencies)
+**Dependency Rule:** Domain <- Database, Domain <- UI (domain has no dependencies)
 
 **DI (Koin):** `viewModel {}` screens, `factory {}` use cases, `single {}` repositories
 
@@ -31,9 +31,9 @@ Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels → UiState + Actions
 **Error Handling:** Arrow library (Either/flatMap/catch)
 
 **Error Types** (`/domain/error/`): `enum class` or `sealed class` with:
-- `val message: String` — English, for logging only
-- `toUiText()` extension — internationalized via string resources, for UI display
-- `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
+- `val message: String` - English, for logging only
+- `toUiText()` extension - internationalized via string resources, for UI display
+- `XxxException(val error: XxxError)` wrapper - **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
 ## Code Style
 - Documentation is the code (avoid comments, write clear code).

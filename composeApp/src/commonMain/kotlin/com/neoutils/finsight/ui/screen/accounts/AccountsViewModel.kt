@@ -6,11 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +37,7 @@ class AccountsViewModel(
     private val accountRepository: IAccountRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val recurringRepository: IRecurringRepository,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
@@ -54,6 +57,7 @@ class AccountsViewModel(
         AccountsFilters(
             category = null,
             type = null,
+            recurringId = null,
         )
     )
 
@@ -96,15 +100,21 @@ class AccountsViewModel(
         accounts,
         operationsBySelectedAccount,
         categoryRepository.observeAllCategories(),
+        recurringRepository.observeAllRecurring(),
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accounts, operations, categories, index, month, currentFilters ->
+    ) { accounts, operations, categories, recurring, index, month, currentFilters ->
         val transactions = operations.flatMap { it.transactions }
-        val filteredOperations = operations
+        val monthOperations = operations
             .filter { it.date.yearMonth == month }
+        val availableRecurringIds = monthOperations.mapNotNull { it.recurring?.id }.toSet()
+        val availableRecurring = recurring.filter { it.id in availableRecurringIds }
+        val selectedRecurring = recurring.firstOrNull { it.id == currentFilters.recurringId }
+        val filteredOperations = monthOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
+            .filter(currentFilters.recurringId)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -156,6 +166,8 @@ class AccountsViewModel(
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
+            recurring = availableRecurring,
+            selectedRecurring = selectedRecurring,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -179,6 +191,10 @@ class AccountsViewModel(
                 filters.value = filters.value.copy(type = action.type)
             }
 
+            is AccountsAction.SelectRecurring -> {
+                filters.value = filters.value.copy(recurringId = action.recurring?.id)
+            }
+
             is AccountsAction.SelectMonth -> {
                 selectedMonth.value = action.yearMonth
             }
@@ -197,6 +213,7 @@ class AccountsViewModel(
 private data class AccountsFilters(
     val category: Category?,
     val type: Transaction.Type?,
+    val recurringId: Long?,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -209,4 +226,9 @@ private fun List<Operation>.filter(category: Category?): List<Operation> {
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
     return filter { operation -> operation.type == type }
+}
+
+private fun List<Operation>.filter(recurringId: Long?): List<Operation> {
+    if (recurringId == null) return this
+    return filter { operation -> operation.recurring?.id == recurringId }
 }

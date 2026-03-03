@@ -182,6 +182,8 @@ class OperationRepository(
         sourceAccountId: Long?,
         targetCreditCardId: Long?,
         targetInvoiceId: Long?,
+        recurringId: Long?,
+        recurringCycle: Int?,
         installmentId: Long?,
         installmentNumber: Int?,
         transactions: List<Transaction>,
@@ -195,6 +197,8 @@ class OperationRepository(
                 sourceAccountId = sourceAccountId,
                 targetCreditCardId = targetCreditCardId,
                 targetInvoiceId = targetInvoiceId,
+                recurringId = recurringId,
+                recurringCycle = recurringCycle,
                 installmentId = installmentId,
                 installmentNumber = installmentNumber,
             )
@@ -276,6 +280,14 @@ class OperationRepository(
             kind = toDomain(operation.kind),
             title = operation.title ?: primaryTransaction.title,
             date = primaryTransaction.date,
+            recurring = operation.recurringId?.let { recurringId ->
+                operation.recurringCycle?.let { cycleNumber ->
+                    Operation.Recurring(
+                        id = recurringId,
+                        cycleNumber = cycleNumber,
+                    )
+                }
+            },
             category = operation.categoryId?.let { categories[it] } ?: primaryTransaction.category,
             sourceAccount = operation.sourceAccountId?.let { accounts[it] },
             targetCreditCard = operation.targetCreditCardId?.let { creditCards[it] },

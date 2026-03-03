@@ -7,6 +7,7 @@ data class Operation(
     val kind: Kind,
     val title: String?,
     val date: LocalDate,
+    val recurring: Recurring? = null,
     val category: Category? = null,
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
@@ -14,11 +15,7 @@ data class Operation(
     val installment: Installment? = null,
     val transactions: List<Transaction>,
 ) {
-    enum class Kind {
-        TRANSACTION,
-        PAYMENT,
-        TRANSFER,
-    }
+    val label get() = checkNotNull(title ?: category?.name ?: "Unnamed")
 
     val accountTransaction: Transaction?
         get() = transactions.firstOrNull { it.target == Transaction.Target.ACCOUNT }
@@ -38,11 +35,20 @@ data class Operation(
     val amount: Double
         get() = primaryTransaction.amount
 
-    val label get() = checkNotNull(title ?: category?.name ?: "Unnamed")
-
     val isEditable: Boolean
         get() = transactions.size == 1
 
     val hasInstallment: Boolean
         get() = installment != null
+
+    enum class Kind {
+        TRANSACTION,
+        PAYMENT,
+        TRANSFER,
+    }
+
+    data class Recurring(
+        val id: Long,
+        val cycleNumber: Int,
+    )
 }

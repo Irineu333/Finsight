@@ -281,7 +281,7 @@ val useCaseModules = module {
 
     factory { GetPendingRecurringUseCase() }
 
-    factory { ConfirmRecurringUseCase(operationRepository = get(), recurringRepository = get(), getOrCreateInvoiceForMonthUseCase = get()) }
+    factory { ConfirmRecurringUseCase(operationRepository = get(), recurringOccurrenceRepository = get(), getOrCreateInvoiceForMonthUseCase = get()) }
 
-    factory { SkipRecurringUseCase(recurringRepository = get()) }
+    factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -80,6 +81,7 @@ import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
 import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
+import com.neoutils.finsight.resources.transactions_filter_recurring
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -670,6 +672,18 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item(
+            key = "recurring_filter"
+        ) {
+            Box {
+                RecurringFilterChip(
+                    selectedRecurring = uiState.selectedRecurring,
+                    recurring = uiState.recurring,
+                    onAction = onAction
+                )
+            }
+        }
     }
 }
 
@@ -794,6 +808,73 @@ private fun TypeFilterChip(
                 text = { Text(label) },
                 onClick = {
                     onAction(InvoiceTransactionsAction.SelectType(type))
+                    expanded = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecurringFilterChip(
+    selectedRecurring: Recurring?,
+    recurring: List<Recurring>,
+    onAction: (InvoiceTransactionsAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val chipColor = selectedRecurring?.let { item ->
+        when (item.type) {
+            Transaction.Type.INCOME -> IncomeColor
+            Transaction.Type.EXPENSE -> ExpenseColor
+            Transaction.Type.ADJUSTMENT -> AdjustmentColor
+        }
+    }
+
+    FilterChip(
+        selected = selectedRecurring != null,
+        onClick = { expanded = true },
+        label = {
+            Text(
+                selectedRecurring?.title
+                    ?: selectedRecurring?.category?.name
+                    ?: stringResource(Res.string.transactions_filter_recurring)
+            )
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null
+            )
+        },
+        colors = chipColor?.let { color ->
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = color.copy(alpha = 0.2f),
+                selectedLabelColor = color,
+                selectedLeadingIconColor = color
+            )
+        } ?: FilterChipDefaults.filterChipColors()
+    )
+
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.invoice_transactions_filter_type_all)) },
+            onClick = {
+                onAction(InvoiceTransactionsAction.SelectRecurring(null))
+                expanded = false
+            }
+        )
+
+        recurring.forEach { item ->
+            DropdownMenuItem(
+                text = {
+                    Text(item.title ?: item.category?.name ?: stringResource(Res.string.transactions_filter_recurring))
+                },
+                onClick = {
+                    onAction(InvoiceTransactionsAction.SelectRecurring(item))
                     expanded = false
                 }
             )

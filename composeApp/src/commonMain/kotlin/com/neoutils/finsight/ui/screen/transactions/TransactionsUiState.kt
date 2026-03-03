@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.transactions
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
@@ -22,7 +23,10 @@ data class TransactionsUiState(
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
     val selectedType: Transaction.Type? = null,
-    val selectedTarget: Transaction.Target? = null
+    val selectedTarget: Transaction.Target? = null,
+    val recurring: List<Recurring> = emptyList(),
+    val selectedRecurring: Recurring? = null,
+    val selectedRecurringId: Long? = null,
 ) {
 
     val isCurrentMonth = selectedYearMonth == currentMonth

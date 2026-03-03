@@ -225,7 +225,7 @@ fun HomeScreen(
                         navController.navigate(
                             HomeRoute.Transactions(
                                 filterType = filterType,
-                                filterTarget = filterTarget
+                                filterTarget = filterTarget,
                             )
                         )
                     },
@@ -254,4 +254,3 @@ fun HomeScreen(
         }
     }
 }
-

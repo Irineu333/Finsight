@@ -185,7 +185,11 @@ class ViewOperationModal(
                     DetailRow(
                         label = stringResource(Res.string.view_operation_source_account_label),
                         value = account.name,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        onClick = {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.Accounts(account.id))
+                        }
                     )
                 }
 
@@ -193,7 +197,11 @@ class ViewOperationModal(
                     DetailRow(
                         label = stringResource(Res.string.view_operation_destination_account_label),
                         value = account.name,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        onClick = {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.Accounts(account.id))
+                        }
                     )
                 }
             }
@@ -203,7 +211,11 @@ class ViewOperationModal(
                     DetailRow(
                         label = stringResource(Res.string.view_operation_account_label),
                         value = account.name,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        onClick = {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.Accounts(account.id))
+                        }
                     )
                 }
             }

@@ -45,7 +45,7 @@ import kotlinx.datetime.LocalDate
         Index(value = ["creditCardId"]),
         Index(value = ["invoiceId"]),
         Index(value = ["accountId"]),
-        Index(value = ["operationId"])
+        Index(value = ["operationId"]),
     ]
 )
 data class TransactionEntity(

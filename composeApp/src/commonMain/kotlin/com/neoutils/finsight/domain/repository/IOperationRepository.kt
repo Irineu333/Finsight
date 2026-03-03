@@ -26,6 +26,8 @@ interface IOperationRepository {
         sourceAccountId: Long?,
         targetCreditCardId: Long?,
         targetInvoiceId: Long?,
+        recurringId: Long? = null,
+        recurringCycle: Int? = null,
         installmentId: Long? = null,
         installmentNumber: Int? = null,
         transactions: List<Transaction>,

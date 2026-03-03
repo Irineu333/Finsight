@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
-import arrow.core.raise.catch
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -36,6 +36,8 @@ class EditTransactionViewModel(
     private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
     private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
     private val selectedAccount = MutableStateFlow(transaction.account)
+    private val _errorMessage = MutableSharedFlow<String>()
+    val errorMessage = _errorMessage.asSharedFlow()
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -127,6 +129,13 @@ class EditTransactionViewModel(
                     operationRepository.updateOperation(operationId, it)
                 }
             }
+        }.onLeft { throwable ->
+            val message = (throwable as? BuildTransactionException)
+                ?.error
+                ?.message
+                ?: throwable.message
+                ?: "Failed to update transaction."
+            _errorMessage.emit(message)
         }.onRight {
             modalManager.dismissAll()
         }

@@ -22,7 +22,6 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_day
-import com.neoutils.finsight.resources.recurring_screen_title
 import com.neoutils.finsight.resources.view_recurring_account_label
 import com.neoutils.finsight.resources.view_recurring_amount_label
 import com.neoutils.finsight.resources.view_recurring_category_label
@@ -104,19 +103,6 @@ class ViewRecurringModal(
                     color = colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
-
-                Surface(
-                    color = Info.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.recurring_screen_title),
-                        color = Info,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

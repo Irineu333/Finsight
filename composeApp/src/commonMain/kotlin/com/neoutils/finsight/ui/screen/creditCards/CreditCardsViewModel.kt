@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +26,7 @@ class CreditCardsViewModel(
     private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
+    private val recurringRepository: IRecurringRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
@@ -43,6 +45,7 @@ class CreditCardsViewModel(
         CreditCardsFilters(
             category = null,
             type = null,
+            recurringId = null,
         )
     )
 
@@ -71,13 +74,18 @@ class CreditCardsViewModel(
         transactionsFlow,
         invoicesFlow,
         categoryRepository.observeAllCategories(),
+        recurringRepository.observeAllRecurring(),
         selectedCardIndex,
         filters,
-    ) { creditCards, operations, invoices, categories, index, currentFilters ->
+    ) { creditCards, operations, invoices, categories, recurring, index, currentFilters ->
+        val availableRecurringIds = operations.mapNotNull { it.recurring?.id }.toSet()
+        val availableRecurring = recurring.filter { it.id in availableRecurringIds }
+        val selectedRecurring = recurring.firstOrNull { it.id == currentFilters.recurringId }
 
         val filteredOperations = operations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
+            .filter(currentFilters.recurringId)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -96,6 +104,8 @@ class CreditCardsViewModel(
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
+            recurring = availableRecurring,
+            selectedRecurring = selectedRecurring,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -118,6 +128,10 @@ class CreditCardsViewModel(
             is CreditCardsAction.SelectType -> {
                 filters.value = filters.value.copy(type = action.type)
             }
+
+            is CreditCardsAction.SelectRecurring -> {
+                filters.value = filters.value.copy(recurringId = action.recurring?.id)
+            }
         }
     }
 }
@@ -125,6 +139,7 @@ class CreditCardsViewModel(
 private data class CreditCardsFilters(
     val category: Category?,
     val type: Transaction.Type?,
+    val recurringId: Long?,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -137,4 +152,9 @@ private fun List<Operation>.filter(category: Category?): List<Operation> {
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
     return filter { operation -> operation.type == type }
+}
+
+private fun List<Operation>.filter(recurringId: Long?): List<Operation> {
+    if (recurringId == null) return this
+    return filter { operation -> operation.recurring?.id == recurringId }
 }

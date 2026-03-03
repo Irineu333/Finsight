@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.TimeZone
@@ -38,6 +39,7 @@ class DashboardViewModel(
     private val accountRepository: IAccountRepository,
     private val budgetRepository: IBudgetRepository,
     private val recurringRepository: IRecurringRepository,
+    private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
@@ -69,7 +71,8 @@ class DashboardViewModel(
         accountRepository.observeAllAccounts(),
         budgetRepository.observeAllBudgets(),
         recurringRepository.observeAllRecurring(),
-    ) { operations, creditCards, invoices, accounts, budgets, recurringList ->
+        recurringOccurrenceRepository.observeAllOccurrences(),
+    ) { operations, creditCards, invoices, accounts, budgets, recurringList, occurrences ->
         val transactions = operations.flatMap { it.transactions }
         val transactionsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
@@ -135,6 +138,7 @@ class DashboardViewModel(
             ),
             pendingRecurring = getPendingRecurringUseCase(
                 recurringList = recurringList,
+                occurrences = occurrences,
                 today = today,
             ),
         )

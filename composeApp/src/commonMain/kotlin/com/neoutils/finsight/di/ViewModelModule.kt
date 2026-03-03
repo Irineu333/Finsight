@@ -74,6 +74,7 @@ val viewModelModule = module {
         ViewOperationViewModel(
             operation = it.get(),
             operationRepository = get(),
+            recurringRepository = get(),
         )
     }
 
@@ -85,6 +86,7 @@ val viewModelModule = module {
             accountRepository = get(),
             budgetRepository = get(),
             recurringRepository = get(),
+            recurringOccurrenceRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
@@ -128,6 +130,7 @@ val viewModelModule = module {
             filterTarget = getOrNull(),
             operationRepository = get(),
             categoryRepository = get(),
+            recurringRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
         )
@@ -145,6 +148,7 @@ val viewModelModule = module {
             accountRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
+            recurringRepository = get(),
             initialAccountId = it.getOrNull(),
         )
     }
@@ -157,6 +161,7 @@ val viewModelModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
+            recurringRepository = get(),
         )
     }
 
@@ -366,6 +371,7 @@ val viewModelModule = module {
             invoiceRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
+            recurringRepository = get(),
         )
     }
 

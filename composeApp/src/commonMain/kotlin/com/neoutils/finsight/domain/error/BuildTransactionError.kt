@@ -18,6 +18,10 @@ sealed class BuildTransactionError(val message: String) {
         message = "Date cannot be in the future."
     )
 
+    data object RecurringMonthLocked : BuildTransactionError(
+        message = "Recurring transactions cannot be moved to another month."
+    )
+
     data object TitleOrCategoryRequired : BuildTransactionError(
         message = "Title or category is required."
     )

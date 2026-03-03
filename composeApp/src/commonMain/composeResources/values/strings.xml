@@ -59,6 +59,7 @@
     <string name="transactions_filter_account">Conta</string>
     <string name="transactions_filter_credit_card">Cartão</string>
     <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>
+    <string name="transactions_filter_recurring">Recorrência</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Parcelamentos</string>
@@ -316,6 +317,8 @@
     <string name="view_operation_card_label">Cartão</string>
     <string name="view_operation_invoice_label">Fatura</string>
     <string name="view_operation_installment_label">Parcela</string>
+    <string name="view_operation_recurring_label">Recorrência</string>
+    <string name="view_operation_recurring_cycle_value">Ciclo %1$d</string>
     <string name="view_operation_deleted">Excluído</string>
     <string name="view_operation_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
     <string name="view_operation_delete">Excluir</string>

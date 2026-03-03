@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -34,6 +35,7 @@ import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.ui.extension.toLabel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -56,6 +58,14 @@ class ViewOperationModal(
 
         val manager = LocalModalManager.current
         val navigator = LocalNavigator.current
+
+        LaunchedEffect(viewModel) {
+            viewModel.event.collect { event ->
+                when (event) {
+                    is ViewOperationEvent.OpenRecurring -> manager.show(ViewRecurringModal(event.recurring))
+                }
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -258,6 +268,16 @@ class ViewOperationModal(
                 )
             }
 
+            uiState.operation.recurring?.let { recurring ->
+                DetailRow(
+                    label = stringResource(Res.string.view_operation_recurring_label),
+                    value = stringResource(Res.string.view_operation_recurring_cycle_value, recurring.cycleNumber),
+                    valueColor = colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = { viewModel.onAction(ViewOperationAction.OpenRecurring) }
+                )
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             uiState.transaction.invoice?.let { invoice ->
@@ -333,9 +353,7 @@ class ViewOperationModal(
             else -> {
                 OutlinedButton(
                     onClick = {
-                        manager.show(
-                            EditTransactionModal(uiState.transaction)
-                        )
+                        manager.show(EditTransactionModal(uiState.transaction))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),

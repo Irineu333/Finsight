@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.accounts
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -15,6 +16,8 @@ data class AccountsUiState(
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
+    val recurring: List<Recurring> = emptyList(),
+    val selectedRecurring: Recurring? = null,
 )
 
 data class AccountUi(

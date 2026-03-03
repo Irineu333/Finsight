@@ -59,6 +59,7 @@
     <string name="transactions_filter_account">Account</string>
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>
+    <string name="transactions_filter_recurring">Recurring</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Installments</string>
@@ -316,6 +317,8 @@
     <string name="view_operation_card_label">Card</string>
     <string name="view_operation_invoice_label">Invoice</string>
     <string name="view_operation_installment_label">Installment</string>
+    <string name="view_operation_recurring_label">Recurring</string>
+    <string name="view_operation_recurring_cycle_value">Cycle %1$d</string>
     <string name="view_operation_deleted">Deleted</string>
     <string name="view_operation_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
     <string name="view_operation_delete">Delete</string>

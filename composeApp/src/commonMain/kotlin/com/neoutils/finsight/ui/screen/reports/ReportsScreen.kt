@@ -47,6 +47,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,12 +70,16 @@ import com.neoutils.finsight.resources.reports_end_date
 import com.neoutils.finsight.resources.reports_filters_title
 import com.neoutils.finsight.resources.reports_generate
 import com.neoutils.finsight.resources.reports_generate_hint
+import com.neoutils.finsight.resources.reports_generate_in_progress
 import com.neoutils.finsight.resources.reports_invoice_description
 import com.neoutils.finsight.resources.reports_invoice_title
 import com.neoutils.finsight.resources.reports_no_accounts
 import com.neoutils.finsight.resources.reports_no_credit_cards
 import com.neoutils.finsight.resources.reports_no_invoices
 import com.neoutils.finsight.resources.reports_pdf
+import com.neoutils.finsight.resources.reports_preview_share_failed
+import com.neoutils.finsight.resources.reports_preview_share_success
+import com.neoutils.finsight.resources.reports_preview_share_unsupported
 import com.neoutils.finsight.resources.reports_start_date
 import com.neoutils.finsight.resources.reports_subtitle
 import com.neoutils.finsight.resources.reports_summary_account
@@ -86,15 +95,16 @@ import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.InvoiceSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.modal.reportPreview.ReportPreviewModal
 import com.neoutils.finsight.ui.extension.toLabel
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -105,12 +115,16 @@ fun ReportsScreen(
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val modalManager = LocalModalManager.current
+    val exportService = koinInject<ReportExportService>()
+    val scope = rememberCoroutineScope()
     val reportTypes = ReportType.entries
     val selectedPage = reportTypes.indexOf(uiState.reportType).coerceAtLeast(0)
     val pagerState = rememberPagerState(
         initialPage = selectedPage,
         pageCount = { reportTypes.size }
     )
+    var exportResult by remember { mutableStateOf<ReportExportResult?>(null) }
+    var isExporting by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         snapshotFlow { pagerState.currentPage }
@@ -124,6 +138,10 @@ fun ReportsScreen(
         if (pagerState.currentPage != selectedPage) {
             pagerState.animateScrollToPage(selectedPage)
         }
+    }
+
+    LaunchedEffect(uiState.reportRequest) {
+        exportResult = null
     }
 
     Scaffold(
@@ -214,25 +232,40 @@ fun ReportsScreen(
             item(key = "reports_action") {
                 Button(
                     onClick = {
-                        viewModel.generateReport { preview ->
-                            uiState.reportRequest?.let(onGenerateReport)
-                            modalManager.show(ReportPreviewModal(preview))
+                        scope.launch {
+                            val request = uiState.reportRequest ?: return@launch
+                            isExporting = true
+                            exportResult = null
+                            onGenerateReport(request)
+                            exportResult = exportService.exportAndShare(
+                                viewModel.generateReport(request)
+                            )
+                            isExporting = false
                         }
                     },
-                    enabled = uiState.canGenerate,
+                    enabled = uiState.canGenerate && !isExporting,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .animateItem()
                 ) {
-                    Text(text = stringResource(Res.string.reports_generate))
+                    Text(
+                        text = stringResource(
+                            if (isExporting) {
+                                Res.string.reports_generate_in_progress
+                            } else {
+                                Res.string.reports_generate
+                            }
+                        )
+                    )
                 }
             }
 
             item(key = "reports_hint") {
                 Text(
-                    text = stringResource(Res.string.reports_generate_hint),
+                    text = exportResult.asText()
+                        ?: stringResource(Res.string.reports_generate_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -241,6 +274,28 @@ fun ReportsScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ReportExportResult?.asText(): String? {
+    return when (this) {
+        is ReportExportResult.Success -> stringResource(
+            Res.string.reports_preview_share_success,
+            fileName,
+        )
+
+        is ReportExportResult.Unsupported -> stringResource(
+            Res.string.reports_preview_share_unsupported,
+            reason,
+        )
+
+        is ReportExportResult.Failure -> stringResource(
+            Res.string.reports_preview_share_failed,
+            reason,
+        )
+
+        null -> null
     }
 }
 

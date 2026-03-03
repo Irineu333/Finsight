@@ -12,7 +12,6 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -148,11 +147,10 @@ class ReportsViewModel(
         }
     }
 
-    fun generateReport(
-        onGenerated: (GeneratedReportPreview) -> Unit,
-    ) = viewModelScope.launch {
-        val request = uiState.value.reportRequest ?: return@launch
-        onGenerated(generateReportPreviewUseCase(request))
+    suspend fun generateReport(
+        request: ReportRequest,
+    ): GeneratedReportPreview {
+        return generateReportPreviewUseCase(request)
     }
 
     private fun buildRequest(

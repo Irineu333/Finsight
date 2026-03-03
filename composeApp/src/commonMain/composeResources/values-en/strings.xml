@@ -64,7 +64,8 @@
     <string name="reports_start_date">Start date</string>
     <string name="reports_end_date">End date</string>
     <string name="reports_generate">Generate report</string>
-    <string name="reports_generate_hint">This step generates a real content preview. File saving and sharing come next.</string>
+    <string name="reports_generate_in_progress">Generating file...</string>
+    <string name="reports_generate_hint">When generated, the app creates the final file and opens sharing directly.</string>
     <string name="reports_summary_title">Selection summary</string>
     <string name="reports_summary_account">Account</string>
     <string name="reports_summary_card">Card</string>

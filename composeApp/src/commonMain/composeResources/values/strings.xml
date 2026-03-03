@@ -64,7 +64,8 @@
     <string name="reports_start_date">Data inicial</string>
     <string name="reports_end_date">Data final</string>
     <string name="reports_generate">Gerar relatório</string>
-    <string name="reports_generate_hint">Nesta etapa o app gera uma prévia real do conteúdo. O salvamento e compartilhamento do arquivo entram no próximo passo.</string>
+    <string name="reports_generate_in_progress">Gerando arquivo...</string>
+    <string name="reports_generate_hint">Ao gerar, o app cria o arquivo final e abre o compartilhamento diretamente.</string>
     <string name="reports_summary_title">Resumo da seleção</string>
     <string name="reports_summary_account">Conta</string>
     <string name="reports_summary_card">Cartão</string>

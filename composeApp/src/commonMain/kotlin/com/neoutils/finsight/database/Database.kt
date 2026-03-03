@@ -165,11 +165,47 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("PRAGMA foreign_keys=OFF")
+
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recurring_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`type` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, " +
+                "`title` TEXT, " +
+                "`dayOfMonth` INTEGER NOT NULL, " +
+                "`categoryId` INTEGER, " +
+                "`accountId` INTEGER, " +
+                "`creditCardId` INTEGER, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`isActive` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
+                "FOREIGN KEY(`creditCardId`) REFERENCES `credit_cards`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
+                ")"
+        )
+        connection.execSQL(
+            "INSERT INTO `recurring_new` (`id`, `type`, `amount`, `title`, `dayOfMonth`, `categoryId`, `accountId`, `creditCardId`, `createdAt`, `isActive`) " +
+                "SELECT `id`, `type`, `amount`, `title`, `dayOfMonth`, `categoryId`, `accountId`, `creditCardId`, `createdAt`, `isActive` " +
+                "FROM `recurring`"
+        )
+        connection.execSQL("DROP TABLE `recurring`")
+        connection.execSQL("ALTER TABLE `recurring_new` RENAME TO `recurring`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_recurring_categoryId` ON `recurring` (`categoryId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_recurring_accountId` ON `recurring` (`accountId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_recurring_creditCardId` ON `recurring` (`creditCardId`)")
+
+        connection.execSQL("PRAGMA foreign_keys=ON")
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_9, MIGRATION_9_10)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_9, MIGRATION_9_10, MIGRATION_10_11)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

@@ -90,8 +90,8 @@ class GenerateReportPreviewUseCase(
         return GeneratedReportPreview(
             title = "Balanco da conta",
             requestedFormat = request.format,
-            suggestedFileName = "balanco-conta-${slug(request.account.name)}-${request.startDate}-${request.endDate}.txt",
-            mimeType = "text/plain",
+            suggestedFileName = "balanco-conta-${slug(request.account.name)}-${request.startDate}-${request.endDate}.pdf",
+            mimeType = "application/pdf",
             content = content,
         )
     }
@@ -158,8 +158,8 @@ class GenerateReportPreviewUseCase(
         return GeneratedReportPreview(
             title = "Fatura",
             requestedFormat = request.format,
-            suggestedFileName = "fatura-${slug(request.creditCard.name)}-${request.invoice.dueMonth}.txt",
-            mimeType = "text/plain",
+            suggestedFileName = "fatura-${slug(request.creditCard.name)}-${request.invoice.dueMonth}.pdf",
+            mimeType = "application/pdf",
             content = content,
         )
     }

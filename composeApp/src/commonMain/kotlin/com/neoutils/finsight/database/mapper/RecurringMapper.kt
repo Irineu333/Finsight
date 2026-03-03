@@ -29,6 +29,7 @@ class RecurringMapper {
         creditCard = creditCard,
         createdAt = entity.createdAt,
         lastHandledYearMonth = entity.lastHandledYearMonth?.let { YearMonth.parse(it) },
+        isActive = entity.isActive,
     )
 
     fun toEntity(recurring: Recurring): RecurringEntity = RecurringEntity(
@@ -46,5 +47,6 @@ class RecurringMapper {
         creditCardId = recurring.creditCard?.id,
         createdAt = recurring.createdAt,
         lastHandledYearMonth = recurring.lastHandledYearMonth?.toString(),
+        isActive = recurring.isActive,
     )
 }

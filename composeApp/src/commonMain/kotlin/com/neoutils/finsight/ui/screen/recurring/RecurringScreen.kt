@@ -39,6 +39,10 @@ import com.neoutils.finsight.resources.recurring_card_monthly_amount
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_filter_all
 import com.neoutils.finsight.resources.recurring_income
+import com.neoutils.finsight.resources.recurring_filter_status_active
+import com.neoutils.finsight.resources.recurring_filter_status_all
+import com.neoutils.finsight.resources.recurring_filter_status_inactive
+import com.neoutils.finsight.resources.recurring_status_inactive
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
@@ -49,6 +53,7 @@ import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -80,10 +85,16 @@ fun RecurringScreen(
                     }
                 },
                 actions = {
-                    RecurringFilterMenu(
-                        selectedFilter = uiState.selectedFilter,
-                        onFilterSelected = { viewModel.onAction(RecurringAction.SelectFilter(it)) },
-                    )
+                    Row {
+                        RecurringStatusFilterMenu(
+                            selectedFilter = uiState.selectedStatusFilter,
+                            onFilterSelected = { viewModel.onAction(RecurringAction.SelectStatusFilter(it)) },
+                        )
+                        RecurringFilterMenu(
+                            selectedFilter = uiState.selectedFilter,
+                            onFilterSelected = { viewModel.onAction(RecurringAction.SelectFilter(it)) },
+                        )
+                    }
                 }
             )
         },
@@ -125,6 +136,71 @@ fun RecurringScreen(
                             .animateItem(),
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecurringStatusFilterMenu(
+    selectedFilter: RecurringStatusFilter,
+    onFilterSelected: (RecurringStatusFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        CompositionLocalProvider(
+            LocalContentColor provides colorScheme.onBackground,
+            LocalTextStyle provides MaterialTheme.typography.labelLarge,
+        ) {
+            TextButton(
+                onClick = { menuExpanded = true },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Unspecified,
+                ),
+            ) {
+                Text(
+                    text = when (selectedFilter) {
+                        RecurringStatusFilter.ACTIVE -> stringResource(Res.string.recurring_filter_status_active)
+                        RecurringStatusFilter.INACTIVE -> stringResource(Res.string.recurring_filter_status_inactive)
+                        RecurringStatusFilter.ALL -> stringResource(Res.string.recurring_filter_status_all)
+                    },
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+        ) {
+            listOf(
+                RecurringStatusFilter.ACTIVE to stringResource(Res.string.recurring_filter_status_active),
+                RecurringStatusFilter.INACTIVE to stringResource(Res.string.recurring_filter_status_inactive),
+                RecurringStatusFilter.ALL to stringResource(Res.string.recurring_filter_status_all),
+            ).forEach { (filter, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    trailingIcon = if (selectedFilter == filter) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else null,
+                    onClick = {
+                        onFilterSelected(filter)
+                        menuExpanded = false
+                    },
+                )
             }
         }
     }
@@ -308,6 +384,14 @@ private fun RecurringCard(
                                 text = recurring.category.name,
                                 fontSize = 12.sp,
                                 color = colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (!recurring.isActive) {
+                            Text(
+                                text = stringResource(Res.string.recurring_status_inactive),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Warning,
                             )
                         }
                     }

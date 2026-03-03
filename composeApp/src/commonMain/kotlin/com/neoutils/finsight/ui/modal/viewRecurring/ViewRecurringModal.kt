@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -22,6 +23,8 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.recurring_expense
 import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_day
+import com.neoutils.finsight.resources.recurring_status_active
+import com.neoutils.finsight.resources.recurring_status_inactive
 import com.neoutils.finsight.resources.view_recurring_account_label
 import com.neoutils.finsight.resources.view_recurring_amount_label
 import com.neoutils.finsight.resources.view_recurring_category_label
@@ -29,15 +32,21 @@ import com.neoutils.finsight.resources.view_recurring_credit_card_label
 import com.neoutils.finsight.resources.view_recurring_day_label
 import com.neoutils.finsight.resources.view_recurring_delete
 import com.neoutils.finsight.resources.view_recurring_edit
+import com.neoutils.finsight.resources.view_recurring_reactivate
+import com.neoutils.finsight.resources.view_recurring_status_label
+import com.neoutils.finsight.resources.view_recurring_stop
 import com.neoutils.finsight.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
+import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
+import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 
 class ViewRecurringModal(
@@ -119,6 +128,15 @@ class ViewRecurringModal(
                     label = stringResource(Res.string.view_recurring_day_label),
                     value = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
                 )
+                DetailRow(
+                    label = stringResource(Res.string.view_recurring_status_label),
+                    value = if (recurring.isActive) {
+                        stringResource(Res.string.recurring_status_active)
+                    } else {
+                        stringResource(Res.string.recurring_status_inactive)
+                    },
+                    valueColor = if (recurring.isActive) Income else Warning,
+                )
                 recurring.account?.let {
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_account_label),
@@ -145,26 +163,50 @@ class ViewRecurringModal(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedButton(
-                    onClick = { manager.show(DeleteRecurringModal(recurring)) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(width = 1.dp, color = colorScheme.error),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_recurring_delete),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
+                if (recurring.isActive) {
+                    OutlinedButton(
+                        onClick = { manager.show(StopRecurringModal(recurring)) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Warning,
+                        ),
+                        border = BorderStroke(width = 1.dp, color = Warning),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = stringResource(Res.string.view_recurring_stop),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { manager.show(ReactivateRecurringModal(recurring)) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Income,
+                        ),
+                        border = BorderStroke(width = 1.dp, color = Income),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = stringResource(Res.string.view_recurring_reactivate),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 }
 
                 OutlinedButton(
@@ -184,6 +226,30 @@ class ViewRecurringModal(
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
                         text = stringResource(Res.string.view_recurring_edit),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+            }
+
+            if (!recurring.isActive) {
+                OutlinedButton(
+                    onClick = { manager.show(DeleteRecurringModal(recurring)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.error,
+                    ),
+                    border = BorderStroke(width = 1.dp, color = colorScheme.error),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(Res.string.view_recurring_delete),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                     )

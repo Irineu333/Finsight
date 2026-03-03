@@ -13,14 +13,17 @@ class RecurringViewModel(
     private val recurringRepository: IRecurringRepository,
 ) : ViewModel() {
     private val selectedFilter = MutableStateFlow(RecurringFilter.ALL)
+    private val selectedStatusFilter = MutableStateFlow(RecurringStatusFilter.ACTIVE)
 
     val uiState = combine(
         recurringRepository.observeAllRecurring(),
         selectedFilter,
-    ) { recurring, filter ->
+        selectedStatusFilter,
+    ) { recurring, filter, statusFilter ->
         RecurringUiState(
             recurring = recurring,
             selectedFilter = filter,
+            selectedStatusFilter = statusFilter,
         )
     }
         .stateIn(
@@ -32,6 +35,7 @@ class RecurringViewModel(
     fun onAction(action: RecurringAction) {
         when (action) {
             is RecurringAction.SelectFilter -> selectedFilter.value = action.filter
+            is RecurringAction.SelectStatusFilter -> selectedStatusFilter.value = action.filter
         }
     }
 }

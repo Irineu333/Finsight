@@ -19,7 +19,8 @@ class GetPendingRecurringUseCase {
             .toSet()
 
         return recurringList.filter { recurring ->
-            today.yearMonth.effectiveDay(recurring.dayOfMonth) <= today.day &&
+            recurring.isActive &&
+                today.yearMonth.effectiveDay(recurring.dayOfMonth) <= today.day &&
                 recurring.id !in handledRecurringIds
         }
     }

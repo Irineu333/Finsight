@@ -36,6 +36,8 @@ import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
+import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
+import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
@@ -396,6 +398,22 @@ val viewModelModule = module {
         DeleteRecurringViewModel(
             recurring = it.get(),
             recurringRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        StopRecurringViewModel(
+            recurring = it.get(),
+            stopRecurringUseCase = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        ReactivateRecurringViewModel(
+            recurring = it.get(),
+            reactivateRecurringUseCase = get(),
             modalManager = get(),
         )
     }

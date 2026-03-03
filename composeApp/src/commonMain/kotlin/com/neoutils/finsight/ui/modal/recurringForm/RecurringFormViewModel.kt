@@ -94,6 +94,7 @@ class RecurringFormViewModel(
             creditCard = if (target.isCreditCard) selectedCreditCard.value else null,
             createdAt = recurring?.createdAt,
             lastHandledYearMonth = recurring?.lastHandledYearMonth,
+            isActive = recurring?.isActive ?: true,
         ).onRight {
             modalManager.dismissAll()
         }

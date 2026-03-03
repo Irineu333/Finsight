@@ -49,6 +49,7 @@ data class RecurringEntity(
     val creditCardId: Long?,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val lastHandledYearMonth: String? = null,
+    val isActive: Boolean = true,
 ) {
     enum class Type { EXPENSE, INCOME }
 }

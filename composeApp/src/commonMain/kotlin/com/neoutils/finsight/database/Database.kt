@@ -157,11 +157,19 @@ val MIGRATION_3_9 = object : Migration(3, 9) {
     }
 }
 
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `recurring` ADD COLUMN `isActive` INTEGER NOT NULL DEFAULT 1"
+        )
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_9)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_9, MIGRATION_9_10)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

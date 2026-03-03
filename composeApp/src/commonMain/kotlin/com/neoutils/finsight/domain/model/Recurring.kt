@@ -13,4 +13,5 @@ data class Recurring(
     val creditCard: CreditCard?,
     val createdAt: Long,
     val lastHandledYearMonth: YearMonth? = null,
+    val isActive: Boolean = true,
 )

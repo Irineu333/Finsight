@@ -13,6 +13,7 @@ keystore.properties
 captures
 .externalNativeBuild
 .cxx
+
 # XcodeGen - Exclude generated Xcode project
 iosApp/iosApp.xcodeproj/
 
@@ -22,7 +23,3 @@ iosApp/iosApp.xcodeproj/
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 /composeApp/schemas/*
-/CLAUDE.md
-/.claude/
-/.agent/rules/code-style-guide.md
-/AGENTS.md

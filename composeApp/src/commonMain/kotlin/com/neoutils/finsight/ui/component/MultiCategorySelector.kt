@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.multi_category_selector_and
 import com.neoutils.finsight.resources.multi_category_selector_label
 import com.neoutils.finsight.resources.multi_category_selector_none
-import com.neoutils.finsight.resources.multi_category_selector_plural
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -29,11 +29,10 @@ fun MultiCategorySelector(
     var expanded by remember { mutableStateOf(false) }
 
     val noneLabel = stringResource(Res.string.multi_category_selector_none)
-    val pluralLabel = stringResource(Res.string.multi_category_selector_plural, selectedCategories.size)
+    val andLabel = stringResource(Res.string.multi_category_selector_and)
     val displayText = when {
         selectedCategories.isEmpty() -> noneLabel
-        selectedCategories.size == 1 -> selectedCategories.first().name
-        else -> pluralLabel
+        else -> selectedCategories.formatForDisplay(andLabel)
     }
 
     ExposedDropdownMenuBox(
@@ -98,5 +97,15 @@ fun MultiCategorySelector(
                 )
             }
         }
+    }
+}
+
+private fun List<Category>.formatForDisplay(andLabel: String): String {
+    val names = map(Category::name)
+    return when (names.size) {
+        0 -> ""
+        1 -> names.first()
+        2 -> names.joinToString(separator = " $andLabel ")
+        else -> names.dropLast(1).joinToString(", ") + " $andLabel " + names.last()
     }
 }

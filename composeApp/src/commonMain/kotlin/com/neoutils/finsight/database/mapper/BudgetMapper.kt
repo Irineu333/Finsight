@@ -10,7 +10,7 @@ class BudgetMapper {
             id = entity.id,
             title = entity.title,
             categories = categories,
-            iconCategoryId = entity.iconCategoryId,
+            iconKey = entity.iconKey,
             amount = entity.amount,
             createdAt = entity.createdAt,
         )
@@ -20,7 +20,8 @@ class BudgetMapper {
         return BudgetEntity(
             id = domain.id,
             categoryId = domain.categories.firstOrNull()?.id ?: 0,
-            iconCategoryId = domain.iconCategoryId,
+            iconCategoryId = domain.categories.firstOrNull()?.id ?: 0,
+            iconKey = domain.iconKey,
             title = domain.title,
             amount = domain.amount,
             period = "MONTHLY",

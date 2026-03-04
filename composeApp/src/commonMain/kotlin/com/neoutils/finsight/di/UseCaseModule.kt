@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
+import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
@@ -184,6 +185,12 @@ val useCaseModules = module {
 
     factory {
         ValidateAccountNameUseCase(
+            repository = get(),
+        )
+    }
+
+    factory {
+        ValidateBudgetTitleUseCase(
             repository = get(),
         )
     }

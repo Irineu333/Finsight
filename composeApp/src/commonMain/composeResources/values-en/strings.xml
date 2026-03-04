@@ -51,6 +51,8 @@
     <string name="dashboard_installments">Installments</string>
     <string name="dashboard_default">Default</string>
     <string name="dashboard_current_balance">Current Balance</string>
+    <string name="dashboard_total_balance">Total balance</string>
+    <string name="dashboard_add_account">Add account</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>

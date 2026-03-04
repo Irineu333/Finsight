@@ -15,6 +15,10 @@
     <string name="category_error_empty_name">Category name cannot be empty.</string>
     <string name="category_error_already_exist">A category with this name already exists.</string>
 
+    <!-- Budget errors -->
+    <string name="budget_error_empty_title">Budget title cannot be empty.</string>
+    <string name="budget_error_already_exist">A budget with this title already exists.</string>
+
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">Card name is required.</string>
     <string name="credit_card_error_already_exist_name">A card with this name already exists.</string>
@@ -181,6 +185,9 @@
     <string name="category_form_new_title">New Category</string>
     <string name="category_form_name_label">Name</string>
     <string name="category_form_icon_label">Icon</string>
+    <string name="category_form_icon_select">Select icon</string>
+    <string name="category_form_icon_helper">Tap to open the icon list</string>
+    <string name="category_form_icon_modal_title">Choose an icon</string>
     <string name="category_form_expense">Expense</string>
     <string name="category_form_income">Income</string>
     <string name="category_form_save">Save</string>
@@ -192,6 +199,8 @@
     <string name="budget_form_new_title">New Budget</string>
     <string name="budget_form_title_label">Title</string>
     <string name="budget_form_icon_label">Budget icon</string>
+    <string name="budget_form_icon_helper">Tap to open the icon list</string>
+    <string name="budget_form_icon_modal_title">Choose a budget icon</string>
     <string name="budget_form_limit_label">Limit</string>
     <string name="budget_form_save">Save</string>
 
@@ -389,6 +398,7 @@
     <string name="invoice_navigator_label">Invoice</string>
 
     <string name="multi_category_selector_none">None</string>
+    <string name="multi_category_selector_and">and</string>
     <string name="multi_category_selector_plural">%1$d categories</string>
     <string name="multi_category_selector_label">Categories</string>
 

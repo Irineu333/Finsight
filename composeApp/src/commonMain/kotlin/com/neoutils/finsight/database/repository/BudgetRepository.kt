@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 
 class BudgetRepository(
     private val dao: BudgetDao,
@@ -30,6 +31,10 @@ class BudgetRepository(
                 mapper.toDomain(entity, entityCategories)
             }
         }
+    }
+
+    override suspend fun getAllBudgets(): List<Budget> {
+        return observeAllBudgets().first()
     }
 
     override suspend fun insert(budget: Budget) {

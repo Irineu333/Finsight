@@ -22,6 +22,7 @@ import kotlin.time.ExperimentalTime
 
 class CategoryFormViewModel(
     private val category: Category?,
+    private val initialType: Category.Type?,
     private val repository: ICategoryRepository,
     private val validateCategoryName: ValidateCategoryNameUseCase,
     private val modalManager: ModalManager,
@@ -43,7 +44,7 @@ class CategoryFormViewModel(
     )
 
     private val type = MutableStateFlow(
-        category?.type ?: Category.Type.EXPENSE
+        category?.type ?: initialType ?: Category.Type.EXPENSE
     )
 
     private val icon = MutableStateFlow(

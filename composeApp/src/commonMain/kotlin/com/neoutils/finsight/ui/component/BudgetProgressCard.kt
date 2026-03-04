@@ -73,15 +73,13 @@ private fun BudgetProgressRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        progress.budget.iconCategory?.let { category ->
-            CategoryIconBox(
-                category = category,
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(8.dp),
-                modifier = Modifier.size(40.dp),
-                color = accentColor,
-            )
-        }
+        CategoryIconBox(
+            icon = progress.budget.icon,
+            tint = accentColor,
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.size(40.dp),
+        )
 
         Column(
             modifier = Modifier

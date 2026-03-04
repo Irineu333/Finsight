@@ -15,6 +15,10 @@
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
 
+    <!-- Budget errors -->
+    <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
+    <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
+
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
     <string name="credit_card_error_already_exist_name">Já existe um cartão com esse nome.</string>
@@ -181,6 +185,9 @@
     <string name="category_form_new_title">Nova Categoria</string>
     <string name="category_form_name_label">Nome</string>
     <string name="category_form_icon_label">Ícone</string>
+    <string name="category_form_icon_select">Selecionar ícone</string>
+    <string name="category_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="category_form_icon_modal_title">Escolha um ícone</string>
     <string name="category_form_expense">Despesa</string>
     <string name="category_form_income">Receita</string>
     <string name="category_form_save">Salvar</string>
@@ -192,6 +199,8 @@
     <string name="budget_form_new_title">Novo Orçamento</string>
     <string name="budget_form_title_label">Título</string>
     <string name="budget_form_icon_label">Ícone do orçamento</string>
+    <string name="budget_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="budget_form_icon_modal_title">Escolha um ícone para o orçamento</string>
     <string name="budget_form_limit_label">Limite</string>
     <string name="budget_form_save">Salvar</string>
 
@@ -390,6 +399,7 @@
     <string name="invoice_navigator_label">Fatura</string>
 
     <string name="multi_category_selector_none">Nenhuma</string>
+    <string name="multi_category_selector_and">e</string>
     <string name="multi_category_selector_plural">%1$d categorias</string>
     <string name="multi_category_selector_label">Categorias</string>
 

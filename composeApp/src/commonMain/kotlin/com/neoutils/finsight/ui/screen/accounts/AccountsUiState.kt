@@ -15,6 +15,7 @@ data class AccountsUiState(
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
+    val showRecurringOnly: Boolean = false,
 )
 
 data class AccountUi(

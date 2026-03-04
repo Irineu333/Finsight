@@ -8,6 +8,8 @@ import com.neoutils.finsight.database.repository.CreditCardRepository
 import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.database.repository.InstallmentRepository
 import com.neoutils.finsight.database.repository.OperationRepository
+import com.neoutils.finsight.database.repository.RecurringRepository
+import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
@@ -16,6 +18,8 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.russhwolf.settings.Settings
@@ -85,12 +89,32 @@ val repositoryModule = module {
         OperationRepository(
             operationDao = get(),
             transactionDao = get(),
+            recurringDao = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             installmentRepository = get(),
             accountRepository = get(),
+            operationMapper = get(),
+            recurringMapper = get(),
             transactionMapper = get(),
+        )
+    }
+
+    single<IRecurringRepository> {
+        RecurringRepository(
+            dao = get(),
+            mapper = get(),
+            categoryRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+        )
+    }
+
+    single<IRecurringOccurrenceRepository> {
+        RecurringOccurrenceRepository(
+            dao = get(),
+            mapper = get(),
         )
     }
 }

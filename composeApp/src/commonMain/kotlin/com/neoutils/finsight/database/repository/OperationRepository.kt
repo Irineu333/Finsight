@@ -2,12 +2,20 @@
 
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.entity.OperationEntity
-import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.database.mapper.OperationMapper
+import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -18,17 +26,21 @@ import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine as flowCombine
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
 class OperationRepository(
     private val operationDao: OperationDao,
     private val transactionDao: TransactionDao,
+    private val recurringDao: RecurringDao,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
+    private val operationMapper: OperationMapper,
+    private val recurringMapper: RecurringMapper,
     private val transactionMapper: TransactionMapper,
 ) : IOperationRepository {
 
@@ -37,6 +49,22 @@ class OperationRepository(
     private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
     private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
     private val accountsFlow = accountRepository.observeAllAccounts().map { it.associateBy { account -> account.id } }
+
+    private val recurringFlow = flowCombine(
+        recurringDao.observeAll(),
+        categoriesFlow,
+        accountsFlow,
+        creditCardsFlow,
+    ) { entities, categories, accounts, creditCards ->
+        entities.associate { entity ->
+            entity.id to recurringMapper.toDomain(
+                entity = entity,
+                category = entity.categoryId?.let { categories[it] },
+                account = entity.accountId?.let { accounts[it] },
+                creditCard = entity.creditCardId?.let { creditCards[it] },
+            )
+        }
+    }
 
     override fun observeAllOperations(): Flow<List<Operation>> {
         return combine(
@@ -47,12 +75,13 @@ class OperationRepository(
             invoicesFlow,
             installmentsFlow,
             accountsFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts ->
+            recurringFlow,
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
-                toDomain(
-                    operation = operation,
+                operationMapper.toDomain(
+                    entity = operation,
                     transactions = operationTransactions.map { entity ->
                         transactionMapper.toDomain(
                             entity = entity,
@@ -67,6 +96,7 @@ class OperationRepository(
                     invoices = invoices,
                     installments = installments,
                     accounts = accounts,
+                    recurring = recurring,
                 )
             }
         }
@@ -91,12 +121,13 @@ class OperationRepository(
             invoicesFlow,
             installmentsFlow,
             accountsFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts ->
+            recurringFlow,
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
-                toDomain(
-                    operation = operation,
+                operationMapper.toDomain(
+                    entity = operation,
                     transactions = operationTransactions.map { entity ->
                         transactionMapper.toDomain(
                             entity = entity,
@@ -111,6 +142,7 @@ class OperationRepository(
                     invoices = invoices,
                     installments = installments,
                     accounts = accounts,
+                    recurring = recurring,
                 )
             }
         }
@@ -123,6 +155,15 @@ class OperationRepository(
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
         val installments = installmentRepository.getAllInstallments().associateBy { it.id }
         val accounts = accountRepository.getAllAccounts().associateBy { it.id }
+        val recurring = recurringDao.getAll()
+            .associate { entity ->
+                entity.id to recurringMapper.toDomain(
+                    entity = entity,
+                    category = entity.categoryId?.let { categories[it] },
+                    account = entity.accountId?.let { accounts[it] },
+                    creditCard = entity.creditCardId?.let { creditCards[it] },
+                )
+            }
         return operations.mapNotNull { operation ->
             val transactions = transactionDao
                 .getTransactionsByOperationId(operation.id)
@@ -135,14 +176,15 @@ class OperationRepository(
                         account = accounts[entity.accountId],
                     )
                 }
-            toDomain(
-                operation = operation,
+            operationMapper.toDomain(
+                entity = operation,
                 transactions = transactions,
                 categories = categories,
                 creditCards = creditCards,
                 invoices = invoices,
                 installments = installments,
                 accounts = accounts,
+                recurring = recurring,
             )
         }
     }
@@ -154,6 +196,15 @@ class OperationRepository(
         val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
         val installments = installmentRepository.getAllInstallments().associateBy { it.id }
         val accounts = accountRepository.getAllAccounts().associateBy { it.id }
+        val recurring = recurringDao.getAll()
+            .associate { entity ->
+                entity.id to recurringMapper.toDomain(
+                    entity = entity,
+                    category = entity.categoryId?.let { categories[it] },
+                    account = entity.accountId?.let { accounts[it] },
+                    creditCard = entity.creditCardId?.let { creditCards[it] },
+                )
+            }
         val transactions = transactionDao.getTransactionsByOperationId(id).map { entity ->
             transactionMapper.toDomain(
                 entity = entity,
@@ -163,14 +214,15 @@ class OperationRepository(
                 account = accounts[entity.accountId],
             )
         }
-        return toDomain(
-            operation = operation,
+        return operationMapper.toDomain(
+            entity = operation,
             transactions = transactions,
             categories = categories,
             creditCards = creditCards,
             invoices = invoices,
             installments = installments,
             accounts = accounts,
+            recurring = recurring,
         )
     }
 
@@ -182,19 +234,23 @@ class OperationRepository(
         sourceAccountId: Long?,
         targetCreditCardId: Long?,
         targetInvoiceId: Long?,
+        recurringId: Long?,
+        recurringCycle: Int?,
         installmentId: Long?,
         installmentNumber: Int?,
         transactions: List<Transaction>,
     ): Operation {
         val operationId = operationDao.insert(
             OperationEntity(
-                kind = toEntity(kind),
+                kind = operationMapper.toEntity(kind),
                 title = title,
                 date = date,
                 categoryId = categoryId,
                 sourceAccountId = sourceAccountId,
                 targetCreditCardId = targetCreditCardId,
                 targetInvoiceId = targetInvoiceId,
+                recurringId = recurringId,
+                recurringCycle = recurringCycle,
                 installmentId = installmentId,
                 installmentNumber = installmentNumber,
             )
@@ -255,53 +311,5 @@ class OperationRepository(
 
     override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) {
         operationDao.deleteTransactionsByCreditCardId(creditCardId)
-    }
-
-    private fun toDomain(
-        operation: OperationEntity,
-        transactions: List<Transaction>,
-        categories: Map<Long, com.neoutils.finsight.domain.model.Category>,
-        creditCards: Map<Long, com.neoutils.finsight.domain.model.CreditCard>,
-        invoices: Map<Long, com.neoutils.finsight.domain.model.Invoice>,
-        installments: Map<Long, Installment>,
-        accounts: Map<Long, com.neoutils.finsight.domain.model.Account>,
-    ): Operation? {
-        if (transactions.isEmpty()) return null
-        val primaryTransaction = transactions
-            .firstOrNull { it.target == Transaction.Target.ACCOUNT }
-            ?: transactions.first()
-
-        return Operation(
-            id = operation.id,
-            kind = toDomain(operation.kind),
-            title = operation.title ?: primaryTransaction.title,
-            date = primaryTransaction.date,
-            category = operation.categoryId?.let { categories[it] } ?: primaryTransaction.category,
-            sourceAccount = operation.sourceAccountId?.let { accounts[it] },
-            targetCreditCard = operation.targetCreditCardId?.let { creditCards[it] },
-            targetInvoice = operation.targetInvoiceId?.let { invoices[it] },
-            installment = operation.installmentNumber?.let { number ->
-                operation.installmentId?.let { installmentId ->
-                    installments[installmentId]?.copy(number = number)
-                }
-            },
-            transactions = transactions.sortedByDescending { it.id },
-        )
-    }
-
-    private fun toDomain(kind: OperationEntity.Kind): Operation.Kind {
-        return when (kind) {
-            OperationEntity.Kind.TRANSACTION -> Operation.Kind.TRANSACTION
-            OperationEntity.Kind.PAYMENT -> Operation.Kind.PAYMENT
-            OperationEntity.Kind.TRANSFER -> Operation.Kind.TRANSFER
-        }
-    }
-
-    private fun toEntity(kind: Operation.Kind): OperationEntity.Kind {
-        return when (kind) {
-            Operation.Kind.TRANSACTION -> OperationEntity.Kind.TRANSACTION
-            Operation.Kind.PAYMENT -> OperationEntity.Kind.PAYMENT
-            Operation.Kind.TRANSFER -> OperationEntity.Kind.TRANSFER
-        }
     }
 }

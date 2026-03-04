@@ -92,187 +92,189 @@ class EditTransactionModal(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(Res.string.edit_transaction_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TypeToggle(
-                selectedType = type,
-                onTypeSelected = {
-                    type = it
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                state = title,
-                label = {
-                    Text(text = stringResource(Res.string.edit_transaction_title_label))
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            AnimatedVisibility(type.isExpense) {
-                TargetSelector(
-                    selectedTarget = target,
-                    onTargetSelected = { target = it },
-                    availableTargets = uiState.targets,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                )
-            }
-
-            AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD
+        Box {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CreditCardSelector(
-                    creditCards = uiState.creditCards,
-                    creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
+                Text(
+                    text = stringResource(Res.string.edit_transaction_title),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
                 )
-            }
 
-            AnimatedVisibility(
-                visible = target == Transaction.Target.ACCOUNT || type.isIncome
-            ) {
-                AccountSelector(
-                    selectedAccount = uiState.selectedAccount,
-                    accounts = uiState.accounts,
-                    onAccountSelected = {
-                        viewModel.selectAccount(it)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TypeToggle(
+                    selectedType = type,
+                    onTypeSelected = {
+                        type = it
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    state = title,
+                    label = {
+                        Text(text = stringResource(Res.string.edit_transaction_title_label))
                     },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
 
-            AnimatedVisibility(
-                type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
-            ) {
-                uiState.invoiceSelection?.let { selection ->
-                    InvoiceMonthNavigator(
-                        selection = selection,
-                        onNavigate = { viewModel.navigateToMonth(it) },
+                AnimatedVisibility(type.isExpense) {
+                    TargetSelector(
+                        selectedTarget = target,
+                        onTargetSelected = { target = it },
+                        availableTargets = uiState.targets,
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                AnimatedVisibility(
+                    type.isExpense && target == Transaction.Target.CREDIT_CARD
+                ) {
+                    CreditCardSelector(
+                        creditCards = uiState.creditCards,
+                        creditCard = uiState.selectedCreditCard,
+                        onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
-            CategorySelector(
-                selectedCategory = selectedCategory,
-                categories = when (type) {
-                    Transaction.Type.INCOME -> uiState.incomeCategories
-                    Transaction.Type.EXPENSE -> uiState.expenseCategories
-                    else -> emptyList()
-                },
-                onCategorySelected = { selectedCategory = it },
-                modifier = Modifier.fillMaxWidth()
-            )
+                AnimatedVisibility(
+                    visible = target == Transaction.Target.ACCOUNT || type.isIncome
+                ) {
+                    AccountSelector(
+                        selectedAccount = uiState.selectedAccount,
+                        accounts = uiState.accounts,
+                        onAccountSelected = {
+                            viewModel.selectAccount(it)
+                        },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                state = amount,
-                label = {
-                    Text(text = stringResource(Res.string.edit_transaction_amount_label))
-                },
-                inputTransformation = rememberMoneyInputTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
-                ),
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                state = date,
-                label = {
-                    Text(text = stringResource(Res.string.edit_transaction_date_label))
-                },
-                inputTransformation = DateInputTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            manager.show(
-                                DatePickerModal(
-                                    initialDate = dayMonthYear.parse(date.text.toString()),
-                                    maxDate = currentDate,
-                                    onDateSelected = { selectedDate ->
-                                        date.edit {
-                                            replace(0, length, dayMonthYear.format(selectedDate))
-                                        }
-                                    }
-                                )
-                            )
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.TwoTone.CalendarToday,
-                            contentDescription = null,
-                            tint = colorScheme.primary,
+                AnimatedVisibility(
+                    type.isExpense && target == Transaction.Target.CREDIT_CARD && uiState.invoiceSelection != null
+                ) {
+                    uiState.invoiceSelection?.let { selection ->
+                        InvoiceMonthNavigator(
+                            selection = selection,
+                            onNavigate = { viewModel.navigateToMonth(it) },
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
                         )
                     }
-                },
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth()
-            )
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = {
-                    viewModel.updateTransaction(
-                        form = form
-                    )
-                },
-                enabled = form.isValid() && !uiState.isInvoiceBlocked,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.edit_transaction_save),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                CategorySelector(
+                    selectedCategory = selectedCategory,
+                    categories = when (type) {
+                        Transaction.Type.INCOME -> uiState.incomeCategories
+                        Transaction.Type.EXPENSE -> uiState.expenseCategories
+                        else -> emptyList()
+                    },
+                    onCategorySelected = { selectedCategory = it },
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    state = amount,
+                    label = {
+                        Text(text = stringResource(Res.string.edit_transaction_amount_label))
+                    },
+                    inputTransformation = rememberMoneyInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    state = date,
+                    label = {
+                        Text(text = stringResource(Res.string.edit_transaction_date_label))
+                    },
+                    inputTransformation = DateInputTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = {
+                                manager.show(
+                                    DatePickerModal(
+                                        initialDate = dayMonthYear.parse(date.text.toString()),
+                                        maxDate = currentDate,
+                                        onDateSelected = { selectedDate ->
+                                            date.edit {
+                                                replace(0, length, dayMonthYear.format(selectedDate))
+                                            }
+                                        }
+                                    )
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.TwoTone.CalendarToday,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.updateTransaction(
+                            form = form
+                        )
+                    },
+                    enabled = form.isValid() && !uiState.isInvoiceBlocked,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = stringResource(Res.string.edit_transaction_save),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

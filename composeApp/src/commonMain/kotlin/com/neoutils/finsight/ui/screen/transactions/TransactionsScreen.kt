@@ -105,7 +105,6 @@ private fun TransactionsContent(
                     uiState = uiState,
                     onAction = onAction,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .animateItem()
                 )
@@ -160,7 +159,11 @@ private fun FiltersRow(
     onAction: (TransactionsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyRow(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         item(
             key = "category_filter"
         ) {
@@ -191,6 +194,17 @@ private fun FiltersRow(
                 TargetFilterChip(
                     selectedTarget = uiState.selectedTarget,
                     onAction = onAction
+                )
+            }
+        }
+
+        item(
+            key = "recurring_filter"
+        ) {
+            Box {
+                RecurringFilterChip(
+                    enabled = uiState.showRecurringOnly,
+                    onAction = onAction,
                 )
             }
         }
@@ -328,6 +342,20 @@ private fun TypeFilterChip(
             )
         }
     }
+}
+
+@Composable
+private fun RecurringFilterChip(
+    enabled: Boolean,
+    onAction: (TransactionsAction) -> Unit,
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(TransactionsAction.ToggleRecurring(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
 }
 
 @Composable

@@ -43,6 +43,7 @@ class CreditCardsViewModel(
         CreditCardsFilters(
             category = null,
             type = null,
+            recurringOnly = false,
         )
     )
 
@@ -74,10 +75,10 @@ class CreditCardsViewModel(
         selectedCardIndex,
         filters,
     ) { creditCards, operations, invoices, categories, index, currentFilters ->
-
         val filteredOperations = operations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
+            .filter(currentFilters.recurringOnly)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -96,6 +97,7 @@ class CreditCardsViewModel(
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
+            showRecurringOnly = currentFilters.recurringOnly,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -118,6 +120,10 @@ class CreditCardsViewModel(
             is CreditCardsAction.SelectType -> {
                 filters.value = filters.value.copy(type = action.type)
             }
+
+            is CreditCardsAction.ToggleRecurring -> {
+                filters.value = filters.value.copy(recurringOnly = action.enabled)
+            }
         }
     }
 }
@@ -125,6 +131,7 @@ class CreditCardsViewModel(
 private data class CreditCardsFilters(
     val category: Category?,
     val type: Transaction.Type?,
+    val recurringOnly: Boolean,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -137,4 +144,9 @@ private fun List<Operation>.filter(category: Category?): List<Operation> {
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
     return filter { operation -> operation.type == type }
+}
+
+private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+    if (!recurringOnly) return this
+    return filter { operation -> operation.recurring != null }
 }

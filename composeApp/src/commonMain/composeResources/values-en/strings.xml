@@ -63,6 +63,7 @@
     <string name="transactions_filter_account">Account</string>
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>
+    <string name="transactions_filter_recurring">Recurring</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Installments</string>
@@ -325,6 +326,8 @@
     <string name="view_operation_card_label">Card</string>
     <string name="view_operation_invoice_label">Invoice</string>
     <string name="view_operation_installment_label">Installment</string>
+    <string name="view_operation_recurring_label">Recurring</string>
+    <string name="view_operation_recurring_cycle_value">Cycle %1$d</string>
     <string name="view_operation_deleted">Deleted</string>
     <string name="view_operation_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
     <string name="view_operation_delete">Delete</string>
@@ -484,4 +487,75 @@
     <!-- Date picker -->
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancel</string>
+
+    <!-- Dashboard - Recurring -->
+    <string name="dashboard_recurring">Recurring</string>
+    <string name="dashboard_pending_recurring">Pending</string>
+
+    <!-- Recurring Screen -->
+    <string name="recurring_screen_title">Recurring</string>
+    <string name="recurring_screen_empty">No recurring transactions</string>
+    <string name="recurring_screen_create">Create recurring</string>
+    <string name="recurring_screen_day">Day %1$d</string>
+    <string name="recurring_filter_all">All</string>
+    <string name="recurring_filter_status_active">Active</string>
+    <string name="recurring_filter_status_inactive">Inactive</string>
+    <string name="recurring_filter_status_all">All</string>
+    <string name="recurring_expense">Expense</string>
+    <string name="recurring_income">Income</string>
+    <string name="recurring_card_monthly_amount">Monthly amount</string>
+
+    <!-- Recurring Form Modal -->
+    <string name="recurring_form_title_label">Title</string>
+    <string name="recurring_form_amount_label">Amount</string>
+    <string name="recurring_form_day_label">Day of month</string>
+    <string name="recurring_form_save">Save</string>
+    <string name="recurring_form_delete">Delete Recurring</string>
+
+    <!-- Confirm Recurring Modal -->
+    <string name="recurring_confirm_subtitle">Review and confirm the entry</string>
+    <string name="recurring_confirm_amount_label">Amount</string>
+    <string name="recurring_confirm_date_label">Date</string>
+    <string name="recurring_confirm_button">Confirm</string>
+    <string name="recurring_confirm_skip">Skip</string>
+
+    <!-- Recurring status -->
+    <string name="recurring_status_active">Active</string>
+    <string name="recurring_status_pending">Pending</string>
+    <string name="recurring_status_inactive">Inactive</string>
+
+    <!-- View Recurring Modal -->
+    <string name="view_recurring_type_label">Type</string>
+    <string name="view_recurring_amount_label">Amount</string>
+    <string name="view_recurring_day_label">Day of month</string>
+    <string name="view_recurring_status_label">Status</string>
+    <string name="view_recurring_account_label">Account</string>
+    <string name="view_recurring_credit_card_label">Credit card</string>
+    <string name="view_recurring_category_label">Category</string>
+    <string name="view_recurring_reactivate">Reactivate</string>
+    <string name="view_recurring_stop">Stop</string>
+    <string name="view_recurring_delete">Delete</string>
+    <string name="view_recurring_edit">Edit</string>
+
+    <!-- Reactivate Recurring Modal -->
+    <string name="reactivate_recurring_title">Reactivate recurring</string>
+    <string name="reactivate_recurring_message">Do you want to reactivate "%1$s"? New pending items will be generated from this recurring entry again.</string>
+    <string name="reactivate_recurring_confirm">Reactivate</string>
+
+    <!-- Stop Recurring Modal -->
+    <string name="stop_recurring_title">Stop recurring</string>
+    <string name="stop_recurring_message">Do you want to stop "%1$s"? Existing entries will stay linked, but no new pending items will be created.</string>
+    <string name="stop_recurring_confirm">Stop</string>
+
+    <!-- Delete Recurring Modal -->
+    <string name="delete_recurring_title">Delete recurring</string>
+    <string name="delete_recurring_message">Do you want to delete "%1$s"? This action cannot be undone.</string>
+    <string name="delete_recurring_confirm">Delete</string>
+
+    <!-- Recurring Errors -->
+    <string name="recurring_error_amount_required">Amount is required.</string>
+    <string name="recurring_error_amount_zero">Amount cannot be zero.</string>
+    <string name="recurring_error_title_or_category_required">Provide a title or category.</string>
+    <string name="recurring_error_invalid_day">Day must be between 1 and 31.</string>
+    <string name="recurring_error_account_required">Account is required.</string>
 </resources>

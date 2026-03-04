@@ -7,6 +7,8 @@ import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.OperationDao
+import com.neoutils.finsight.database.dao.RecurringDao
+import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
 import org.koin.core.module.Module
@@ -23,7 +25,8 @@ val databaseModule = module {
     single<AccountDao> { get<AppDatabase>().accountDao() }
     single<InstallmentDao> { get<AppDatabase>().installmentDao() }
     single<BudgetDao> { get<AppDatabase>().budgetDao() }
+    single<RecurringDao> { get<AppDatabase>().recurringDao() }
+    single<RecurringOccurrenceDao> { get<AppDatabase>().recurringOccurrenceDao() }
 }
 
 expect val databasePlatformModule: Module
-

@@ -80,6 +80,7 @@ import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
 import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
+import com.neoutils.finsight.resources.transactions_filter_recurring
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -231,7 +232,6 @@ private fun InvoiceTransactionsContent(
                     uiState = uiState,
                     onAction = onAction,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
                         .animateItem()
                 )
@@ -647,7 +647,11 @@ private fun FiltersRow(
     onAction: (InvoiceTransactionsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyRow(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         item(
             key = "category_filter"
         ) {
@@ -666,6 +670,17 @@ private fun FiltersRow(
             Box {
                 TypeFilterChip(
                     selectedType = uiState.selectedType,
+                    onAction = onAction
+                )
+            }
+        }
+
+        item(
+            key = "recurring_filter"
+        ) {
+            Box {
+                RecurringFilterChip(
+                    enabled = uiState.showRecurringOnly,
                     onAction = onAction
                 )
             }
@@ -799,4 +814,18 @@ private fun TypeFilterChip(
             )
         }
     }
+}
+
+@Composable
+private fun RecurringFilterChip(
+    enabled: Boolean,
+    onAction: (InvoiceTransactionsAction) -> Unit
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(InvoiceTransactionsAction.ToggleRecurring(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
 }

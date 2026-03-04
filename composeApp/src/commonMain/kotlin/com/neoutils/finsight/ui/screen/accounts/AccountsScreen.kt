@@ -80,6 +80,7 @@ import com.neoutils.finsight.resources.accounts_initial_balance
 import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
+import com.neoutils.finsight.resources.transactions_filter_recurring
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -223,7 +224,6 @@ private fun AccountsContent(
                         uiState = uiState,
                         onAction = onAction,
                         modifier = Modifier
-                            .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem()
                     )
@@ -375,7 +375,7 @@ private fun AccountCard(
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_initial_balance),
                 amount = initialBalance,
-                color = Color.White,
+                color = colorScheme.onSurface,
                 signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
                 onEditClick = onEditInitialBalance
             )
@@ -623,7 +623,11 @@ private fun FiltersRow(
     onAction: (AccountsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyRow(
+        modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         item(
             key = "category_filter"
         ) {
@@ -642,6 +646,17 @@ private fun FiltersRow(
             Box {
                 TypeFilterChip(
                     selectedType = uiState.selectedType,
+                    onAction = onAction
+                )
+            }
+        }
+
+        item(
+            key = "recurring_filter"
+        ) {
+            Box {
+                RecurringFilterChip(
+                    enabled = uiState.showRecurringOnly,
                     onAction = onAction
                 )
             }
@@ -844,6 +859,20 @@ private fun TypeFilterChip(
         )
 
     }
+}
+
+@Composable
+private fun RecurringFilterChip(
+    enabled: Boolean,
+    onAction: (AccountsAction) -> Unit
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(AccountsAction.ToggleRecurring(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
 }
 
 private enum class AccountSignDisplay {

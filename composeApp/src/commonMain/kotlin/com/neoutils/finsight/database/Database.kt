@@ -15,7 +15,6 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                 "`categoryId` INTEGER NOT NULL, " +
                 "`iconCategoryId` INTEGER NOT NULL, " +
-                "`iconKey` TEXT NOT NULL DEFAULT 'default', " +
                 "`title` TEXT NOT NULL, " +
                 "`amount` REAL NOT NULL, " +
                 "`period` TEXT NOT NULL, " +

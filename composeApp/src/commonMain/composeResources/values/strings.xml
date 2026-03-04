@@ -51,6 +51,8 @@
     <string name="dashboard_installments">Parcelamentos</string>
     <string name="dashboard_default">Padrão</string>
     <string name="dashboard_current_balance">Saldo Atual</string>
+    <string name="dashboard_total_balance">Saldo total</string>
+    <string name="dashboard_add_account">Adicionar conta</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

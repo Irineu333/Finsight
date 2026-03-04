@@ -6,10 +6,11 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -29,25 +30,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.ui.component.*
+import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
-import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
-import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.domain.model.Recurring
@@ -55,13 +55,14 @@ import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
 import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_current_balance
 import com.neoutils.finsight.resources.dashboard_default
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_pending_recurring
+import com.neoutils.finsight.resources.dashboard_add_account
 import com.neoutils.finsight.resources.dashboard_recents
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_see_all
+import com.neoutils.finsight.resources.dashboard_total_balance
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -134,10 +135,6 @@ private fun DashboardContent(
         pageCount = { uiState.creditCards.size }
     )
 
-    val accountPagerState = rememberPagerState(
-        pageCount = { uiState.accounts.size }
-    )
-
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
@@ -149,24 +146,13 @@ private fun DashboardContent(
             .padding(paddingValues),
     ) {
         item(
-            key = "accounts_pager",
+            key = "total_balance",
         ) {
-            DashboardAccountPager(
-                accounts = uiState.accounts,
-                pagerState = accountPagerState,
-                onAccountClick = { accountId ->
-                    navigator.navigate(NavigationAction.Accounts(accountId = accountId))
-                },
-                onEditBalance = { account ->
-                    modalManager.show(
-                        EditAccountBalanceModal(
-                            type = EditAccountBalanceModal.Type.CURRENT,
-                            account = account,
-                        )
-                    )
-                },
+            TotalBalanceCard(
+                balance = uiState.balance.balance,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
                     .animateItem()
             )
         }
@@ -203,6 +189,25 @@ private fun DashboardContent(
             }
         }
 
+        if (uiState.accounts.size > 1) {
+            item(key = "accounts_overview") {
+                DashboardAccountsRow(
+                    accounts = uiState.accounts,
+                    onOpenAccounts = onOpenAccounts,
+                    onAccountClick = { accountId ->
+                        navigator.navigate(NavigationAction.Accounts(accountId = accountId))
+                    },
+                    onAddAccount = {
+                        modalManager.show(AccountFormModal())
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .animateItem(),
+                )
+            }
+        }
+
         if (uiState.creditCards.isNotEmpty()) {
             item(
                 key = "credit_cards_pager",
@@ -214,6 +219,23 @@ private fun DashboardContent(
                         .animateItem(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.dashboard_credit_cards),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        TextButton(onClick = onOpenCreditCards) {
+                            Text(text = stringResource(Res.string.dashboard_see_all))
+                        }
+                    }
+
                     HorizontalPager(
                         state = creditCardPagerState,
                         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -308,6 +330,7 @@ private fun DashboardContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
                             )
+
                             SpendingPage.Budgets -> BudgetProgressCard(
                                 budgetProgress = uiState.budgetProgress,
                                 modifier = Modifier.fillMaxWidth(),
@@ -717,6 +740,213 @@ private fun PendingRecurringCard(
 private enum class SpendingPage { Categories, Budgets }
 
 @Composable
+private fun TotalBalanceCard(
+    balance: Double,
+    modifier: Modifier = Modifier,
+) {
+    val formatter = LocalCurrencyFormatter.current
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 22.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.dashboard_total_balance),
+                style = MaterialTheme.typography.titleMedium,
+                color = colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = formatter.format(balance),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardAccountsRow(
+    accounts: List<DashboardAccountUi>,
+    onOpenAccounts: () -> Unit,
+    onAccountClick: (Long) -> Unit,
+    onAddAccount: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.dashboard_accounts),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onOpenAccounts) {
+                Text(text = stringResource(Res.string.dashboard_see_all))
+            }
+        }
+
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(
+                items = accounts.sortedByDescending { it.account.isDefault },
+                key = { accountUi -> accountUi.account.id },
+            ) { accountUi ->
+                DashboardAccountItemCard(
+                    accountUi = accountUi,
+                    onClick = { onAccountClick(accountUi.account.id) },
+                )
+            }
+
+            item(key = "add_account") {
+                DashboardAddAccountCard(
+                    onClick = onAddAccount,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardAccountItemCard(
+    accountUi: DashboardAccountUi,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val formatter = LocalCurrencyFormatter.current
+
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(18.dp),
+        modifier = modifier
+            .width(156.dp)
+            .height(112.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Wallet,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+
+                if (accountUi.account.isDefault) {
+                    Surface(
+                        color = colorScheme.primary.copy(alpha = 0.12f),
+                        contentColor = colorScheme.primary,
+                        shape = RoundedCornerShape(999.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.dashboard_default),
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier.align(Alignment.BottomStart),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = accountUi.account.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+                Text(
+                    text = formatter.format(accountUi.balance),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardAddAccountCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(18.dp),
+        modifier = modifier
+            .width(156.dp)
+            .height(112.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(24.dp),
+                )
+
+                Text(
+                    text = stringResource(Res.string.dashboard_add_account),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun PageIndicator(
     count: Int,
     current: Int,
@@ -747,119 +977,5 @@ private fun PageIndicator(
                     shape = CircleShape
                 )
         )
-    }
-}
-
-@Composable
-private fun DashboardAccountPager(
-    accounts: List<DashboardAccountUi>,
-    pagerState: PagerState,
-    onAccountClick: (Long) -> Unit,
-    onEditBalance: (Account) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    HorizontalPager(
-        state = pagerState,
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        pageSpacing = 8.dp,
-    ) { page ->
-        DashboardAccountCard(
-            accountUi = accounts[page],
-            onClick = { onAccountClick(accounts[page].account.id) },
-            onEditBalance = { onEditBalance(accounts[page].account) },
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-private fun DashboardAccountCard(
-    accountUi: DashboardAccountUi,
-    onClick: () -> Unit,
-    onEditBalance: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val formatter = LocalCurrencyFormatter.current
-    val account = accountUi.account
-    val balance = accountUi.balance
-
-    Card(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer
-        ),
-        shape = MaterialTheme.shapes.large,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Wallet,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
-
-                    Text(
-                        text = account.name,
-                        fontSize = 14.sp,
-                        color = colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (account.isDefault) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_default),
-                        fontSize = 12.sp,
-                        color = TextLight1,
-                    )
-                }
-            }
-
-            Column {
-                Text(
-                    text = stringResource(Res.string.dashboard_current_balance),
-                    fontSize = 12.sp,
-                    color = TextLight1
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { onEditBalance() }
-                ) {
-                    Text(
-                        text = formatter.format(balance),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.onSurface
-                    )
-
-                    Icon(
-                        imageVector = Icons.Rounded.ModeEdit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = colorScheme.onSurface.copy(alpha = 0.5f),
-                    )
-                }
-            }
-        }
     }
 }

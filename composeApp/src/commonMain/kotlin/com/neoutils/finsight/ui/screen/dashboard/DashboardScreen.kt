@@ -14,6 +14,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.rounded.ModeEdit
@@ -34,6 +36,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
@@ -47,6 +50,7 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.TextLight1
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
@@ -54,10 +58,19 @@ import com.neoutils.finsight.resources.dashboard_credit_cards
 import com.neoutils.finsight.resources.dashboard_current_balance
 import com.neoutils.finsight.resources.dashboard_default
 import com.neoutils.finsight.resources.dashboard_installments
+import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_recents
+import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_see_all
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
+import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.Income
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 
@@ -69,6 +82,7 @@ fun DashboardScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openRecurring: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,6 +97,7 @@ fun DashboardScreen(
         onOpenAccounts = openAccounts,
         onOpenInstallments = openInstallments,
         onOpenBudgets = openBudgets,
+        onOpenRecurring = openRecurring,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -96,6 +111,7 @@ private fun DashboardContent(
     onOpenAccounts: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenBudgets: () -> Unit,
+    onOpenRecurring: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -311,6 +327,48 @@ private fun DashboardContent(
             }
         }
 
+        if (uiState.pendingRecurring.isNotEmpty()) {
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+            item(key = "pending_recurring_title") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_pending_recurring),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    TextButton(onClick = onOpenRecurring) {
+                        Text(text = stringResource(Res.string.dashboard_see_all))
+                    }
+                }
+            }
+
+            itemsIndexed(
+                items = uiState.pendingRecurring,
+                key = { _, recurring -> "pending_recurring_${recurring.id}" },
+            ) { _, recurring ->
+                PendingRecurringCard(
+                    recurring = recurring,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                    onClick = {
+                        val targetDate = today.yearMonth.safeOnDay(recurring.dayOfMonth)
+                        modalManager.show(ConfirmRecurringModal(recurring, targetDate))
+                    }
+                )
+            }
+        }
+
         if (uiState.recents.isNotEmpty()) {
             item(
                 key = "recents_title"
@@ -518,6 +576,38 @@ private fun DashboardContent(
         }
 
         item(
+            key = "open_recurring_action"
+        ) {
+            Card(
+                onClick = onOpenRecurring,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_recurring),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
             key = "open_installments_action"
         ) {
             Card(
@@ -547,6 +637,79 @@ private fun DashboardContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PendingRecurringCard(
+    recurring: Recurring,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val formatter = LocalCurrencyFormatter.current
+    val typeColor = if (recurring.type.isIncome) Income else Expense
+
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f),
+            ) {
+                if (recurring.category != null) {
+                    CategoryIconBox(
+                        category = recurring.category,
+                        contentPadding = PaddingValues(12.dp),
+                    )
+                } else {
+                    Surface(
+                        color = typeColor.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = if (recurring.type.isIncome) {
+                                Icons.AutoMirrored.Filled.TrendingUp
+                            } else {
+                                Icons.AutoMirrored.Filled.TrendingDown
+                            },
+                            contentDescription = null,
+                            tint = typeColor,
+                            modifier = Modifier.padding(12.dp),
+                        )
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = recurring.label,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                    )
+                }
+            }
+
+            Text(
+                text = formatter.format(recurring.amount),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = typeColor,
+            )
         }
     }
 }

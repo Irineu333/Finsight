@@ -40,4 +40,3 @@ data class Transaction(
 
     val isInvoicePayment: Boolean get() = invoice != null
 }
-

@@ -54,6 +54,7 @@ class AccountsViewModel(
         AccountsFilters(
             category = null,
             type = null,
+            recurringOnly = false,
         )
     )
 
@@ -101,10 +102,12 @@ class AccountsViewModel(
         filters,
     ) { accounts, operations, categories, index, month, currentFilters ->
         val transactions = operations.flatMap { it.transactions }
-        val filteredOperations = operations
+        val monthOperations = operations
             .filter { it.date.yearMonth == month }
+        val filteredOperations = monthOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
+            .filter(currentFilters.recurringOnly)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -156,6 +159,7 @@ class AccountsViewModel(
             categories = categories,
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
+            showRecurringOnly = currentFilters.recurringOnly,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -179,6 +183,10 @@ class AccountsViewModel(
                 filters.value = filters.value.copy(type = action.type)
             }
 
+            is AccountsAction.ToggleRecurring -> {
+                filters.value = filters.value.copy(recurringOnly = action.enabled)
+            }
+
             is AccountsAction.SelectMonth -> {
                 selectedMonth.value = action.yearMonth
             }
@@ -197,6 +205,7 @@ class AccountsViewModel(
 private data class AccountsFilters(
     val category: Category?,
     val type: Transaction.Type?,
+    val recurringOnly: Boolean,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -209,4 +218,9 @@ private fun List<Operation>.filter(category: Category?): List<Operation> {
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
     return filter { operation -> operation.type == type }
+}
+
+private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+    if (!recurringOnly) return this
+    return filter { operation -> operation.recurring != null }
 }

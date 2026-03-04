@@ -39,7 +39,7 @@ class TransactionsViewModel(
         TransactionsFilters(
             category = category,
             type = filterType,
-            target = filterTarget
+            target = filterTarget,
         )
     )
 
@@ -84,7 +84,9 @@ class TransactionsViewModel(
             selectedCategory = filters.category,
             selectedType = filters.type,
             selectedTarget = filters.target,
+            showRecurringOnly = filters.recurringOnly,
             operations = operations
+                .filter(filters.recurringOnly)
                 .filter(filters.category)
                 .filter(filters.type)
                 .filter(filters.target)
@@ -123,8 +125,17 @@ class TransactionsViewModel(
             is TransactionsAction.SelectTarget -> {
                 filters.value = filters.value.copy(target = action.target)
             }
+
+            is TransactionsAction.ToggleRecurring -> {
+                filters.value = filters.value.copy(recurringOnly = action.enabled)
+            }
         }
     }
+}
+
+private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+    if (!recurringOnly) return this
+    return filter { operation -> operation.recurring != null }
 }
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {

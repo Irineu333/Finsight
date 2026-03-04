@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
-import arrow.core.raise.catch
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -127,6 +127,8 @@ class EditTransactionViewModel(
                     operationRepository.updateOperation(operationId, it)
                 }
             }
+        }.onLeft {
+            // TODO: register exception
         }.onRight {
             modalManager.dismissAll()
         }

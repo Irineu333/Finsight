@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -24,7 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,9 +45,14 @@ import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_form_default_label
 import com.neoutils.finsight.resources.account_form_edit_title
+import com.neoutils.finsight.resources.account_form_icon_helper
+import com.neoutils.finsight.resources.account_form_icon_label
+import com.neoutils.finsight.resources.account_form_icon_modal_title
 import com.neoutils.finsight.resources.account_form_name_label
 import com.neoutils.finsight.resources.account_form_new_title
 import com.neoutils.finsight.resources.account_form_save
+import com.neoutils.finsight.ui.component.IconPickerBottomSheet
+import com.neoutils.finsight.ui.component.IconPickerSelector
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -60,6 +69,7 @@ class AccountFormModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val name = rememberTextFieldState(uiState.name)
+        var isIconPickerVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
@@ -144,6 +154,14 @@ class AccountFormModal(
                 )
             }
 
+            IconPickerSelector(
+                selectedIcon = uiState.selectedIcon,
+                accentColor = MaterialTheme.colorScheme.primary,
+                title = stringResource(Res.string.account_form_icon_label),
+                helperText = stringResource(Res.string.account_form_icon_helper),
+                onClick = { isIconPickerVisible = true },
+            )
+
             HorizontalDivider()
 
             Button(
@@ -160,6 +178,19 @@ class AccountFormModal(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+
+        if (isIconPickerVisible) {
+            IconPickerBottomSheet(
+                title = stringResource(Res.string.account_form_icon_modal_title),
+                selectedIcon = uiState.selectedIcon,
+                accentColor = MaterialTheme.colorScheme.primary,
+                onDismiss = { isIconPickerVisible = false },
+                onIconSelected = { icon ->
+                    viewModel.onAction(AccountFormAction.IconSelected(icon))
+                    isIconPickerVisible = false
+                },
+            )
         }
     }
 }

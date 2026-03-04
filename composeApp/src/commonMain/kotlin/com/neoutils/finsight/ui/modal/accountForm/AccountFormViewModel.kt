@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.util.CategoryIcon
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
@@ -30,6 +31,7 @@ class AccountFormViewModel(
     private val isEditMode = account != null
 
     private val name = MutableStateFlow(account?.name.orEmpty())
+    private val selectedIcon = MutableStateFlow(CategoryIcon.fromKey(account?.iconKey ?: CategoryIcon.DEFAULT.key))
 
     private val validation = ObservableMutableMap(
         map = mutableMapOf(
@@ -45,9 +47,10 @@ class AccountFormViewModel(
         account?.isDefault ?: false
     )
 
-    val uiState = combine(name, isDefault, validation) { name, isDefault, validation ->
+    val uiState = combine(name, selectedIcon, isDefault, validation) { name, selectedIcon, isDefault, validation ->
         AccountFormUiState(
             name = name,
+            selectedIcon = selectedIcon,
             validation = validation,
             isDefault = isDefault,
             isEditMode = isEditMode,
@@ -59,6 +62,7 @@ class AccountFormViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = AccountFormUiState(
             name = name.value,
+            selectedIcon = selectedIcon.value,
             validation = validation,
             isDefault = isDefault.value,
             isEditMode = isEditMode,
@@ -75,6 +79,10 @@ class AccountFormViewModel(
 
             is AccountFormAction.IsDefaultChanged -> {
                 isDefault.value = action.isDefault
+            }
+
+            is AccountFormAction.IconSelected -> {
+                selectedIcon.value = action.icon
             }
 
             is AccountFormAction.Submit -> submit()
@@ -117,6 +125,7 @@ class AccountFormViewModel(
             ) {
                 it.copy(
                     name = name,
+                    iconKey = selectedIcon.value.key,
                     isDefault = isDefault.value
                 )
             }.onLeft {
@@ -130,6 +139,7 @@ class AccountFormViewModel(
         createAccountUseCase(
             name = name,
             isDefault = isDefault.value,
+            iconKey = selectedIcon.value.key,
         ).onLeft {
             // TODO: register exception
         }.onRight {

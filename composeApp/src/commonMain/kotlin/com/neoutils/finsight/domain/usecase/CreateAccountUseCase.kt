@@ -18,7 +18,8 @@ class CreateAccountUseCase(
 ) {
     suspend operator fun invoke(
         name: String,
-        isDefault: Boolean
+        isDefault: Boolean,
+        iconKey: String,
     ): Either<Throwable, Account> {
         return either {
             validateAccountName(
@@ -30,6 +31,7 @@ class CreateAccountUseCase(
             val account = catch {
                 Account(
                     name = name.trim(),
+                    iconKey = iconKey,
                     isDefault = false,
                     createdAt = Clock.System.now().toEpochMilliseconds()
                 )

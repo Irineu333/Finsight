@@ -8,6 +8,7 @@ class AccountMapper {
         return Account(
             id = entity.id,
             name = entity.name,
+            iconKey = entity.iconKey,
             isDefault = entity.isDefault,
             createdAt = entity.createdAt
         )
@@ -17,6 +18,7 @@ class AccountMapper {
         return AccountEntity(
             id = domain.id,
             name = domain.name,
+            iconKey = domain.iconKey,
             isDefault = domain.isDefault,
             createdAt = domain.createdAt
         )

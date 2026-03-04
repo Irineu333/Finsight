@@ -375,7 +375,7 @@ private fun AccountCard(
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_initial_balance),
                 amount = initialBalance,
-                color = Color.White,
+                color = colorScheme.onSurface,
                 signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
                 onEditClick = onEditInitialBalance
             )

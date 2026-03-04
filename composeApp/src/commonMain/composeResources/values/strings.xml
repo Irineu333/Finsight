@@ -170,6 +170,9 @@
     <string name="account_form_edit_title">Editar Conta</string>
     <string name="account_form_new_title">Nova Conta</string>
     <string name="account_form_name_label">Nome</string>
+    <string name="account_form_icon_label">Ícone da conta</string>
+    <string name="account_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="account_form_icon_modal_title">Escolha um ícone para a conta</string>
     <string name="account_form_default_label">Conta Padrão</string>
     <string name="account_form_save">Salvar</string>
 

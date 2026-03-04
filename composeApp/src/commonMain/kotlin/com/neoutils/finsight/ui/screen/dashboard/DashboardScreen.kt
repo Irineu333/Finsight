@@ -19,7 +19,6 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -66,6 +65,7 @@ import com.neoutils.finsight.resources.dashboard_total_balance
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.util.CategoryIcon
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -858,7 +858,7 @@ private fun DashboardAccountItemCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Default.Wallet,
+                    imageVector = CategoryIcon.fromKey(accountUi.account.iconKey).icon,
                     contentDescription = null,
                     tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),

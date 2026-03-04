@@ -170,6 +170,9 @@
     <string name="account_form_edit_title">Edit Account</string>
     <string name="account_form_new_title">New Account</string>
     <string name="account_form_name_label">Name</string>
+    <string name="account_form_icon_label">Account icon</string>
+    <string name="account_form_icon_helper">Tap to open the icon list</string>
+    <string name="account_form_icon_modal_title">Choose an account icon</string>
     <string name="account_form_default_label">Default Account</string>
     <string name="account_form_save">Save</string>
 

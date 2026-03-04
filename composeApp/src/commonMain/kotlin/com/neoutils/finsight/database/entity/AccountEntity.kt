@@ -11,6 +11,7 @@ import kotlin.time.ExperimentalTime
 data class AccountEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
+    val iconKey: String = "default",
     val isDefault: Boolean = false,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 )

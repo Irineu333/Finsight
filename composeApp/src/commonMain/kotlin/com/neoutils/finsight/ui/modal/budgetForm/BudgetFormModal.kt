@@ -22,10 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -44,11 +41,13 @@ import com.neoutils.finsight.resources.budget_form_limit_label
 import com.neoutils.finsight.resources.budget_form_new_title
 import com.neoutils.finsight.resources.budget_form_save
 import com.neoutils.finsight.resources.budget_form_title_label
-import com.neoutils.finsight.ui.component.IconPickerBottomSheet
 import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.ui.util.stringUiText
+import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import org.jetbrains.compose.resources.stringResource
@@ -64,9 +63,11 @@ class BudgetFormModal(
         val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val modalManager = LocalModalManager.current
+        val accentColor = MaterialTheme.colorScheme.primary
+        val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
         val amount = rememberTextFieldState(budget?.amount?.let { formatter.format(it) } ?: "")
-        var isIconPickerVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             snapshotFlow { amount.text.toString() }.collect {
@@ -143,10 +144,25 @@ class BudgetFormModal(
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
-                accentColor = MaterialTheme.colorScheme.primary,
+                accentColor = accentColor,
                 title = stringResource(Res.string.budget_form_icon_label),
                 helperText = stringResource(Res.string.budget_form_icon_helper),
-                onClick = { isIconPickerVisible = true },
+                onClick = {
+                    modalManager.show(
+                        IconPickerModal(
+                            title = iconModalTitle,
+                            selectedIcon = uiState.selectedIcon,
+                            accentColor = accentColor,
+                            icons = FeatureIconCatalog.withGeneral(
+                                featureIcons = FeatureIconCatalog.budgets,
+                                selectedIcon = uiState.selectedIcon,
+                            ),
+                            onIconSelected = { icon ->
+                                viewModel.onAction(BudgetFormAction.IconSelected(icon))
+                            },
+                        )
+                    )
+                },
             )
 
             HorizontalDivider()
@@ -163,19 +179,6 @@ class BudgetFormModal(
                     fontWeight = FontWeight.Bold,
                 )
             }
-        }
-
-        if (isIconPickerVisible) {
-            IconPickerBottomSheet(
-                title = stringResource(Res.string.budget_form_icon_modal_title),
-                selectedIcon = uiState.selectedIcon,
-                accentColor = MaterialTheme.colorScheme.primary,
-                onDismiss = { isIconPickerVisible = false },
-                onIconSelected = { icon ->
-                    viewModel.onAction(BudgetFormAction.IconSelected(icon))
-                    isIconPickerVisible = false
-                },
-            )
         }
     }
 }

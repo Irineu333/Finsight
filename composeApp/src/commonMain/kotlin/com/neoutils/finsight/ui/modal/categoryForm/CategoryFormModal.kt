@@ -24,10 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,12 +45,14 @@ import com.neoutils.finsight.resources.category_form_income
 import com.neoutils.finsight.resources.category_form_name_label
 import com.neoutils.finsight.resources.category_form_new_title
 import com.neoutils.finsight.resources.category_form_save
-import com.neoutils.finsight.ui.component.IconPickerBottomSheet
 import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.util.stringUiText
+import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
@@ -69,10 +68,11 @@ class CategoryFormModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category, initialType) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val modalManager = LocalModalManager.current
 
         val name = rememberTextFieldState(uiState.name)
-        var isIconPickerVisible by remember { mutableStateOf(false) }
         val accentColor = if (uiState.selectedType.isIncome) Income else Expense
+        val iconModalTitle = stringResource(Res.string.category_form_icon_modal_title)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
@@ -147,7 +147,22 @@ class CategoryFormModal(
                 accentColor = accentColor,
                 title = stringResource(Res.string.category_form_icon_select),
                 helperText = stringResource(Res.string.category_form_icon_helper),
-                onClick = { isIconPickerVisible = true },
+                onClick = {
+                    modalManager.show(
+                        IconPickerModal(
+                            title = iconModalTitle,
+                            selectedIcon = uiState.selectedIcon,
+                            accentColor = accentColor,
+                            icons = FeatureIconCatalog.withGeneral(
+                                featureIcons = FeatureIconCatalog.categories,
+                                selectedIcon = uiState.selectedIcon,
+                            ),
+                            onIconSelected = { icon ->
+                                viewModel.onAction(CategoryFormAction.IconChanged(icon))
+                            },
+                        )
+                    )
+                },
             )
 
             HorizontalDivider()
@@ -164,19 +179,6 @@ class CategoryFormModal(
                     fontWeight = FontWeight.Bold,
                 )
             }
-        }
-
-        if (isIconPickerVisible) {
-            IconPickerBottomSheet(
-                title = stringResource(Res.string.category_form_icon_modal_title),
-                selectedIcon = uiState.selectedIcon,
-                accentColor = accentColor,
-                onDismiss = { isIconPickerVisible = false },
-                onIconSelected = { icon ->
-                    viewModel.onAction(CategoryFormAction.IconChanged(icon))
-                    isIconPickerVisible = false
-                },
-            )
         }
     }
 

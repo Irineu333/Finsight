@@ -25,10 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.ui.util.stringUiText
@@ -51,8 +49,9 @@ import com.neoutils.finsight.resources.account_form_icon_modal_title
 import com.neoutils.finsight.resources.account_form_name_label
 import com.neoutils.finsight.resources.account_form_new_title
 import com.neoutils.finsight.resources.account_form_save
-import com.neoutils.finsight.ui.component.IconPickerBottomSheet
 import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
+import com.neoutils.finsight.util.FeatureIconCatalog
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -67,9 +66,11 @@ class AccountFormModal(
 
         val viewModel = koinViewModel<AccountFormViewModel> { parametersOf(account) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val modalManager = LocalModalManager.current
+        val accentColor = MaterialTheme.colorScheme.primary
+        val iconModalTitle = stringResource(Res.string.account_form_icon_modal_title)
 
         val name = rememberTextFieldState(uiState.name)
-        var isIconPickerVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
@@ -156,10 +157,25 @@ class AccountFormModal(
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
-                accentColor = MaterialTheme.colorScheme.primary,
+                accentColor = accentColor,
                 title = stringResource(Res.string.account_form_icon_label),
                 helperText = stringResource(Res.string.account_form_icon_helper),
-                onClick = { isIconPickerVisible = true },
+                onClick = {
+                    modalManager.show(
+                        IconPickerModal(
+                            title = iconModalTitle,
+                            selectedIcon = uiState.selectedIcon,
+                            accentColor = accentColor,
+                            icons = FeatureIconCatalog.withGeneral(
+                                featureIcons = FeatureIconCatalog.accounts,
+                                selectedIcon = uiState.selectedIcon,
+                            ),
+                            onIconSelected = { icon ->
+                                viewModel.onAction(AccountFormAction.IconSelected(icon))
+                            },
+                        )
+                    )
+                },
             )
 
             HorizontalDivider()
@@ -178,19 +194,6 @@ class AccountFormModal(
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
-
-        if (isIconPickerVisible) {
-            IconPickerBottomSheet(
-                title = stringResource(Res.string.account_form_icon_modal_title),
-                selectedIcon = uiState.selectedIcon,
-                accentColor = MaterialTheme.colorScheme.primary,
-                onDismiss = { isIconPickerVisible = false },
-                onIconSelected = { icon ->
-                    viewModel.onAction(AccountFormAction.IconSelected(icon))
-                    isIconPickerVisible = false
-                },
-            )
         }
     }
 }

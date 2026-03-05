@@ -15,6 +15,7 @@ data class RecurringUiState(
     val recurring: List<Recurring> = emptyList(),
     val selectedFilter: RecurringFilter = RecurringFilter.ALL,
     val selectedStatusFilter: RecurringStatusFilter = RecurringStatusFilter.ACTIVE,
+    val isLoading: Boolean = true,
 ) {
     val filteredRecurring: List<Recurring>
         get() = recurring

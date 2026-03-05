@@ -6,4 +6,5 @@ import kotlinx.datetime.YearMonth
 data class BudgetsUiState(
     val budgetProgress: List<BudgetProgress> = emptyList(),
     val selectedMonth: YearMonth? = null,
+    val isLoading: Boolean = true,
 )

@@ -47,11 +47,14 @@ class BudgetsViewModel(
                 today = today,
             ),
             selectedMonth = selectedMonth,
+            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = BudgetsUiState(),
+        initialValue = BudgetsUiState(
+            selectedMonth = selectedMonth.value,
+        ),
     )
 
     fun onAction(action: BudgetsAction) {

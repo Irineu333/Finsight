@@ -98,6 +98,7 @@ class CreditCardsViewModel(
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
+            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,

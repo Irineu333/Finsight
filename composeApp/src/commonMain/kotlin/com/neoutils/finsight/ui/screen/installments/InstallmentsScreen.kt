@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -228,115 +229,130 @@ private fun InstallmentsContent(
             }
         },
     ) { paddingValues ->
-        if (uiState.installments.isEmpty()) {
-            EmptyInstallmentsState(
-                onCreateInstallment = { modalManager.show(AddInstallmentModal()) },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item(key = "installments_pager") {
-                    InstallmentPager(
-                        installments = uiState.installments,
-                        selectedIndex = uiState.selectedInstallmentIndex,
-                        onSelectInstallment = { index ->
-                            onAction(InstallmentsAction.SelectInstallment(index))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                uiState.selectedInstallment?.let { selected ->
-                    if (selected.isDeletable) {
-                        item(key = "delete_action") {
-                            OutlinedButton(
-                                onClick = {
-                                    modalManager.show(
-                                        DeleteInstallmentModal(
-                                            installment = selected.installment,
-                                            operations = selected.operations,
+            uiState.installments.isEmpty() -> {
+                EmptyInstallmentsState(
+                    onCreateInstallment = { modalManager.show(AddInstallmentModal()) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item(key = "installments_pager") {
+                        InstallmentPager(
+                            installments = uiState.installments,
+                            selectedIndex = uiState.selectedInstallmentIndex,
+                            onSelectInstallment = { index ->
+                                onAction(InstallmentsAction.SelectInstallment(index))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    uiState.selectedInstallment?.let { selected ->
+                        if (selected.isDeletable) {
+                            item(key = "delete_action") {
+                                OutlinedButton(
+                                    onClick = {
+                                        modalManager.show(
+                                            DeleteInstallmentModal(
+                                                installment = selected.installment,
+                                                operations = selected.operations,
+                                            )
                                         )
+                                    },
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .fillMaxWidth()
+                                        .animateItem(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = colorScheme.error,
+                                    ),
+                                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                                        brush = androidx.compose.ui.graphics.SolidColor(
+                                            colorScheme.error.copy(alpha = 0.5f)
+                                        )
+                                    ),
+                                    contentPadding = PaddingValues(12.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
                                     )
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .animateItem(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = colorScheme.error,
-                                ),
-                                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                                    brush = androidx.compose.ui.graphics.SolidColor(
-                                        colorScheme.error.copy(alpha = 0.5f)
+                                    Spacer(modifier = Modifier.size(8.dp))
+                                    Text(
+                                        text = stringResource(Res.string.installments_delete),
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium,
                                     )
-                                ),
-                                contentPadding = PaddingValues(12.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                Text(
-                                    text = stringResource(Res.string.installments_delete),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                )
+                                }
                             }
                         }
                     }
-                }
 
-                item(key = "filters_row") {
-                    FiltersRow(
-                        uiState = uiState,
-                        onAction = onAction,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                    )
-                }
+                    item(key = "filters_row") {
+                        FiltersRow(
+                            uiState = uiState,
+                            onAction = onAction,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
 
-                items(
-                    items = uiState.filteredOperations,
-                    key = Operation::id,
-                ) { operation ->
-                    OperationCard(
-                        operation = operation,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        amountDecoration = when (operation.targetInvoice?.status) {
+                    items(
+                        items = uiState.filteredOperations,
+                        key = Operation::id,
+                    ) { operation ->
+                        OperationCard(
+                            operation = operation,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateItem(),
+                            amountDecoration = when (operation.targetInvoice?.status) {
 
-                            Invoice.Status.PAID,
-                            Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
+                                Invoice.Status.PAID,
+                                Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
 
-                            else -> TextDecoration.None
-                        },
-                        onClick = {
-                            when (operation.type) {
-                                Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
+                                else -> TextDecoration.None
+                            },
+                            onClick = {
+                                when (operation.type) {
+                                    Transaction.Type.ADJUSTMENT -> {
+                                        modalManager.show(ViewAdjustmentModal(operation))
+                                    }
+
+                                    else -> {
+                                        modalManager.show(ViewOperationModal(operation))
+                                    }
                                 }
-
-                                else -> {
-                                    modalManager.show(ViewOperationModal(operation))
-                                }
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
             }
         }

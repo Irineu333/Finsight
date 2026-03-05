@@ -110,109 +110,124 @@ private fun CreditCardsContent(
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
-        if (uiState.creditCards.isEmpty()) {
-            EmptyCreditCardsState(
-                onCreateCreditCard = { modalManager.show(CreditCardFormModal()) },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item(
-                    key = "credit_card_pager"
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    CreditCardPager(
-                        creditCards = uiState.creditCards,
-                        selectedIndex = uiState.selectedCardIndex,
-                        onSelectCard = { index ->
-                            onAction(CreditCardsAction.SelectCard(index))
-                        },
-                        onCardClick = { creditCardUi ->
-                            navigator.navigate(
-                                NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
-                            )
-                        },
-                        onEditInvoice = { invoice ->
-                            modalManager.show(
-                                EditInvoiceBalanceModal(
-                                    initialInvoice = invoice
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    CircularProgressIndicator()
                 }
+            }
 
-                uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
+            uiState.creditCards.isEmpty() -> {
+                EmptyCreditCardsState(
+                    onCreateCreditCard = { modalManager.show(CreditCardFormModal()) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     item(
-                        key = "card_actions"
+                        key = "credit_card_pager"
                     ) {
-                        CardActions(
-                            creditCardUi = selectedCard,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .animateContentSize()
+                        CreditCardPager(
+                            creditCards = uiState.creditCards,
+                            selectedIndex = uiState.selectedCardIndex,
+                            onSelectCard = { index ->
+                                onAction(CreditCardsAction.SelectCard(index))
+                            },
+                            onCardClick = { creditCardUi ->
+                                navigator.navigate(
+                                    NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
+                                )
+                            },
+                            onEditInvoice = { invoice ->
+                                modalManager.show(
+                                    EditInvoiceBalanceModal(
+                                        initialInvoice = invoice
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
-                }
 
-                item(
-                    key = "filters_row"
-                ) {
-                    FiltersRow(
-                        uiState = uiState,
-                        onAction = onAction,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                    )
-                }
+                    uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
+                        item(
+                            key = "card_actions"
+                        ) {
+                            CardActions(
+                                creditCardUi = selectedCard,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .fillMaxWidth()
+                                    .animateContentSize()
+                            )
+                        }
+                    }
 
-                uiState.operations.forEach { (date, operations) ->
                     item(
-                        key = "date_title_$date"
+                        key = "filters_row"
                     ) {
-                        Text(
-                            text = LocalDateFormats.current.formatRelativeDate(date),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                        FiltersRow(
+                            uiState = uiState,
+                            onAction = onAction,
                             modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
                                 .animateItem()
                         )
                     }
 
-                    items(
-                        items = operations,
-                        key = { it.id }
-                    ) { operation ->
-                        OperationCard(
-                            operation = operation,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .animateItem(),
-                            onClick = {
-                                when (operation.type) {
-                                    Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
-                                    }
+                    uiState.operations.forEach { (date, operations) ->
+                        item(
+                            key = "date_title_$date"
+                        ) {
+                            Text(
+                                text = LocalDateFormats.current.formatRelativeDate(date),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem()
+                            )
+                        }
 
-                                    else -> {
-                                        modalManager.show(ViewOperationModal(operation))
+                        items(
+                            items = operations,
+                            key = { it.id }
+                        ) { operation ->
+                            OperationCard(
+                                operation = operation,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                                onClick = {
+                                    when (operation.type) {
+                                        Transaction.Type.ADJUSTMENT -> {
+                                            modalManager.show(ViewAdjustmentModal(operation))
+                                        }
+
+                                        else -> {
+                                            modalManager.show(ViewOperationModal(operation))
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }

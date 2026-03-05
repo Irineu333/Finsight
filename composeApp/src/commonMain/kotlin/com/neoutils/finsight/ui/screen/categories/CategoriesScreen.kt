@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -93,65 +94,80 @@ private fun CategoriesContent(
             }
         }
     ) { paddingValues ->
-        if (uiState.categories.isEmpty()) {
-            EmptyCategoriesState(
-                onCreateDefaultCategories = {
-                    onAction(CategoriesAction.CreateDefaultCategories)
-                },
-                onCreateManualCategory = {
-                    modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            )
-        } else {
-            val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
-            val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
-            val visibleCategories = uiState.categories.filter { it.type == uiState.selectedType }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
-                    tabs.forEachIndexed { index, type ->
-                        val title = when (type) {
-                            Category.Type.EXPENSE -> stringResource(Res.string.categories_expense)
-                            Category.Type.INCOME -> stringResource(Res.string.categories_income)
-                        }
-
-                        Tab(
-                            selected = selectedTabIndex == index,
-                            onClick = {
-                                onAction(CategoriesAction.SelectType(type))
-                            },
-                            text = {
-                                Text(text = title)
-                            }
-                        )
-                    }
-                }
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    items(
-                        items = visibleCategories,
-                        key = { it.id },
-                    ) { category ->
-                        CategoryCard(
-                            category = category,
-                            onClick = {
-                                modalManager.show(ViewCategoryModal(category))
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                        )
+                    CircularProgressIndicator()
+                }
+            }
+
+            uiState.categories.isEmpty() -> {
+                EmptyCategoriesState(
+                    onCreateDefaultCategories = {
+                        onAction(CategoriesAction.CreateDefaultCategories)
+                    },
+                    onCreateManualCategory = {
+                        modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+
+            else -> {
+                val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
+                val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
+                val visibleCategories = uiState.categories.filter { it.type == uiState.selectedType }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
+                        tabs.forEachIndexed { index, type ->
+                            val title = when (type) {
+                                Category.Type.EXPENSE -> stringResource(Res.string.categories_expense)
+                                Category.Type.INCOME -> stringResource(Res.string.categories_income)
+                            }
+
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = {
+                                    onAction(CategoriesAction.SelectType(type))
+                                },
+                                text = {
+                                    Text(text = title)
+                                }
+                            )
+                        }
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = visibleCategories,
+                            key = { it.id },
+                        ) { category ->
+                            CategoryCard(
+                                category = category,
+                                onClick = {
+                                    modalManager.show(ViewCategoryModal(category))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem()
+                            )
+                        }
                     }
                 }
             }

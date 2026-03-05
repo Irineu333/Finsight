@@ -107,6 +107,7 @@ class InstallmentsViewModel(
             selectedType = type,
             selectedFilter = filter,
             categories = categories,
+            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -121,12 +122,15 @@ class InstallmentsViewModel(
                 selectedCategory.value = null
                 selectedType.value = null
             }
+
             is InstallmentsAction.SelectCategory -> {
                 selectedCategory.value = action.category
             }
+
             is InstallmentsAction.SelectType -> {
                 selectedType.value = action.type
             }
+
             is InstallmentsAction.SelectFilter -> {
                 selectedFilter.value = action.filter
                 selectedInstallmentIndex.value = 0

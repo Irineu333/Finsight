@@ -15,7 +15,8 @@ Bump the project version to `$ARGUMENTS` across all platforms.
 
 ## Rules
 
-- `versionName`, `packageVersion`, and `CFBundleShortVersionString` must all be set to the new version string (e.g. `"1.2.0"`).
+- `versionName` and `CFBundleShortVersionString` must be set to the full version string, including any suffix (e.g. `"1.5.0-rc01"`).
+- `packageVersion` (Desktop) does **not** support suffixes — use only the base `MAJOR.MINOR.PATCH` part (e.g. `"1.5.0"`).
 - `versionCode` and `CFBundleVersion` must be incremented by 1 from their current values.
 - After editing `iosApp/project.yml`, run `cd iosApp && ./generate-project.sh` to regenerate the Xcode project.
 

@@ -2,9 +2,11 @@ package com.neoutils.finsight.ui.modal.accountForm
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,11 +16,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -32,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +49,9 @@ import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_form_default_label
+import com.neoutils.finsight.resources.account_form_default_state_disabled
+import com.neoutils.finsight.resources.account_form_default_state_off
+import com.neoutils.finsight.resources.account_form_default_state_on
 import com.neoutils.finsight.resources.account_form_edit_title
 import com.neoutils.finsight.resources.account_form_icon_helper
 import com.neoutils.finsight.resources.account_form_icon_label
@@ -134,24 +144,12 @@ class AccountFormModal(
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = stringResource(Res.string.account_form_default_label),
-                    fontSize = 16.sp,
-                )
-
-                Switch(
+                DefaultAccountSelector(
                     checked = uiState.isDefault,
-                    enabled = uiState.canChangeDefault,
-                    colors = SwitchDefaults.colors(
-                        uncheckedThumbColor = Color.LightGray,
-                    ),
-                    onCheckedChange = { isDefault ->
-                        viewModel.onAction(AccountFormAction.IsDefaultChanged(isDefault))
-                    }
+                    canChange = uiState.canChangeDefault,
+                    onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
 
@@ -194,6 +192,89 @@ class AccountFormModal(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DefaultAccountSelector(
+    checked: Boolean,
+    canChange: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val accentColor = MaterialTheme.colorScheme.primary
+    val subtitle = when {
+        !canChange -> stringResource(Res.string.account_form_default_state_disabled)
+        checked -> stringResource(Res.string.account_form_default_state_on)
+        else -> stringResource(Res.string.account_form_default_state_off)
+    }
+
+    Surface(
+        onClick = {
+            if (canChange) {
+                onCheckedChange(!checked)
+            }
+        },
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = accentColor.copy(alpha = if (canChange) 0.12f else 0.08f),
+                modifier = Modifier.size(52.dp),
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = if (canChange) {
+                            accentColor
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.account_form_default_label),
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = subtitle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Switch(
+                checked = checked,
+                enabled = canChange,
+                colors = SwitchDefaults.colors(
+                    uncheckedThumbColor = Color.LightGray,
+                ),
+                onCheckedChange = onCheckedChange,
+            )
         }
     }
 }

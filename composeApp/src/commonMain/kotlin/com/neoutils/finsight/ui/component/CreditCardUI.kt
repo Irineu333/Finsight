@@ -65,7 +65,7 @@ fun CreditCardUI(
 
     val sharedModifier = sharedTransitionScope?.run {
         animatedVisibilityScope?.let {
-            Modifier.sharedBounds(
+            Modifier.sharedElement(
                 sharedContentState = rememberSharedContentState(
                     key = "credit_card_${ui.creditCard.id}",
                 ),

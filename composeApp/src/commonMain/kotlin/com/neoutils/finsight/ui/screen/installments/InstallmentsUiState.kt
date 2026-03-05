@@ -17,6 +17,7 @@ data class InstallmentsUiState(
     val selectedType: Transaction.Type? = null,
     val selectedFilter: InstallmentFilter = InstallmentFilter.ACTIVE,
     val categories: List<Category> = emptyList(),
+    val isLoading: Boolean = true,
 ) {
     val selectedInstallment: InstallmentWithOperationsUi?
         get() = installments.getOrNull(selectedInstallmentIndex)

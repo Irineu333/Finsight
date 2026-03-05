@@ -98,32 +98,47 @@ fun BudgetsScreen(
             }
         }
     ) { paddingValues ->
-        if (uiState.budgetProgress.isEmpty()) {
-            EmptyBudgetsState(
-                onCreateBudget = { modalManager.show(BudgetFormModal()) },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(
-                    items = uiState.budgetProgress,
-                    key = { it.budget.id },
-                ) { progress ->
-                    BudgetProgressItem(
-                        progress = progress,
-                        onClick = { modalManager.show(ViewBudgetModal(progress)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
-                    )
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            uiState.budgetProgress.isEmpty() -> {
+                EmptyBudgetsState(
+                    onCreateBudget = { modalManager.show(BudgetFormModal()) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(
+                        items = uiState.budgetProgress,
+                        key = { it.budget.id },
+                    ) { progress ->
+                        BudgetProgressItem(
+                            progress = progress,
+                            onClick = { modalManager.show(ViewBudgetModal(progress)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
                 }
             }
         }
@@ -225,7 +240,10 @@ private fun BudgetProgressItem(
                     )
                     val categoryCount = progress.budget.categories.size
                     Text(
-                        text = if (categoryCount == 1) stringResource(Res.string.budgets_category_singular) else stringResource(Res.string.budgets_category_plural, categoryCount),
+                        text = if (categoryCount == 1) stringResource(Res.string.budgets_category_singular) else stringResource(
+                            Res.string.budgets_category_plural,
+                            categoryCount
+                        ),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -266,7 +284,9 @@ private fun BudgetProgressItem(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (progress.isExceeded) stringResource(Res.string.budgets_exceeded_by) else stringResource(Res.string.budgets_remaining),
+                        text = if (progress.isExceeded) stringResource(Res.string.budgets_exceeded_by) else stringResource(
+                            Res.string.budgets_remaining
+                        ),
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )

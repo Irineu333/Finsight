@@ -24,6 +24,7 @@ class RecurringViewModel(
             recurring = recurring,
             selectedFilter = filter,
             selectedStatusFilter = statusFilter,
+            isLoading = false,
         )
     }
         .stateIn(

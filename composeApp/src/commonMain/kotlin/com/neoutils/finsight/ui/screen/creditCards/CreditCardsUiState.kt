@@ -15,6 +15,7 @@ data class CreditCardsUiState(
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
     val showRecurringOnly: Boolean = false,
+    val isLoading: Boolean = true,
 )
 
 data class CreditCardUi(

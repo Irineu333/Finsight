@@ -34,6 +34,7 @@ class CategoriesViewModel(
         CategoriesUiState(
             categories = sortedCategories,
             selectedType = resolvedSelectedType,
+            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,

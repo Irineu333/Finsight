@@ -5,4 +5,5 @@ import com.neoutils.finsight.domain.model.Category
 data class CategoriesUiState(
     val categories: List<Category> = emptyList(),
     val selectedType: Category.Type = Category.Type.EXPENSE,
+    val isLoading: Boolean = true,
 )

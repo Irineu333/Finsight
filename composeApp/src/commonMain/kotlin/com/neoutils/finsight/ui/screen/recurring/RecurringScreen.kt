@@ -108,33 +108,48 @@ fun RecurringScreen(
             }
         },
     ) { paddingValues ->
-        if (uiState.filteredRecurring.isEmpty()) {
-            RecurringEmptyState(
-                onCreateClick = { modalManager.show(RecurringFormModal()) },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(
-                    items = uiState.filteredRecurring,
-                    key = { "recurring_${it.id}" },
-                ) { recurring ->
-                    RecurringCard(
-                        recurring = recurring,
-                        onClick = { modalManager.show(ViewRecurringModal(recurring)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .animateItem(),
-                    )
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            uiState.filteredRecurring.isEmpty() -> {
+                RecurringEmptyState(
+                    onCreateClick = { modalManager.show(RecurringFormModal()) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(
+                        items = uiState.filteredRecurring,
+                        key = { "recurring_${it.id}" },
+                    ) { recurring ->
+                        RecurringCard(
+                            recurring = recurring,
+                            onClick = { modalManager.show(ViewRecurringModal(recurring)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .animateItem(),
+                        )
+                    }
                 }
             }
         }

@@ -66,6 +66,7 @@
     <string name="transactions_filter_credit_card">Cartão</string>
     <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>
     <string name="transactions_filter_recurring">Recorrência</string>
+    <string name="transactions_filter_installment">Parcelas</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Parcelamentos</string>

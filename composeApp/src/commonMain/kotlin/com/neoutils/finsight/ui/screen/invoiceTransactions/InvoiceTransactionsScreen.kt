@@ -80,6 +80,7 @@ import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
 import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
+import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
@@ -685,6 +686,17 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item(
+            key = "installment_filter"
+        ) {
+            Box {
+                InstallmentFilterChip(
+                    enabled = uiState.showInstallmentOnly,
+                    onAction = onAction
+                )
+            }
+        }
     }
 }
 
@@ -826,6 +838,20 @@ private fun RecurringFilterChip(
         onClick = { onAction(InvoiceTransactionsAction.ToggleRecurring(!enabled)) },
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
+}
+
+@Composable
+private fun InstallmentFilterChip(
+    enabled: Boolean,
+    onAction: (InvoiceTransactionsAction) -> Unit
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(InvoiceTransactionsAction.ToggleInstallment(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_installment))
         },
     )
 }

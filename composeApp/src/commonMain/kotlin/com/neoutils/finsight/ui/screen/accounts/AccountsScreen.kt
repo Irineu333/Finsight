@@ -81,6 +81,7 @@ import com.neoutils.finsight.resources.accounts_initial_balance
 import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
+import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -698,6 +699,17 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item(
+            key = "installment_filter"
+        ) {
+            Box {
+                InstallmentFilterChip(
+                    enabled = uiState.showInstallmentOnly,
+                    onAction = onAction
+                )
+            }
+        }
     }
 }
 
@@ -908,6 +920,20 @@ private fun RecurringFilterChip(
         onClick = { onAction(AccountsAction.ToggleRecurring(!enabled)) },
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
+}
+
+@Composable
+private fun InstallmentFilterChip(
+    enabled: Boolean,
+    onAction: (AccountsAction) -> Unit
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(AccountsAction.ToggleInstallment(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_installment))
         },
     )
 }

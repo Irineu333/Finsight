@@ -553,6 +553,17 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item(
+            key = "installment_filter"
+        ) {
+            Box {
+                InstallmentFilterChip(
+                    enabled = uiState.showInstallmentOnly,
+                    onAction = onAction
+                )
+            }
+        }
     }
 }
 
@@ -694,6 +705,20 @@ private fun RecurringFilterChip(
         onClick = { onAction(CreditCardsAction.ToggleRecurring(!enabled)) },
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
+}
+
+@Composable
+private fun InstallmentFilterChip(
+    enabled: Boolean,
+    onAction: (CreditCardsAction) -> Unit
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(CreditCardsAction.ToggleInstallment(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_installment))
         },
     )
 }

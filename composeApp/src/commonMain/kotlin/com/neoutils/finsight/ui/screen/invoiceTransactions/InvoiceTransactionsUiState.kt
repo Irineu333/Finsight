@@ -20,6 +20,7 @@ data class InvoiceTransactionsUiState(
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
     val showRecurringOnly: Boolean = false,
+    val showInstallmentOnly: Boolean = false,
 ) {
     data class InvoiceSummary(
         val invoice: Invoice,

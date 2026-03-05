@@ -66,6 +66,7 @@
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>
     <string name="transactions_filter_recurring">Recurring</string>
+    <string name="transactions_filter_installment">Installments</string>
 
     <!-- Installments Screen -->
     <string name="installments_title">Installments</string>

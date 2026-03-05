@@ -24,6 +24,7 @@ data class TransactionsUiState(
     val selectedType: Transaction.Type? = null,
     val selectedTarget: Transaction.Target? = null,
     val showRecurringOnly: Boolean = false,
+    val showInstallmentOnly: Boolean = false,
 ) {
 
     val isCurrentMonth = selectedYearMonth == currentMonth

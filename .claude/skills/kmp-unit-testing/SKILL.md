@@ -7,6 +7,7 @@ description: >
   UiState transitions, Action emissions, and test naming conventions. Also trigger when the user
   asks how to test something, reports a flaky test, or needs help with runTest, TestDispatcher,
   or Turbine.
+user-invocable: false
 ---
 
 # KMP Unit Testing Expert Skill

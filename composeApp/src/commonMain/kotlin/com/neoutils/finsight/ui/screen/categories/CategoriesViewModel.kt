@@ -31,15 +31,18 @@ class CategoriesViewModel(
             else -> Category.Type.EXPENSE
         }
 
-        CategoriesUiState(
-            categories = sortedCategories,
-            selectedType = resolvedSelectedType,
-            isLoading = false,
-        )
+        if (sortedCategories.isEmpty()) {
+            CategoriesUiState.Empty(selectedType = resolvedSelectedType)
+        } else {
+            CategoriesUiState.Content(
+                categories = sortedCategories,
+                selectedType = resolvedSelectedType,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CategoriesUiState()
+        initialValue = CategoriesUiState.Loading,
     )
 
     fun onAction(action: CategoriesAction) {

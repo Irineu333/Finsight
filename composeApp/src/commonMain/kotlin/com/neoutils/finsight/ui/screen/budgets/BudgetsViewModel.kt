@@ -40,21 +40,23 @@ class BudgetsViewModel(
         } else {
             LocalDate(selectedMonth.year, selectedMonth.month, 1)
         }
-        BudgetsUiState(
-            budgetProgress = calculateBudgetProgressUseCase(
-                budgets = budgets,
-                transactions = transactions,
-                today = today,
-            ),
-            selectedMonth = selectedMonth,
-            isLoading = false,
+        val budgetProgress = calculateBudgetProgressUseCase(
+            budgets = budgets,
+            transactions = transactions,
+            today = today,
         )
+        if (budgetProgress.isEmpty()) {
+            BudgetsUiState.Empty(selectedMonth = selectedMonth)
+        } else {
+            BudgetsUiState.Content(
+                budgetProgress = budgetProgress,
+                selectedMonth = selectedMonth,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = BudgetsUiState(
-            selectedMonth = selectedMonth.value,
-        ),
+        initialValue = BudgetsUiState.Loading(selectedMonth = selectedMonth.value),
     )
 
     fun onAction(action: BudgetsAction) {

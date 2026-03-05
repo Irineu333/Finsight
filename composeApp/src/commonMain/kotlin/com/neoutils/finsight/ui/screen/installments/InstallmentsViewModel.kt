@@ -89,9 +89,13 @@ class InstallmentsViewModel(
             InstallmentFilter.ALL -> installmentsAll
         }
 
+        if (filtered.isEmpty()) {
+            return@combine InstallmentsUiState.Empty(selectedFilter = filter)
+        }
+
         val safeSelectedIndex = selectedIndex
             .coerceAtLeast(0)
-            .coerceAtMost((filtered.size - 1).coerceAtLeast(0))
+            .coerceAtMost(filtered.size - 1)
 
         val selectedOperations = filtered.getOrNull(safeSelectedIndex)
             ?.operations.orEmpty()
@@ -100,19 +104,18 @@ class InstallmentsViewModel(
             .mapNotNull { it.category }
             .distinctBy { it.id }
 
-        InstallmentsUiState(
+        InstallmentsUiState.Content(
             installments = filtered,
             selectedInstallmentIndex = safeSelectedIndex,
             selectedCategory = category,
             selectedType = type,
             selectedFilter = filter,
             categories = categories,
-            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = InstallmentsUiState(),
+        initialValue = InstallmentsUiState.Loading(),
     )
 
     fun onAction(action: InstallmentsAction) {

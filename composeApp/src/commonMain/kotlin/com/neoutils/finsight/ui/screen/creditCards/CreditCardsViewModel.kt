@@ -75,6 +75,10 @@ class CreditCardsViewModel(
         selectedCardIndex,
         filters,
     ) { creditCards, operations, invoices, categories, index, currentFilters ->
+        if (creditCards.isEmpty()) {
+            return@combine CreditCardsUiState.Empty
+        }
+
         val filteredOperations = operations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
@@ -82,7 +86,7 @@ class CreditCardsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
-        CreditCardsUiState(
+        CreditCardsUiState.Content(
             creditCards = creditCards.map { creditCard ->
                 val invoice = invoices[creditCard.id]
                 CreditCardUi(
@@ -98,14 +102,11 @@ class CreditCardsViewModel(
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
-            isLoading = false,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CreditCardsUiState(
-            selectedCardIndex = selectedCardIndex.value,
-        )
+        initialValue = CreditCardsUiState.Loading,
     )
 
     fun onAction(action: CreditCardsAction) = viewModelScope.launch {

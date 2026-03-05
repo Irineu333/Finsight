@@ -99,7 +99,7 @@ fun RecurringScreen(
             )
         },
         floatingActionButton = {
-            if (uiState.filteredRecurring.isNotEmpty()) {
+            if (uiState is RecurringUiState.Content) {
                 FloatingActionButton(
                     onClick = { modalManager.show(RecurringFormModal()) },
                 ) {
@@ -108,8 +108,8 @@ fun RecurringScreen(
             }
         },
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
+        when (val uiState = uiState) {
+            is RecurringUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -120,7 +120,7 @@ fun RecurringScreen(
                 }
             }
 
-            uiState.filteredRecurring.isEmpty() -> {
+            is RecurringUiState.Empty -> {
                 RecurringEmptyState(
                     onCreateClick = { modalManager.show(RecurringFormModal()) },
                     modifier = Modifier
@@ -129,7 +129,7 @@ fun RecurringScreen(
                 )
             }
 
-            else -> {
+            is RecurringUiState.Content -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()

@@ -95,7 +95,7 @@ private fun CreditCardsContent(
             )
         },
         floatingActionButton = {
-            if (uiState.creditCards.isNotEmpty()) {
+            if (uiState is CreditCardsUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(CreditCardFormModal())
@@ -110,8 +110,8 @@ private fun CreditCardsContent(
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
+        when (uiState) {
+            CreditCardsUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -122,7 +122,7 @@ private fun CreditCardsContent(
                 }
             }
 
-            uiState.creditCards.isEmpty() -> {
+            CreditCardsUiState.Empty -> {
                 EmptyCreditCardsState(
                     onCreateCreditCard = { modalManager.show(CreditCardFormModal()) },
                     modifier = Modifier
@@ -131,7 +131,7 @@ private fun CreditCardsContent(
                 )
             }
 
-            else -> {
+            is CreditCardsUiState.Content -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -511,7 +511,7 @@ private fun CardActions(
 
 @Composable
 private fun FiltersRow(
-    uiState: CreditCardsUiState,
+    uiState: CreditCardsUiState.Content,
     onAction: (CreditCardsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {

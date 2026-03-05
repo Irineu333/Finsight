@@ -10,26 +10,39 @@ enum class InstallmentFilter {
     ACTIVE, COMPLETED, ALL
 }
 
-data class InstallmentsUiState(
-    val installments: List<InstallmentWithOperationsUi> = emptyList(),
-    val selectedInstallmentIndex: Int = 0,
-    val selectedCategory: Category? = null,
-    val selectedType: Transaction.Type? = null,
-    val selectedFilter: InstallmentFilter = InstallmentFilter.ACTIVE,
-    val categories: List<Category> = emptyList(),
-    val isLoading: Boolean = true,
-) {
-    val selectedInstallment: InstallmentWithOperationsUi?
-        get() = installments.getOrNull(selectedInstallmentIndex)
+sealed class InstallmentsUiState {
 
-    val filteredOperations: List<Operation>
-        get() {
-            val operations = selectedInstallment?.operations.orEmpty()
-            return operations.filter { operation ->
-                (selectedCategory == null || operation.category?.id == selectedCategory.id) &&
-                        (selectedType == null || operation.type == selectedType)
+    abstract val selectedFilter: InstallmentFilter
+
+    data class Loading(
+        override val selectedFilter: InstallmentFilter = InstallmentFilter.ACTIVE,
+    ) : InstallmentsUiState()
+
+    data class Empty(
+        override val selectedFilter: InstallmentFilter,
+    ) : InstallmentsUiState()
+
+    data class Content(
+        val installments: List<InstallmentWithOperationsUi>,
+        val selectedInstallmentIndex: Int,
+        val selectedCategory: Category?,
+        val selectedType: Transaction.Type?,
+        override val selectedFilter: InstallmentFilter,
+        val categories: List<Category>,
+    ) : InstallmentsUiState() {
+
+        val selectedInstallment: InstallmentWithOperationsUi?
+            get() = installments.getOrNull(selectedInstallmentIndex)
+
+        val filteredOperations: List<Operation>
+            get() {
+                val operations = selectedInstallment?.operations.orEmpty()
+                return operations.filter { operation ->
+                    (selectedCategory == null || operation.category?.id == selectedCategory.id) &&
+                            (selectedType == null || operation.type == selectedType)
+                }
             }
-        }
+    }
 }
 
 data class InstallmentWithOperationsUi(

@@ -14,4 +14,5 @@ sealed class TransactionsAction {
     data class SelectType(val type: Transaction.Type?) : TransactionsAction()
     data class SelectTarget(val target: Transaction.Target?) : TransactionsAction()
     data class ToggleRecurring(val enabled: Boolean) : TransactionsAction()
+    data class ToggleInstallment(val enabled: Boolean) : TransactionsAction()
 }

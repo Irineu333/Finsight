@@ -55,6 +55,7 @@ class AccountsViewModel(
             category = null,
             type = null,
             recurringOnly = false,
+            installmentOnly = false,
         )
     )
 
@@ -108,6 +109,7 @@ class AccountsViewModel(
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
+            .filterInstallment(currentFilters.installmentOnly)
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
@@ -160,6 +162,7 @@ class AccountsViewModel(
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
+            showInstallmentOnly = currentFilters.installmentOnly,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -187,6 +190,10 @@ class AccountsViewModel(
                 filters.value = filters.value.copy(recurringOnly = action.enabled)
             }
 
+            is AccountsAction.ToggleInstallment -> {
+                filters.value = filters.value.copy(installmentOnly = action.enabled)
+            }
+
             is AccountsAction.SelectMonth -> {
                 selectedMonth.value = action.yearMonth
             }
@@ -206,6 +213,7 @@ private data class AccountsFilters(
     val category: Category?,
     val type: Transaction.Type?,
     val recurringOnly: Boolean,
+    val installmentOnly: Boolean,
 )
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
@@ -223,4 +231,9 @@ private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
 private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
     if (!recurringOnly) return this
     return filter { operation -> operation.recurring != null }
+}
+
+private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+    if (!installmentOnly) return this
+    return filter { operation -> operation.installment != null }
 }

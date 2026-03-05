@@ -208,6 +208,17 @@ private fun FiltersRow(
                 )
             }
         }
+
+        item(
+            key = "installment_filter"
+        ) {
+            Box {
+                InstallmentFilterChip(
+                    enabled = uiState.showInstallmentOnly,
+                    onAction = onAction,
+                )
+            }
+        }
     }
 }
 
@@ -354,6 +365,20 @@ private fun RecurringFilterChip(
         onClick = { onAction(TransactionsAction.ToggleRecurring(!enabled)) },
         label = {
             Text(stringResource(Res.string.transactions_filter_recurring))
+        },
+    )
+}
+
+@Composable
+private fun InstallmentFilterChip(
+    enabled: Boolean,
+    onAction: (TransactionsAction) -> Unit,
+) {
+    FilterChip(
+        selected = enabled,
+        onClick = { onAction(TransactionsAction.ToggleInstallment(!enabled)) },
+        label = {
+            Text(stringResource(Res.string.transactions_filter_installment))
         },
     )
 }

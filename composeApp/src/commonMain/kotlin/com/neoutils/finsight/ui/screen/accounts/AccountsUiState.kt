@@ -16,6 +16,7 @@ data class AccountsUiState(
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,
     val showRecurringOnly: Boolean = false,
+    val showInstallmentOnly: Boolean = false,
 )
 
 data class AccountUi(

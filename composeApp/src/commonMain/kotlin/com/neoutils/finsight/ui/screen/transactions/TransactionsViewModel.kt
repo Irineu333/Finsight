@@ -85,8 +85,10 @@ class TransactionsViewModel(
             selectedType = filters.type,
             selectedTarget = filters.target,
             showRecurringOnly = filters.recurringOnly,
+            showInstallmentOnly = filters.installmentOnly,
             operations = operations
                 .filter(filters.recurringOnly)
+                .filterInstallment(filters.installmentOnly)
                 .filter(filters.category)
                 .filter(filters.type)
                 .filter(filters.target)
@@ -129,6 +131,10 @@ class TransactionsViewModel(
             is TransactionsAction.ToggleRecurring -> {
                 filters.value = filters.value.copy(recurringOnly = action.enabled)
             }
+
+            is TransactionsAction.ToggleInstallment -> {
+                filters.value = filters.value.copy(installmentOnly = action.enabled)
+            }
         }
     }
 }
@@ -136,6 +142,11 @@ class TransactionsViewModel(
 private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
     if (!recurringOnly) return this
     return filter { operation -> operation.recurring != null }
+}
+
+private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+    if (!installmentOnly) return this
+    return filter { operation -> operation.installment != null }
 }
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {

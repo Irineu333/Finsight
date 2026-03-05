@@ -21,6 +21,7 @@ sealed class CreditCardsUiState {
         val selectedCategory: Category?,
         val selectedType: Transaction.Type?,
         val showRecurringOnly: Boolean,
+        val showInstallmentOnly: Boolean,
     ) : CreditCardsUiState()
 }
 

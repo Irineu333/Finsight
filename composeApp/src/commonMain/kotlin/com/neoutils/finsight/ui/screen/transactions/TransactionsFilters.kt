@@ -8,4 +8,5 @@ data class TransactionsFilters(
     val type: Transaction.Type? = null,
     val target: Transaction.Target? = null,
     val recurringOnly: Boolean = false,
+    val installmentOnly: Boolean = false,
 )

@@ -170,6 +170,7 @@ val viewModelModule = module {
         InstallmentsViewModel(
             installmentRepository = get(),
             operationRepository = get(),
+            installmentUiMapper = get(),
         )
     }
 

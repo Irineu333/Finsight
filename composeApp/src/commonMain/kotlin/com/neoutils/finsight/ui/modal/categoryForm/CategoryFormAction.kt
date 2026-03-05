@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.modal.categoryForm
 
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 
 sealed class CategoryFormAction {
 
@@ -14,7 +14,7 @@ sealed class CategoryFormAction {
     ) : CategoryFormAction()
 
     data class IconChanged(
-        val icon: CategoryIcon
+        val icon: AppIcon
     ) : CategoryFormAction()
 
     data object Submit : CategoryFormAction()

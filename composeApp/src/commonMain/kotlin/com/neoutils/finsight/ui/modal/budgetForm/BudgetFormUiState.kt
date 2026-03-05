@@ -2,13 +2,13 @@ package com.neoutils.finsight.ui.modal.budgetForm
 
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.Validation
 
 data class BudgetFormUiState(
     val availableCategories: List<Category> = emptyList(),
     val selectedCategories: List<Category> = emptyList(),
-    val selectedIcon: CategoryIcon = CategoryIcon.DEFAULT,
+    val selectedIcon: AppIcon = AppIcon.BUDGET,
     val title: String = "",
     val amount: String = "",
     val validation: Map<BudgetField, Validation> = mapOf(),

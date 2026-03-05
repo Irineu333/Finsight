@@ -271,7 +271,7 @@ class ViewOperationModal(
             uiState.operation.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_installment_label),
-                    value = "${installment.label} de ${formatter.format(installment.totalAmount)}",
+                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()

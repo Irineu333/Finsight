@@ -49,7 +49,6 @@ class InstallmentRepository(
         return Installment(
             id = entity.id,
             count = entity.count,
-            number = 1,
             totalAmount = entity.totalAmount,
         )
     }

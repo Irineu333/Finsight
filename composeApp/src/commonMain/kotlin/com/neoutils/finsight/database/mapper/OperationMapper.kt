@@ -5,6 +5,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.domain.model.OperationInstallment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.OperationRecurring
@@ -50,7 +51,12 @@ class OperationMapper {
             targetInvoice = entity.targetInvoiceId?.let { invoices[it] },
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->
-                    installments[installmentId]?.copy(number = number)
+                    installments[installmentId]?.let { instance ->
+                        OperationInstallment(
+                            instance = instance,
+                            number = number,
+                        )
+                    }
                 }
             },
             transactions = transactions.sortedByDescending { it.id },

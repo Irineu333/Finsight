@@ -12,7 +12,7 @@ data class Operation(
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
     val targetInvoice: Invoice? = null,
-    val installment: Installment? = null,
+    val installment: OperationInstallment? = null,
     val transactions: List<Transaction>,
 ) {
     val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"

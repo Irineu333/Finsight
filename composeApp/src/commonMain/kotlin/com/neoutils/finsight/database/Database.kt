@@ -186,7 +186,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
-// unpublished
+// 1.4.0
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
@@ -199,12 +199,6 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
                     "WHERE `categories`.`id` = `budgets`.`iconCategoryId`" +
                     "), 'default')"
         )
-    }
-}
-
-// unpublished
-val MIGRATION_5_6 = object : Migration(5, 6) {
-    override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `accounts` ADD COLUMN `iconKey` TEXT NOT NULL DEFAULT 'default'"
         )
@@ -215,7 +209,7 @@ fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

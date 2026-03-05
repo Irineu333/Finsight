@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import org.koin.dsl.module
 
@@ -22,6 +23,7 @@ val mapperModule = module {
     factory { RecurringMapper() }
     factory { RecurringOccurrenceMapper() }
     factory { TransactionMapper() }
+    factory { InstallmentUiMapper() }
     factory {
         InvoiceUiMapper(
             calculateInvoiceUseCase = get(),

@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.update
 class InstallmentsViewModel(
     installmentRepository: IInstallmentRepository,
     operationRepository: IOperationRepository,
+    private val installmentUiMapper: InstallmentUiMapper,
 ) : ViewModel() {
 
     private val selectedInstallmentIndex = MutableStateFlow(0)
@@ -32,47 +34,15 @@ class InstallmentsViewModel(
 
         installments
             .mapNotNull { installment ->
-                val installmentOperations = operationsByInstallmentId[installment.id]
-                    .orEmpty()
-                    .sortedBy { it.installment?.number ?: Int.MAX_VALUE }
-
-                if (installmentOperations.isEmpty()) {
-                    null
-                } else {
-                    val firstOperation = installmentOperations.first()
-                    val openOperation = installmentOperations.firstOrNull {
-                        it.targetInvoice?.status?.isOpen == true
-                    }
-                    val currentNumber = openOperation?.installment?.number
-                        ?: installmentOperations.last().installment?.number
-                        ?: installment.count
-                    val installmentAmount = installment.totalAmount / installment.count
-                    val paidCount = installmentOperations.count {
-                        it.targetInvoice?.status?.isPaid == true
-                    }
-                    val isActive = paidCount < installment.count
-
-                    InstallmentWithOperationsUi(
-                        installment = installment,
-                        operations = installmentOperations,
-                        latestOperationDate = installmentOperations.maxOf { it.date },
-                        title = firstOperation.label,
-                        categoryName = firstOperation.category?.name?.uppercase(),
-                        category = firstOperation.category,
-                        isActive = isActive,
-                        currentNumber = currentNumber,
-                        installmentAmount = installmentAmount,
-                        remainingAmount = (installment.count - paidCount) * installmentAmount,
-                        progress = currentNumber.toFloat() / installment.count,
-                        isDeletable = installmentOperations.all {
-                            it.targetInvoice?.status?.isEditable != false
-                        },
-                    )
-                }
+                installmentUiMapper.toUi(
+                    installment = installment,
+                    operations = operationsByInstallmentId[installment.id].orEmpty(),
+                )
             }
             .sortedWith(
-                compareByDescending<InstallmentWithOperationsUi> { it.latestOperationDate }
-                    .thenByDescending { it.installment.id }
+                compareByDescending<InstallmentWithOperationsUi> {
+                    it.latestOperationDate
+                }.thenByDescending { it.installment.id }
             )
     }
 

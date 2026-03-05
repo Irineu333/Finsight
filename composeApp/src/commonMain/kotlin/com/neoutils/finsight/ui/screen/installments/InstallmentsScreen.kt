@@ -215,7 +215,7 @@ private fun InstallmentsContent(
             )
         },
         floatingActionButton = {
-            if (uiState.installments.isNotEmpty()) {
+            if (uiState is InstallmentsUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(AddInstallmentModal())
@@ -229,8 +229,8 @@ private fun InstallmentsContent(
             }
         },
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
+        when (uiState) {
+            is InstallmentsUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -241,7 +241,7 @@ private fun InstallmentsContent(
                 }
             }
 
-            uiState.installments.isEmpty() -> {
+            is InstallmentsUiState.Empty -> {
                 EmptyInstallmentsState(
                     onCreateInstallment = { modalManager.show(AddInstallmentModal()) },
                     modifier = Modifier
@@ -250,7 +250,7 @@ private fun InstallmentsContent(
                 )
             }
 
-            else -> {
+            is InstallmentsUiState.Content -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -600,7 +600,7 @@ private fun StatusBadge(
 
 @Composable
 private fun FiltersRow(
-    uiState: InstallmentsUiState,
+    uiState: InstallmentsUiState.Content,
     onAction: (InstallmentsAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {

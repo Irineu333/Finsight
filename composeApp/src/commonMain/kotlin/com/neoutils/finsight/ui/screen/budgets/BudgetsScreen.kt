@@ -79,17 +79,15 @@ fun BudgetsScreen(
                     }
                 },
                 actions = {
-                    uiState.selectedMonth?.let { month ->
-                        MonthSelector(
-                            selectedMonth = month,
-                            onMonthSelected = { viewModel.onAction(BudgetsAction.SelectMonth(it)) },
-                        )
-                    }
+                    MonthSelector(
+                        selectedMonth = uiState.selectedMonth,
+                        onMonthSelected = { viewModel.onAction(BudgetsAction.SelectMonth(it)) },
+                    )
                 },
             )
         },
         floatingActionButton = {
-            if (uiState.budgetProgress.isNotEmpty()) {
+            if (uiState is BudgetsUiState.Content) {
                 FloatingActionButton(
                     onClick = { modalManager.show(BudgetFormModal()) },
                 ) {
@@ -98,8 +96,8 @@ fun BudgetsScreen(
             }
         }
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
+        when (val uiState = uiState) {
+            is BudgetsUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -110,7 +108,7 @@ fun BudgetsScreen(
                 }
             }
 
-            uiState.budgetProgress.isEmpty() -> {
+            is BudgetsUiState.Empty -> {
                 EmptyBudgetsState(
                     onCreateBudget = { modalManager.show(BudgetFormModal()) },
                     modifier = Modifier
@@ -119,7 +117,7 @@ fun BudgetsScreen(
                 )
             }
 
-            else -> {
+            is BudgetsUiState.Content -> {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()

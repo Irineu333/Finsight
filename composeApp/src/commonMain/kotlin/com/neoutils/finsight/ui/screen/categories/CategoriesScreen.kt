@@ -80,7 +80,7 @@ private fun CategoriesContent(
             )
         },
         floatingActionButton = {
-            if (uiState.categories.isNotEmpty()) {
+            if (uiState is CategoriesUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
@@ -94,8 +94,8 @@ private fun CategoriesContent(
             }
         }
     ) { paddingValues ->
-        when {
-            uiState.isLoading -> {
+        when (uiState) {
+            CategoriesUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -106,7 +106,7 @@ private fun CategoriesContent(
                 }
             }
 
-            uiState.categories.isEmpty() -> {
+            is CategoriesUiState.Empty -> {
                 EmptyCategoriesState(
                     onCreateDefaultCategories = {
                         onAction(CategoriesAction.CreateDefaultCategories)
@@ -120,7 +120,7 @@ private fun CategoriesContent(
                 )
             }
 
-            else -> {
+            is CategoriesUiState.Content -> {
                 val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
                 val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
                 val visibleCategories = uiState.categories.filter { it.type == uiState.selectedType }

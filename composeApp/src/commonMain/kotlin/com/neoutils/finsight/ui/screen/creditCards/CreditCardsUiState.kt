@@ -7,16 +7,22 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.InvoiceUi
 import kotlinx.datetime.LocalDate
 
-data class CreditCardsUiState(
-    val creditCards: List<CreditCardUi> = emptyList(),
-    val selectedCardIndex: Int = 0,
-    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
-    val categories: List<Category> = emptyList(),
-    val selectedCategory: Category? = null,
-    val selectedType: Transaction.Type? = null,
-    val showRecurringOnly: Boolean = false,
-    val isLoading: Boolean = true,
-)
+sealed class CreditCardsUiState {
+
+    data object Loading : CreditCardsUiState()
+
+    data object Empty : CreditCardsUiState()
+
+    data class Content(
+        val creditCards: List<CreditCardUi>,
+        val selectedCardIndex: Int,
+        val operations: Map<LocalDate, List<Operation>>,
+        val categories: List<Category>,
+        val selectedCategory: Category?,
+        val selectedType: Transaction.Type?,
+        val showRecurringOnly: Boolean,
+    ) : CreditCardsUiState()
+}
 
 data class CreditCardUi(
     val creditCard: CreditCard,

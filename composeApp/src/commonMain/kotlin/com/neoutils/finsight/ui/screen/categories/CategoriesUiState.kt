@@ -2,8 +2,16 @@ package com.neoutils.finsight.ui.screen.categories
 
 import com.neoutils.finsight.domain.model.Category
 
-data class CategoriesUiState(
-    val categories: List<Category> = emptyList(),
-    val selectedType: Category.Type = Category.Type.EXPENSE,
-    val isLoading: Boolean = true,
-)
+sealed class CategoriesUiState {
+
+    data object Loading : CategoriesUiState()
+
+    data class Empty(
+        val selectedType: Category.Type = Category.Type.EXPENSE,
+    ) : CategoriesUiState()
+
+    data class Content(
+        val categories: List<Category>,
+        val selectedType: Category.Type,
+    ) : CategoriesUiState()
+}

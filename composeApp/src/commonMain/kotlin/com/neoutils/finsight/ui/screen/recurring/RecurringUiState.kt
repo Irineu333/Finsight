@@ -11,27 +11,24 @@ enum class RecurringStatusFilter {
     ACTIVE, INACTIVE, ALL
 }
 
-data class RecurringUiState(
-    val recurring: List<Recurring> = emptyList(),
-    val selectedFilter: RecurringFilter = RecurringFilter.ALL,
-    val selectedStatusFilter: RecurringStatusFilter = RecurringStatusFilter.ACTIVE,
-    val isLoading: Boolean = true,
-) {
-    val filteredRecurring: List<Recurring>
-        get() = recurring
-            .filter { recurring ->
-                when (selectedFilter) {
-                    RecurringFilter.ALL -> true
-                    RecurringFilter.INCOME -> recurring.type == Transaction.Type.INCOME
-                    RecurringFilter.EXPENSE -> recurring.type == Transaction.Type.EXPENSE
-                }
-            }
-            .filter { recurring ->
-                when (selectedStatusFilter) {
-                    RecurringStatusFilter.ACTIVE -> recurring.isActive
-                    RecurringStatusFilter.INACTIVE -> !recurring.isActive
-                    RecurringStatusFilter.ALL -> true
-                }
-            }
-            .sortedWith(compareByDescending<Recurring> { it.isActive }.thenBy { it.createdAt })
+sealed class RecurringUiState {
+
+    abstract val selectedFilter: RecurringFilter
+    abstract val selectedStatusFilter: RecurringStatusFilter
+
+    data class Loading(
+        override val selectedFilter: RecurringFilter = RecurringFilter.ALL,
+        override val selectedStatusFilter: RecurringStatusFilter = RecurringStatusFilter.ACTIVE,
+    ) : RecurringUiState()
+
+    data class Empty(
+        override val selectedFilter: RecurringFilter,
+        override val selectedStatusFilter: RecurringStatusFilter,
+    ) : RecurringUiState()
+
+    data class Content(
+        val filteredRecurring: List<Recurring>,
+        override val selectedFilter: RecurringFilter,
+        override val selectedStatusFilter: RecurringStatusFilter,
+    ) : RecurringUiState()
 }

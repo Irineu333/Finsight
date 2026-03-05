@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +57,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.ui.theme.TextLight1
+import com.neoutils.finsight.util.CategoryIcon
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -325,6 +326,7 @@ private fun AccountCard(
     onEditInitialBalance: () -> Unit = {}
 ) {
     val account = accountUi.account
+    val accountIcon = CategoryIcon.fromKey(account.iconKey).icon
     val initialBalance = accountUi.initialBalance
     val balance = accountUi.balance
     val income = accountUi.income
@@ -335,7 +337,7 @@ private fun AccountCard(
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = colorScheme.surfaceContainer
         ),
@@ -355,20 +357,51 @@ private fun AccountCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = account.name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        color = colorScheme.primary.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = accountIcon,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = account.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
 
                 if (account.isDefault) {
-                    Text(
-                        text = stringResource(Res.string.accounts_default),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextLight1,
-                    )
+                    Surface(
+                        color = colorScheme.primary.copy(alpha = 0.12f),
+                        contentColor = colorScheme.primary,
+                        shape = RoundedCornerShape(999.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.accounts_default),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
                 }
             }
 
@@ -421,7 +454,9 @@ private fun AccountCard(
                 )
             }
 
-            HorizontalDivider()
+            HorizontalDivider(
+                color = colorScheme.outlineVariant.copy(alpha = 0.6f)
+            )
 
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_balance),
@@ -454,9 +489,11 @@ private fun AccountSummaryRow(
     ) {
         Text(
             text = label,
-            fontSize = if (isTotal) 18.sp else 16.sp,
+            fontSize = if (isTotal) 18.sp else 15.sp,
             fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isTotal) colorScheme.onSurface else TextLight1
+            color = if (isTotal) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
 
         val formattedAmount = when (signDisplay) {
@@ -497,7 +534,7 @@ private fun AccountSummaryRow(
 
             Text(
                 text = formattedAmount,
-                fontSize = if (isTotal) 20.sp else 18.sp,
+                fontSize = if (isTotal) 20.sp else 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = color
             )

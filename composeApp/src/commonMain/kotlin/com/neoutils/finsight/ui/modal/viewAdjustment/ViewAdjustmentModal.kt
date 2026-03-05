@@ -3,10 +3,12 @@
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Tune
@@ -26,10 +28,12 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.component.NavigationAction
+import com.neoutils.finsight.ui.extension.toLabel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -45,6 +49,7 @@ class ViewAdjustmentModal(
 
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
+        val navigator = LocalNavigator.current
         val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -120,7 +125,11 @@ class ViewAdjustmentModal(
                     value = account.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    onClick = {
+                        manager.dismissAll()
+                        navigator.navigate(NavigationAction.Accounts(account.id))
+                    }
                 )
             }
 
@@ -131,7 +140,11 @@ class ViewAdjustmentModal(
                     value = creditCard.name,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    onClick = {
+                        manager.dismissAll()
+                        navigator.navigate(NavigationAction.CreditCards(creditCard.id))
+                    }
                 )
             } ?: run {
                 if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
@@ -144,6 +157,24 @@ class ViewAdjustmentModal(
                             .fillMaxWidth()
                     )
                 }
+            }
+
+            uiState.transaction.invoice?.let { invoice ->
+                val creditCardId = uiState.transaction.creditCard?.id
+                DetailRow(
+                    label = stringResource(Res.string.view_operation_invoice_label),
+                    value = invoice.toLabel(),
+                    valueColor = invoice.status.color,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
+                    onClick = creditCardId?.let {
+                        {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.InvoiceTransactions(it))
+                        }
+                    }
+                )
             }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -224,23 +255,39 @@ class ViewAdjustmentModal(
         label: String,
         value: String,
         modifier: Modifier = Modifier,
-        valueColor: Color = colorScheme.onSurface
+        valueColor: Color = colorScheme.onSurface,
+        onClick: (() -> Unit)? = null,
     ) {
         Row(
             modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = label,
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
-            Text(
-                text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = valueColor
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            ) {
+                if (onClick != null) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                Text(
+                    text = value,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = valueColor
+                )
+            }
         }
     }
 }

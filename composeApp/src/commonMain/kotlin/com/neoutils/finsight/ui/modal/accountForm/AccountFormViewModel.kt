@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
@@ -31,7 +31,7 @@ class AccountFormViewModel(
     private val isEditMode = account != null
 
     private val name = MutableStateFlow(account?.name.orEmpty())
-    private val selectedIcon = MutableStateFlow(CategoryIcon.fromKey(account?.iconKey ?: CategoryIcon.DEFAULT.key))
+    private val selectedIcon = MutableStateFlow(AppIcon.fromKey(account?.iconKey ?: AppIcon.WALLET.key))
 
     private val validation = ObservableMutableMap(
         map = mutableMapOf(

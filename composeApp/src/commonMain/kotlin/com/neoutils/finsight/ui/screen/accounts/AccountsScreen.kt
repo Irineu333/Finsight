@@ -57,7 +57,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -327,7 +327,7 @@ private fun AccountCard(
     onEditInitialBalance: () -> Unit = {}
 ) {
     val account = accountUi.account
-    val accountIcon = CategoryIcon.fromKey(account.iconKey).icon
+    val accountIcon = AppIcon.fromKey(account.iconKey).icon
     val initialBalance = accountUi.initialBalance
     val balance = accountUi.balance
     val income = accountUi.income

@@ -49,9 +49,9 @@ class CategoryFormViewModel(
 
     private val icon = MutableStateFlow(
         if (category != null) {
-            CategoryIcon.fromKey(category.icon.key)
+            AppIcon.fromKey(category.icon.key)
         } else {
-            CategoryIcon.SHOPPING_CART
+            AppIcon.CATEGORY
         }
     )
 

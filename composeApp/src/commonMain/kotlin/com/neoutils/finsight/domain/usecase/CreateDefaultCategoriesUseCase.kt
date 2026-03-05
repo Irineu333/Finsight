@@ -20,7 +20,7 @@ import com.neoutils.finsight.resources.category_default_subscriptions
 import com.neoutils.finsight.resources.category_default_transport
 import com.neoutils.finsight.resources.category_default_travel
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -30,25 +30,25 @@ class CreateDefaultCategoriesUseCase(
 ) {
     private data class Template(
         val name: UiText,
-        val icon: CategoryIcon,
+        val icon: AppIcon,
         val type: Category.Type,
     )
 
     private val templates = listOf(
-        Template(UiText.Res(Res.string.category_default_salary), CategoryIcon.MONEY, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_freelance), CategoryIcon.WORK, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_investments), CategoryIcon.BUSINESS, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_benefits), CategoryIcon.GIFT, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_refund), CategoryIcon.DEFAULT, Category.Type.INCOME),
-        Template(UiText.Res(Res.string.category_default_housing), CategoryIcon.HOME, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_food), CategoryIcon.RESTAURANT, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_market), CategoryIcon.SHOPPING_CART, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_transport), CategoryIcon.CAR, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_health), CategoryIcon.HEALTH, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_education), CategoryIcon.SCHOOL, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_entertainment), CategoryIcon.MOVIE, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_subscriptions), CategoryIcon.WIFI, Category.Type.EXPENSE),
-        Template(UiText.Res(Res.string.category_default_travel), CategoryIcon.FLIGHT, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_salary), AppIcon.MONEY, Category.Type.INCOME),
+        Template(UiText.Res(Res.string.category_default_freelance), AppIcon.WORK, Category.Type.INCOME),
+        Template(UiText.Res(Res.string.category_default_investments), AppIcon.BUSINESS, Category.Type.INCOME),
+        Template(UiText.Res(Res.string.category_default_benefits), AppIcon.GIFT, Category.Type.INCOME),
+        Template(UiText.Res(Res.string.category_default_refund), AppIcon.DEFAULT, Category.Type.INCOME),
+        Template(UiText.Res(Res.string.category_default_housing), AppIcon.HOME, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_food), AppIcon.RESTAURANT, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_market), AppIcon.SHOPPING_CART, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_transport), AppIcon.CAR, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_health), AppIcon.HEALTH, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_education), AppIcon.SCHOOL, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_entertainment), AppIcon.MOVIE, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_subscriptions), AppIcon.WIFI, Category.Type.EXPENSE),
+        Template(UiText.Res(Res.string.category_default_travel), AppIcon.FLIGHT, Category.Type.EXPENSE),
     )
 
     suspend operator fun invoke() {

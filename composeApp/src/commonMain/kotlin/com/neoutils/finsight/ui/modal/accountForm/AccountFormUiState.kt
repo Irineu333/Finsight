@@ -1,11 +1,11 @@
 package com.neoutils.finsight.ui.modal.accountForm
 
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.Validation
 
 data class AccountFormUiState(
     val name: String = "",
-    val selectedIcon: CategoryIcon = CategoryIcon.DEFAULT,
+    val selectedIcon: AppIcon = AppIcon.WALLET,
     val validation: Map<AccountField, Validation> = mapOf(),
     val isDefault: Boolean = false,
     val isEditMode: Boolean = false,

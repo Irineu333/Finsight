@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
 import com.neoutils.finsight.util.Validation
@@ -40,7 +40,7 @@ class BudgetFormViewModel(
     private val isEditMode = budget != null
 
     private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
-    private val selectedIcon = MutableStateFlow(CategoryIcon.fromKey(budget?.iconKey ?: CategoryIcon.DEFAULT.key))
+    private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
     private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
     private val validation = ObservableMutableMap(
@@ -55,7 +55,7 @@ class BudgetFormViewModel(
 
     private data class FormFields(
         val selectedCategories: List<Category>,
-        val selectedIcon: CategoryIcon,
+        val selectedIcon: AppIcon,
         val title: String,
         val amount: String,
     )
@@ -88,7 +88,7 @@ class BudgetFormViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = BudgetFormUiState(
             selectedCategories = budget?.categories ?: emptyList(),
-            selectedIcon = CategoryIcon.fromKey(budget?.iconKey ?: CategoryIcon.DEFAULT.key),
+            selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
             amount = budget?.amount?.let { formatter.format(it) } ?: "",
             validation = validation,

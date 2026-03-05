@@ -65,7 +65,7 @@ import com.neoutils.finsight.resources.dashboard_total_balance
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -858,7 +858,7 @@ private fun DashboardAccountItemCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = CategoryIcon.fromKey(accountUi.account.iconKey).icon,
+                    imageVector = AppIcon.fromKey(accountUi.account.iconKey).icon,
                     contentDescription = null,
                     tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),

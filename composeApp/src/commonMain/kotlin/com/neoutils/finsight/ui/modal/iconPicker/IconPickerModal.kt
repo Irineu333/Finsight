@@ -26,14 +26,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 
 class IconPickerModal(
     private val title: String,
-    private val selectedIcon: CategoryIcon,
+    private val selectedIcon: AppIcon,
     private val accentColor: Color,
-    private val icons: List<CategoryIcon>,
-    private val onIconSelected: (CategoryIcon) -> Unit,
+    private val icons: List<AppIcon>,
+    private val onIconSelected: (AppIcon) -> Unit,
 ) : ModalBottomSheet() {
 
     @Composable

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.accountForm
 
-import com.neoutils.finsight.util.CategoryIcon
+import com.neoutils.finsight.util.AppIcon
 
 sealed class AccountFormAction {
 
@@ -13,7 +13,7 @@ sealed class AccountFormAction {
     ) : AccountFormAction()
 
     data class IconSelected(
-        val icon: CategoryIcon,
+        val icon: AppIcon,
     ) : AccountFormAction()
 
     data object Submit : AccountFormAction()

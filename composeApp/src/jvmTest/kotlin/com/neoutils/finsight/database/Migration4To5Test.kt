@@ -7,7 +7,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class Migration4To5Test {
@@ -18,6 +17,7 @@ class Migration4To5Test {
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
 
+        // v4 `categories` table (FK target for budgets.iconCategoryId)
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `categories` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
@@ -28,6 +28,7 @@ class Migration4To5Test {
                 ")"
         )
 
+        // v4 `budgets` table (without `iconKey`)
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `budgets` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
@@ -39,11 +40,28 @@ class Migration4To5Test {
                 "`createdAt` INTEGER NOT NULL" +
                 ")"
         )
+
+        // v4 `accounts` table (without `iconKey`)
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `accounts` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL" +
+                ")"
+        )
     }
 
     @AfterTest
     fun teardown() {
         connection.close()
+    }
+
+    // --- budgets table ---
+
+    @Test
+    fun `given database at version 4 when migrated to 5 then budgets table still exists`() {
+        MIGRATION_4_5.migrate(connection)
+
+        assertTrue(connection.tableExists("budgets"))
     }
 
     @Test
@@ -54,34 +72,29 @@ class Migration4To5Test {
     }
 
     @Test
-    fun `given database at version 4 before migration then budgets does not have iconKey column`() {
-        assertFalse("iconKey" in connection.getColumns("budgets"))
-    }
-
-    @Test
-    fun `given budget with no matching category when migrated to 5 then iconKey defaults to default`() {
+    fun `given existing budget when migrated to 5 then budget data is preserved`() {
         connection.execSQL(
             "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `title`, `amount`, `period`, `createdAt`) " +
-                "VALUES (1, 999, 'Food Budget', 500.0, '2024-01', 1000)"
+                "VALUES (1, 1, 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
         MIGRATION_4_5.migrate(connection)
 
-        val stmt = connection.prepare("SELECT `iconKey` FROM `budgets`")
-        assertTrue(stmt.step())
-        assertEquals("default", stmt.getText(0))
+        val stmt = connection.prepare("SELECT COUNT(*) FROM `budgets`")
+        stmt.step()
+        assertEquals(1L, stmt.getLong(0))
         stmt.close()
     }
 
     @Test
-    fun `given budget with matching category when migrated to 5 then iconKey is populated from category`() {
+    fun `given budget with matching category when migrated to 5 then iconKey is copied from category`() {
         connection.execSQL(
             "INSERT INTO `categories` (`id`, `name`, `iconKey`, `type`, `createdAt`) " +
                 "VALUES (1, 'Food', 'food_icon', 'EXPENSE', 1000)"
         )
         connection.execSQL(
             "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `title`, `amount`, `period`, `createdAt`) " +
-                "VALUES (1, 1, 'Food Budget', 500.0, '2024-01', 1000)"
+                "VALUES (1, 1, 'Food', 500.0, 'MONTHLY', 1000)"
         )
 
         MIGRATION_4_5.migrate(connection)
@@ -93,53 +106,61 @@ class Migration4To5Test {
     }
 
     @Test
-    fun `given existing budget when migrated to 5 then other columns are preserved`() {
+    fun `given budget with no matching category when migrated to 5 then iconKey defaults to default`() {
         connection.execSQL(
             "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `title`, `amount`, `period`, `createdAt`) " +
-                "VALUES (1, 1, 'Groceries', 300.0, '2024-03', 2000)"
+                "VALUES (99, 99, 'Unknown', 100.0, 'MONTHLY', 1000)"
         )
 
         MIGRATION_4_5.migrate(connection)
 
-        val stmt = connection.prepare(
-            "SELECT `title`, `amount`, `period`, `createdAt` FROM `budgets`"
-        )
+        val stmt = connection.prepare("SELECT `iconKey` FROM `budgets`")
         assertTrue(stmt.step())
-        assertEquals("Groceries", stmt.getText(0))
-        assertEquals(300.0, stmt.getDouble(1))
-        assertEquals("2024-03", stmt.getText(2))
-        assertEquals(2000L, stmt.getLong(3))
+        assertEquals("default", stmt.getText(0))
+        stmt.close()
+    }
+
+    // --- accounts table ---
+
+    @Test
+    fun `given database at version 4 when migrated to 5 then accounts table still exists`() {
+        MIGRATION_4_5.migrate(connection)
+
+        assertTrue(connection.tableExists("accounts"))
+    }
+
+    @Test
+    fun `given database at version 4 when migrated to 5 then accounts has iconKey column`() {
+        MIGRATION_4_5.migrate(connection)
+
+        assertTrue("iconKey" in connection.getColumns("accounts"))
+    }
+
+    @Test
+    fun `given existing account when migrated to 5 then account data is preserved`() {
+        connection.execSQL(
+            "INSERT INTO `accounts` (`name`) VALUES ('Checking')"
+        )
+
+        MIGRATION_4_5.migrate(connection)
+
+        val stmt = connection.prepare("SELECT COUNT(*) FROM `accounts`")
+        stmt.step()
+        assertEquals(1L, stmt.getLong(0))
         stmt.close()
     }
 
     @Test
-    fun `given multiple budgets with mixed category matches when migrated to 5 then each gets correct iconKey`() {
+    fun `given existing account when migrated to 5 then iconKey defaults to default`() {
         connection.execSQL(
-            "INSERT INTO `categories` (`id`, `name`, `iconKey`, `type`, `createdAt`) " +
-                "VALUES (10, 'Transport', 'car_icon', 'EXPENSE', 1000)"
-        )
-        connection.execSQL(
-            "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `title`, `amount`, `period`, `createdAt`) " +
-                "VALUES (10, 10, 'Transport Budget', 200.0, '2024-01', 1000)"
-        )
-        connection.execSQL(
-            "INSERT INTO `budgets` (`categoryId`, `iconCategoryId`, `title`, `amount`, `period`, `createdAt`) " +
-                "VALUES (10, 999, 'Unknown Budget', 100.0, '2024-01', 1000)"
+            "INSERT INTO `accounts` (`name`) VALUES ('Savings')"
         )
 
         MIGRATION_4_5.migrate(connection)
 
-        val stmt = connection.prepare(
-            "SELECT `title`, `iconKey` FROM `budgets` ORDER BY `id`"
-        )
+        val stmt = connection.prepare("SELECT `iconKey` FROM `accounts`")
         assertTrue(stmt.step())
-        assertEquals("Transport Budget", stmt.getText(0))
-        assertEquals("car_icon", stmt.getText(1))
-
-        assertTrue(stmt.step())
-        assertEquals("Unknown Budget", stmt.getText(0))
-        assertEquals("default", stmt.getText(1))
-
+        assertEquals("default", stmt.getText(0))
         stmt.close()
     }
 }

@@ -21,20 +21,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryField
-import com.neoutils.finsight.ui.util.stringUiText
-import com.neoutils.finsight.util.DayInputTransformation
-import com.neoutils.finsight.util.rememberMoneyInputTransformation
-import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_form_closing_day_label
 import com.neoutils.finsight.resources.credit_card_form_due_day_label
 import com.neoutils.finsight.resources.credit_card_form_edit_title
+import com.neoutils.finsight.resources.credit_card_form_icon_helper
+import com.neoutils.finsight.resources.credit_card_form_icon_label
+import com.neoutils.finsight.resources.credit_card_form_icon_modal_title
 import com.neoutils.finsight.resources.credit_card_form_limit_label
 import com.neoutils.finsight.resources.credit_card_form_name_label
 import com.neoutils.finsight.resources.credit_card_form_new_title
 import com.neoutils.finsight.resources.credit_card_form_save
+import com.neoutils.finsight.ui.component.IconPickerSelector
+import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
+import com.neoutils.finsight.ui.util.stringUiText
+import com.neoutils.finsight.util.DayInputTransformation
+import com.neoutils.finsight.util.FeatureIconCatalog
+import com.neoutils.finsight.util.Validation
+import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -48,6 +54,9 @@ class CreditCardFormModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val modalManager = LocalModalManager.current
+        val accentColor = MaterialTheme.colorScheme.primary
+        val iconModalTitle = stringResource(Res.string.credit_card_form_icon_modal_title)
 
         val name = rememberTextFieldState(uiState.form.name)
         val limit = rememberTextFieldState(uiState.form.limit)
@@ -193,6 +202,29 @@ class CreditCardFormModal(
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
+            )
+
+            IconPickerSelector(
+                selectedIcon = uiState.selectedIcon,
+                accentColor = accentColor,
+                title = stringResource(Res.string.credit_card_form_icon_label),
+                helperText = stringResource(Res.string.credit_card_form_icon_helper),
+                onClick = {
+                    modalManager.show(
+                        IconPickerModal(
+                            title = iconModalTitle,
+                            selectedIcon = uiState.selectedIcon,
+                            accentColor = accentColor,
+                            icons = FeatureIconCatalog.withGeneral(
+                                featureIcons = FeatureIconCatalog.creditCards,
+                                selectedIcon = uiState.selectedIcon,
+                            ),
+                            onIconSelected = { icon ->
+                                viewModel.onAction(CreditCardFormAction.IconSelected(icon))
+                            },
+                        )
+                    )
+                },
             )
 
             HorizontalDivider()

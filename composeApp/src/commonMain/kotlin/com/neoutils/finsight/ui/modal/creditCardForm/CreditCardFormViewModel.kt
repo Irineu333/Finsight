@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
 import com.neoutils.finsight.util.ObservableMutableMap
@@ -36,6 +37,7 @@ class CreditCardFormViewModel(
     private val isEditMode = creditCard != null
 
     private val name = MutableStateFlow(creditCard?.name.orEmpty())
+    private val selectedIcon = MutableStateFlow(AppIcon.fromKey(creditCard?.iconKey ?: AppIcon.CARD.key))
 
     private val validation = ObservableMutableMap<CreditCardField, Validation>(
         map = mutableMapOf(
@@ -60,7 +62,8 @@ class CreditCardFormViewModel(
         limit,
         closingDay,
         dueDay,
-    ) { name, limit, closingDay, dueDay ->
+        selectedIcon,
+    ) { name, limit, closingDay, dueDay, selectedIcon ->
         val closingDayInt = closingDay.toIntOrNull()
         val dueDayInt = dueDay.toIntOrNull()
 
@@ -71,6 +74,7 @@ class CreditCardFormViewModel(
             dueDayUser = dueDay,
             closingDayCalc = dueDayInt?.let { creditCardPeriod.calculateClosingDay(it) },
             dueDayCalc = closingDayInt?.let { creditCardPeriod.calculateDueDay(it) },
+            iconKey = selectedIcon.key,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -81,13 +85,17 @@ class CreditCardFormViewModel(
                 limit = formatter.format(it.limit),
                 closingDayUser = it.closingDay.toString(),
                 dueDayUser = it.dueDay.toString(),
+                iconKey = it.iconKey,
             )
-        } ?: CreditCardForm()
+        } ?: CreditCardForm(
+            iconKey = AppIcon.CARD.key
+        )
     )
 
-    val uiState = combine(form, validation) { form, validation ->
+    val uiState = combine(form, selectedIcon, validation) { form, selectedIcon, validation ->
         CreditCardFormUiState(
             form = form,
+            selectedIcon = selectedIcon,
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.isValid(),
@@ -97,6 +105,7 @@ class CreditCardFormViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = CreditCardFormUiState(
             form = form.value,
+            selectedIcon = selectedIcon.value,
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = form.value.isValid(),
@@ -119,6 +128,10 @@ class CreditCardFormViewModel(
 
             is CreditCardFormAction.DueDayChanged -> {
                 dueDay.value = action.dueDay
+            }
+
+            is CreditCardFormAction.IconSelected -> {
+                selectedIcon.value = action.icon
             }
 
             is CreditCardFormAction.Submit -> submit()
@@ -156,6 +169,7 @@ class CreditCardFormViewModel(
                         limit = creditCard.limit,
                         closingDay = creditCard.closingDay,
                         dueDay = creditCard.dueDay,
+                        iconKey = creditCard.iconKey,
                     )
                 }
             }.onLeft {

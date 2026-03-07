@@ -184,6 +184,9 @@
     <string name="credit_card_form_edit_title">Editar Cartão</string>
     <string name="credit_card_form_new_title">Novo Cartão</string>
     <string name="credit_card_form_name_label">Nome do Cartão</string>
+    <string name="credit_card_form_icon_label">Ícone do cartão</string>
+    <string name="credit_card_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="credit_card_form_icon_modal_title">Escolha um ícone para o cartão</string>
     <string name="credit_card_form_limit_label">Limite</string>
     <string name="credit_card_form_closing_day_label">Dia de Fechamento</string>
     <string name="credit_card_form_due_day_label">Dia de Vencimento</string>

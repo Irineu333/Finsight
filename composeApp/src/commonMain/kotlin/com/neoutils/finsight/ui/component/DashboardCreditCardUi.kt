@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -33,6 +32,7 @@ import com.neoutils.finsight.resources.dashboard_credit_card_available_limit
 import com.neoutils.finsight.resources.dashboard_credit_card_close_invoice
 import com.neoutils.finsight.resources.dashboard_credit_card_current_invoice
 import com.neoutils.finsight.resources.dashboard_credit_card_pay_invoice
+import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
 data class CreditCardUiConfig(
@@ -105,7 +105,7 @@ fun DashboardCreditCardUI(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CreditCard,
+                        imageVector = AppIcon.fromKey(ui.creditCard.iconKey).icon,
                         contentDescription = null,
                         tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)

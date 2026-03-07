@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
+import com.neoutils.finsight.util.AppIcon
+
 sealed class CreditCardFormAction {
 
     data class NameChanged(
@@ -16,6 +18,10 @@ sealed class CreditCardFormAction {
 
     data class DueDayChanged(
         val dueDay: String
+    ) : CreditCardFormAction()
+
+    data class IconSelected(
+        val icon: AppIcon
     ) : CreditCardFormAction()
 
     data object Submit : CreditCardFormAction()

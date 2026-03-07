@@ -104,6 +104,18 @@ object FeatureIconCatalog {
         AppIcon.FAVORITE,
     )
 
+    val creditCards: List<AppIcon> = listOf(
+        AppIcon.CARD,
+        AppIcon.PAYMENT,
+        AppIcon.RECEIPT,
+        AppIcon.MONEY,
+        AppIcon.WALLET,
+        AppIcon.BANK,
+        AppIcon.SAVINGS,
+        AppIcon.BUSINESS,
+        AppIcon.FAVORITE,
+    )
+
     fun withGeneral(
         featureIcons: List<AppIcon>,
         selectedIcon: AppIcon? = null,

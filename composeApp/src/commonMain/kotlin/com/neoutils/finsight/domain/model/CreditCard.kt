@@ -13,6 +13,7 @@ data class CreditCard(
     val limit: Double,
     val closingDay: Int,
     val dueDay: Int,
+    val iconKey: String = "card",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 ) {
     init {

@@ -19,6 +19,7 @@ data class CreditCardForm(
     val dueDayUser: String = "",
     val closingDayCalc: Int? = null,
     val dueDayCalc: Int? = null,
+    val iconKey: String = "card",
 ) {
     val closingDay = closingDayUser.toIntOrNull() ?: closingDayCalc
 
@@ -53,6 +54,7 @@ data class CreditCardForm(
             limit = limitValue,
             closingDay = closingDay,
             dueDay = dueDay,
+            iconKey = iconKey,
             createdAt = Clock.System.now().toEpochMilliseconds()
         ).right()
     }

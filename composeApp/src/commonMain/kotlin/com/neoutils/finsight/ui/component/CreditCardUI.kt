@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,6 +47,7 @@ import com.neoutils.finsight.resources.credit_card_ui_closes_on
 import com.neoutils.finsight.resources.credit_card_ui_current_invoice
 import com.neoutils.finsight.resources.credit_card_ui_due_on
 import com.neoutils.finsight.resources.credit_card_ui_edit_invoice
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
@@ -102,7 +102,7 @@ fun CreditCardUI(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CreditCard,
+                        imageVector = AppIcon.fromKey(ui.creditCard.iconKey).icon,
                         contentDescription = null,
                         tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)

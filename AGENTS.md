@@ -9,7 +9,6 @@ Use as skills abaixo diretamente dos caminhos locais, sem cópia e sem symlink:
 
 - `commit`: `./.claude/skills/commit/SKILL.md`
 - `bump-version`: `./.claude/skills/bump-version/SKILL.md`
-- `finsight-ux`: `./.claude/skills/finsight-ux/SKILL.md`
 - `jetpack-compose-expert`: `./.claude/skills/jetpack-compose-expert/SKILL.md`
 - `kmp-architecture`: `./.claude/skills/kmp-architecture/SKILL.md`
 - `kmp-unit-testing`: `./.claude/skills/kmp-unit-testing/SKILL.md`

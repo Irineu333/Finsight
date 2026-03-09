@@ -57,6 +57,8 @@
 
     <!-- Report Config Screen -->
     <string name="report_config_title">Novo Relatório</string>
+    <string name="report_config_perspective">Perspectiva</string>
+    <string name="report_config_sections">Seções</string>
     <string name="report_config_perspective_account">Conta</string>
     <string name="report_config_perspective_credit_card">Cartão de Crédito</string>
     <string name="report_config_date_range">Período</string>
@@ -67,7 +69,9 @@
     <string name="report_config_generate">Gerar Relatório</string>
     <string name="report_config_cancel">Cancelar</string>
     <string name="report_config_confirm">Confirmar</string>
+    <string name="report_config_accounts">Contas</string>
     <string name="report_config_no_accounts">Nenhuma conta cadastrada</string>
+    <string name="report_config_credit_cards">Cartões</string>
     <string name="report_config_no_credit_cards">Nenhum cartão cadastrado</string>
 
     <!-- Report Viewer Screen -->
@@ -449,8 +453,10 @@
 
     <string name="credit_card_ui_current_invoice">Fatura Atual</string>
     <string name="credit_card_ui_available_limit">Limite Disponível</string>
+    <string name="credit_card_ui_opens_on">Abre em</string>
     <string name="credit_card_ui_closes_on">Fecha em</string>
     <string name="credit_card_ui_due_on">Vence em</string>
+    <string name="credit_card_ui_day">Dia %1$d</string>
     <string name="credit_card_ui_edit_invoice">Editar fatura</string>
 
     <string name="dashboard_credit_card_current_invoice">Fatura Atual</string>

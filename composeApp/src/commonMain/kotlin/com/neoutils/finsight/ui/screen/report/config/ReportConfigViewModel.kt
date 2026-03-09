@@ -5,13 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.ui.screen.home.AppRoute
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 
 class ReportConfigViewModel(
     private val accountRepository: IAccountRepository,
@@ -19,6 +14,11 @@ class ReportConfigViewModel(
 ) : ViewModel() {
 
     private val config = MutableStateFlow(ReportConfigUiState())
+
+    init {
+        selectDefaultAccount()
+    }
+
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),
@@ -40,6 +40,7 @@ class ReportConfigViewModel(
             is ReportConfigAction.SelectPerspective -> {
                 config.update { it.copy(selectedTab = action.tab) }
             }
+
             is ReportConfigAction.ToggleAccount -> {
                 config.update { state ->
                     val ids = state.selectedAccountIds.toMutableSet()
@@ -51,20 +52,33 @@ class ReportConfigViewModel(
                     state.copy(selectedAccountIds = ids)
                 }
             }
+
             is ReportConfigAction.SelectCreditCard -> {
                 config.update { it.copy(selectedCreditCardId = action.creditCardId) }
             }
+
             is ReportConfigAction.SelectStartDate -> {
                 config.update { it.copy(startDate = action.date) }
             }
+
             is ReportConfigAction.SelectEndDate -> {
                 config.update { it.copy(endDate = action.date) }
             }
+
             is ReportConfigAction.ToggleSpendingByCategory -> {
                 config.update { it.copy(includeSpendingByCategory = action.enabled) }
             }
+
             is ReportConfigAction.ToggleTransactionList -> {
                 config.update { it.copy(includeTransactionList = action.enabled) }
+            }
+        }
+    }
+
+    private fun selectDefaultAccount() = viewModelScope.launch {
+        accountRepository.getDefaultAccount()?.let { account ->
+            config.update {
+                it.copy(selectedAccountIds = setOf(account.id))
             }
         }
     }
@@ -80,6 +94,7 @@ class ReportConfigViewModel(
                 includeSpendingByCategory = state.includeSpendingByCategory,
                 includeTransactionList = state.includeTransactionList,
             )
+
             PerspectiveTab.CREDIT_CARD -> AppRoute.ReportViewer(
                 perspectiveType = "CREDIT_CARD",
                 creditCardId = state.selectedCreditCardId,

@@ -53,6 +53,29 @@
     <string name="dashboard_current_balance">Current Balance</string>
     <string name="dashboard_total_balance">Total balance</string>
     <string name="dashboard_add_account">Add account</string>
+    <string name="dashboard_reports">Reports</string>
+
+    <!-- Report Config Screen -->
+    <string name="report_config_title">New Report</string>
+    <string name="report_config_perspective_account">Account</string>
+    <string name="report_config_perspective_credit_card">Credit Card</string>
+    <string name="report_config_date_range">Period</string>
+    <string name="report_config_start_date">Start date</string>
+    <string name="report_config_end_date">End date</string>
+    <string name="report_config_include_spending_by_category">Spending by category</string>
+    <string name="report_config_include_transactions">Transaction list</string>
+    <string name="report_config_generate">Generate Report</string>
+    <string name="report_config_cancel">Cancel</string>
+    <string name="report_config_confirm">Confirm</string>
+
+    <!-- Report Viewer Screen -->
+    <string name="report_viewer_title">Report</string>
+    <string name="report_viewer_summary_income">Income</string>
+    <string name="report_viewer_summary_expense">Expense</string>
+    <string name="report_viewer_summary_balance">Balance</string>
+    <string name="report_viewer_summary_invoice_total">Invoice Total</string>
+    <string name="report_viewer_spending_by_category">Spending by Category</string>
+    <string name="report_viewer_transactions">Transactions</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>

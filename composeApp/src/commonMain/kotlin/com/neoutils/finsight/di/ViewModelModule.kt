@@ -41,6 +41,8 @@ import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringVie
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
+import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
+import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
@@ -415,6 +417,24 @@ val viewModelModule = module {
             recurring = it.get(),
             reactivateRecurringUseCase = get(),
             modalManager = get(),
+        )
+    }
+
+    viewModel {
+        ReportConfigViewModel(
+            accountRepository = get(),
+            creditCardRepository = get(),
+        )
+    }
+
+    viewModel { params ->
+        ReportViewerViewModel(
+            route = params.get(),
+            operationRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+            calculateReportStatsUseCase = get(),
+            calculateReportCategorySpendingUseCase = get(),
         )
     }
 

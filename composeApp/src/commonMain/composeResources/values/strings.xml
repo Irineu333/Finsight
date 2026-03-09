@@ -53,6 +53,29 @@
     <string name="dashboard_current_balance">Saldo Atual</string>
     <string name="dashboard_total_balance">Saldo total</string>
     <string name="dashboard_add_account">Adicionar conta</string>
+    <string name="dashboard_reports">Relatórios</string>
+
+    <!-- Report Config Screen -->
+    <string name="report_config_title">Novo Relatório</string>
+    <string name="report_config_perspective_account">Conta</string>
+    <string name="report_config_perspective_credit_card">Cartão de Crédito</string>
+    <string name="report_config_date_range">Período</string>
+    <string name="report_config_start_date">Data inicial</string>
+    <string name="report_config_end_date">Data final</string>
+    <string name="report_config_include_spending_by_category">Gastos por categoria</string>
+    <string name="report_config_include_transactions">Lista de transações</string>
+    <string name="report_config_generate">Gerar Relatório</string>
+    <string name="report_config_cancel">Cancelar</string>
+    <string name="report_config_confirm">Confirmar</string>
+
+    <!-- Report Viewer Screen -->
+    <string name="report_viewer_title">Relatório</string>
+    <string name="report_viewer_summary_income">Receitas</string>
+    <string name="report_viewer_summary_expense">Despesas</string>
+    <string name="report_viewer_summary_balance">Saldo</string>
+    <string name="report_viewer_summary_invoice_total">Total da Fatura</string>
+    <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
+    <string name="report_viewer_transactions">Transações</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

@@ -3,7 +3,6 @@
 package com.neoutils.finsight.ui.component
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope.ResizeMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +26,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,9 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.extension.toUiText
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardUi
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_ui_available_limit
 import com.neoutils.finsight.resources.credit_card_ui_closes_on
@@ -48,7 +43,6 @@ import com.neoutils.finsight.resources.credit_card_ui_current_invoice
 import com.neoutils.finsight.resources.credit_card_ui_due_on
 import com.neoutils.finsight.resources.credit_card_ui_edit_invoice
 import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
 

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.extension
+package com.neoutils.finsight.extension
 
 import androidx.compose.runtime.Composable
 import com.neoutils.finsight.domain.model.Invoice

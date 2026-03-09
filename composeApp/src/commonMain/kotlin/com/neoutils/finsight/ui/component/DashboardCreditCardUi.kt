@@ -3,7 +3,6 @@
 package com.neoutils.finsight.ui.component
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope.ResizeMode
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.extension.toUiText
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.screen.dashboard.CreditCardUi
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_credit_card_advance

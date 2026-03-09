@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_navigator_label
-import com.neoutils.finsight.ui.extension.toLabel
+import com.neoutils.finsight.extension.toLabel
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth

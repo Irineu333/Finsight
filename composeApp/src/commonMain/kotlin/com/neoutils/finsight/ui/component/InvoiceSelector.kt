@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_selector_label
-import com.neoutils.finsight.ui.extension.toLabel
+import com.neoutils.finsight.extension.toLabel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

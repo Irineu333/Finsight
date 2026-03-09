@@ -69,6 +69,12 @@
     <string name="report_config_generate">Gerar Relatório</string>
     <string name="report_config_cancel">Cancelar</string>
     <string name="report_config_confirm">Confirmar</string>
+    <string name="report_config_period_select">Toque para selecionar</string>
+    <string name="report_config_period_last_7_days">Últimos 7 dias</string>
+    <string name="report_config_period_last_30_days">Últimos 30 dias</string>
+    <string name="report_config_period_this_month">Este mês</string>
+    <string name="report_config_period_last_month">Mês passado</string>
+    <string name="report_config_period_this_year">Este ano</string>
     <string name="report_config_accounts">Contas</string>
     <string name="report_config_no_accounts">Nenhuma conta cadastrada</string>
     <string name="report_config_credit_cards">Cartões</string>

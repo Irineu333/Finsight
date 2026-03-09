@@ -39,4 +39,18 @@ sealed class AppRoute {
 
     @Serializable
     data object Recurring : AppRoute()
+
+    @Serializable
+    data object ReportConfig : AppRoute()
+
+    @Serializable
+    data class ReportViewer(
+        val perspectiveType: String,
+        val accountIds: List<Long> = emptyList(),
+        val creditCardId: Long? = null,
+        val startDate: String,
+        val endDate: String,
+        val includeSpendingByCategory: Boolean,
+        val includeTransactionList: Boolean,
+    ) : AppRoute()
 }

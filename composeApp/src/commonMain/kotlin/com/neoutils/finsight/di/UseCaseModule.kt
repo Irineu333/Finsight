@@ -30,6 +30,8 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
+import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateFutureInvoiceUseCase
@@ -86,6 +88,10 @@ val useCaseModules = module {
     factory { CalculateTransactionStatsUseCase() }
 
     factory { CalculateCategorySpendingUseCase() }
+
+    factory { CalculateReportStatsUseCase() }
+
+    factory { CalculateReportCategorySpendingUseCase() }
 
     factory { CalculateBudgetProgressUseCase() }
 

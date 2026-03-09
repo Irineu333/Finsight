@@ -54,7 +54,6 @@ import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
 import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_default
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_add_account
@@ -850,88 +849,18 @@ private fun DashboardAccountsRow(
                 items = accounts.sortedByDescending { it.account.isDefault },
                 key = { accountUi -> accountUi.account.id },
             ) { accountUi ->
-                DashboardAccountItemCard(
-                    accountUi = accountUi,
-                    onClick = { onAccountClick(accountUi.account.id) },
+                AccountCard(
+                    account = accountUi.account,
+                    variant = AccountCardVariant.Dashboard(
+                        balance = accountUi.balance,
+                        onClick = { onAccountClick(accountUi.account.id) },
+                    ),
                 )
             }
 
             item(key = "add_account") {
                 DashboardAddAccountCard(
                     onClick = onAddAccount,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardAccountItemCard(
-    accountUi: DashboardAccountUi,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val formatter = LocalCurrencyFormatter.current
-
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer,
-            contentColor = colorScheme.onSurface,
-        ),
-        shape = RoundedCornerShape(18.dp),
-        modifier = modifier
-            .width(156.dp)
-            .height(112.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = AppIcon.fromKey(accountUi.account.iconKey).icon,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-
-                if (accountUi.account.isDefault) {
-                    Surface(
-                        color = colorScheme.primary.copy(alpha = 0.12f),
-                        contentColor = colorScheme.primary,
-                        shape = RoundedCornerShape(999.dp),
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_default),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.align(Alignment.BottomStart),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = accountUi.account.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-                Text(
-                    text = formatter.format(accountUi.balance),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    maxLines = 1,
                 )
             }
         }

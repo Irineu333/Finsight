@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.AccountCard
+import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.screen.home.AppRoute
@@ -134,10 +136,12 @@ private fun ReportConfigContent(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             items(uiState.accounts, key = { it.id }) { account ->
-                                AccountSelectionCard(
+                                AccountCard(
                                     account = account,
-                                    selected = account.id in uiState.selectedAccountIds,
-                                    onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
+                                    variant = AccountCardVariant.Selection(
+                                        selected = account.id in uiState.selectedAccountIds,
+                                        onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
+                                    ),
                                 )
                             }
                         }

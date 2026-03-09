@@ -247,51 +247,53 @@ private fun DashboardContent(
                     ) { page ->
                         val creditCardUi = uiState.creditCards[page]
 
-                        DashboardCreditCardUI(
-                            ui = creditCardUi,
-                            config = CreditCardUiConfig.from(creditCardUi = creditCardUi),
+                        CreditCardCard(
+                            creditCard = creditCardUi.creditCard,
+                            invoiceUi = creditCardUi.invoiceUi,
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                navigator.navigate(
-                                    NavigationAction.CreditCards(
-                                        creditCardId = creditCardUi.creditCard.id
-                                    )
-                                )
-                            },
-                            onCloseInvoice = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
-                                }
-                            },
-                            onPayInvoice = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        PayInvoiceModal(
-                                            invoice = it.invoice,
-                                            currentBillAmount = it.amount
+                            variant = CreditCardCardVariant.Dashboard(
+                                onClick = {
+                                    navigator.navigate(
+                                        NavigationAction.CreditCards(
+                                            creditCardId = creditCardUi.creditCard.id
                                         )
                                     )
-                                }
-                            },
-                            onAdvancePayment = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        AdvancePaymentModal(
-                                            invoice = it.invoice,
-                                            currentBillAmount = it.amount
+                                },
+                                onCloseInvoice = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                                    }
+                                },
+                                onPayInvoice = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            PayInvoiceModal(
+                                                invoice = it.invoice,
+                                                currentBillAmount = it.amount
+                                            )
                                         )
-                                    )
-                                }
-                            },
-                            onEditAmount = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        EditInvoiceBalanceModal(
-                                            initialInvoice = it.invoice,
+                                    }
+                                },
+                                onAdvancePayment = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            AdvancePaymentModal(
+                                                invoice = it.invoice,
+                                                currentBillAmount = it.amount
+                                            )
                                         )
-                                    )
-                                }
-                            }
+                                    }
+                                },
+                                onEditAmount = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            EditInvoiceBalanceModal(
+                                                initialInvoice = it.invoice,
+                                            )
+                                        )
+                                    }
+                                },
+                            ),
                         )
                     }
                     if (uiState.creditCards.size > 1) {

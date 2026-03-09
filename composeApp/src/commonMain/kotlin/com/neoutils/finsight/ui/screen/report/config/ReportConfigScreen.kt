@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.CreditCardCard
+import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -184,7 +186,10 @@ private fun ReportConfigContent(
                             pageSpacing = 8.dp,
                             modifier = Modifier.fillMaxWidth(),
                         ) { page ->
-                            CreditCardSelectionCard(card = uiState.creditCards[page])
+                            CreditCardCard(
+                                creditCard = uiState.creditCards[page],
+                                variant = CreditCardCardVariant.Selection,
+                            )
                         }
                     }
                 }

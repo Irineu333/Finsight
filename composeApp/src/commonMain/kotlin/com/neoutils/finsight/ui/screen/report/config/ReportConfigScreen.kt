@@ -212,9 +212,10 @@ private fun ReportConfigContent(
                 DateRangeCard(
                     startDate = uiState.startDate,
                     endDate = uiState.endDate,
-                    onSelectStartDate = { onAction(ReportConfigAction.SelectStartDate(it)) },
-                    onSelectEndDate = { onAction(ReportConfigAction.SelectEndDate(it)) },
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    onRangeSelected = { start, end ->
+                        onAction(ReportConfigAction.SelectStartDate(start))
+                        onAction(ReportConfigAction.SelectEndDate(end))
+                    },
                 )
             }
 

@@ -32,8 +32,8 @@ private data class QuickPeriod(
 
 @Composable
 fun DateRangeCard(
-    startDate: LocalDate?,
-    endDate: LocalDate?,
+    startDate: LocalDate,
+    endDate: LocalDate,
     onRangeSelected: (start: LocalDate, end: LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -82,10 +82,14 @@ fun DateRangeCard(
                     )
                 )
             },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                modifier = Modifier.padding(
+                    horizontal = 16.dp,
+                    vertical = 16.dp
+                ),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -99,19 +103,9 @@ fun DateRangeCard(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Text(
-                        text = stringResource(Res.string.report_config_date_range),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                    val hasRange = startDate != null && endDate != null
-                    Text(
-                        text = if (hasRange) {
-                            "${dateFormat.format(startDate!!)} – ${dateFormat.format(endDate!!)}"
-                        } else {
-                            stringResource(Res.string.report_config_period_select)
-                        },
+                        text = "${dateFormat.format(startDate)} – ${dateFormat.format(endDate)}",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (hasRange) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+                        color = colorScheme.onSurface,
                     )
                 }
                 Icon(

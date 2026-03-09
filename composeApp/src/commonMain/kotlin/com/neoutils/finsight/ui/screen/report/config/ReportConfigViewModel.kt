@@ -90,8 +90,8 @@ class ReportConfigViewModel(
             PerspectiveTab.ACCOUNT -> AppRoute.ReportViewer(
                 perspectiveType = "ACCOUNT",
                 accountIds = state.selectedAccountIds.toList(),
-                startDate = state.startDate!!.toString(),
-                endDate = state.endDate!!.toString(),
+                startDate = state.startDate.toString(),
+                endDate = state.endDate.toString(),
                 includeSpendingByCategory = state.includeSpendingByCategory,
                 includeTransactionList = state.includeTransactionList,
             )
@@ -99,8 +99,8 @@ class ReportConfigViewModel(
             PerspectiveTab.CREDIT_CARD -> AppRoute.ReportViewer(
                 perspectiveType = "CREDIT_CARD",
                 creditCardId = state.selectedCreditCardId,
-                startDate = state.startDate!!.toString(),
-                endDate = state.endDate!!.toString(),
+                startDate = state.startDate.toString(),
+                endDate = state.endDate.toString(),
                 includeSpendingByCategory = state.includeSpendingByCategory,
                 includeTransactionList = state.includeTransactionList,
             )

@@ -16,8 +16,8 @@ data class ReportConfigUiState(
     val selectedTab: PerspectiveTab = PerspectiveTab.ACCOUNT,
     val selectedAccountIds: Set<Long> = emptySet(),
     val selectedCreditCardId: Long? = null,
-    val startDate: LocalDate? = null,
-    val endDate: LocalDate? = null,
+    val startDate: LocalDate,
+    val endDate: LocalDate,
     val includeSpendingByCategory: Boolean = true,
     val includeTransactionList: Boolean = true,
 ) {
@@ -38,8 +38,8 @@ data class ReportConfigUiState(
 
     val isValid: Boolean
         get() = when (selectedTab) {
-            PerspectiveTab.ACCOUNT -> selectedAccountIds.isNotEmpty() && startDate != null && endDate != null && startDate <= endDate
-            PerspectiveTab.CREDIT_CARD -> selectedCreditCardId != null && startDate != null && endDate != null && startDate <= endDate
+            PerspectiveTab.ACCOUNT -> selectedAccountIds.isNotEmpty() && startDate <= endDate
+            PerspectiveTab.CREDIT_CARD -> selectedCreditCardId != null && startDate <= endDate
         }
 }
 

@@ -40,7 +40,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.extension.toUiText
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
@@ -59,7 +59,6 @@ import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
-import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.invoice_transactions_advance_payment
@@ -82,6 +81,7 @@ import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
 import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
+import com.neoutils.finsight.util.stringUiText
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

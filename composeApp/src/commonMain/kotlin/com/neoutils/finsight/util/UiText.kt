@@ -1,7 +1,9 @@
 package com.neoutils.finsight.util
 
+import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 sealed class UiText {
     data class Raw(val value: String) : UiText()
@@ -14,5 +16,14 @@ sealed class UiText {
         is Raw -> value
         is Res -> getString(res)
         is ResWithArgs -> getString(res, formatArgs = args.toTypedArray())
+    }
+}
+
+@Composable
+fun stringUiText(error: UiText): String {
+    return when (error) {
+        is UiText.Raw -> error.value
+        is UiText.Res -> stringResource(error.res)
+        is UiText.ResWithArgs -> stringResource(error.res, formatArgs = error.args.toTypedArray())
     }
 }

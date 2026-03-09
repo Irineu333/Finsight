@@ -32,7 +32,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationAction
-import com.neoutils.finsight.ui.extension.toLabel
+import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal

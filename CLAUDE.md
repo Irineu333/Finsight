@@ -3,12 +3,6 @@
 ## Project
 Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatform.
 
-Package: `com.neoutils.finsight`
-Module: `composeApp`
-
-## iOS
-The iOS project uses **XcodeGen** (`iosApp/project.yml`).
-
 ## Commands
 ```bash
 ./gradlew allTests                                          # All tests
@@ -27,13 +21,20 @@ The iOS project uses **XcodeGen** (`iosApp/project.yml`).
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
 
-## Architecture
-Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
-
 **Layers:**
 - `/domain/`: Repositories (interfaces), UseCases, models, Error types (business rules, framework-independent)
 - `/database/`: Room entities, DAOs, Mappers, Repository implementations (data sources)
 - `/ui/`: Screens (composables, ViewModels, UiState), Modals, Components (presentation)
+
+## Useful Paths
+
+**Extensions (`/extension/`):** Useful extensions for common types
+
+**Utilities (`/util/`):** General-purpose utilities
+
+## Conventions
+
+**Architecture:** Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Dependency Rule:** Domain <- Database, Domain <- UI (domain has no dependencies)
 
@@ -45,19 +46,18 @@ Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Error Handling:** Arrow library (Either/flatMap/catch)
 
+> More details in the architecture skill.
+> The iOS project uses **XcodeGen** (`iosApp/project.yml`).
+
 ## Strings & Internationalization
 
-**`UiText`** (`com.neoutils.finsight.util.UiText`) — sealed class for UI-safe text:
-```kotlin
-UiText.Raw(value: String)                          // dynamic/runtime strings
-UiText.Res(res: StringResource)                    // string resource (i18n)
-UiText.ResWithArgs(res: StringResource, vararg args) // parameterized resource
-```
+**`UiText`** (`/util/UiText`) — sealed class for UI-safe text:
 - `UiText.asString()` — suspend, for non-Composable contexts
 - `stringUiText(error: UiText): String` — `@Composable`, for UI display
 
 **String resources:** `composeApp/src/commonMain/composeResources/values/strings.xml`
-Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
+
+> Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
 
 ## Error Types (`/domain/error/`)
 `enum class` or `sealed class` with:

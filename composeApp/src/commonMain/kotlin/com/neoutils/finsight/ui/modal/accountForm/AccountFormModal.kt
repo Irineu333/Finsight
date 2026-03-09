@@ -46,7 +46,6 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.Validation
-import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_form_default_label
 import com.neoutils.finsight.resources.account_form_default_state_disabled
@@ -62,6 +61,7 @@ import com.neoutils.finsight.resources.account_form_save
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.util.FeatureIconCatalog
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

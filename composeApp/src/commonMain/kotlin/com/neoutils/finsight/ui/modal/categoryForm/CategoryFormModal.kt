@@ -51,9 +51,9 @@ import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.util.stringUiText
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

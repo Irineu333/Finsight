@@ -4,18 +4,22 @@ package com.neoutils.finsight.ui.screen.report.config
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.screen.home.AppRoute
-import kotlinx.datetime.LocalDate
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -46,72 +50,7 @@ private fun ReportConfigContent(
     onNavigateBack: () -> Unit,
     onGenerate: () -> Unit,
 ) {
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-
-    if (showStartDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showStartDatePicker = false },
-            confirmButton = {},
-            dismissButton = {},
-        ) {
-            val state = rememberDatePickerState(
-                initialSelectedDateMillis = uiState.startDate?.toEpochDays()?.times(86400000L),
-            )
-            DatePicker(state = state)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                TextButton(onClick = { showStartDatePicker = false }) {
-                    Text(stringResource(Res.string.report_config_cancel))
-                }
-                TextButton(
-                    onClick = {
-                        state.selectedDateMillis?.let { millis ->
-                            val days = (millis / 86400000L).toInt()
-                            onAction(ReportConfigAction.SelectStartDate(LocalDate.fromEpochDays(days)))
-                        }
-                        showStartDatePicker = false
-                    }
-                ) {
-                    Text(stringResource(Res.string.report_config_confirm))
-                }
-            }
-        }
-    }
-
-    if (showEndDatePicker) {
-        DatePickerDialog(
-            onDismissRequest = { showEndDatePicker = false },
-            confirmButton = {},
-            dismissButton = {},
-        ) {
-            val state = rememberDatePickerState(
-                initialSelectedDateMillis = uiState.endDate?.toEpochDays()?.times(86400000L),
-            )
-            DatePicker(state = state)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                TextButton(onClick = { showEndDatePicker = false }) {
-                    Text(stringResource(Res.string.report_config_cancel))
-                }
-                TextButton(
-                    onClick = {
-                        state.selectedDateMillis?.let { millis ->
-                            val days = (millis / 86400000L).toInt()
-                            onAction(ReportConfigAction.SelectEndDate(LocalDate.fromEpochDays(days)))
-                        }
-                        showEndDatePicker = false
-                    }
-                ) {
-                    Text(stringResource(Res.string.report_config_confirm))
-                }
-            }
-        }
-    }
+    val colorScheme = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -140,141 +79,152 @@ private fun ReportConfigContent(
     ) { paddingValues ->
         LazyColumn(
             contentPadding = PaddingValues(
-                top = paddingValues.calculateTopPadding() + 8.dp,
-                bottom = paddingValues.calculateBottomPadding() + 8.dp,
+                top = paddingValues.calculateTopPadding() + 16.dp,
+                bottom = paddingValues.calculateBottomPadding() + 16.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             item {
-                PrimaryTabRow(
-                    selectedTabIndex = uiState.selectedTab.ordinal,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Tab(
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                    SegmentedButton(
                         selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
                         onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
-                        text = { Text(stringResource(Res.string.report_config_perspective_account)) },
-                    )
-                    Tab(
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        icon = {},
+                    ) {
+                        Text(stringResource(Res.string.report_config_perspective_account))
+                    }
+                    SegmentedButton(
                         selected = uiState.selectedTab == PerspectiveTab.CREDIT_CARD,
                         onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.CREDIT_CARD)) },
-                        text = { Text(stringResource(Res.string.report_config_perspective_credit_card)) },
-                    )
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        icon = {},
+                    ) {
+                        Text(stringResource(Res.string.report_config_perspective_credit_card))
+                    }
                 }
             }
 
             if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
+                item {
+                    Text(
+                        text = stringResource(Res.string.report_config_accounts),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
                 if (uiState.accounts.isEmpty()) {
                     item {
                         Text(
                             text = stringResource(Res.string.report_config_no_accounts),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp),
                         )
                     }
                 } else {
-                    items(uiState.accounts, key = { it.id }) { account ->
-                        ListItem(
-                            headlineContent = { Text(account.name) },
-                            leadingContent = {
-                                Checkbox(
-                                    checked = account.id in uiState.selectedAccountIds,
-                                    onCheckedChange = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
-                                )
-                            },
+                    item {
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth(),
-                        )
+                        ) {
+                            items(uiState.accounts, key = { it.id }) { account ->
+                                AccountSelectionCard(
+                                    account = account,
+                                    selected = account.id in uiState.selectedAccountIds,
+                                    onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
+                                )
+                            }
+                        }
                     }
                 }
-            } else {
+            }
+
+            if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
+                item {
+                    Text(
+                        text = stringResource(Res.string.report_config_credit_cards),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
                 if (uiState.creditCards.isEmpty()) {
                     item {
                         Text(
                             text = stringResource(Res.string.report_config_no_credit_cards),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp),
                         )
                     }
                 } else {
-                    items(uiState.creditCards, key = { it.id }) { card ->
-                        ListItem(
-                            headlineContent = { Text(card.name) },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = card.id == uiState.selectedCreditCardId,
-                                    onClick = { onAction(ReportConfigAction.SelectCreditCard(card.id)) },
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth(),
+                    item {
+                        val initialPage = uiState.creditCards
+                            .indexOfFirst { it.id == uiState.selectedCreditCardId }
+                            .coerceAtLeast(0)
+
+                        val pagerState = rememberPagerState(
+                            initialPage = initialPage,
+                            pageCount = { uiState.creditCards.size },
                         )
+
+                        LaunchedEffect(pagerState) {
+                            snapshotFlow { pagerState.currentPage }.collectLatest { page ->
+                                onAction(ReportConfigAction.SelectCreditCard(uiState.creditCards[page].id))
+                            }
+                        }
+
+                        HorizontalPager(
+                            state = pagerState,
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            pageSpacing = 8.dp,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { page ->
+                            CreditCardSelectionCard(card = uiState.creditCards[page])
+                        }
                     }
                 }
-            }
-
-            item {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             }
 
             item {
                 Text(
                     text = stringResource(Res.string.report_config_date_range),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 8.dp),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = { showStartDatePicker = true },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(uiState.startDate?.toString() ?: stringResource(Res.string.report_config_start_date))
-                    }
-                    OutlinedButton(
-                        onClick = { showEndDatePicker = true },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(uiState.endDate?.toString() ?: stringResource(Res.string.report_config_end_date))
-                    }
-                }
-            }
-
-            item {
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            }
-
-            item {
-                ListItem(
-                    headlineContent = { Text(stringResource(Res.string.report_config_include_spending_by_category)) },
-                    trailingContent = {
-                        Switch(
-                            checked = uiState.includeSpendingByCategory,
-                            onCheckedChange = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
-                        )
-                    },
+                DateRangeCard(
+                    startDate = uiState.startDate,
+                    endDate = uiState.endDate,
+                    onSelectStartDate = { onAction(ReportConfigAction.SelectStartDate(it)) },
+                    onSelectEndDate = { onAction(ReportConfigAction.SelectEndDate(it)) },
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
 
             item {
-                ListItem(
-                    headlineContent = { Text(stringResource(Res.string.report_config_include_transactions)) },
-                    trailingContent = {
-                        Switch(
-                            checked = uiState.includeTransactionList,
-                            onCheckedChange = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
-                        )
-                    },
+                Text(
+                    text = stringResource(Res.string.report_config_sections),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+
+            item {
+                SectionsCard(
+                    includeSpendingByCategory = uiState.includeSpendingByCategory,
+                    includeTransactionList = uiState.includeTransactionList,
+                    onToggleSpendingByCategory = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
+                    onToggleTransactionList = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
         }

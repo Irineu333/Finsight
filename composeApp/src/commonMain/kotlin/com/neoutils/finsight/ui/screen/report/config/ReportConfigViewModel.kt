@@ -13,7 +13,8 @@ class ReportConfigViewModel(
     private val creditCardRepository: ICreditCardRepository,
 ) : ViewModel() {
 
-    private val config = MutableStateFlow(ReportConfigUiState())
+    private val initialConfig = ReportConfigUiState.initial()
+    private val config = MutableStateFlow(initialConfig)
 
     init {
         selectDefaultAccount()
@@ -32,7 +33,7 @@ class ReportConfigViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ReportConfigUiState(),
+        initialValue = initialConfig,
     )
 
     fun onAction(action: ReportConfigAction) = viewModelScope.launch {

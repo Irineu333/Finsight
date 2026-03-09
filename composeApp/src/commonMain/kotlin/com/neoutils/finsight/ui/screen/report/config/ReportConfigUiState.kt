@@ -2,7 +2,13 @@ package com.neoutils.finsight.ui.screen.report.config
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 data class ReportConfigUiState(
     val accounts: List<Account> = emptyList(),
@@ -15,6 +21,21 @@ data class ReportConfigUiState(
     val includeSpendingByCategory: Boolean = true,
     val includeTransactionList: Boolean = true,
 ) {
+    companion object {
+        fun initial(): ReportConfigUiState {
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val firstThisMonth = LocalDate(today.year, today.month, 1)
+            val lastThisMonth = firstThisMonth
+                .plus(1, DateTimeUnit.MONTH)
+                .minus(1, DateTimeUnit.DAY)
+
+            return ReportConfigUiState(
+                startDate = firstThisMonth,
+                endDate = lastThisMonth,
+            )
+        }
+    }
+
     val isValid: Boolean
         get() = when (selectedTab) {
             PerspectiveTab.ACCOUNT -> selectedAccountIds.isNotEmpty() && startDate != null && endDate != null && startDate <= endDate

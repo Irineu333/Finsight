@@ -7,8 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -19,8 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.toPercentageString
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.BalanceCard
+import com.neoutils.finsight.ui.component.BalanceCardConfig
+import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -28,6 +28,7 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -53,6 +54,7 @@ private fun ReportViewerContent(
 ) {
     val modalManager = LocalModalManager.current
     val formatter = LocalCurrencyFormatter.current
+    val dateFormats = LocalDateFormats.current
 
     Scaffold(
         topBar = {
@@ -65,7 +67,7 @@ private fun ReportViewerContent(
                 },
             )
         },
-        contentWindowInsets = WindowInsets(),
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         when (uiState) {
             is ReportViewerUiState.Loading -> {
@@ -76,6 +78,7 @@ private fun ReportViewerContent(
                     CircularProgressIndicator()
                 }
             }
+
             is ReportViewerUiState.Content -> {
                 LazyColumn(
                     contentPadding = PaddingValues(
@@ -106,6 +109,26 @@ private fun ReportViewerContent(
                     }
 
                     item {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        ) {
+                            BalanceCard(
+                                balance = uiState.income,
+                                modifier = Modifier.weight(1f),
+                                config = BalanceCardConfig.Income,
+                            )
+                            BalanceCard(
+                                balance = uiState.expense,
+                                modifier = Modifier.weight(1f),
+                                config = BalanceCardConfig.Expense,
+                            )
+                        }
+                    }
+
+                    item {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = colorScheme.surfaceContainer,
@@ -114,26 +137,22 @@ private fun ReportViewerContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                         ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                SummaryRow(
-                                    label = stringResource(Res.string.report_viewer_summary_income),
-                                    value = formatter.format(uiState.income),
-                                    valueColor = Income,
+                                Text(
+                                    text = stringResource(Res.string.report_viewer_summary_balance),
+                                    style = MaterialTheme.typography.titleMedium,
                                 )
-                                SummaryRow(
-                                    label = stringResource(Res.string.report_viewer_summary_expense),
-                                    value = formatter.format(uiState.expense),
-                                    valueColor = Expense,
-                                )
-                                HorizontalDivider()
-                                SummaryRow(
-                                    label = stringResource(Res.string.report_viewer_summary_balance),
-                                    value = formatter.format(uiState.balance),
-                                    valueColor = if (uiState.balance >= 0) Income else Expense,
-                                    bold = true,
+                                Text(
+                                    text = formatter.format(uiState.balance),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (uiState.balance >= 0) Income else Expense,
                                 )
                             }
                         }
@@ -149,29 +168,12 @@ private fun ReportViewerContent(
                             )
                         }
 
-                        items(uiState.categorySpending, key = { it.category.id }) { spending ->
-                            ListItem(
-                                headlineContent = { Text(spending.category.name) },
-                                supportingContent = {
-                                    LinearProgressIndicator(
-                                        progress = { (spending.percentage / 100).toFloat().coerceIn(0f, 1f) },
-                                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                    )
-                                },
-                                trailingContent = {
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(
-                                            text = formatter.format(spending.amount),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Expense,
-                                        )
-                                        Text(
-                                            text = spending.percentage.toPercentageString(),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                },
+                        item {
+                            CategorySpendingCard(
+                                categorySpending = uiState.categorySpending,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
                             )
                         }
                     }
@@ -189,10 +191,12 @@ private fun ReportViewerContent(
                         uiState.transactions.forEach { (date, operations) ->
                             item(key = "date_$date") {
                                 Text(
-                                    text = date.toString(),
+                                    text = dateFormats.formatRelativeDate(date),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp),
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(top = 4.dp),
                                 )
                             }
 
@@ -213,32 +217,5 @@ private fun ReportViewerContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SummaryRow(
-    label: String,
-    value: String,
-    valueColor: androidx.compose.ui.graphics.Color,
-    bold: Boolean = false,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = if (bold) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-        )
-        Text(
-            text = value,
-            style = if (bold) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-            color = valueColor,
-        )
     }
 }

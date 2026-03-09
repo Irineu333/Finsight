@@ -136,7 +136,7 @@ private fun ReportConfigContent(
                 Text(stringResource(Res.string.report_config_generate))
             }
         },
-        contentWindowInsets = WindowInsets(),
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         LazyColumn(
             contentPadding = PaddingValues(
@@ -165,30 +165,56 @@ private fun ReportConfigContent(
             }
 
             if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
-                items(uiState.accounts, key = { it.id }) { account ->
-                    ListItem(
-                        headlineContent = { Text(account.name) },
-                        leadingContent = {
-                            Checkbox(
-                                checked = account.id in uiState.selectedAccountIds,
-                                onCheckedChange = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                if (uiState.accounts.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(Res.string.report_config_no_accounts),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                } else {
+                    items(uiState.accounts, key = { it.id }) { account ->
+                        ListItem(
+                            headlineContent = { Text(account.name) },
+                            leadingContent = {
+                                Checkbox(
+                                    checked = account.id in uiState.selectedAccountIds,
+                                    onCheckedChange = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             } else {
-                items(uiState.creditCards, key = { it.id }) { card ->
-                    ListItem(
-                        headlineContent = { Text(card.name) },
-                        leadingContent = {
-                            RadioButton(
-                                selected = card.id == uiState.selectedCreditCardId,
-                                onClick = { onAction(ReportConfigAction.SelectCreditCard(card.id)) },
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                if (uiState.creditCards.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(Res.string.report_config_no_credit_cards),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                } else {
+                    items(uiState.creditCards, key = { it.id }) { card ->
+                        ListItem(
+                            headlineContent = { Text(card.name) },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = card.id == uiState.selectedCreditCardId,
+                                    onClick = { onAction(ReportConfigAction.SelectCreditCard(card.id)) },
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
 

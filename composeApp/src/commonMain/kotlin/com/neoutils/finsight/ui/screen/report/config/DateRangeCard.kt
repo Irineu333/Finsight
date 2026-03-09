@@ -128,9 +128,21 @@ fun DateRangeCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(quickPeriods) { period ->
-                SuggestionChip(
+                val selected = period.start == startDate && period.end == endDate
+                FilterChip(
+                    selected = selected,
                     onClick = { onRangeSelected(period.start, period.end) },
                     label = { Text(stringResource(period.labelRes)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selected,
+                        borderColor = colorScheme.outline,
+                        selectedBorderColor = colorScheme.primaryContainer,
+                    ),
                 )
             }
         }

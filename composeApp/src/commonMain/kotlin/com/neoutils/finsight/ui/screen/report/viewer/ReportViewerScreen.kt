@@ -18,8 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.BalanceCard
-import com.neoutils.finsight.ui.component.BalanceCardConfig
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
@@ -90,23 +88,15 @@ private fun ReportViewerContent(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item {
-                        Column(
+                        ReportContextCard(
+                            perspectiveLabel = uiState.perspectiveLabel,
+                            perspectiveIconKey = uiState.perspectiveIconKey,
+                            startDate = uiState.startDate,
+                            endDate = uiState.endDate,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                text = uiState.perspectiveLabel,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = uiState.dateRangeLabel,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        )
                     }
 
                     item {

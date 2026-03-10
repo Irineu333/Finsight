@@ -38,6 +38,20 @@ class DateFormats(
         year()
     }
 
+    fun formatReportPeriod(startDate: LocalDate, endDate: LocalDate): String {
+        val short = LocalDate.Format {
+            day(); chars(" "); monthName(monthNames)
+        }
+        val full = LocalDate.Format {
+            day(); chars(" "); monthName(monthNames); chars(" "); year()
+        }
+        return if (startDate.year == endDate.year) {
+            "${short.format(startDate)} – ${full.format(endDate)}"
+        } else {
+            "${full.format(startDate)} – ${full.format(endDate)}"
+        }
+    }
+
     fun formatRelativeDate(date: LocalDate): String {
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 

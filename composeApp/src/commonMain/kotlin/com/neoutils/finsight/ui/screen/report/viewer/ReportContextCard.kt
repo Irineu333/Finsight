@@ -13,22 +13,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.report_viewer_header_badge
+import com.neoutils.finsight.resources.report_viewer_summary_balance
+import com.neoutils.finsight.resources.report_viewer_summary_expense
+import com.neoutils.finsight.resources.report_viewer_summary_income
+import com.neoutils.finsight.resources.report_viewer_summary_initial_balance
+import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ReportContextCard(
     perspectiveLabel: String,
+    perspectiveBadge: UiText,
     perspectiveIconKey: String,
     startDate: LocalDate,
     endDate: LocalDate,
+    balance: Double,
+    initialBalance: Double,
+    income: Double,
+    expense: Double,
     modifier: Modifier = Modifier,
 ) {
     val dateFormats = LocalDateFormats.current
+    val formatter = LocalCurrencyFormatter.current
     val dateRangeText = remember(startDate, endDate) {
         dateFormats.formatReportPeriod(startDate, endDate)
     }
@@ -89,10 +103,83 @@ internal fun ReportContextCard(
                     shape = RoundedCornerShape(999.dp),
                 ) {
                     Text(
-                        text = stringResource(Res.string.report_viewer_header_badge),
+                        text = stringUiText(perspectiveBadge),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(Res.string.report_viewer_summary_balance),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = formatter.format(balance),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (balance >= 0) Income else Expense,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.report_viewer_summary_initial_balance),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = formatter.format(initialBalance),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (initialBalance >= 0) Income else Expense,
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.report_viewer_summary_income),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "+${formatter.format(income)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Income,
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.report_viewer_summary_expense),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = "-${formatter.format(expense)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Expense,
                     )
                 }
             }

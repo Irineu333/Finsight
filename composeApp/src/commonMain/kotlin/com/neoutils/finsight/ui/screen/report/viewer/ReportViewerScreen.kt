@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -25,8 +24,6 @@ import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.home.AppRoute
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,7 +49,6 @@ private fun ReportViewerContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
-    val formatter = LocalCurrencyFormatter.current
     val dateFormats = LocalDateFormats.current
 
     Scaffold(
@@ -90,100 +86,18 @@ private fun ReportViewerContent(
                     item {
                         ReportContextCard(
                             perspectiveLabel = uiState.perspectiveLabel,
+                            perspectiveBadge = uiState.perspectiveBadge,
                             perspectiveIconKey = uiState.perspectiveIconKey,
                             startDate = uiState.startDate,
                             endDate = uiState.endDate,
+                            balance = uiState.balance,
+                            initialBalance = uiState.initialBalance,
+                            income = uiState.income,
+                            expense = uiState.expense,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                         )
-                    }
-
-                    item {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = colorScheme.surfaceContainer,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.report_viewer_summary_balance),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    text = formatter.format(uiState.balance),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (uiState.balance >= 0) Income else Expense,
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.report_viewer_summary_initial_balance),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = colorScheme.onSurfaceVariant,
-                                    )
-                                    Text(
-                                        text = formatter.format(uiState.initialBalance),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (uiState.initialBalance >= 0) Income else Expense,
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.report_viewer_summary_income),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = colorScheme.onSurfaceVariant,
-                                    )
-                                    Text(
-                                        text = "+${formatter.format(uiState.income)}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Income,
-                                    )
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = stringResource(Res.string.report_viewer_summary_expense),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = colorScheme.onSurfaceVariant,
-                                    )
-                                    Text(
-                                        text = "-${formatter.format(uiState.expense)}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Expense,
-                                    )
-                                }
-                            }
-                        }
                     }
 
                     if (!uiState.categorySpending.isNullOrEmpty()) {

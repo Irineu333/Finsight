@@ -4,6 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.report_viewer_badge_account
+import com.neoutils.finsight.resources.report_viewer_badge_credit_card
+import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
@@ -101,8 +105,14 @@ class ReportViewerViewModel(
             }
         }
 
+        val perspectiveBadge = when (perspective) {
+            is ReportPerspective.CreditCardPerspective -> UiText.Res(Res.string.report_viewer_badge_credit_card)
+            is ReportPerspective.AccountPerspective -> UiText.Res(Res.string.report_viewer_badge_account)
+        }
+
         ReportViewerUiState.Content(
             perspectiveLabel = perspectiveLabel,
+            perspectiveBadge = perspectiveBadge,
             perspectiveIconKey = perspectiveIconKey,
             startDate = startDate,
             endDate = endDate,

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
 
 sealed class ReportViewerUiState {
@@ -9,6 +10,7 @@ sealed class ReportViewerUiState {
 
     data class Content(
         val perspectiveLabel: String,
+        val perspectiveBadge: UiText,
         val perspectiveIconKey: String,
         val startDate: LocalDate,
         val endDate: LocalDate,

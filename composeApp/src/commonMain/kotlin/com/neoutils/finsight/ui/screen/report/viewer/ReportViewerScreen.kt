@@ -24,6 +24,7 @@ import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
+import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.theme.Expense
@@ -199,6 +200,7 @@ private fun ReportViewerContent(
                         item {
                             CategorySpendingCard(
                                 categorySpending = uiState.categorySpending,
+                                onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp),

@@ -9,6 +9,7 @@ sealed class ReportViewerUiState {
     data class Content(
         val perspectiveLabel: String,
         val dateRangeLabel: String,
+        val initialBalance: Double,
         val income: Double,
         val expense: Double,
         val balance: Double,

@@ -26,10 +26,24 @@ class CalculateReportStatsUseCase {
             .filter { it.type.isExpense && it.matchesPerspective(perspective) }
             .sumOf { it.amount }
 
+        val priorTransactions = operations
+            .filter { it.date < startDate }
+            .filter { it.matchesPerspective(perspective) }
+            .flatMap { it.transactions }
+
+        val priorIncome = priorTransactions
+            .filter { it.type.isIncome && it.matchesPerspective(perspective) }
+            .sumOf { it.amount }
+
+        val priorExpense = priorTransactions
+            .filter { it.type.isExpense && it.matchesPerspective(perspective) }
+            .sumOf { it.amount }
+
         return ReportStats(
             income = income,
             expense = expense,
             balance = income - expense,
+            initialBalance = priorIncome - priorExpense,
         )
     }
 
@@ -37,6 +51,7 @@ class CalculateReportStatsUseCase {
         val income: Double,
         val expense: Double,
         val balance: Double,
+        val initialBalance: Double,
     )
 }
 

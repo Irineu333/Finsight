@@ -94,6 +94,7 @@ class ReportViewerViewModel(
         ReportViewerUiState.Content(
             perspectiveLabel = perspectiveLabel,
             dateRangeLabel = "${route.startDate} – ${route.endDate}",
+            initialBalance = stats.initialBalance,
             income = stats.income,
             expense = stats.expense,
             balance = stats.balance,

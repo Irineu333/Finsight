@@ -128,14 +128,14 @@ fun DateRangeCard(
                     onClick = { onRangeSelected(period.start, period.end) },
                     label = { Text(stringResource(period.labelRes)) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = colorScheme.primaryContainer,
-                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        selectedContainerColor = colorScheme.primary.copy(alpha = 0.2f),
+                        selectedLabelColor = colorScheme.primary,
                     ),
                     border = FilterChipDefaults.filterChipBorder(
                         enabled = true,
                         selected = selected,
                         borderColor = colorScheme.outline,
-                        selectedBorderColor = colorScheme.primaryContainer,
+                        selectedBorderColor = colorScheme.primary,
                     ),
                 )
             }

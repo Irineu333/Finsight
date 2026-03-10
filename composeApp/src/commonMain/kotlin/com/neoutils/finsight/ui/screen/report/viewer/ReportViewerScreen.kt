@@ -180,15 +180,6 @@ private fun ReportViewerContent(
 
                     if (!uiState.categorySpending.isNullOrEmpty()) {
                         item {
-                            Text(
-                                text = stringResource(Res.string.report_viewer_spending_by_category),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 16.dp).padding(top = 8.dp),
-                            )
-                        }
-
-                        item {
                             CategorySpendingCard(
                                 categorySpending = uiState.categorySpending,
                                 modifier = Modifier

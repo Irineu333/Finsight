@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.screen.home
 
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import kotlinx.serialization.Serializable
 
 sealed class HomeRoute {
@@ -45,7 +46,7 @@ sealed class AppRoute {
 
     @Serializable
     data class ReportViewer(
-        val perspectiveType: String,
+        val perspectiveType: PerspectiveTab,
         val accountIds: List<Long> = emptyList(),
         val creditCardId: Long? = null,
         val startDate: String,

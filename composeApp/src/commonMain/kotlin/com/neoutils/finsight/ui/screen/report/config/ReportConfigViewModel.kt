@@ -88,7 +88,7 @@ class ReportConfigViewModel(
         if (!state.isValid) return null
         return when (state.selectedTab) {
             PerspectiveTab.ACCOUNT -> AppRoute.ReportViewer(
-                perspectiveType = "ACCOUNT",
+                perspectiveType = PerspectiveTab.ACCOUNT,
                 accountIds = state.selectedAccountIds.toList(),
                 startDate = state.startDate.toString(),
                 endDate = state.endDate.toString(),
@@ -97,7 +97,7 @@ class ReportConfigViewModel(
             )
 
             PerspectiveTab.CREDIT_CARD -> AppRoute.ReportViewer(
-                perspectiveType = "CREDIT_CARD",
+                perspectiveType = PerspectiveTab.CREDIT_CARD,
                 creditCardId = state.selectedCreditCardId,
                 startDate = state.startDate.toString(),
                 endDate = state.endDate.toString(),

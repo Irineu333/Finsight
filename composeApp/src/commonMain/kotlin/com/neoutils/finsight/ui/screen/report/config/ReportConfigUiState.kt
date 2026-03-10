@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.report.config
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.serialization.Serializable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -43,6 +44,7 @@ data class ReportConfigUiState(
         }
 }
 
+@Serializable
 enum class PerspectiveTab {
     ACCOUNT,
     CREDIT_CARD,

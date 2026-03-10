@@ -91,9 +91,21 @@ class ReportViewerViewModel(
                 .groupBy { it.date }
         } else null
 
+        val perspectiveIconKey = when (perspective) {
+            is ReportPerspective.CreditCardPerspective ->
+                creditCards.find { it.id == perspective.creditCardId }?.iconKey ?: "card"
+            is ReportPerspective.AccountPerspective -> {
+                val selected = if (perspective.accountIds.isEmpty()) accounts
+                               else accounts.filter { it.id in perspective.accountIds }
+                if (selected.size == 1) selected.first().iconKey else "wallet"
+            }
+        }
+
         ReportViewerUiState.Content(
             perspectiveLabel = perspectiveLabel,
-            dateRangeLabel = "${route.startDate} – ${route.endDate}",
+            perspectiveIconKey = perspectiveIconKey,
+            startDate = startDate,
+            endDate = endDate,
             initialBalance = stats.initialBalance,
             income = stats.income,
             expense = stats.expense,

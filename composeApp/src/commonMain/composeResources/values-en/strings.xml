@@ -80,6 +80,7 @@
 
     <!-- Report Viewer Screen -->
     <string name="report_viewer_title">Report</string>
+    <string name="report_viewer_header_badge">Report</string>
     <string name="report_viewer_summary_income">Income</string>
     <string name="report_viewer_summary_expense">Expense</string>
     <string name="report_viewer_summary_balance">Period Balance</string>

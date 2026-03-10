@@ -154,27 +154,44 @@ private fun ReportViewerContent(
                                         color = if (uiState.initialBalance >= 0) Income else Expense,
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.report_viewer_summary_income),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = "+${formatter.format(uiState.income)}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Income,
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.report_viewer_summary_expense),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = "-${formatter.format(uiState.expense)}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Expense,
+                                    )
+                                }
                             }
-                        }
-                    }
-
-                    item {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        ) {
-                            BalanceCard(
-                                balance = uiState.income,
-                                modifier = Modifier.weight(1f),
-                                config = BalanceCardConfig.Income,
-                            )
-                            BalanceCard(
-                                balance = uiState.expense,
-                                modifier = Modifier.weight(1f),
-                                config = BalanceCardConfig.Expense,
-                            )
                         }
                     }
 

@@ -90,11 +90,20 @@ private fun ReportConfigContent(
             modifier = Modifier.fillMaxSize(),
         ) {
             item {
+                val segmentedButtonColors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
+                    activeContentColor = colorScheme.primary,
+                    activeBorderColor = colorScheme.primary,
+                    inactiveContainerColor = colorScheme.surfaceContainer,
+                    inactiveContentColor = colorScheme.onSurfaceVariant,
+                    inactiveBorderColor = colorScheme.outline,
+                )
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     SegmentedButton(
                         selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
                         onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
                         shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                        colors = segmentedButtonColors,
                         icon = {},
                     ) {
                         Text(stringResource(Res.string.report_config_perspective_account))
@@ -103,6 +112,7 @@ private fun ReportConfigContent(
                         selected = uiState.selectedTab == PerspectiveTab.CREDIT_CARD,
                         onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.CREDIT_CARD)) },
                         shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                        colors = segmentedButtonColors,
                         icon = {},
                     ) {
                         Text(stringResource(Res.string.report_config_perspective_credit_card))

@@ -42,9 +42,20 @@ fun SectionsCard(
             Switch(
                 checked = includeSpendingByCategory,
                 onCheckedChange = onToggleSpendingByCategory,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colorScheme.primary,
+                    checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
+                    checkedBorderColor = colorScheme.primary,
+                    uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = colorScheme.surfaceVariant,
+                    uncheckedBorderColor = colorScheme.outline,
+                ),
             )
         }
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = colorScheme.outlineVariant.copy(alpha = 0.6f),
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -60,6 +71,14 @@ fun SectionsCard(
             Switch(
                 checked = includeTransactionList,
                 onCheckedChange = onToggleTransactionList,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = colorScheme.primary,
+                    checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
+                    checkedBorderColor = colorScheme.primary,
+                    uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = colorScheme.surfaceVariant,
+                    uncheckedBorderColor = colorScheme.outline,
+                ),
             )
         }
     }

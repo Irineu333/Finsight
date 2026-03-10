@@ -43,7 +43,7 @@ class DateFormats(
             day(); chars(" "); monthName(monthNames)
         }
         val full = LocalDate.Format {
-            day(); chars(" "); monthName(monthNames); chars(" "); year()
+            day(); chars(" "); monthName(monthNames); chars(", "); year()
         }
         return if (startDate.year == endDate.year) {
             "${short.format(startDate)} – ${full.format(endDate)}"

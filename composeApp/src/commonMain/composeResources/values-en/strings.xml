@@ -67,7 +67,9 @@
     <string name="report_config_include_spending_by_category">Spending by category</string>
     <string name="report_config_include_transactions">Transaction list</string>
     <string name="report_config_accounts">Accounts</string>
+    <string name="report_config_no_accounts">No accounts registered</string>
     <string name="report_config_credit_cards">Cards</string>
+    <string name="report_config_no_credit_cards">No cards registered</string>
     <string name="report_config_generate">Generate Report</string>
     <string name="report_config_cancel">Cancel</string>
     <string name="report_config_confirm">Confirm</string>

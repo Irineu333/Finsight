@@ -84,7 +84,8 @@
     <string name="report_viewer_title">Relatório</string>
     <string name="report_viewer_summary_income">Receitas</string>
     <string name="report_viewer_summary_expense">Despesas</string>
-    <string name="report_viewer_summary_balance">Saldo</string>
+    <string name="report_viewer_summary_balance">Saldo do Período</string>
+    <string name="report_viewer_summary_initial_balance">Saldo Inicial</string>
     <string name="report_viewer_summary_invoice_total">Total da Fatura</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
     <string name="report_viewer_transactions">Transações</string>

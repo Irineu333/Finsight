@@ -109,6 +109,56 @@ private fun ReportViewerContent(
                     }
 
                     item {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = colorScheme.surfaceContainer,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.report_viewer_summary_balance),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    text = formatter.format(uiState.balance),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (uiState.balance >= 0) Income else Expense,
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.report_viewer_summary_initial_balance),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = formatter.format(uiState.initialBalance),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (uiState.initialBalance >= 0) Income else Expense,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier
@@ -125,36 +175,6 @@ private fun ReportViewerContent(
                                 modifier = Modifier.weight(1f),
                                 config = BalanceCardConfig.Expense,
                             )
-                        }
-                    }
-
-                    item {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = colorScheme.surfaceContainer,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.report_viewer_summary_balance),
-                                    style = MaterialTheme.typography.titleMedium,
-                                )
-                                Text(
-                                    text = formatter.format(uiState.balance),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (uiState.balance >= 0) Income else Expense,
-                                )
-                            }
                         }
                     }
 

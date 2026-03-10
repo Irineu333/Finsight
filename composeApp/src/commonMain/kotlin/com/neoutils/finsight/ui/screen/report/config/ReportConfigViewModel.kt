@@ -45,7 +45,7 @@ class ReportConfigViewModel(
             is ReportConfigAction.ToggleAccount -> {
                 config.update { state ->
                     val ids = state.selectedAccountIds.toMutableSet()
-                    if (action.accountId in ids && ids.size > 1) {
+                    if (action.accountId in ids) {
                         ids.remove(action.accountId)
                     } else {
                         ids.add(action.accountId)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
 import com.neoutils.finsight.resources.report_viewer_badge_credit_card
@@ -31,10 +32,10 @@ class ReportViewerViewModel(
     private val endDate = LocalDate.parse(route.endDate)
 
     private val perspective: ReportPerspective = when (route.perspectiveType) {
-        "CREDIT_CARD" -> ReportPerspective.CreditCardPerspective(
+        PerspectiveTab.CREDIT_CARD -> ReportPerspective.CreditCardPerspective(
             creditCardId = requireNotNull(route.creditCardId),
         )
-        else -> ReportPerspective.AccountPerspective(
+        PerspectiveTab.ACCOUNT -> ReportPerspective.AccountPerspective(
             accountIds = route.accountIds,
         )
     }

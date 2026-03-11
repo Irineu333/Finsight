@@ -29,8 +29,9 @@ internal fun buildReportHtml(
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px; color: #1a1a1a; max-width: 800px; }
-            .badge { display: inline-block; background: rgba(25,118,210,0.12); color: #1976d2; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; margin-bottom: 10px; }
-            h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+            .header-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+            h1 { font-size: 22px; font-weight: 700; }
+            .badge { display: inline-block; background: rgba(25,118,210,0.12); color: #1976d2; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
             .period { color: #666; font-size: 13px; margin-bottom: 24px; }
             .summary { border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
             .summary-balance { padding: 16px 20px; border-bottom: 1px solid #e0e0e0; }
@@ -58,8 +59,10 @@ internal fun buildReportHtml(
     )
 
     // Header
-    appendLine("""<span class="badge">${escapeHtml(perspectiveBadgeText)}</span>""")
+    appendLine("""<div class="header-row">""")
     appendLine("""<h1>${escapeHtml(state.perspectiveLabel)}</h1>""")
+    appendLine("""<span class="badge">${escapeHtml(perspectiveBadgeText)}</span>""")
+    appendLine("</div>")
     appendLine("""<p class="period">${dateFormats.formatReportPeriod(state.startDate, state.endDate)}</p>""")
 
     // Summary card

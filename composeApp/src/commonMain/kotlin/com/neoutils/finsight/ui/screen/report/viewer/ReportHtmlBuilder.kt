@@ -85,7 +85,7 @@ internal fun buildReportHtml(
         appendLine("""<h2>${escapeHtml(labels.spendingByCategory)}</h2>""")
         appendLine("<table><tbody>")
         spending.forEach { item ->
-            val pct = "${(item.percentage * 100).toInt()}%"
+            val pct = "${item.percentage.toInt()}%"
             appendLine("<tr>")
             appendLine("""<td>${escapeHtml(item.category.name)}</td>""")
             appendLine("""<td class="pct-col">$pct</td>""")

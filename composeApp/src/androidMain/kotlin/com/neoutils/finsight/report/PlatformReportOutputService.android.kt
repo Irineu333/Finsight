@@ -1,6 +1,8 @@
 package com.neoutils.finsight.report
 
 import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +20,21 @@ actual class PlatformReportOutputService actual constructor() : ReportOutputServ
             val reportsDir = File(context.cacheDir, "reports").apply { mkdirs() }
             val reportFile = File(reportsDir, document.fileName)
             reportFile.writeBytes(document.content)
-            ReportOutputResult.Success(location = reportFile.absolutePath)
+            val contentUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                reportFile,
+            )
+            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                type = document.format.mimeType
+                putExtra(Intent.EXTRA_STREAM, contentUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooserIntent = Intent.createChooser(sendIntent, null).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(chooserIntent)
+            ReportOutputResult.Success()
         }.getOrElse {
             ReportOutputResult.Failure(ReportOutputError.IoError)
         }

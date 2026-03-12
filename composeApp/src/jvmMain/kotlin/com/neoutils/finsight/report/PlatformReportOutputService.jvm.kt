@@ -1,5 +1,6 @@
 package com.neoutils.finsight.report
 
+import java.awt.Desktop
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,12 +12,17 @@ actual class PlatformReportOutputService actual constructor() : ReportOutputServ
         }
 
         runCatching {
-            val reportsDir = File(System.getProperty("user.home"), ".finance/reports").apply {
-                mkdirs()
-            }
-            val reportFile = File(reportsDir, document.fileName)
+            val reportFile = File.createTempFile("finsight-report-", ".${document.format.fileExtension}")
             reportFile.writeBytes(document.content)
-            ReportOutputResult.Success(location = reportFile.absolutePath)
+            reportFile.deleteOnExit()
+            if (Desktop.isDesktopSupported()) {
+                val desktop = Desktop.getDesktop()
+                when {
+                    desktop.isSupported(Desktop.Action.BROWSE) -> desktop.browse(reportFile.toURI())
+                    desktop.isSupported(Desktop.Action.OPEN) -> desktop.open(reportFile)
+                }
+            }
+            ReportOutputResult.Success()
         }.getOrElse {
             ReportOutputResult.Failure(ReportOutputError.IoError)
         }

@@ -49,50 +49,10 @@
     <string name="dashboard_credit_cards">Cartões de Crédito</string>
     <string name="dashboard_accounts">Contas</string>
     <string name="dashboard_installments">Parcelamentos</string>
-    <string name="dashboard_reports">Relatórios</string>
     <string name="dashboard_default">Padrão</string>
     <string name="dashboard_current_balance">Saldo Atual</string>
     <string name="dashboard_total_balance">Saldo total</string>
     <string name="dashboard_add_account">Adicionar conta</string>
-
-    <!-- Reports Screen -->
-    <string name="reports_title">Relatórios</string>
-    <string name="reports_subtitle">Escolha o tipo de relatório que deseja gerar. A próxima etapa vai abrir os filtros específicos de conta, fatura ou período.</string>
-    <string name="reports_selected_requirements">Filtros previstos para este relatório</string>
-    <string name="reports_available_formats">Formatos previstos</string>
-    <string name="reports_filters_title">Filtros</string>
-    <string name="reports_start_date">Data inicial</string>
-    <string name="reports_end_date">Data final</string>
-    <string name="reports_generate">Gerar relatório</string>
-    <string name="reports_generate_in_progress">Gerando arquivo...</string>
-    <string name="reports_generate_hint">Ao gerar, o app cria o arquivo final e abre o compartilhamento diretamente.</string>
-    <string name="reports_summary_title">Resumo da seleção</string>
-    <string name="reports_summary_account">Conta</string>
-    <string name="reports_summary_card">Cartão</string>
-    <string name="reports_summary_invoice">Fatura</string>
-    <string name="reports_summary_period">Período</string>
-    <string name="reports_summary_format">Formato</string>
-    <string name="reports_no_accounts">Nenhuma conta disponível para gerar o balanço.</string>
-    <string name="reports_no_credit_cards">Nenhum cartão disponível para gerar a fatura.</string>
-    <string name="reports_no_invoices">Nenhuma fatura disponível para o cartão selecionado.</string>
-    <string name="reports_preview_title">Prévia do relatório</string>
-    <string name="reports_preview_file_name">Nome sugerido do arquivo</string>
-    <string name="reports_preview_content">Conteúdo gerado</string>
-    <string name="reports_preview_share">Compartilhar arquivo</string>
-    <string name="reports_preview_share_success">Arquivo preparado para compartilhamento: %1$s</string>
-    <string name="reports_preview_share_unsupported">%1$s</string>
-    <string name="reports_preview_share_failed">Não foi possível compartilhar o arquivo: %1$s</string>
-    <string name="reports_pdf">PDF</string>
-    <string name="reports_csv">CSV</string>
-    <string name="reports_account_balance_title">Balanço da conta</string>
-    <string name="reports_account_balance_description">Resumo do saldo da conta em um período, com entradas, despesas, ajustes e saldo final.</string>
-    <string name="reports_account_balance_requirements">Conta, período inicial e final, com foco em gerar um relatório consolidado para conferência e compartilhamento.</string>
-    <string name="reports_invoice_title">Fatura</string>
-    <string name="reports_invoice_description">Detalhamento da fatura do cartão com gastos, ajustes, pagamentos e total consolidado.</string>
-    <string name="reports_invoice_requirements">Cartão, fatura ou competência, com fechamento, vencimento, status e composição da cobrança.</string>
-    <string name="reports_transactions_title">Transações por período</string>
-    <string name="reports_transactions_description">Lista analítica de lançamentos em um intervalo, ideal para planilhas e conferência detalhada.</string>
-    <string name="reports_transactions_requirements">Período inicial e final, com possibilidade futura de filtrar por conta, cartão, categoria e tipo.</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

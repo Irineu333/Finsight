@@ -44,7 +44,6 @@ import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
-import com.neoutils.finsight.ui.screen.reports.GenerateReportDocumentUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -91,14 +90,6 @@ val useCaseModules = module {
     factory { CalculateBudgetProgressUseCase() }
 
     factory { CalculateInvoiceOverviewsUseCase() }
-
-    factory {
-        GenerateReportDocumentUseCase(
-            operationRepository = get(),
-            transactionRepository = get(),
-            formatter = get(),
-        )
-    }
 
     factory {
         CalculateAvailableLimitUseCase(

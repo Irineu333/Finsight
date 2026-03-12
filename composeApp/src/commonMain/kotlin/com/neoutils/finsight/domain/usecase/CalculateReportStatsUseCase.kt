@@ -3,6 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.signedImpact
 import kotlinx.datetime.LocalDate
 
 class CalculateReportStatsUseCase {
@@ -16,34 +17,33 @@ class CalculateReportStatsUseCase {
             .filter { it.date in startDate..endDate }
             .filter { it.matchesPerspective(perspective) }
 
-        val transactions = filtered.flatMap { it.transactions }
+        val transactions = filtered
+            .flatMap { it.transactions }
+            .filter { it.matchesPerspective(perspective) }
 
         val income = transactions
-            .filter { it.type.isIncome && it.matchesPerspective(perspective) }
+            .filter { it.type.isIncome }
             .sumOf { it.amount }
 
         val expense = transactions
-            .filter { it.type.isExpense && it.matchesPerspective(perspective) }
+            .filter { it.type.isExpense }
             .sumOf { it.amount }
+
+        val balance = transactions.sumOf { it.signedImpact() }
 
         val priorTransactions = operations
             .filter { it.date < startDate }
             .filter { it.matchesPerspective(perspective) }
             .flatMap { it.transactions }
+            .filter { it.matchesPerspective(perspective) }
 
-        val priorIncome = priorTransactions
-            .filter { it.type.isIncome && it.matchesPerspective(perspective) }
-            .sumOf { it.amount }
-
-        val priorExpense = priorTransactions
-            .filter { it.type.isExpense && it.matchesPerspective(perspective) }
-            .sumOf { it.amount }
+        val initialBalance = priorTransactions.sumOf { it.signedImpact() }
 
         return ReportStats(
             income = income,
             expense = expense,
-            balance = income - expense,
-            initialBalance = priorIncome - priorExpense,
+            balance = balance,
+            initialBalance = initialBalance,
         )
     }
 

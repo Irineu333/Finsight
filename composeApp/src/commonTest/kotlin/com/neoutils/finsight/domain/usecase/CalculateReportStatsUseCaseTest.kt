@@ -183,15 +183,94 @@ class CalculateReportStatsUseCaseTest {
         assertEquals(-75.0, result.initialBalance)
     }
 
+    @Test
+    fun accountPerspectiveIgnoresInternalTransfersBetweenSelectedAccounts() {
+        val accountA = Account(id = 1, name = "Conta A")
+        val accountB = Account(id = 2, name = "Conta B")
+        val accountC = Account(id = 3, name = "Conta C")
+
+        val operations = listOf(
+            transferOperation(
+                date = LocalDate(2026, 3, 10),
+                amount = 100.0,
+                source = accountA,
+                destination = accountB,
+            ),
+            transferOperation(
+                date = LocalDate(2026, 3, 11),
+                amount = 30.0,
+                source = accountA,
+                destination = accountC,
+            ),
+            operation(
+                date = LocalDate(2026, 3, 12),
+                transactions = listOf(
+                    transaction(
+                        type = Transaction.Type.INCOME,
+                        amount = 50.0,
+                        date = LocalDate(2026, 3, 12),
+                        account = accountA,
+                    ),
+                    transaction(
+                        type = Transaction.Type.EXPENSE,
+                        amount = 20.0,
+                        date = LocalDate(2026, 3, 12),
+                        account = accountB,
+                    ),
+                ),
+            ),
+        )
+
+        val result = useCase(
+            operations = operations,
+            perspective = ReportPerspective.AccountPerspective(
+                accountIds = listOf(accountA.id, accountB.id)
+            ),
+            startDate = LocalDate(2026, 3, 1),
+            endDate = LocalDate(2026, 3, 31),
+        )
+
+        assertEquals(50.0, result.income)
+        assertEquals(50.0, result.expense)
+        assertEquals(0.0, result.balance)
+    }
+
     private fun operation(
         date: LocalDate,
         transactions: List<Transaction>,
+        kind: Operation.Kind = Operation.Kind.TRANSACTION,
     ): Operation {
         return Operation(
-            kind = Operation.Kind.TRANSACTION,
+            kind = kind,
             title = null,
             date = date,
             transactions = transactions,
+        )
+    }
+
+    private fun transferOperation(
+        date: LocalDate,
+        amount: Double,
+        source: Account,
+        destination: Account,
+    ): Operation {
+        return operation(
+            date = date,
+            kind = Operation.Kind.TRANSFER,
+            transactions = listOf(
+                transaction(
+                    type = Transaction.Type.EXPENSE,
+                    amount = amount,
+                    date = date,
+                    account = source,
+                ),
+                transaction(
+                    type = Transaction.Type.INCOME,
+                    amount = amount,
+                    date = date,
+                    account = destination,
+                ),
+            ),
         )
     }
 

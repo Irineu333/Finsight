@@ -60,7 +60,6 @@ import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_add_account
 import com.neoutils.finsight.resources.dashboard_recents
 import com.neoutils.finsight.resources.dashboard_recurring
-import com.neoutils.finsight.resources.dashboard_reports
 import com.neoutils.finsight.resources.dashboard_see_all
 import com.neoutils.finsight.resources.dashboard_total_balance
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
@@ -85,7 +84,6 @@ fun DashboardScreen(
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
     openRecurring: () -> Unit = {},
-    openReports: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -101,7 +99,6 @@ fun DashboardScreen(
         onOpenInstallments = openInstallments,
         onOpenBudgets = openBudgets,
         onOpenRecurring = openRecurring,
-        onOpenReports = openReports,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -116,7 +113,6 @@ private fun DashboardContent(
     onOpenInstallments: () -> Unit,
     onOpenBudgets: () -> Unit,
     onOpenRecurring: () -> Unit,
-    onOpenReports: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -497,38 +493,6 @@ private fun DashboardContent(
         }
 
         item(
-            key = "open_reports_action"
-        ) {
-            Card(
-                onClick = onOpenReports,
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_reports),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        item(
             key = "open_budgets_action"
         ) {
             Card(
@@ -539,7 +503,7 @@ private fun DashboardContent(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp)
                     .animateItem(),
             ) {

@@ -4,19 +4,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.report_viewer_badge_account
-import com.neoutils.finsight.resources.report_viewer_badge_credit_card
-import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.report.HtmlReportDocumentRenderer
+import com.neoutils.finsight.report.ReportLayout
+import com.neoutils.finsight.report.ReportOutputError
+import com.neoutils.finsight.report.ReportOutputResult
+import com.neoutils.finsight.report.ReportOutputService
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.report_output_error_generic
+import com.neoutils.finsight.resources.report_output_error_printing_unsupported
+import com.neoutils.finsight.resources.report_output_error_unsupported_format
+import com.neoutils.finsight.resources.report_output_export_success
+import com.neoutils.finsight.resources.report_output_export_success_with_location
+import com.neoutils.finsight.resources.report_output_print_queued
+import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
+import com.neoutils.finsight.resources.report_viewer_badge_account
+import com.neoutils.finsight.resources.report_viewer_badge_credit_card
+import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.ui.screen.home.AppRoute
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 class ReportViewerViewModel(
@@ -26,6 +40,8 @@ class ReportViewerViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
+    private val reportRenderer: HtmlReportDocumentRenderer,
+    private val reportOutputService: ReportOutputService,
 ) : ViewModel() {
 
     private val startDate = LocalDate.parse(route.startDate)
@@ -39,6 +55,9 @@ class ReportViewerViewModel(
             accountIds = route.accountIds,
         )
     }
+
+    private val _event = MutableSharedFlow<UiText>()
+    val event = _event.asSharedFlow()
 
     val uiState = combine(
         operationRepository.observeAllOperations(),
@@ -129,4 +148,51 @@ class ReportViewerViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ReportViewerUiState.Loading,
     )
+
+    fun exportAsHtml(layout: ReportLayout) = viewModelScope.launch {
+        val document = reportRenderer.render(layout)
+        val outputResult = reportOutputService.export(document)
+        emitOutputResult(
+            outputResult = outputResult,
+            success = when (outputResult) {
+                is ReportOutputResult.Success -> outputResult.location?.let {
+                    UiText.ResWithArgs(Res.string.report_output_export_success_with_location, it)
+                } ?: UiText.Res(Res.string.report_output_export_success)
+                is ReportOutputResult.Failure -> null
+            },
+        )
+    }
+
+    fun print(layout: ReportLayout) = viewModelScope.launch {
+        val document = reportRenderer.render(layout)
+        val outputResult = reportOutputService.print(document)
+        emitOutputResult(
+            outputResult = outputResult,
+            success = UiText.Res(Res.string.report_output_print_queued),
+        )
+    }
+
+    private suspend fun emitOutputResult(
+        outputResult: ReportOutputResult,
+        success: UiText?,
+    ) {
+        when (outputResult) {
+            is ReportOutputResult.Success -> {
+                success?.let { _event.emit(it) }
+            }
+
+            is ReportOutputResult.Failure -> {
+                _event.emit(outputResult.error.toUiText())
+            }
+        }
+    }
+}
+
+private fun ReportOutputError.toUiText(): UiText {
+    return when (this) {
+        ReportOutputError.UnsupportedFormat -> UiText.Res(Res.string.report_output_error_unsupported_format)
+        ReportOutputError.UnsupportedPrinting -> UiText.Res(Res.string.report_output_error_printing_unsupported)
+        ReportOutputError.IoError -> UiText.Res(Res.string.report_output_error_generic)
+        ReportOutputError.Unknown -> UiText.Res(Res.string.report_output_error_generic)
+    }
 }

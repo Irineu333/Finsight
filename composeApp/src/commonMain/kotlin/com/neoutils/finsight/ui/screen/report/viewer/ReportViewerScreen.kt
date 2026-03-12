@@ -7,15 +7,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -25,6 +31,8 @@ import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.stringUiText
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -36,10 +44,40 @@ fun ReportViewerScreen(
     viewModel: ReportViewerViewModel = koinViewModel { parametersOf(route) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val dateFormats = LocalDateFormats.current
+    val formatter = LocalCurrencyFormatter.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.event.collect { event ->
+            snackbarHostState.showSnackbar(event.asString())
+        }
+    }
 
     ReportViewerContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
+        snackbarHostState = snackbarHostState,
+        onExportHtml = { content, strings, badgeText ->
+            viewModel.exportAsHtml(
+                content.toReportLayout(
+                    strings = strings,
+                    dateFormats = dateFormats,
+                    formatter = formatter,
+                    perspectiveBadgeText = badgeText,
+                )
+            )
+        },
+        onPrint = { content, strings, badgeText ->
+            viewModel.print(
+                content.toReportLayout(
+                    strings = strings,
+                    dateFormats = dateFormats,
+                    formatter = formatter,
+                    perspectiveBadgeText = badgeText,
+                )
+            )
+        },
     )
 }
 
@@ -47,9 +85,30 @@ fun ReportViewerScreen(
 private fun ReportViewerContent(
     uiState: ReportViewerUiState,
     onNavigateBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onExportHtml: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
+    onPrint: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
+    val exportStrings = ReportExportStrings(
+        title = stringResource(Res.string.report_viewer_title),
+        generatedAtPrefix = stringResource(Res.string.report_output_generated_at),
+        summaryBalance = stringResource(Res.string.report_viewer_summary_balance),
+        summaryInitialBalance = stringResource(Res.string.report_viewer_summary_initial_balance),
+        summaryIncome = stringResource(Res.string.report_viewer_summary_income),
+        summaryExpense = stringResource(Res.string.report_viewer_summary_expense),
+        sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
+        sectionTransactions = stringResource(Res.string.report_viewer_transactions),
+        operationTransfer = stringResource(Res.string.operation_card_transfer),
+        operationPayment = stringResource(Res.string.operation_card_payment),
+        operationBalanceAdjustment = stringResource(Res.string.operation_card_balance_adjustment),
+        operationInvoiceAdjustment = stringResource(Res.string.operation_card_invoice_adjustment),
+        columnCategory = stringResource(Res.string.report_output_column_category),
+        columnTransaction = stringResource(Res.string.report_output_column_transaction),
+        columnAmount = stringResource(Res.string.report_output_column_amount),
+        columnPercentage = stringResource(Res.string.report_output_column_percentage),
+    )
 
     Scaffold(
         topBar = {
@@ -60,8 +119,46 @@ private fun ReportViewerContent(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },
+                actions = {
+                    if (uiState is ReportViewerUiState.Content) {
+                        var menuExpanded by remember { mutableStateOf(false) }
+                        val badgeText = stringUiText(uiState.perspectiveBadge)
+
+                        Box {
+                            IconButton(
+                                onClick = { menuExpanded = true },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = null,
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.report_viewer_action_export_html)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onExportHtml(uiState, exportStrings, badgeText)
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.report_viewer_action_print)) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onPrint(uiState, exportStrings, badgeText)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         when (uiState) {

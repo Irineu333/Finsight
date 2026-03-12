@@ -91,7 +91,6 @@
     <string name="report_viewer_summary_invoice_total">Total da Fatura</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
     <string name="report_viewer_transactions">Transações</string>
-    <string name="report_viewer_print">Imprimir</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

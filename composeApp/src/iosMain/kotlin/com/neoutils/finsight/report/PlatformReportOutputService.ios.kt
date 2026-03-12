@@ -2,12 +2,17 @@ package com.neoutils.finsight.report
 
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
+import platform.UIKit.UIMarkupTextPrintFormatter
+import platform.UIKit.UIPrintInfo
+import platform.UIKit.UIPrintInfoOutputType
+import platform.UIKit.UIPrintInteractionController
 import platform.UIKit.UIViewController
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
-actual class PlatformReportOutputService actual constructor() : ReportOutputService {
-    actual override suspend fun export(document: ReportDocument): ReportOutputResult {
+class IosReportOutputService : ReportOutputService {
+
+    override suspend fun export(document: ReportDocument): ReportOutputResult {
         if (document.format != ReportDocumentFormat.HTML) {
             return ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
         }
@@ -34,8 +39,30 @@ actual class PlatformReportOutputService actual constructor() : ReportOutputServ
         }
     }
 
-    actual override suspend fun print(document: ReportDocument): ReportOutputResult {
-        return ReportOutputResult.Failure(ReportOutputError.UnsupportedPrinting)
+    override suspend fun print(document: ReportDocument): ReportOutputResult {
+        if (document.format != ReportDocumentFormat.HTML) {
+            return ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
+        }
+
+        return runCatching {
+            val printInfo = UIPrintInfo.printInfo()
+            printInfo.outputType = UIPrintInfoOutputType.UIPrintInfoOutputGeneral
+            printInfo.jobName = document.fileNameWithoutExtension
+
+            val printFormatter = UIMarkupTextPrintFormatter(document.content.decodeToString())
+
+            val printController = UIPrintInteractionController.sharedPrintController()
+            printController.printInfo = printInfo
+            printController.printFormatter = printFormatter
+
+            dispatch_async(dispatch_get_main_queue()) {
+                printController.presentAnimated(true, completionHandler = null)
+            }
+
+            ReportOutputResult.Success()
+        }.getOrElse {
+            ReportOutputResult.Failure(ReportOutputError.Unknown)
+        }
     }
 }
 

@@ -91,6 +91,19 @@
     <string name="report_viewer_summary_invoice_total">Total da Fatura</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
     <string name="report_viewer_transactions">Transações</string>
+    <string name="report_viewer_action_export_html">Exportar HTML</string>
+    <string name="report_viewer_action_print">Imprimir</string>
+    <string name="report_output_generated_at">Gerado em</string>
+    <string name="report_output_export_success">Relatório exportado com sucesso.</string>
+    <string name="report_output_export_success_with_location">Relatório exportado: %1$s</string>
+    <string name="report_output_print_queued">Relatório enviado para impressão.</string>
+    <string name="report_output_error_unsupported_format">Formato de exportação não suportado.</string>
+    <string name="report_output_error_printing_unsupported">Impressão indisponível nesta plataforma.</string>
+    <string name="report_output_error_generic">Não foi possível concluir a operação do relatório.</string>
+    <string name="report_output_column_category">Categoria</string>
+    <string name="report_output_column_transaction">Transação</string>
+    <string name="report_output_column_amount">Valor</string>
+    <string name="report_output_column_percentage">%</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>

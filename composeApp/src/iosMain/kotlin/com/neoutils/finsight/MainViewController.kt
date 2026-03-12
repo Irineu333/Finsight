@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import androidx.compose.ui.window.ComposeUIViewController
 import com.neoutils.finsight.di.databaseModule
 import com.neoutils.finsight.di.mapperModule
+import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
@@ -16,6 +17,7 @@ fun MainViewController() = ComposeUIViewController(
                 mapperModule,
                 repositoryModule,
                 useCaseModules,
+                reportModule,
                 viewModelModule,
             )
         }

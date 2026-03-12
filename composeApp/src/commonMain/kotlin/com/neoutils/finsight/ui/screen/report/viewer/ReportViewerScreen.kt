@@ -58,8 +58,8 @@ fun ReportViewerScreen(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
         snackbarHostState = snackbarHostState,
-        onExportHtml = { content, strings, badgeText ->
-            viewModel.exportAsHtml(
+        onShareHtml = { content, strings, badgeText ->
+            viewModel.shareAsHtml(
                 content.toReportLayout(
                     strings = strings,
                     dateFormats = dateFormats,
@@ -86,7 +86,7 @@ private fun ReportViewerContent(
     uiState: ReportViewerUiState,
     onNavigateBack: () -> Unit,
     snackbarHostState: SnackbarHostState,
-    onExportHtml: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
+    onShareHtml: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
     onPrint: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
@@ -139,10 +139,10 @@ private fun ReportViewerContent(
                                 onDismissRequest = { menuExpanded = false },
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.report_viewer_action_export_html)) },
+                                    text = { Text(stringResource(Res.string.report_viewer_action_share_html)) },
                                     onClick = {
                                         menuExpanded = false
-                                        onExportHtml(uiState, exportStrings, badgeText)
+                                        onShareHtml(uiState, exportStrings, badgeText)
                                     },
                                 )
                                 DropdownMenuItem(

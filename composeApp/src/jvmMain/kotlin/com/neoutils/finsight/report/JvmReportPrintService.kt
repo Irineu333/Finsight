@@ -1,5 +1,7 @@
 package com.neoutils.finsight.report
 
+import arrow.core.Either
+import arrow.core.left
 import com.neoutils.finsight.domain.model.ReportDocument
 import java.awt.Desktop
 import java.io.File
@@ -10,12 +12,12 @@ private const val AUTO_PRINT_SCRIPT = "<script>window.onload=()=>window.print()<
 
 class JvmReportPrintService : ReportPrintService {
 
-    override suspend fun print(document: ReportDocument): ReportOutputResult = withContext(Dispatchers.IO) {
+    override suspend fun print(document: ReportDocument): Either<ReportOutputError, Unit> = withContext(Dispatchers.IO) {
         if (document.format != ReportDocument.Format.HTML) {
-            return@withContext ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
+            return@withContext ReportOutputError.UNSUPPORTED_FORMAT.left()
         }
 
-        runCatching {
+        Either.catch {
             val html = document.content.decodeToString()
                 .replace("</body>", "$AUTO_PRINT_SCRIPT</body>")
 
@@ -26,8 +28,6 @@ class JvmReportPrintService : ReportPrintService {
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(reportFile.toURI())
             }
-
-            ReportOutputResult.Success()
-        }.getOrElse { ReportOutputResult.Failure(ReportOutputError.IoError) }
+        }.mapLeft { ReportOutputError.IO_ERROR }
     }
 }

@@ -97,7 +97,6 @@
     <string name="report_output_share_success">Relatório compartilhado com sucesso.</string>
     <string name="report_output_share_success_with_location">Relatório salvo em: %1$s</string>
     <string name="report_output_print_queued">Relatório enviado para impressão.</string>
-    <string name="report_output_error_unsupported_format">Formato de exportação não suportado.</string>
     <string name="report_output_error_printing_unsupported">Impressão indisponível nesta plataforma.</string>
     <string name="report_output_error_generic">Não foi possível concluir a operação do relatório.</string>
     <string name="report_output_column_category">Categoria</string>
@@ -624,6 +623,11 @@
     <string name="delete_recurring_title">Excluir recorrente</string>
     <string name="delete_recurring_message">Deseja excluir "%1$s"? Esta ação não pode ser desfeita.</string>
     <string name="delete_recurring_confirm">Excluir</string>
+
+    <!-- Report Output Errors -->
+    <string name="report_output_error_unsupported_format">Formato de relatório não suportado.</string>
+    <string name="report_output_error_io_error">Falha ao processar o relatório.</string>
+    <string name="report_output_error_unknown">Ocorreu um erro inesperado.</string>
 
     <!-- Recurring Errors -->
     <string name="recurring_error_amount_required">O valor é obrigatório.</string>

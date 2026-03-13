@@ -5,10 +5,12 @@ import android.print.PrintAttributes
 import android.print.PrintManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.report.ActivityHolder
 import com.neoutils.finsight.report.ReportOutputError
-import com.neoutils.finsight.report.ReportOutputResult
 import com.neoutils.finsight.report.ReportPrintService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -17,17 +19,17 @@ class AndroidReportPrintService(
     private val activityHolder: ActivityHolder,
 ) : ReportPrintService {
 
-    override suspend fun print(document: ReportDocument): ReportOutputResult {
+    override suspend fun print(document: ReportDocument): Either<ReportOutputError, Unit> {
         if (document.format != ReportDocument.Format.HTML) {
-            return ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
+            return ReportOutputError.UNSUPPORTED_FORMAT.left()
         }
 
         val activity = activityHolder.activity
-            ?: return ReportOutputResult.Failure(ReportOutputError.Unknown)
+            ?: return ReportOutputError.UNKNOWN.left()
 
         return suspendCancellableCoroutine { continuation ->
             activity.runOnUiThread {
-                runCatching {
+                Either.catch {
                     val webView = WebView(activity)
                     webView.webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView, url: String) {
@@ -38,7 +40,7 @@ class AndroidReportPrintService(
                                 adapter,
                                 PrintAttributes.Builder().build(),
                             )
-                            continuation.resume(ReportOutputResult.Success())
+                            continuation.resume(Unit.right())
                         }
                     }
                     webView.loadDataWithBaseURL(
@@ -48,8 +50,8 @@ class AndroidReportPrintService(
                         Charsets.UTF_8.name(),
                         null,
                     )
-                }.onFailure {
-                    continuation.resume(ReportOutputResult.Failure(ReportOutputError.Unknown))
+                }.onLeft {
+                    continuation.resume(ReportOutputError.UNKNOWN.left())
                 }
             }
         }

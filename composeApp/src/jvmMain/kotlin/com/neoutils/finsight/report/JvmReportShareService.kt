@@ -1,5 +1,8 @@
 package com.neoutils.finsight.report
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.neoutils.finsight.domain.model.ReportDocument
 import java.io.File
 import javax.swing.JFileChooser
@@ -10,9 +13,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 class JvmReportShareService : ReportShareService {
 
-    override suspend fun share(document: ReportDocument): ReportOutputResult {
+    override suspend fun share(document: ReportDocument): Either<ReportOutputError, Unit> {
         if (document.format != ReportDocument.Format.HTML) {
-            return ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
+            return ReportOutputError.UNSUPPORTED_FORMAT.left()
         }
 
         return suspendCancellableCoroutine { continuation ->
@@ -29,14 +32,13 @@ class JvmReportShareService : ReportShareService {
                 val result = chooser.showSaveDialog(null)
 
                 if (result == JFileChooser.APPROVE_OPTION) {
-                    runCatching {
-                        chooser.selectedFile.writeBytes(document.content)
-                        continuation.resume(ReportOutputResult.Success(chooser.selectedFile.absolutePath))
-                    }.onFailure {
-                        continuation.resume(ReportOutputResult.Failure(ReportOutputError.IoError))
-                    }
+                    Either.catch { chooser.selectedFile.writeBytes(document.content) }
+                        .fold(
+                            ifLeft = { continuation.resume(ReportOutputError.IO_ERROR.left()) },
+                            ifRight = { continuation.resume(Unit.right()) },
+                        )
                 } else {
-                    continuation.resume(ReportOutputResult.Success())
+                    continuation.resume(Unit.right())
                 }
             }
         }

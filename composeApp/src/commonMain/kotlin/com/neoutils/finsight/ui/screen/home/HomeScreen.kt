@@ -224,6 +224,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(),
         bottomBar = {
             BottomNavigationBar(
                 selectedItem = selectedItem,

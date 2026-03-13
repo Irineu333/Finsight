@@ -1,7 +1,12 @@
 package com.neoutils.finsight.report
 
-interface ReportOutputService {
+import com.neoutils.finsight.domain.model.ReportDocument
+
+interface ReportShareService {
     suspend fun share(document: ReportDocument): ReportOutputResult
+}
+
+interface ReportPrintService {
     suspend fun print(document: ReportDocument): ReportOutputResult
 }
 
@@ -12,7 +17,6 @@ sealed class ReportOutputResult {
 
 enum class ReportOutputError {
     UnsupportedFormat,
-    UnsupportedPrinting,
     IoError,
     Unknown,
 }

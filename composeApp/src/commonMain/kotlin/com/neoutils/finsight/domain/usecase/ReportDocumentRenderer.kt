@@ -1,13 +1,13 @@
-package com.neoutils.finsight.report
+package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.ReportDocument
+import com.neoutils.finsight.domain.model.ReportLayout
+import com.neoutils.finsight.domain.model.ReportLayoutSection
+import com.neoutils.finsight.domain.model.ReportTone
 import kotlinx.datetime.toLocalDateTime
 
-interface ReportDocumentRenderer {
-    fun render(layout: ReportLayout): ReportDocument
-}
-
-class HtmlReportDocumentRenderer : ReportDocumentRenderer {
-    override fun render(layout: ReportLayout): ReportDocument {
+class RenderHtmlReportUseCase {
+    operator fun invoke(layout: ReportLayout): ReportDocument {
         val html = buildString {
             appendLine("<!doctype html>")
             appendLine("<html lang=\"en\">")
@@ -204,7 +204,7 @@ class HtmlReportDocumentRenderer : ReportDocumentRenderer {
 
         return ReportDocument(
             fileNameWithoutExtension = "report-${currentIsoDate()}",
-            format = ReportDocumentFormat.HTML,
+            format = ReportDocument.Format.HTML,
             content = html.encodeToByteArray(),
         )
     }

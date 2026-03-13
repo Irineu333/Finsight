@@ -1,13 +1,15 @@
-package com.neoutils.finsight.domain.usecase
+package com.neoutils.finsight.report
 
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
 import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.domain.model.ReportTone
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
-class RenderHtmlReportUseCase {
-    operator fun invoke(layout: ReportLayout): ReportDocument {
+class HtmlReportDocumentRenderer : ReportDocumentRenderer {
+    override fun render(layout: ReportLayout): ReportDocument {
         val html = buildString {
             appendLine("<!doctype html>")
             appendLine("<html lang=\"en\">")
@@ -234,8 +236,8 @@ private fun ReportTone.toCssClass(): String {
 }
 
 private fun currentIsoDate(): String {
-    val today = kotlin.time.Clock.System.now()
-        .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    val today = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())
         .date
     return today.toString()
 }

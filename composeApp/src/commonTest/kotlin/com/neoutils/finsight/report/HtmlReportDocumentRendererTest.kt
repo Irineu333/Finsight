@@ -2,7 +2,7 @@ package com.neoutils.finsight.report
 
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
-import com.neoutils.finsight.domain.model.ReportDocumentFormat
+import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
 import com.neoutils.finsight.domain.model.ReportLayoutSection
 import com.neoutils.finsight.domain.model.ReportSummaryItem
@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class HtmlReportDocumentRendererTest {
-    private val renderer = _root_ide_package_.com.neoutils.finsight.domain.usecase.RenderHtmlReportUseCase()
+    private val renderer = HtmlReportDocumentRenderer()
 
     @Test
     fun renderBuildsHtmlWithSummaryAndSections() {
@@ -65,10 +65,10 @@ class HtmlReportDocumentRendererTest {
             ),
         )
 
-        val result = renderer(layout)
+        val result = renderer.render(layout)
         val html = result.content.decodeToString()
 
-        assertEquals(ReportDocumentFormat.HTML, result.format)
+        assertEquals(ReportDocument.Format.HTML, result.format)
         assertTrue(html.contains("<h1>Relatório</h1>"))
         assertTrue(html.contains("Gastos por Categoria"))
         assertTrue(html.contains("Transações"))
@@ -111,7 +111,7 @@ class HtmlReportDocumentRendererTest {
             ),
         )
 
-        val html = renderer(layout).content.decodeToString()
+        val html = renderer.render(layout).content.decodeToString()
 
         assertTrue(html.contains("&lt;script&gt;"))
         assertTrue(html.contains("A&amp;B"))

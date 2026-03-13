@@ -78,7 +78,6 @@
     <string name="report_config_accounts">Contas</string>
     <string name="report_config_no_accounts">Nenhuma conta cadastrada</string>
     <string name="report_config_credit_cards">Cartões</string>
-    <string name="report_config_no_credit_cards">Nenhum cartão cadastrado</string>
 
     <!-- Report Viewer Screen -->
     <string name="report_viewer_title">Relatório</string>

@@ -89,33 +89,35 @@ private fun ReportConfigContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item {
-                val segmentedButtonColors = SegmentedButtonDefaults.colors(
-                    activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
-                    activeContentColor = colorScheme.primary,
-                    activeBorderColor = colorScheme.primary,
-                    inactiveContainerColor = colorScheme.surfaceContainer,
-                    inactiveContentColor = colorScheme.onSurfaceVariant,
-                    inactiveBorderColor = colorScheme.outline,
-                )
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    SegmentedButton(
-                        selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
-                        onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        colors = segmentedButtonColors,
-                        icon = {},
-                    ) {
-                        Text(stringResource(Res.string.report_config_perspective_account))
-                    }
-                    SegmentedButton(
-                        selected = uiState.selectedTab == PerspectiveTab.CREDIT_CARD,
-                        onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.CREDIT_CARD)) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        colors = segmentedButtonColors,
-                        icon = {},
-                    ) {
-                        Text(stringResource(Res.string.report_config_perspective_credit_card))
+            if (uiState.creditCards.isNotEmpty()) {
+                item {
+                    val segmentedButtonColors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
+                        activeContentColor = colorScheme.primary,
+                        activeBorderColor = colorScheme.primary,
+                        inactiveContainerColor = colorScheme.surfaceContainer,
+                        inactiveContentColor = colorScheme.onSurfaceVariant,
+                        inactiveBorderColor = colorScheme.outline,
+                    )
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        SegmentedButton(
+                            selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
+                            onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                            colors = segmentedButtonColors,
+                            icon = {},
+                        ) {
+                            Text(stringResource(Res.string.report_config_perspective_account))
+                        }
+                        SegmentedButton(
+                            selected = uiState.selectedTab == PerspectiveTab.CREDIT_CARD,
+                            onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.CREDIT_CARD)) },
+                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                            colors = segmentedButtonColors,
+                            icon = {},
+                        ) {
+                            Text(stringResource(Res.string.report_config_perspective_credit_card))
+                        }
                     }
                 }
             }
@@ -168,43 +170,32 @@ private fun ReportConfigContent(
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }
-                if (uiState.creditCards.isEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(Res.string.report_config_no_credit_cards),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                        )
+                item {
+                    val initialPage = uiState.creditCards
+                        .indexOfFirst { it.id == uiState.selectedCreditCardId }
+                        .coerceAtLeast(0)
+
+                    val pagerState = rememberPagerState(
+                        initialPage = initialPage,
+                        pageCount = { uiState.creditCards.size },
+                    )
+
+                    LaunchedEffect(pagerState) {
+                        snapshotFlow { pagerState.currentPage }.collectLatest { page ->
+                            onAction(ReportConfigAction.SelectCreditCard(uiState.creditCards[page].id))
+                        }
                     }
-                } else {
-                    item {
-                        val initialPage = uiState.creditCards
-                            .indexOfFirst { it.id == uiState.selectedCreditCardId }
-                            .coerceAtLeast(0)
 
-                        val pagerState = rememberPagerState(
-                            initialPage = initialPage,
-                            pageCount = { uiState.creditCards.size },
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        pageSpacing = 8.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { page ->
+                        CreditCardCard(
+                            creditCard = uiState.creditCards[page],
+                            variant = CreditCardCardVariant.Selection,
                         )
-
-                        LaunchedEffect(pagerState) {
-                            snapshotFlow { pagerState.currentPage }.collectLatest { page ->
-                                onAction(ReportConfigAction.SelectCreditCard(uiState.creditCards[page].id))
-                            }
-                        }
-
-                        HorizontalPager(
-                            state = pagerState,
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            pageSpacing = 8.dp,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { page ->
-                            CreditCardCard(
-                                creditCard = uiState.creditCards[page],
-                                variant = CreditCardCardVariant.Selection,
-                            )
-                        }
                     }
                 }
             }

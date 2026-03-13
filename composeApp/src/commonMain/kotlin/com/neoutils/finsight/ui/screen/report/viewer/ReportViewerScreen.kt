@@ -49,22 +49,26 @@ fun ReportViewerScreen(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
         onShareHtml = { content, strings, badgeText ->
-            viewModel.shareAsHtml(
-                content.toReportLayout(
-                    strings = strings,
-                    dateFormats = dateFormats,
-                    formatter = formatter,
-                    perspectiveBadgeText = badgeText,
+            viewModel.onAction(
+                ReportViewerAction.ShareAsHtml(
+                    content.toReportLayout(
+                        strings = strings,
+                        dateFormats = dateFormats,
+                        formatter = formatter,
+                        perspectiveBadgeText = badgeText,
+                    )
                 )
             )
         },
         onPrint = { content, strings, badgeText ->
-            viewModel.print(
-                content.toReportLayout(
-                    strings = strings,
-                    dateFormats = dateFormats,
-                    formatter = formatter,
-                    perspectiveBadgeText = badgeText,
+            viewModel.onAction(
+                ReportViewerAction.Print(
+                    content.toReportLayout(
+                        strings = strings,
+                        dateFormats = dateFormats,
+                        formatter = formatter,
+                        perspectiveBadgeText = badgeText,
+                    )
                 )
             )
         },

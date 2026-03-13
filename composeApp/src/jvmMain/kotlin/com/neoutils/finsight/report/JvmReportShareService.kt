@@ -1,19 +1,17 @@
 package com.neoutils.finsight.report
 
-import java.awt.Desktop
+import com.neoutils.finsight.domain.model.ReportDocument
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 import javax.swing.filechooser.FileNameExtensionFilter
 import kotlin.coroutines.resume
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 
-class JvmReportOutputService : ReportOutputService {
+class JvmReportShareService : ReportShareService {
 
     override suspend fun share(document: ReportDocument): ReportOutputResult {
-        if (document.format != ReportDocumentFormat.HTML) {
+        if (document.format != ReportDocument.Format.HTML) {
             return ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
         }
 
@@ -42,27 +40,5 @@ class JvmReportOutputService : ReportOutputService {
                 }
             }
         }
-    }
-
-    override suspend fun print(document: ReportDocument): ReportOutputResult = withContext(Dispatchers.IO) {
-        if (document.format != ReportDocumentFormat.HTML) {
-            return@withContext ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
-        }
-
-        runCatching {
-            val reportFile = File.createTempFile("finsight-report-", ".${document.format.fileExtension}")
-            reportFile.writeBytes(document.content)
-            reportFile.deleteOnExit()
-
-            if (Desktop.isDesktopSupported()) {
-                val desktop = Desktop.getDesktop()
-                when {
-                    desktop.isSupported(Desktop.Action.PRINT) -> desktop.print(reportFile)
-                    desktop.isSupported(Desktop.Action.BROWSE) -> desktop.browse(reportFile.toURI())
-                }
-            }
-
-            ReportOutputResult.Success()
-        }.getOrElse { ReportOutputResult.Failure(ReportOutputError.IoError) }
     }
 }

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.report
+package com.neoutils.finsight.domain.model
 
 data class ReportLayout(
     val title: String,

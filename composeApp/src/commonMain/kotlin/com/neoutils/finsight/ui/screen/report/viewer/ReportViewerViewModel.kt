@@ -3,14 +3,14 @@ package com.neoutils.finsight.ui.screen.report.viewer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.ReportPerspective
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.report.HtmlReportDocumentRenderer
-import com.neoutils.finsight.report.ReportLayout
-import com.neoutils.finsight.report.ReportOutputService
+import com.neoutils.finsight.report.service.PrintReportUseCase
+import com.neoutils.finsight.report.service.ShareReportUseCase
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
 import com.neoutils.finsight.resources.report_viewer_badge_credit_card
@@ -30,8 +30,8 @@ class ReportViewerViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
-    private val reportRenderer: HtmlReportDocumentRenderer,
-    private val reportOutputService: ReportOutputService,
+    private val shareReport: ShareReportUseCase,
+    private val printReport: PrintReportUseCase,
 ) : ViewModel() {
 
     private val startDate = LocalDate.parse(route.startDate)
@@ -86,13 +86,13 @@ class ReportViewerViewModel(
                     when (perspective) {
                         is ReportPerspective.AccountPerspective -> {
                             op.transactions.any {
-                                it.target == com.neoutils.finsight.domain.model.Transaction.Target.ACCOUNT &&
+                                it.target == Transaction.Target.ACCOUNT &&
                                     (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
                             }
                         }
                         is ReportPerspective.CreditCardPerspective -> {
                             op.transactions.any {
-                                it.target == com.neoutils.finsight.domain.model.Transaction.Target.CREDIT_CARD &&
+                                it.target == Transaction.Target.CREDIT_CARD &&
                                     it.creditCard?.id == perspective.creditCardId
                             }
                         }
@@ -136,11 +136,10 @@ class ReportViewerViewModel(
         initialValue = ReportViewerUiState.Loading,
     )
 
-    fun shareAsHtml(layout: ReportLayout) = viewModelScope.launch {
-        reportOutputService.share(reportRenderer.render(layout))
-    }
-
-    fun print(layout: ReportLayout) = viewModelScope.launch {
-        reportOutputService.print(reportRenderer.render(layout))
+    fun onAction(action: ReportViewerAction) = viewModelScope.launch {
+        when (action) {
+            is ReportViewerAction.ShareAsHtml -> shareReport(action.layout)
+            is ReportViewerAction.Print -> printReport(action.layout)
+        }
     }
 }

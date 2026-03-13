@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +31,6 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.stringUiText
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -46,18 +44,10 @@ fun ReportViewerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val dateFormats = LocalDateFormats.current
     val formatter = LocalCurrencyFormatter.current
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(viewModel) {
-        viewModel.event.collect { event ->
-            snackbarHostState.showSnackbar(event.asString())
-        }
-    }
 
     ReportViewerContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
-        snackbarHostState = snackbarHostState,
         onShareHtml = { content, strings, badgeText ->
             viewModel.shareAsHtml(
                 content.toReportLayout(
@@ -85,7 +75,6 @@ fun ReportViewerScreen(
 private fun ReportViewerContent(
     uiState: ReportViewerUiState,
     onNavigateBack: () -> Unit,
-    snackbarHostState: SnackbarHostState,
     onShareHtml: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
     onPrint: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
 ) {
@@ -158,7 +147,6 @@ private fun ReportViewerContent(
                 },
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
         when (uiState) {

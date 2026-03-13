@@ -26,9 +26,11 @@ class ReportConfigViewModel(
         creditCardRepository.observeAllCreditCards(),
         config,
     ) { accounts, creditCards, config ->
+        val selectedTab = if (creditCards.isEmpty()) PerspectiveTab.ACCOUNT else config.selectedTab
         config.copy(
             accounts = accounts,
             creditCards = creditCards,
+            selectedTab = selectedTab,
         )
     }.stateIn(
         scope = viewModelScope,

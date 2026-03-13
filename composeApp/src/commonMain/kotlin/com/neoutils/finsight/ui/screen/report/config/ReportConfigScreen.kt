@@ -89,7 +89,7 @@ private fun ReportConfigContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item {
+            if (uiState.creditCards.isNotEmpty()) item {
                 val segmentedButtonColors = SegmentedButtonDefaults.colors(
                     activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
                     activeContentColor = colorScheme.primary,

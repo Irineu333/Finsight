@@ -53,6 +53,7 @@
     <string name="dashboard_current_balance">Saldo Atual</string>
     <string name="dashboard_total_balance">Saldo total</string>
     <string name="dashboard_add_account">Adicionar conta</string>
+    <string name="dashboard_add_credit_card">Adicionar cartão de crédito</string>
     <string name="dashboard_reports">Relatórios</string>
 
     <!-- Report Config Screen -->

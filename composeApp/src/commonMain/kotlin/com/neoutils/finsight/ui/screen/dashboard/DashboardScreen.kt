@@ -39,6 +39,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
@@ -57,6 +58,7 @@ import com.neoutils.finsight.resources.dashboard_credit_cards
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_add_account
+import com.neoutils.finsight.resources.dashboard_add_credit_card
 import com.neoutils.finsight.resources.dashboard_recents
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_reports
@@ -538,34 +540,68 @@ private fun DashboardContent(
             }
         }
 
-        item(
-            key = "open_credit_card_action"
-        ) {
-            Card(
-                onClick = onOpenCreditCards,
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
+        if (uiState.creditCards.isNotEmpty()) {
+            item(
+                key = "open_credit_card_action"
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                Card(
+                    onClick = onOpenCreditCards,
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorScheme.surfaceContainer,
+                        contentColor = colorScheme.onSurface,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_credit_cards),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.dashboard_credit_cards),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                            modifier = Modifier.size(18.dp),
+                            contentDescription = null,
+                        )
+                    }
+                }
+            }
+        } else {
+            item(
+                key = "add_credit_card_action"
+            ) {
+                Card(
+                    onClick = { modalManager.show(CreditCardFormModal()) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorScheme.surfaceContainer,
+                        contentColor = colorScheme.onSurface,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.dashboard_add_credit_card),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            modifier = Modifier.size(18.dp),
+                            contentDescription = null,
+                        )
+                    }
                 }
             }
         }

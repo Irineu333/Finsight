@@ -79,6 +79,12 @@ private fun CreditCardsContent(
     val modalManager = LocalModalManager.current
     val navigator = LocalNavigator.current
 
+    LaunchedEffect(uiState) {
+        if (uiState is CreditCardsUiState.Empty) {
+            onNavigateBack()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -123,14 +129,7 @@ private fun CreditCardsContent(
                 }
             }
 
-            CreditCardsUiState.Empty -> {
-                EmptyCreditCardsState(
-                    onCreateCreditCard = { modalManager.show(CreditCardFormModal()) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                )
-            }
+            CreditCardsUiState.Empty -> Unit
 
             is CreditCardsUiState.Content -> {
                 LazyColumn(
@@ -231,41 +230,6 @@ private fun CreditCardsContent(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyCreditCardsState(
-    onCreateCreditCard: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(Res.string.credit_cards_empty),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = onCreateCreditCard,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(Res.string.credit_cards_create))
             }
         }
     }

@@ -128,7 +128,6 @@ private fun DashboardContent(
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = colorScheme.background,
             ),
-            windowInsets = WindowInsets(),
         )
     },
     contentWindowInsets = WindowInsets(),

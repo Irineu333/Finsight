@@ -7,14 +7,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -114,38 +112,24 @@ private fun ReportViewerContent(
                 },
                 actions = {
                     if (uiState is ReportViewerUiState.Content) {
-                        var menuExpanded by remember { mutableStateOf(false) }
                         val badgeText = stringUiText(uiState.perspectiveBadge)
 
-                        Box {
-                            IconButton(
-                                onClick = { menuExpanded = true },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = null,
-                                )
-                            }
+                        IconButton(
+                            onClick = { onShareHtml(uiState, exportStrings, badgeText) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = stringResource(Res.string.report_viewer_action_share_html),
+                            )
+                        }
 
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.report_viewer_action_share_html)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onShareHtml(uiState, exportStrings, badgeText)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.report_viewer_action_print)) },
-                                    onClick = {
-                                        menuExpanded = false
-                                        onPrint(uiState, exportStrings, badgeText)
-                                    },
-                                )
-                            }
+                        IconButton(
+                            onClick = { onPrint(uiState, exportStrings, badgeText) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Print,
+                                contentDescription = stringResource(Res.string.report_viewer_action_print),
+                            )
                         }
                     }
                 },

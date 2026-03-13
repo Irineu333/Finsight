@@ -18,7 +18,7 @@ class AndroidReportOutputService(
     private val activityHolder: ActivityHolder,
 ) : ReportOutputService {
 
-    override suspend fun export(document: ReportDocument): ReportOutputResult = withContext(Dispatchers.IO) {
+    override suspend fun share(document: ReportDocument): ReportOutputResult = withContext(Dispatchers.IO) {
         if (document.format != ReportDocumentFormat.HTML) {
             return@withContext ReportOutputResult.Failure(ReportOutputError.UnsupportedFormat)
         }

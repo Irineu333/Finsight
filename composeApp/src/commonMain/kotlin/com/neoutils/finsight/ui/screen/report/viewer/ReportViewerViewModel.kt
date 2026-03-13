@@ -17,8 +17,8 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_output_error_generic
 import com.neoutils.finsight.resources.report_output_error_printing_unsupported
 import com.neoutils.finsight.resources.report_output_error_unsupported_format
-import com.neoutils.finsight.resources.report_output_export_success
-import com.neoutils.finsight.resources.report_output_export_success_with_location
+import com.neoutils.finsight.resources.report_output_share_success
+import com.neoutils.finsight.resources.report_output_share_success_with_location
 import com.neoutils.finsight.resources.report_output_print_queued
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.resources.report_viewer_badge_account
@@ -149,15 +149,15 @@ class ReportViewerViewModel(
         initialValue = ReportViewerUiState.Loading,
     )
 
-    fun exportAsHtml(layout: ReportLayout) = viewModelScope.launch {
+    fun shareAsHtml(layout: ReportLayout) = viewModelScope.launch {
         val document = reportRenderer.render(layout)
-        val outputResult = reportOutputService.export(document)
+        val outputResult = reportOutputService.share(document)
         emitOutputResult(
             outputResult = outputResult,
             success = when (outputResult) {
                 is ReportOutputResult.Success -> outputResult.location?.let {
-                    UiText.ResWithArgs(Res.string.report_output_export_success_with_location, it)
-                } ?: UiText.Res(Res.string.report_output_export_success)
+                    UiText.ResWithArgs(Res.string.report_output_share_success_with_location, it)
+                } ?: UiText.Res(Res.string.report_output_share_success)
                 is ReportOutputResult.Failure -> null
             },
         )

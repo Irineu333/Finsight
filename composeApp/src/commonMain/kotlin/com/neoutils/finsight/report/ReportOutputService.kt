@@ -1,7 +1,7 @@
 package com.neoutils.finsight.report
 
 interface ReportOutputService {
-    suspend fun export(document: ReportDocument): ReportOutputResult
+    suspend fun share(document: ReportDocument): ReportOutputResult
     suspend fun print(document: ReportDocument): ReportOutputResult
 }
 

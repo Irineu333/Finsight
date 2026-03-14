@@ -24,13 +24,14 @@ Type(Scope): Summary
 - Do not amend existing commits.
 - Stage only files related to the described change; leave unrelated changes unstaged.
 - Never commit `.env`, secrets, or credentials.
+- Always add the agent itself as co-author in the commit trailers: `Co-authored-by: Codex <codex@openai.com>`.
 
 ## Steps
 
 1. Run `git status` and `git diff` to understand what changed.
 2. Identify the appropriate `Type` and `Scope` from the changes.
 3. Stage the relevant files with `git add <files>`.
-4. Commit using the format above.
+4. Commit using the format above and include the co-author trailer.
 5. Run `git status` to confirm the commit succeeded.
 
 If `$ARGUMENTS` is provided, use it as a hint for the commit message or scope.

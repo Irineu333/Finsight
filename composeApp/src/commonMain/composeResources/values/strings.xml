@@ -214,6 +214,10 @@
     <string name="budget_form_icon_helper">Toque para abrir a lista de ícones</string>
     <string name="budget_form_icon_modal_title">Escolha um ícone para o orçamento</string>
     <string name="budget_form_limit_label">Limite</string>
+    <string name="budget_form_limit_type_fixed">R$</string>
+    <string name="budget_form_limit_type_percentage">%</string>
+    <string name="budget_form_percentage_label">Percentual</string>
+    <string name="budget_form_recurring_income_label">Receita base</string>
     <string name="budget_form_save">Salvar</string>
 
     <!-- Add Transaction Modal -->
@@ -368,6 +372,7 @@
     <string name="view_category_edit">Editar</string>
 
     <!-- View Budget Modal -->
+    <string name="view_budget_percentage_label">Percentual</string>
     <string name="view_budget_limit_label">Limite</string>
     <string name="view_budget_spent_label">Gasto</string>
     <string name="view_budget_exceeded_by_label">Excedido em</string>

@@ -8,8 +8,12 @@ import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.LimitType
+import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
@@ -32,6 +36,7 @@ class BudgetFormViewModel(
     private val budget: Budget? = null,
     private val budgetRepository: IBudgetRepository,
     private val categoryRepository: ICategoryRepository,
+    private val recurringRepository: IRecurringRepository,
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
@@ -43,6 +48,9 @@ class BudgetFormViewModel(
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
     private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
+    private val limitType = MutableStateFlow(budget?.limitType ?: LimitType.FIXED)
+    private val percentage = MutableStateFlow(budget?.percentage?.toString() ?: "")
+    private val selectedRecurring = MutableStateFlow<Recurring?>(null)
     private val validation = ObservableMutableMap(
         map = mutableMapOf(
             if (isEditMode) {
@@ -58,21 +66,40 @@ class BudgetFormViewModel(
         val selectedIcon: AppIcon,
         val title: String,
         val amount: String,
+        val limitType: LimitType,
+        val percentage: String,
+        val selectedRecurring: Recurring?,
     )
+
+    private val formFields = combine(
+        combine(selectedCategories, selectedIcon, title, amount) { cats, icon, t, amt ->
+            cats to Triple(icon, t, amt)
+        },
+        combine(limitType, percentage, selectedRecurring) { lt, pct, rec ->
+            Triple(lt, pct, rec)
+        },
+    ) { (cats, iconTitleAmount), (lt, pct, rec) ->
+        val (icon, t, amt) = iconTitleAmount
+        FormFields(cats, icon, t, amt, lt, pct, rec)
+    }
 
     val uiState = combine(
         categoryRepository.observeCategoriesByType(Category.Type.EXPENSE),
         budgetRepository.observeAllBudgets(),
-        combine(selectedCategories, selectedIcon, title, amount) { categories, icon, title, amount ->
-            FormFields(categories, icon, title, amount)
+        combine(recurringRepository.observeAllRecurring(), formFields, validation) { rec, fields, v ->
+            Triple(rec, fields, v)
         },
-        validation,
-    ) { categories, budgets, fields, validation ->
+    ) { categories, budgets, (allRecurrings, fields, validation) ->
         val budgetedCategoryIds = budgets
             .filter { it.id != budget?.id }
             .flatMap { it.categories }
             .map { it.id }
             .toSet()
+
+        val incomeRecurrings = allRecurrings.filter { it.type == Transaction.Type.INCOME && it.isActive }
+
+        val resolvedSelectedRecurring = fields.selectedRecurring
+            ?: budget?.recurringId?.let { id -> incomeRecurrings.find { it.id == id } }
 
         BudgetFormUiState(
             availableCategories = categories.filter { it.id !in budgetedCategoryIds },
@@ -82,6 +109,10 @@ class BudgetFormViewModel(
             amount = fields.amount,
             validation = validation,
             isEditMode = isEditMode,
+            limitType = fields.limitType,
+            percentage = fields.percentage,
+            incomeRecurrings = incomeRecurrings,
+            selectedRecurring = resolvedSelectedRecurring,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -93,6 +124,8 @@ class BudgetFormViewModel(
             amount = budget?.amount?.let { formatter.format(it) } ?: "",
             validation = validation,
             isEditMode = isEditMode,
+            limitType = budget?.limitType ?: LimitType.FIXED,
+            percentage = budget?.percentage?.toString() ?: "",
         ),
     )
 
@@ -109,9 +142,11 @@ class BudgetFormViewModel(
                     }
                 }
             }
-
             is BudgetFormAction.AmountChanged -> amount.update { action.amount }
             is BudgetFormAction.IconSelected -> selectedIcon.update { action.icon }
+            is BudgetFormAction.LimitTypeChanged -> limitType.update { action.limitType }
+            is BudgetFormAction.PercentageChanged -> percentage.update { action.percentage }
+            is BudgetFormAction.RecurringSelected -> selectedRecurring.update { action.recurring }
             BudgetFormAction.Submit -> submit()
         }
     }
@@ -148,13 +183,24 @@ class BudgetFormViewModel(
             val state = uiState.value
             if (!state.canSubmit) return@launch
 
+            val resolvedAmount = when (state.limitType) {
+                LimitType.FIXED -> state.amount.moneyToDouble()
+                LimitType.PERCENTAGE -> {
+                    val rec = state.selectedRecurring ?: return@launch
+                    rec.amount * (state.percentage.toDoubleOrNull() ?: 0.0) / 100.0
+                }
+            }
+
             if (budget != null) {
                 budgetRepository.update(
                     budget.copy(
                         title = validatedTitle.trim(),
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
-                        amount = state.amount.moneyToDouble(),
+                        amount = resolvedAmount,
+                        limitType = state.limitType,
+                        percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
+                        recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
                     )
                 )
             } else {
@@ -163,7 +209,10 @@ class BudgetFormViewModel(
                         title = validatedTitle.trim(),
                         categories = state.selectedCategories,
                         iconKey = state.selectedIcon.key,
-                        amount = state.amount.moneyToDouble(),
+                        amount = resolvedAmount,
+                        limitType = state.limitType,
+                        percentage = if (state.limitType == LimitType.PERCENTAGE) state.percentage.toDoubleOrNull() else null,
+                        recurringId = if (state.limitType == LimitType.PERCENTAGE) state.selectedRecurring?.id else null,
                         createdAt = Clock.System.now().toEpochMilliseconds(),
                     )
                 )

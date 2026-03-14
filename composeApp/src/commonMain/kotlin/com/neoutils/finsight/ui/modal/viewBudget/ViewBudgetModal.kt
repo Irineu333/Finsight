@@ -32,10 +32,12 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.resources.view_budget_delete
 import com.neoutils.finsight.resources.view_budget_edit
 import com.neoutils.finsight.resources.view_budget_exceeded_by_label
 import com.neoutils.finsight.resources.view_budget_limit_label
+import com.neoutils.finsight.resources.view_budget_percentage_label
 import com.neoutils.finsight.resources.view_budget_remaining_label
 import com.neoutils.finsight.resources.view_budget_spent_label
 import org.jetbrains.compose.resources.stringResource
@@ -113,6 +115,16 @@ class ViewBudgetModal(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (budget.limitType == LimitType.PERCENTAGE && budget.percentage != null) {
+                    val pctLabel = buildString {
+                        append("${budget.percentage.toInt()}%")
+                        budgetProgress.recurringLabel?.let { append(" de $it") }
+                    }
+                    DetailRow(
+                        label = stringResource(Res.string.view_budget_percentage_label),
+                        value = pctLabel,
+                    )
+                }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
                     value = formatter.format(budget.amount),

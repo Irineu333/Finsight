@@ -103,6 +103,7 @@ val viewModelModule = module {
         BudgetsViewModel(
             budgetRepository = get(),
             operationRepository = get(),
+            recurringRepository = get(),
             calculateBudgetProgressUseCase = get(),
         )
     }
@@ -113,6 +114,7 @@ val viewModelModule = module {
             budget = it.getOrNull(),
             budgetRepository = get(),
             categoryRepository = get(),
+            recurringRepository = get(),
             validateBudgetTitle = get(),
             modalManager = get(),
             debounceManager = get(),

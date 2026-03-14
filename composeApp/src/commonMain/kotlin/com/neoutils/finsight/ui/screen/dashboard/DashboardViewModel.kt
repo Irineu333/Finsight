@@ -135,6 +135,8 @@ class DashboardViewModel(
             budgetProgress = calculateBudgetProgressUseCase(
                 budgets = budgets,
                 transactions = transactions,
+                recurringList = recurringList,
+                operations = operations,
             ),
             pendingRecurring = getPendingRecurringUseCase(
                 recurringList = recurringList,

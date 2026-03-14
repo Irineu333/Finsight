@@ -8,6 +8,9 @@ data class Budget(
     val categories: List<Category>,
     val iconKey: String,
     val amount: Double,
+    val limitType: LimitType = LimitType.FIXED,
+    val percentage: Double? = null,
+    val recurringId: Long? = null,
     val createdAt: Long,
 ) {
     val icon: CategoryLazyIcon

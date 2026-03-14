@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import kotlin.time.ExperimentalTime
 class BudgetsViewModel(
     private val budgetRepository: IBudgetRepository,
     private val operationRepository: IOperationRepository,
+    private val recurringRepository: IRecurringRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
 ) : ViewModel() {
 
@@ -31,8 +33,9 @@ class BudgetsViewModel(
     val uiState = combine(
         budgetRepository.observeAllBudgets(),
         operationRepository.observeAllOperations(),
+        recurringRepository.observeAllRecurring(),
         selectedMonth,
-    ) { budgets, operations, selectedMonth ->
+    ) { budgets, operations, recurringList, selectedMonth ->
         val transactions = operations.flatMap { it.transactions }
         val systemToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val today = if (selectedMonth == systemToday.yearMonth) {
@@ -43,6 +46,8 @@ class BudgetsViewModel(
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = budgets,
             transactions = transactions,
+            recurringList = recurringList,
+            operations = operations,
             today = today,
         )
         if (budgetProgress.isEmpty()) {

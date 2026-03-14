@@ -30,5 +30,8 @@ data class BudgetEntity(
     val title: String,
     val amount: Double,
     val period: String,
+    val limitType: String = "FIXED",
+    val percentage: Double? = null,
+    val recurringId: Long? = null,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
 )

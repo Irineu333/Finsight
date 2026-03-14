@@ -3,6 +3,7 @@ package com.neoutils.finsight.database.mapper
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.LimitType
 
 class BudgetMapper {
     fun toDomain(entity: BudgetEntity, categories: List<Category>): Budget {
@@ -12,6 +13,9 @@ class BudgetMapper {
             categories = categories,
             iconKey = entity.iconKey,
             amount = entity.amount,
+            limitType = runCatching { LimitType.valueOf(entity.limitType) }.getOrDefault(LimitType.FIXED),
+            percentage = entity.percentage,
+            recurringId = entity.recurringId,
             createdAt = entity.createdAt,
         )
     }
@@ -25,6 +29,9 @@ class BudgetMapper {
             title = domain.title,
             amount = domain.amount,
             period = "MONTHLY",
+            limitType = domain.limitType.name,
+            percentage = domain.percentage,
+            recurringId = domain.recurringId,
             createdAt = domain.createdAt,
         )
     }

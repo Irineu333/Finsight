@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IGoalRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
@@ -19,6 +20,7 @@ import kotlinx.datetime.toLocalDateTime
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
+import com.neoutils.finsight.domain.usecase.CalculateGoalProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -38,12 +40,14 @@ class DashboardViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
     private val budgetRepository: IBudgetRepository,
+    private val goalRepository: IGoalRepository,
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
+    private val calculateGoalProgressUseCase: CalculateGoalProgressUseCase,
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
@@ -70,9 +74,10 @@ class DashboardViewModel(
         invoicesFlow,
         accountRepository.observeAllAccounts(),
         budgetRepository.observeAllBudgets(),
+        goalRepository.observeAllGoals(),
         recurringRepository.observeAllRecurring(),
         recurringOccurrenceRepository.observeAllOccurrences(),
-    ) { operations, creditCards, invoices, accounts, budgets, recurringList, occurrences ->
+    ) { operations, creditCards, invoices, accounts, budgets, goals, recurringList, occurrences ->
         val transactions = operations.flatMap { it.transactions }
         val transactionsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
@@ -134,6 +139,10 @@ class DashboardViewModel(
             creditCards = creditCardsWithBills,
             budgetProgress = calculateBudgetProgressUseCase(
                 budgets = budgets,
+                transactions = transactions,
+            ),
+            goalProgress = calculateGoalProgressUseCase(
+                goals = goals,
                 transactions = transactions,
             ),
             pendingRecurring = getPendingRecurringUseCase(

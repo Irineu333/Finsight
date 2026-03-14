@@ -1,0 +1,121 @@
+package com.neoutils.finsight.ui.component
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.GoalProgress
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.theme.goalProgressColor
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.goal_progress_card_title
+import org.jetbrains.compose.resources.stringResource
+
+@Composable
+fun GoalProgressCard(
+    goalProgress: List<GoalProgress>,
+    modifier: Modifier = Modifier,
+    onGoalClick: (GoalProgress) -> Unit = {},
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(Res.string.goal_progress_card_title),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            goalProgress.take(3).forEach { progress ->
+                GoalProgressRow(
+                    progress = progress,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clickable { onGoalClick(progress) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GoalProgressRow(
+    progress: GoalProgress,
+    modifier: Modifier = Modifier,
+) {
+    val formatter = LocalCurrencyFormatter.current
+    val accentColor = goalProgressColor(progress.progress)
+
+    Row(
+        modifier = modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CategoryIconBox(
+            icon = progress.goal.icon,
+            tint = accentColor,
+            shape = RoundedCornerShape(8.dp),
+            contentPadding = PaddingValues(8.dp),
+            modifier = Modifier.size(40.dp),
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = progress.goal.title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = "${formatter.format(progress.earned)} / ${formatter.format(progress.goal.amount)}",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface,
+                )
+            }
+
+            LinearProgressIndicator(
+                progress = { progress.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                color = accentColor,
+                trackColor = colorScheme.surfaceContainerHighest,
+                strokeCap = StrokeCap.Round,
+                drawStopIndicator = {},
+                gapSize = (-4).dp,
+            )
+        }
+    }
+}

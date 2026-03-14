@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
+import com.neoutils.finsight.database.dao.GoalDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.OperationDao
@@ -25,6 +26,7 @@ val databaseModule = module {
     single<AccountDao> { get<AppDatabase>().accountDao() }
     single<InstallmentDao> { get<AppDatabase>().installmentDao() }
     single<BudgetDao> { get<AppDatabase>().budgetDao() }
+    single<GoalDao> { get<AppDatabase>().goalDao() }
     single<RecurringDao> { get<AppDatabase>().recurringDao() }
     single<RecurringOccurrenceDao> { get<AppDatabase>().recurringOccurrenceDao() }
 }

@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.GoalProgress
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
@@ -24,6 +25,7 @@ data class DashboardUiState(
     val categorySpending: List<CategorySpending> = emptyList(),
     val creditCards: List<CreditCardUi> = emptyList(),
     val budgetProgress: List<BudgetProgress> = emptyList(),
+    val goalProgress: List<GoalProgress> = emptyList(),
     val pendingRecurring: List<Recurring> = emptyList(),
 ) {
     data class BalanceStats(

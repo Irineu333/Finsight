@@ -33,6 +33,7 @@ import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
+import com.neoutils.finsight.ui.screen.goals.GoalsScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
@@ -87,6 +88,9 @@ fun AppNavHost() = Surface {
                             },
                             openBudgets = {
                                 navController.navigate(AppRoute.Budgets)
+                            },
+                            openGoals = {
+                                navController.navigate(AppRoute.Goals)
                             },
                             openRecurring = {
                                 navController.navigate(AppRoute.Recurring)
@@ -153,6 +157,14 @@ fun AppNavHost() = Surface {
                     )
                 }
 
+                composable<AppRoute.Goals> {
+                    GoalsScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
+                }
+
                 composable<AppRoute.Recurring> {
                     RecurringScreen(
                         onNavigateBack = {
@@ -172,6 +184,7 @@ fun HomeScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openGoals: () -> Unit = {},
     openRecurring: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
@@ -234,6 +247,7 @@ fun HomeScreen(
                     openAccounts = openAccounts,
                     openInstallments = openInstallments,
                     openBudgets = openBudgets,
+                    openGoals = openGoals,
                     openRecurring = openRecurring,
                 )
             }

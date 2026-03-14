@@ -214,11 +214,47 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+// unpublished
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `goals` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`categoryId` INTEGER NOT NULL, " +
+                "`iconCategoryId` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, " +
+                "`period` TEXT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE" +
+                ")"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_goals_categoryId` ON `goals` (`categoryId`)"
+        )
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `goal_categories` (" +
+                "`goalId` INTEGER NOT NULL, `categoryId` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`goalId`, `categoryId`), " +
+                "FOREIGN KEY(`goalId`) REFERENCES `goals`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE" +
+                ")"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_goal_categories_goalId` ON `goal_categories` (`goalId`)"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_goal_categories_categoryId` ON `goal_categories` (`categoryId`)"
+        )
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

@@ -45,6 +45,7 @@ import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
+import com.neoutils.finsight.ui.modal.viewGoal.ViewGoalModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.util.LocalDateFormats
@@ -55,6 +56,7 @@ import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
 import com.neoutils.finsight.resources.dashboard_credit_cards
 import com.neoutils.finsight.resources.dashboard_default
+import com.neoutils.finsight.resources.dashboard_goals
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_add_account
@@ -83,6 +85,7 @@ fun DashboardScreen(
     openAccounts: () -> Unit = {},
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
+    openGoals: () -> Unit = {},
     openRecurring: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
@@ -98,6 +101,7 @@ fun DashboardScreen(
         onOpenAccounts = openAccounts,
         onOpenInstallments = openInstallments,
         onOpenBudgets = openBudgets,
+        onOpenGoals = openGoals,
         onOpenRecurring = openRecurring,
         modalManager = modalManager,
         navigator = navigator
@@ -112,6 +116,7 @@ private fun DashboardContent(
     onOpenAccounts: () -> Unit,
     onOpenInstallments: () -> Unit,
     onOpenBudgets: () -> Unit,
+    onOpenGoals: () -> Unit,
     onOpenRecurring: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
@@ -304,6 +309,7 @@ private fun DashboardContent(
 
         val spendingPages = buildList {
             if (uiState.budgetProgress.isNotEmpty()) add(SpendingPage.Budgets)
+            if (uiState.goalProgress.isNotEmpty()) add(SpendingPage.Goals)
             if (uiState.categorySpending.isNotEmpty()) add(SpendingPage.Categories)
         }
 
@@ -335,6 +341,12 @@ private fun DashboardContent(
                                 budgetProgress = uiState.budgetProgress,
                                 modifier = Modifier.fillMaxWidth(),
                                 onBudgetClick = { modalManager.show(ViewBudgetModal(it)) },
+                            )
+
+                            SpendingPage.Goals -> GoalProgressCard(
+                                goalProgress = uiState.goalProgress,
+                                modifier = Modifier.fillMaxWidth(),
+                                onGoalClick = { modalManager.show(ViewGoalModal(it)) },
                             )
                         }
                     }
@@ -491,6 +503,38 @@ private fun DashboardContent(
                 ) {
                     Text(
                         text = stringResource(Res.string.dashboard_budgets),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
+            key = "open_goals_action"
+        ) {
+            Card(
+                onClick = onOpenGoals,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_goals),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
@@ -737,7 +781,7 @@ private fun PendingRecurringCard(
     }
 }
 
-private enum class SpendingPage { Categories, Budgets }
+private enum class SpendingPage { Categories, Budgets, Goals }
 
 @Composable
 private fun TotalBalanceCard(

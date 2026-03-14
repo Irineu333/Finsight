@@ -18,6 +18,8 @@
     <!-- Budget errors -->
     <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
     <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
+    <string name="goal_error_empty_title">O título da meta não pode ser vazio.</string>
+    <string name="goal_error_already_exist">Já existe uma meta com esse título.</string>
 
     <!-- Credit card errors -->
     <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
@@ -45,6 +47,7 @@
     <string name="dashboard_recents">Recentes</string>
     <string name="dashboard_see_all">Ver Tudo</string>
     <string name="dashboard_budgets">Orçamentos</string>
+    <string name="dashboard_goals">Metas</string>
     <string name="dashboard_categories">Categorias</string>
     <string name="dashboard_credit_cards">Cartões de Crédito</string>
     <string name="dashboard_accounts">Contas</string>
@@ -147,6 +150,17 @@
     <string name="budgets_empty">Sem orçamentos</string>
     <string name="budgets_create">Criar orçamento</string>
 
+    <!-- Goals Screen -->
+    <string name="goals_title">Metas</string>
+    <string name="goals_target">Objetivo</string>
+    <string name="goals_earned">Recebido</string>
+    <string name="goals_missing">Faltam</string>
+    <string name="goals_above_target">Acima da meta</string>
+    <string name="goals_category_singular">1 categoria</string>
+    <string name="goals_category_plural">%1$d categorias</string>
+    <string name="goals_empty">Sem metas</string>
+    <string name="goals_create">Criar meta</string>
+
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
     <string name="invoice_transactions_delete_card">Excluir Cartão</string>
@@ -216,6 +230,16 @@
     <string name="budget_form_limit_label">Limite</string>
     <string name="budget_form_save">Salvar</string>
 
+    <!-- Goal Form Modal -->
+    <string name="goal_form_edit_title">Editar Meta</string>
+    <string name="goal_form_new_title">Nova Meta</string>
+    <string name="goal_form_title_label">Título</string>
+    <string name="goal_form_icon_label">Ícone da meta</string>
+    <string name="goal_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="goal_form_icon_modal_title">Escolha um ícone para a meta</string>
+    <string name="goal_form_target_label">Objetivo</string>
+    <string name="goal_form_save">Salvar</string>
+
     <!-- Add Transaction Modal -->
     <string name="add_transaction_title_label">Título</string>
     <string name="add_transaction_amount_label">Valor</string>
@@ -252,6 +276,10 @@
     <string name="delete_budget_title">Excluir Orçamento</string>
     <string name="delete_budget_message">Tem certeza que deseja excluir o orçamento \"%1$s\"? Esta ação não pode ser desfeita.</string>
     <string name="delete_budget_confirm">Excluir</string>
+
+    <string name="delete_goal_title">Excluir Meta</string>
+    <string name="delete_goal_message">Tem certeza que deseja excluir a meta \"%1$s\"? Esta ação não pode ser desfeita.</string>
+    <string name="delete_goal_confirm">Excluir</string>
 
     <string name="delete_installment_title">Excluir Parcelamento</string>
     <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
@@ -375,6 +403,14 @@
     <string name="view_budget_delete">Excluir</string>
     <string name="view_budget_edit">Editar</string>
 
+    <!-- View Goal Modal -->
+    <string name="view_goal_target_label">Objetivo</string>
+    <string name="view_goal_earned_label">Recebido</string>
+    <string name="view_goal_missing_label">Faltam</string>
+    <string name="view_goal_above_target_label">Acima da meta</string>
+    <string name="view_goal_delete">Excluir</string>
+    <string name="view_goal_edit">Editar</string>
+
     <!-- Components -->
     <string name="balance_card_pay_invoice">Pagar Fatura</string>
     <string name="balance_card_current_balance">Saldo Atual</string>
@@ -443,6 +479,7 @@
     <string name="category_spending_card_title">Gastos por Categoria</string>
 
     <string name="budget_progress_card_title">Orçamentos</string>
+    <string name="goal_progress_card_title">Metas</string>
 
     <!-- Invoice statuses -->
     <string name="invoice_status_future">Futura</string>

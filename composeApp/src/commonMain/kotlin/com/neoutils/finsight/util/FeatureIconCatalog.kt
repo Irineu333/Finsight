@@ -90,6 +90,20 @@ object FeatureIconCatalog {
         AppIcon.PETS,
     )
 
+    val goals: List<AppIcon> = listOf(
+        AppIcon.GOAL,
+        AppIcon.MONEY,
+        AppIcon.SAVINGS,
+        AppIcon.WALLET,
+        AppIcon.PAYMENT,
+        AppIcon.BUSINESS,
+        AppIcon.WORK,
+        AppIcon.GIFT,
+        AppIcon.CELEBRATION,
+        AppIcon.BANK,
+        AppIcon.CARD,
+    )
+
     val accounts: List<AppIcon> = listOf(
         AppIcon.WALLET,
         AppIcon.BANK,

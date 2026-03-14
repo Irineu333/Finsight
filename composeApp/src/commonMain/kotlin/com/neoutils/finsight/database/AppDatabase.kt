@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.dao.GoalDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.OperationDao
@@ -20,6 +21,8 @@ import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
+import com.neoutils.finsight.database.entity.GoalCategoryEntity
+import com.neoutils.finsight.database.entity.GoalEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.entity.InstallmentEntity
 import com.neoutils.finsight.database.entity.OperationEntity
@@ -38,10 +41,12 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         OperationEntity::class,
         BudgetEntity::class,
         BudgetCategoryEntity::class,
+        GoalEntity::class,
+        GoalCategoryEntity::class,
         RecurringEntity::class,
         RecurringOccurrenceEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -55,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun installmentDao(): InstallmentDao
     abstract fun operationDao(): OperationDao
     abstract fun budgetDao(): BudgetDao
+    abstract fun goalDao(): GoalDao
     abstract fun recurringDao(): RecurringDao
     abstract fun recurringOccurrenceDao(): RecurringOccurrenceDao
 }

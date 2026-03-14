@@ -33,7 +33,10 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
+import com.neoutils.finsight.ui.modal.deleteGoal.DeleteGoalViewModel
+import com.neoutils.finsight.ui.modal.goalForm.GoalFormViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
+import com.neoutils.finsight.ui.screen.goals.GoalsViewModel
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
 import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
@@ -87,12 +90,14 @@ val viewModelModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             budgetRepository = get(),
+            goalRepository = get(),
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
             calculateBudgetProgressUseCase = get(),
+            calculateGoalProgressUseCase = get(),
             ensureDefaultAccountUseCase = get(),
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get()
@@ -123,6 +128,34 @@ val viewModelModule = module {
         DeleteBudgetViewModel(
             budget = it.get(),
             budgetRepository = get(),
+            modalManager = get(),
+        )
+    }
+
+    viewModel {
+        GoalsViewModel(
+            goalRepository = get(),
+            operationRepository = get(),
+            calculateGoalProgressUseCase = get(),
+        )
+    }
+
+    viewModel {
+        GoalFormViewModel(
+            formatter = get(),
+            goal = it.getOrNull(),
+            goalRepository = get(),
+            categoryRepository = get(),
+            validateGoalTitle = get(),
+            modalManager = get(),
+            debounceManager = get(),
+        )
+    }
+
+    viewModel {
+        DeleteGoalViewModel(
+            goal = it.get(),
+            goalRepository = get(),
             modalManager = get(),
         )
     }

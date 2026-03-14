@@ -5,6 +5,7 @@ import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.database.repository.BudgetRepository
 import com.neoutils.finsight.database.repository.CategoryRepository
 import com.neoutils.finsight.database.repository.CreditCardRepository
+import com.neoutils.finsight.database.repository.GoalRepository
 import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.database.repository.InstallmentRepository
 import com.neoutils.finsight.database.repository.OperationRepository
@@ -15,6 +16,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IGoalRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
@@ -79,6 +81,14 @@ val repositoryModule = module {
 
     single<IBudgetRepository> {
         BudgetRepository(
+            dao = get(),
+            mapper = get(),
+            categoryRepository = get(),
+        )
+    }
+
+    single<IGoalRepository> {
+        GoalRepository(
             dao = get(),
             mapper = get(),
             categoryRepository = get(),

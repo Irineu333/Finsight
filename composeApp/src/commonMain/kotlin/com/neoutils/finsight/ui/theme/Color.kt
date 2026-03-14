@@ -45,6 +45,13 @@ fun budgetProgressColor(progress: Float): Color = when {
     else -> lerp(Success, Warning, progress / 0.5f)
 }
 
+// Goal progress color: smooth gradient Error → Warning → Success
+fun goalProgressColor(progress: Float): Color = when {
+    progress >= 1f -> Success
+    progress >= 0.5f -> lerp(Warning, Success, (progress - 0.5f) / 0.5f)
+    else -> lerp(Error, Warning, progress / 0.5f)
+}
+
 // Category color
 val CategoryColor = Color(0xFF3B82F6)
 

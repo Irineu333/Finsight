@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.twotone.Label
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -129,6 +130,7 @@ enum class AppIcon(
 
     CATEGORY("category", Icons.Default.Category),
     BUDGET("budget", Icons.Default.PieChart),
+    GOAL("goal", Icons.AutoMirrored.Filled.TrendingUp),
     WALLET("wallet", Icons.Default.AccountBalanceWallet),
     BANK("bank", Icons.Default.AccountBalance),
     CARD("card", Icons.Default.CreditCard),

@@ -112,6 +112,9 @@ private fun ReportViewerContent(
         summaryInitialBalance = stringResource(Res.string.report_viewer_summary_initial_balance),
         summaryIncome = stringResource(Res.string.report_viewer_summary_income),
         summaryExpense = stringResource(Res.string.report_viewer_summary_expense),
+        summaryInvoiceExpense = stringResource(Res.string.report_viewer_summary_invoice_expense),
+        summaryInvoiceTotal = stringResource(Res.string.report_viewer_summary_invoice_total),
+        summaryAdvancePayment = stringResource(Res.string.report_viewer_summary_advance_payment),
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
         operationTransfer = stringResource(Res.string.operation_card_transfer),
@@ -184,12 +187,7 @@ private fun ReportViewerContent(
                             perspectiveLabel = uiState.perspectiveLabel,
                             perspectiveBadge = uiState.perspectiveBadge,
                             perspectiveIconKey = uiState.perspectiveIconKey,
-                            startDate = uiState.startDate,
-                            endDate = uiState.endDate,
-                            balance = uiState.balance,
-                            initialBalance = uiState.initialBalance,
-                            income = uiState.income,
-                            expense = uiState.expense,
+                            stats = uiState.stats,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),

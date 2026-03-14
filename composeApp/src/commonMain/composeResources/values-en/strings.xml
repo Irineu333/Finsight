@@ -69,6 +69,7 @@
     <string name="report_config_accounts">Accounts</string>
     <string name="report_config_no_accounts">No accounts registered</string>
     <string name="report_config_credit_cards">Cards</string>
+    <string name="report_config_invoice">Invoice</string>
     <string name="report_config_generate">Generate Report</string>
     <string name="report_config_cancel">Cancel</string>
     <string name="report_config_confirm">Confirm</string>
@@ -87,7 +88,9 @@
     <string name="report_viewer_summary_expense">Expense</string>
     <string name="report_viewer_summary_balance">Period Balance</string>
     <string name="report_viewer_summary_initial_balance">Initial Balance</string>
-    <string name="report_viewer_summary_invoice_total">Invoice Total</string>
+    <string name="report_viewer_summary_invoice_total">Open Invoice</string>
+    <string name="report_viewer_summary_invoice_expense">Expense</string>
+    <string name="report_viewer_summary_advance_payment">Paid</string>
     <string name="report_viewer_spending_by_category">Spending by Category</string>
     <string name="report_viewer_transactions">Transactions</string>
     <string name="report_viewer_action_share_html">Share HTML</string>

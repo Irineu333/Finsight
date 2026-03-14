@@ -22,6 +22,7 @@ import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
+import com.neoutils.finsight.ui.component.InvoiceSelector
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -200,24 +201,47 @@ private fun ReportConfigContent(
                 }
             }
 
-            item {
-                Text(
-                    text = stringResource(Res.string.report_config_date_range),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+            if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
+                item {
+                    Text(
+                        text = stringResource(Res.string.report_config_date_range),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+
+                item {
+                    DateRangeCard(
+                        startDate = uiState.startDate,
+                        endDate = uiState.endDate,
+                        onRangeSelected = { start, end ->
+                            onAction(ReportConfigAction.SelectStartDate(start))
+                            onAction(ReportConfigAction.SelectEndDate(end))
+                        },
+                    )
+                }
             }
 
-            item {
-                DateRangeCard(
-                    startDate = uiState.startDate,
-                    endDate = uiState.endDate,
-                    onRangeSelected = { start, end ->
-                        onAction(ReportConfigAction.SelectStartDate(start))
-                        onAction(ReportConfigAction.SelectEndDate(end))
-                    },
-                )
+            if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
+                item {
+                    Text(
+                        text = stringResource(Res.string.report_config_invoice),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                }
+                item {
+                    InvoiceSelector(
+                        invoices = uiState.invoices,
+                        invoice = uiState.invoices.find { it.id == uiState.selectedInvoiceId },
+                        onInvoiceSelected = { onAction(ReportConfigAction.SelectInvoice(it.id)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                    )
+                }
             }
 
             item {

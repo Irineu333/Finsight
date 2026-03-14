@@ -426,6 +426,7 @@ val viewModelModule = module {
         ReportConfigViewModel(
             accountRepository = get(),
             creditCardRepository = get(),
+            invoiceRepository = get(),
         )
     }
 
@@ -435,6 +436,7 @@ val viewModelModule = module {
             operationRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
+            invoiceRepository = get(),
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
             renderer = get(),

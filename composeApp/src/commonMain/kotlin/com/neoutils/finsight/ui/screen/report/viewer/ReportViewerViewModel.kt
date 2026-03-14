@@ -2,10 +2,14 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
@@ -19,6 +23,7 @@ import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,6 +34,7 @@ class ReportViewerViewModel(
     private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
+    private val invoiceRepository: IInvoiceRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val renderer: ReportDocumentRenderer,
@@ -47,6 +53,11 @@ class ReportViewerViewModel(
         )
     }
 
+    private val invoiceFlow = when (val id = route.invoiceId) {
+        null -> flowOf(null)
+        else -> invoiceRepository.observeInvoiceById(id)
+    }
+
     private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -54,13 +65,42 @@ class ReportViewerViewModel(
         operationRepository.observeAllOperations(),
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
-    ) { operations, accounts, creditCards ->
-        val stats = calculateReportStatsUseCase(
-            operations = operations,
-            perspective = perspective,
-            startDate = startDate,
-            endDate = endDate,
-        )
+        invoiceFlow,
+    ) { operations, accounts, creditCards, invoice ->
+
+        val stats = if (invoice != null) {
+            val invoiceTransactions = operations
+                .flatMap { it.transactions }
+                .filter { it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD }
+
+            val expense = invoiceTransactions
+                .filter { it.type == Transaction.Type.EXPENSE }
+                .sumOf { it.amount }
+            val advancePayment = invoiceTransactions
+                .filter { it.type == Transaction.Type.INCOME && it.isInvoicePayment }
+                .sumOf { it.amount }
+            val adjustment = invoiceTransactions
+                .filter { it.type == Transaction.Type.ADJUSTMENT }
+                .sumOf { it.amount }
+            val total = invoiceTransactions.sumOf { -it.signedImpact() }
+
+            ReportViewerUiState.Stats.Invoice(invoice, expense, advancePayment, adjustment, total)
+        } else {
+            val reportStats = calculateReportStatsUseCase(
+                operations = operations,
+                perspective = perspective,
+                startDate = startDate,
+                endDate = endDate,
+            )
+            ReportViewerUiState.Stats.Account(
+                startDate = startDate,
+                endDate = endDate,
+                initialBalance = reportStats.initialBalance,
+                income = reportStats.income,
+                expense = reportStats.expense,
+                balance = reportStats.balance,
+            )
+        }
 
         val perspectiveLabel = when (perspective) {
             is ReportPerspective.AccountPerspective -> {
@@ -76,36 +116,62 @@ class ReportViewerViewModel(
         }
 
         val categorySpending = if (route.includeSpendingByCategory) {
-            calculateReportCategorySpendingUseCase(
-                operations = operations,
-                perspective = perspective,
-                startDate = startDate,
-                endDate = endDate,
-            )
+            if (invoice != null) {
+                val invoiceTransactions = operations
+                    .flatMap { it.transactions }
+                    .filter { it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD }
+                val expenseTransactions = invoiceTransactions.filter { it.type == Transaction.Type.EXPENSE }
+                val totalExpense = expenseTransactions.sumOf { it.amount }
+                if (totalExpense > 0) {
+                    expenseTransactions
+                        .groupBy { it.category }
+                        .mapNotNull { (category, txs) ->
+                            val cat = category ?: return@mapNotNull null
+                            val amount = txs.sumOf { it.amount }
+                            CategorySpending(cat, amount, (amount / totalExpense) * 100)
+                        }
+                        .sortedByDescending { it.amount }
+                } else {
+                    emptyList()
+                }
+            } else {
+                calculateReportCategorySpendingUseCase(
+                    operations = operations,
+                    perspective = perspective,
+                    startDate = startDate,
+                    endDate = endDate,
+                )
+            }
         } else null
 
         val transactionsMap = if (route.includeTransactionList) {
-            operations
-                .filter { it.date in startDate..endDate }
-                .filter { op ->
-                    when (perspective) {
-                        is ReportPerspective.AccountPerspective -> {
-                            op.transactions.any {
-                                it.target == Transaction.Target.ACCOUNT &&
-                                        (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+            val filteredOps = if (invoice != null) {
+                operations.filter { op ->
+                    op.targetInvoice?.id == invoice.id ||
+                            op.transactions.any { tx -> tx.invoice?.id == invoice.id }
+                }
+            } else {
+                operations
+                    .filter { it.date in startDate..endDate }
+                    .filter { op ->
+                        when (perspective) {
+                            is ReportPerspective.AccountPerspective -> {
+                                op.transactions.any {
+                                    it.target == Transaction.Target.ACCOUNT &&
+                                            (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+                                }
                             }
-                        }
 
-                        is ReportPerspective.CreditCardPerspective -> {
-                            op.transactions.any {
-                                it.target == Transaction.Target.CREDIT_CARD &&
-                                        it.creditCard?.id == perspective.creditCardId
+                            is ReportPerspective.CreditCardPerspective -> {
+                                op.transactions.any {
+                                    it.target == Transaction.Target.CREDIT_CARD &&
+                                            it.creditCard?.id == perspective.creditCardId
+                                }
                             }
                         }
                     }
-                }
-                .sortedByDescending { it.date }
-                .groupBy { it.date }
+            }
+            filteredOps.sortedByDescending { it.date }.groupBy { it.date }
         } else null
 
         val perspectiveIconKey = when (perspective) {
@@ -129,12 +195,7 @@ class ReportViewerViewModel(
             perspectiveLabel = perspectiveLabel,
             perspectiveBadge = perspectiveBadge,
             perspectiveIconKey = perspectiveIconKey,
-            startDate = startDate,
-            endDate = endDate,
-            initialBalance = stats.initialBalance,
-            income = stats.income,
-            expense = stats.expense,
-            balance = stats.balance,
+            stats = stats,
             categorySpending = categorySpending,
             transactions = transactionsMap,
         )

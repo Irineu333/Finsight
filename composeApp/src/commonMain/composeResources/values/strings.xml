@@ -78,6 +78,7 @@
     <string name="report_config_accounts">Contas</string>
     <string name="report_config_no_accounts">Nenhuma conta cadastrada</string>
     <string name="report_config_credit_cards">Cartões</string>
+    <string name="report_config_invoice">Fatura</string>
 
     <!-- Report Viewer Screen -->
     <string name="report_viewer_title">Relatório</string>
@@ -87,7 +88,9 @@
     <string name="report_viewer_summary_expense">Despesas</string>
     <string name="report_viewer_summary_balance">Saldo do Período</string>
     <string name="report_viewer_summary_initial_balance">Saldo Inicial</string>
-    <string name="report_viewer_summary_invoice_total">Total da Fatura</string>
+    <string name="report_viewer_summary_invoice_total">Fatura em Aberto</string>
+    <string name="report_viewer_summary_invoice_expense">Saída</string>
+    <string name="report_viewer_summary_advance_payment">Pago</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
     <string name="report_viewer_transactions">Transações</string>
     <string name="report_viewer_action_share_html">Compartilhar HTML</string>

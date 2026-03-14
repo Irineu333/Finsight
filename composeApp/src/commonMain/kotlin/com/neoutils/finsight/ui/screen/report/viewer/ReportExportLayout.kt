@@ -25,6 +25,9 @@ data class ReportExportStrings(
     val summaryInitialBalance: String,
     val summaryIncome: String,
     val summaryExpense: String,
+    val summaryInvoiceExpense: String,
+    val summaryInvoiceTotal: String,
+    val summaryAdvancePayment: String,
     val sectionSpendingByCategory: String,
     val sectionTransactions: String,
     val operationTransfer: String,
@@ -44,30 +47,54 @@ fun ReportViewerUiState.Content.toReportLayout(
     perspectiveBadgeText: String,
 ): ReportLayout {
     val generatedAtDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val periodLabel = dateFormats.formatReportPeriod(startDate, endDate)
 
-    val summaryItems = listOf(
-        ReportSummaryItem(
-            label = strings.summaryBalance,
-            value = formatter.format(balance),
-            tone = balance.toTone(),
-        ),
-        ReportSummaryItem(
-            label = strings.summaryInitialBalance,
-            value = formatter.format(initialBalance),
-            tone = initialBalance.toTone(),
-        ),
-        ReportSummaryItem(
-            label = strings.summaryIncome,
-            value = "+${formatter.format(income)}",
-            tone = ReportTone.POSITIVE,
-        ),
-        ReportSummaryItem(
-            label = strings.summaryExpense,
-            value = "-${formatter.format(expense)}",
-            tone = ReportTone.NEGATIVE,
-        ),
-    )
+    val periodLabel = when (val s = stats) {
+        is ReportViewerUiState.Stats.Account -> dateFormats.formatReportPeriod(s.startDate, s.endDate)
+        is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(s.invoice.openingDate, s.invoice.closingDate)
+    }
+
+    val summaryItems = when (val s = stats) {
+        is ReportViewerUiState.Stats.Account -> listOf(
+            ReportSummaryItem(
+                label = strings.summaryBalance,
+                value = formatter.format(s.balance),
+                tone = s.balance.toTone(),
+            ),
+            ReportSummaryItem(
+                label = strings.summaryInitialBalance,
+                value = formatter.format(s.initialBalance),
+                tone = s.initialBalance.toTone(),
+            ),
+            ReportSummaryItem(
+                label = strings.summaryIncome,
+                value = "+${formatter.format(s.income)}",
+                tone = ReportTone.POSITIVE,
+            ),
+            ReportSummaryItem(
+                label = strings.summaryExpense,
+                value = "-${formatter.format(s.expense)}",
+                tone = ReportTone.NEGATIVE,
+            ),
+        )
+
+        is ReportViewerUiState.Stats.Invoice -> listOf(
+            ReportSummaryItem(
+                label = strings.summaryInvoiceExpense,
+                value = formatter.format(s.expense),
+                tone = ReportTone.NEGATIVE,
+            ),
+            ReportSummaryItem(
+                label = strings.summaryInvoiceTotal,
+                value = formatter.format(s.total),
+                tone = s.total.toTone(),
+            ),
+            ReportSummaryItem(
+                label = strings.summaryAdvancePayment,
+                value = formatter.format(s.advancePayment),
+                tone = ReportTone.POSITIVE,
+            ),
+        )
+    }
 
     val sections = buildList {
         if (!categorySpending.isNullOrEmpty()) {

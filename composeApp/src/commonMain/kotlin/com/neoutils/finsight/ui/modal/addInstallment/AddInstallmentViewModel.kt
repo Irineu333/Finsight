@@ -37,13 +37,9 @@ class AddInstallmentViewModel(
     private val _errorMessage = MutableSharedFlow<String>()
     val errorMessage = _errorMessage.asSharedFlow()
 
-    private val categories = kotlinx.coroutines.flow.flow {
-        emit(categoryRepository.getAllCategories())
-    }
+    private val categories = categoryRepository.observeAllCategories()
 
-    private val creditCards = kotlinx.coroutines.flow.flow {
-        emit(creditCardRepository.getAllCreditCards())
-    }
+    private val creditCards = creditCardRepository.observeAllCreditCards()
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {

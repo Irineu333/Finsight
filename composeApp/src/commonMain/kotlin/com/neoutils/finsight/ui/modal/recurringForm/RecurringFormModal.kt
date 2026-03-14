@@ -37,8 +37,11 @@ import com.neoutils.finsight.resources.recurring_form_title_label
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.CategorySelector
 import com.neoutils.finsight.ui.component.CreditCardSelector
+import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.TargetSelector
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DayInputTransformation
@@ -63,6 +66,8 @@ class RecurringFormModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val manager = LocalModalManager.current
+
         val viewModel = koinViewModel<RecurringFormViewModel> {
             parametersOf(recurring)
         }
@@ -156,6 +161,7 @@ class RecurringFormModal(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
                     onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    onEmpty = { manager.show(CreditCardFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -168,6 +174,7 @@ class RecurringFormModal(
                     else -> emptyList()
                 },
                 onCategorySelected = { selectedCategory = it },
+                onEmpty = { manager.show(CategoryFormModal()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 

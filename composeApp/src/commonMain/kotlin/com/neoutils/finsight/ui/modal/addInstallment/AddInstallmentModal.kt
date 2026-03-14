@@ -29,6 +29,8 @@ import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
@@ -122,6 +124,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     selectedCategory = selectedCategory,
                     categories = uiState.categories,
                     onCategorySelected = { selectedCategory = it },
+                    onEmpty = { modalManager.show(CategoryFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -131,6 +134,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
                     onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    onEmpty = { modalManager.show(CreditCardFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
 

@@ -13,10 +13,5 @@ data class RecurringFormUiState(
     val incomeCategories: List<Category> = emptyList(),
     val expenseCategories: List<Category> = emptyList(),
 ) {
-    val targets: List<Transaction.Target>
-        get() = if (creditCards.isEmpty()) {
-            listOf(Transaction.Target.ACCOUNT)
-        } else {
-            listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
-        }
+    val targets = listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
 }

@@ -28,9 +28,9 @@ class RecurringFormViewModel(
     private val selectedAccount = MutableStateFlow(recurring?.account)
     private val selectedCreditCard = MutableStateFlow(recurring?.creditCard)
 
-    private val categories = flow { emit(categoryRepository.getAllCategories()) }
-    private val accounts = flow { emit(accountRepository.getAllAccounts()) }
-    private val creditCards = flow { emit(creditCardRepository.getAllCreditCards()) }
+    private val categories = categoryRepository.observeAllCategories()
+    private val accounts = accountRepository.observeAllAccounts()
+    private val creditCards = creditCardRepository.observeAllCreditCards()
 
     val uiState = combine(
         selectedAccount,

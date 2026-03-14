@@ -4,6 +4,8 @@ package com.neoutils.finsight.ui.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ fun CategorySelector(
     categories: List<Category>,
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
+    onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -52,9 +55,19 @@ fun CategorySelector(
                 }
             },
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                if (categories.isEmpty() && onEmpty != null) {
+                    IconButton(onClick = onEmpty) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
             },
-            enabled = categories.isNotEmpty(),
+            enabled = categories.isNotEmpty() || onEmpty != null,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier

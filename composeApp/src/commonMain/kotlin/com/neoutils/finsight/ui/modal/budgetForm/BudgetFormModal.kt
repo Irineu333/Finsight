@@ -17,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -25,6 +27,8 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -66,7 +70,9 @@ import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
+import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
@@ -150,6 +156,7 @@ class BudgetFormModal(
                 selectedCategories = uiState.selectedCategories,
                 categories = uiState.availableCategories,
                 onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
+                onEmpty = { modalManager.show(CategoryFormModal()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -208,6 +215,7 @@ class BudgetFormModal(
                     recurrings = uiState.incomeRecurrings,
                     selected = uiState.selectedRecurring,
                     onSelected = { viewModel.onAction(BudgetFormAction.RecurringSelected(it)) },
+                    onEmpty = { modalManager.show(RecurringFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -259,6 +267,7 @@ private fun RecurringIncomeSelector(
     selected: Recurring?,
     onSelected: (Recurring) -> Unit,
     modifier: Modifier = Modifier,
+    onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -277,9 +286,19 @@ private fun RecurringIncomeSelector(
             readOnly = true,
             label = { Text(text = stringResource(Res.string.budget_form_recurring_income_label)) },
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                if (recurrings.isEmpty() && onEmpty != null) {
+                    IconButton(onClick = onEmpty) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
             },
-            enabled = recurrings.isNotEmpty(),
+            enabled = recurrings.isNotEmpty() || onEmpty != null,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier

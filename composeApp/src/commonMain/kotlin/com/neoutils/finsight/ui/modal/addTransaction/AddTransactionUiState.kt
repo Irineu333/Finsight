@@ -15,11 +15,7 @@ data class AddTransactionUiState(
     val accounts: List<Account> = emptyList(),
     val selectedAccount: Account? = null,
 ) {
-    val targets = if (creditCards.isEmpty()) {
-        listOf(Transaction.Target.ACCOUNT)
-    } else {
-        listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
-    }
+    val targets = listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
 
     val isInvoiceBlocked = invoiceSelection?.isBlocked == true
 }

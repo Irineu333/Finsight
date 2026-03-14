@@ -37,10 +37,15 @@ class CalculateBudgetProgressUseCase {
                 .filter { tx -> tx.type.isExpense && budget.categories.any { it.id == tx.category?.id } }
                 .filter { it.date.yearMonth == today.yearMonth }
                 .sumOf { it.amount }
-            val recurringLabel = if (budget.limitType == LimitType.PERCENTAGE) {
-                recurringList.find { it.id == budget.recurringId }?.label
+            val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
+                recurringList.find { it.id == budget.recurringId }
             } else null
-            BudgetProgress(budget = budget.copy(amount = limit), spent = spent, recurringLabel = recurringLabel)
+            BudgetProgress(
+                budget = budget.copy(amount = limit),
+                spent = spent,
+                recurringLabel = recurring?.label,
+                recurring = recurring,
+            )
         }
     }
 }

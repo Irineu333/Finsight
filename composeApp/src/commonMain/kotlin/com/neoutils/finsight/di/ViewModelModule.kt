@@ -437,8 +437,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
-            shareReport = get(),
-            printReport = get(),
+            renderer = get(),
         )
     }
 

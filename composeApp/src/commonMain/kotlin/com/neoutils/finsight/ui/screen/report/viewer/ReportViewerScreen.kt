@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.report.ReportPrintService
+import com.neoutils.finsight.report.ReportShareService
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -30,6 +34,7 @@ import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -40,8 +45,26 @@ fun ReportViewerScreen(
     viewModel: ReportViewerViewModel = koinViewModel { parametersOf(route) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     val dateFormats = LocalDateFormats.current
     val formatter = LocalCurrencyFormatter.current
+    val platformContext = LocalPlatformContext.current
+
+    val printService: ReportPrintService = koinInject()
+    val shareService: ReportShareService = koinInject()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ReportViewerEvent.Print -> {
+                    printService.print(event.document, platformContext)
+                }
+                is ReportViewerEvent.Share -> {
+                    shareService.share(event.document, platformContext)
+                }
+            }
+        }
+    }
 
     ReportViewerContent(
         uiState = uiState,

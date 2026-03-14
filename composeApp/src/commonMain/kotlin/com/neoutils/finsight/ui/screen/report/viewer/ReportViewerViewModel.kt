@@ -9,16 +9,17 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.report.service.PrintReportUseCase
-import com.neoutils.finsight.report.service.ShareReportUseCase
+import com.neoutils.finsight.report.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
 import com.neoutils.finsight.resources.report_viewer_badge_credit_card
-import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
+import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -30,8 +31,7 @@ class ReportViewerViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
-    private val shareReport: ShareReportUseCase,
-    private val printReport: PrintReportUseCase,
+    private val renderer: ReportDocumentRenderer,
 ) : ViewModel() {
 
     private val startDate = LocalDate.parse(route.startDate)
@@ -41,10 +41,14 @@ class ReportViewerViewModel(
         PerspectiveTab.CREDIT_CARD -> ReportPerspective.CreditCardPerspective(
             creditCardId = requireNotNull(route.creditCardId),
         )
+
         PerspectiveTab.ACCOUNT -> ReportPerspective.AccountPerspective(
             accountIds = route.accountIds,
         )
     }
+
+    private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     val uiState = combine(
         operationRepository.observeAllOperations(),
@@ -65,6 +69,7 @@ class ReportViewerViewModel(
                     .joinToString(", ") { it.name }
                     .takeIf { it.isNotBlank() } ?: accounts.joinToString(", ") { it.name }
             }
+
             is ReportPerspective.CreditCardPerspective -> {
                 creditCards.find { it.id == perspective.creditCardId }?.name ?: ""
             }
@@ -87,13 +92,14 @@ class ReportViewerViewModel(
                         is ReportPerspective.AccountPerspective -> {
                             op.transactions.any {
                                 it.target == Transaction.Target.ACCOUNT &&
-                                    (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+                                        (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
                             }
                         }
+
                         is ReportPerspective.CreditCardPerspective -> {
                             op.transactions.any {
                                 it.target == Transaction.Target.CREDIT_CARD &&
-                                    it.creditCard?.id == perspective.creditCardId
+                                        it.creditCard?.id == perspective.creditCardId
                             }
                         }
                     }
@@ -103,11 +109,13 @@ class ReportViewerViewModel(
         } else null
 
         val perspectiveIconKey = when (perspective) {
-            is ReportPerspective.CreditCardPerspective ->
+            is ReportPerspective.CreditCardPerspective -> {
                 creditCards.find { it.id == perspective.creditCardId }?.iconKey ?: "card"
+            }
+
             is ReportPerspective.AccountPerspective -> {
                 val selected = if (perspective.accountIds.isEmpty()) accounts
-                               else accounts.filter { it.id in perspective.accountIds }
+                else accounts.filter { it.id in perspective.accountIds }
                 if (selected.size == 1) selected.first().iconKey else "wallet"
             }
         }
@@ -138,8 +146,17 @@ class ReportViewerViewModel(
 
     fun onAction(action: ReportViewerAction) = viewModelScope.launch {
         when (action) {
-            is ReportViewerAction.ShareAsHtml -> shareReport(action.layout)
-            is ReportViewerAction.Print -> printReport(action.layout)
+            is ReportViewerAction.ShareAsHtml -> {
+                _events.send(
+                    ReportViewerEvent.Share(renderer.render(action.layout))
+                )
+            }
+
+            is ReportViewerAction.Print -> {
+                _events.send(
+                    ReportViewerEvent.Print(renderer.render(action.layout))
+                )
+            }
         }
     }
 }

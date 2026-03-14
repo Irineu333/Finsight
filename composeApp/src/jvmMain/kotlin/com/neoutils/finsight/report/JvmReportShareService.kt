@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.model.ReportDocument
+import com.neoutils.finsight.extension.PlatformContext
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
@@ -13,7 +14,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 class JvmReportShareService : ReportShareService {
 
-    override suspend fun share(document: ReportDocument): Either<ReportOutputError, Unit> {
+    override suspend fun share(document: ReportDocument, context: PlatformContext): Either<ReportOutputError, Unit> {
         if (document.format != ReportDocument.Format.HTML) {
             return ReportOutputError.UNSUPPORTED_FORMAT.left()
         }

@@ -6,13 +6,13 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
-import com.neoutils.finsight.report.ActivityHolder
+import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.theme.FinsightTheme
-import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-    private val activityHolder: ActivityHolder by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
@@ -24,20 +24,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            FinsightTheme {
-                App()
+            CompositionLocalProvider(LocalPlatformContext provides PlatformContext(this)) {
+                FinsightTheme {
+                    App()
+                }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        activityHolder.set(this)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        activityHolder.clear()
     }
 }
 

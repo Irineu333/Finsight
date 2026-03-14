@@ -7,6 +7,6 @@ import com.neoutils.finsight.report.ReportShareService
 import org.koin.dsl.module
 
 actual val reportPlatformModule = module {
-    single<ReportShareService> { JvmReportShareService() }
-    single<ReportPrintService> { JvmReportPrintService() }
+    factory<ReportShareService> { JvmReportShareService() }
+    factory<ReportPrintService> { JvmReportPrintService() }
 }

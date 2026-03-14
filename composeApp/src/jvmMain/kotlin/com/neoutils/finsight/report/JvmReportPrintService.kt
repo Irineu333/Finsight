@@ -3,6 +3,7 @@ package com.neoutils.finsight.report
 import arrow.core.Either
 import arrow.core.left
 import com.neoutils.finsight.domain.model.ReportDocument
+import com.neoutils.finsight.extension.PlatformContext
 import java.awt.Desktop
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,7 @@ private const val AUTO_PRINT_SCRIPT = "<script>window.onload=()=>window.print()<
 
 class JvmReportPrintService : ReportPrintService {
 
-    override suspend fun print(document: ReportDocument): Either<ReportOutputError, Unit> = withContext(Dispatchers.IO) {
+    override suspend fun print(document: ReportDocument, context: PlatformContext): Either<ReportOutputError, Unit> = withContext(Dispatchers.IO) {
         if (document.format != ReportDocument.Format.HTML) {
             return@withContext ReportOutputError.UNSUPPORTED_FORMAT.left()
         }

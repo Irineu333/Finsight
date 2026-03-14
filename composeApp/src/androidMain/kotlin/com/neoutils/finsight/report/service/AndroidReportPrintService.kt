@@ -9,31 +9,29 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.domain.model.ReportDocument
-import com.neoutils.finsight.report.ActivityHolder
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.report.ReportOutputError
 import com.neoutils.finsight.report.ReportPrintService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-class AndroidReportPrintService(
-    private val activityHolder: ActivityHolder,
-) : ReportPrintService {
+class AndroidReportPrintService : ReportPrintService {
 
-    override suspend fun print(document: ReportDocument): Either<ReportOutputError, Unit> {
+    override suspend fun print(
+        document: ReportDocument,
+        context: PlatformContext
+    ): Either<ReportOutputError, Unit> {
         if (document.format != ReportDocument.Format.HTML) {
             return ReportOutputError.UNSUPPORTED_FORMAT.left()
         }
 
-        val activity = activityHolder.activity
-            ?: return ReportOutputError.UNKNOWN.left()
-
         return suspendCancellableCoroutine { continuation ->
-            activity.runOnUiThread {
+            context.activity.runOnUiThread {
                 Either.catch {
-                    val webView = WebView(activity)
+                    val webView = WebView(context.activity)
                     webView.webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView, url: String) {
-                            val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
+                            val printManager = context.activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
                             val adapter = view.createPrintDocumentAdapter(document.fileNameWithoutExtension)
                             printManager.print(
                                 document.fileNameWithoutExtension,

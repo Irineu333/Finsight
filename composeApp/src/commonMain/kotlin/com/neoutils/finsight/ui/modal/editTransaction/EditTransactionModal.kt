@@ -31,6 +31,8 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
@@ -152,6 +154,7 @@ class EditTransactionModal(
                         creditCards = uiState.creditCards,
                         creditCard = uiState.selectedCreditCard,
                         onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                        onEmpty = { manager.show(CreditCardFormModal()) },
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
@@ -197,6 +200,7 @@ class EditTransactionModal(
                         else -> emptyList()
                     },
                     onCategorySelected = { selectedCategory = it },
+                    onEmpty = { manager.show(CategoryFormModal()) },
                     modifier = Modifier.fillMaxWidth()
                 )
 

@@ -45,17 +45,11 @@ class EditTransactionViewModel(
         }
     }
 
-    private val categories = flow {
-        emit(categoryRepository.getAllCategories())
-    }
+    private val categories = categoryRepository.observeAllCategories()
 
-    private val creditCards = flow {
-        emit(creditCardRepository.getAllCreditCards())
-    }
+    private val creditCards = creditCardRepository.observeAllCreditCards()
 
-    private val accounts = flow {
-        emit(accountRepository.getAllAccounts())
-    }
+    private val accounts = accountRepository.observeAllAccounts()
 
     val uiState = combine(
         categories,

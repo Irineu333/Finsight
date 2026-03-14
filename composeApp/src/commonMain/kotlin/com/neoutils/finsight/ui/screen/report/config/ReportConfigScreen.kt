@@ -17,13 +17,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
-import com.neoutils.finsight.ui.component.InvoiceSelector
 import com.neoutils.finsight.ui.screen.home.AppRoute
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -233,14 +241,19 @@ private fun ReportConfigContent(
                     )
                 }
                 item {
-                    InvoiceSelector(
-                        invoices = uiState.invoices,
-                        invoice = uiState.invoices.find { it.id == uiState.selectedInvoiceId },
-                        onInvoiceSelected = { onAction(ReportConfigAction.SelectInvoice(it.id)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        items(uiState.invoices, key = { it.id }) { invoice ->
+                            InvoiceSelectionCard(
+                                invoice = invoice,
+                                selected = invoice.id in uiState.selectedInvoiceIds,
+                                onClick = { onAction(ReportConfigAction.ToggleInvoice(invoice.id)) },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -262,6 +275,64 @@ private fun ReportConfigContent(
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun InvoiceSelectionCard(
+    invoice: Invoice,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val dateFormats = LocalDateFormats.current
+
+    Card(
+        modifier = modifier
+            .width(156.dp)
+            .height(88.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
+        shape = RoundedCornerShape(18.dp),
+        border = if (selected) BorderStroke(2.dp, colorScheme.primary) else null,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Receipt,
+                    contentDescription = null,
+                    tint = invoice.status.color,
+                    modifier = Modifier.size(20.dp),
+                )
+                Surface(
+                    color = invoice.status.color.copy(alpha = 0.15f),
+                    contentColor = invoice.status.color,
+                    shape = RoundedCornerShape(999.dp),
+                ) {
+                    Text(
+                        text = stringResource(invoice.status.toUiText()),
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                    )
+                }
+            }
+            Text(
+                text = dateFormats.yearMonth.format(invoice.dueMonth),
+                style = MaterialTheme.typography.labelMedium,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.BottomStart),
+            )
         }
     }
 }

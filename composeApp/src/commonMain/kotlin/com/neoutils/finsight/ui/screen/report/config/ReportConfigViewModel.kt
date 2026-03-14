@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.report.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -42,7 +43,7 @@ class ReportConfigViewModel(
         config.copy(
             accounts = accounts,
             creditCards = creditCards,
-            invoices = invoices,
+            invoices = invoices.reversed(),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -72,8 +73,12 @@ class ReportConfigViewModel(
                 config.update { it.copy(selectedCreditCardId = action.creditCardId) }
             }
 
-            is ReportConfigAction.SelectInvoice -> {
-                config.update { it.copy(selectedInvoiceId = action.invoiceId) }
+            is ReportConfigAction.ToggleInvoice -> {
+                config.update { state ->
+                    val ids = state.selectedInvoiceIds.toMutableSet()
+                    if (action.invoiceId in ids) ids.remove(action.invoiceId) else ids.add(action.invoiceId)
+                    state.copy(selectedInvoiceIds = ids)
+                }
             }
 
             is ReportConfigAction.SelectStartDate -> {
@@ -104,9 +109,12 @@ class ReportConfigViewModel(
 
     private fun autoSelectInvoice() = viewModelScope.launch {
         invoicesFlow.collectLatest { invoices ->
-            val current = config.value.selectedInvoiceId
-            if (current == null || invoices.none { it.id == current }) {
-                config.update { it.copy(selectedInvoiceId = invoices.firstOrNull()?.id) }
+            val invoiceIds = invoices.map { it.id }.toSet()
+            val current = config.value.selectedInvoiceIds
+            if (current.none { it in invoiceIds }) {
+                val toSelect = invoices.firstOrNull { it.status == Invoice.Status.OPEN }
+                    ?: invoices.firstOrNull()
+                config.update { it.copy(selectedInvoiceIds = setOfNotNull(toSelect?.id)) }
             }
         }
     }
@@ -124,13 +132,14 @@ class ReportConfigViewModel(
             )
 
             PerspectiveTab.CREDIT_CARD -> {
-                val invoice = state.invoices.find { it.id == state.selectedInvoiceId } ?: return null
+                val selected = state.invoices.filter { it.id in state.selectedInvoiceIds }
+                if (selected.isEmpty()) return null
                 AppRoute.ReportViewer(
                     perspectiveType = PerspectiveTab.CREDIT_CARD,
                     creditCardId = state.selectedCreditCardId,
-                    invoiceId = state.selectedInvoiceId,
-                    startDate = invoice.openingDate.toString(),
-                    endDate = invoice.closingDate.toString(),
+                    invoiceIds = selected.map { it.id },
+                    startDate = selected.minOf { it.openingDate }.toString(),
+                    endDate = selected.maxOf { it.closingDate }.toString(),
                     includeSpendingByCategory = state.includeSpendingByCategory,
                     includeTransactionList = state.includeTransactionList,
                 )

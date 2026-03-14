@@ -3,7 +3,6 @@ package com.neoutils.finsight.ui.screen.report.viewer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.signedImpact
@@ -24,6 +23,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -53,9 +53,11 @@ class ReportViewerViewModel(
         )
     }
 
-    private val invoiceFlow = when (val id = route.invoiceId) {
-        null -> flowOf(null)
-        else -> invoiceRepository.observeInvoiceById(id)
+    private val invoicesFlow = when {
+        route.invoiceIds.isEmpty() -> flowOf(emptyList())
+        else -> invoiceRepository.observeInvoicesByCreditCard(
+            requireNotNull(route.creditCardId)
+        ).map { invoices -> invoices.filter { it.id in route.invoiceIds } }
     }
 
     private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
@@ -65,13 +67,14 @@ class ReportViewerViewModel(
         operationRepository.observeAllOperations(),
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
-        invoiceFlow,
-    ) { operations, accounts, creditCards, invoice ->
+        invoicesFlow,
+    ) { operations, accounts, creditCards, invoices ->
 
-        val stats = if (invoice != null) {
+        val stats = if (invoices.isNotEmpty()) {
+            val invoiceIds = invoices.map { it.id }.toSet()
             val invoiceTransactions = operations
                 .flatMap { it.transactions }
-                .filter { it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD }
+                .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
 
             val expense = invoiceTransactions
                 .filter { it.type == Transaction.Type.EXPENSE }
@@ -84,7 +87,14 @@ class ReportViewerViewModel(
                 .sumOf { it.amount }
             val total = invoiceTransactions.sumOf { -it.signedImpact() }
 
-            ReportViewerUiState.Stats.Invoice(invoice, expense, advancePayment, adjustment, total)
+            ReportViewerUiState.Stats.Invoice(
+                openingDate = invoices.minOf { it.openingDate },
+                closingDate = invoices.maxOf { it.closingDate },
+                expense = expense,
+                advancePayment = advancePayment,
+                adjustment = adjustment,
+                total = total,
+            )
         } else {
             val reportStats = calculateReportStatsUseCase(
                 operations = operations,
@@ -116,10 +126,11 @@ class ReportViewerViewModel(
         }
 
         val categorySpending = if (route.includeSpendingByCategory) {
-            if (invoice != null) {
+            if (invoices.isNotEmpty()) {
+                val invoiceIds = invoices.map { it.id }.toSet()
                 val invoiceTransactions = operations
                     .flatMap { it.transactions }
-                    .filter { it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD }
+                    .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
                 val expenseTransactions = invoiceTransactions.filter { it.type == Transaction.Type.EXPENSE }
                 val totalExpense = expenseTransactions.sumOf { it.amount }
                 if (totalExpense > 0) {
@@ -145,10 +156,11 @@ class ReportViewerViewModel(
         } else null
 
         val transactionsMap = if (route.includeTransactionList) {
-            val filteredOps = if (invoice != null) {
+            val filteredOps = if (invoices.isNotEmpty()) {
+                val invoiceIds = invoices.map { it.id }.toSet()
                 operations.filter { op ->
-                    op.targetInvoice?.id == invoice.id ||
-                            op.transactions.any { tx -> tx.invoice?.id == invoice.id }
+                    op.targetInvoice?.id in invoiceIds ||
+                            op.transactions.any { tx -> tx.invoice?.id in invoiceIds }
                 }
             } else {
                 operations

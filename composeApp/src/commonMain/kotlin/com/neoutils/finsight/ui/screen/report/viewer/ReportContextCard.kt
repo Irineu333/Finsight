@@ -44,7 +44,7 @@ internal fun ReportContextCard(
     val dateRangeText = remember(stats) {
         when (stats) {
             is ReportViewerUiState.Stats.Account -> dateFormats.formatReportPeriod(stats.startDate, stats.endDate)
-            is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(stats.invoice.openingDate, stats.invoice.closingDate)
+            is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(stats.openingDate, stats.closingDate)
         }
     }
 

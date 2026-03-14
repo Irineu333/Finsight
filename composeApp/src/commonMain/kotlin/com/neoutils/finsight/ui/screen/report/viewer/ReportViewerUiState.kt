@@ -1,7 +1,6 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
@@ -20,7 +19,8 @@ sealed class ReportViewerUiState {
         ) : Stats()
 
         data class Invoice(
-            val invoice: com.neoutils.finsight.domain.model.Invoice,
+            val openingDate: LocalDate,
+            val closingDate: LocalDate,
             val expense: Double,
             val advancePayment: Double,
             val adjustment: Double,

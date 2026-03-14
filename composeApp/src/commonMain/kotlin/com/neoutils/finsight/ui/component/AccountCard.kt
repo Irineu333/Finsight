@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.component
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,11 +66,7 @@ fun AccountCard(
     val isDetail = variant is AccountCardVariant.Detail
     val isSelection = variant is AccountCardVariant.Selection
 
-    val containerColor = if (isSelection && (variant as AccountCardVariant.Selection).selected) {
-        colorScheme.primaryContainer
-    } else {
-        colorScheme.surfaceContainer
-    }
+    val selected = isSelection && (variant as AccountCardVariant.Selection).selected
 
     val onClick = when (variant) {
         is AccountCardVariant.Dashboard -> variant.onClick
@@ -90,8 +87,9 @@ fun AccountCard(
                 if (onClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable { onClick() }
                 else Modifier
             ),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         shape = RoundedCornerShape(18.dp),
+        border = if (selected) BorderStroke(2.dp, colorScheme.primary) else null,
     ) {
         if (isDetail) {
             DetailContent(
@@ -239,8 +237,6 @@ private fun CompactContent(
     variant: AccountCardVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val selected = (variant as? AccountCardVariant.Selection)?.selected == true
-    val contentColor = if (selected) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant
 
     Box(
         modifier = Modifier
@@ -255,15 +251,14 @@ private fun CompactContent(
             Icon(
                 imageVector = AppIcon.fromKey(account.iconKey).icon,
                 contentDescription = null,
-                tint = contentColor,
+                tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
 
             if (account.isDefault) {
-                val badgeColor = if (selected) colorScheme.onPrimaryContainer else colorScheme.primary
                 Surface(
-                    color = badgeColor.copy(alpha = 0.12f),
-                    contentColor = badgeColor,
+                    color = colorScheme.primary.copy(alpha = 0.12f),
+                    contentColor = colorScheme.primary,
                     shape = RoundedCornerShape(999.dp),
                 ) {
                     Text(
@@ -282,7 +277,7 @@ private fun CompactContent(
             Text(
                 text = account.name,
                 style = MaterialTheme.typography.labelMedium,
-                color = contentColor,
+                color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

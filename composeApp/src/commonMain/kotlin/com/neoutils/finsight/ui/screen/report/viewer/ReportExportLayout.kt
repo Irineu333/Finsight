@@ -50,7 +50,7 @@ fun ReportViewerUiState.Content.toReportLayout(
 
     val periodLabel = when (val s = stats) {
         is ReportViewerUiState.Stats.Account -> dateFormats.formatReportPeriod(s.startDate, s.endDate)
-        is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(s.invoice.openingDate, s.invoice.closingDate)
+        is ReportViewerUiState.Stats.Invoice -> dateFormats.formatReportPeriod(s.openingDate, s.closingDate)
     }
 
     val summaryItems = when (val s = stats) {

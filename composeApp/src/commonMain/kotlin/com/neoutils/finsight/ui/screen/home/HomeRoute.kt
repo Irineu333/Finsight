@@ -49,7 +49,7 @@ sealed class AppRoute {
         val perspectiveType: PerspectiveTab,
         val accountIds: List<Long> = emptyList(),
         val creditCardId: Long? = null,
-        val invoiceId: Long? = null,
+        val invoiceIds: List<Long> = emptyList(),
         val startDate: String,
         val endDate: String,
         val includeSpendingByCategory: Boolean,

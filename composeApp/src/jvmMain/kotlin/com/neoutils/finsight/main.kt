@@ -29,7 +29,7 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "Finsight",
     ) {
-        CompositionLocalProvider(LocalPlatformContext provides PlatformContext()) {
+        CompositionLocalProvider(LocalPlatformContext provides PlatformContext(this)) {
             App()
         }
     }

@@ -1,3 +1,5 @@
 package com.neoutils.finsight.extension
 
-actual class PlatformContext
+import androidx.compose.ui.window.WindowScope
+
+actual class PlatformContext(val windowScope: WindowScope)

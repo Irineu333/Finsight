@@ -25,9 +25,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             CompositionLocalProvider(LocalPlatformContext provides PlatformContext(this)) {
-                FinsightTheme {
-                    App()
-                }
+                App()
             }
         }
     }

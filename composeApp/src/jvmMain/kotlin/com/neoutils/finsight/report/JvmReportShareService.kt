@@ -30,7 +30,7 @@ class JvmReportShareService : ReportShareService {
                     )
                 }
 
-                val result = chooser.showSaveDialog(null)
+                val result = chooser.showSaveDialog(context.windowScope.window)
 
                 if (result == JFileChooser.APPROVE_OPTION) {
                     Either.catch { chooser.selectedFile.writeBytes(document.content) }

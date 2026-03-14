@@ -2,6 +2,14 @@
 
 package com.neoutils.finsight.ui.screen.report.viewer
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -137,25 +145,32 @@ private fun ReportViewerContent(
                     }
                 },
                 actions = {
-                    if (uiState is ReportViewerUiState.Content) {
-                        val badgeText = stringUiText(uiState.perspectiveBadge)
+                    val contentState = uiState as? ReportViewerUiState.Content
+                    val badgeText = if (contentState != null) stringUiText(contentState.perspectiveBadge) else ""
 
-                        IconButton(
-                            onClick = { onShareHtml(uiState, exportStrings, badgeText) },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = stringResource(Res.string.report_viewer_action_share_html),
-                            )
-                        }
+                    AnimatedVisibility(
+                        visible = contentState != null,
+                        enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.85f, animationSpec = tween(200)),
+                        exit = fadeOut(tween(150)) + scaleOut(targetScale = 0.85f, animationSpec = tween(150)),
+                    ) {
+                        Row {
+                            IconButton(
+                                onClick = { contentState?.let { onShareHtml(it, exportStrings, badgeText) } },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = stringResource(Res.string.report_viewer_action_share_html),
+                                )
+                            }
 
-                        IconButton(
-                            onClick = { onPrint(uiState, exportStrings, badgeText) },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Print,
-                                contentDescription = stringResource(Res.string.report_viewer_action_print),
-                            )
+                            IconButton(
+                                onClick = { contentState?.let { onPrint(it, exportStrings, badgeText) } },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Print,
+                                    contentDescription = stringResource(Res.string.report_viewer_action_print),
+                                )
+                            }
                         }
                     }
                 },
@@ -163,82 +178,92 @@ private fun ReportViewerContent(
         },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { paddingValues ->
-        when (uiState) {
-            is ReportViewerUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is ReportViewerUiState.Content -> {
-                LazyColumn(
-                    contentPadding = PaddingValues(
-                        top = paddingValues.calculateTopPadding() + 8.dp,
-                        bottom = paddingValues.calculateBottomPadding() + 16.dp,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    item {
-                        ReportContextCard(
-                            perspectiveLabel = uiState.perspectiveLabel,
-                            perspectiveBadge = uiState.perspectiveBadge,
-                            perspectiveIconKey = uiState.perspectiveIconKey,
-                            stats = uiState.stats,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                        )
+        AnimatedContent(
+            targetState = uiState,
+            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+            contentKey = { it::class },
+            label = "viewer_state",
+            modifier = Modifier.fillMaxSize(),
+        ) { state ->
+            when (state) {
+                is ReportViewerUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(paddingValues),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
+                }
 
-                    if (!uiState.categorySpending.isNullOrEmpty()) {
+                is ReportViewerUiState.Content -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(
+                            top = paddingValues.calculateTopPadding() + 8.dp,
+                            bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
                         item {
-                            CategorySpendingCard(
-                                categorySpending = uiState.categorySpending,
-                                onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                            ReportContextCard(
+                                perspectiveLabel = state.perspectiveLabel,
+                                perspectiveBadge = state.perspectiveBadge,
+                                perspectiveIconKey = state.perspectiveIconKey,
+                                stats = state.stats,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp),
                             )
                         }
-                    }
 
-                    if (!uiState.transactions.isNullOrEmpty()) {
-                        item {
-                            Text(
-                                text = stringResource(Res.string.report_viewer_transactions),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 16.dp).padding(top = 8.dp),
-                            )
+                        if (!state.categorySpending.isNullOrEmpty()) {
+                            item {
+                                CategorySpendingCard(
+                                    categorySpending = state.categorySpending,
+                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                )
+                            }
                         }
 
-                        uiState.transactions.forEach { (date, operations) ->
-                            item(key = "date_$date") {
+                        if (!state.transactions.isNullOrEmpty()) {
+                            item {
                                 Text(
-                                    text = dateFormats.formatRelativeDate(date),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = colorScheme.onSurfaceVariant,
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(top = 4.dp),
+                                    text = stringResource(Res.string.report_viewer_transactions),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(horizontal = 16.dp).padding(top = 8.dp),
                                 )
                             }
 
-                            items(operations, key = { "op_${it.id}" }) { operation ->
-                                OperationCard(
-                                    operation = operation,
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    onClick = {
-                                        when {
-                                            operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
-                                            else -> modalManager.show(ViewOperationModal(operation))
-                                        }
-                                    },
-                                )
+                            state.transactions.forEach { (date, operations) ->
+                                item(key = "date_$date") {
+                                    Text(
+                                        text = dateFormats.formatRelativeDate(date),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(top = 4.dp),
+                                    )
+                                }
+
+                                items(operations, key = { "op_${it.id}" }) { operation ->
+                                    OperationCard(
+                                        operation = operation,
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .padding(horizontal = 16.dp),
+                                        onClick = {
+                                            when {
+                                                operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
+                                                else -> modalManager.show(ViewOperationModal(operation))
+                                            }
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

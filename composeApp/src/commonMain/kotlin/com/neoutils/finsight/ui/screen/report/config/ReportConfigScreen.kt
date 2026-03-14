@@ -17,9 +17,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -65,6 +68,15 @@ private fun ReportConfigContent(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
+    val segmentedButtonColors = SegmentedButtonDefaults.colors(
+        activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
+        activeContentColor = colorScheme.primary,
+        activeBorderColor = colorScheme.primary,
+        inactiveContainerColor = colorScheme.surfaceContainer,
+        inactiveContentColor = colorScheme.onSurfaceVariant,
+        inactiveBorderColor = colorScheme.outline,
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -100,14 +112,6 @@ private fun ReportConfigContent(
         ) {
             if (uiState.creditCards.isNotEmpty()) {
                 item {
-                    val segmentedButtonColors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
-                        activeContentColor = colorScheme.primary,
-                        activeBorderColor = colorScheme.primary,
-                        inactiveContainerColor = colorScheme.surfaceContainer,
-                        inactiveContentColor = colorScheme.onSurfaceVariant,
-                        inactiveBorderColor = colorScheme.outline,
-                    )
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                         SegmentedButton(
                             selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
@@ -163,6 +167,7 @@ private fun ReportConfigContent(
                                         selected = account.id in uiState.selectedAccountIds,
                                         onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
                                     ),
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -251,6 +256,7 @@ private fun ReportConfigContent(
                                 invoice = invoice,
                                 selected = invoice.id in uiState.selectedInvoiceIds,
                                 onClick = { onAction(ReportConfigAction.ToggleInvoice(invoice.id)) },
+                                modifier = Modifier.animateItem(),
                             )
                         }
                     }
@@ -289,6 +295,12 @@ private fun InvoiceSelectionCard(
     val colorScheme = MaterialTheme.colorScheme
     val dateFormats = LocalDateFormats.current
 
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) colorScheme.primary else Color.Transparent,
+        animationSpec = tween(durationMillis = 200),
+        label = "invoice_border",
+    )
+
     Card(
         modifier = modifier
             .width(156.dp)
@@ -297,7 +309,7 @@ private fun InvoiceSelectionCard(
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         shape = RoundedCornerShape(18.dp),
-        border = if (selected) BorderStroke(2.dp, colorScheme.primary) else null,
+        border = BorderStroke(2.dp, borderColor),
     ) {
         Box(
             modifier = Modifier

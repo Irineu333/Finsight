@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.budgetForm
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -202,7 +203,7 @@ class BudgetFormModal(
                 )
             }
 
-            if (uiState.limitType == LimitType.PERCENTAGE) {
+            AnimatedVisibility(visible = uiState.limitType == LimitType.PERCENTAGE) {
                 RecurringIncomeSelector(
                     recurrings = uiState.incomeRecurrings,
                     selected = uiState.selectedRecurring,

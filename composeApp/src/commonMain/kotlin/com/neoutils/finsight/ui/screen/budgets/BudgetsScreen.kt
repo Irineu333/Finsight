@@ -237,11 +237,17 @@ private fun BudgetProgressItem(
                         color = colorScheme.onSurface,
                     )
                     val categoryCount = progress.budget.categories.size
+                    val categoryLabel = if (categoryCount == 1) {
+                        stringResource(Res.string.budgets_category_singular)
+                    } else {
+                        stringResource(Res.string.budgets_category_plural, categoryCount)
+                    }
                     Text(
-                        text = if (categoryCount == 1) stringResource(Res.string.budgets_category_singular) else stringResource(
-                            Res.string.budgets_category_plural,
-                            categoryCount
-                        ),
+                        text = if (progress.recurringLabel != null) {
+                            "$categoryLabel, ${progress.recurringLabel}"
+                        } else {
+                            categoryLabel
+                        },
                         fontSize = 12.sp,
                         color = colorScheme.onSurfaceVariant,
                     )

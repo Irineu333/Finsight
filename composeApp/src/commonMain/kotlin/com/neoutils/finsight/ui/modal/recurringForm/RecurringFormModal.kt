@@ -95,6 +95,12 @@ class RecurringFormModal(
             selectedCategory = selectedCategory?.takeIf { it.type.isAccept(type) }
         }
 
+        LaunchedEffect(target, uiState.creditCards) {
+            if (target.isCreditCard && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
+                viewModel.selectCreditCard(uiState.creditCards.first())
+            }
+        }
+
         val form by remember {
             derivedStateOf {
                 RecurringForm.from(

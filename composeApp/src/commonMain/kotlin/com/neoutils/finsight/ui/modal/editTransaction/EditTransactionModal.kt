@@ -78,6 +78,12 @@ class EditTransactionModal(
             }
         }
 
+        LaunchedEffect(target, uiState.creditCards) {
+            if (target == Transaction.Target.CREDIT_CARD && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
+                viewModel.selectCreditCard(uiState.creditCards.first())
+            }
+        }
+
         val form by remember {
             derivedStateOf {
                 TransactionForm.from(

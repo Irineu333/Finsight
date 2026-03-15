@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.viewRecurring
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -9,11 +10,13 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,7 +41,9 @@ import com.neoutils.finsight.resources.view_recurring_stop
 import com.neoutils.finsight.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
@@ -56,6 +61,7 @@ class ViewRecurringModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
+        val navigator = LocalNavigator.current
         val formatter = LocalCurrencyFormatter.current
         val typeColor = if (recurring.type.isIncome) Income else Expense
 
@@ -146,20 +152,28 @@ class ViewRecurringModal(
                     },
                     valueColor = if (recurring.isActive) Income else Warning,
                 )
-                recurring.account?.let {
+                recurring.account?.let { account ->
                     Spacer(modifier = Modifier.height(8.dp))
 
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_account_label),
-                        value = it.name,
+                        value = account.name,
+                        onClick = {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.Accounts(account.id))
+                        }
                     )
                 }
-                recurring.creditCard?.let {
+                recurring.creditCard?.let { creditCard ->
                     Spacer(modifier = Modifier.height(8.dp))
 
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_credit_card_label),
-                        value = it.name,
+                        value = creditCard.name,
+                        onClick = {
+                            manager.dismissAll()
+                            navigator.navigate(NavigationAction.CreditCards(creditCard.id))
+                        }
                     )
                 }
                 recurring.category?.let {
@@ -283,23 +297,39 @@ class ViewRecurringModal(
     private fun DetailRow(
         label: String,
         value: String,
-        valueColor: androidx.compose.ui.graphics.Color = colorScheme.onSurface,
+        valueColor: Color = colorScheme.onSurface,
+        onClick: (() -> Unit)? = null,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = label,
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = value,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = valueColor,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+            ) {
+                if (onClick != null) {
+                    Icon(
+                        imageVector = Icons.Default.OpenInNew,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+                Text(
+                    text = value,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = valueColor,
+                )
+            }
         }
     }
 }

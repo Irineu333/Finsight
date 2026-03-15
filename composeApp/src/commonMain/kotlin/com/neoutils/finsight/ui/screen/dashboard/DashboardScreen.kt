@@ -186,6 +186,28 @@ private fun DashboardContent(
                     )
                 }
 
+                if (uiState.balance.hasPending) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (uiState.balance.pendingIncome > 0.0) {
+                            BalanceCard(
+                                balance = uiState.balance.pendingIncome,
+                                modifier = Modifier.weight(1f),
+                                config = BalanceCardConfig.PendingIncome,
+                            )
+                        }
+
+                        if (uiState.balance.pendingExpense > 0.0) {
+                            BalanceCard(
+                                balance = uiState.balance.pendingExpense,
+                                modifier = Modifier.weight(1f),
+                                config = BalanceCardConfig.PendingExpense,
+                            )
+                        }
+                    }
+                }
             }
         }
 

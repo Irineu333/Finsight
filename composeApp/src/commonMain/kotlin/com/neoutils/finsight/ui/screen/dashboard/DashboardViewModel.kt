@@ -73,6 +73,7 @@ class DashboardViewModel(
         recurringRepository.observeAllRecurring(),
         recurringOccurrenceRepository.observeAllOccurrences(),
     ) { operations, creditCards, invoices, accounts, budgets, recurringList, occurrences ->
+        val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
         val transactions = operations.flatMap { it.transactions }
         val transactionsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
@@ -81,6 +82,12 @@ class DashboardViewModel(
         val stats = calculateTransactionStatsUseCase(
             transactions = transactionsForStats,
             forYearMonth = currentMonth
+        )
+
+        val pendingRecurring = getPendingRecurringUseCase(
+            recurringList = recurringList,
+            occurrences = occurrences,
+            today = today,
         )
 
         val categorySpending = calculateCategorySpendingUseCase(
@@ -110,7 +117,6 @@ class DashboardViewModel(
             )
         }
 
-        val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
         val presentOperations = operations.filter { it.date <= today }
 
         DashboardUiState(
@@ -127,7 +133,9 @@ class DashboardViewModel(
                 balance = calculateBalanceUseCase(
                     target = currentMonth,
                     transactions = transactions,
-                )
+                ),
+                pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount },
+                pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount },
             ),
             yearMonth = currentMonth,
             categorySpending = categorySpending,
@@ -138,11 +146,7 @@ class DashboardViewModel(
                 recurringList = recurringList,
                 operations = operations,
             ),
-            pendingRecurring = getPendingRecurringUseCase(
-                recurringList = recurringList,
-                occurrences = occurrences,
-                today = today,
-            ),
+            pendingRecurring = pendingRecurring,
         )
     }.stateIn(
         scope = viewModelScope,

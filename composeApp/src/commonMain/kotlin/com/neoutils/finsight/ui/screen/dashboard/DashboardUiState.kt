@@ -31,8 +31,11 @@ data class DashboardUiState(
         val expense: Double = 0.0,
         val payment: Double = 0.0,
         val balance: Double = 0.0,
+        val pendingIncome: Double = 0.0,
+        val pendingExpense: Double = 0.0,
     ) {
         val mustShowPayment = payment != 0.0
+        val hasPending = pendingIncome > 0.0 || pendingExpense > 0.0
     }
 }
 

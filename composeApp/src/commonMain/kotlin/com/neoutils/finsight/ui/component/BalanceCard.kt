@@ -38,6 +38,8 @@ import com.neoutils.finsight.resources.balance_card_expense
 import com.neoutils.finsight.resources.balance_card_income
 import com.neoutils.finsight.resources.balance_card_invoices
 import com.neoutils.finsight.resources.balance_card_pay_invoice
+import com.neoutils.finsight.resources.balance_card_pending_expense
+import com.neoutils.finsight.resources.balance_card_pending_income
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
@@ -240,6 +242,44 @@ data class BalanceCardConfig(
                 ),
                 padding = PaddingValues(16.dp),
                 container = InvoicePayment.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val PendingIncome
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowUpward,
+                title = stringResource(Res.string.balance_card_pending_income),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = IncomeColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = IncomeColor.copy(alpha = 0.1f),
+                shape = shapes.large
+            )
+
+        val PendingExpense
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowDownward,
+                title = stringResource(Res.string.balance_card_pending_expense),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = ExpenseColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = ExpenseColor.copy(alpha = 0.1f),
                 shape = shapes.large
             )
 

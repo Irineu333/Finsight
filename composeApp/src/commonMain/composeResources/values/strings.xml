@@ -387,6 +387,8 @@
     <string name="balance_card_expense">Despesas</string>
     <string name="balance_card_invoices">Faturas</string>
     <string name="balance_card_current_invoice">Fatura Atual</string>
+    <string name="balance_card_pending_income">Receitas Pendentes</string>
+    <string name="balance_card_pending_expense">Despesas Pendentes</string>
 
     <string name="summary_card_initial_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>

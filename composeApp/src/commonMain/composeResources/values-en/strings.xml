@@ -382,6 +382,8 @@
     <string name="balance_card_expense">Expenses</string>
     <string name="balance_card_invoices">Invoices</string>
     <string name="balance_card_current_invoice">Current Invoice</string>
+    <string name="balance_card_pending_income">Pending Income</string>
+    <string name="balance_card_pending_expense">Pending Expenses</string>
 
     <string name="summary_card_initial_balance">Initial Balance</string>
     <string name="summary_card_income">Income</string>

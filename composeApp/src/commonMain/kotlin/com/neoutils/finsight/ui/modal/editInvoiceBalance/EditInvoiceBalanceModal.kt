@@ -105,7 +105,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             InvoiceSelector(
                 invoices = uiState.editableInvoices,
@@ -116,7 +116,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 label = { Text(stringResource(Res.string.edit_invoice_balance_label)) },
@@ -153,7 +153,7 @@ class EditInvoiceBalanceModal(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = { viewModel.adjustBalance(newBalance) },

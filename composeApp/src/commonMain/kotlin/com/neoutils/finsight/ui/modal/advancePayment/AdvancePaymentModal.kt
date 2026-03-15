@@ -80,15 +80,17 @@ class AdvancePaymentModal(
                 text = stringResource(Res.string.advance_payment_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(Res.string.advance_payment_description),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 state = amount,

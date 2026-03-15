@@ -45,19 +45,19 @@ class IconPickerModal(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = title,
                 style = typography.titleLarge,
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 icons.forEach { icon ->
                     val isSelected = icon == selectedIcon
@@ -69,6 +69,7 @@ class IconPickerModal(
                         color = colorScheme.surfaceContainerHighest,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
+                            .padding(bottom = 8.dp)
                             .size(64.dp)
                             .then(
                                 if (isSelected) {
@@ -96,8 +97,6 @@ class IconPickerModal(
                     }
                 }
             }
-
-            Spacer(Modifier.height(8.dp))
         }
     }
 }

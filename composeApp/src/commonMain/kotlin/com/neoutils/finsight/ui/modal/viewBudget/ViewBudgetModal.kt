@@ -62,7 +62,6 @@ class ViewBudgetModal(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -83,6 +82,8 @@ class ViewBudgetModal(
                     color = colorScheme.onSurface,
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (budget.categories.isNotEmpty()) {
                 LazyRow(
@@ -116,9 +117,11 @@ class ViewBudgetModal(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column {
                 if (budget.limitType == LimitType.PERCENTAGE && budget.percentage != null) {
                     val pctLabel = buildString {
                         append("${budget.percentage.toInt()}%")
@@ -131,15 +134,23 @@ class ViewBudgetModal(
                             { manager.show(ViewRecurringModal(recurring)) }
                         },
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
                 DetailRow(
                     label = stringResource(Res.string.view_budget_limit_label),
                     value = formatter.format(budget.amount),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 DetailRow(
                     label = stringResource(Res.string.view_budget_spent_label),
                     value = formatter.format(budgetProgress.spent),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 if (budgetProgress.isExceeded) {
                     DetailRow(
                         label = stringResource(Res.string.view_budget_exceeded_by_label),
@@ -153,6 +164,8 @@ class ViewBudgetModal(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             LinearProgressIndicator(
                 progress = { budgetProgress.progress },
                 modifier = Modifier
@@ -165,7 +178,11 @@ class ViewBudgetModal(
                 gapSize = (-4).dp,
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

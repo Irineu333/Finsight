@@ -73,10 +73,10 @@ class ViewCategoryModal(
                 onNextMonth = {
                     viewModel.onAction(ViewCategoryAction.NextMonth)
                 },
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,

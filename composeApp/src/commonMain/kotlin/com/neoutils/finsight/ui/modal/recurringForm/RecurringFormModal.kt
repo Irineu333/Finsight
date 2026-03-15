@@ -122,14 +122,13 @@ class RecurringFormModal(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TypeToggle(
                 selectedType = type,
                 onTypeSelected = { type = it },
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 state = title,
@@ -149,7 +148,9 @@ class RecurringFormModal(
                     selectedTarget = target,
                     onTargetSelected = { target = it },
                     availableTargets = uiState.targets,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
                 )
             }
 
@@ -158,7 +159,9 @@ class RecurringFormModal(
                     selectedAccount = uiState.selectedAccount,
                     accounts = uiState.accounts,
                     onAccountSelected = { viewModel.selectAccount(it) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
                 )
             }
 
@@ -168,9 +171,13 @@ class RecurringFormModal(
                     creditCard = uiState.selectedCreditCard,
                     onCreditCardSelected = { viewModel.selectCreditCard(it) },
                     onEmpty = { manager.show(CreditCardFormModal()) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             CategorySelector(
                 selectedCategory = selectedCategory,
@@ -184,6 +191,8 @@ class RecurringFormModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = amount,
                 label = { Text(text = stringResource(Res.string.recurring_form_amount_label)) },
@@ -196,6 +205,8 @@ class RecurringFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 state = dayOfMonth,

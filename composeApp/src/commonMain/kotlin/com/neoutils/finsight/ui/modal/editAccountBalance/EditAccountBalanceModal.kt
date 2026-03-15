@@ -113,10 +113,10 @@ class EditAccountBalanceModal(
                 onAccountSelected = { account ->
                     account?.let { viewModel.selectAccount(it) }
                 },
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 label = { Text(stringResource(Res.string.edit_account_balance_label)) },

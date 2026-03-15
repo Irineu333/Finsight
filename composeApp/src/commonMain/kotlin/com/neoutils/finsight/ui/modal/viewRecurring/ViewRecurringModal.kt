@@ -70,7 +70,6 @@ class ViewRecurringModal(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -114,20 +113,31 @@ class ViewRecurringModal(
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column {
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_type_label),
                     value = typeLabel,
                     valueColor = typeColor,
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_amount_label),
                     value = formatter.format(recurring.amount),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_day_label),
                     value = stringResource(Res.string.recurring_screen_day, recurring.dayOfMonth),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 DetailRow(
                     label = stringResource(Res.string.view_recurring_status_label),
                     value = if (recurring.isActive) {
@@ -138,18 +148,24 @@ class ViewRecurringModal(
                     valueColor = if (recurring.isActive) Income else Warning,
                 )
                 recurring.account?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_account_label),
                         value = it.name,
                     )
                 }
                 recurring.creditCard?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_credit_card_label),
                         value = it.name,
                     )
                 }
                 recurring.category?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_category_label),
                         value = it.name,
@@ -157,7 +173,11 @@ class ViewRecurringModal(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -233,6 +253,8 @@ class ViewRecurringModal(
             }
 
             if (!recurring.isActive) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedButton(
                     onClick = { manager.show(DeleteRecurringModal(recurring)) },
                     modifier = Modifier.fillMaxWidth(),

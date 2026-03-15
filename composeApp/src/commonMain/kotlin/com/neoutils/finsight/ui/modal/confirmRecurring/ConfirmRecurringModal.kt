@@ -89,18 +89,17 @@ class ConfirmRecurringModal(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = recurring.label,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = typeLabel,
@@ -113,6 +112,8 @@ class ConfirmRecurringModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             recurring.category?.let { category ->
                 OutlinedTextField(
                     value = category.name,
@@ -124,6 +125,8 @@ class ConfirmRecurringModal(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             recurring.account?.let { account ->
@@ -137,6 +140,8 @@ class ConfirmRecurringModal(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             recurring.creditCard?.let { creditCard ->
@@ -151,6 +156,8 @@ class ConfirmRecurringModal(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 InvoiceSelector(
                     invoices = uiState.invoices,
                     invoice = uiState.selectedInvoice,
@@ -159,6 +166,8 @@ class ConfirmRecurringModal(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             OutlinedTextField(
@@ -173,6 +182,8 @@ class ConfirmRecurringModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 state = dateText,

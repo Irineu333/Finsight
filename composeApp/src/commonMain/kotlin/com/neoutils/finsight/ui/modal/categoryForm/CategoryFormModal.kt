@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -87,7 +89,6 @@ class CategoryFormModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = if (uiState.isEditMode) {
@@ -99,11 +100,15 @@ class CategoryFormModal(
                 fontWeight = FontWeight.Bold,
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             if (!uiState.isEditMode) {
                 TypeToggle(
                     selectedType = uiState.selectedType,
                     onTypeSelected = { viewModel.onAction(CategoryFormAction.TypeChanged(it)) },
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             OutlinedTextField(
@@ -142,6 +147,8 @@ class CategoryFormModal(
                     .fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
                 accentColor = accentColor,
@@ -165,7 +172,9 @@ class CategoryFormModal(
                 },
             )
 
-            HorizontalDivider()
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
 
             Button(
                 onClick = { viewModel.onAction(CategoryFormAction.Submit) },
@@ -186,8 +195,9 @@ class CategoryFormModal(
     private fun TypeToggle(
         selectedType: Category.Type,
         onTypeSelected: (Category.Type) -> Unit,
+        modifier: Modifier = Modifier,
     ) = Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Button(

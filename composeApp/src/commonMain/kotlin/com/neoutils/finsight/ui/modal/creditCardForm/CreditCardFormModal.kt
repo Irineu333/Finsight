@@ -104,13 +104,14 @@ class CreditCardFormModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = if (uiState.isEditMode) stringResource(Res.string.credit_card_form_edit_title) else stringResource(Res.string.credit_card_form_new_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 state = name,
@@ -148,6 +149,8 @@ class CreditCardFormModal(
                     .fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = limit,
                 label = { Text(text = stringResource(Res.string.credit_card_form_limit_label)) },
@@ -160,6 +163,8 @@ class CreditCardFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 state = closingDay,
@@ -184,6 +189,8 @@ class CreditCardFormModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
                 state = dueDay,
                 labelPosition = TextFieldLabelPosition.Attached(
@@ -206,6 +213,8 @@ class CreditCardFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
@@ -230,7 +239,9 @@ class CreditCardFormModal(
                 },
             )
 
-            HorizontalDivider()
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
 
             Button(
                 onClick = {

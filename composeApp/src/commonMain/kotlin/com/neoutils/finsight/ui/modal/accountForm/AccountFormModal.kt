@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -97,13 +99,14 @@ class AccountFormModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = if (uiState.isEditMode) stringResource(Res.string.account_form_edit_title) else stringResource(Res.string.account_form_new_title),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 state = name,
@@ -143,6 +146,8 @@ class AccountFormModal(
                     .fillMaxWidth(),
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -152,6 +157,8 @@ class AccountFormModal(
                     onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             IconPickerSelector(
                 selectedIcon = uiState.selectedIcon,
@@ -176,7 +183,9 @@ class AccountFormModal(
                 },
             )
 
-            HorizontalDivider()
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
 
             Button(
                 onClick = {
@@ -252,12 +261,14 @@ private fun DefaultAccountSelector(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
                     text = stringResource(Res.string.account_form_default_label),
                     fontWeight = FontWeight.Medium,
                 )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
                     text = subtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

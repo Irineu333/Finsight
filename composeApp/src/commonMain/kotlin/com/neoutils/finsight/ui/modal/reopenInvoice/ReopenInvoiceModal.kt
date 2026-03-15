@@ -53,24 +53,27 @@ class ReopenInvoiceModal(
                 text = stringResource(Res.string.reopen_invoice_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = stringResource(Res.string.reopen_invoice_confirm_message),
                 fontSize = 16.sp,
                 color = colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(Res.string.reopen_invoice_description),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 24.dp)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth()

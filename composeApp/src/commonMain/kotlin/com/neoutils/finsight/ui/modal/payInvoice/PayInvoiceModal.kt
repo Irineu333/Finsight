@@ -84,15 +84,17 @@ class PayInvoiceModal(
                 text = stringResource(Res.string.pay_invoice_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(Res.string.pay_invoice_message),
                 fontSize = 14.sp,
                 color = colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = amount,
@@ -115,6 +117,8 @@ class PayInvoiceModal(
                 onAccountSelected = { viewModel.selectAccount(it) },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 state = date,
@@ -198,5 +202,3 @@ class PayInvoiceModal(
     }
 
 }
-
-

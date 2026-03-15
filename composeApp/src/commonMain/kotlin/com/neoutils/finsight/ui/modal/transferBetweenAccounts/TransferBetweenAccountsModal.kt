@@ -77,8 +77,9 @@ class TransferBetweenAccountsModal(
                     text = stringResource(Res.string.transfer_title),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 AccountSelector(
                     selectedAccount = uiState.selectedSourceAccount,

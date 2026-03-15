@@ -92,8 +92,7 @@ class ConfirmRecurringModal(
         ) {
             Text(
                 text = recurring.label,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,

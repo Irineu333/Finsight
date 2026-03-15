@@ -111,8 +111,7 @@ class EditTransactionModal(
             ) {
                 Text(
                     text = stringResource(Res.string.edit_transaction_title),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface
                 )
 

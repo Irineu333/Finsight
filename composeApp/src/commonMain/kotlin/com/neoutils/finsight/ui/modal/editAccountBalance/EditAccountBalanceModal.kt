@@ -92,8 +92,7 @@ class EditAccountBalanceModal(
         ) {
             Text(
                 text = stringResource(type.titleRes),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
             )
 
             if (targetMonth != null) {

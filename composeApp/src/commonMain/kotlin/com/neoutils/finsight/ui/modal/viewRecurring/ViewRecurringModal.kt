@@ -106,8 +106,7 @@ class ViewRecurringModal(
 
                 Text(
                     text = recurring.label,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )

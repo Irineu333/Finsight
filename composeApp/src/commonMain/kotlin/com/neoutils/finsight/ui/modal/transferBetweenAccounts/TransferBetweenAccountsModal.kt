@@ -75,8 +75,7 @@ class TransferBetweenAccountsModal(
             ) {
                 Text(
                     text = stringResource(Res.string.transfer_title),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

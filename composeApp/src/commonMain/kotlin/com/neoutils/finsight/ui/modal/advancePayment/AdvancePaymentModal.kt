@@ -78,8 +78,7 @@ class AdvancePaymentModal(
         ) {
             Text(
                 text = stringResource(Res.string.advance_payment_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
             )
 
             Spacer(modifier = Modifier.height(8.dp))

@@ -85,8 +85,7 @@ class ViewAdjustmentModal(
                             Transaction.Target.ACCOUNT -> balanceAdjust
                             Transaction.Target.CREDIT_CARD -> invoiceAdjust
                         },
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
                     )
                 }

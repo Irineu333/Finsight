@@ -90,8 +90,7 @@ class EditInvoiceBalanceModal(
         ) {
             Text(
                 text = stringResource(Res.string.edit_invoice_balance_title),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
             )
 
             Spacer(modifier = Modifier.height(16.dp))

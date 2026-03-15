@@ -102,8 +102,7 @@ class ViewCategoryModal(
 
                     Text(
                         text = uiState.category.name,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
                     )
                 }

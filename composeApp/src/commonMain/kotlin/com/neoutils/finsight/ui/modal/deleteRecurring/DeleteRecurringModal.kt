@@ -36,8 +36,7 @@ class DeleteRecurringModal(
         ) {
             Text(
                 text = stringResource(Res.string.delete_recurring_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
             )
 

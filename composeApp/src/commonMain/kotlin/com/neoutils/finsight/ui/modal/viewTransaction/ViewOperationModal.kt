@@ -148,8 +148,7 @@ class ViewOperationModal(
                             Operation.Kind.TRANSFER -> stringResource(Res.string.operation_card_transfer)
                             else -> uiState.operation.label
                         },
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
                     )
                 }

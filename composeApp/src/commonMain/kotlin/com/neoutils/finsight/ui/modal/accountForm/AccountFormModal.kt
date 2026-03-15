@@ -102,8 +102,7 @@ class AccountFormModal(
         ) {
             Text(
                 text = if (uiState.isEditMode) stringResource(Res.string.account_form_edit_title) else stringResource(Res.string.account_form_new_title),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
             )
 
             Spacer(modifier = Modifier.height(16.dp))

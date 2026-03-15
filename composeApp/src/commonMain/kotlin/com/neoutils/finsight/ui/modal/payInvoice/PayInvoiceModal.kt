@@ -82,8 +82,7 @@ class PayInvoiceModal(
         ) {
             Text(
                 text = stringResource(Res.string.pay_invoice_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
             )
 
             Spacer(modifier = Modifier.height(8.dp))

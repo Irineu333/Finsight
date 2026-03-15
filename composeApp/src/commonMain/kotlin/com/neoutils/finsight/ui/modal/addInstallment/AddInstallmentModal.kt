@@ -95,8 +95,7 @@ class AddInstallmentModal : ModalBottomSheet() {
             ) {
                 Text(
                     text = stringResource(Res.string.add_installment_title),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )

@@ -77,8 +77,7 @@ class ViewBudgetModal(
 
                 Text(
                     text = budget.title,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface,
                 )
             }

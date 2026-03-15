@@ -125,43 +125,17 @@ class BudgetFormModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val limitTypeToggle: @Composable () -> Unit = {
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .height(32.dp)
-                        .padding(end = 12.dp)
-                ) {
-                    SegmentedButton(
-                        selected = uiState.limitType == LimitType.FIXED,
-                        onClick = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(LimitType.FIXED)) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                        icon = {},
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.budget_form_limit_type_fixed),
-                            fontSize = 12.sp,
-                        )
-                    }
-                    SegmentedButton(
-                        selected = uiState.limitType == LimitType.PERCENTAGE,
-                        onClick = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(LimitType.PERCENTAGE)) },
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                        icon = {},
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.budget_form_limit_type_percentage),
-                            fontSize = 12.sp,
-                        )
-                    }
-                }
-            }
-
             when (uiState.limitType) {
                 LimitType.FIXED -> {
                     OutlinedTextField(
                         state = amount,
                         label = { Text(text = stringResource(Res.string.budget_form_limit_label)) },
-                        trailingIcon = limitTypeToggle,
+                        trailingIcon = {
+                            LimitTypeToggle(
+                                limitType = uiState.limitType,
+                                onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
+                            )
+                        },
                         inputTransformation = rememberMoneyInputTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
@@ -175,7 +149,12 @@ class BudgetFormModal(
                         value = uiState.percentage,
                         onValueChange = { viewModel.onAction(BudgetFormAction.PercentageChanged(it)) },
                         label = { Text(text = stringResource(Res.string.budget_form_percentage_label)) },
-                        trailingIcon = limitTypeToggle,
+                        trailingIcon = {
+                            LimitTypeToggle(
+                                limitType = uiState.limitType,
+                                onLimitTypeChanged = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(it)) },
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
@@ -236,6 +215,42 @@ class BudgetFormModal(
                     fontWeight = FontWeight.Bold,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun LimitTypeToggle(
+    limitType: LimitType,
+    onLimitTypeChanged: (LimitType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SingleChoiceSegmentedButtonRow(
+        modifier = modifier
+            .height(32.dp)
+            .padding(end = 12.dp)
+    ) {
+        SegmentedButton(
+            selected = limitType == LimitType.FIXED,
+            onClick = { onLimitTypeChanged(LimitType.FIXED) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            icon = {},
+        ) {
+            Text(
+                text = stringResource(Res.string.budget_form_limit_type_fixed),
+                fontSize = 12.sp,
+            )
+        }
+        SegmentedButton(
+            selected = limitType == LimitType.PERCENTAGE,
+            onClick = { onLimitTypeChanged(LimitType.PERCENTAGE) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            icon = {},
+        ) {
+            Text(
+                text = stringResource(Res.string.budget_form_limit_type_percentage),
+                fontSize = 12.sp,
+            )
         }
     }
 }

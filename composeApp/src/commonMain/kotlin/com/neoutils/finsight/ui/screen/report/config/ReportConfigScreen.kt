@@ -275,8 +275,10 @@ private fun ReportConfigContent(
             item {
                 SectionsCard(
                     includeSpendingByCategory = uiState.includeSpendingByCategory,
+                    includeIncomeByCategory = uiState.includeIncomeByCategory,
                     includeTransactionList = uiState.includeTransactionList,
                     onToggleSpendingByCategory = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
+                    onToggleIncomeByCategory = { onAction(ReportConfigAction.ToggleIncomeByCategory(it)) },
                     onToggleTransactionList = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )

@@ -23,6 +23,7 @@ data class ReportConfigUiState(
     val startDate: LocalDate,
     val endDate: LocalDate,
     val includeSpendingByCategory: Boolean = true,
+    val includeIncomeByCategory: Boolean = true,
     val includeTransactionList: Boolean = true,
 ) {
     companion object {

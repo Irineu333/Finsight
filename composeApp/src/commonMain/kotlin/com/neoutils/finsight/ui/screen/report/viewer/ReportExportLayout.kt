@@ -29,6 +29,7 @@ data class ReportExportStrings(
     val summaryInvoiceTotal: String,
     val summaryAdvancePayment: String,
     val sectionSpendingByCategory: String,
+    val sectionIncomeByCategory: String,
     val sectionTransactions: String,
     val operationTransfer: String,
     val operationPayment: String,
@@ -102,6 +103,21 @@ fun ReportViewerUiState.Content.toReportLayout(
                 ReportLayoutSection.SpendingByCategory(
                     title = strings.sectionSpendingByCategory,
                     items = categorySpending.map { item ->
+                        CategoryItem(
+                            label = item.category.name,
+                            amount = formatter.format(item.amount),
+                            percentage = item.percentage.toRoundedPercent(),
+                        )
+                    },
+                )
+            )
+        }
+
+        if (!categoryIncome.isNullOrEmpty()) {
+            add(
+                ReportLayoutSection.SpendingByCategory(
+                    title = strings.sectionIncomeByCategory,
+                    items = categoryIncome.map { item ->
                         CategoryItem(
                             label = item.category.name,
                             amount = formatter.format(item.amount),

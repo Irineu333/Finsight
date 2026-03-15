@@ -12,15 +12,16 @@ class CalculateReportCategorySpendingUseCase {
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
+        transactionType: Transaction.Type = Transaction.Type.EXPENSE,
     ): List<CategorySpending> {
-        val expenseTransactions = operations
+        val matchingTransactions = operations
             .filter { it.date in startDate..endDate }
             .flatMap { it.transactions }
-            .filter { it.type.isExpense && it.category != null && it.matchesPerspective(perspective) }
+            .filter { it.type == transactionType && it.category != null && it.matchesPerspective(perspective) }
 
-        val totalExpense = expenseTransactions.sumOf { it.amount }
+        val totalAmount = matchingTransactions.sumOf { it.amount }
 
-        return expenseTransactions
+        return matchingTransactions
             .groupBy { it.category!! }
             .map { (category, transactions) ->
                 val amount = transactions.sumOf { it.amount }
@@ -28,7 +29,7 @@ class CalculateReportCategorySpendingUseCase {
                     category = category,
                     amount = amount,
                     percentage = when {
-                        totalExpense > 0 -> (amount / totalExpense) * 100
+                        totalAmount > 0 -> (amount / totalAmount) * 100
                         else -> 0.0
                     },
                 )

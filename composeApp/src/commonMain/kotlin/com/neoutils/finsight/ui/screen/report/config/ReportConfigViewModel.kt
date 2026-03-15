@@ -93,6 +93,10 @@ class ReportConfigViewModel(
                 config.update { it.copy(includeSpendingByCategory = action.enabled) }
             }
 
+            is ReportConfigAction.ToggleIncomeByCategory -> {
+                config.update { it.copy(includeIncomeByCategory = action.enabled) }
+            }
+
             is ReportConfigAction.ToggleTransactionList -> {
                 config.update { it.copy(includeTransactionList = action.enabled) }
             }
@@ -128,6 +132,7 @@ class ReportConfigViewModel(
                 startDate = state.startDate.toString(),
                 endDate = state.endDate.toString(),
                 includeSpendingByCategory = state.includeSpendingByCategory,
+                includeIncomeByCategory = state.includeIncomeByCategory,
                 includeTransactionList = state.includeTransactionList,
             )
 
@@ -141,6 +146,7 @@ class ReportConfigViewModel(
                     startDate = selected.minOf { it.openingDate }.toString(),
                     endDate = selected.maxOf { it.closingDate }.toString(),
                     includeSpendingByCategory = state.includeSpendingByCategory,
+                    includeIncomeByCategory = state.includeIncomeByCategory,
                     includeTransactionList = state.includeTransactionList,
                 )
             }

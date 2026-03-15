@@ -34,6 +34,7 @@ sealed class ReportViewerUiState {
         val perspectiveIconKey: String,
         val stats: Stats,
         val categorySpending: List<CategorySpending>?,
+        val categoryIncome: List<CategorySpending>?,
         val transactions: Map<LocalDate, List<Operation>>?,
     ) : ReportViewerUiState()
 }

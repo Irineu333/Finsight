@@ -10,5 +10,6 @@ sealed class ReportConfigAction {
     data class SelectStartDate(val date: LocalDate) : ReportConfigAction()
     data class SelectEndDate(val date: LocalDate) : ReportConfigAction()
     data class ToggleSpendingByCategory(val enabled: Boolean) : ReportConfigAction()
+    data class ToggleIncomeByCategory(val enabled: Boolean) : ReportConfigAction()
     data class ToggleTransactionList(val enabled: Boolean) : ReportConfigAction()
 }

@@ -53,6 +53,7 @@ sealed class AppRoute {
         val startDate: String,
         val endDate: String,
         val includeSpendingByCategory: Boolean,
+        val includeIncomeByCategory: Boolean = true,
         val includeTransactionList: Boolean,
     ) : AppRoute()
 }

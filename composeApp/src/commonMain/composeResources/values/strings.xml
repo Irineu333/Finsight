@@ -65,6 +65,7 @@
     <string name="report_config_start_date">Data inicial</string>
     <string name="report_config_end_date">Data final</string>
     <string name="report_config_include_spending_by_category">Gastos por categoria</string>
+    <string name="report_config_include_income_by_category">Ganhos por categoria</string>
     <string name="report_config_include_transactions">Lista de transações</string>
     <string name="report_config_generate">Gerar Relatório</string>
     <string name="report_config_cancel">Cancelar</string>
@@ -92,6 +93,7 @@
     <string name="report_viewer_summary_invoice_expense">Saída</string>
     <string name="report_viewer_summary_advance_payment">Pago</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>
+    <string name="report_viewer_income_by_category">Ganhos por Categoria</string>
     <string name="report_viewer_transactions">Transações</string>
     <string name="report_viewer_action_share_html">Compartilhar HTML</string>
     <string name="report_viewer_action_print">Imprimir</string>

@@ -65,6 +65,7 @@
     <string name="report_config_start_date">Start date</string>
     <string name="report_config_end_date">End date</string>
     <string name="report_config_include_spending_by_category">Spending by category</string>
+    <string name="report_config_include_income_by_category">Income by category</string>
     <string name="report_config_include_transactions">Transaction list</string>
     <string name="report_config_accounts">Accounts</string>
     <string name="report_config_no_accounts">No accounts registered</string>
@@ -92,6 +93,7 @@
     <string name="report_viewer_summary_invoice_expense">Expense</string>
     <string name="report_viewer_summary_advance_payment">Paid</string>
     <string name="report_viewer_spending_by_category">Spending by Category</string>
+    <string name="report_viewer_income_by_category">Income by Category</string>
     <string name="report_viewer_transactions">Transactions</string>
     <string name="report_viewer_action_share_html">Share HTML</string>
     <string name="report_viewer_action_print">Print</string>

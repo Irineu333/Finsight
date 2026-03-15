@@ -69,13 +69,12 @@ class ReportViewerViewModel(
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
     ) { operations, accounts, creditCards, invoices ->
+        val invoiceIds = invoices.map { it.id }.toSet()
+        val invoiceTransactions = operations
+            .flatMap { it.transactions }
+            .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
 
         val stats = if (invoices.isNotEmpty()) {
-            val invoiceIds = invoices.map { it.id }.toSet()
-            val invoiceTransactions = operations
-                .flatMap { it.transactions }
-                .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
-
             val expense = invoiceTransactions
                 .filter { it.type == Transaction.Type.EXPENSE }
                 .sumOf { it.amount }
@@ -125,39 +124,32 @@ class ReportViewerViewModel(
             }
         }
 
-        val categorySpending = if (route.includeSpendingByCategory) {
-            if (invoices.isNotEmpty()) {
-                val invoiceIds = invoices.map { it.id }.toSet()
-                val invoiceTransactions = operations
-                    .flatMap { it.transactions }
-                    .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
-                val expenseTransactions = invoiceTransactions.filter { it.type == Transaction.Type.EXPENSE }
-                val totalExpense = expenseTransactions.sumOf { it.amount }
-                if (totalExpense > 0) {
-                    expenseTransactions
-                        .groupBy { it.category }
-                        .mapNotNull { (category, txs) ->
-                            val cat = category ?: return@mapNotNull null
-                            val amount = txs.sumOf { it.amount }
-                            CategorySpending(cat, amount, (amount / totalExpense) * 100)
-                        }
-                        .sortedByDescending { it.amount }
-                } else {
-                    emptyList()
-                }
-            } else {
-                calculateReportCategorySpendingUseCase(
-                    operations = operations,
-                    perspective = perspective,
-                    startDate = startDate,
-                    endDate = endDate,
-                )
-            }
-        } else null
+        val categorySpending = when {
+            !route.includeSpendingByCategory -> null
+            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
+            else -> calculateReportCategorySpendingUseCase(
+                operations = operations,
+                perspective = perspective,
+                startDate = startDate,
+                endDate = endDate,
+                transactionType = Transaction.Type.EXPENSE,
+            )
+        }
+
+        val categoryIncome = when {
+            !route.includeIncomeByCategory -> null
+            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
+            else -> calculateReportCategorySpendingUseCase(
+                operations = operations,
+                perspective = perspective,
+                startDate = startDate,
+                endDate = endDate,
+                transactionType = Transaction.Type.INCOME,
+            )
+        }
 
         val transactionsMap = if (route.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
-                val invoiceIds = invoices.map { it.id }.toSet()
                 operations.filter { op ->
                     op.targetInvoice?.id in invoiceIds ||
                             op.transactions.any { tx -> tx.invoice?.id in invoiceIds }
@@ -209,6 +201,7 @@ class ReportViewerViewModel(
             perspectiveIconKey = perspectiveIconKey,
             stats = stats,
             categorySpending = categorySpending,
+            categoryIncome = categoryIncome,
             transactions = transactionsMap,
         )
     }.stateIn(
@@ -219,7 +212,7 @@ class ReportViewerViewModel(
 
     fun onAction(action: ReportViewerAction) = viewModelScope.launch {
         when (action) {
-            is ReportViewerAction.ShareAsHtml -> {
+            is ReportViewerAction.Share -> {
                 _events.send(
                     ReportViewerEvent.Share(renderer.render(action.layout))
                 )
@@ -232,4 +225,24 @@ class ReportViewerViewModel(
             }
         }
     }
+}
+
+private fun List<Transaction>.toCategoryBreakdown(
+    transactionType: Transaction.Type,
+): List<CategorySpending> {
+    val typedTransactions = filter { it.type == transactionType && it.category != null }
+    val totalAmount = typedTransactions.sumOf { it.amount }
+    if (totalAmount <= 0) return emptyList()
+
+    return typedTransactions
+        .groupBy { it.category!! }
+        .map { (category, transactions) ->
+            val amount = transactions.sumOf { it.amount }
+            CategorySpending(
+                category = category,
+                amount = amount,
+                percentage = (amount / totalAmount) * 100,
+            )
+        }
+        .sortedByDescending { it.amount }
 }

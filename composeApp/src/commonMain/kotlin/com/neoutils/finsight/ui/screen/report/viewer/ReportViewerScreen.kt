@@ -67,6 +67,7 @@ fun ReportViewerScreen(
                 is ReportViewerEvent.Print -> {
                     printService.print(event.document, platformContext)
                 }
+
                 is ReportViewerEvent.Share -> {
                     shareService.share(event.document, platformContext)
                 }
@@ -79,7 +80,7 @@ fun ReportViewerScreen(
         onNavigateBack = onNavigateBack,
         onShareHtml = { content, strings, badgeText ->
             viewModel.onAction(
-                ReportViewerAction.ShareAsHtml(
+                ReportViewerAction.Share(
                     content.toReportLayout(
                         strings = strings,
                         dateFormats = dateFormats,
@@ -113,6 +114,7 @@ private fun ReportViewerContent(
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
+
     val exportStrings = ReportExportStrings(
         title = stringResource(Res.string.report_viewer_title),
         generatedAtPrefix = stringResource(Res.string.report_output_generated_at),
@@ -124,6 +126,7 @@ private fun ReportViewerContent(
         summaryInvoiceTotal = stringResource(Res.string.report_viewer_summary_invoice_total),
         summaryAdvancePayment = stringResource(Res.string.report_viewer_summary_advance_payment),
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
+        sectionIncomeByCategory = stringResource(Res.string.report_viewer_income_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
         operationTransfer = stringResource(Res.string.operation_card_transfer),
         operationPayment = stringResource(Res.string.operation_card_payment),
@@ -155,7 +158,9 @@ private fun ReportViewerContent(
                     ) {
                         Row {
                             IconButton(
-                                onClick = { contentState?.let { onShareHtml(it, exportStrings, badgeText) } },
+                                onClick = {
+                                    contentState?.let { onShareHtml(it, exportStrings, badgeText) }
+                                },
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Share,
@@ -164,7 +169,9 @@ private fun ReportViewerContent(
                             }
 
                             IconButton(
-                                onClick = { contentState?.let { onPrint(it, exportStrings, badgeText) } },
+                                onClick = {
+                                    contentState?.let { onPrint(it, exportStrings, badgeText) }
+                                },
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Print,
@@ -198,7 +205,7 @@ private fun ReportViewerContent(
                 is ReportViewerUiState.Content -> {
                     LazyColumn(
                         contentPadding = PaddingValues(
-                            top = paddingValues.calculateTopPadding() + 8.dp,
+                            top = paddingValues.calculateTopPadding() + 16.dp,
                             bottom = paddingValues.calculateBottomPadding() + 16.dp,
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -220,6 +227,20 @@ private fun ReportViewerContent(
                             item {
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
+                                    title = stringResource(Res.string.report_viewer_spending_by_category),
+                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                )
+                            }
+                        }
+
+                        if (!state.categoryIncome.isNullOrEmpty()) {
+                            item {
+                                CategorySpendingCard(
+                                    categorySpending = state.categoryIncome,
+                                    title = stringResource(Res.string.report_viewer_income_by_category),
                                     onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -258,7 +279,12 @@ private fun ReportViewerContent(
                                             .padding(horizontal = 16.dp),
                                         onClick = {
                                             when {
-                                                operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
+                                                operation.type.isAdjustment -> modalManager.show(
+                                                    ViewAdjustmentModal(
+                                                        operation
+                                                    )
+                                                )
+
                                                 else -> modalManager.show(ViewOperationModal(operation))
                                             }
                                         },

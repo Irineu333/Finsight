@@ -60,7 +60,8 @@ fun InvoiceMonthNavigator(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
-                        tint = colorScheme.primary
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
 
@@ -72,7 +73,8 @@ fun InvoiceMonthNavigator(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = null,
-                        tint = colorScheme.primary
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }

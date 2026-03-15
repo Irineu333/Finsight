@@ -211,7 +211,6 @@ class AddTransactionModal : ModalBottomSheet() {
                                 total = amount.text.toString().moneyToDouble(),
                             ),
                             onInstallmentsChange = { installments = it },
-                            modifier = Modifier.padding(end = 8.dp)
                         )
                     }
                 } else null,
@@ -252,6 +251,7 @@ class AddTransactionModal : ModalBottomSheet() {
                             imageVector = Icons.TwoTone.CalendarToday,
                             contentDescription = null,
                             tint = colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 },

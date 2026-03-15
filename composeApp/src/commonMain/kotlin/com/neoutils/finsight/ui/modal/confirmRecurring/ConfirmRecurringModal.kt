@@ -196,6 +196,7 @@ class ConfirmRecurringModal(
                             imageVector = Icons.TwoTone.CalendarToday,
                             contentDescription = null,
                             tint = colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 },

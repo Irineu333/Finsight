@@ -6,11 +6,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -161,7 +163,11 @@ class BudgetFormModal(
             )
 
             val limitTypeToggle: @Composable () -> Unit = {
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp).padding(end = 12.dp)) {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .height(32.dp)
+                        .padding(end = 12.dp)
+                ) {
                     SegmentedButton(
                         selected = uiState.limitType == LimitType.FIXED,
                         onClick = { viewModel.onAction(BudgetFormAction.LimitTypeChanged(LimitType.FIXED)) },
@@ -188,26 +194,31 @@ class BudgetFormModal(
             }
 
             when (uiState.limitType) {
-                LimitType.FIXED -> OutlinedTextField(
-                    state = amount,
-                    label = { Text(text = stringResource(Res.string.budget_form_limit_label)) },
-                    trailingIcon = limitTypeToggle,
-                    inputTransformation = rememberMoneyInputTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(12.dp),
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                LimitType.PERCENTAGE -> OutlinedTextField(
-                    value = uiState.percentage,
-                    onValueChange = { viewModel.onAction(BudgetFormAction.PercentageChanged(it)) },
-                    label = { Text(text = stringResource(Res.string.budget_form_percentage_label)) },
-                    trailingIcon = limitTypeToggle,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                LimitType.FIXED -> {
+                    OutlinedTextField(
+                        state = amount,
+                        label = { Text(text = stringResource(Res.string.budget_form_limit_label)) },
+                        trailingIcon = limitTypeToggle,
+                        inputTransformation = rememberMoneyInputTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                LimitType.PERCENTAGE -> {
+                    OutlinedTextField(
+                        value = uiState.percentage,
+                        onValueChange = { viewModel.onAction(BudgetFormAction.PercentageChanged(it)) },
+                        label = { Text(text = stringResource(Res.string.budget_form_percentage_label)) },
+                        trailingIcon = limitTypeToggle,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             AnimatedVisibility(visible = uiState.limitType == LimitType.PERCENTAGE) {
@@ -292,6 +303,7 @@ private fun RecurringIncomeSelector(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 } else {

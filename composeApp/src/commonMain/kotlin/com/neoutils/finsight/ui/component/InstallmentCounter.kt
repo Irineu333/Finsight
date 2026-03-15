@@ -51,13 +51,12 @@ fun InstallmentCounter(
         targetState = state,
         transitionSpec = {
             fadeIn() togetherWith fadeOut()
-        }
+        },
+        modifier = modifier,
     ) { state ->
         val canDecrease = state.count > minCount
 
         Row(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -67,13 +66,12 @@ fun InstallmentCounter(
                     }
                 },
                 enabled = canDecrease,
-                modifier = Modifier.size(32.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
                     contentDescription = null,
                     tint = if (canDecrease) colorScheme.primary else colorScheme.outline,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -85,14 +83,15 @@ fun InstallmentCounter(
             )
 
             IconButton(
-                onClick = { onInstallmentsChange(state.count + 1) },
-                modifier = Modifier.size(32.dp)
+                onClick = {
+                    onInstallmentsChange(state.count + 1)
+                },
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
                     tint = colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

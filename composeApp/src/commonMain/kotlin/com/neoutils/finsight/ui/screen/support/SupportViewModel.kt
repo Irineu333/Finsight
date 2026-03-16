@@ -17,14 +17,14 @@ class SupportViewModel(
 
     val uiState = supportRepository.observeIssues()
         .map { issues ->
-            SupportUiState(
+            SupportUiState.Content(
                 issues = issues.sortedByDescending { it.updatedAt },
             )
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = SupportUiState(),
+            initialValue = SupportUiState.Loading,
         )
 
     fun createIssue(

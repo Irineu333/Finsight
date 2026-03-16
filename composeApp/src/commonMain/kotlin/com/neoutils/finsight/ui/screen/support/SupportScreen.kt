@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -108,52 +109,67 @@ fun SupportScreen(
             }
         },
     ) { paddingValues ->
-        if (uiState.issues.isEmpty()) {
-            EmptySupportState(
-                onCreateIssue = {
-                    modalManager.show(
-                        CreateSupportIssueModal(
-                            onSubmit = { draft ->
-                                viewModel.createIssue(
-                                    draft = draft,
-                                    onIssueCreated = onOpenIssue,
+        when (val state = uiState) {
+            SupportUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is SupportUiState.Content -> {
+                if (state.issues.isEmpty()) {
+                    EmptySupportState(
+                        onCreateIssue = {
+                            modalManager.show(
+                                CreateSupportIssueModal(
+                                    onSubmit = { draft ->
+                                        viewModel.createIssue(
+                                            draft = draft,
+                                            onIssueCreated = onOpenIssue,
+                                        )
+                                    },
                                 )
-                            },
-                        )
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
                     )
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (uiState.integrationPending) {
-                    item(key = "integration_note") {
-                        IntegrationPendingCard()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        if (state.integrationPending) {
+                            item(key = "integration_note") {
+                                IntegrationPendingCard()
+                            }
+                        }
+
+                        item(key = "overview") {
+                            SupportOverviewCard(uiState = state)
+                        }
+
+                        items(
+                            items = state.issues,
+                            key = { it.id },
+                        ) { issue ->
+                            SupportIssueCard(
+                                issue = issue,
+                                onClick = { onOpenIssue(issue.id) },
+                                colorScheme = colorScheme,
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
-                }
-
-                item(key = "overview") {
-                    SupportOverviewCard(uiState = uiState)
-                }
-
-                items(
-                    items = uiState.issues,
-                    key = { it.id },
-                ) { issue ->
-                    SupportIssueCard(
-                        issue = issue,
-                        onClick = { onOpenIssue(issue.id) },
-                        colorScheme = colorScheme,
-                        modifier = Modifier.animateItem(),
-                    )
                 }
             }
         }
@@ -247,7 +263,7 @@ private fun IntegrationPendingCard(
 
 @Composable
 private fun SupportOverviewCard(
-    uiState: SupportUiState,
+    uiState: SupportUiState.Content,
     modifier: Modifier = Modifier,
 ) {
     Card(

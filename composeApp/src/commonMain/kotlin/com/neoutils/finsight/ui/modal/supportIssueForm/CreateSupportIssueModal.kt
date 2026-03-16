@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
-import com.neoutils.finsight.domain.repository.ISupportRepository
+import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.support_form_description_label
 import com.neoutils.finsight.resources.support_form_submit
@@ -57,7 +57,7 @@ class CreateSupportIssueModal(
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val supportRepository = koinInject<ISupportRepository>()
+        val createSupportIssueUseCase = koinInject<CreateSupportIssueUseCase>()
         val modalManager = LocalModalManager.current
         val scope = rememberCoroutineScope()
         val titleState = rememberTextFieldState()
@@ -141,16 +141,20 @@ class CreateSupportIssueModal(
                 onClick = {
                     scope.launch {
                         isSubmitting = true
-                        val issue = supportRepository.createIssue(
+                        createSupportIssueUseCase(
                             SupportIssueDraft(
                                 type = selectedType,
                                 title = title,
                                 message = description,
                             )
+                        ).fold(
+                            ifLeft = { isSubmitting = false },
+                            ifRight = { issue ->
+                                isSubmitting = false
+                                modalManager.dismiss()
+                                onIssueCreated(issue.id)
+                            },
                         )
-                        isSubmitting = false
-                        modalManager.dismiss()
-                        onIssueCreated(issue.id)
                     }
                 },
                 enabled = canSubmit,

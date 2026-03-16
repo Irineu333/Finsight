@@ -31,6 +31,13 @@ targets:
       - path: iosApp
         excludes:
           - Info.plist
+      - path: GoogleService-Info.plist
+
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
 
     info:
       path: iosApp/Info.plist
@@ -103,6 +110,11 @@ targets:
           cd "$SRCROOT/.."
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
         showEnvVarsInLog: false
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "11.0.0"
 
 schemes:
   Finsight:

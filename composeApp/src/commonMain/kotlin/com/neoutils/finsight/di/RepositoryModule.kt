@@ -8,7 +8,7 @@ import com.neoutils.finsight.database.repository.CreditCardRepository
 import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.database.repository.InstallmentRepository
 import com.neoutils.finsight.database.repository.OperationRepository
-import com.neoutils.finsight.database.repository.TodoSupportRepository
+import com.neoutils.finsight.database.repository.FirebaseSupportRepository
 import com.neoutils.finsight.database.repository.RecurringRepository
 import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
@@ -121,6 +121,6 @@ val repositoryModule = module {
     }
 
     single<ISupportRepository> {
-        TodoSupportRepository()
+        FirebaseSupportRepository()
     }
 }

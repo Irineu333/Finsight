@@ -215,12 +215,24 @@ class ConfirmRecurringModal(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
+                OutlinedButton(
+                    onClick = { viewModel.onAction(ConfirmRecurringAction.Skip) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.recurring_confirm_skip),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
                 Button(
                     onClick = {
                         viewModel.onAction(ConfirmRecurringAction.Confirm, amount.text.toString())
@@ -231,18 +243,6 @@ class ConfirmRecurringModal(
                 ) {
                     Text(
                         text = stringResource(Res.string.recurring_confirm_button),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                OutlinedButton(
-                    onClick = { viewModel.onAction(ConfirmRecurringAction.Skip) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.recurring_confirm_skip),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                     )

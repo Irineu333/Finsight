@@ -145,7 +145,7 @@ class CreateSupportIssueModal(
                             SupportIssueDraft(
                                 type = selectedType,
                                 title = title,
-                                message = description,
+                                description = description,
                             )
                         ).fold(
                             ifLeft = { isSubmitting = false },

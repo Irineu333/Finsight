@@ -128,6 +128,11 @@ private fun SupportIssueHeader(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
+            Text(
+                text = issue.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -225,7 +230,7 @@ private fun ReplyComposer(
             value = value,
             onValueChange = onValueChange,
             label = {
-                Text(text = stringResource(Res.string.support_form_description_label))
+                Text(text = stringResource(Res.string.support_reply_message_label))
             },
             shape = RoundedCornerShape(12.dp),
             trailingIcon = {

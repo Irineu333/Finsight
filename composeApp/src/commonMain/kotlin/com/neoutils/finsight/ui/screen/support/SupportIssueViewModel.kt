@@ -21,11 +21,13 @@ class SupportIssueViewModel(
 
     val uiState = combine(
         supportRepository.observeIssueById(issueId),
+        supportRepository.observeMessages(issueId),
         replyText,
         isSending,
-    ) { issue, replyText, isSending ->
+    ) { issue, messages, replyText, isSending ->
         SupportIssueUiState(
             issue = issue,
+            messages = messages,
             replyText = replyText,
             isSending = isSending,
         )

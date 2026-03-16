@@ -94,13 +94,13 @@ fun SupportIssueScreen(
                     SupportIssueHeader(issue = issue)
                 }
 
-                if (issue.messages.isEmpty()) {
+                if (uiState.messages.isEmpty()) {
                     item(key = "messages_empty") {
                         EmptyMessagesState()
                     }
                 } else {
                     items(
-                        items = issue.messages,
+                        items = uiState.messages,
                         key = { it.id },
                     ) { message ->
                         MessageBubble(message = message)

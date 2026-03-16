@@ -64,6 +64,21 @@ class FirebaseSupportRepository : ISupportRepository {
         )
     }
 
+    override fun observeMessages(issueId: String): Flow<List<SupportMessage>> = flow {
+        emitAll(
+            collection.document(issueId)
+                .collection("messages")
+                .snapshots
+                .map { snapshot ->
+                    snapshot.documents.mapNotNull { doc ->
+                        runCatching {
+                            doc.data<MessageDocument>().toDomain(doc.id)
+                        }.getOrNull()
+                    }.sortedBy { it.createdAt }
+                }
+        )
+    }
+
     override suspend fun createIssue(draft: SupportIssueDraft): SupportIssue {
         val userId = currentUserId()
         val now = Clock.System.now()
@@ -74,7 +89,7 @@ class FirebaseSupportRepository : ISupportRepository {
             title = draft.title.trim(),
             description = draft.description.trim(),
             status = SupportIssue.Status.OPEN.name,
-            messages = emptyList(),
+            pendingForSupportReply = true,
             createdAtMs = now.toEpochMilliseconds(),
             updatedAtMs = now.toEpochMilliseconds(),
         )
@@ -89,7 +104,6 @@ class FirebaseSupportRepository : ISupportRepository {
         val current = docRef.get().data<IssueDocument>()
 
         val newMessage = MessageDocument(
-            id = "msg-${now.toEpochMilliseconds()}-${current.messages.size}",
             author = SupportMessage.Author.USER.name,
             body = message.trim(),
             createdAtMs = now.toEpochMilliseconds(),
@@ -103,8 +117,12 @@ class FirebaseSupportRepository : ISupportRepository {
             else -> current.status
         }
 
+        collection.document(issueId)
+            .collection("messages")
+            .add(newMessage)
+
         docRef.update(
-            "messages" to current.messages + newMessage,
+            "pendingForSupportReply" to true,
             "updatedAtMs" to now.toEpochMilliseconds(),
             "status" to newStatus,
         )
@@ -118,14 +136,13 @@ private data class IssueDocument(
     val title: String = "",
     val description: String = "",
     val status: String = "",
-    val messages: List<MessageDocument> = emptyList(),
+    val pendingForSupportReply: Boolean = false,
     val createdAtMs: Long = 0L,
     val updatedAtMs: Long = 0L,
 )
 
 @Serializable
 private data class MessageDocument(
-    val id: String = "",
     val author: String = "",
     val body: String = "",
     val createdAtMs: Long = 0L,
@@ -138,13 +155,13 @@ private fun IssueDocument.toDomain(id: String): SupportIssue {
         title = title,
         description = description,
         status = SupportIssue.Status.valueOf(status),
-        messages = messages.map { it.toDomain() },
+        isWaitingSupportReply = pendingForSupportReply,
         createdAt = Instant.fromEpochMilliseconds(createdAtMs),
         updatedAt = Instant.fromEpochMilliseconds(updatedAtMs),
     )
 }
 
-private fun MessageDocument.toDomain() = SupportMessage(
+private fun MessageDocument.toDomain(id: String) = SupportMessage(
     id = id,
     author = SupportMessage.Author.valueOf(author),
     body = body,

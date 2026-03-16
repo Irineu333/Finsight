@@ -138,6 +138,8 @@
     <string name="support_form_submit">Enviar</string>
     <string name="support_detail_empty">Issue nao encontrada.</string>
     <string name="support_detail_fallback_title">Issue</string>
+    <string name="support_messages_empty_title">Ainda não há mensagens</string>
+    <string name="support_messages_empty_body">A primeira resposta da conversa aparecerá aqui.</string>
     <string name="support_reply_message_label">Mensagem</string>
     <string name="support_reply_send">Responder</string>
     <string name="support_author_you">Voce</string>

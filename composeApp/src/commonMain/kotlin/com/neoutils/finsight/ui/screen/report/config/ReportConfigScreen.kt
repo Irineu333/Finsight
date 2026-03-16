@@ -111,8 +111,16 @@ private fun ReportConfigContent(
             modifier = Modifier.fillMaxSize(),
         ) {
             if (uiState.creditCards.isNotEmpty()) {
-                item {
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                item(
+                    key = "perspective_tabs",
+                    contentType = "segmented_buttons",
+                ) {
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
+                    ) {
                         SegmentedButton(
                             selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
                             onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
@@ -136,31 +144,50 @@ private fun ReportConfigContent(
             }
 
             if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
-                item {
+                item(
+                    key = "accounts_title",
+                    contentType = "section_title",
+                ) {
                     Text(
                         text = stringResource(Res.string.report_config_accounts),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     )
                 }
                 if (uiState.accounts.isEmpty()) {
-                    item {
+                    item(
+                        key = "accounts_empty",
+                        contentType = "empty_state",
+                    ) {
                         Text(
                             text = stringResource(Res.string.report_config_no_accounts),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .animateItem(),
                         )
                     }
                 } else {
-                    item {
+                    item(
+                        key = "accounts_list",
+                        contentType = "accounts_row",
+                    ) {
                         LazyRow(
                             contentPadding = PaddingValues(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
                         ) {
-                            items(uiState.accounts, key = { it.id }) { account ->
+                            items(
+                                items = uiState.accounts,
+                                key = { it.id },
+                                contentType = { "account_card" },
+                            ) { account ->
                                 AccountCard(
                                     account = account,
                                     variant = AccountCardVariant.Selection(
@@ -176,15 +203,23 @@ private fun ReportConfigContent(
             }
 
             if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
-                item {
+                item(
+                    key = "credit_cards_title",
+                    contentType = "section_title",
+                ) {
                     Text(
                         text = stringResource(Res.string.report_config_credit_cards),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     )
                 }
-                item {
+                item(
+                    key = "credit_cards_pager",
+                    contentType = "credit_cards_pager",
+                ) {
                     val initialPage = uiState.creditCards
                         .indexOfFirst { it.id == uiState.selectedCreditCardId }
                         .coerceAtLeast(0)
@@ -204,7 +239,9 @@ private fun ReportConfigContent(
                         state = pagerState,
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         pageSpacing = 8.dp,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
                     ) { page ->
                         CreditCardCard(
                             creditCard = uiState.creditCards[page],
@@ -215,16 +252,24 @@ private fun ReportConfigContent(
             }
 
             if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
-                item {
+                item(
+                    key = "date_range_title",
+                    contentType = "section_title",
+                ) {
                     Text(
                         text = stringResource(Res.string.report_config_date_range),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     )
                 }
 
-                item {
+                item(
+                    key = "date_range_card",
+                    contentType = "date_range_card",
+                ) {
                     DateRangeCard(
                         startDate = uiState.startDate,
                         endDate = uiState.endDate,
@@ -232,26 +277,41 @@ private fun ReportConfigContent(
                             onAction(ReportConfigAction.SelectStartDate(start))
                             onAction(ReportConfigAction.SelectEndDate(end))
                         },
+                        modifier = Modifier.animateItem(),
                     )
                 }
             }
 
             if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
-                item {
+                item(
+                    key = "invoice_title",
+                    contentType = "section_title",
+                ) {
                     Text(
                         text = stringResource(Res.string.report_config_invoice),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .animateItem(),
                     )
                 }
-                item {
+                item(
+                    key = "invoice_list",
+                    contentType = "invoice_row",
+                ) {
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
                     ) {
-                        items(uiState.invoices, key = { it.id }) { invoice ->
+                        items(
+                            items = uiState.invoices,
+                            key = { it.id },
+                            contentType = { "invoice_card" },
+                        ) { invoice ->
                             InvoiceSelectionCard(
                                 invoice = invoice,
                                 selected = invoice.id in uiState.selectedInvoiceIds,
@@ -263,16 +323,24 @@ private fun ReportConfigContent(
                 }
             }
 
-            item {
+            item(
+                key = "sections_title",
+                contentType = "section_title",
+            ) {
                 Text(
                     text = stringResource(Res.string.report_config_sections),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 )
             }
 
-            item {
+            item(
+                key = "sections_card",
+                contentType = "sections_card",
+            ) {
                 SectionsCard(
                     includeSpendingByCategory = uiState.includeSpendingByCategory,
                     includeIncomeByCategory = uiState.includeIncomeByCategory,
@@ -280,7 +348,9 @@ private fun ReportConfigContent(
                     onToggleSpendingByCategory = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
                     onToggleIncomeByCategory = { onAction(ReportConfigAction.ToggleIncomeByCategory(it)) },
                     onToggleTransactionList = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 )
             }
         }

@@ -6,6 +6,8 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import arrow.core.getOrElse
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
@@ -30,9 +32,15 @@ class ConfirmRecurringUseCase(
         recurring: Recurring,
         date: LocalDate,
         amount: Double = recurring.amount,
+        target: Transaction.Target = if (recurring.creditCard != null) {
+            Transaction.Target.CREDIT_CARD
+        } else {
+            Transaction.Target.ACCOUNT
+        },
+        account: Account? = recurring.account,
+        creditCard: CreditCard? = recurring.creditCard,
         invoice: Invoice? = null,
     ): Either<Throwable, Operation> {
-        val creditCard = recurring.creditCard
         val yearMonth = date.yearMonth
         val cycleNumber = Instant
             .fromEpochMilliseconds(recurring.createdAt)
@@ -45,9 +53,12 @@ class ConfirmRecurringUseCase(
                 "Recurring already confirmed for $yearMonth"
             }
 
-            if (creditCard != null) {
+            if (target.isCreditCard) {
+                val targetCreditCard = creditCard ?: recurring.creditCard
+                requireNotNull(targetCreditCard) { "Credit card is required for recurring confirmation" }
+
                 val invoice = invoice
-                    ?: getOrCreateInvoiceForMonthUseCase(creditCard, yearMonth)
+                    ?: getOrCreateInvoiceForMonthUseCase(targetCreditCard, yearMonth)
                         .getOrElse { throw it }
 
                 operationRepository.createOperation(
@@ -56,7 +67,7 @@ class ConfirmRecurringUseCase(
                     date = date,
                     categoryId = recurring.category?.id,
                     sourceAccountId = null,
-                    targetCreditCardId = creditCard.id,
+                    targetCreditCardId = targetCreditCard.id,
                     targetInvoiceId = invoice.id,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
@@ -68,18 +79,19 @@ class ConfirmRecurringUseCase(
                             date = date,
                             category = recurring.category,
                             target = Transaction.Target.CREDIT_CARD,
-                            creditCard = creditCard,
+                            creditCard = targetCreditCard,
                             invoice = invoice,
                         )
                     ),
                 )
             } else {
+                val sourceAccount = account ?: recurring.account
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
                     title = recurring.title,
                     date = date,
                     categoryId = recurring.category?.id,
-                    sourceAccountId = recurring.account?.id,
+                    sourceAccountId = sourceAccount?.id,
                     targetCreditCardId = null,
                     targetInvoiceId = null,
                     recurringId = recurring.id,
@@ -92,7 +104,7 @@ class ConfirmRecurringUseCase(
                             date = date,
                             category = recurring.category,
                             target = Transaction.Target.ACCOUNT,
-                            account = recurring.account,
+                            account = sourceAccount,
                         )
                     ),
                 )

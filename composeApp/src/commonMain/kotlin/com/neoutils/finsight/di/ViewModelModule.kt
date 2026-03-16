@@ -424,6 +424,8 @@ val viewModelModule = module {
         ConfirmRecurringViewModel(
             recurring = it.get(),
             targetDate = it.get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
             invoiceRepository = get(),
             confirmRecurringUseCase = get(),
             skipRecurringUseCase = get(),

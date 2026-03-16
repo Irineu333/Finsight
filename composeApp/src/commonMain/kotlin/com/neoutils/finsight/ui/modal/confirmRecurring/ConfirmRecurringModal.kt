@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.confirmRecurring
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,31 +14,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.recurring_confirm_amount_label
-import com.neoutils.finsight.resources.recurring_confirm_button
-import com.neoutils.finsight.resources.recurring_confirm_date_label
-import com.neoutils.finsight.resources.recurring_confirm_skip
-import com.neoutils.finsight.resources.recurring_expense
-import com.neoutils.finsight.resources.recurring_income
-import com.neoutils.finsight.resources.view_recurring_account_label
-import com.neoutils.finsight.resources.view_recurring_category_label
-import com.neoutils.finsight.resources.view_recurring_credit_card_label
-import com.neoutils.finsight.resources.view_recurring_type_label
-import com.neoutils.finsight.ui.component.InvoiceSelector
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.DatePickerModal
 import com.neoutils.finsight.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
@@ -122,51 +114,67 @@ class ConfirmRecurringModal(
                     enabled = false,
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            recurring.account?.let { account ->
-                OutlinedTextField(
-                    value = account.name,
-                    onValueChange = {},
-                    label = { Text(text = stringResource(Res.string.view_recurring_account_label)) },
-                    readOnly = true,
-                    enabled = false,
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+            AnimatedVisibility(recurring.type.isExpense) {
+                TargetSelector(
+                    selectedTarget = uiState.selectedTarget,
+                    onTargetSelected = { target ->
+                        viewModel.onAction(ConfirmRecurringAction.TargetSelected(target))
+                    },
+                    availableTargets = uiState.targets,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            recurring.creditCard?.let { creditCard ->
-                OutlinedTextField(
-                    value = creditCard.name,
-                    onValueChange = {},
-                    label = { Text(text = stringResource(Res.string.view_recurring_credit_card_label)) },
-                    readOnly = true,
-                    enabled = false,
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+            AnimatedVisibility(
+                uiState.selectedTarget.isAccount || recurring.type.isIncome
+            ) {
+                AccountSelector(
+                    selectedAccount = uiState.selectedAccount,
+                    accounts = uiState.accounts,
+                    onAccountSelected = { account ->
+                        viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
+                    },
+                    label = stringResource(Res.string.view_recurring_account_label),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
                 )
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
+            AnimatedVisibility(uiState.selectedTarget.isCreditCard && recurring.type.isExpense) {
+                CreditCardSelector(
+                    creditCards = uiState.creditCards,
+                    creditCard = uiState.selectedCreditCard,
+                    onCreditCardSelected = { card ->
+                        viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                )
+            }
 
+            AnimatedVisibility(
+                uiState.selectedTarget.isCreditCard && recurring.type.isExpense
+            ) {
                 InvoiceSelector(
                     invoices = uiState.invoices,
                     invoice = uiState.selectedInvoice,
                     onInvoiceSelected = {
                         viewModel.onAction(ConfirmRecurringAction.InvoiceSelected(it))
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
             OutlinedTextField(
@@ -196,7 +204,7 @@ class ConfirmRecurringModal(
                                     initialDate = uiState.confirmDate,
                                     maxDate = currentDate,
                                     onDateSelected = { date ->
-                                        viewModel.onAction(ConfirmRecurringAction.DateChanged(date), amount.text.toString())
+                                        viewModel.onAction(ConfirmRecurringAction.DateChanged(date))
                                     }
                                 )
                             )
@@ -235,9 +243,14 @@ class ConfirmRecurringModal(
 
                 Button(
                     onClick = {
-                        viewModel.onAction(ConfirmRecurringAction.Confirm, amount.text.toString())
+                        viewModel.onAction(ConfirmRecurringAction.Confirm(amount.text.toString()))
                     },
-                    enabled = amount.text.toString().moneyToDouble() > 0.0,
+                    enabled = amount.text.toString().moneyToDouble() > 0.0 &&
+                            if (uiState.selectedTarget.isCreditCard) {
+                                uiState.selectedCreditCard != null
+                            } else {
+                                uiState.selectedAccount != null
+                            },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                 ) {

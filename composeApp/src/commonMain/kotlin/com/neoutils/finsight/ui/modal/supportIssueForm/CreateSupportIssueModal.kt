@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,9 +13,8 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -24,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
-import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.support_form_description_label
 import com.neoutils.finsight.resources.support_form_submit
@@ -47,27 +43,22 @@ import com.neoutils.finsight.resources.support_type_feature
 import com.neoutils.finsight.resources.support_type_question
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 
 class CreateSupportIssueModal(
-    private val onIssueCreated: (String) -> Unit = {},
+    private val onSubmit: (SupportIssueDraft) -> Unit = {},
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val createSupportIssueUseCase = koinInject<CreateSupportIssueUseCase>()
         val modalManager = LocalModalManager.current
-        val scope = rememberCoroutineScope()
         val titleState = rememberTextFieldState()
         val descriptionState = rememberTextFieldState()
         var selectedType by remember { mutableStateOf(SupportIssue.Type.BUG) }
-        var isSubmitting by remember { mutableStateOf(false) }
 
         val title = titleState.text.toString().trim()
         val description = descriptionState.text.toString().trim()
-        val canSubmit = title.isNotBlank() && description.isNotBlank() && !isSubmitting
+        val canSubmit = title.isNotBlank() && description.isNotBlank()
 
         Column(
             modifier = Modifier
@@ -139,38 +130,22 @@ class CreateSupportIssueModal(
 
             Button(
                 onClick = {
-                    scope.launch {
-                        isSubmitting = true
-                        createSupportIssueUseCase(
-                            SupportIssueDraft(
-                                type = selectedType,
-                                title = title,
-                                description = description,
-                            )
-                        ).fold(
-                            ifLeft = { isSubmitting = false },
-                            ifRight = { issue ->
-                                isSubmitting = false
-                                modalManager.dismiss()
-                                onIssueCreated(issue.id)
-                            },
+                    onSubmit(
+                        SupportIssueDraft(
+                            type = selectedType,
+                            title = title,
+                            description = description,
                         )
-                    }
+                    )
+                    modalManager.dismiss()
                 },
                 enabled = canSubmit,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    androidx.compose.material3.Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = null,
-                    )
-                }
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = null,
+                )
                 Text(
                     text = stringResource(Res.string.support_form_submit),
                     modifier = Modifier.padding(start = 8.dp),

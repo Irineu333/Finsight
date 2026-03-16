@@ -9,7 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -95,11 +97,17 @@ fun SupportIssueScreen(
                     SupportIssueHeader(issue = issue)
                 }
 
-                items(
-                    items = issue.messages,
-                    key = { it.id },
-                ) { message ->
-                    MessageBubble(message = message)
+                if (issue.messages.isEmpty()) {
+                    item(key = "messages_empty") {
+                        EmptyMessagesState()
+                    }
+                } else {
+                    items(
+                        items = issue.messages,
+                        key = { it.id },
+                    ) { message ->
+                        MessageBubble(message = message)
+                    }
                 }
             }
         }
@@ -146,11 +154,24 @@ private fun SupportIssueHeader(
                     color = issue.type.color(colorScheme),
                 )
             }
-            Text(
-                text = issue.updatedAt.toRelativeDateLabel(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Text(
+                    text = issue.updatedAt.toRelativeDateLabel(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -209,6 +230,44 @@ private fun MessageBubble(
 }
 
 @Composable
+private fun EmptyMessagesState(
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.SupportAgent,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(Res.string.support_messages_empty_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(Res.string.support_messages_empty_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ReplyComposer(
     value: String,
     onValueChange: (String) -> Unit,
@@ -239,7 +298,7 @@ private fun ReplyComposer(
                     enabled = enabled,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = stringResource(Res.string.support_reply_send),
                         tint = if (enabled) {
                             MaterialTheme.colorScheme.primary

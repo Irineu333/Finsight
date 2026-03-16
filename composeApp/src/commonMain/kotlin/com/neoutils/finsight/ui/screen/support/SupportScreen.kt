@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -51,10 +50,8 @@ import com.neoutils.finsight.resources.support_integration_body
 import com.neoutils.finsight.resources.support_integration_title
 import com.neoutils.finsight.resources.support_overview_total
 import com.neoutils.finsight.resources.support_overview_waiting
-import com.neoutils.finsight.resources.support_status_open
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.supportIssueForm.CreateSupportIssueModal
-import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -94,7 +91,12 @@ fun SupportScreen(
                 onClick = {
                     modalManager.show(
                         CreateSupportIssueModal(
-                            onIssueCreated = onOpenIssue,
+                            onSubmit = { draft ->
+                                viewModel.createIssue(
+                                    draft = draft,
+                                    onIssueCreated = onOpenIssue,
+                                )
+                            },
                         )
                     )
                 }
@@ -111,7 +113,12 @@ fun SupportScreen(
                 onCreateIssue = {
                     modalManager.show(
                         CreateSupportIssueModal(
-                            onIssueCreated = onOpenIssue,
+                            onSubmit = { draft ->
+                                viewModel.createIssue(
+                                    draft = draft,
+                                    onIssueCreated = onOpenIssue,
+                                )
+                            },
                         )
                     )
                 },
@@ -372,19 +379,12 @@ private fun SupportIssueCard(
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
                 Text(
                     text = issue.updatedAt.toRelativeDateLabel(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                if (issue.isWaitingSupportReply) {
-                    Text(
-                        text = stringResource(Res.string.support_status_open),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Warning,
-                    )
-                }
             }
         }
     }

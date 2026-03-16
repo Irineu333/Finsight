@@ -3,32 +3,14 @@
 package com.neoutils.finsight.ui.screen.support
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,13 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.support_author_support
-import com.neoutils.finsight.resources.support_author_you
-import com.neoutils.finsight.resources.support_detail_empty
-import com.neoutils.finsight.resources.support_detail_fallback_title
-import com.neoutils.finsight.resources.support_form_description_label
-import com.neoutils.finsight.resources.support_reply_send
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.theme.Info
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -237,45 +213,44 @@ private fun ReplyComposer(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(
+            topStart = 24.dp,
+            topEnd = 24.dp
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
     ) {
-        Row(
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = {
+                Text(text = stringResource(Res.string.support_form_description_label))
+            },
+            shape = RoundedCornerShape(12.dp),
+            trailingIcon = {
+                IconButton(
+                    onClick = onSend,
+                    enabled = enabled,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = stringResource(Res.string.support_reply_send),
+                        tint = if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        },
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                label = {
-                    Text(text = stringResource(Res.string.support_form_description_label))
-                },
-                shape = RoundedCornerShape(12.dp),
-                trailingIcon = {
-                    IconButton(
-                        onClick = onSend,
-                        enabled = enabled,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Send,
-                            contentDescription = stringResource(Res.string.support_reply_send),
-                            tint = if (enabled) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            },
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 1,
-                maxLines = 4,
-            )
-        }
+                .padding(16.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .fillMaxWidth(),
+            minLines = 1,
+            maxLines = 4,
+        )
     }
 }

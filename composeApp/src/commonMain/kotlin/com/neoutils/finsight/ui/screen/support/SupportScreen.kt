@@ -299,7 +299,6 @@ private fun SupportIssueCard(
     val statusColor = issue.status.color(colorScheme)
     val statusLabel = stringResource(issue.status.toResource())
     val typeLabel = stringResource(issue.type.toResource())
-    val lastMessage = issue.lastMessage?.body.orEmpty()
 
     Card(
         modifier = modifier
@@ -355,15 +354,13 @@ private fun SupportIssueCard(
                 )
             }
 
-            if (lastMessage.isNotBlank()) {
-                Text(
-                    text = lastMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                text =  issue.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,

@@ -12,7 +12,7 @@ class CreateSupportIssueUseCase(
 ) {
     suspend operator fun invoke(draft: SupportIssueDraft): Either<SupportError, SupportIssue> {
         if (draft.title.isBlank()) return SupportError.EMPTY_TITLE.left()
-        if (draft.message.isBlank()) return SupportError.EMPTY_DESCRIPTION.left()
+        if (draft.description.isBlank()) return SupportError.EMPTY_DESCRIPTION.left()
         return runCatching { supportRepository.createIssue(draft) }.fold(
             onSuccess = { Either.Right(it) },
             onFailure = { Either.Left(SupportError.UNKNOWN) },

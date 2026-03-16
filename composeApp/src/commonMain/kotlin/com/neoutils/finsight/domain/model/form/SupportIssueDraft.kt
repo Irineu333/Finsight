@@ -5,5 +5,5 @@ import com.neoutils.finsight.domain.model.SupportIssue
 data class SupportIssueDraft(
     val type: SupportIssue.Type,
     val title: String,
-    val message: String,
+    val description: String,
 )

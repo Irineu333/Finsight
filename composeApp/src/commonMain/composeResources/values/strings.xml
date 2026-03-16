@@ -134,10 +134,11 @@
     <string name="support_form_title">Nova issue</string>
     <string name="support_form_type">Tipo</string>
     <string name="support_form_title_label">Titulo</string>
-    <string name="support_form_description_label">Mensagem</string>
+    <string name="support_form_description_label">Descrição</string>
     <string name="support_form_submit">Enviar</string>
     <string name="support_detail_empty">Issue nao encontrada.</string>
     <string name="support_detail_fallback_title">Issue</string>
+    <string name="support_reply_message_label">Mensagem</string>
     <string name="support_reply_send">Responder</string>
     <string name="support_author_you">Voce</string>
     <string name="support_author_support">Suporte</string>

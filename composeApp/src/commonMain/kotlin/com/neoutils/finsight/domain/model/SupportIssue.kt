@@ -10,6 +10,7 @@ data class SupportIssue(
     val id: String,
     val type: Type,
     val title: String,
+    val description: String,
     val status: Status = Status.OPEN,
     val messages: List<SupportMessage>,
     val createdAt: Instant = Clock.System.now(),
@@ -19,8 +20,12 @@ data class SupportIssue(
         get() = messages.maxByOrNull { it.createdAt }
 
     val isWaitingSupportReply: Boolean
-        get() = messages.lastOrNull()?.author == SupportMessage.Author.USER &&
-                status != Status.RESOLVED
+        get() = when {
+            status == Status.RESOLVED -> false
+            lastMessage?.author == SupportMessage.Author.USER -> true
+            lastMessage?.author == SupportMessage.Author.SUPPORT -> false
+            else -> status == Status.OPEN || status == Status.IN_REVIEW
+        }
 
     enum class Type {
         BUG,

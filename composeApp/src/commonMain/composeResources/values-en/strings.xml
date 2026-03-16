@@ -129,10 +129,11 @@
     <string name="support_form_title">New issue</string>
     <string name="support_form_type">Type</string>
     <string name="support_form_title_label">Title</string>
-    <string name="support_form_description_label">Message</string>
+    <string name="support_form_description_label">Description</string>
     <string name="support_form_submit">Send</string>
     <string name="support_detail_empty">Issue not found.</string>
     <string name="support_detail_fallback_title">Issue</string>
+    <string name="support_reply_message_label">Message</string>
     <string name="support_reply_send">Reply</string>
     <string name="support_author_you">You</string>
     <string name="support_author_support">Support</string>

@@ -72,15 +72,9 @@ class FirebaseSupportRepository : ISupportRepository {
             userId = userId,
             type = draft.type.name,
             title = draft.title.trim(),
+            description = draft.description.trim(),
             status = SupportIssue.Status.OPEN.name,
-            messages = listOf(
-                MessageDocument(
-                    id = "msg-${now.toEpochMilliseconds()}",
-                    author = SupportMessage.Author.USER.name,
-                    body = draft.message.trim(),
-                    createdAtMs = now.toEpochMilliseconds(),
-                )
-            ),
+            messages = emptyList(),
             createdAtMs = now.toEpochMilliseconds(),
             updatedAtMs = now.toEpochMilliseconds(),
         )
@@ -122,6 +116,7 @@ private data class IssueDocument(
     val userId: String = "",
     val type: String = "",
     val title: String = "",
+    val description: String = "",
     val status: String = "",
     val messages: List<MessageDocument> = emptyList(),
     val createdAtMs: Long = 0L,
@@ -136,15 +131,18 @@ private data class MessageDocument(
     val createdAtMs: Long = 0L,
 )
 
-private fun IssueDocument.toDomain(id: String) = SupportIssue(
-    id = id,
-    type = SupportIssue.Type.valueOf(type),
-    title = title,
-    status = SupportIssue.Status.valueOf(status),
-    messages = messages.map { it.toDomain() },
-    createdAt = Instant.fromEpochMilliseconds(createdAtMs),
-    updatedAt = Instant.fromEpochMilliseconds(updatedAtMs),
-)
+private fun IssueDocument.toDomain(id: String): SupportIssue {
+    return SupportIssue(
+        id = id,
+        type = SupportIssue.Type.valueOf(type),
+        title = title,
+        description = description,
+        status = SupportIssue.Status.valueOf(status),
+        messages = messages.map { it.toDomain() },
+        createdAt = Instant.fromEpochMilliseconds(createdAtMs),
+        updatedAt = Instant.fromEpochMilliseconds(updatedAtMs),
+    )
+}
 
 private fun MessageDocument.toDomain() = SupportMessage(
     id = id,

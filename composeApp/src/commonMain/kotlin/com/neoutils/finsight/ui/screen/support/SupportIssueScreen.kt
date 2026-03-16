@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.theme.Info
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -41,9 +40,7 @@ fun SupportIssueScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(text = uiState.issue?.title ?: stringResource(Res.string.support_detail_fallback_title))
-                },
+                title = { },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
@@ -141,36 +138,43 @@ private fun SupportIssueHeader(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SupportPill(
-                    text = stringResource(issue.status.toResource()),
-                    color = issue.status.color(colorScheme),
-                )
-                SupportPill(
-                    text = stringResource(issue.type.toResource()),
-                    color = issue.type.color(colorScheme),
-                )
-            }
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(
-                    imageVector = Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
 
-                Text(
-                    text = issue.updatedAt.toRelativeDateLabel(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                    Text(
+                        text = issue.updatedAt.toRelativeDateLabel(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SupportPill(
+                        text = stringResource(issue.type.toResource()),
+                        color = issue.type.color(colorScheme),
+                    )
+                    SupportPill(
+                        text = stringResource(issue.status.toResource()),
+                        color = issue.status.color(colorScheme),
+                    )
+                }
             }
         }
     }
@@ -197,34 +201,34 @@ private fun MessageBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
     ) {
-        Box(
+        Column(
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
             modifier = Modifier
-                .fillMaxWidth(0.86f)
+                .padding(if (isUser) PaddingValues(start = 32.dp) else PaddingValues(end = 32.dp))
                 .background(
                     color = bubbleColor,
                     shape = RoundedCornerShape(18.dp),
                 )
                 .padding(14.dp),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text = if (isUser) stringResource(Res.string.support_author_you) else stringResource(Res.string.support_author_support),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isUser) contentColor else Info,
-                )
-                Text(
-                    text = message.body,
-                    color = contentColor,
-                )
-                Text(
-                    text = message.createdAt.toRelativeDateLabel(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.72f),
-                )
-            }
+//                Text(
+//                    text = if (isUser) stringResource(Res.string.support_author_you) else stringResource(Res.string.support_author_support),
+//                    style = MaterialTheme.typography.labelLarge,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = if (isUser) contentColor else Info,
+//                )
+            Text(
+                text = message.body,
+                color = contentColor,
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = message.createdAt.toRelativeDateLabel(),
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.72f),
+            )
         }
     }
 }

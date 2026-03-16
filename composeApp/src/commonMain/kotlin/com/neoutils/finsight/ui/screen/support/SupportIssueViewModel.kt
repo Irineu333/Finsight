@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.support
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.ISupportRepository
+import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
 
 class SupportIssueViewModel(
     issueId: String,
-    private val supportRepository: ISupportRepository,
+    supportRepository: ISupportRepository,
+    private val addSupportReplyUseCase: AddSupportReplyUseCase,
 ) : ViewModel() {
 
     private val replyText = MutableStateFlow("")
@@ -44,11 +46,10 @@ class SupportIssueViewModel(
 
         viewModelScope.launch {
             isSending.value = true
-            supportRepository.addReply(
-                issueId = issue.id,
-                message = reply,
+            addSupportReplyUseCase(issueId = issue.id, message = reply).fold(
+                ifLeft = {},
+                ifRight = { replyText.value = "" },
             )
-            replyText.value = ""
             isSending.value = false
         }
     }

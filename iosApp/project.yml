@@ -1,7 +1,7 @@
 name: iosApp
 
 options:
-  bundleIdPrefix: com.neoutils.finance
+  bundleIdPrefix: com.neoutils.finsight
   deploymentTarget:
     iOS: "18.2"
   minimizedProjectReferenceProxies: true
@@ -28,6 +28,13 @@ targets:
       - path: iosApp
         excludes:
           - Info.plist
+      - path: GoogleService-Info.plist
+
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
 
     info:
       path: iosApp/Info.plist
@@ -49,7 +56,7 @@ targets:
 
         # Product Settings
         PRODUCT_NAME: finance
-        PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finance.finance
+        PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finsight
         TARGETED_DEVICE_FAMILY: "1,2"
 
         # Swift
@@ -100,6 +107,11 @@ targets:
           cd "$SRCROOT/.."
           ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
         showEnvVarsInLog: false
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "11.0.0"
 
 schemes:
   iosApp:

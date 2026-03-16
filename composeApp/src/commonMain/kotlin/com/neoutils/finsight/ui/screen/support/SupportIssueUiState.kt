@@ -6,7 +6,7 @@ data class SupportIssueUiState(
     val issue: SupportIssue? = null,
     val replyText: String = "",
     val isSending: Boolean = false,
-    val integrationPending: Boolean = true,
+    val integrationPending: Boolean = false,
 ) {
     val canSend: Boolean
         get() = issue != null && replyText.isNotBlank() && !isSending

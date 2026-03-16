@@ -43,6 +43,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.AccountCard
+import com.neoutils.finsight.ui.component.AccountCardVariant
+import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.OperationCard
@@ -52,23 +55,13 @@ import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
-import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.accounts_advance_payments
-import com.neoutils.finsight.resources.accounts_adjustments
-import com.neoutils.finsight.resources.accounts_balance
-import com.neoutils.finsight.resources.accounts_default
 import com.neoutils.finsight.resources.accounts_delete
 import com.neoutils.finsight.resources.accounts_edit
-import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_filter_category
 import com.neoutils.finsight.resources.accounts_filter_category_all
 import com.neoutils.finsight.resources.accounts_filter_type
@@ -76,17 +69,14 @@ import com.neoutils.finsight.resources.accounts_filter_type_adjustment
 import com.neoutils.finsight.resources.accounts_filter_type_all
 import com.neoutils.finsight.resources.accounts_filter_type_expense
 import com.neoutils.finsight.resources.accounts_filter_type_income
-import com.neoutils.finsight.resources.accounts_income
-import com.neoutils.finsight.resources.accounts_initial_balance
-import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
 import com.neoutils.finsight.resources.transactions_filter_installment
 import com.neoutils.finsight.resources.transactions_filter_recurring
+import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.math.absoluteValue
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
@@ -307,239 +297,14 @@ private fun AccountPager(
         pageSpacing = 8.dp,
     ) { page ->
         AccountCard(
-            accountUi = accounts[page],
+            account = accounts[page].account,
+            variant = AccountCardVariant.Detail(
+                accountUi = accounts[page],
+                onEditBalance = { onEditBalance(accounts[page].account) },
+                onEditInitialBalance = { onEditInitialBalance(accounts[page].account) },
+            ),
             modifier = Modifier.fillMaxWidth(),
-            onEditBalance = {
-                onEditBalance(accounts[page].account)
-            },
-            onEditInitialBalance = {
-                onEditInitialBalance(accounts[page].account)
-            }
         )
-    }
-}
-
-@Composable
-private fun AccountCard(
-    accountUi: AccountUi,
-    modifier: Modifier = Modifier,
-    onEditBalance: () -> Unit = {},
-    onEditInitialBalance: () -> Unit = {}
-) {
-    val account = accountUi.account
-    val accountIcon = AppIcon.fromKey(account.iconKey).icon
-    val initialBalance = accountUi.initialBalance
-    val balance = accountUi.balance
-    val income = accountUi.income
-    val expense = accountUi.expense
-    val adjustment = accountUi.adjustment
-    val invoicePayment = accountUi.invoicePayment
-    val advancePayment = accountUi.advancePayment
-
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-                .animateContentSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        color = colorScheme.primary.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = accountIcon,
-                                contentDescription = null,
-                                tint = colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = account.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                if (account.isDefault) {
-                    Surface(
-                        color = colorScheme.primary.copy(alpha = 0.12f),
-                        contentColor = colorScheme.primary,
-                        shape = RoundedCornerShape(999.dp),
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.accounts_default),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
-                }
-            }
-
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_initial_balance),
-                amount = initialBalance,
-                color = colorScheme.onSurface,
-                signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
-                onEditClick = onEditInitialBalance
-            )
-
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_income),
-                amount = income,
-                color = Income,
-                signDisplay = AccountSignDisplay.ALWAYS_POSITIVE
-            )
-
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_expenses),
-                amount = expense,
-                color = Expense,
-                signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
-            )
-
-            if (adjustment != 0.0) {
-                AccountSummaryRow(
-                    label = stringResource(Res.string.accounts_adjustments),
-                    amount = adjustment,
-                    color = Adjustment,
-                    signDisplay = AccountSignDisplay.SHOW_ALWAYS
-                )
-            }
-
-            if (invoicePayment != 0.0) {
-                AccountSummaryRow(
-                    label = stringResource(Res.string.accounts_invoices),
-                    amount = invoicePayment,
-                    color = InvoicePayment,
-                    signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
-                )
-            }
-
-            if (advancePayment != 0.0) {
-                AccountSummaryRow(
-                    label = stringResource(Res.string.accounts_advance_payments),
-                    amount = advancePayment,
-                    color = InvoicePayment,
-                    signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE
-                )
-            }
-
-            HorizontalDivider(
-                color = colorScheme.outlineVariant.copy(alpha = 0.6f)
-            )
-
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_balance),
-                amount = balance,
-                color = colorScheme.onSurface,
-                isTotal = true,
-                onEditClick = onEditBalance,
-                signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE
-            )
-        }
-    }
-}
-
-@Composable
-private fun AccountSummaryRow(
-    label: String,
-    amount: Double,
-    color: Color,
-    modifier: Modifier = Modifier,
-    signDisplay: AccountSignDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
-    isTotal: Boolean = false,
-    onEditClick: (() -> Unit)? = null
-) {
-    val formatter = LocalCurrencyFormatter.current
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            fontSize = if (isTotal) 18.sp else 15.sp,
-            fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isTotal) colorScheme.onSurface else colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-
-        val formattedAmount = when (signDisplay) {
-            AccountSignDisplay.ALWAYS_POSITIVE -> {
-                "+${formatter.format(amount.absoluteValue)}"
-            }
-
-            AccountSignDisplay.ALWAYS_NEGATIVE -> {
-                "-${formatter.format(amount.absoluteValue)}"
-            }
-
-            AccountSignDisplay.SHOW_ONLY_NEGATIVE -> formatter.format(amount)
-
-            AccountSignDisplay.SHOW_ALWAYS -> formatter.formatWithSign(amount)
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .then(
-                    if (onEditClick != null) {
-                        Modifier.clickable { onEditClick() }
-                    } else {
-                        Modifier
-                    }
-                )
-        ) {
-            if (onEditClick != null) {
-                Icon(
-                    imageVector = Icons.Rounded.ModeEdit,
-                    contentDescription = null,
-                    tint = color.copy(alpha = 0.5f),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            Text(
-                text = formattedAmount,
-                fontSize = if (isTotal) 20.sp else 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
     }
 }
 
@@ -936,11 +701,4 @@ private fun InstallmentFilterChip(
             Text(stringResource(Res.string.transactions_filter_installment))
         },
     )
-}
-
-private enum class AccountSignDisplay {
-    ALWAYS_POSITIVE,
-    ALWAYS_NEGATIVE,
-    SHOW_ONLY_NEGATIVE,
-    SHOW_ALWAYS,
 }

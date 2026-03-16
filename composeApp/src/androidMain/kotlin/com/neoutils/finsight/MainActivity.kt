@@ -6,10 +6,14 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.tooling.preview.Preview
+import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.theme.FinsightTheme
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(
@@ -20,7 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            FinsightTheme {
+            CompositionLocalProvider(LocalPlatformContext provides PlatformContext(this)) {
                 App()
             }
         }

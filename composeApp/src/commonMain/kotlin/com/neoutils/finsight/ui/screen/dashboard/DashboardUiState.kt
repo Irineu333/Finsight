@@ -5,12 +5,10 @@ package com.neoutils.finsight.ui.screen.dashboard
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.model.InvoiceUi
+import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -38,11 +36,6 @@ data class DashboardUiState(
         val hasPending = pendingIncome > 0.0 || pendingExpense > 0.0
     }
 }
-
-data class CreditCardUi(
-    val creditCard: CreditCard,
-    val invoiceUi: InvoiceUi?,
-)
 
 data class DashboardAccountUi(
     val account: Account,

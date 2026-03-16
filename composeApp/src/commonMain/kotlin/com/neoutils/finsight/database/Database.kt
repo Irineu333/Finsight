@@ -205,7 +205,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
-// unpublished
+// 1.5.0-rc01
 val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

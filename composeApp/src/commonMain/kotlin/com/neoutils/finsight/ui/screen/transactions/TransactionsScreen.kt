@@ -73,6 +73,7 @@ private fun TransactionsContent(
                 },
                 showPickerChevron = false,
                 modifier = Modifier
+                    .statusBarsPadding()
                     .padding(vertical = 8.dp)
                     .fillMaxWidth()
             )

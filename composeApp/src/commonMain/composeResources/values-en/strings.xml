@@ -53,6 +53,61 @@
     <string name="dashboard_current_balance">Current Balance</string>
     <string name="dashboard_total_balance">Total balance</string>
     <string name="dashboard_add_account">Add account</string>
+    <string name="dashboard_reports">Reports</string>
+
+    <!-- Report Config Screen -->
+    <string name="report_config_title">New Report</string>
+    <string name="report_config_perspective">Perspective</string>
+    <string name="report_config_sections">Sections</string>
+    <string name="report_config_perspective_account">Account</string>
+    <string name="report_config_perspective_credit_card">Credit Card</string>
+    <string name="report_config_date_range">Period</string>
+    <string name="report_config_start_date">Start date</string>
+    <string name="report_config_end_date">End date</string>
+    <string name="report_config_include_spending_by_category">Spending by category</string>
+    <string name="report_config_include_income_by_category">Income by category</string>
+    <string name="report_config_include_transactions">Transaction list</string>
+    <string name="report_config_accounts">Accounts</string>
+    <string name="report_config_no_accounts">No accounts registered</string>
+    <string name="report_config_credit_cards">Cards</string>
+    <string name="report_config_invoice">Invoice</string>
+    <string name="report_config_generate">Generate Report</string>
+    <string name="report_config_cancel">Cancel</string>
+    <string name="report_config_confirm">Confirm</string>
+    <string name="report_config_period_select">Tap to select</string>
+    <string name="report_config_period_last_7_days">Last 7 days</string>
+    <string name="report_config_period_last_30_days">Last 30 days</string>
+    <string name="report_config_period_this_month">This month</string>
+    <string name="report_config_period_last_month">Last month</string>
+    <string name="report_config_period_this_year">This year</string>
+
+    <!-- Report Viewer Screen -->
+    <string name="report_viewer_title">Report</string>
+    <string name="report_viewer_badge_account">Account</string>
+    <string name="report_viewer_badge_credit_card">Card</string>
+    <string name="report_viewer_summary_income">Income</string>
+    <string name="report_viewer_summary_expense">Expense</string>
+    <string name="report_viewer_summary_balance">Period Balance</string>
+    <string name="report_viewer_summary_initial_balance">Initial Balance</string>
+    <string name="report_viewer_summary_invoice_total">Open Invoice</string>
+    <string name="report_viewer_summary_invoice_expense">Expense</string>
+    <string name="report_viewer_summary_advance_payment">Paid</string>
+    <string name="report_viewer_spending_by_category">Spending by Category</string>
+    <string name="report_viewer_income_by_category">Income by Category</string>
+    <string name="report_viewer_transactions">Transactions</string>
+    <string name="report_viewer_action_share_html">Share HTML</string>
+    <string name="report_viewer_action_print">Print</string>
+    <string name="report_output_generated_at">Generated at</string>
+    <string name="report_output_share_success">Report shared successfully.</string>
+    <string name="report_output_share_success_with_location">Report saved to: %1$s</string>
+    <string name="report_output_print_queued">Report sent to printer queue.</string>
+    <string name="report_output_error_unsupported_format">Unsupported export format.</string>
+    <string name="report_output_error_printing_unsupported">Printing is not available on this platform.</string>
+    <string name="report_output_error_generic">Unable to complete report operation.</string>
+    <string name="report_output_column_category">Category</string>
+    <string name="report_output_column_transaction">Transaction</string>
+    <string name="report_output_column_amount">Amount</string>
+    <string name="report_output_column_percentage">%</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>
@@ -418,8 +473,10 @@
 
     <string name="credit_card_ui_current_invoice">Current Invoice</string>
     <string name="credit_card_ui_available_limit">Available Limit</string>
+    <string name="credit_card_ui_opens_on">Opens on</string>
     <string name="credit_card_ui_closes_on">Closes on</string>
     <string name="credit_card_ui_due_on">Due on</string>
+    <string name="credit_card_ui_day">Day %1$d</string>
     <string name="credit_card_ui_edit_invoice">Edit invoice</string>
 
     <string name="dashboard_credit_card_current_invoice">Current Invoice</string>

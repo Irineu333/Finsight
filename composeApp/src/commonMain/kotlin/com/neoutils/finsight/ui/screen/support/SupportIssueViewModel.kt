@@ -25,16 +25,20 @@ class SupportIssueViewModel(
         replyText,
         isSending,
     ) { issue, messages, replyText, isSending ->
-        SupportIssueUiState(
-            issue = issue,
-            messages = messages,
-            replyText = replyText,
-            isSending = isSending,
-        )
+        if (issue == null) {
+            SupportIssueUiState.Loading
+        } else {
+            SupportIssueUiState.Content(
+                issue = issue,
+                messages = messages,
+                replyText = replyText,
+                isSending = isSending,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = SupportIssueUiState(),
+        initialValue = SupportIssueUiState.Loading,
     )
 
     fun onReplyTextChange(value: String) {
@@ -42,13 +46,13 @@ class SupportIssueViewModel(
     }
 
     fun sendReply() {
-        val issue = uiState.value.issue ?: return
-        val reply = uiState.value.replyText.trim()
-        if (reply.isBlank() || uiState.value.isSending) return
+        val content = uiState.value as? SupportIssueUiState.Content ?: return
+        val reply = content.replyText.trim()
+        if (reply.isBlank() || content.isSending) return
 
         viewModelScope.launch {
             isSending.value = true
-            addSupportReplyUseCase(issueId = issue.id, message = reply).fold(
+            addSupportReplyUseCase(issueId = content.issue.id, message = reply).fold(
                 ifLeft = {},
                 ifRight = { replyText.value = "" },
             )

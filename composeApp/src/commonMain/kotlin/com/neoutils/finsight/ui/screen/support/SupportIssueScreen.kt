@@ -57,53 +57,52 @@ fun SupportIssueScreen(
             )
         },
         bottomBar = {
-            if (uiState.issue != null) {
+            val content = uiState as? SupportIssueUiState.Content
+            if (content != null) {
                 ReplyComposer(
-                    value = uiState.replyText,
+                    value = content.replyText,
                     onValueChange = viewModel::onReplyTextChange,
                     onSend = viewModel::sendReply,
-                    enabled = uiState.canSend,
+                    enabled = content.canSend,
                 )
             }
         },
     ) { paddingValues ->
-        val issue = uiState.issue
-
-        if (issue == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(Res.string.support_detail_empty),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                item(key = "header") {
-                    SupportIssueHeader(issue = issue)
+        when (val state = uiState) {
+            SupportIssueUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                if (uiState.messages.isEmpty()) {
-                    item(key = "messages_empty") {
-                        EmptyMessagesState()
+            is SupportIssueUiState.Content -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    item(key = "header") {
+                        SupportIssueHeader(issue = state.issue)
                     }
-                } else {
-                    items(
-                        items = uiState.messages,
-                        key = { it.id },
-                    ) { message ->
-                        MessageBubble(message = message)
+
+                    if (state.messages.isEmpty()) {
+                        item(key = "messages_empty") {
+                            EmptyMessagesState()
+                        }
+                    } else {
+                        items(
+                            items = state.messages,
+                            key = { it.id },
+                        ) { message ->
+                            MessageBubble(message = message)
+                        }
                     }
                 }
             }

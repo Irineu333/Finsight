@@ -49,6 +49,7 @@ import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -708,7 +709,7 @@ private fun DashboardContent(
             }
         }
 
-        item(
+        if (!isDesktop) item(
             key = "open_support_action"
         ) {
             Card(

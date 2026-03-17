@@ -17,7 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.twotone.CalendarMonth
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
@@ -48,10 +50,9 @@ import com.neoutils.finsight.resources.support_type_question
 import com.neoutils.finsight.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.theme.Success
 import com.neoutils.finsight.ui.theme.Warning
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -89,10 +90,6 @@ internal fun SupportIssue.Status.color(colorScheme: ColorScheme): Color = when (
     SupportIssue.Status.RESOLVED -> Success
 }
 
-internal fun kotlin.time.Instant.toRelativeDateLabel(): String {
-    return toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-}
-
 @Composable
 internal fun SupportPill(
     text: String,
@@ -123,6 +120,7 @@ internal fun SupportIssueCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val typeColor = issue.type.color(colorScheme)
+    val dateFormats = LocalDateFormats.current
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
@@ -213,13 +211,13 @@ internal fun SupportIssueCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Schedule,
+                    imageVector = Icons.TwoTone.CalendarMonth,
                     contentDescription = null,
                     modifier = Modifier.size(12.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = issue.updatedAt.toRelativeDateLabel(),
+                    text = dateFormats.formatInstantDate(issue.updatedAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

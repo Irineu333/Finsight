@@ -4,6 +4,8 @@ package com.neoutils.finsight.util
 
 import androidx.compose.runtime.compositionLocalOf
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format.DayOfWeekNames
@@ -13,6 +15,7 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 val dayMonthYear = LocalDate.Format {
     byUnicodePattern("dd/MM/yyyy")
@@ -26,6 +29,8 @@ class DateFormats(
     private val monthNames: MonthNames,
     private val dayOfWeekNames: DayOfWeekNames,
 ) {
+    private val abbreviatedMonthNames = MonthNames(monthNames.names.map { it.take(3) })
+
     val dayOfWeek = LocalDate.Format {
         day()
         chars(", ")
@@ -36,6 +41,40 @@ class DateFormats(
         monthName(monthNames)
         chars(", ")
         year()
+    }
+
+    val monthDayYear = LocalDate.Format {
+        monthName(abbreviatedMonthNames)
+        chars(" ")
+        day()
+        chars(", ")
+        year()
+    }
+
+    private val monthDay = LocalDate.Format {
+        monthName(abbreviatedMonthNames)
+        chars(" ")
+        day()
+    }
+
+    private val timeFormat = LocalTime.Format {
+        hour()
+        chars(":")
+        minute()
+    }
+
+    fun toLocalDate(instant: Instant): LocalDate {
+        return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
+
+    fun formatDividerDate(instant: Instant, today: String, yesterday: String): String {
+        val date = toLocalDate(instant)
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return when (date.daysUntil(now)) {
+            0 -> today
+            1 -> yesterday
+            else -> if (date.year == now.year) monthDay.format(date) else monthDayYear.format(date)
+        }
     }
 
     fun formatReportPeriod(startDate: LocalDate, endDate: LocalDate): String {
@@ -60,6 +99,16 @@ class DateFormats(
             date.month != today.month -> dayMonth.format(date)
             else -> dayOfWeek.format(date)
         }
+    }
+
+    fun formatInstantDate(instant: Instant): String {
+        val date = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return monthDayYear.format(date)
+    }
+
+    fun formatInstantTime(instant: Instant): String {
+        val time = instant.toLocalDateTime(TimeZone.currentSystemDefault()).time
+        return timeFormat.format(time)
     }
 }
 

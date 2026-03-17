@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.support
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -57,14 +58,17 @@ fun SupportIssueScreen(
             )
         },
         bottomBar = {
-            val content = uiState as? SupportIssueUiState.Content
-            if (content != null) {
-                ReplyComposer(
-                    value = content.replyText,
-                    onValueChange = viewModel::onReplyTextChange,
-                    onSend = viewModel::sendReply,
-                    enabled = content.canSend,
-                )
+            when (val content = uiState) {
+                is SupportIssueUiState.Content -> {
+                    ReplyComposer(
+                        value = content.replyText,
+                        onValueChange = viewModel::onReplyTextChange,
+                        onSend = viewModel::sendReply,
+                        enabled = content.canSend,
+                    )
+                }
+
+                else -> Unit
             }
         },
     ) { paddingValues ->
@@ -81,6 +85,10 @@ fun SupportIssueScreen(
             }
 
             is SupportIssueUiState.Content -> {
+                val dateFormats = LocalDateFormats.current
+                val today = stringResource(Res.string.support_chat_divider_today)
+                val yesterday = stringResource(Res.string.support_chat_divider_yesterday)
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -100,11 +108,26 @@ fun SupportIssueScreen(
                             EmptyMessagesState()
                         }
                     } else {
-                        items(
+                        itemsIndexed(
                             items = state.messages,
-                            key = { it.id },
-                        ) { message ->
-                            MessageBubble(message = message)
+                            key = { _, message -> message.id },
+                        ) { index, message ->
+                            val isNewDay = index == 0 ||
+                                dateFormats.toLocalDate(state.messages[index - 1].createdAt) !=
+                                dateFormats.toLocalDate(message.createdAt)
+
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                if (isNewDay) {
+                                    DateDivider(
+                                        label = dateFormats.formatDividerDate(
+                                            instant = message.createdAt,
+                                            today = today,
+                                            yesterday = yesterday,
+                                        )
+                                    )
+                                }
+                                MessageBubble(message = message)
+                            }
                         }
                     }
                 }
@@ -118,6 +141,7 @@ private fun MessageBubble(
     message: SupportMessage,
     modifier: Modifier = Modifier,
 ) {
+    val dateFormats = LocalDateFormats.current
     val bubbleColor = when (message.author) {
         SupportMessage.Author.USER -> MaterialTheme.colorScheme.primary
         SupportMessage.Author.SUPPORT -> MaterialTheme.colorScheme.surfaceContainer
@@ -157,9 +181,35 @@ private fun MessageBubble(
             )
         }
         Text(
-            text = message.createdAt.toRelativeDateLabel(),
+            text = dateFormats.formatInstantTime(message.createdAt),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun DateDivider(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
         )
     }
 }

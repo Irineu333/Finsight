@@ -3,7 +3,6 @@
 package com.neoutils.finsight.ui.screen.support
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -74,12 +74,12 @@ fun SupportScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    androidx.compose.material3.IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
-                    }
+                    IconButton(onClick = onNavigateBack) {
+                         Icon(
+                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                             contentDescription = null,
+                         )
+                     }
                 },
             )
         },
@@ -105,7 +105,7 @@ fun SupportScreen(
             }
         },
     ) { paddingValues ->
-        when (val state = uiState) {
+        when (uiState) {
             SupportUiState.Loading -> {
                 Box(
                     modifier = Modifier
@@ -118,7 +118,7 @@ fun SupportScreen(
             }
 
             is SupportUiState.Content -> {
-                if (state.issues.isEmpty()) {
+                if (uiState.issues.isEmpty()) {
                     EmptySupportState(
                         onCreateIssue = {
                             modalManager.show(
@@ -144,18 +144,18 @@ fun SupportScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        if (state.integrationPending) {
+                        if (uiState.integrationPending) {
                             item(key = "integration_note") {
                                 IntegrationPendingCard()
                             }
                         }
 
                         item(key = "overview") {
-                            SupportOverviewCard(uiState = state)
+                            SupportOverviewCard(uiState = uiState)
                         }
 
                         items(
-                            items = state.issues,
+                            items = uiState.issues,
                             key = { it.id },
                         ) { issue ->
                             SupportIssueCard(

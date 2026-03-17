@@ -142,6 +142,8 @@
     <string name="support_messages_empty_body">A primeira resposta da conversa aparecerá aqui.</string>
     <string name="support_reply_message_label">Mensagem</string>
     <string name="support_reply_send">Responder</string>
+    <string name="support_chat_divider_today">Hoje</string>
+    <string name="support_chat_divider_yesterday">Ontem</string>
     <string name="support_author_you">Voce</string>
     <string name="support_author_support">Suporte</string>
 

@@ -14,7 +14,9 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,8 +91,16 @@ fun SupportIssueScreen(
                 val dateFormats = LocalDateFormats.current
                 val today = stringResource(Res.string.support_chat_divider_today)
                 val yesterday = stringResource(Res.string.support_chat_divider_yesterday)
+                val listState = rememberLazyListState()
+
+                LaunchedEffect(state.messages.size) {
+                    if (state.messages.isNotEmpty()) {
+                        listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+                    }
+                }
 
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),

@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,10 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_support
 import com.neoutils.finsight.resources.support_empty_body
@@ -64,7 +61,6 @@ fun SupportScreen(
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val modalManager = LocalModalManager.current
-    val colorScheme = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -165,7 +161,6 @@ fun SupportScreen(
                             SupportIssueCard(
                                 issue = issue,
                                 onClick = { onOpenIssue(issue.id) },
-                                colorScheme = colorScheme,
                                 modifier = Modifier.animateItem(),
                             )
                         }
@@ -312,96 +307,3 @@ private fun SupportOverviewCard(
     }
 }
 
-@Composable
-private fun SupportIssueCard(
-    issue: SupportIssue,
-    onClick: () -> Unit,
-    colorScheme: androidx.compose.material3.ColorScheme,
-    modifier: Modifier = Modifier,
-) {
-    val statusColor = issue.status.color(colorScheme)
-    val statusLabel = stringResource(issue.status.toResource())
-    val typeLabel = stringResource(issue.type.toResource())
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(
-                            color = issue.type.color(colorScheme).copy(alpha = 0.16f),
-                            shape = RoundedCornerShape(12.dp),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = issue.type.icon(),
-                        contentDescription = null,
-                        tint = issue.type.color(colorScheme),
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = issue.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = typeLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                SupportPill(
-                    text = statusLabel,
-                    color = statusColor,
-                )
-            }
-
-            Text(
-                text =  issue.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Text(
-                    text = issue.updatedAt.toRelativeDateLabel(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}

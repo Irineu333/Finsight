@@ -114,24 +114,28 @@ fun AppNavHost() = Surface {
                         }
 
                         composable<AppRoute.Support> {
-                            SupportScreen(
-                                onNavigateBack = {
-                                    navController.navigateUp()
-                                },
-                                onOpenIssue = { issueId ->
-                                    navController.navigate(AppRoute.SupportIssue(issueId))
-                                },
-                            )
+                            AnimatedVisibilityScopeProvider {
+                                SupportScreen(
+                                    onNavigateBack = {
+                                        navController.navigateUp()
+                                    },
+                                    onOpenIssue = { issueId ->
+                                        navController.navigate(AppRoute.SupportIssue(issueId))
+                                    },
+                                )
+                            }
                         }
 
                         composable<AppRoute.SupportIssue> { backStackEntry ->
-                            val route = backStackEntry.toRoute<AppRoute.SupportIssue>()
-                            SupportIssueScreen(
-                                issueId = route.issueId,
-                                onNavigateBack = {
-                                    navController.navigateUp()
-                                },
-                            )
+                            AnimatedVisibilityScopeProvider {
+                                val route = backStackEntry.toRoute<AppRoute.SupportIssue>()
+                                SupportIssueScreen(
+                                    issueId = route.issueId,
+                                    onNavigateBack = {
+                                        navController.navigateUp()
+                                    },
+                                )
+                            }
                         }
 
                         navigation<AppRoute.Reports>(

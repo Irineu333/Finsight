@@ -68,11 +68,11 @@ class FirebaseSupportRepository : ISupportRepository {
         emitAll(
             collection.document(issueId)
                 .collection("messages")
-                .snapshots
+                .snapshots(includeMetadataChanges = true)
                 .map { snapshot ->
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
-                            doc.data<MessageDocument>().toDomain(doc.id)
+                            doc.data<MessageDocument>().toDomain(doc.id, doc.metadata.hasPendingWrites)
                         }.getOrNull()
                     }.sortedBy { it.createdAt }
                 }
@@ -161,9 +161,10 @@ private fun IssueDocument.toDomain(id: String): SupportIssue {
     )
 }
 
-private fun MessageDocument.toDomain(id: String) = SupportMessage(
+private fun MessageDocument.toDomain(id: String, isPending: Boolean = false) = SupportMessage(
     id = id,
     author = SupportMessage.Author.valueOf(author),
     body = body,
     createdAt = Instant.fromEpochMilliseconds(createdAtMs),
+    isPending = isPending,
 )

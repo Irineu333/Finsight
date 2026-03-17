@@ -86,7 +86,7 @@ fun SupportIssueScreen(
                         .fillMaxSize()
                         .padding(paddingValues),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     item(key = "header") {
                         SupportIssueCard(
@@ -118,50 +118,49 @@ private fun MessageBubble(
     message: SupportMessage,
     modifier: Modifier = Modifier,
 ) {
-    val isUser = message.author == SupportMessage.Author.USER
-    val bubbleColor = if (isUser) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
+    val bubbleColor = when (message.author) {
+        SupportMessage.Author.USER -> MaterialTheme.colorScheme.primary
+        SupportMessage.Author.SUPPORT -> MaterialTheme.colorScheme.surfaceContainer
     }
-    val contentColor = if (isUser) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurface
+    val contentColor = when (message.author) {
+        SupportMessage.Author.USER -> MaterialTheme.colorScheme.onPrimary
+        SupportMessage.Author.SUPPORT -> MaterialTheme.colorScheme.onSurface
     }
-    val bubbleShape = if (isUser) {
-        RoundedCornerShape(18.dp, 4.dp, 18.dp, 18.dp)
-    } else {
-        RoundedCornerShape(4.dp, 18.dp, 18.dp, 18.dp)
+    val bubbleShape = when (message.author) {
+        SupportMessage.Author.USER -> RoundedCornerShape(16.dp, 0.dp, 16.dp, 16.dp)
+        SupportMessage.Author.SUPPORT -> RoundedCornerShape(0.dp, 16.dp, 16.dp, 16.dp)
+    }
+    val alignment = when (message.author) {
+        SupportMessage.Author.USER -> Alignment.End
+        SupportMessage.Author.SUPPORT -> Alignment.Start
+    }
+    val padding = when (message.author) {
+        SupportMessage.Author.USER -> PaddingValues(start = 64.dp)
+        SupportMessage.Author.SUPPORT -> PaddingValues(end = 64.dp)
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
+        horizontalAlignment = alignment,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(
-            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
+        Box(
             modifier = Modifier
-                .padding(if (isUser) PaddingValues(start = 32.dp) else PaddingValues(end = 32.dp))
-                .background(
-                    color = bubbleColor,
-                    shape = bubbleShape,
-                )
-                .padding(14.dp),
+                .padding(padding)
+                .background(color = bubbleColor, shape = bubbleShape)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Text(
                 text = message.body,
                 color = contentColor,
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            Text(
-                text = message.createdAt.toRelativeDateLabel(),
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.72f),
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
+        Text(
+            text = message.createdAt.toRelativeDateLabel(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

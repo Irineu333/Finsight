@@ -17,14 +17,12 @@ class SupportIssueViewModel(
 ) : ViewModel() {
 
     private val replyText = MutableStateFlow("")
-    private val isSending = MutableStateFlow(false)
 
     val uiState = combine(
         supportRepository.observeIssueById(issueId),
         supportRepository.observeMessages(issueId),
         replyText,
-        isSending,
-    ) { issue, messages, replyText, isSending ->
+    ) { issue, messages, replyText ->
         if (issue == null) {
             SupportIssueUiState.Loading
         } else {
@@ -32,7 +30,6 @@ class SupportIssueViewModel(
                 issue = issue,
                 messages = messages,
                 replyText = replyText,
-                isSending = isSending,
             )
         }
     }.stateIn(
@@ -48,15 +45,12 @@ class SupportIssueViewModel(
     fun sendReply() {
         val content = uiState.value as? SupportIssueUiState.Content ?: return
         val reply = content.replyText.trim()
-        if (reply.isBlank() || content.isSending) return
+        if (reply.isBlank()) return
+
+        replyText.value = ""
 
         viewModelScope.launch {
-            isSending.value = true
-            addSupportReplyUseCase(issueId = content.issue.id, message = reply).fold(
-                ifLeft = {},
-                ifRight = { replyText.value = "" },
-            )
-            isSending.value = false
+            addSupportReplyUseCase(issueId = content.issue.id, message = reply)
         }
     }
 }

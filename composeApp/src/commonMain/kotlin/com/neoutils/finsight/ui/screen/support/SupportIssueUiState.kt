@@ -11,10 +11,8 @@ sealed class SupportIssueUiState {
         val issue: SupportIssue,
         val messages: List<SupportMessage> = emptyList(),
         val replyText: String = "",
-        val isSending: Boolean = false,
-        val integrationPending: Boolean = false,
     ) : SupportIssueUiState() {
         val canSend: Boolean
-            get() = replyText.isNotBlank() && !isSending
+            get() = replyText.isNotBlank()
     }
 }

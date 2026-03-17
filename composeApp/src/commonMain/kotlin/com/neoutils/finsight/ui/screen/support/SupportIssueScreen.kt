@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -113,8 +114,8 @@ fun SupportIssueScreen(
                             key = { _, message -> message.id },
                         ) { index, message ->
                             val isNewDay = index == 0 ||
-                                dateFormats.toLocalDate(state.messages[index - 1].createdAt) !=
-                                dateFormats.toLocalDate(message.createdAt)
+                                    dateFormats.toLocalDate(state.messages[index - 1].createdAt) !=
+                                    dateFormats.toLocalDate(message.createdAt)
 
                             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 if (isNewDay) {
@@ -180,11 +181,25 @@ private fun MessageBubble(
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
-        Text(
-            text = dateFormats.formatInstantTime(message.createdAt),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (message.isPending && message.author == SupportMessage.Author.USER) {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
+
+            Text(
+                text = dateFormats.formatInstantTime(message.createdAt),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

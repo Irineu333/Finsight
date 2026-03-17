@@ -37,6 +37,7 @@ data class SupportMessage(
     val author: Author,
     val body: String,
     val createdAt: Instant = Clock.System.now(),
+    val isPending: Boolean = false,
 ) {
     enum class Author {
         USER,

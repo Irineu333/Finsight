@@ -89,7 +89,7 @@
     <string name="report_viewer_summary_expense">Despesas</string>
     <string name="report_viewer_summary_balance">Saldo do Período</string>
     <string name="report_viewer_summary_initial_balance">Saldo Inicial</string>
-    <string name="report_viewer_summary_invoice_total">Fatura em Aberto</string>
+    <string name="report_viewer_summary_invoice_total">Aberta</string>
     <string name="report_viewer_summary_invoice_expense">Saída</string>
     <string name="report_viewer_summary_advance_payment">Pago</string>
     <string name="report_viewer_spending_by_category">Gastos por Categoria</string>

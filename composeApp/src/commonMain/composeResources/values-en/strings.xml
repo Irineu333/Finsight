@@ -89,7 +89,7 @@
     <string name="report_viewer_summary_expense">Expense</string>
     <string name="report_viewer_summary_balance">Period Balance</string>
     <string name="report_viewer_summary_initial_balance">Initial Balance</string>
-    <string name="report_viewer_summary_invoice_total">Open Invoice</string>
+    <string name="report_viewer_summary_invoice_total">Open</string>
     <string name="report_viewer_summary_invoice_expense">Expense</string>
     <string name="report_viewer_summary_advance_payment">Paid</string>
     <string name="report_viewer_spending_by_category">Spending by Category</string>

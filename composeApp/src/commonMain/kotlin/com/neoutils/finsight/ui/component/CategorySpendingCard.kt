@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun CategorySpendingCard(
     categorySpending: List<CategorySpending>,
+    title: String? = null,
     modifier: Modifier = Modifier,
     onCategoryClick: (Category) -> Unit = {}
 ) {
@@ -43,7 +44,7 @@ fun CategorySpendingCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(Res.string.category_spending_card_title),
+                text = title ?: stringResource(Res.string.category_spending_card_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -53,12 +54,8 @@ fun CategorySpendingCard(
                 CategorySpendingItem(
                     spending = spending,
                     modifier = Modifier
+                        .clickable { onCategoryClick(spending.category) }
                         .padding(horizontal = 16.dp)
-                        .clickable(
-                            onClick = {
-                                onCategoryClick(spending.category)
-                            }
-                        )
                 )
             }
         }

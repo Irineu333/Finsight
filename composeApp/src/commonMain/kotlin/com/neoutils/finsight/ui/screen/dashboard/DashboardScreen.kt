@@ -54,12 +54,12 @@ import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
 import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_default
 import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_pending_recurring
 import com.neoutils.finsight.resources.dashboard_add_account
 import com.neoutils.finsight.resources.dashboard_recents
 import com.neoutils.finsight.resources.dashboard_recurring
+import com.neoutils.finsight.resources.dashboard_reports
 import com.neoutils.finsight.resources.dashboard_see_all
 import com.neoutils.finsight.resources.dashboard_total_balance
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
@@ -84,6 +84,7 @@ fun DashboardScreen(
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
     openRecurring: () -> Unit = {},
+    openReports: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -99,6 +100,7 @@ fun DashboardScreen(
         onOpenInstallments = openInstallments,
         onOpenBudgets = openBudgets,
         onOpenRecurring = openRecurring,
+        onOpenReports = openReports,
         modalManager = modalManager,
         navigator = navigator
     )
@@ -113,6 +115,7 @@ private fun DashboardContent(
     onOpenInstallments: () -> Unit,
     onOpenBudgets: () -> Unit,
     onOpenRecurring: () -> Unit,
+    onOpenReports: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigator: Navigator
@@ -125,7 +128,6 @@ private fun DashboardContent(
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = colorScheme.background,
             ),
-            windowInsets = WindowInsets()
         )
     },
     contentWindowInsets = WindowInsets(),
@@ -266,51 +268,53 @@ private fun DashboardContent(
                     ) { page ->
                         val creditCardUi = uiState.creditCards[page]
 
-                        DashboardCreditCardUI(
-                            ui = creditCardUi,
-                            config = CreditCardUiConfig.from(creditCardUi = creditCardUi),
+                        CreditCardCard(
+                            creditCard = creditCardUi.creditCard,
+                            invoiceUi = creditCardUi.invoiceUi,
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                navigator.navigate(
-                                    NavigationAction.CreditCards(
-                                        creditCardId = creditCardUi.creditCard.id
-                                    )
-                                )
-                            },
-                            onCloseInvoice = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
-                                }
-                            },
-                            onPayInvoice = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        PayInvoiceModal(
-                                            invoice = it.invoice,
-                                            currentBillAmount = it.amount
+                            variant = CreditCardCardVariant.Dashboard(
+                                onClick = {
+                                    navigator.navigate(
+                                        NavigationAction.CreditCards(
+                                            creditCardId = creditCardUi.creditCard.id
                                         )
                                     )
-                                }
-                            },
-                            onAdvancePayment = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        AdvancePaymentModal(
-                                            invoice = it.invoice,
-                                            currentBillAmount = it.amount
+                                },
+                                onCloseInvoice = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                                    }
+                                },
+                                onPayInvoice = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            PayInvoiceModal(
+                                                invoice = it.invoice,
+                                                currentBillAmount = it.amount
+                                            )
                                         )
-                                    )
-                                }
-                            },
-                            onEditAmount = {
-                                creditCardUi.invoiceUi?.let {
-                                    modalManager.show(
-                                        EditInvoiceBalanceModal(
-                                            initialInvoice = it.invoice,
+                                    }
+                                },
+                                onAdvancePayment = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            AdvancePaymentModal(
+                                                invoice = it.invoice,
+                                                currentBillAmount = it.amount
+                                            )
                                         )
-                                    )
-                                }
-                            }
+                                    }
+                                },
+                                onEditAmount = {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            EditInvoiceBalanceModal(
+                                                initialInvoice = it.invoice,
+                                            )
+                                        )
+                                    }
+                                },
+                            ),
                         )
                     }
                     if (uiState.creditCards.size > 1) {
@@ -653,6 +657,38 @@ private fun DashboardContent(
         }
 
         item(
+            key = "open_reports_action"
+        ) {
+            Card(
+                onClick = onOpenReports,
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_reports),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        item(
             key = "open_installments_action"
         ) {
             Card(
@@ -835,88 +871,18 @@ private fun DashboardAccountsRow(
                 items = accounts.sortedByDescending { it.account.isDefault },
                 key = { accountUi -> accountUi.account.id },
             ) { accountUi ->
-                DashboardAccountItemCard(
-                    accountUi = accountUi,
-                    onClick = { onAccountClick(accountUi.account.id) },
+                AccountCard(
+                    account = accountUi.account,
+                    variant = AccountCardVariant.Dashboard(
+                        balance = accountUi.balance,
+                        onClick = { onAccountClick(accountUi.account.id) },
+                    ),
                 )
             }
 
             item(key = "add_account") {
                 DashboardAddAccountCard(
                     onClick = onAddAccount,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardAccountItemCard(
-    accountUi: DashboardAccountUi,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val formatter = LocalCurrencyFormatter.current
-
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer,
-            contentColor = colorScheme.onSurface,
-        ),
-        shape = RoundedCornerShape(18.dp),
-        modifier = modifier
-            .width(156.dp)
-            .height(112.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = AppIcon.fromKey(accountUi.account.iconKey).icon,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-
-                if (accountUi.account.isDefault) {
-                    Surface(
-                        color = colorScheme.primary.copy(alpha = 0.12f),
-                        contentColor = colorScheme.primary,
-                        shape = RoundedCornerShape(999.dp),
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_default),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.align(Alignment.BottomStart),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = accountUi.account.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-                Text(
-                    text = formatter.format(accountUi.balance),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    maxLines = 1,
                 )
             }
         }

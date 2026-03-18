@@ -32,6 +32,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
+import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
@@ -306,11 +307,14 @@ private fun CreditCardPager(
         contentPadding = PaddingValues(horizontal = 16.dp),
         pageSpacing = 8.dp,
     ) { page ->
-        CreditCardUI(
-            ui = creditCards[page],
+        CreditCardCard(
+            creditCard = creditCards[page].creditCard,
+            invoiceUi = creditCards[page].invoiceUi,
             modifier = Modifier.fillMaxWidth(),
-            onClick = { onCardClick(creditCards[page]) },
-            onEditInvoice = onEditInvoice,
+            variant = CreditCardCardVariant.Listing(
+                onClick = { onCardClick(creditCards[page]) },
+                onEditInvoice = onEditInvoice,
+            ),
         )
     }
 }

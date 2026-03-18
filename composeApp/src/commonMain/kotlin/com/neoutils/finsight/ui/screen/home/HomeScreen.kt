@@ -26,6 +26,7 @@ import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
+import com.neoutils.finsight.util.PerspectiveTabNavType
 import com.neoutils.finsight.util.TransactionTargetNavType
 import com.neoutils.finsight.util.TransactionTypeNavType
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
@@ -36,7 +37,10 @@ import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
+import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
+import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
+import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlin.reflect.typeOf
 
@@ -90,7 +94,10 @@ fun AppNavHost() = Surface {
                             },
                             openRecurring = {
                                 navController.navigate(AppRoute.Recurring)
-                            }
+                            },
+                            openReports = {
+                                navController.navigate(AppRoute.ReportConfig)
+                            },
                         )
                     }
                 }
@@ -160,6 +167,31 @@ fun AppNavHost() = Surface {
                         }
                     )
                 }
+
+                composable<AppRoute.ReportConfig> {
+                    ReportConfigScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        },
+                        onNavigateToViewer = { route ->
+                            navController.navigate(route)
+                        },
+                    )
+                }
+
+                composable<AppRoute.ReportViewer>(
+                    typeMap = mapOf(
+                        typeOf<PerspectiveTab>() to PerspectiveTabNavType()
+                    )
+                ) { backStackEntry ->
+                    val route = backStackEntry.toRoute<AppRoute.ReportViewer>()
+                    ReportViewerScreen(
+                        route = route,
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        },
+                    )
+                }
             }
         }
     }
@@ -173,6 +205,7 @@ fun HomeScreen(
     openInstallments: () -> Unit = {},
     openBudgets: () -> Unit = {},
     openRecurring: () -> Unit = {},
+    openReports: () -> Unit = {},
 ) {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
@@ -191,6 +224,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(),
         bottomBar = {
             BottomNavigationBar(
                 selectedItem = selectedItem,
@@ -235,6 +269,7 @@ fun HomeScreen(
                     openInstallments = openInstallments,
                     openBudgets = openBudgets,
                     openRecurring = openRecurring,
+                    openReports = openReports,
                 )
             }
 

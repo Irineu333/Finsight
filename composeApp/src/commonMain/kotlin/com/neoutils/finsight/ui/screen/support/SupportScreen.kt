@@ -84,24 +84,26 @@ fun SupportScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    modalManager.show(
-                        CreateSupportIssueModal(
-                            onSubmit = { draft ->
-                                viewModel.createIssue(
-                                    draft = draft,
-                                    onIssueCreated = onOpenIssue,
-                                )
-                            },
+            if (uiState is SupportUiState.Content && uiState.issues.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        modalManager.show(
+                            CreateSupportIssueModal(
+                                onSubmit = { draft ->
+                                    viewModel.createIssue(
+                                        draft = draft,
+                                        onIssueCreated = onOpenIssue,
+                                    )
+                                },
+                            )
                         )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
                     )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                )
             }
         },
     ) { paddingValues ->

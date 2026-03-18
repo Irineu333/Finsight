@@ -93,6 +93,11 @@ private fun CreditCardsContent(
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                ),
             )
         },
         floatingActionButton = {

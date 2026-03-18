@@ -181,6 +181,11 @@ private fun ReportViewerContent(
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                ),
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing,

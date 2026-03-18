@@ -348,6 +348,7 @@ private fun ReportConfigContent(
                     onToggleSpendingByCategory = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
                     onToggleIncomeByCategory = { onAction(ReportConfigAction.ToggleIncomeByCategory(it)) },
                     onToggleTransactionList = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
+                    showIncomeByCategory = uiState.selectedTab != PerspectiveTab.CREDIT_CARD,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .animateItem(),

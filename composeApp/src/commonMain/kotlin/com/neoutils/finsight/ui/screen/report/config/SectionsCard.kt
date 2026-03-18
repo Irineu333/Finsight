@@ -23,6 +23,7 @@ fun SectionsCard(
     onToggleIncomeByCategory: (Boolean) -> Unit,
     onToggleTransactionList: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    showIncomeByCategory: Boolean = true,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Card(
@@ -55,34 +56,36 @@ fun SectionsCard(
                 ),
             )
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            color = colorScheme.outlineVariant.copy(alpha = 0.6f),
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onToggleIncomeByCategory(!includeIncomeByCategory) }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.report_config_include_income_by_category),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
+        if (showIncomeByCategory) {
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colorScheme.outlineVariant.copy(alpha = 0.6f),
             )
-            Switch(
-                checked = includeIncomeByCategory,
-                onCheckedChange = onToggleIncomeByCategory,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = colorScheme.primary,
-                    checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
-                    checkedBorderColor = colorScheme.primary,
-                    uncheckedThumbColor = colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = colorScheme.surfaceVariant,
-                    uncheckedBorderColor = colorScheme.outline,
-                ),
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleIncomeByCategory(!includeIncomeByCategory) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(Res.string.report_config_include_income_by_category),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = includeIncomeByCategory,
+                    onCheckedChange = onToggleIncomeByCategory,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = colorScheme.primary,
+                        checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
+                        checkedBorderColor = colorScheme.primary,
+                        uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                        uncheckedTrackColor = colorScheme.surfaceVariant,
+                        uncheckedBorderColor = colorScheme.outline,
+                    ),
+                )
+            }
         }
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 16.dp),

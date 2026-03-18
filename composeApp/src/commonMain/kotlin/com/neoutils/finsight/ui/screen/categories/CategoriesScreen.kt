@@ -1,10 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.neoutils.finsight.ui.screen.categories
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -21,7 +24,9 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,6 +43,7 @@ import com.neoutils.finsight.resources.categories_empty
 import com.neoutils.finsight.resources.categories_expense
 import com.neoutils.finsight.resources.categories_income
 import com.neoutils.finsight.resources.categories_title
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -123,7 +129,25 @@ private fun CategoriesContent(
             is CategoriesUiState.Content -> {
                 val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
                 val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
-                val visibleCategories = uiState.categories.filter { it.type == uiState.selectedType }
+
+                val pagerState = rememberPagerState(
+                    initialPage = selectedTabIndex,
+                    pageCount = { tabs.size },
+                )
+
+                LaunchedEffect(pagerState) {
+                    snapshotFlow { pagerState.currentPage }
+                        .distinctUntilChanged()
+                        .collect { page ->
+                            onAction(CategoriesAction.SelectType(tabs[page]))
+                        }
+                }
+
+                LaunchedEffect(selectedTabIndex) {
+                    if (pagerState.currentPage != selectedTabIndex) {
+                        pagerState.animateScrollToPage(selectedTabIndex)
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -149,24 +173,31 @@ private fun CategoriesContent(
                         }
                     }
 
-                    LazyColumn(
+                    HorizontalPager(
+                        state = pagerState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            items = visibleCategories,
-                            key = { it.id },
-                        ) { category ->
-                            CategoryCard(
-                                category = category,
-                                onClick = {
-                                    modalManager.show(ViewCategoryModal(category))
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem()
-                            )
+                    ) { page ->
+                        val pageCategories = uiState.categories.filter { it.type == tabs[page] }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(
+                                items = pageCategories,
+                                key = { it.id },
+                            ) { category ->
+                                CategoryCard(
+                                    category = category,
+                                    onClick = {
+                                        modalManager.show(ViewCategoryModal(category))
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem()
+                                )
+                            }
                         }
                     }
                 }

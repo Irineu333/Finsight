@@ -162,21 +162,8 @@ private fun ReportConfigContent(
                             .animateItem(),
                     )
                 }
-                if (uiState.accounts.isEmpty()) {
-                    item(
-                        key = "accounts_empty",
-                        contentType = "empty_state",
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.report_config_no_accounts),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .animateItem(),
-                        )
-                    }
-                } else {
+
+                if (uiState.accounts.isNotEmpty()) {
                     item(
                         key = "accounts_list",
                         contentType = "accounts_row",

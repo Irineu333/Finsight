@@ -5,8 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -15,29 +16,38 @@ class SupportViewModel(
     private val createSupportIssueUseCase: CreateSupportIssueUseCase,
 ) : ViewModel() {
 
-    val uiState = supportRepository.observeIssues()
-        .map { issues ->
-            SupportUiState.Content(
-                issues = issues.sortedByDescending { it.updatedAt },
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = SupportUiState.Loading,
-        )
+    private val _showActive = MutableStateFlow(true)
 
-    fun createIssue(
-        draft: SupportIssueDraft,
-        onIssueCreated: (String) -> Unit,
-    ) {
+    val uiState = combine(
+        supportRepository.observeIssues(),
+        _showActive,
+    ) { issues, showActive ->
+
+        if (issues.isEmpty()) {
+            return@combine SupportUiState.Empty(showActive = showActive)
+        }
+
+        SupportUiState.Content(
+            issues = issues
+                .filter { it.isActive == showActive }
+                .sortedByDescending { it.updatedAt },
+            showActive = showActive,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = SupportUiState.Loading(
+            showActive = _showActive.value
+        ),
+    )
+
+    fun setFilter(showActive: Boolean) {
+        _showActive.value = showActive
+    }
+
+    fun createIssue(draft: SupportIssueDraft) {
         viewModelScope.launch {
-            createSupportIssueUseCase(draft).fold(
-                ifLeft = {},
-                ifRight = { issue ->
-                    onIssueCreated(issue.id)
-                },
-            )
+            createSupportIssueUseCase(draft)
         }
     }
 }

@@ -123,6 +123,8 @@
     <string name="support_integration_body">As issues desta tela ainda estao em memoria. TODO: conectar o backend de suporte escolhido.</string>
     <string name="support_overview_waiting">%1$d aguardando resposta</string>
     <string name="support_overview_total">%1$d issues no total</string>
+    <string name="support_filter_active">Ativas</string>
+    <string name="support_filter_inactive">Inativas</string>
     <string name="support_type_bug">Bug</string>
     <string name="support_type_feature">Feature</string>
     <string name="support_type_question">Duvida</string>

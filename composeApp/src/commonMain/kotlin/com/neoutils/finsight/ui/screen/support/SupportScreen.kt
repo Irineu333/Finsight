@@ -3,51 +3,23 @@
 package com.neoutils.finsight.ui.screen.support
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.SupportAgent
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.resources.support_empty_body
-import com.neoutils.finsight.resources.support_empty_cta
-import com.neoutils.finsight.resources.support_empty_title
-import com.neoutils.finsight.resources.support_integration_body
-import com.neoutils.finsight.resources.support_integration_title
-import com.neoutils.finsight.resources.support_overview_total
-import com.neoutils.finsight.resources.support_overview_waiting
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.supportIssueForm.CreateSupportIssueModal
 import org.jetbrains.compose.resources.stringResource
@@ -75,16 +47,22 @@ fun SupportScreen(
                 ),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                         Icon(
-                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                             contentDescription = null,
-                         )
-                     }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                },
+                actions = {
+                    SupportActiveFilterMenu(
+                        showActive = uiState.showActive,
+                        onFilterSelected = { viewModel.setFilter(it) },
+                    )
                 },
             )
         },
         floatingActionButton = {
-            if (uiState is SupportUiState.Content && uiState.issues.isNotEmpty()) {
+            if (uiState is SupportUiState.Content) {
                 FloatingActionButton(
                     onClick = {
                         modalManager.show(
@@ -92,7 +70,6 @@ fun SupportScreen(
                                 onSubmit = { draft ->
                                     viewModel.createIssue(
                                         draft = draft,
-                                        onIssueCreated = onOpenIssue,
                                     )
                                 },
                             )
@@ -108,7 +85,7 @@ fun SupportScreen(
         },
     ) { paddingValues ->
         when (uiState) {
-            SupportUiState.Loading -> {
+            is SupportUiState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -120,54 +97,53 @@ fun SupportScreen(
             }
 
             is SupportUiState.Content -> {
-                if (uiState.issues.isEmpty()) {
-                    EmptySupportState(
-                        onCreateIssue = {
-                            modalManager.show(
-                                CreateSupportIssueModal(
-                                    onSubmit = { draft ->
-                                        viewModel.createIssue(
-                                            draft = draft,
-                                            onIssueCreated = onOpenIssue,
-                                        )
-                                    },
-                                )
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        if (uiState.integrationPending) {
-                            item(key = "integration_note") {
-                                IntegrationPendingCard()
-                            }
-                        }
-
-                        item(key = "overview") {
-                            SupportOverviewCard(uiState = uiState)
-                        }
-
-                        items(
-                            items = uiState.issues,
-                            key = { it.id },
-                        ) { issue ->
-                            SupportIssueCard(
-                                issue = issue,
-                                onClick = { onOpenIssue(issue.id) },
-                                modifier = Modifier.animateItem(),
-                            )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (uiState.integrationPending) {
+                        item(key = "integration_note") {
+                            IntegrationPendingCard()
                         }
                     }
+
+                    item(key = "overview") {
+                        SupportOverviewCard(uiState = uiState)
+                    }
+
+                    items(
+                        items = uiState.issues,
+                        key = { it.id },
+                    ) { issue ->
+                        SupportIssueCard(
+                            issue = issue,
+                            onClick = { onOpenIssue(issue.id) },
+                            modifier = Modifier.animateItem(),
+                        )
+                    }
                 }
+            }
+
+            is SupportUiState.Empty -> {
+                EmptySupportState(
+                    onCreateIssue = {
+                        modalManager.show(
+                            CreateSupportIssueModal(
+                                onSubmit = { draft ->
+                                    viewModel.createIssue(
+                                        draft = draft,
+                                    )
+                                },
+                            )
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                )
             }
         }
     }
@@ -309,3 +285,64 @@ private fun SupportOverviewCard(
     }
 }
 
+@Composable
+private fun SupportActiveFilterMenu(
+    showActive: Boolean,
+    onFilterSelected: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    Box(modifier = modifier) {
+        CompositionLocalProvider(
+            LocalContentColor provides colorScheme.onBackground,
+            LocalTextStyle provides MaterialTheme.typography.labelLarge,
+        ) {
+            TextButton(
+                onClick = { menuExpanded = true },
+                colors = ButtonDefaults.textButtonColors(contentColor = Color.Unspecified),
+            ) {
+                Text(
+                    text = stringResource(
+                        if (showActive) Res.string.support_filter_active
+                        else Res.string.support_filter_inactive
+                    ),
+                )
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+        ) {
+            listOf(
+                true to stringResource(Res.string.support_filter_active),
+                false to stringResource(Res.string.support_filter_inactive),
+            ).forEach { (active, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    trailingIcon = if (showActive == active) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else null,
+                    onClick = {
+                        onFilterSelected(active)
+                        menuExpanded = false
+                    },
+                )
+            }
+        }
+    }
+}

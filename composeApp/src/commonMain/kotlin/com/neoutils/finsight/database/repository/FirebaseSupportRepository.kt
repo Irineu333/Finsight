@@ -101,21 +101,12 @@ class FirebaseSupportRepository : ISupportRepository {
     override suspend fun addReply(issueId: String, message: String) {
         val now = Clock.System.now()
         val docRef = collection.document(issueId)
-        val current = docRef.get().data<IssueDocument>()
 
         val newMessage = MessageDocument(
             author = SupportMessage.Author.USER.name,
             body = message.trim(),
             createdAtMs = now.toEpochMilliseconds(),
         )
-
-        val newStatus = when (SupportIssue.Status.valueOf(current.status)) {
-            SupportIssue.Status.ANSWERED,
-            SupportIssue.Status.PLANNED,
-            SupportIssue.Status.RESOLVED -> SupportIssue.Status.IN_REVIEW.name
-
-            else -> current.status
-        }
 
         collection.document(issueId)
             .collection("messages")
@@ -124,7 +115,6 @@ class FirebaseSupportRepository : ISupportRepository {
         docRef.update(
             "pendingForSupportReply" to true,
             "updatedAtMs" to now.toEpochMilliseconds(),
-            "status" to newStatus,
         )
     }
 }

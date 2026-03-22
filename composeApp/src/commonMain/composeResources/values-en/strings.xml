@@ -121,11 +121,12 @@
     <string name="support_type_bug">Bug</string>
     <string name="support_type_feature">Feature</string>
     <string name="support_type_question">Question</string>
+    <string name="support_filter_active">Active</string>
+    <string name="support_filter_inactive">Inactive</string>
     <string name="support_status_open">Open</string>
-    <string name="support_status_in_review">In review</string>
-    <string name="support_status_answered">Answered</string>
     <string name="support_status_planned">Planned</string>
-    <string name="support_status_resolved">Resolved</string>
+    <string name="support_status_doing">In progress</string>
+    <string name="support_status_done">Done</string>
     <string name="support_form_title">New issue</string>
     <string name="support_form_type">Type</string>
     <string name="support_form_title_label">Title</string>
@@ -139,6 +140,12 @@
     <string name="support_reply_send">Reply</string>
     <string name="support_author_you">You</string>
     <string name="support_author_support">Support</string>
+    <string name="support_chat_divider_today">Today</string>
+    <string name="support_chat_divider_yesterday">Yesterday</string>
+    <string name="support_error_empty_title">Title is required.</string>
+    <string name="support_error_empty_description">Description is required.</string>
+    <string name="support_error_empty_message">Message cannot be empty.</string>
+    <string name="support_error_unknown">An error occurred. Please try again.</string>
 
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Category</string>

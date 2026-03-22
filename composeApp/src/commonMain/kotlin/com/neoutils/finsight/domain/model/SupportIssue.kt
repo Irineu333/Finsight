@@ -12,6 +12,7 @@ data class SupportIssue(
     val title: String,
     val description: String,
     val status: Status = Status.OPEN,
+    val isActive: Boolean = true,
     val isWaitingSupportReply: Boolean = false,
     val createdAt: Instant = Clock.System.now(),
     val updatedAt: Instant = createdAt,

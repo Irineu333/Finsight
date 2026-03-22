@@ -4,13 +4,22 @@ import com.neoutils.finsight.domain.model.SupportIssue
 
 sealed class SupportUiState {
 
-    data object Loading : SupportUiState()
+    abstract val showActive: Boolean
+
+    data class Loading(
+        override val showActive: Boolean = true,
+    ) : SupportUiState()
 
     data class Content(
         val issues: List<SupportIssue>,
+        override val showActive: Boolean = true,
         val integrationPending: Boolean = false,
     ) : SupportUiState() {
         val waitingSupportCount: Int
             get() = issues.count { it.isWaitingSupportReply }
     }
+
+    data class Empty(
+        override val showActive: Boolean = true,
+    ) : SupportUiState()
 }

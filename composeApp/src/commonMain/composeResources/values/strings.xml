@@ -127,10 +127,9 @@
     <string name="support_type_feature">Feature</string>
     <string name="support_type_question">Duvida</string>
     <string name="support_status_open">Aberta</string>
-    <string name="support_status_in_review">Em analise</string>
-    <string name="support_status_answered">Respondida</string>
     <string name="support_status_planned">Planejada</string>
-    <string name="support_status_resolved">Resolvida</string>
+    <string name="support_status_doing">Em andamento</string>
+    <string name="support_status_done">Concluída</string>
     <string name="support_form_title">Nova issue</string>
     <string name="support_form_type">Tipo</string>
     <string name="support_form_title_label">Titulo</string>

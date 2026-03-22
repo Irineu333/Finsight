@@ -39,11 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.support_status_answered
-import com.neoutils.finsight.resources.support_status_in_review
+import com.neoutils.finsight.resources.support_status_doing
+import com.neoutils.finsight.resources.support_status_done
 import com.neoutils.finsight.resources.support_status_open
 import com.neoutils.finsight.resources.support_status_planned
-import com.neoutils.finsight.resources.support_status_resolved
 import com.neoutils.finsight.resources.support_type_bug
 import com.neoutils.finsight.resources.support_type_feature
 import com.neoutils.finsight.resources.support_type_question
@@ -64,10 +63,9 @@ internal fun SupportIssue.Type.toResource(): StringResource = when (this) {
 
 internal fun SupportIssue.Status.toResource(): StringResource = when (this) {
     SupportIssue.Status.OPEN -> Res.string.support_status_open
-    SupportIssue.Status.IN_REVIEW -> Res.string.support_status_in_review
-    SupportIssue.Status.ANSWERED -> Res.string.support_status_answered
     SupportIssue.Status.PLANNED -> Res.string.support_status_planned
-    SupportIssue.Status.RESOLVED -> Res.string.support_status_resolved
+    SupportIssue.Status.DOING -> Res.string.support_status_doing
+    SupportIssue.Status.DONE -> Res.string.support_status_done
 }
 
 internal fun SupportIssue.Type.icon(): ImageVector = when (this) {
@@ -84,10 +82,9 @@ internal fun SupportIssue.Type.color(colorScheme: ColorScheme): Color = when (th
 
 internal fun SupportIssue.Status.color(colorScheme: ColorScheme): Color = when (this) {
     SupportIssue.Status.OPEN -> Warning
-    SupportIssue.Status.IN_REVIEW -> Info
-    SupportIssue.Status.ANSWERED -> colorScheme.primary
-    SupportIssue.Status.PLANNED -> Success
-    SupportIssue.Status.RESOLVED -> Success
+    SupportIssue.Status.PLANNED -> colorScheme.primary
+    SupportIssue.Status.DOING -> Info
+    SupportIssue.Status.DONE -> Success
 }
 
 @Composable

@@ -25,10 +25,9 @@ data class SupportIssue(
 
     enum class Status {
         OPEN,
-        IN_REVIEW,
-        ANSWERED,
         PLANNED,
-        RESOLVED,
+        DOING,
+        DONE,
     }
 }
 

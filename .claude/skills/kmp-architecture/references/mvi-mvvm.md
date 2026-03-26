@@ -1,170 +1,183 @@
 # MVI + MVVM Pattern
 
-## Overview
+## Purpose
 
-The project uses a hybrid MVI/MVVM approach:
-- **MVVM**: ViewModel holds state, UI observes
-- **MVI**: unidirectional data flow — UI sends events → ViewModel processes → emits new UiState
+This document defines the project standard for applying MVI + MVVM in ViewModels.
+It is prescriptive.
 
-```
-UI (composable)
-  │  collectAsStateWithLifecycle()
-  ▼
-ViewModel
-  │  StateFlow<UiState>   ──▶  UI renders
-  │  Channel<Action>      ──▶  UI handles one-shot events
-  │
-  ▼  calls
-UseCase(s)
-```
+## Core Cycle
 
-## UiState
+UI sends intent -> ViewModel handles intent -> ViewModel updates `UiState` and emits one-shot `Event` -> UI renders state and reacts to events.
 
-Prefer explicit state modeling with **sealed UiState** when states are mutually exclusive
-(e.g. `Loading`, `Empty`, `Error`, `Content`).
+## Terminology
 
-Use a `data class` for `UiState` when fields are truly concurrent (forms, filter controls, etc.).
+- `UiState`: persistent screen state (`StateFlow`).
+- `Action`: user intent sent from UI to ViewModel.
+- `Event`: one-shot effect emitted by ViewModel to UI (navigation, snackbar, share, print, open modal).
+
+## ViewModel Types and `onAction`
+
+### 1. Simple command ViewModel
+
+Use this for single-command modals with no observable state.
+Examples in current code: `DeleteAccountViewModel`, `CloseInvoiceViewModel`.
+
+Rules:
+- `onAction` is optional.
+- `uiState` is optional.
+- A single public command method is allowed (`delete()`, `confirm()`, etc.).
+
+### 2. Complex ViewModel
+
+Use this for forms, filters, selections, async loading, or multiple intents.
+Examples in current code: `AddInstallmentViewModel`, `EditTransactionViewModel`, `ReportViewerViewModel`.
+
+Rules:
+- `onAction(action: XxxAction)` is required as the public intent entrypoint.
+- Expose a single `uiState` stream.
+- Internal mutations stay private.
+
+## UiState Modeling
+
+### Prefer sealed UiState for mutually exclusive states
+
+Use `sealed class` or `sealed interface` when screen states are exclusive:
+`Loading`, `Empty`, `Error`, `Content`.
+
+This is the preferred model for async screens (as already used in:
+`BudgetsUiState`, `CategoriesUiState`, `CreditCardsUiState`, `InstallmentsUiState`, `RecurringUiState`).
 
 ```kotlin
-// PREFERRED for async screens
-sealed interface DashboardUiState {
-    data object Loading : DashboardUiState
-    data object Empty : DashboardUiState
-    data class Error(val message: UiText) : DashboardUiState
+sealed class BudgetsUiState {
+    abstract val selectedMonth: YearMonth
+
+    data class Loading(override val selectedMonth: YearMonth) : BudgetsUiState()
+    data class Empty(override val selectedMonth: YearMonth) : BudgetsUiState()
     data class Content(
-        val balance: String,
-        val transactions: List<TransactionUi>,
-    ) : DashboardUiState
+        val budgetProgress: List<BudgetProgress>,
+        override val selectedMonth: YearMonth,
+    ) : BudgetsUiState()
 }
 ```
 
-Avoid priority conflicts like `isLoading + error + data` in one object for exclusive states.
+### Use data class UiState for concurrent fields
 
-## Actions (One-shot Events)
-
-For navigation, toasts, dialogs, and other effects that **must not replay**,
-use `Channel<Action>` exposed as `Flow<Action>`.
+Use `data class` when fields truly coexist, usually in forms and filter state.
+Examples in current code: `AccountFormUiState`, `CategoryFormUiState`, `AddTransactionUiState`.
 
 ```kotlin
-sealed class DashboardAction {
-    data class NavigateToTransaction(val id: Long) : DashboardAction()
-    data object ShowDeleteConfirmation : DashboardAction()
-}
-
-class DashboardViewModel : ViewModel() {
-    private val _action = Channel<DashboardAction>()
-    val action: Flow<DashboardAction> = _action.receiveAsFlow()
-
-    fun onTransactionClick(id: Long) {
-        viewModelScope.launch {
-            _action.send(DashboardAction.NavigateToTransaction(id))
-        }
-    }
-}
+data class AccountFormUiState(
+    val name: String,
+    val selectedIcon: AppIcon,
+    val validation: Map<AccountField, Validation>,
+    val canSubmit: Boolean,
+)
 ```
 
-**Why Channel over SharedFlow?**
-Channel delivers each item exactly once to one collector. SharedFlow replays to all collectors,
-causing duplicate navigation on recomposition.
+### Forbidden pattern
 
-## ViewModel Structure
+Do not model exclusive states with flag priority inside one object:
+`isLoading + error + data`.
+
+## One-shot Events
+
+Use `Channel<Event>` with `receiveAsFlow()`:
 
 ```kotlin
-class DashboardViewModel(
-    private val getTransactions: GetTransactionsByAccountUseCase,
-    private val deleteTransaction: DeleteTransactionUseCase,
+private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
+val events = _events.receiveAsFlow()
+```
+
+Rules:
+- Use `Event` for one-shot effects only.
+- Do not use `MutableSharedFlow` for one-shot events.
+- UI collects events in `LaunchedEffect`.
+
+## Complex ViewModel Template
+
+```kotlin
+class SampleViewModel(
+    private val repository: Repository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DashboardUiState())
-    val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
+    private val query = MutableStateFlow("")
 
-    private val _action = Channel<DashboardAction>()
-    val action: Flow<DashboardAction> = _action.receiveAsFlow()
+    private val _events = Channel<SampleEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
-    init {
-        observeTransactions()
-    }
+    val uiState = combine(
+        repository.observeItems(),
+        query,
+    ) { items, query ->
+        val filtered = items.filter { it.matches(query) }
+        when {
+            filtered.isEmpty() -> SampleUiState.Empty(query)
+            else -> SampleUiState.Content(filtered, query)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = SampleUiState.Loading,
+    )
 
-    private fun observeTransactions() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            getTransactions()
-                .catch { e -> _uiState.update { it.copy(isLoading = false, error = UiText.from(e)) } }
-                .collect { transactions ->
-                    _uiState.update {
-                        it.copy(isLoading = false, transactions = transactions.toUiList())
-                    }
-                }
+    fun onAction(action: SampleAction) {
+        when (action) {
+            is SampleAction.QueryChanged -> query.value = action.value
+            is SampleAction.ItemClicked -> viewModelScope.launch {
+                _events.send(SampleEvent.NavigateToDetails(action.id))
+            }
+            SampleAction.Refresh -> refresh()
         }
     }
 
-    fun onDeleteClick(id: Long) {
+    private fun refresh() {
         viewModelScope.launch {
-            deleteTransaction(id).fold(
-                ifLeft = { error -> _uiState.update { it.copy(error = error.toUiText()) } },
-                ifRight = { _action.send(DashboardAction.ShowDeleteConfirmation) }
-            )
+            repository.refresh()
         }
     }
 }
 ```
 
-## Composable: Collecting State
+## Composable Integration
+
+Rules:
+- Collect `uiState` as state (`collectAsStateWithLifecycle()` where lifecycle API is available).
+- Collect `events` in `LaunchedEffect(viewModel)`.
+- Send intents via `viewModel.onAction(...)` for complex ViewModels.
 
 ```kotlin
 @Composable
-fun DashboardScreen(
-    viewModel: DashboardViewModel = koinViewModel(),
-    onNavigateToTransaction: (Long) -> Unit,
-) {
+fun SampleScreen(viewModel: SampleViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // One-shot actions
-    LaunchedEffect(Unit) {
-        viewModel.action.collect { action ->
-            when (action) {
-                is DashboardAction.NavigateToTransaction -> onNavigateToTransaction(action.id)
-                DashboardAction.ShowDeleteConfirmation -> { /* show dialog */ }
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SampleEvent.NavigateToDetails -> { /* navigate */ }
             }
         }
     }
 
-    DashboardContent(
+    SampleContent(
         uiState = uiState,
-        onDeleteClick = viewModel::onDeleteClick,
+        onQueryChange = { viewModel.onAction(SampleAction.QueryChanged(it)) },
+        onItemClick = { id -> viewModel.onAction(SampleAction.ItemClicked(id)) },
     )
 }
 ```
 
-**Use `collectAsStateWithLifecycle()`** (not `collectAsState()`) — it respects Android
-lifecycle and stops collection when the app is backgrounded, saving resources.
+## Coroutines and Initialization
 
-## Event Handling Patterns
-
-| User action | How to handle |
-|-------------|--------------|
-| Button click | Direct `viewModel.onXxx()` function reference |
-| Text input | `viewModel.onXxx(value)` on each keystroke, debounce in ViewModel if needed |
-| Navigation trigger | Send `Action` from ViewModel, handle in Screen |
-| Dialog confirmation | Send `Action` or update `UiState` flag |
-| Pull-to-refresh | `viewModel.onRefresh()` → sets `isLoading = true`, re-fetches |
+Rules:
+- Never use `runBlocking` in ViewModel.
+- Prefer lightweight `initialValue` in `stateIn`.
+- Use `viewModelScope.launch` for async startup work.
+- Keep long-running state reactive (`combine`, `map`, `flatMapLatest`, `stateIn`).
 
 ## Anti-patterns
 
-```kotlin
-// ❌ Business logic in composable
-@Composable
-fun Screen(viewModel: ViewModel) {
-    val data by viewModel.data.collectAsState()
-    val filtered = data.filter { it.amount > 0 } // ❌ belongs in ViewModel/UseCase
-}
-
-// ❌ ViewModel knows about Compose
-class ViewModel : ViewModel() {
-    fun onClick(context: Context) { /* ❌ no Android/Compose imports in ViewModel */ }
-}
-
-// ❌ Exposing mutable state
-val _uiState = MutableStateFlow(UiState()) // ❌ should be private
-val uiState = _uiState // ❌ should be .asStateFlow()
-```
+- Complex ViewModel exposing many public mutators (`onNameChanged`, `onFilterChanged`, `onSubmit`) instead of `onAction`.
+- Exclusive async states modeled with flag priority in one data class.
+- One-shot effects in `MutableSharedFlow`.
+- Exposing `MutableStateFlow` publicly.
+- Android/Compose-specific dependencies inside domain layer code.

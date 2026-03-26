@@ -89,7 +89,16 @@ class EditTransactionViewModel(
         )
     )
 
-    fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+    fun onAction(action: EditTransactionAction) {
+        when (action) {
+            is EditTransactionAction.SelectCreditCard -> selectCreditCard(action.creditCard)
+            is EditTransactionAction.SelectInvoiceMonth -> selectedDueMonth.value = action.dueMonth
+            is EditTransactionAction.SelectAccount -> selectedAccount.value = action.account
+            is EditTransactionAction.Submit -> submit(action.form)
+        }
+    }
+
+    private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
         selectedCreditCard.value = creditCard
         selectedDueMonth.value = creditCard?.let {
             invoiceRepository
@@ -99,15 +108,7 @@ class EditTransactionViewModel(
         }
     }
 
-    fun navigateToMonth(dueMonth: YearMonth) {
-        selectedDueMonth.value = dueMonth
-    }
-
-    fun selectAccount(account: Account?) {
-        selectedAccount.value = account
-    }
-
-    fun updateTransaction(
+    private fun submit(
         form: TransactionForm
     ) = viewModelScope.launch {
         buildTransactionUseCase(

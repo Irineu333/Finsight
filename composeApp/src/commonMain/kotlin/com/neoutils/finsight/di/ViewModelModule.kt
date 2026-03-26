@@ -78,7 +78,6 @@ val viewModelModule = module {
         ViewOperationViewModel(
             operation = it.get(),
             operationRepository = get(),
-            recurringRepository = get(),
         )
     }
 

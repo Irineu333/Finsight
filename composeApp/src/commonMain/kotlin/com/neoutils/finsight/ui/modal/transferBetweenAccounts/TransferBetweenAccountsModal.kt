@@ -60,8 +60,12 @@ class TransferBetweenAccountsModal(
         val date = rememberTextFieldState(dayMonthYear.format(currentDate))
 
         LaunchedEffect(Unit) {
-            viewModel.errorMessage.collect { message ->
-                snackbarHostState.showSnackbar(message)
+            viewModel.events.collect { event ->
+                when (event) {
+                    is TransferBetweenAccountsEvent.ShowError -> {
+                        snackbarHostState.showSnackbar(event.message.asString())
+                    }
+                }
             }
         }
 
@@ -83,7 +87,9 @@ class TransferBetweenAccountsModal(
                 AccountSelector(
                     selectedAccount = uiState.selectedSourceAccount,
                     accounts = uiState.accounts,
-                    onAccountSelected = { viewModel.selectSourceAccount(it) },
+                    onAccountSelected = {
+                        viewModel.onAction(TransferBetweenAccountsAction.SelectSourceAccount(it))
+                    },
                     label = stringResource(Res.string.transfer_source_account_label),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -93,7 +99,9 @@ class TransferBetweenAccountsModal(
                 AccountSelector(
                     selectedAccount = uiState.selectedDestinationAccount,
                     accounts = uiState.destinationAccounts,
-                    onAccountSelected = { viewModel.selectDestinationAccount(it) },
+                    onAccountSelected = {
+                        viewModel.onAction(TransferBetweenAccountsAction.SelectDestinationAccount(it))
+                    },
                     label = stringResource(Res.string.transfer_destination_account_label),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -160,9 +168,11 @@ class TransferBetweenAccountsModal(
 
                 Button(
                     onClick = {
-                        viewModel.transfer(
-                            amount = amount.text.toString().moneyToDouble(),
-                            date = dayMonthYear.parse(date.text.toString()),
+                        viewModel.onAction(
+                            TransferBetweenAccountsAction.Submit(
+                                amount = amount.text.toString().moneyToDouble(),
+                                date = dayMonthYear.parse(date.text.toString()),
+                            )
                         )
                     },
                     enabled = isValidTransfer(

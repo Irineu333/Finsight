@@ -88,19 +88,29 @@ class EditInvoiceBalanceViewModel(
         )
     )
 
-    fun selectCreditCard(creditCard: CreditCard) = viewModelScope.launch {
-        selectedCreditCard.value = creditCard
-        selectedInvoice.value = invoiceRepository
-            .getOpenInvoice(creditCard.id) ?: return@launch
+    fun onAction(action: EditInvoiceBalanceAction) = viewModelScope.launch {
+        when (action) {
+            is EditInvoiceBalanceAction.SelectCreditCard -> {
+                selectedCreditCard.value = action.creditCard
+
+                selectedInvoice.value = invoiceRepository
+                    .getOpenInvoice(action.creditCard.id) ?: return@launch
+            }
+
+            is EditInvoiceBalanceAction.SelectInvoice -> {
+                selectedInvoice.value = action.invoice
+            }
+
+            is EditInvoiceBalanceAction.Submit -> {
+                submit(action.targetBalance)
+            }
+        }
     }
 
-    fun selectInvoice(invoice: Invoice) {
-        selectedInvoice.value = invoice
-    }
-
-    fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
+    private fun submit(targetBalance: Double) = viewModelScope.launch {
+        val invoice = uiState.value.selectedInvoice ?: return@launch
         adjustInvoiceUseCase(
-            invoice = selectedInvoice.value,
+            invoice = invoice,
             target = targetBalance,
             adjustmentDate = currentDate
         )

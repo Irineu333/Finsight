@@ -60,7 +60,7 @@ class ViewOperationModal(
         val navigator = LocalNavigator.current
 
         LaunchedEffect(viewModel) {
-            viewModel.event.collect { event ->
+            viewModel.events.collect { event ->
                 when (event) {
                     is ViewOperationEvent.OpenRecurring -> manager.show(ViewRecurringModal(event.recurring))
                 }
@@ -279,17 +279,19 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.operation.recurring?.let { recurring ->
-                DetailRow(
-                    label = stringResource(Res.string.view_operation_recurring_label),
-                    value = recurring.label,
-                    valueColor = colorScheme.onSurface,
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = {
-                        manager.show(ViewRecurringModal(recurring.instance))
-                    }
-                )
-            }
+                uiState.operation.recurring?.let { recurring ->
+                    DetailRow(
+                        label = stringResource(Res.string.view_operation_recurring_label),
+                        value = recurring.label,
+                        valueColor = colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 8.dp),
+                        onClick = {
+                            viewModel.onAction(
+                                ViewOperationAction.OpenRecurring(recurring.instance)
+                            )
+                        }
+                    )
+                }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 

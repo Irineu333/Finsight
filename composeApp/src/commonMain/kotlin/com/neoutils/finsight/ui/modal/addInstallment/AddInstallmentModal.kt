@@ -63,8 +63,12 @@ class AddInstallmentModal : ModalBottomSheet() {
         var installments by remember { mutableStateOf(2) }
 
         LaunchedEffect(Unit) {
-            viewModel.errorMessage.collect { message ->
-                snackbarHostState.showSnackbar(message)
+            viewModel.events.collect { event ->
+                when (event) {
+                    is AddInstallmentEvent.ShowError -> {
+                        snackbarHostState.showSnackbar(event.message.asString())
+                    }
+                }
             }
         }
 
@@ -132,7 +136,9 @@ class AddInstallmentModal : ModalBottomSheet() {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    onCreditCardSelected = {
+                        viewModel.onAction(AddInstallmentAction.SelectCreditCard(it))
+                    },
                     onEmpty = { modalManager.show(CreditCardFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -142,7 +148,9 @@ class AddInstallmentModal : ModalBottomSheet() {
 
                     InvoiceMonthNavigator(
                         selection = selection,
-                        onNavigate = { viewModel.navigateToMonth(it) },
+                        onNavigate = {
+                            viewModel.onAction(AddInstallmentAction.NavigateToMonth(it))
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         label = stringResource(Res.string.add_installment_initial_invoice),
                     )
@@ -227,9 +235,11 @@ class AddInstallmentModal : ModalBottomSheet() {
 
                 Button(
                     onClick = {
-                        viewModel.addInstallment(
-                            form = form,
-                            installments = installments,
+                        viewModel.onAction(
+                            AddInstallmentAction.Submit(
+                                form = form,
+                                installments = installments,
+                            )
                         )
                     },
                     enabled = form.isValid()

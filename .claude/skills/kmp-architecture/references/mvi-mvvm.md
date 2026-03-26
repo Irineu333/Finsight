@@ -20,40 +20,25 @@ UseCase(s)
 
 ## UiState
 
-Model the entire screen state as a **single data class**. Never scatter state across
-multiple flows or multiple boolean flags.
+Prefer explicit state modeling with **sealed UiState** when states are mutually exclusive
+(e.g. `Loading`, `Empty`, `Error`, `Content`).
+
+Use a `data class` for `UiState` when fields are truly concurrent (forms, filter controls, etc.).
 
 ```kotlin
-// CORRECT
-data class DashboardUiState(
-    val isLoading: Boolean = false,
-    val balance: String = "",
-    val transactions: List<TransactionUi> = emptyList(),
-    val error: UiText? = null
-)
-
-// WRONG — fragmented state
-class DashboardViewModel : ViewModel() {
-    val isLoading = MutableStateFlow(false)         // ❌
-    val balance = MutableStateFlow("")              // ❌
-    val transactions = MutableStateFlow(emptyList<Transaction>()) // ❌
+// PREFERRED for async screens
+sealed interface DashboardUiState {
+    data object Loading : DashboardUiState
+    data object Empty : DashboardUiState
+    data class Error(val message: UiText) : DashboardUiState
+    data class Content(
+        val balance: String,
+        val transactions: List<TransactionUi>,
+    ) : DashboardUiState
 }
 ```
 
-### Error in UiState
-
-Use a nullable `UiText?` for transient errors that appear in the UI. Clear it after display.
-
-```kotlin
-data class UiState(
-    val error: UiText? = null
-)
-
-// In ViewModel after error is shown:
-fun onErrorDismissed() {
-    _uiState.update { it.copy(error = null) }
-}
-```
+Avoid priority conflicts like `isLoading + error + data` in one object for exclusive states.
 
 ## Actions (One-shot Events)
 

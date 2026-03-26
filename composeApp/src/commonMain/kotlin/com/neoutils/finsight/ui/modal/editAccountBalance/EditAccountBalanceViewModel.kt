@@ -80,12 +80,20 @@ class EditAccountBalanceViewModel(
     private val timeZone get() = TimeZone.currentSystemDefault()
     private val currentDate get() = Clock.System.now().toLocalDateTime(timeZone).date
 
-    fun selectAccount(account: Account) = viewModelScope.launch {
-        selectedAccount.value = account
+    fun onAction(action: EditAccountBalanceAction) {
+        when (action) {
+            is EditAccountBalanceAction.SelectAccount -> {
+                selectedAccount.value = action.account
+            }
+
+            is EditAccountBalanceAction.Submit -> {
+                submit(action.targetBalance)
+            }
+        }
     }
 
-    fun adjustBalance(targetBalance: Double) = viewModelScope.launch {
-        val account = checkNotNull(selectedAccount.value)
+    private fun submit(targetBalance: Double) = viewModelScope.launch {
+        val account = uiState.value.selectedAccount ?: return@launch
 
         when (type) {
             EditAccountBalanceModal.Type.CURRENT -> {

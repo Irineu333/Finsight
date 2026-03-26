@@ -113,7 +113,9 @@ class PayInvoiceModal(
             AccountSelector(
                 selectedAccount = uiState.selectedAccount,
                 accounts = uiState.accounts,
-                onAccountSelected = { viewModel.selectAccount(it) },
+                onAccountSelected = {
+                    viewModel.onAction(PayInvoiceAction.SelectAccount(it))
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -163,8 +165,10 @@ class PayInvoiceModal(
 
             Button(
                 onClick = {
-                    viewModel.payInvoice(
-                        date = dayMonthYear.parse(date.text.toString()),
+                    viewModel.onAction(
+                        PayInvoiceAction.Submit(
+                            date = dayMonthYear.parse(date.text.toString()),
+                        )
                     )
                 },
                 enabled = isValidPayment(

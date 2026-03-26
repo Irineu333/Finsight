@@ -6,11 +6,11 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.ui.component.ModalManager
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -25,8 +25,8 @@ class TransferBetweenAccountsViewModel(
     private val selectedSourceAccount = MutableStateFlow(initialSourceAccount)
     private val selectedDestinationAccount = MutableStateFlow<Account?>(null)
 
-    private val _errorMessage = MutableSharedFlow<String>()
-    val errorMessage = _errorMessage.asSharedFlow()
+    private val _events = Channel<TransferBetweenAccountsEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),
@@ -53,7 +53,18 @@ class TransferBetweenAccountsViewModel(
         ),
     )
 
-    fun selectSourceAccount(account: Account?) {
+    fun onAction(action: TransferBetweenAccountsAction) {
+        when (action) {
+            is TransferBetweenAccountsAction.SelectSourceAccount -> selectSourceAccount(action.account)
+            is TransferBetweenAccountsAction.SelectDestinationAccount -> selectDestinationAccount(action.account)
+            is TransferBetweenAccountsAction.Submit -> submit(
+                amount = action.amount,
+                date = action.date,
+            )
+        }
+    }
+
+    private fun selectSourceAccount(account: Account?) {
         if (account == null) return
         selectedSourceAccount.value = account
         if (selectedDestinationAccount.value?.id == account.id) {
@@ -61,11 +72,11 @@ class TransferBetweenAccountsViewModel(
         }
     }
 
-    fun selectDestinationAccount(account: Account?) {
+    private fun selectDestinationAccount(account: Account?) {
         selectedDestinationAccount.value = account
     }
 
-    fun transfer(
+    private fun submit(
         amount: Double,
         date: LocalDate,
     ) = viewModelScope.launch {
@@ -78,7 +89,11 @@ class TransferBetweenAccountsViewModel(
             amount = amount,
             date = date,
         ).onLeft {
-            _errorMessage.emit(it.error.toUiText().asString())
+            _events.send(
+                TransferBetweenAccountsEvent.ShowError(
+                    it.error.toUiText()
+                )
+            )
         }.onRight {
             modalManager.dismiss()
         }

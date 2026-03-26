@@ -56,15 +56,23 @@ class RecurringFormViewModel(
         ),
     )
 
-    fun selectAccount(account: Account?) {
-        selectedAccount.value = account
+    fun onAction(action: RecurringFormAction) {
+        when (action) {
+            is RecurringFormAction.SelectAccount -> {
+                selectedAccount.value = action.account
+            }
+
+            is RecurringFormAction.SelectCreditCard -> {
+                selectedCreditCard.value = action.creditCard
+            }
+
+            is RecurringFormAction.Submit -> {
+                submit(action.form)
+            }
+        }
     }
 
-    fun selectCreditCard(creditCard: CreditCard?) {
-        selectedCreditCard.value = creditCard
-    }
-
-    fun save(form: RecurringForm) =
+    private fun submit(form: RecurringForm) =
         viewModelScope.launch {
             saveRecurringUseCase(
                 id = recurring?.id ?: 0L,

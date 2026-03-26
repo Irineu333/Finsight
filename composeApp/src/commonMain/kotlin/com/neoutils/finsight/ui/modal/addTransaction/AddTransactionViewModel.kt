@@ -79,7 +79,16 @@ class AddTransactionViewModel(
         initialValue = AddTransactionUiState(),
     )
 
-    fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+    fun onAction(action: AddTransactionAction) {
+        when (action) {
+            is AddTransactionAction.SelectCreditCard -> selectCreditCard(action.creditCard)
+            is AddTransactionAction.SelectInvoiceMonth -> selectedDueMonth.value = action.dueMonth
+            is AddTransactionAction.SelectAccount -> selectedAccount.value = action.account
+            is AddTransactionAction.Submit -> submit(action.form)
+        }
+    }
+
+    private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
         selectedCreditCard.value = creditCard
         selectedDueMonth.value = creditCard?.let {
             invoiceRepository
@@ -89,15 +98,7 @@ class AddTransactionViewModel(
         }
     }
 
-    fun navigateToMonth(dueMonth: YearMonth) {
-        selectedDueMonth.value = dueMonth
-    }
-
-    fun selectAccount(account: Account?) {
-        selectedAccount.value = account
-    }
-
-    fun addTransaction(
+    private fun submit(
         form: TransactionForm
     ) = viewModelScope.launch {
         if (form.installments > 1) {

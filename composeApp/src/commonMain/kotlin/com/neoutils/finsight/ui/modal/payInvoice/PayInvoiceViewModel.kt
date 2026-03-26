@@ -40,11 +40,22 @@ class PayInvoiceViewModel(
         initialValue = PayInvoiceUiState(),
     )
 
-    fun selectAccount(account: Account?) {
-        selectedAccount.value = account
+    fun onAction(action: PayInvoiceAction) {
+        when (action) {
+            is PayInvoiceAction.SelectAccount -> {
+                selectedAccount.value = action.account
+            }
+
+            is PayInvoiceAction.Submit -> {
+                submit(
+                    date = action.date,
+                    account = action.account,
+                )
+            }
+        }
     }
 
-    fun payInvoice(
+    private fun submit(
         date: LocalDate,
         account: Account? = selectedAccount.value,
     ) = viewModelScope.launch {

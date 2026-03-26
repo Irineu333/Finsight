@@ -111,7 +111,9 @@ class AdvancePaymentModal(
             AccountSelector(
                 selectedAccount = uiState.selectedAccount,
                 accounts = uiState.accounts,
-                onAccountSelected = { viewModel.selectAccount(it) },
+                onAccountSelected = {
+                    viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -161,9 +163,11 @@ class AdvancePaymentModal(
 
             Button(
                 onClick = {
-                    viewModel.advancePayment(
-                        amount = parseMoneyToDouble(amount.text.toString()),
-                        date = dayMonthYear.parse(date.text.toString()),
+                    viewModel.onAction(
+                        AdvancePaymentAction.Submit(
+                            amount = parseMoneyToDouble(amount.text.toString()),
+                            date = dayMonthYear.parse(date.text.toString()),
+                        )
                     )
                 },
                 enabled = isValidPayment(

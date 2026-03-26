@@ -110,7 +110,9 @@ class EditAccountBalanceModal(
                 selectedAccount = uiState.selectedAccount,
                 accounts = uiState.accounts,
                 onAccountSelected = { account ->
-                    account?.let { viewModel.selectAccount(it) }
+                    account?.let {
+                        viewModel.onAction(EditAccountBalanceAction.SelectAccount(it))
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -154,7 +156,7 @@ class EditAccountBalanceModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { viewModel.adjustBalance(newBalance) },
+                onClick = { viewModel.onAction(EditAccountBalanceAction.Submit(newBalance)) },
                 enabled = balanceState.text.isNotBlank() && newBalance != uiState.currentBalance,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

@@ -41,11 +41,23 @@ class AdvancePaymentViewModel(
         initialValue = AdvancePaymentUiState(),
     )
 
-    fun selectAccount(account: Account?) {
-        selectedAccount.value = account
+    fun onAction(action: AdvancePaymentAction) {
+        when (action) {
+            is AdvancePaymentAction.SelectAccount -> {
+                selectedAccount.value = action.account
+            }
+
+            is AdvancePaymentAction.Submit -> {
+                submit(
+                    amount = action.amount,
+                    date = action.date,
+                    account = action.account,
+                )
+            }
+        }
     }
 
-    fun advancePayment(
+    private fun submit(
         amount: Double,
         date: LocalDate,
         account: Account? = selectedAccount.value,
@@ -60,4 +72,3 @@ class AdvancePaymentViewModel(
         }
     }
 }
-

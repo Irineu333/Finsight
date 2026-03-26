@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.addInstallment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
@@ -10,14 +12,17 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.add_installment_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -34,8 +39,8 @@ class AddInstallmentViewModel(
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
 
-    private val _errorMessage = MutableSharedFlow<String>()
-    val errorMessage = _errorMessage.asSharedFlow()
+    private val _events = Channel<AddInstallmentEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private val categories = categoryRepository.observeAllCategories()
 
@@ -74,13 +79,31 @@ class AddInstallmentViewModel(
     )
 
     init {
+        initialCreditCard()
+    }
+
+    private fun initialCreditCard() {
         viewModelScope.launch {
-            val firstCard = creditCardRepository.getAllCreditCards().firstOrNull() ?: return@launch
+            val firstCard = creditCardRepository
+                .getAllCreditCards()
+                .firstOrNull() ?: return@launch
+
             selectCreditCard(firstCard)
         }
     }
 
-    fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
+    fun onAction(action: AddInstallmentAction) {
+        when (action) {
+            is AddInstallmentAction.SelectCreditCard -> selectCreditCard(action.creditCard)
+            is AddInstallmentAction.NavigateToMonth -> selectedDueMonth.value = action.dueMonth
+            is AddInstallmentAction.Submit -> submit(
+                form = action.form,
+                installments = action.installments,
+            )
+        }
+    }
+
+    private fun selectCreditCard(creditCard: CreditCard?) = viewModelScope.launch {
         selectedCreditCard.update { creditCard }
 
         selectedDueMonth.value = creditCard?.let {
@@ -92,24 +115,22 @@ class AddInstallmentViewModel(
         }
     }
 
-    fun navigateToMonth(dueMonth: YearMonth) {
-        selectedDueMonth.value = dueMonth
-    }
-
-    fun addInstallment(
+    private fun submit(
         form: TransactionForm,
         installments: Int,
     ) = viewModelScope.launch {
-        if (installments <= 1) {
-            _errorMessage.emit("Parcelamento deve ter pelo menos 2 parcelas")
-            return@launch
-        }
-
         addInstallmentUseCase(
             form = form,
             installments = installments,
         ).onLeft {
-            _errorMessage.emit(it.message ?: "Erro ao registrar parcelamento")
+            _events.send(
+                AddInstallmentEvent.ShowError(
+                    when (it) {
+                        is InstallmentException -> it.error.toUiText()
+                        else -> UiText.Res(Res.string.add_installment_error_generic)
+                    }
+                )
+            )
         }.onRight {
             modalManager.dismiss()
         }

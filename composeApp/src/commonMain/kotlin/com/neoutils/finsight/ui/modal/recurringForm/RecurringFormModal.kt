@@ -97,7 +97,9 @@ class RecurringFormModal(
 
         LaunchedEffect(target, uiState.creditCards) {
             if (target.isCreditCard && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
-                viewModel.selectCreditCard(uiState.creditCards.first())
+                viewModel.onAction(
+                    RecurringFormAction.SelectCreditCard(uiState.creditCards.first())
+                )
             }
         }
 
@@ -158,7 +160,9 @@ class RecurringFormModal(
                 AccountSelector(
                     selectedAccount = uiState.selectedAccount,
                     accounts = uiState.accounts,
-                    onAccountSelected = { viewModel.selectAccount(it) },
+                    onAccountSelected = {
+                        viewModel.onAction(RecurringFormAction.SelectAccount(it))
+                    },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
@@ -169,7 +173,9 @@ class RecurringFormModal(
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    onCreditCardSelected = {
+                        viewModel.onAction(RecurringFormAction.SelectCreditCard(it))
+                    },
                     onEmpty = { manager.show(CreditCardFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -224,7 +230,7 @@ class RecurringFormModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { viewModel.save(form) },
+                onClick = { viewModel.onAction(RecurringFormAction.Submit(form)) },
                 enabled = form.isValid(),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

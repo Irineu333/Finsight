@@ -99,7 +99,7 @@ class EditInvoiceBalanceModal(
                 creditCards = uiState.creditCards,
                 creditCard = uiState.selectedCreditCard,
                 onCreditCardSelected = { creditCard ->
-                    viewModel.selectCreditCard(creditCard)
+                    viewModel.onAction(EditInvoiceBalanceAction.SelectCreditCard(creditCard))
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -110,7 +110,7 @@ class EditInvoiceBalanceModal(
                 invoices = uiState.editableInvoices,
                 invoice = uiState.selectedInvoice,
                 onInvoiceSelected = { invoice ->
-                    viewModel.selectInvoice(invoice)
+                    viewModel.onAction(EditInvoiceBalanceAction.SelectInvoice(invoice))
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -155,7 +155,7 @@ class EditInvoiceBalanceModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { viewModel.adjustBalance(newBalance) },
+                onClick = { viewModel.onAction(EditInvoiceBalanceAction.Submit(newBalance)) },
                 enabled = uiState.selectedInvoice != null &&
                         balanceState.text.isNotBlank() &&
                         newBalance != uiState.currentBalance,

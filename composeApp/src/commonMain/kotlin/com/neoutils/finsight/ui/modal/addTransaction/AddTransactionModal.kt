@@ -76,7 +76,11 @@ class AddTransactionModal : ModalBottomSheet() {
 
         LaunchedEffect(target, uiState.creditCards) {
             if (target.isCreditCard && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
-                viewModel.selectCreditCard(uiState.creditCards.first())
+                viewModel.onAction(
+                    AddTransactionAction.SelectCreditCard(
+                        uiState.creditCards.first()
+                    )
+                )
             }
         }
 
@@ -146,7 +150,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 CreditCardSelector(
                     creditCards = uiState.creditCards,
                     creditCard = uiState.selectedCreditCard,
-                    onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                    onCreditCardSelected = {
+                        viewModel.onAction(AddTransactionAction.SelectCreditCard(it))
+                    },
                     onEmpty = { manager.show(CreditCardFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
@@ -157,13 +163,15 @@ class AddTransactionModal : ModalBottomSheet() {
             AnimatedVisibility(
                 type.isExpense && target.isCreditCard && uiState.invoiceSelection != null
             ) {
-                uiState.invoiceSelection?.let { selection ->
-                    InvoiceMonthNavigator(
-                        selection = selection,
-                        onNavigate = { viewModel.navigateToMonth(it) },
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth()
+                    uiState.invoiceSelection?.let { selection ->
+                        InvoiceMonthNavigator(
+                            selection = selection,
+                            onNavigate = {
+                                viewModel.onAction(AddTransactionAction.SelectInvoiceMonth(it))
+                            },
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
                     )
                 }
             }
@@ -171,14 +179,14 @@ class AddTransactionModal : ModalBottomSheet() {
             AnimatedVisibility(
                 visible = target.isAccount || type.isIncome
             ) {
-                AccountSelector(
-                    selectedAccount = uiState.selectedAccount,
-                    accounts = uiState.accounts,
-                    onAccountSelected = {
-                        viewModel.selectAccount(it)
-                    },
-                    modifier = Modifier
-                        .padding(top = 8.dp)
+                    AccountSelector(
+                        selectedAccount = uiState.selectedAccount,
+                        accounts = uiState.accounts,
+                        onAccountSelected = {
+                            viewModel.onAction(AddTransactionAction.SelectAccount(it))
+                        },
+                        modifier = Modifier
+                            .padding(top = 8.dp)
                         .fillMaxWidth()
                 )
             }
@@ -270,7 +278,7 @@ class AddTransactionModal : ModalBottomSheet() {
 
             Button(
                 onClick = {
-                    viewModel.addTransaction(form)
+                    viewModel.onAction(AddTransactionAction.Submit(form))
                 },
                 enabled = form.isValid() && !uiState.isInvoiceBlocked,
                 modifier = Modifier.fillMaxWidth(),

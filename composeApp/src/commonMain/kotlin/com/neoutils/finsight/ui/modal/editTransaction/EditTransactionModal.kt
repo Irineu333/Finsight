@@ -80,7 +80,11 @@ class EditTransactionModal(
 
         LaunchedEffect(target, uiState.creditCards) {
             if (target == Transaction.Target.CREDIT_CARD && uiState.creditCards.size == 1 && uiState.selectedCreditCard == null) {
-                viewModel.selectCreditCard(uiState.creditCards.first())
+                viewModel.onAction(
+                    EditTransactionAction.SelectCreditCard(
+                        uiState.creditCards.first()
+                    )
+                )
             }
         }
 
@@ -158,7 +162,9 @@ class EditTransactionModal(
                     CreditCardSelector(
                         creditCards = uiState.creditCards,
                         creditCard = uiState.selectedCreditCard,
-                        onCreditCardSelected = { viewModel.selectCreditCard(it) },
+                        onCreditCardSelected = {
+                            viewModel.onAction(EditTransactionAction.SelectCreditCard(it))
+                        },
                         onEmpty = { manager.show(CreditCardFormModal()) },
                         modifier = Modifier
                             .padding(top = 8.dp)
@@ -173,7 +179,7 @@ class EditTransactionModal(
                         selectedAccount = uiState.selectedAccount,
                         accounts = uiState.accounts,
                         onAccountSelected = {
-                            viewModel.selectAccount(it)
+                            viewModel.onAction(EditTransactionAction.SelectAccount(it))
                         },
                         modifier = Modifier
                             .padding(top = 8.dp)
@@ -187,7 +193,9 @@ class EditTransactionModal(
                     uiState.invoiceSelection?.let { selection ->
                         InvoiceMonthNavigator(
                             selection = selection,
-                            onNavigate = { viewModel.navigateToMonth(it) },
+                            onNavigate = {
+                                viewModel.onAction(EditTransactionAction.SelectInvoiceMonth(it))
+                            },
                             modifier = Modifier
                                 .padding(top = 8.dp)
                                 .fillMaxWidth()
@@ -271,8 +279,10 @@ class EditTransactionModal(
 
                 Button(
                     onClick = {
-                        viewModel.updateTransaction(
-                            form = form
+                        viewModel.onAction(
+                            EditTransactionAction.Submit(
+                                form = form
+                            )
                         )
                     },
                     enabled = form.isValid() && !uiState.isInvoiceBlocked,

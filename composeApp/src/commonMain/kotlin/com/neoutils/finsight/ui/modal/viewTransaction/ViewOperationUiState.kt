@@ -8,9 +8,6 @@ data class ViewOperationUiState(
     val perspective: OperationPerspective? = null,
 ) {
     val transaction = perspective?.let { selectedPerspective ->
-        OperationPerspective.resolveTransaction(
-            operation = operation,
-            perspective = selectedPerspective,
-        )
+        selectedPerspective.resolve(operation = operation)
     } ?: operation.primaryTransaction
 }

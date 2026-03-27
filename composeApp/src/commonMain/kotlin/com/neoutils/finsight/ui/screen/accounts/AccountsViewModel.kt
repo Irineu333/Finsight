@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
@@ -32,10 +31,12 @@ class AccountsViewModel(
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
+    private val accounts = accountRepository.observeAllAccounts()
+
     private val selectedAccountId = MutableStateFlow(initialAccountId)
 
     private val selectedAccountIndex = combine(
-        accountRepository.observeAllAccounts(),
+        accounts,
         selectedAccountId,
     ) { accounts, selectedAccountId ->
         accounts.indexOfFirst {
@@ -44,19 +45,13 @@ class AccountsViewModel(
     }
 
     private val selectedAccount = combine(
-        accountRepository.observeAllAccounts(),
+        accounts,
         selectedAccountIndex,
     ) { accounts, index ->
         accounts.getOrNull(index) ?: accounts.first()
     }
 
     private val operations = operationRepository.observeAllOperations()
-
-    private val allTransactions = operations.map { operations ->
-        operations.flatMap { operation ->
-            operation.transactions
-        }
-    }
 
     private val operationsUi = combine(
         selectedAccount,
@@ -77,6 +72,28 @@ class AccountsViewModel(
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
+    private val accountsUi = combine(
+        accounts,
+        operations,
+        selectedMonth,
+    ) { accounts, operations, month ->
+        val allTransactions = operations.flatMap { operation ->
+            operation.transactions
+        }
+
+        accounts.map { account ->
+            val transactions = allTransactions.filter { transaction ->
+                transaction.account?.id == account.id
+            }
+
+            AccountUi(
+                account = account,
+                transactions = transactions,
+                month = month,
+            )
+        }
+    }
+
     private val filters = MutableStateFlow(
         AccountsFilters(
             category = null,
@@ -86,14 +103,13 @@ class AccountsViewModel(
     )
 
     val uiState = combine(
-        accountRepository.observeAllAccounts(),
-        allTransactions,
+        accountsUi,
         operationsUi,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accounts, allTransactions, selectedAccountOperations, categories, index, month, currentFilters ->
+    ) { accountsUi, selectedAccountOperations, categories, index, month, currentFilters ->
         val monthOperations = selectedAccountOperations.filter { operation ->
             operation.displayDate.yearMonth == month
         }
@@ -106,47 +122,7 @@ class AccountsViewModel(
             .groupBy { it.displayDate }
 
         AccountsUiState.Content(
-            accounts = accounts.map { account ->
-                val transactions = allTransactions.filter { it.account?.id == account.id }
-
-                val initialBalance = transactions
-                    .filter { it.date.yearMonth < month }
-                    .sumOf { it.signedImpact() }
-
-                val accountTransactions = transactions
-                    .filter { it.date.yearMonth <= month }
-
-                val balance = accountTransactions.sumOf { it.signedImpact() }
-
-                val monthTransactions = accountTransactions.filter { it.date.yearMonth == month }
-
-                val income = monthTransactions
-                    .filter { it.type == Transaction.Type.INCOME }
-                    .sumOf { it.amount }
-
-                val expense = monthTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE && !it.isInvoicePayment }
-                    .sumOf { it.amount }
-
-                val adjustment = monthTransactions
-                    .filter { it.type == Transaction.Type.ADJUSTMENT }
-                    .sumOf { it.signedImpact() }
-
-                val invoicePayment = monthTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE && it.isInvoicePayment }
-                    .sumOf { it.amount }
-
-                AccountUi(
-                    account = account,
-                    initialBalance = initialBalance,
-                    balance = balance,
-                    income = income,
-                    expense = expense,
-                    adjustment = adjustment,
-                    invoicePayment = invoicePayment,
-                    advancePayment = 0.0
-                )
-            },
+            accounts = accountsUi,
             selectedAccountIndex = index,
             selectedMonth = month,
             operations = filteredOperations,

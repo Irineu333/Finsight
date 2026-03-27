@@ -77,6 +77,7 @@ val viewModelModule = module {
     viewModel {
         ViewOperationViewModel(
             operation = it.get(),
+            perspective = it.getOrNull(),
             operationRepository = get(),
         )
     }

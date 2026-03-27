@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -41,6 +42,10 @@ fun OperationCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     amountDecoration: TextDecoration = TextDecoration.None,
+    displayType: Transaction.Type = operation.type,
+    displayAmount: Double = operation.amount,
+    displayTarget: Transaction.Target = operation.target,
+    displayCategory: Category? = operation.category ?: operation.primaryTransaction.category,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -62,7 +67,7 @@ fun OperationCard(
         ) {
             Box {
                 Surface(
-                    color = operation.color().copy(alpha = 0.2f),
+                    color = operation.color(displayType).copy(alpha = 0.2f),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -70,11 +75,11 @@ fun OperationCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        if (operation.category != null) {
+                        if (displayCategory != null) {
                             Icon(
-                                painter = operation.category.icon(),
+                                painter = displayCategory.icon(),
                                 contentDescription = null,
-                                tint = operation.color(),
+                                tint = operation.color(displayType),
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {
@@ -82,21 +87,21 @@ fun OperationCard(
                                 imageVector = when {
                                     operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
                                     operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
-                                    else -> when (operation.type) {
+                                    else -> when (displayType) {
                                         Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
                                         Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
                                         Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
                                     }
                                 },
                                 contentDescription = null,
-                                tint = operation.color(),
+                                tint = operation.color(displayType),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
                 }
 
-                if (operation.target.isCreditCard || operation.kind == Operation.Kind.PAYMENT) {
+                if (displayTarget.isCreditCard || operation.kind == Operation.Kind.PAYMENT) {
                     Surface(
                         color = colorScheme.surfaceVariant,
                         shape = CircleShape,
@@ -137,26 +142,26 @@ fun OperationCard(
             }
 
             Text(
-                text = when (operation.type) {
+                text = when (displayType) {
                     Transaction.Type.ADJUSTMENT -> {
-                        formatter.formatWithSign(operation.amount)
+                        formatter.formatWithSign(displayAmount)
                     }
 
                     Transaction.Type.EXPENSE -> {
                         if (operation.kind == Operation.Kind.TRANSFER) {
-                            "-${formatter.format(operation.amount)}"
+                            "-${formatter.format(displayAmount)}"
                         } else {
-                            formatter.format(operation.amount)
+                            formatter.format(displayAmount)
                         }
                     }
 
                     else -> {
-                        formatter.format(operation.amount)
+                        formatter.format(displayAmount)
                     }
                 },
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = operation.color(),
+                color = operation.color(displayType),
                 textDecoration = amountDecoration,
             )
         }
@@ -186,10 +191,10 @@ private fun getTitle(
     return baseTitle
 }
 
-private fun Operation.color() = when {
+private fun Operation.color(displayType: Transaction.Type) = when {
     kind == Operation.Kind.PAYMENT -> InvoicePayment
     kind == Operation.Kind.TRANSFER -> Info
-    type == Transaction.Type.INCOME -> Income
-    type == Transaction.Type.EXPENSE -> Expense
+    displayType == Transaction.Type.INCOME -> Income
+    displayType == Transaction.Type.EXPENSE -> Expense
     else -> Adjustment
 }

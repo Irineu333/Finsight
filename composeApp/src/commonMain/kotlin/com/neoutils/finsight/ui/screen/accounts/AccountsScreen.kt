@@ -248,21 +248,25 @@ private fun AccountsContent(
                     items(
                         items = operations,
                         key = { it.id }
-                    ) { operation ->
+                    ) { operationUi ->
                         OperationCard(
-                            operation = operation,
+                            operation = operationUi.operation,
+                            displayType = operationUi.displayType,
+                            displayAmount = operationUi.displayAmount,
+                            displayTarget = operationUi.displayTarget,
+                            displayCategory = operationUi.displayCategory,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                when (operation.type) {
+                                when (operationUi.displayType) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
+                                        modalManager.show(ViewAdjustmentModal(operationUi.operation))
                                     }
 
                                     else -> {
-                                        modalManager.show(ViewOperationModal(operation))
+                                        modalManager.show(ViewOperationModal(operationUi))
                                     }
                                 }
                             }

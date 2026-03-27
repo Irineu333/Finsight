@@ -33,6 +33,8 @@ import com.neoutils.finsight.ui.component.LocalNavigator
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.ui.model.OperationPerspective
+import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
@@ -45,14 +47,22 @@ import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
 
 class ViewOperationModal(
-    private val operation: Operation
+    private val operation: Operation,
+    private val perspective: OperationPerspective? = null,
 ) : ModalBottomSheet() {
+
+    constructor(operationUi: OperationUi) : this(
+        operation = operationUi.operation,
+        perspective = operationUi.perspective,
+    )
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
         val formatter = LocalCurrencyFormatter.current
-        val viewModel = koinViewModel<ViewOperationViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<ViewOperationViewModel> {
+            parametersOf(operation, perspective)
+        }
 
         val uiState by viewModel.uiState.collectAsState()
 

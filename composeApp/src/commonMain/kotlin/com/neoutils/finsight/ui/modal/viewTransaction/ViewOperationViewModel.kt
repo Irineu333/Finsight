@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.ui.model.OperationPerspective
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class ViewOperationViewModel(
     operation: Operation,
+    private val perspective: OperationPerspective? = null,
     operationRepository: IOperationRepository,
 ) : ViewModel() {
 
@@ -28,13 +30,15 @@ class ViewOperationViewModel(
         .map { currentOperation ->
             ViewOperationUiState(
                 operation = currentOperation,
+                perspective = perspective,
             )
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = ViewOperationUiState(
-                operation = operation
+                operation = operation,
+                perspective = perspective,
             )
         )
 

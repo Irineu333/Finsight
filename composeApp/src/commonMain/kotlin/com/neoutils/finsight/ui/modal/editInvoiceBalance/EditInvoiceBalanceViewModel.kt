@@ -40,12 +40,10 @@ class EditInvoiceBalanceViewModel(
 
     private val selectedCreditCard = MutableStateFlow(initialInvoice.creditCard)
 
-    private val editableInvoices = flow {
-        emit(
-            invoiceRepository
-                .getInvoicesByCreditCard(initialInvoice.creditCard.id)
-                .filter { it.status.isEditable }
-        )
+    private val editableInvoices = selectedCreditCard.map { creditCard ->
+        invoiceRepository
+            .getInvoicesByCreditCard(creditCard.id)
+            .filter { it.status.isEditable }
     }
 
     private val creditCards = flow {

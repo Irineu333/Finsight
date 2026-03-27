@@ -52,15 +52,20 @@ class AccountsViewModel(
 
     private val operations = operationRepository.observeAllOperations()
 
-    private val operationsBySelectedAccount = combine(
+    private val allTransactions = operations.map { operations ->
+        operations.flatMap { operation ->
+            operation.transactions
+        }
+    }
+
+    private val operationsUi = combine(
         selectedAccount,
         operations,
     ) { account, operations ->
         val perspective = OperationPerspective.Account(accountId = account.id)
         operations.mapNotNull { operation ->
-            OperationPerspective.resolveTransaction(
+            perspective.resolve(
                 operation = operation,
-                perspective = perspective,
             )?.let {
                 OperationUi(
                     operation = operation,
@@ -82,17 +87,13 @@ class AccountsViewModel(
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),
-        operations,
-        operationsBySelectedAccount,
+        allTransactions,
+        operationsUi,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accounts, operations, selectedAccountOperations, categories, index, month, currentFilters ->
-        val transactions = operations.flatMap { operation ->
-            operation.transactions
-        }
-
+    ) { accounts, allTransactions, selectedAccountOperations, categories, index, month, currentFilters ->
         val monthOperations = selectedAccountOperations.filter { operation ->
             operation.displayDate.yearMonth == month
         }
@@ -106,13 +107,13 @@ class AccountsViewModel(
 
         AccountsUiState.Content(
             accounts = accounts.map { account ->
-                val allAccountTransactions = transactions.filter { it.account?.id == account.id }
+                val transactions = allTransactions.filter { it.account?.id == account.id }
 
-                val initialBalance = allAccountTransactions
+                val initialBalance = transactions
                     .filter { it.date.yearMonth < month }
                     .sumOf { it.signedImpact() }
 
-                val accountTransactions = allAccountTransactions
+                val accountTransactions = transactions
                     .filter { it.date.yearMonth <= month }
 
                 val balance = accountTransactions.sumOf { it.signedImpact() }

@@ -19,9 +19,8 @@ data class OperationUi(
 
     val transaction: Transaction by lazy {
         requireNotNull(
-            OperationPerspective.resolveTransaction(
+            perspective.resolve(
                 operation = operation,
-                perspective = perspective,
             )
         ) {
             "Operation ${operation.id} does not match perspective $perspective"
@@ -29,7 +28,10 @@ data class OperationUi(
     }
 
     val displayType: Transaction.Type
-        get() = if (kind == Operation.Kind.PAYMENT) Transaction.Type.EXPENSE else transaction.type
+        get() = when (kind) {
+            Operation.Kind.PAYMENT -> Transaction.Type.EXPENSE
+            else -> transaction.type
+        }
 
     val displayAmount: Double
         get() = transaction.amount

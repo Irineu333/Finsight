@@ -13,19 +13,21 @@ sealed class OperationPerspective {
         val invoiceId: Long? = null,
     ) : OperationPerspective()
 
-    companion object {
-        fun resolveTransaction(
-            operation: Operation,
-            perspective: OperationPerspective,
-        ): Transaction? {
-            return when (perspective) {
-                is Account -> operation.transactions.firstOrNull { transaction ->
-                    transaction.account?.id == perspective.accountId
+    fun resolve(
+        operation: Operation,
+    ): Transaction? {
+        return when (this) {
+            is Account -> {
+                operation.transactions.firstOrNull { transaction ->
+                    transaction.target.isAccount && transaction.account?.id == accountId
                 }
+            }
 
-                is Card -> operation.transactions.firstOrNull { transaction ->
-                    transaction.creditCard?.id == perspective.creditCardId ||
-                        (perspective.invoiceId != null && transaction.invoice?.id == perspective.invoiceId)
+            is Card -> {
+                operation.transactions.firstOrNull { transaction ->
+                    transaction.target.isCreditCard &&
+                            transaction.creditCard?.id == creditCardId &&
+                            (invoiceId == null || transaction.invoice?.id == invoiceId)
                 }
             }
         }

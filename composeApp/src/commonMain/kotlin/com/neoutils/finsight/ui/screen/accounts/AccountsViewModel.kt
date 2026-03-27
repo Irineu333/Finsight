@@ -15,16 +15,8 @@ import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -39,15 +31,46 @@ class AccountsViewModel(
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
-    private val accounts = accountRepository.observeAllAccounts()
+    private val selectedAccountId = MutableStateFlow(initialAccountId)
 
-    private val selectedAccountIndex = MutableStateFlow(
-        runBlocking {
-            accounts.first().indexOfFirst {
-                it.id == initialAccountId
-            }.coerceAtLeast(minimumValue = 0)
+    private val selectedAccountIndex = combine(
+        accountRepository.observeAllAccounts(),
+        selectedAccountId,
+    ) { accounts, selectedAccountId ->
+        accounts.indexOfFirst {
+            it.id == selectedAccountId
+        }.coerceAtLeast(minimumValue = 0)
+    }
+
+    private val selectedAccount = combine(
+        accountRepository.observeAllAccounts(),
+        selectedAccountIndex,
+    ) { accounts, index ->
+        accounts.getOrNull(index) ?: accounts.first()
+    }
+
+    private val operationsBySelectedAccount = selectedAccount.flatMapLatest { account ->
+        operationRepository.observeAllOperations().map { operations ->
+            operations.filter { operation ->
+                operation.transactions.any { transaction ->
+                    transaction.account?.id == account.id
+                }
+            }.map { operation ->
+                val selectedTransactions = operation.transactions.filter { transaction ->
+                    transaction.account?.id == account.id
+                }
+                if (selectedTransactions.isEmpty()) {
+                    operation
+                } else {
+                    operation.copy(
+                        transactions = selectedTransactions + operation.transactions.filterNot { transaction ->
+                            transaction.account?.id == account.id
+                        }
+                    )
+                }
+            }
         }
-    )
+    }
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
@@ -59,43 +82,8 @@ class AccountsViewModel(
         )
     )
 
-    private val operationsBySelectedAccount = combine(
-        accounts,
-        selectedAccountIndex,
-    ) { accounts, index ->
-        val account = accounts.getOrNull(index)
-        account?.id
-    }.flatMapLatest { accountId ->
-        if (accountId != null) {
-            operationRepository.observeAllOperations().map { operations ->
-                operations
-                    .filter { operation ->
-                        operation.transactions.any { transaction ->
-                            transaction.account?.id == accountId
-                        }
-                    }
-                    .map { operation ->
-                        val selectedTransactions = operation.transactions.filter { transaction ->
-                            transaction.account?.id == accountId
-                        }
-                        if (selectedTransactions.isEmpty()) {
-                            operation
-                        } else {
-                            operation.copy(
-                                transactions = selectedTransactions + operation.transactions.filterNot { transaction ->
-                                    transaction.account?.id == accountId
-                                }
-                            )
-                        }
-                    }
-            }
-        } else {
-            flowOf(emptyList())
-        }
-    }
-
     val uiState = combine(
-        accounts,
+        accountRepository.observeAllAccounts(),
         operationsBySelectedAccount,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
@@ -103,8 +91,9 @@ class AccountsViewModel(
         filters,
     ) { accounts, operations, categories, index, month, currentFilters ->
         val transactions = operations.flatMap { it.transactions }
-        val monthOperations = operations
-            .filter { it.date.yearMonth == month }
+
+        val monthOperations = operations.filter { it.date.yearMonth == month }
+
         val filteredOperations = monthOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
@@ -112,7 +101,7 @@ class AccountsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
-        AccountsUiState(
+        AccountsUiState.Content(
             accounts = accounts.map { account ->
                 val allAccountTransactions = transactions.filter { it.account?.id == account.id }
 
@@ -165,15 +154,16 @@ class AccountsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = AccountsUiState(
-            selectedAccountIndex = selectedAccountIndex.value,
+        initialValue = AccountsUiState.Loading(
+            selectedMonth = selectedMonth.value,
         )
     )
 
     fun onAction(action: AccountsAction) = viewModelScope.launch {
         when (action) {
             is AccountsAction.SelectAccount -> {
-                selectedAccountIndex.value = action.index.coerceAtLeast(0)
+                selectedAccountId.value = accountRepository
+                    .getAllAccounts()[action.index.coerceAtLeast(0)].id
             }
 
             is AccountsAction.SelectCategory -> {
@@ -225,4 +215,3 @@ private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
     if (!recurringOnly) return this
     return filter { operation -> operation.recurring != null }
 }
-

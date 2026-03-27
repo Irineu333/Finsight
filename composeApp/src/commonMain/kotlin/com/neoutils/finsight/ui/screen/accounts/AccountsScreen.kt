@@ -125,14 +125,12 @@ private fun AccountsContent(
                     }
                 },
                 actions = {
-                    uiState.selectedMonth?.let { month ->
-                        MonthSelector(
-                            selectedMonth = month,
-                            onMonthSelected = { selected ->
-                                onAction(AccountsAction.SelectMonth(selected))
-                            }
-                        )
-                    }
+                    MonthSelector(
+                        selectedMonth = uiState.selectedMonth,
+                        onMonthSelected = { selected ->
+                            onAction(AccountsAction.SelectMonth(selected))
+                        }
+                    )
                 }
             )
         },
@@ -157,57 +155,70 @@ private fun AccountsContent(
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item(
-                key = "account_pager"
-            ) {
-                AccountPager(
-                    accounts = uiState.accounts,
-                    selectedIndex = uiState.selectedAccountIndex,
-                    onSelectAccount = { index ->
-                        onAction(AccountsAction.SelectAccount(index))
-                    },
-                    onEditBalance = { account ->
-                        uiState.selectedMonth?.let { month ->
-                            modalManager.show(
-                                EditAccountBalanceModal(
-                                    type = EditAccountBalanceModal.Type.FINAL,
-                                    targetMonth = month,
-                                    account = account,
-                                )
+            when (uiState) {
+                is AccountsUiState.Loading -> {
+                    item(
+                        key = "account_pager_loading"
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(28.dp),
                             )
                         }
-                    },
-                    onEditInitialBalance = { account ->
-                        uiState.selectedMonth?.let { month ->
-                            modalManager.show(
-                                EditAccountBalanceModal(
-                                    type = EditAccountBalanceModal.Type.INITIAL,
-                                    targetMonth = month,
-                                    account = account,
-                                )
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            uiState.accounts.getOrNull(uiState.selectedAccountIndex)?.let { selectedAccount ->
-                item(
-                    key = "account_actions"
-                ) {
-                    AccountActions(
-                        accountUi = selectedAccount,
-                        canTransfer = uiState.accounts.size > 1,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateContentSize()
-                    )
+                    }
                 }
-            }
 
-            if (uiState.accounts.isNotEmpty()) {
+                is AccountsUiState.Content -> {
+                    item(
+                        key = "account_pager"
+                    ) {
+                        AccountPager(
+                            accounts = uiState.accounts,
+                            selectedIndex = uiState.selectedAccountIndex,
+                            onSelectAccount = { index ->
+                                onAction(AccountsAction.SelectAccount(index))
+                            },
+                            onEditBalance = { account ->
+                                modalManager.show(
+                                    EditAccountBalanceModal(
+                                        type = EditAccountBalanceModal.Type.FINAL,
+                                        targetMonth = uiState.selectedMonth,
+                                        account = account,
+                                    )
+                                )
+                            },
+                            onEditInitialBalance = { account ->
+                                modalManager.show(
+                                    EditAccountBalanceModal(
+                                        type = EditAccountBalanceModal.Type.INITIAL,
+                                        targetMonth = uiState.selectedMonth,
+                                        account = account,
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    item(
+                        key = "account_actions"
+                    ) {
+                        AccountActions(
+                            accountUi = uiState.accounts[uiState.selectedAccountIndex],
+                            canTransfer = uiState.accounts.size > 1,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateContentSize()
+                        )
+                    }
+
                 item(
                     key = "filters_row"
                 ) {
@@ -219,49 +230,49 @@ private fun AccountsContent(
                             .animateItem()
                     )
                 }
-            }
+                uiState.operations.forEach { (date, operations) ->
+                    item(
+                        key = "date_title_$date"
+                    ) {
+                        Text(
+                            text = LocalDateFormats.current.formatRelativeDate(date),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .padding(horizontal = 16.dp)
+                                .animateItem()
+                        )
+                    }
 
-            uiState.operations.forEach { (date, operations) ->
-                item(
-                    key = "date_title_$date"
-                ) {
-                    Text(
-                        text = LocalDateFormats.current.formatRelativeDate(date),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(vertical = 8.dp)
-                            .padding(horizontal = 16.dp)
-                            .animateItem()
-                    )
-                }
+                    items(
+                        items = operations,
+                        key = { it.id }
+                    ) { operation ->
+                        OperationCard(
+                            operation = operation,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateItem(),
+                            onClick = {
+                                when (operation.type) {
+                                    Transaction.Type.ADJUSTMENT -> {
+                                        modalManager.show(ViewAdjustmentModal(operation))
+                                    }
 
-                items(
-                    items = operations,
-                    key = { it.id }
-                ) { operation ->
-                    OperationCard(
-                        operation = operation,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateItem(),
-                        onClick = {
-                            when (operation.type) {
-                                Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
-                                }
-
-                                else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    else -> {
+                                        modalManager.show(ViewOperationModal(operation))
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
     }
+}
 }
 
 @Composable
@@ -421,7 +432,7 @@ private fun AccountActions(
 
 @Composable
 private fun FiltersRow(
-    uiState: AccountsUiState,
+    uiState: AccountsUiState.Content,
     onAction: (AccountsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -677,4 +688,3 @@ private fun RecurringFilterChip(
         },
     )
 }
-

@@ -15,10 +15,8 @@ import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.time.ExperimentalTime
 
 class CreditCardsViewModel(
@@ -32,13 +30,23 @@ class CreditCardsViewModel(
 
     private val creditCards = creditCardRepository.observeAllCreditCards()
 
-    private val selectedCardIndex = MutableStateFlow(
-        runBlocking {
-            creditCards.first().indexOfFirst {
-                it.id == initialCreditCardId
-            }.coerceAtLeast(minimumValue = 0)
-        }
-    )
+    private val selectedCardId = MutableStateFlow(initialCreditCardId)
+
+    private val selectedCardIndex = combine(
+        creditCards,
+        selectedCardId,
+    ) { creditCards, selectedCardId ->
+        creditCards.indexOfFirst {
+            it.id == selectedCardId
+        }.coerceAtLeast(minimumValue = 0)
+    }
+
+    private val selectedCard = combine(
+        creditCards,
+        selectedCardIndex,
+    ) { creditCards, index ->
+        creditCards.getOrNull(index)
+    }
 
     private val filters = MutableStateFlow(
         CreditCardsFilters(
@@ -56,11 +64,10 @@ class CreditCardsViewModel(
         }
 
     private val transactionsFlow = combine(
-        creditCards,
+        selectedCard,
         invoicesFlow,
-        selectedCardIndex,
-    ) { creditCards, invoices, index ->
-        invoices[creditCards.getOrNull(index)?.id]
+    ) { selectedCard, invoices ->
+        invoices[selectedCard?.id]
     }.flatMapLatest { invoice ->
         if (invoice != null) {
             operationRepository.observeOperationsBy(invoiceId = invoice.id)
@@ -116,7 +123,10 @@ class CreditCardsViewModel(
     fun onAction(action: CreditCardsAction) = viewModelScope.launch {
         when (action) {
             is CreditCardsAction.SelectCard -> {
-                selectedCardIndex.value = action.index.coerceAtLeast(0)
+                selectedCardId.value = creditCardRepository
+                    .getAllCreditCards()
+                    .getOrNull(action.index.coerceAtLeast(0))
+                    ?.id
             }
 
             is CreditCardsAction.SelectCategory -> {

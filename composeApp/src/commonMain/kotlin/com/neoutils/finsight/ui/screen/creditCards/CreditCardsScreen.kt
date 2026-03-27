@@ -170,18 +170,16 @@ private fun CreditCardsContent(
                         )
                     }
 
-                    uiState.creditCards.getOrNull(uiState.selectedCardIndex)?.let { selectedCard ->
-                        item(
-                            key = "card_actions"
-                        ) {
-                            CardActions(
-                                creditCardUi = selectedCard,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .animateContentSize()
-                            )
-                        }
+                    item(
+                        key = "card_actions"
+                    ) {
+                        CardActions(
+                            creditCardUi = uiState.creditCards[uiState.selectedCardIndex],
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateContentSize()
+                        )
                     }
 
                     item(

@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.signedImpact
+import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository

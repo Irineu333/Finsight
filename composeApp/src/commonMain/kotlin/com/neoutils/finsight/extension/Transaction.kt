@@ -1,4 +1,6 @@
-package com.neoutils.finsight.domain.model
+package com.neoutils.finsight.extension
+
+import com.neoutils.finsight.domain.model.Transaction
 
 fun Transaction.signedImpact(): Double {
     return when (type) {

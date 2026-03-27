@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.signedImpact
+import com.neoutils.finsight.extension.signedImpact
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 

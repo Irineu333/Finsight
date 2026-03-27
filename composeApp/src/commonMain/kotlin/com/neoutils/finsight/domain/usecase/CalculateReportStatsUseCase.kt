@@ -3,7 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.signedImpact
+import com.neoutils.finsight.extension.signedImpact
 import kotlinx.datetime.LocalDate
 
 class CalculateReportStatsUseCase {

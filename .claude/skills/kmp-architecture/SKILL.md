@@ -33,6 +33,7 @@ and extended for multiplatform targets (Android, Desktop, iOS).
 | Repository interfaces, implementations, mappers | `references/repository-pattern.md` |
 | StateFlow, SharedFlow, Flow operators, coroutine scopes | `references/flows-coroutines.md` |
 | Modal stack, bottom sheets, open/close flow, modal events | `references/modal-bottom-sheets.md` |
+| Form architecture in modals, validation layers, create/edit flows | `references/form-patterns.md` |
 | Koin: modules, viewModel {}, factory {}, single {}, KMP setup | `references/koin-di.md` |
 | Arrow Either, error types, toUiText(), exception wrappers | `references/error-handling.md` |
 | Unit tests, Flow testing, coroutine testing, fake repos | `references/testing.md` |

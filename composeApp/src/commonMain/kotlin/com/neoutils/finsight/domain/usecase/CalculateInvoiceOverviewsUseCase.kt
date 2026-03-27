@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.signedImpact
+import com.neoutils.finsight.extension.signedImpact
 import kotlinx.datetime.YearMonth
 
 class CalculateInvoiceOverviewsUseCase {

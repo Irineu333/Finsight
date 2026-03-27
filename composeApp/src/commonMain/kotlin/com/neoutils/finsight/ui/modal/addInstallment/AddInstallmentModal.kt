@@ -178,7 +178,6 @@ class AddInstallmentModal : ModalBottomSheet() {
                                 installments = it.coerceAtLeast(2)
                             },
                             minCount = 2,
-                            modifier = Modifier.padding(end = 8.dp),
                         )
                     },
                     shape = RoundedCornerShape(12.dp),

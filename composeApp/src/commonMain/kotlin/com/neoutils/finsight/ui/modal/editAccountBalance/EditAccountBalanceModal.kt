@@ -35,13 +35,11 @@ import com.neoutils.finsight.resources.edit_account_balance_final_title
 import com.neoutils.finsight.resources.edit_account_balance_initial_title
 import com.neoutils.finsight.resources.edit_account_balance_label
 import com.neoutils.finsight.resources.edit_account_balance_save
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditAccountBalanceModal(
@@ -56,117 +54,144 @@ class EditAccountBalanceModal(
             parametersOf(type, targetMonth, account)
         }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
         val currencyFormatter = LocalCurrencyFormatter.current
-        val initialCents = (uiState.currentBalance * 100).toLong()
-        val balanceState = rememberTextFieldState(formatMoney(initialCents, currencyFormatter))
+        when (val state = uiState) {
+            EditAccountBalanceUiState.Loading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(type.titleRes),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
 
-        val newBalance by remember {
-            derivedStateOf {
-                parseMoneyToDouble(balanceState.text.toString())
-            }
-        }
+                    if (targetMonth != null) {
+                        Text(
+                            text = LocalDateFormats.current.yearMonth.format(targetMonth),
+                            fontSize = 14.sp,
+                            color = TextLight1,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
 
-        val adjustment by remember {
-            derivedStateOf {
-                newBalance - uiState.currentBalance
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            snapshotFlow {
-                uiState.currentBalance
-            }.collectLatest {
-                balanceState.edit {
-                    replace(0, length, formatMoney((uiState.currentBalance * 100).toLong(), currencyFormatter))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    CircularProgressIndicator()
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(type.titleRes),
-                style = MaterialTheme.typography.titleLarge,
-            )
-
-            if (targetMonth != null) {
-                Text(
-                    text = LocalDateFormats.current.yearMonth.format(targetMonth),
-                    fontSize = 14.sp,
-                    color = TextLight1,
-                    modifier = Modifier.padding(top = 4.dp)
+            is EditAccountBalanceUiState.Content -> {
+                val balanceState = rememberTextFieldState(
+                    formatMoney((state.currentBalance * 100).toLong(), currencyFormatter)
                 )
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AccountSelector(
-                selectedAccount = uiState.selectedAccount,
-                accounts = uiState.accounts,
-                onAccountSelected = { account ->
-                    account?.let {
-                        viewModel.onAction(EditAccountBalanceAction.SelectAccount(it))
+                val newBalance by remember {
+                    derivedStateOf {
+                        parseMoneyToDouble(balanceState.text.toString())
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                val adjustment by remember {
+                    derivedStateOf {
+                        newBalance - state.currentBalance
+                    }
+                }
 
-            OutlinedTextField(
-                label = { Text(stringResource(Res.string.edit_account_balance_label)) },
-                state = balanceState,
-                inputTransformation = rememberMoneyInputTransformation(),
-                shape = RoundedCornerShape(12.dp),
-                lineLimits = TextFieldLineLimits.SingleLine,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                trailingIcon = {
-                    AnimatedVisibility(
-                        visible = adjustment != 0.0,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                    ) {
-                        if (adjustment != 0.0) {
-                            AnimatedContent(
-                                targetState = adjustment,
-                                transitionSpec = {
-                                    fadeIn() togetherWith fadeOut()
-                                }
-                            ) { adjustment ->
-                                AdjustmentLabel(
-                                    adjustment = adjustment,
-                                    modifier = Modifier.padding(end = 16.dp),
-                                )
+                LaunchedEffect(state.currentBalance) {
+                    balanceState.edit {
+                        replace(0, length, formatMoney((state.currentBalance * 100).toLong(), currencyFormatter))
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(type.titleRes),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+
+                    if (targetMonth != null) {
+                        Text(
+                            text = LocalDateFormats.current.yearMonth.format(targetMonth),
+                            fontSize = 14.sp,
+                            color = TextLight1,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    AccountSelector(
+                        selectedAccount = state.selectedAccount,
+                        accounts = state.accounts,
+                        onAccountSelected = { selected ->
+                            selected?.let {
+                                viewModel.onAction(EditAccountBalanceAction.SelectAccount(it))
                             }
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        label = { Text(stringResource(Res.string.edit_account_balance_label)) },
+                        state = balanceState,
+                        inputTransformation = rememberMoneyInputTransformation(),
+                        shape = RoundedCornerShape(12.dp),
+                        lineLimits = TextFieldLineLimits.SingleLine,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        trailingIcon = {
+                            AnimatedVisibility(
+                                visible = adjustment != 0.0,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                            ) {
+                                if (adjustment != 0.0) {
+                                    AnimatedContent(
+                                        targetState = adjustment,
+                                        transitionSpec = {
+                                            fadeIn() togetherWith fadeOut()
+                                        }
+                                    ) { currentAdjustment ->
+                                        AdjustmentLabel(
+                                            adjustment = currentAdjustment,
+                                            modifier = Modifier.padding(end = 16.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { viewModel.onAction(EditAccountBalanceAction.Submit(newBalance)) },
+                        enabled = balanceState.text.isNotBlank() && newBalance != state.currentBalance,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Adjustment),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.edit_account_balance_save),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { viewModel.onAction(EditAccountBalanceAction.Submit(newBalance)) },
-                enabled = balanceState.text.isNotBlank() && newBalance != uiState.currentBalance,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Adjustment),
-            ) {
-                Text(
-                    text = stringResource(Res.string.edit_account_balance_save),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                }
             }
         }
     }

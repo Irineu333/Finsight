@@ -11,18 +11,11 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-data class EditAccountBalanceUiState(
-    val accounts: List<Account> = emptyList(),
-    val selectedAccount: Account? = null,
-    val currentBalance: Double = 0.0
-)
 
 @OptIn(ExperimentalTime::class)
 class EditAccountBalanceViewModel(
@@ -37,21 +30,27 @@ class EditAccountBalanceViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
+    init {
+        initialAccount()
+    }
+
+    private fun initialAccount() = viewModelScope.launch {
+        selectedAccount.value = accountRepository.getAccountById(account.id) ?: account
+    }
+
     private val accounts = flow {
         emit(accountRepository.getAllAccounts())
     }
 
-    private val selectedAccount = MutableStateFlow(
-        runBlocking {
-            accountRepository.getAccountById(account.id) ?: account
-        }
-    )
+    private val selectedAccount = MutableStateFlow<Account?>(null)
 
-    private val currentBalance = selectedAccount.map { account ->
-        calculateBalanceUseCase(
-            target = targetMonth,
-            accountId = account.id
-        )
+    private val currentBalance = selectedAccount.map { selected ->
+        selected?.let {
+            calculateBalanceUseCase(
+                target = targetMonth,
+                accountId = it.id
+            )
+        }
     }
 
     val uiState = combine(
@@ -59,22 +58,19 @@ class EditAccountBalanceViewModel(
         selectedAccount,
         currentBalance
     ) { accounts, selectedAccount, balance ->
-        EditAccountBalanceUiState(
-            accounts = accounts,
-            selectedAccount = selectedAccount,
-            currentBalance = balance
-        )
+        if (selectedAccount == null || balance == null) {
+            EditAccountBalanceUiState.Loading
+        } else {
+            EditAccountBalanceUiState.Content(
+                accounts = accounts,
+                selectedAccount = selectedAccount,
+                currentBalance = balance
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditAccountBalanceUiState(
-            currentBalance = runBlocking {
-                calculateBalanceUseCase(
-                    target = targetMonth,
-                    accountId = account.id
-                )
-            }
-        )
+        initialValue = EditAccountBalanceUiState.Loading
     )
 
     private val timeZone get() = TimeZone.currentSystemDefault()
@@ -93,7 +89,7 @@ class EditAccountBalanceViewModel(
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
-        val account = uiState.value.selectedAccount ?: return@launch
+        val account = selectedAccount.value ?: return@launch
 
         when (type) {
             EditAccountBalanceModal.Type.CURRENT -> {

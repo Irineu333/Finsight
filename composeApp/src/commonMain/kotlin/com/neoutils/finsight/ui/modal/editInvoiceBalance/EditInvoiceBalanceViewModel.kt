@@ -2,7 +2,6 @@ package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -11,19 +10,10 @@ import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-
-data class EditInvoiceBalanceUiState(
-    val creditCards: List<CreditCard> = emptyList(),
-    val selectedCreditCard: CreditCard? = null,
-    val editableInvoices: List<Invoice> = emptyList(),
-    val selectedInvoice: Invoice? = null,
-    val currentBalance: Double = 0.0,
-)
 
 @OptIn(ExperimentalTime::class)
 class EditInvoiceBalanceViewModel(
@@ -56,9 +46,7 @@ class EditInvoiceBalanceViewModel(
         calculateInvoiceUseCase(invoice.id)
     }.stateIn(
         scope = viewModelScope,
-        initialValue = runBlocking {
-            calculateInvoiceUseCase(initialInvoice.id)
-        },
+        initialValue = null,
         started = SharingStarted.WhileSubscribed(5_000),
     )
 
@@ -69,21 +57,21 @@ class EditInvoiceBalanceViewModel(
         selectedInvoice,
         currentBalance
     ) { cards, selectedCard, invoices, selectedInvoice, balance ->
-        EditInvoiceBalanceUiState(
-            creditCards = cards,
-            selectedCreditCard = selectedCard,
-            editableInvoices = invoices,
-            selectedInvoice = selectedInvoice,
-            currentBalance = balance
-        )
+        if (balance == null) {
+            EditInvoiceBalanceUiState.Loading
+        } else {
+            EditInvoiceBalanceUiState.Content(
+                creditCards = cards,
+                selectedCreditCard = selectedCard,
+                editableInvoices = invoices,
+                selectedInvoice = selectedInvoice,
+                currentBalance = balance
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditInvoiceBalanceUiState(
-            currentBalance = currentBalance.value,
-            selectedInvoice = selectedInvoice.value,
-            selectedCreditCard = selectedCreditCard.value,
-        )
+        initialValue = EditInvoiceBalanceUiState.Loading
     )
 
     fun onAction(action: EditInvoiceBalanceAction) = viewModelScope.launch {
@@ -106,7 +94,7 @@ class EditInvoiceBalanceViewModel(
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
-        val invoice = uiState.value.selectedInvoice ?: return@launch
+        val invoice = selectedInvoice.value
         adjustInvoiceUseCase(
             invoice = invoice,
             target = targetBalance,

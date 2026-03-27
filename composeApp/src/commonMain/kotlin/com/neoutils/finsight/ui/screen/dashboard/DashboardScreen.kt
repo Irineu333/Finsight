@@ -49,8 +49,8 @@ import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -71,6 +71,18 @@ fun DashboardScreen(
     DashboardContent(
         uiState = uiState,
         openTransactions = openTransactions,
+        onOpenQuickAction = { type ->
+            when (type) {
+                QuickActionType.BUDGETS -> navigationDispatcher.dispatch(NavigationDestination.Budgets)
+                QuickActionType.CATEGORIES -> navigationDispatcher.dispatch(NavigationDestination.Categories)
+                QuickActionType.CREDIT_CARDS -> navigationDispatcher.dispatch(NavigationDestination.CreditCards())
+                QuickActionType.ACCOUNTS -> navigationDispatcher.dispatch(NavigationDestination.Accounts())
+                QuickActionType.RECURRING -> navigationDispatcher.dispatch(NavigationDestination.Recurring)
+                QuickActionType.REPORTS -> navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
+                QuickActionType.INSTALLMENTS -> navigationDispatcher.dispatch(NavigationDestination.Installments)
+                QuickActionType.SUPPORT -> navigationDispatcher.dispatch(NavigationDestination.Support)
+            }
+        },
         modalManager = modalManager,
         navigationDispatcher = navigationDispatcher,
     )
@@ -79,6 +91,7 @@ fun DashboardScreen(
 @Composable
 private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
+    onOpenQuickAction: (QuickActionType) -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
     navigationDispatcher: NavigationDispatcher,
@@ -95,652 +108,489 @@ private fun DashboardContent(
     },
     contentWindowInsets = WindowInsets(),
 ) { paddingValues ->
-
-    val creditCardPagerState = rememberPagerState(
-        pageCount = { uiState.creditCards.size }
-    )
-
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
             top = 8.dp,
-            bottom = 16.dp,
+            bottom = 32.dp,
         ),
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues),
     ) {
-        item(
-            key = "total_balance",
-        ) {
-            TotalBalanceCard(
-                balance = uiState.balance.balance,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .animateItem()
-            )
-        }
-
-        item(
-            key = "balance"
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .animateItem()
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    BalanceCard(
-                        balance = uiState.balance.income,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Income,
-                        onClick = { openTransactions(Transaction.Type.INCOME, null) }
-                    )
-
-                    BalanceCard(
-                        balance = uiState.balance.expense,
-                        modifier = Modifier.weight(1f),
-                        config = BalanceCardConfig.Expense,
-                        onClick = { openTransactions(Transaction.Type.EXPENSE, null) }
-                    )
-                }
-
-                if (uiState.balance.hasPending) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (uiState.balance.pendingIncome > 0.0) {
-                            BalanceCard(
-                                balance = uiState.balance.pendingIncome,
-                                modifier = Modifier.weight(1f),
-                                config = BalanceCardConfig.PendingIncome,
-                            )
-                        }
-
-                        if (uiState.balance.pendingExpense > 0.0) {
-                            BalanceCard(
-                                balance = uiState.balance.pendingExpense,
-                                modifier = Modifier.weight(1f),
-                                config = BalanceCardConfig.PendingExpense,
-                            )
-                        }
+        uiState.components.forEach { component ->
+            when (component) {
+                is DashboardComponent.TotalBalance -> {
+                    item(key = component.key) {
+                        TotalBalanceCard(
+                            balance = component.amount,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .animateItem(),
+                        )
                     }
                 }
-            }
-        }
 
-        if (uiState.accounts.size > 1) {
-            item(key = "accounts_overview") {
-                DashboardAccountsRow(
-                    accounts = uiState.accounts,
-                    onOpenAccounts = {
-                        navigationDispatcher.dispatch(NavigationDestination.Accounts())
-                    },
-                    onAccountClick = { accountId ->
-                        navigationDispatcher.dispatch(
-                            NavigationDestination.Accounts(accountId = accountId)
+                is DashboardComponent.ConcreteBalanceStats -> {
+                    item(key = component.key) {
+                        DashboardConcreteBalanceSection(
+                            component = component,
+                            openTransactions = openTransactions,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .animateItem(),
                         )
-                    },
-                    onAddAccount = {
-                        modalManager.show(AccountFormModal())
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .animateItem(),
-                )
-            }
-        }
+                    }
+                }
 
-        if (uiState.creditCards.isNotEmpty()) {
-            item(
-                key = "credit_cards_pager",
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .animateItem(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_credit_cards),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                is DashboardComponent.PendingBalanceStats -> {
+                    item(key = component.key) {
+                        DashboardPendingBalanceSection(
+                            component = component,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .animateItem(),
                         )
-                        TextButton(
+                    }
+                }
+
+                is DashboardComponent.AccountsOverview -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    item(key = component.key) {
+                        DashboardAccountsRow(
+                            accounts = component.accounts,
+                            onOpenAccounts = { onOpenQuickAction(QuickActionType.ACCOUNTS) },
+                            onAccountClick = { accountId ->
+                                navigationDispatcher.dispatch(
+                                    NavigationDestination.Accounts(accountId = accountId)
+                                )
+                            },
+                            onAddAccount = {
+                                modalManager.show(AccountFormModal())
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
+                }
+
+                is DashboardComponent.CreditCardsPager -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    item(key = component.key) {
+                        DashboardCreditCardsSection(
+                            component = component,
+                            onOpenCreditCards = { onOpenQuickAction(QuickActionType.CREDIT_CARDS) },
+                            navigationDispatcher = navigationDispatcher,
+                            modalManager = modalManager,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
+                }
+
+                is DashboardComponent.SpendingPager -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    item(key = component.key) {
+                        DashboardSpendingSection(
+                            component = component,
+                            modalManager = modalManager,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem(),
+                        )
+                    }
+                }
+
+                is DashboardComponent.PendingRecurring -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    item(key = "${component.key}_header") {
+                        DashboardSectionHeader(
+                            title = stringResource(Res.string.dashboard_pending_recurring),
+                            onClick = { onOpenQuickAction(QuickActionType.RECURRING) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+
+                    items(
+                        items = component.recurringList,
+                        key = { recurring -> "${component.key}_${recurring.id}" },
+                    ) { recurring ->
+                        PendingRecurringCard(
+                            recurring = recurring,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             onClick = {
-                                navigationDispatcher.dispatch(NavigationDestination.CreditCards())
-                            }
-                        ) {
-                            Text(text = stringResource(Res.string.dashboard_see_all))
-                        }
-                    }
+                                val targetDate = Clock.System.now()
+                                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                                    .date.yearMonth
+                                    .safeOnDay(recurring.dayOfMonth)
 
-                    HorizontalPager(
-                        state = creditCardPagerState,
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 8.dp,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { page ->
-                        val creditCardUi = uiState.creditCards[page]
-
-                        CreditCardCard(
-                            creditCard = creditCardUi.creditCard,
-                            invoiceUi = creditCardUi.invoiceUi,
-                            modifier = Modifier.fillMaxWidth(),
-                            variant = CreditCardCardVariant.Dashboard(
-                                onClick = {
-                                    navigationDispatcher.dispatch(
-                                        NavigationDestination.CreditCards(
-                                            creditCardId = creditCardUi.creditCard.id
-                                        )
-                                    )
-                                },
-                                onCloseInvoice = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
-                                    }
-                                },
-                                onPayInvoice = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            PayInvoiceModal(
-                                                invoice = it.invoice,
-                                                currentBillAmount = it.amount
-                                            )
-                                        )
-                                    }
-                                },
-                                onAdvancePayment = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            AdvancePaymentModal(
-                                                invoice = it.invoice,
-                                                currentBillAmount = it.amount
-                                            )
-                                        )
-                                    }
-                                },
-                                onEditAmount = {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(
-                                            EditInvoiceBalanceModal(
-                                                initialInvoice = it.invoice,
-                                            )
-                                        )
-                                    }
-                                },
-                            ),
+                                modalManager.show(ConfirmRecurringModal(recurring, targetDate))
+                            },
                         )
                     }
-                    if (uiState.creditCards.size > 1) {
-                        PageIndicator(
-                            count = uiState.creditCards.size,
-                            current = creditCardPagerState.currentPage,
-                            modifier = Modifier.fillMaxWidth()
+                }
+
+                is DashboardComponent.Recents -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    item(key = "${component.key}_header") {
+                        DashboardSectionHeader(
+                            title = stringResource(Res.string.dashboard_recents),
+                            onClick = { openTransactions(null, null) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+
+                    itemsIndexed(
+                        items = component.operations,
+                        key = { _, operation -> "${component.key}_${operation.id}" },
+                    ) { index, operation ->
+                        val isLastWithFade = component.hasMore && index == component.operations.lastIndex
+
+                        OperationCard(
+                            operation = operation,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .then(
+                                    if (isLastWithFade) {
+                                        Modifier
+                                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                            .drawWithContent {
+                                                drawContent()
+                                                drawRect(
+                                                    brush = Brush.verticalGradient(
+                                                        colors = listOf(Color.Black, Color.Transparent),
+                                                    ),
+                                                    blendMode = BlendMode.DstIn,
+                                                )
+                                            }
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            onClick = {
+                                when {
+                                    isLastWithFade -> {
+                                        openTransactions(null, null)
+                                    }
+
+                                    operation.type.isAdjustment -> {
+                                        modalManager.show(ViewAdjustmentModal(operation))
+                                    }
+
+                                    else -> {
+                                        modalManager.show(ViewOperationModal(operation))
+                                    }
+                                }
+                            },
+                        )
+                    }
+                }
+
+                is DashboardComponent.QuickActions -> {
+
+                    item { Spacer(Modifier.height(8.dp)) }
+
+                    items(
+                        items = component.actions,
+                        key = { action ->
+                            component.key + action.name
+                        },
+                    ) { action ->
+                        DashboardQuickActionCard(
+                            action = action,
+                            onOpen = onOpenQuickAction,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth(),
                         )
                     }
                 }
             }
         }
+    }
+}
 
-        val spendingPages = buildList {
-            if (uiState.budgetProgress.isNotEmpty()) add(SpendingPage.Budgets)
-            if (uiState.categorySpending.isNotEmpty()) add(SpendingPage.Categories)
+@Composable
+private fun DashboardConcreteBalanceSection(
+    component: DashboardComponent.ConcreteBalanceStats,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            BalanceCard(
+                balance = component.income,
+                modifier = Modifier.weight(1f),
+                config = BalanceCardConfig.Income,
+                onClick = { openTransactions(Transaction.Type.INCOME, null) },
+            )
+
+            BalanceCard(
+                balance = component.expense,
+                modifier = Modifier.weight(1f),
+                config = BalanceCardConfig.Expense,
+                onClick = { openTransactions(Transaction.Type.EXPENSE, null) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardPendingBalanceSection(
+    component: DashboardComponent.PendingBalanceStats,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        if (component.pendingIncome > 0.0) {
+            BalanceCard(
+                balance = component.pendingIncome,
+                modifier = Modifier.weight(1f),
+                config = BalanceCardConfig.PendingIncome,
+            )
         }
 
-        if (spendingPages.isNotEmpty()) {
-            item(key = "spending_pager") {
-                val pagerState = rememberPagerState(pageCount = { spendingPages.size })
+        if (component.pendingExpense > 0.0) {
+            BalanceCard(
+                balance = component.pendingExpense,
+                modifier = Modifier.weight(1f),
+                config = BalanceCardConfig.PendingExpense,
+            )
+        }
+    }
+}
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .animateItem(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    HorizontalPager(
-                        state = pagerState,
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        pageSpacing = 16.dp,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { page ->
-                        when (spendingPages[page]) {
-                            SpendingPage.Categories -> CategorySpendingCard(
-                                categorySpending = uiState.categorySpending,
-                                modifier = Modifier.fillMaxWidth(),
-                                onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
-                            )
+@Composable
+private fun DashboardCreditCardsSection(
+    component: DashboardComponent.CreditCardsPager,
+    onOpenCreditCards: () -> Unit,
+    navigationDispatcher: NavigationDispatcher,
+    modalManager: ModalManager,
+    modifier: Modifier = Modifier,
+) {
+    val pagerState = rememberPagerState(
+        pageCount = { component.creditCards.size },
+    )
 
-                            SpendingPage.Budgets -> BudgetProgressCard(
-                                budgetProgress = uiState.budgetProgress,
-                                modifier = Modifier.fillMaxWidth(),
-                                onBudgetClick = { modalManager.show(ViewBudgetModal(it)) },
-                            )
-                        }
-                    }
-
-                    if (spendingPages.size > 1) {
-                        PageIndicator(
-                            count = spendingPages.size,
-                            current = pagerState.currentPage,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.dashboard_credit_cards),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onOpenCreditCards) {
+                Text(text = stringResource(Res.string.dashboard_see_all))
             }
         }
 
-        if (uiState.pendingRecurring.isNotEmpty()) {
-            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 8.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) { page ->
+            val creditCardUi = component.creditCards[page]
 
-            item(key = "pending_recurring_title") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.dashboard_pending_recurring),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    TextButton(
-                        onClick = {
-                            navigationDispatcher.dispatch(NavigationDestination.Recurring)
-                        }
-                    ) {
-                        Text(text = stringResource(Res.string.dashboard_see_all))
-                    }
-                }
-            }
-
-            itemsIndexed(
-                items = uiState.pendingRecurring,
-                key = { _, recurring -> "pending_recurring_${recurring.id}" },
-            ) { _, recurring ->
-                PendingRecurringCard(
-                    recurring = recurring,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
+            CreditCardCard(
+                creditCard = creditCardUi.creditCard,
+                invoiceUi = creditCardUi.invoiceUi,
+                modifier = Modifier.fillMaxWidth(),
+                variant = CreditCardCardVariant.Dashboard(
                     onClick = {
-                        val targetDate = today.yearMonth.safeOnDay(recurring.dayOfMonth)
-                        modalManager.show(ConfirmRecurringModal(recurring, targetDate))
-                    }
+                        navigationDispatcher.dispatch(
+                            NavigationDestination.CreditCards(
+                                creditCardId = creditCardUi.creditCard.id,
+                            )
+                        )
+                    },
+                    onCloseInvoice = {
+                        creditCardUi.invoiceUi?.let {
+                            modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                        }
+                    },
+                    onPayInvoice = {
+                        creditCardUi.invoiceUi?.let {
+                            modalManager.show(
+                                PayInvoiceModal(
+                                    invoice = it.invoice,
+                                    currentBillAmount = it.amount,
+                                )
+                            )
+                        }
+                    },
+                    onAdvancePayment = {
+                        creditCardUi.invoiceUi?.let {
+                            modalManager.show(
+                                AdvancePaymentModal(
+                                    invoice = it.invoice,
+                                    currentBillAmount = it.amount,
+                                )
+                            )
+                        }
+                    },
+                    onEditAmount = {
+                        creditCardUi.invoiceUi?.let {
+                            modalManager.show(
+                                EditInvoiceBalanceModal(
+                                    initialInvoice = it.invoice,
+                                )
+                            )
+                        }
+                    },
+                ),
+            )
+        }
+
+        if (component.creditCards.size > 1) {
+            PageIndicator(
+                count = component.creditCards.size,
+                current = pagerState.currentPage,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardSpendingSection(
+    component: DashboardComponent.SpendingPager,
+    modalManager: ModalManager,
+    modifier: Modifier = Modifier,
+) {
+    val pages = buildList {
+        if (component.budgetProgress.isNotEmpty()) add(SpendingPage.Budgets)
+        if (component.categorySpending.isNotEmpty()) add(SpendingPage.Categories)
+    }
+    val pagerState = rememberPagerState(pageCount = { pages.size })
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            pageSpacing = 16.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) { page ->
+            when (pages[page]) {
+                SpendingPage.Categories -> CategorySpendingCard(
+                    categorySpending = component.categorySpending,
+                    modifier = Modifier.fillMaxWidth(),
+                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                )
+
+                SpendingPage.Budgets -> BudgetProgressCard(
+                    budgetProgress = component.budgetProgress,
+                    modifier = Modifier.fillMaxWidth(),
+                    onBudgetClick = { modalManager.show(ViewBudgetModal(it)) },
                 )
             }
         }
 
-        if (uiState.recents.isNotEmpty()) {
-            item(
-                key = "recents_title"
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_recents),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                    TextButton(
-                        onClick = {
-                            openTransactions(null, null)
-                        }
-                    ) {
-                        Text(text = stringResource(Res.string.dashboard_see_all))
-                    }
-                }
-            }
-        }
-
-        itemsIndexed(
-            items = uiState.recents,
-            key = { _, operation ->
-                "operation_" + operation.id
-            },
-        ) { index, operation ->
-            val isLastWithFade = uiState.hasMoreRecents && index == uiState.recents.lastIndex
-
-            OperationCard(
-                operation = operation,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .then(
-                        if (isLastWithFade) {
-                            Modifier
-                                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                                .drawWithContent {
-                                    drawContent()
-                                    drawRect(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(Color.Black, Color.Transparent)
-                                        ),
-                                        blendMode = BlendMode.DstIn
-                                    )
-                                }
-                        } else {
-                            Modifier
-                        }
-                    ).animateItem(),
-                onClick = {
-                    when {
-                        isLastWithFade -> {
-                            openTransactions(null, null)
-                        }
-
-                        operation.type.isAdjustment -> {
-                            modalManager.show(ViewAdjustmentModal(operation))
-                        }
-
-                        else -> {
-                            modalManager.show(ViewOperationModal(operation))
-                        }
-                    }
-                }
+        if (pages.size > 1) {
+            PageIndicator(
+                count = pages.size,
+                current = pagerState.currentPage,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
+}
 
-        item(
-            key = "open_budgets_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Budgets)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_budgets),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
+@Composable
+private fun DashboardSectionHeader(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        TextButton(onClick = onClick) {
+            Text(
+                text = stringResource(Res.string.dashboard_see_all),
+            )
         }
+    }
+}
 
-        item(
-            key = "open_category_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Categories)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_categories),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
+@Composable
+private fun DashboardQuickActionCard(
+    action: QuickActionType,
+    onOpen: (QuickActionType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val label = stringUiText(action.title)
 
-        item(
-            key = "open_credit_card_action"
+    Card(
+        onClick = { onOpen(action) },
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.CreditCards())
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_credit_cards),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        item(
-            key = "open_accounts_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Accounts())
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_accounts),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        item(
-            key = "open_recurring_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Recurring)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_recurring),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        item(
-            key = "open_reports_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_reports),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        item(
-            key = "open_installments_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Installments)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_installments),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
-
-        if (!isDesktop) item(
-            key = "open_support_action"
-        ) {
-            Card(
-                onClick = {
-                    navigationDispatcher.dispatch(NavigationDestination.Support)
-                },
-                colors = CardDefaults.cardColors(
-                    containerColor = colorScheme.surfaceContainer,
-                    contentColor = colorScheme.onSurface,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .padding(horizontal = 16.dp)
-                    .animateItem(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_support),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
-                        modifier = Modifier.size(18.dp),
-                        contentDescription = null,
-                    )
-                }
-            }
+            Text(
+                text = label,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                modifier = Modifier.size(18.dp),
+                contentDescription = null,
+            )
         }
     }
 }

@@ -30,6 +30,7 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
+import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
@@ -86,6 +87,17 @@ val viewModelModule = module {
         )
     }
 
+    factory {
+        DashboardComponentsBuilder(
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get(),
+            calculateCategorySpendingUseCase = get(),
+            calculateBudgetProgressUseCase = get(),
+            getPendingRecurringUseCase = get(),
+            invoiceUiMapper = get(),
+        )
+    }
+
     viewModel {
         DashboardViewModel(
             operationRepository = get(),
@@ -95,13 +107,8 @@ val viewModelModule = module {
             budgetRepository = get(),
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
-            calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
-            calculateCategorySpendingUseCase = get(),
-            calculateBudgetProgressUseCase = get(),
             ensureDefaultAccountUseCase = get(),
-            getPendingRecurringUseCase = get(),
-            invoiceUiMapper = get()
+            dashboardComponentsBuilder = get(),
         )
     }
 

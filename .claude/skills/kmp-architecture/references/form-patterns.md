@@ -61,6 +61,50 @@ Rules:
 
 UI can use `form.isValid()` for button enablement, but submit path must still validate again in domain/use case.
 
+## Monetary and Date Fields (Required Pattern)
+
+### Monetary fields
+
+Use this pipeline:
+
+1. UI input masking with `rememberMoneyInputTransformation()`.
+2. Keep value as `String` in form state.
+3. Parse with `moneyToDouble()` only when validating/submitting.
+4. Revalidate amount constraints in use case/domain (`> 0`, limits, debt caps, etc.).
+
+Rules:
+- Use shared parser `moneyToDouble()` (from `extension/MoneyFormatter.kt`).
+- For read-only monetary fields, format from numeric value using `CurrencyFormatter` / `LocalCurrencyFormatter`.
+- Avoid ad-hoc parse helpers duplicated inside modals.
+
+### Date fields (`dd/MM/yyyy`)
+
+Use this pipeline:
+
+1. Initialize field with `dayMonthYear.format(initialDate)`.
+2. Apply `DateInputTransformation()` to text fields.
+3. Open `DatePickerModal` from trailing icon to select valid dates.
+4. On selection, replace full text with `dayMonthYear.format(selectedDate)`.
+5. Parse with `dayMonthYear.parse(...)` before submit.
+
+For restricted periods:
+- define `minDate` / `maxDate` in UI and pass to `DatePickerModal`.
+- clamp initial value with `coerceIn(minDate, maxDate)` when needed.
+- mirror the same bounds in domain/use case validation.
+
+### Day-of-month fields (critical rule)
+
+For fields like recurring `dayOfMonth`, card `closingDay`, and `dueDay`:
+- use `DayInputTransformation()` in UI.
+- accept and validate full range `1..31` in form/domain/use case.
+- never cap to `28` just to avoid month-length complexity.
+
+The app already handles shorter months at execution time:
+- `YearMonth.safeOnDay(day)` clamps to the month last day.
+- `YearMonth.effectiveDay(day)` is used in recurring/invoice logic.
+
+This means input remains user-intent (`31` is valid), while scheduling/billing adapts per month safely.
+
 ## Validation Layers (Required)
 
 ### Layer 1: Interaction-level gating (UI)
@@ -135,6 +179,9 @@ val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard
 - Coupling `TextFieldState` to ViewModel.
 - Mixing create and edit logic across separate duplicated ViewModels when one can handle both.
 - Always using `dismissAll()` regardless of flow context.
+- Parsing monetary/date values with custom local helpers when shared formatter/parser already exists.
+- Enforcing date range only in UI without repeating constraints in use case/domain.
+- Limiting day-of-month inputs to `1..28` instead of `1..31`.
 
 ## Checklist for New Forms
 
@@ -146,3 +193,5 @@ val viewModel = koinViewModel<CreditCardFormViewModel> { parametersOf(creditCard
 - Submit path revalidates in domain/use case.
 - Create/edit mode is explicit and initialized from params.
 - Dismiss strategy matches modal stack context.
+- Money/date fields follow shared transformations and parsers (`rememberMoneyInputTransformation`, `DateInputTransformation`, `dayMonthYear`, `moneyToDouble`).
+- Day-of-month fields explicitly allow `1..31` and rely on `safeOnDay/effectiveDay` for short months.

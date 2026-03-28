@@ -389,74 +389,231 @@ class DashboardViewModel(
 
 ## 8. UI — DashboardScreen
 
-### 8.1 Estrutura geral do DashboardScreen
+### 8.0 Critério de aceite visual (não negociável)
 
-O `DashboardScreen` faz `when(uiState)` e renderiza estruturas distintas para cada tipo:
+> O modo edição **deve parecer o modo visualização com affordances de edição sobrepostas** — não uma lista genérica de itens com título.
+
+O critério concreto:
+- Cada componente no modo edição renderiza o **mesmo composable** que renderiza no modo normal, com dados de exemplo realistas
+- Um `TotalBalance` em edit mode parece um `TotalBalance` real — com valor, cores, layout idênticos — apenas frozen (sem interações) e com drag handle + botão remover sobre ele
+- Um `CreditCardsPager` em edit mode parece um carrossel de cartões de crédito — não um card com o texto "Cartões de Crédito"
+- Ao entrar no modo edição, o usuário deve perceber que os componentes **ficaram no lugar** enquanto os controles de edição apareceram
+
+**Anti-padrão explicitamente proibido:**
+```
+┌─────────────────────────────┐   ← ERRADO: lista genérica com só título
+│ ☰  Saldo Total          [−] │
+│ ☰  Cartões de Crédito   [−] │
+│ ☰  Contas               [−] │
+└─────────────────────────────┘
+```
+
+**Padrão correto:**
+```
+┌─────────────────────────────┐   ← CORRETO: componente real com overlay de edição
+│[−]              ░░░░░░  [☰] │
+│                             │
+│   R$ 5.450,00               │   ← TotalBalance renderizado com mock data
+│                             │
+└─────────────────────────────┘
+┌─────────────────────────────┐
+│[−]  ░░░░░░░░░░░░░░░░   [☰] │
+│  ┌────────┐ ┌────────┐      │   ← CreditCardsPager renderizado com mock data
+│  │ VISA   │ │ MASTER │      │
+│  │ •••4521│ │ •••7832│      │
+└─────────────────────────────┘
+```
+
+---
+
+### 8.1 Estratégia de renderização
+
+A transição entre modos deve parecer que affordances de edição **aparecem sobre** os componentes existentes — não que a tela é substituída.
+
+**Abordagem:** `Crossfade` no nível do conteúdo principal, com ambos os modos renderizando o mesmo conjunto de itens na mesma ordem e com os mesmos tamanhos.
 
 ```kotlin
-when (val state = uiState) {
-    is DashboardUiState.Loading  -> DashboardLoadingContent()
-    is DashboardUiState.Viewing  -> DashboardViewingContent(state, onAction)
-    is DashboardUiState.Editing  -> DashboardEditingContent(state, onAction)
+Crossfade(
+    targetState = uiState,
+    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+) { state ->
+    when (state) {
+        is DashboardUiState.Loading -> DashboardLoadingContent()
+        is DashboardUiState.Viewing -> DashboardViewingContent(state, onAction)
+        is DashboardUiState.Editing -> DashboardEditingContent(state, onAction)
+    }
 }
 ```
 
-**Estrutura do `DashboardEditingContent`:**
+Como `DashboardViewingContent` e `DashboardEditingContent` renderizam os mesmos componentes na mesma ordem e com dimensões idênticas, o `Crossfade` cria o efeito visual de affordances aparecendo/desaparecendo **sobre** os componentes em seus lugares.
+
+---
+
+### 8.2 `DashboardEditingContent` — estrutura
 
 ```
 Box (fill max size)
-├── LazyColumn (lista editável)
-│   └── items(state.items) { item ->
-│       DashboardEditItemCard(
-│           item = item,
-│           dragHandle = { ReorderHandle() },
-│           onRemove = { onAction(RemoveComponent(item.key)) },
-│       )
+├── LazyColumn (lista editável com reorderable)
+│   └── items(state.items, key = { it.key }) { item ->
+│       ReorderableItem { isDragging ->
+│           DashboardEditItemWrapper(
+│               item = item,
+│               isDragging = isDragging,
+│               dragHandle = { Modifier.draggableHandle() },
+│               onRemove = { onAction(RemoveComponent(item.key)) },
+│           )
+│       }
 │   }
-├── AddComponentPanel (AnimatedVisibility, slide from bottom)
-│   └── items(state.availableItems) { item ->
-│       DashboardAvailableItemCard(
-│           item = item,
-│           onTap = { onAction(AddComponent(item.key)) },
-│           onDragStart = { dragState.startDrag(item.key) },
-│       )
+├── AddComponentPanel (AnimatedVisibility slide from bottom)
+│   └── LazyVerticalGrid(2 colunas) {
+│       items(state.availableItems) { item ->
+│           DashboardAddItemCard(
+│               item = item,
+│               onTap = { onAction(AddComponent(item.key)) },
+│               onDragStart = { dragState.startDrag(item.key) },
+│           )
+│       }
 │   }
-└── DragPreview (visível enquanto dragState.isDragging)
-    └── renderiza o componente mock em tamanho reduzido
+└── DragPreview (Box flutuante, visível durante drag cross-container)
 ```
 
-### 8.2 `DashboardEditItemCard`
+---
 
-- Exibe o componente mock (`item.preview`) em tamanho normal, **não interativo** (pointer intercept = blocked)
-- Overlay com 40% de opacidade para comunicar estado não-ativo
-- Drag handle no canto superior direito (ícone `drag_handle`)
-- Botão "–" circular no canto superior esquerdo
-- Borda arredondada levemente elevada (card visual)
-- Spring animation na entrada/saída (`fadeIn` + `scaleIn` / `fadeOut` + `scaleOut`)
+### 8.3 `DashboardEditItemWrapper` — renderização fiel ao original
 
-### 8.3 Transição Normal ↔ Edit Mode
-
-- `AnimatedContent(targetState = uiState)` com `slideInVertically` para a edit toolbar no topo
-- `AnimatedVisibility` para ocultar a `BottomNavigationBar` no `HomeScreen`
-
-A detecção do modo edição no `HomeScreen` é feita via callback:
+Este é o componente central do modo edição. Ele **não reimplementa** o visual do componente — ele **reutiliza** o composable original.
 
 ```kotlin
-// HomeScreen observa o uiState do DashboardViewModel
-val isEditMode = dashboardUiState is DashboardUiState.Editing
+@Composable
+fun DashboardEditItemWrapper(
+    item: DashboardEditItem,
+    isDragging: Boolean,
+    dragHandle: @Composable Modifier.() -> Modifier,
+    onRemove: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
+    ) {
+        // 1. Renderiza o composable ORIGINAL com dados mock — sem simplificação
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) { /* consome todos os eventos — componente frozen */ }
+        ) {
+            DashboardComponentContent(component = item.preview)  // mesmo composable do Viewing
+        }
 
-AnimatedVisibility(visible = !isEditMode) {
+        // 2. Overlay de edição sobre o componente
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.15f))
+        )
+
+        // 3. Affordances de edição
+        IconButton(
+            onClick = onRemove,
+            modifier = Modifier.align(Alignment.TopStart),
+        ) {
+            Icon(Icons.Rounded.RemoveCircle, contentDescription = null)
+        }
+
+        Icon(
+            imageVector = Icons.Rounded.DragHandle,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .dragHandle(),
+        )
+    }
+}
+```
+
+`DashboardComponentContent` é o mesmo switch `when(component)` que já existe no `DashboardViewingContent` — extraído para uma função compartilhada.
+
+---
+
+### 8.4 `DashboardAddItemCard` — preview no painel de adição
+
+O painel de adição também deve remeter ao componente original, não apenas exibir seu nome. Usa uma versão em escala reduzida (`scale = 0.6f`) do mesmo composable:
+
+```kotlin
+@Composable
+fun DashboardAddItemCard(
+    item: DashboardEditItem,
+    onTap: () -> Unit,
+    onDragStart: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .clickable(onClick = onTap)
+            .detectDragGesturesAfterLongPress(onDragStart = { onDragStart() })
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // Preview em miniatura do componente real
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .graphicsLayer { scaleX = 0.6f; scaleY = 0.6f }
+                .pointerInput(Unit) { /* frozen */ }
+        ) {
+            DashboardComponentContent(component = item.preview)
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text(stringUiText(item.title), style = MaterialTheme.typography.labelSmall)
+    }
+}
+```
+
+---
+
+### 8.5 Transição Normal ↔ Edit Mode — detalhes
+
+**Chrome (toolbar + bottom nav):**
+- TopAppBar: `AnimatedContent(targetState = isEditMode)` — a toolbar normal e a de edição fazem crossfade
+- BottomNavigationBar: `AnimatedVisibility(visible = !isEditMode, enter = slideInVertically { it }, exit = slideOutVertically { it })`
+
+**Por componente (affordances):**
+As affordances (drag handle, botão remover) não animam individualmente por componente — o `Crossfade` global já cria a ilusão de aparecerem no lugar certo. Se mais refinamento for desejado em iterações futuras, `AnimatedVisibility` por affordance pode ser adicionado.
+
+**Ativação por long press:**
+```kotlin
+Modifier.combinedClickable(
+    onLongClick = { onAction(EnterEditMode) },
+    onClick = { /* interação normal */ },
+)
+```
+Aplicado no wrapper de cada componente no `DashboardViewingContent`.
+
+**Detecção no HomeScreen:**
+```kotlin
+val isEditMode = uiState is DashboardUiState.Editing
+
+AnimatedVisibility(
+    visible = !isEditMode,
+    enter = slideInVertically { it },
+    exit = slideOutVertically { it },
+) {
     BottomNavigationBar(...)
 }
 ```
 
-### 8.4 Edit Toolbar
+---
+
+### 8.6 Edit Toolbar
 
 ```
 [ Cancelar ]   ────── Editar ──────   [ Confirmar ]
 ```
 
-Substitui a TopAppBar normal via `AnimatedContent`.
+Substituí a TopAppBar normal via `AnimatedContent(targetState = isEditMode)`. Ambas as versões têm a mesma altura para evitar layout shift durante a transição.
 
 ---
 
@@ -466,24 +623,28 @@ Substitui a TopAppBar normal via `AnimatedContent`.
 
 ```
 ╔══════════════════════════════╗
-║  [Dashboard em edit mode]    ║  ← área de drop (dashboard list)
+║  [Lista editável]            ║  ← área de drop (scroll parcial)
 ║                              ║
-║  ┌─ drop indicator ─────┐   ║
+║  ┌── drop indicator ──────┐  ║
 ║                              ║
-╠══════════════════════════════╣  ← linha de separação animada
+╠══════════════════════════════╣  ← divisor animado
 ║  Adicionar componente    [✕] ║
-║  ┌──────┐ ┌──────┐ ┌──────┐ ║
-║  │Total │ │Cartão│ │Gastos│ ║
-║  │Saldo │ │ Pager│ │      │ ║
-║  └──────┘ └──────┘ └──────┘ ║
+║  ┌──────────┐ ┌──────────┐  ║
+║  │  ██████  │ │ ┌──┐┌──┐ │  ║  ← miniatura do TotalBalance
+║  │  R$5.450 │ │ │  ││  │ │  ║  ← miniatura do CreditCardsPager
+║  └──────────┘ └──────────┘  ║
+║  ┌──────────┐ ┌──────────┐  ║
+║  │ ▓▓ Rec.  │ │ ↑ ↓ Gastos│  ║  ← miniaturas dos demais
+║  └──────────┘ └──────────┘  ║
 ╚══════════════════════════════╝
 ```
 
 - Painel ocupa ~50% da altura da tela
-- Dashboard list ocupa o espaço restante acima
-- `AnimatedVisibility(slideInVertically { it } / slideOutVertically { it })`
-- Abre ao clicar no FAB "+" da edit toolbar
-- Grid de 2 colunas com previews em miniatura dos componentes disponíveis
+- Dashboard list ocupa o espaço restante acima (scrollável para o usuário ver onde vai inserir)
+- `AnimatedVisibility(enter = slideInVertically { it }, exit = slideOutVertically { it })`
+- Abre ao clicar no FAB "+" flutuante no canto da edit toolbar
+- Grid de 2 colunas com `DashboardAddItemCard` — preview em miniatura + título abaixo
+- Os cards do painel também devem remeter ao componente original (via `DashboardComponentContent` em escala reduzida)
 
 ---
 
@@ -646,6 +807,9 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 |---------|----------------------|--------|
 | `DashboardUiState` como sealed class (`Loading`, `Viewing`, `Editing`) | `data class` com `editState: EditState?` | Modo edição é um estado distinto, não uma extensão opcional do modo normal — sealed class elimina estados impossíveis e segue o padrão do projeto |
 | `_editingState: MutableStateFlow<Editing?>` separado do combine reativo | Unificar tudo em um único combine | Separa responsabilidades: dados ao vivo ficam no `viewingState`, edição em curso fica no `_editingState` — evita reconstrução do estado de edição a cada emissão dos repositórios |
+| `DashboardComponentContent` extraído como função compartilhada | Duplicar o `when(component)` em Viewing e Editing | Garante que edit mode renderiza EXATAMENTE o mesmo composable que o modo normal — sem risco de divergência visual |
+| `Crossfade` no nível da tela para a transição de modo | `AnimatedContent` com slides | Como ambos os modos renderizam os mesmos componentes nas mesmas posições, o crossfade cria a ilusão de affordances aparecendo in-place sem custo de implementação de shared elements |
+| Componentes em edit mode: composable original com mock data + overlay | Card simplificado com título | Critério de aceite — o modo edição deve remeter ao modo visualização; lista genérica com títulos é explicitamente reprovada |
 | `AddComponentPanel` como overlay in-tree | `ModalBottomSheet` do `ModalManager` | Drag cross-container requer espaço de coordenadas compartilhado |
 | `russhwolf/settings` + JSON para persistência | Room (nova tabela) | Sem relações, sem queries — settings é suficiente e já disponível |
 | `sh.calvin.reorderable` para drag in-list | `detectDragGesturesAfterLongPress` manual | API de alto nível, multiplatform, menos boilerplate |

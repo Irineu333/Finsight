@@ -74,7 +74,7 @@ Data (database/)
 UI (screen/dashboard/)
   DashboardComponentRegistry          ← registro de todos os componentes disponíveis
   DashboardComponentMocks             ← dados de exemplo para preview no edit mode
-  DashboardUiState + EditState        ← estado expandido com modo edição
+  DashboardUiState (Loading | Viewing | Editing) ← estados como tipos distintos
   DashboardAction                     ← ações de edição
   DashboardViewModel                  ← orquestra preferências + dados reais
   DashboardScreen                     ← renderiza normal e edit mode
@@ -218,27 +218,43 @@ object DashboardComponentMocks {
 }
 ```
 
-### 7.3 `DashboardUiState` — expansão
+### 7.3 `DashboardUiState` — sealed class
+
+O modo de visualização e o modo de edição são tipos distintos do UiState, seguindo o mesmo padrão de `BudgetsUiState`, `AccountsUiState` e demais screens do projeto.
 
 ```kotlin
 // ui/screen/dashboard/DashboardUiState.kt
-data class DashboardUiState(
-    val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
-    val components: List<DashboardComponent> = emptyList(),
-    val editState: EditState? = null,               // null = modo normal
-)
+sealed class DashboardUiState {
+    abstract val yearMonth: YearMonth
 
-data class EditState(
-    val items: List<DashboardEditItem>,              // componentes atualmente na dashboard
-    val availableItems: List<DashboardEditItem>,     // disponíveis para adicionar
-)
+    data class Loading(
+        override val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
+    ) : DashboardUiState()
+
+    data class Viewing(
+        override val yearMonth: YearMonth,
+        val components: List<DashboardComponent>,
+    ) : DashboardUiState()
+
+    data class Editing(
+        override val yearMonth: YearMonth,
+        val items: List<DashboardEditItem>,          // componentes atualmente na dashboard
+        val availableItems: List<DashboardEditItem>, // disponíveis para adicionar
+    ) : DashboardUiState()
+}
 
 data class DashboardEditItem(
     val key: String,
     val title: UiText,
-    val preview: DashboardComponent,                // instância mock para renderização
+    val preview: DashboardComponent,                 // instância mock para renderização
 )
 ```
+
+- `Loading` — carregamento inicial antes dos repositórios emitirem
+- `Viewing` — modo normal, componentes reais com dados ao vivo
+- `Editing` — modo edição, componentes são previews (mock data), editáveis pelo usuário
+
+`yearMonth` é `abstract` pois aparece no seletor de mês em ambos os modos visíveis.
 
 ### 7.4 `DashboardAction` — expansão
 
@@ -261,30 +277,40 @@ sealed class DashboardAction {
 
 ### 7.5 `DashboardViewModel` — novas responsabilidades
 
+`_editingState` é um `MutableStateFlow<DashboardUiState.Editing?>` separado que, quando não-nulo, tem prioridade sobre o estado reativo dos repositórios. Isso congela a UI durante a edição sem cancelar os flows de dados.
+
 ```kotlin
-// Injeção adicional
 class DashboardViewModel(
     // ... repositórios existentes ...
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
     private val dashboardComponentsBuilder: DashboardComponentsBuilder,
 ) : ViewModel() {
 
-    // Snapshot das preferências salvas ao entrar no edit mode (para suportar cancelamento)
+    // Snapshot para suportar CancelEdit sem re-salvar
     private var preferencesSnapshot: List<DashboardComponentPreference> = emptyList()
 
-    // Estado de edição mutável (fora do combine principal)
-    private val _editState = MutableStateFlow<EditState?>(null)
+    // Editing state — quando não-nulo, sobrescreve o Viewing reativo
+    private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
+
+    // Flow reativo que sempre produz Loading → Viewing
+    private val viewingState: Flow<DashboardUiState> = combine(
+        dashboardPreferencesRepository.observe(),
+        // ... demais flows de repositórios ...
+    ) { preferences, /* ... */ ->
+        val ordered = applyPreferences(preferences, builtComponents)
+        DashboardUiState.Viewing(yearMonth = targetMonth, components = ordered)
+    }
 
     val uiState: StateFlow<DashboardUiState> = combine(
-        dashboardPreferencesRepository.observe(),
-        // ... demais flows ...
-    ) { preferences, /* ... */ ->
-        val orderedComponents = applyPreferences(preferences, builtComponents)
-        DashboardUiState(
-            components = orderedComponents,
-            editState = _editState.value,
-        )
-    }.stateIn(...)
+        _editingState,
+        viewingState,
+    ) { editing, viewing ->
+        editing ?: viewing                          // Editing tem prioridade sobre Viewing
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DashboardUiState.Loading(),
+    )
 
     fun onAction(action: DashboardAction) = when (action) {
         is EnterEditMode   -> enterEditMode()
@@ -297,53 +323,52 @@ class DashboardViewModel(
     }
 
     private fun enterEditMode() {
-        preferencesSnapshot = _editState.value?.items
-            ?.map { DashboardComponentPreference(it.key, position = ...) }
-            ?: /* preferências atuais salvas */
-        _editState.value = buildEditState(currentItems = uiState.value.components)
+        val current = uiState.value as? DashboardUiState.Viewing ?: return
+        preferencesSnapshot = current.components
+            .mapIndexed { i, c -> DashboardComponentPreference(c.key, i) }
+        _editingState.value = buildEditingState(current)
     }
 
     private fun confirmEdit() {
         viewModelScope.launch {
-            val prefs = _editState.value?.items
-                ?.mapIndexed { i, item -> DashboardComponentPreference(item.key, i) }
-                ?: return@launch
+            val editing = _editingState.value ?: return@launch
+            val prefs = editing.items.mapIndexed { i, item -> DashboardComponentPreference(item.key, i) }
             dashboardPreferencesRepository.save(prefs)
-            _editState.value = null
+            _editingState.value = null
         }
     }
 
     private fun cancelEdit() {
         viewModelScope.launch {
             dashboardPreferencesRepository.save(preferencesSnapshot)
-            _editState.value = null
+            _editingState.value = null
         }
     }
 
     private fun moveComponent(from: Int, to: Int) {
-        val current = _editState.value ?: return
+        val current = _editingState.value ?: return
         val items = current.items.toMutableList()
         items.add(to, items.removeAt(from))
-        _editState.value = current.copy(items = items)
+        _editingState.value = current.copy(items = items)
     }
 
     private fun removeComponent(key: String) {
-        val current = _editState.value ?: return
+        val current = _editingState.value ?: return
         val removed = current.items.find { it.key == key } ?: return
-        _editState.value = current.copy(
+        _editingState.value = current.copy(
             items = current.items.filter { it.key != key },
             availableItems = current.availableItems + removed,
         )
     }
 
     private fun addComponent(key: String, insertAt: Int?) {
-        val current = _editState.value ?: return
+        val current = _editingState.value ?: return
         val added = current.availableItems.find { it.key == key } ?: return
         val newItems = current.items.toMutableList().also { list ->
             if (insertAt != null) list.add(insertAt.coerceIn(0, list.size), added)
             else list.add(added)
         }
-        _editState.value = current.copy(
+        _editingState.value = current.copy(
             items = newItems,
             availableItems = current.availableItems.filter { it.key != key },
         )
@@ -355,9 +380,7 @@ class DashboardViewModel(
     ): List<DashboardComponent> {
         if (preferences.isEmpty()) return all
         val byKey = all.associateBy { it.key }
-        return preferences
-            .sortedBy { it.position }
-            .mapNotNull { byKey[it.key] }
+        return preferences.sortedBy { it.position }.mapNotNull { byKey[it.key] }
     }
 }
 ```
@@ -366,12 +389,24 @@ class DashboardViewModel(
 
 ## 8. UI — DashboardScreen
 
-### 8.1 Estrutura em Edit Mode
+### 8.1 Estrutura geral do DashboardScreen
+
+O `DashboardScreen` faz `when(uiState)` e renderiza estruturas distintas para cada tipo:
+
+```kotlin
+when (val state = uiState) {
+    is DashboardUiState.Loading  -> DashboardLoadingContent()
+    is DashboardUiState.Viewing  -> DashboardViewingContent(state, onAction)
+    is DashboardUiState.Editing  -> DashboardEditingContent(state, onAction)
+}
+```
+
+**Estrutura do `DashboardEditingContent`:**
 
 ```
 Box (fill max size)
-├── LazyColumn (dashboard normal ou edit mode)
-│   └── items(editState.items) { item ->
+├── LazyColumn (lista editável)
+│   └── items(state.items) { item ->
 │       DashboardEditItemCard(
 │           item = item,
 │           dragHandle = { ReorderHandle() },
@@ -379,7 +414,7 @@ Box (fill max size)
 │       )
 │   }
 ├── AddComponentPanel (AnimatedVisibility, slide from bottom)
-│   └── items(editState.availableItems) { item ->
+│   └── items(state.availableItems) { item ->
 │       DashboardAvailableItemCard(
 │           item = item,
 │           onTap = { onAction(AddComponent(item.key)) },
@@ -401,12 +436,19 @@ Box (fill max size)
 
 ### 8.3 Transição Normal ↔ Edit Mode
 
-- `AnimatedContent` com `slideInVertically` para a edit toolbar no topo
+- `AnimatedContent(targetState = uiState)` com `slideInVertically` para a edit toolbar no topo
 - `AnimatedVisibility` para ocultar a `BottomNavigationBar` no `HomeScreen`
-  - O ViewModel expõe `uiState.editState != null` via callback ou via `SharedFlow<DashboardAction>` que o `HomeScreen` observa
-  - Alternativa: `LocalDashboardEditMode` CompositionLocal setado pelo DashboardScreen
 
-**Recomendado:** passar `isEditMode: Boolean` via lambda para o `HomeScreen` que controla a visibilidade da bottom nav.
+A detecção do modo edição no `HomeScreen` é feita via callback:
+
+```kotlin
+// HomeScreen observa o uiState do DashboardViewModel
+val isEditMode = dashboardUiState is DashboardUiState.Editing
+
+AnimatedVisibility(visible = !isEditMode) {
+    BottomNavigationBar(...)
+}
+```
 
 ### 8.4 Edit Toolbar
 
@@ -462,7 +504,7 @@ val reorderState = rememberReorderableLazyListState(
 )
 
 LazyColumn(state = reorderState.listState) {
-    items(editState.items, key = { it.key }) { item ->
+    items(state.items, key = { it.key }) { item ->  // state: DashboardUiState.Editing
         ReorderableItem(reorderState, key = item.key) { isDragging ->
             DashboardEditItemCard(
                 item = item,
@@ -602,6 +644,8 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 
 | Decisão | Alternativa descartada | Motivo |
 |---------|----------------------|--------|
+| `DashboardUiState` como sealed class (`Loading`, `Viewing`, `Editing`) | `data class` com `editState: EditState?` | Modo edição é um estado distinto, não uma extensão opcional do modo normal — sealed class elimina estados impossíveis e segue o padrão do projeto |
+| `_editingState: MutableStateFlow<Editing?>` separado do combine reativo | Unificar tudo em um único combine | Separa responsabilidades: dados ao vivo ficam no `viewingState`, edição em curso fica no `_editingState` — evita reconstrução do estado de edição a cada emissão dos repositórios |
 | `AddComponentPanel` como overlay in-tree | `ModalBottomSheet` do `ModalManager` | Drag cross-container requer espaço de coordenadas compartilhado |
 | `russhwolf/settings` + JSON para persistência | Room (nova tabela) | Sem relações, sem queries — settings é suficiente e já disponível |
 | `sh.calvin.reorderable` para drag in-list | `detectDragGesturesAfterLongPress` manual | API de alto nível, multiplatform, menos boilerplate |

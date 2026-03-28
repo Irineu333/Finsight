@@ -395,11 +395,17 @@ class DashboardViewModel(
 
 O critério concreto:
 - Cada componente no modo edição renderiza o **mesmo composable** que renderiza no modo normal, com dados de exemplo realistas
-- Um `TotalBalance` em edit mode parece um `TotalBalance` real — com valor, cores, layout idênticos — apenas frozen (sem interações) e com drag handle + botão remover sobre ele
+- Um `TotalBalance` em edit mode parece um `TotalBalance` real — com valor, cores, layout idênticos — apenas frozen (sem interações) e tappable para abrir configurações
 - Um `CreditCardsPager` em edit mode parece um carrossel de cartões de crédito — não um card com o texto "Cartões de Crédito"
-- Ao entrar no modo edição, o usuário deve perceber que os componentes **ficaram no lugar** enquanto os controles de edição apareceram
+- Ao entrar no modo edição, o usuário deve perceber que os componentes **ficaram no lugar** enquanto o modo de interação mudou
 
-**Anti-padrão explicitamente proibido:**
+**Modelo de interação no edit mode:**
+- **Long press + drag** no componente → reordena (o componente inteiro é o handle de drag)
+- **Tap** no componente → abre modal de opções (excluir, configurações futuras)
+- **Sem ícone de drag handle** — não polui o visual do componente
+- **Sem botão de excluir** — a exclusão fica na modal de opções
+
+**Anti-padrões explicitamente proibidos:**
 ```
 ┌─────────────────────────────┐   ← ERRADO: lista genérica com só título
 │ ☰  Saldo Total          [−] │
@@ -410,18 +416,18 @@ O critério concreto:
 
 **Padrão correto:**
 ```
-┌─────────────────────────────┐   ← CORRETO: componente real com overlay de edição
-│[−]              ░░░░░░  [☰] │
-│                             │
-│   R$ 5.450,00               │   ← TotalBalance renderizado com mock data
-│                             │
-└─────────────────────────────┘
-┌─────────────────────────────┐
-│[−]  ░░░░░░░░░░░░░░░░   [☰] │
-│  ┌────────┐ ┌────────┐      │   ← CreditCardsPager renderizado com mock data
-│  │ VISA   │ │ MASTER │      │
-│  │ •••4521│ │ •••7832│      │
-└─────────────────────────────┘
+╔═════════════════════════════╗   ← borda sutil indica modo editável (ex: outline)
+║                             ║
+║   R$ 5.450,00               ║   ← TotalBalance renderizado com mock data
+║                             ║
+╚═════════════════════════════╝
+  ↑ tap → abre modal de opções | long press → arrasta para reordenar
+
+╔═════════════════════════════╗
+║  ┌────────┐ ┌────────┐      ║   ← CreditCardsPager renderizado com mock data
+║  │ VISA   │ │ MASTER │      ║
+║  │ •••4521│ │ •••7832│      ║
+╚═════════════════════════════╝
 ```
 
 ---
@@ -459,8 +465,7 @@ Box (fill max size)
 │           DashboardEditItemWrapper(
 │               item = item,
 │               isDragging = isDragging,
-│               dragHandle = { Modifier.draggableHandle() },
-│               onRemove = { onAction(RemoveComponent(item.key)) },
+│               onTap = { modalManager.show(DashboardComponentOptionsModal(item, onAction)) },
 │           )
 │       }
 │   }
@@ -481,20 +486,25 @@ Box (fill max size)
 
 ### 8.3 `DashboardEditItemWrapper` — renderização fiel ao original
 
-Este é o componente central do modo edição. Ele **não reimplementa** o visual do componente — ele **reutiliza** o composable original.
+O componente inteiro é draggable (sem ícone de handle) e tappable (sem botão de excluir visível). O `draggableHandle()` é aplicado no wrapper inteiro.
 
 ```kotlin
 @Composable
 fun DashboardEditItemWrapper(
     item: DashboardEditItem,
     isDragging: Boolean,
-    dragHandle: @Composable Modifier.() -> Modifier,
-    onRemove: () -> Unit,
+    onTap: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
+            // Tap → abre modal de opções (excluir, configurações)
+            .clickable(onClick = onTap)
+            // Long press + drag → reordena (componente inteiro é o drag handle)
+            .draggableHandle()
+            // Sinaliza estado editável com borda sutil
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
     ) {
         // 1. Renderiza o composable ORIGINAL com dados mock — sem simplificação
         Box(
@@ -505,32 +515,63 @@ fun DashboardEditItemWrapper(
             DashboardComponentContent(component = item.preview)  // mesmo composable do Viewing
         }
 
-        // 2. Overlay de edição sobre o componente
+        // 2. Overlay translúcido mínimo (só para comunicar estado não-interativo)
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.15f))
-        )
-
-        // 3. Affordances de edição
-        IconButton(
-            onClick = onRemove,
-            modifier = Modifier.align(Alignment.TopStart),
-        ) {
-            Icon(Icons.Rounded.RemoveCircle, contentDescription = null)
-        }
-
-        Icon(
-            imageVector = Icons.Rounded.DragHandle,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .dragHandle(),
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.10f))
         )
     }
 }
 ```
 
 `DashboardComponentContent` é o mesmo switch `when(component)` que já existe no `DashboardViewingContent` — extraído para uma função compartilhada.
+
+**Resolução de conflito de gestos:** `clickable` dispara no tap-up sem movimento; `draggableHandle` só ativa após long press + movimento. Eles coexistem naturalmente sem conflito.
+
+---
+
+### 8.3.1 `DashboardComponentOptionsModal`
+
+Modal de opções acionada pelo tap no componente em edit mode. Implementada como `ModalBottomSheet` do `ModalManager`.
+
+```
+╔══════════════════════════════╗
+║  Saldo Total                 ║  ← título do componente (item.title)
+╠══════════════════════════════╣
+║  🗑  Remover                 ║  ← RemoveComponent action + dismiss modal
+║                              ║
+║  (configurações futuras      ║  ← V2: settings específicas do componente
+║   aparecem aqui)             ║
+╚══════════════════════════════╝
+```
+
+```kotlin
+class DashboardComponentOptionsModal(
+    private val item: DashboardEditItem,
+    private val onAction: (DashboardAction) -> Unit,
+) : ModalBottomSheet() {
+
+    @Composable
+    override fun Content() {
+        val modalManager = LocalModalManager.current
+        Column {
+            Text(stringUiText(item.title), style = MaterialTheme.typography.titleMedium)
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(Res.string.remove_component)) },
+                leadingContent = { Icon(Icons.Rounded.Delete, contentDescription = null) },
+                modifier = Modifier.clickable {
+                    onAction(DashboardAction.RemoveComponent(item.key))
+                    modalManager.dismiss()
+                },
+            )
+        }
+    }
+}
+```
+
+Em V1: apenas a opção "Remover". A estrutura já suporta adicionar opções de configuração por componente em versões futuras.
 
 ---
 
@@ -580,17 +621,17 @@ fun DashboardAddItemCard(
 - TopAppBar: `AnimatedContent(targetState = isEditMode)` — a toolbar normal e a de edição fazem crossfade
 - BottomNavigationBar: `AnimatedVisibility(visible = !isEditMode, enter = slideInVertically { it }, exit = slideOutVertically { it })`
 
-**Por componente (affordances):**
-As affordances (drag handle, botão remover) não animam individualmente por componente — o `Crossfade` global já cria a ilusão de aparecerem no lugar certo. Se mais refinamento for desejado em iterações futuras, `AnimatedVisibility` por affordance pode ser adicionado.
+**Por componente:**
+Não há affordances visuais explícitas (sem drag handle, sem botão remover). A borda sutil (`outlineVariant`) é o único indicador de que o componente está em modo editável. O `Crossfade` global cria a transição natural de visualização → edição.
 
-**Ativação por long press:**
+**Ativação por long press em qualquer componente:**
 ```kotlin
+// Aplicado no wrapper de cada componente no DashboardViewingContent
 Modifier.combinedClickable(
     onLongClick = { onAction(EnterEditMode) },
-    onClick = { /* interação normal */ },
+    onClick = { /* interação normal do componente */ },
 )
 ```
-Aplicado no wrapper de cada componente no `DashboardViewingContent`.
 
 **Detecção no HomeScreen:**
 ```kotlin
@@ -810,6 +851,8 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 | `DashboardComponentContent` extraído como função compartilhada | Duplicar o `when(component)` em Viewing e Editing | Garante que edit mode renderiza EXATAMENTE o mesmo composable que o modo normal — sem risco de divergência visual |
 | `Crossfade` no nível da tela para a transição de modo | `AnimatedContent` com slides | Como ambos os modos renderizam os mesmos componentes nas mesmas posições, o crossfade cria a ilusão de affordances aparecendo in-place sem custo de implementação de shared elements |
 | Componentes em edit mode: composable original com mock data + overlay | Card simplificado com título | Critério de aceite — o modo edição deve remeter ao modo visualização; lista genérica com títulos é explicitamente reprovada |
+| Componente inteiro como drag handle (sem ícone) | Ícone `DragHandle` dedicado | Preferência do produto: ícone de handle polui o visual do componente; long press no corpo é mais limpo e intuitivo |
+| Tap no componente → modal de opções (excluir + futuras configs) | Botão "−" visível no componente | Preferência do produto: botão de excluir polui o visual; a modal centraliza opções e escala para configurações futuras sem mudar a UI do edit mode |
 | `AddComponentPanel` como overlay in-tree | `ModalBottomSheet` do `ModalManager` | Drag cross-container requer espaço de coordenadas compartilhado |
 | `russhwolf/settings` + JSON para persistência | Room (nova tabela) | Sem relações, sem queries — settings é suficiente e já disponível |
 | `sh.calvin.reorderable` para drag in-list | `detectDragGesturesAfterLongPress` manual | API de alto nível, multiplatform, menos boilerplate |

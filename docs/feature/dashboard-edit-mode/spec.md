@@ -44,9 +44,9 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ```
 
 **Documentação de referência das bibliotecas** (ler antes de implementar):
-- [`docs/references/reorderable-library.md`](../references/reorderable-library.md) — API completa, armadilhas, `longPressDraggableHandle`, scope, `onMove` síncrono
-- [`docs/references/compose-drag-gestures.md`](../references/compose-drag-gestures.md) — `detectDragGesturesAfterLongPress`, drag cross-container, `DragToAddState`
-- [`docs/references/settings-library.md`](../references/settings-library.md) — `multiplatform-settings`, serialização JSON, `MutableStateFlow` bridge
+- [`docs/reference/reorderable-library.md`](../../reference/reorderable-library.md) — API completa, armadilhas, `longPressDraggableHandle`, scope, `onMove` síncrono
+- [`docs/reference/compose-drag-gestures.md`](../../reference/compose-drag-gestures.md) — `detectDragGesturesAfterLongPress`, drag cross-container, `DragToAddState`
+- [`docs/reference/settings-library.md`](../../reference/settings-library.md) — `multiplatform-settings`, serialização JSON, `MutableStateFlow` bridge
 
 
 ---

@@ -1,7 +1,7 @@
 # Plano: Dashboard Customizável — Modo Edição
 
 Implementação dividida em 4 etapas independentes e validáveis.
-A spec completa está em [`docs/specs/dashboard-edit-mode.md`](../specs/dashboard-edit-mode.md).
+A spec completa está em [`spec.md`](spec.md).
 
 ---
 

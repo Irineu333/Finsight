@@ -1,6 +1,51 @@
 # Spec: Dashboard Customizável — Modo Edição
 
-## 1. Contexto
+## 0. Contexto do projeto (leitura obrigatória antes de implementar)
+
+**Package base:** `com.neoutils.finsight`
+
+**Módulo KMP:** `composeApp` — Kotlin Multiplatform (Android / iOS / Desktop), Compose Multiplatform
+
+**Camadas e paths relevantes:**
+```
+composeApp/src/commonMain/kotlin/com/neoutils/finsight/
+  domain/model/          ← data classes de domínio (sem dependências externas)
+  domain/repository/     ← interfaces de repositório
+  database/repository/   ← implementações (Room + Settings)
+  ui/screen/dashboard/   ← DashboardScreen, ViewModel, UiState, Action
+  ui/component/          ← ModalManager, BottomNavigationBar, componentes compartilhados
+  ui/screen/home/        ← HomeScreen (navigation host, bottom nav)
+  di/                    ← ViewModelModule.kt, RepositoryModule.kt
+```
+
+**Arquivos existentes que serão modificados:**
+- `ui/screen/dashboard/DashboardScreen.kt` — tela principal da dashboard
+- `ui/screen/dashboard/DashboardViewModel.kt` — ViewModel atual sem edit mode
+- `ui/screen/dashboard/DashboardUiState.kt` — atualmente `data class`, será substituído por sealed class
+- `ui/screen/dashboard/DashboardAction.kt` — atualmente só tem `AdjustBalance`
+- `ui/screen/dashboard/DashboardComponent.kt` — sealed interface com 9 tipos (não modificar)
+- `ui/screen/dashboard/DashboardComponentsBuilder.kt` — builder dos componentes (receberá config)
+- `ui/screen/home/HomeScreen.kt` — precisa observar edit mode para ocultar bottom nav
+- `di/ViewModelModule.kt` — adicionar `dashboardPreferencesRepository`
+- `di/RepositoryModule.kt` — registrar `DashboardPreferencesRepository`
+
+**Padrões obrigatórios do projeto:**
+- `UiText.Res(Res.string.xxx)` para strings traduzíveis; `UiText.Raw(str)` apenas para valores dinâmicos
+- `stringUiText(uiText): String` é `@Composable` — use dentro de composables
+- Modals: estender `ModalBottomSheet`, mostrar via `LocalModalManager.current.show(modal)`
+- DI: `viewModel {}` para ViewModels, `factory {}` para UseCases, `single {}` para Repositories
+- UiState sealed: padrão `BudgetsUiState` / `AccountsUiState` — estados como tipos distintos
+- Arrow `Either` / `flatMap` para error handling (não necessário nesta feature)
+- Sem comentários no código — o código deve ser autoexplicativo
+
+**Dependência a adicionar no `composeApp/build.gradle.kts`:**
+```kotlin
+implementation("sh.calvin.reorderable:reorderable:2.4.3")
+```
+
+---
+
+## 1. Contexto da feature
 
 A dashboard possui 9 componentes fixos renderizados em sequência. Esta feature permite ao usuário personalizar quais componentes aparecem e em qual ordem, via um modo de edição acionado por long press.
 
@@ -158,7 +203,11 @@ class DashboardPreferencesRepository(
     }
 
     @Serializable
-    private data class SerializablePreference(val key: String, val position: Int)
+    private data class SerializablePreference(
+        val key: String,
+        val position: Int,
+        val config: Map<String, String> = emptyMap(),
+    )
 
     companion object {
         private const val KEY = "dashboard_preferences"
@@ -263,6 +312,7 @@ sealed class DashboardUiState {
 data class DashboardEditItem(
     val key: String,
     val title: UiText,
+    val config: Map<String, String> = emptyMap(),    // carrega config salvo (para preservar em confirmEdit)
     val preview: DashboardComponent,                 // instância mock para renderização
 )
 ```
@@ -287,6 +337,7 @@ sealed class DashboardAction {
     data class MoveComponent(val from: Int, val to: Int) : DashboardAction()
     data class RemoveComponent(val key: String) : DashboardAction()
     data class AddComponent(val key: String, val insertAt: Int? = null) : DashboardAction()
+    data class UpdateComponentConfig(val key: String, val config: Map<String, String>) : DashboardAction()
 }
 ```
 
@@ -330,34 +381,38 @@ class DashboardViewModel(
     )
 
     fun onAction(action: DashboardAction) = when (action) {
-        is EnterEditMode   -> enterEditMode()
-        is ConfirmEdit     -> confirmEdit()
-        is CancelEdit      -> cancelEdit()
-        is MoveComponent   -> moveComponent(action.from, action.to)
-        is RemoveComponent -> removeComponent(action.key)
-        is AddComponent    -> addComponent(action.key, action.insertAt)
-        is AdjustBalance   -> { /* ... existente ... */ }
+        is EnterEditMode         -> enterEditMode()
+        is ConfirmEdit           -> confirmEdit()
+        is CancelEdit            -> cancelEdit()
+        is MoveComponent         -> moveComponent(action.from, action.to)
+        is RemoveComponent       -> removeComponent(action.key)
+        is AddComponent          -> addComponent(action.key, action.insertAt)
+        is UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
+        is AdjustBalance         -> { /* ... existente ... */ }
     }
 
     private fun enterEditMode() {
-        val current = uiState.value as? DashboardUiState.Viewing ?: return
-        preferencesSnapshot = current.components
-            .mapIndexed { i, c -> DashboardComponentPreference(c.key, i) }
-        _editingState.value = buildEditingState(current)
+        // Lança coroutine pois precisa do primeiro valor das preferências salvas
+        viewModelScope.launch {
+            val current = uiState.value as? DashboardUiState.Viewing ?: return@launch
+            val savedPrefs = dashboardPreferencesRepository.observe().first()
+            _editingState.value = buildEditingState(current, savedPrefs)
+        }
+    }
+
+    // cancelEdit NÃO re-salva no repositório — o repositório não foi modificado durante o edit mode.
+    // Basta limpar _editingState e o viewingState reativo volta a comandar com as prefs anteriores.
+    private fun cancelEdit() {
+        _editingState.value = null
     }
 
     private fun confirmEdit() {
         viewModelScope.launch {
             val editing = _editingState.value ?: return@launch
-            val prefs = editing.items.mapIndexed { i, item -> DashboardComponentPreference(item.key, i) }
+            val prefs = editing.items.mapIndexed { i, item ->
+                DashboardComponentPreference(key = item.key, position = i, config = item.config)
+            }
             dashboardPreferencesRepository.save(prefs)
-            _editingState.value = null
-        }
-    }
-
-    private fun cancelEdit() {
-        viewModelScope.launch {
-            dashboardPreferencesRepository.save(preferencesSnapshot)
             _editingState.value = null
         }
     }
@@ -388,6 +443,47 @@ class DashboardViewModel(
         _editingState.value = current.copy(
             items = newItems,
             availableItems = current.availableItems.filter { it.key != key },
+        )
+    }
+
+    private fun updateComponentConfig(key: String, config: Map<String, String>) {
+        val current = _editingState.value ?: return
+        _editingState.value = current.copy(
+            items = current.items.map { if (it.key == key) it.copy(config = config) else it },
+        )
+    }
+
+    // Constrói o EditingState a partir do Viewing atual + preferências salvas
+    // Preserva configs existentes em cada item; componentes ausentes do Viewing ficam em availableItems
+    private fun buildEditingState(
+        viewing: DashboardUiState.Viewing,
+        savedPrefs: List<DashboardComponentPreference>,
+    ): DashboardUiState.Editing {
+        val prefsByKey = savedPrefs.associateBy { it.key }
+        val presentKeys = viewing.components.map { it.key }.toSet()
+
+        val items = viewing.components.mapNotNull { component ->
+            val entry = DashboardComponentRegistry.entries.find { it.key == component.key } ?: return@mapNotNull null
+            DashboardEditItem(
+                key = component.key,
+                title = entry.title,
+                config = prefsByKey[component.key]?.config ?: emptyMap(),
+                preview = DashboardComponentMocks.forKey(component.key) ?: return@mapNotNull null,
+            )
+        }
+
+        val availableItems = DashboardComponentRegistry.entries
+            .filter { it.key !in presentKeys }
+            .mapNotNull { entry ->
+                DashboardComponentMocks.forKey(entry.key)?.let { mock ->
+                    DashboardEditItem(key = entry.key, title = entry.title, preview = mock)
+                }
+            }
+
+        return DashboardUiState.Editing(
+            yearMonth = viewing.yearMonth,
+            items = items,
+            availableItems = availableItems,
         )
     }
 
@@ -542,7 +638,25 @@ fun DashboardEditItemWrapper(
 }
 ```
 
-`DashboardComponentContent` é o mesmo switch `when(component)` que já existe no `DashboardViewingContent` — extraído para uma função compartilhada.
+`DashboardComponentContent` é o mesmo switch `when(component)` que já existe no `DashboardViewingContent` — extraído para uma função compartilhada no mesmo arquivo ou em `DashboardComponents.kt`:
+
+```kotlin
+// Assinatura — mesmo when(component) do DashboardViewingContent, sem lógica adicional
+@Composable
+fun DashboardComponentContent(
+    component: DashboardComponent,
+    onAction: (DashboardAction) -> Unit = {},
+) {
+    when (component) {
+        is DashboardComponent.TotalBalance        -> TotalBalanceCard(component, onAction)
+        is DashboardComponent.ConcreteBalanceStats -> DashboardConcreteBalanceSection(component, onAction)
+        // ... demais tipos
+    }
+}
+```
+
+Em `DashboardViewingContent`, substituir o `when(component)` inline por `DashboardComponentContent(component, onAction)`.
+Em `DashboardEditItemWrapper`, chamar `DashboardComponentContent(item.preview)` — sem `onAction` (componente frozen).
 
 **Resolução de conflito de gestos:** `clickable` dispara no tap-up sem movimento; `draggableHandle` só ativa após long press + movimento. Eles coexistem naturalmente sem conflito.
 
@@ -651,8 +765,14 @@ Modifier.combinedClickable(
 ```
 
 **Detecção no HomeScreen:**
+
+O `HomeScreen` já instancia o `DashboardViewModel` (ou pode acessá-lo via Koin `koinViewModel()`). Basta observar o `uiState` coletado como state:
+
 ```kotlin
-val isEditMode = uiState is DashboardUiState.Editing
+// HomeScreen.kt
+val dashboardViewModel: DashboardViewModel = koinViewModel()
+val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
+val isEditMode = dashboardUiState is DashboardUiState.Editing
 
 AnimatedVisibility(
     visible = !isEditMode,
@@ -662,6 +782,8 @@ AnimatedVisibility(
     BottomNavigationBar(...)
 }
 ```
+
+O `DashboardViewModel` é `single` no escopo do `NavBackStackEntry` do route `Home`, portanto a mesma instância é compartilhada entre `HomeScreen` e `DashboardScreen`.
 
 ---
 
@@ -759,7 +881,7 @@ val LocalDashboardDragState = staticCompositionLocalOf { DragToAddState() }
 ```
 
 **Fluxo:**
-1. Long press em `DashboardAvailableItemCard` → `dragState.startDrag(key, offset)`
+1. Long press em `DashboardAddItemCard` → `dragState.startDrag(key, offset)`
 2. Durante drag: a lista acima detecta `dragState.dragOffset` via `Modifier.onGloballyPositioned` e calcula `dropTargetIndex`
 3. Ghost preview renderizado no `Box` pai na posição `dragOffset`
 4. Release: `onAction(AddComponent(dragState.draggedKey!!, insertAt = dragState.endDrag()))`

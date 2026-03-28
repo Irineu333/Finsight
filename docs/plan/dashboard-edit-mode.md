@@ -26,6 +26,7 @@ Os componentes são representados por cards simplificados (título + placeholder
 - `DashboardViewModel` — lógica de edit mode com `_editingState` separado do combine reativo
 - `DashboardScreen` — `Crossfade` entre `Loading`, `Viewing`, `Editing`
 - `DashboardEditingContent` — `LazyColumn` com `sh.calvin.reorderable`, cards simplificados
+  - Em Etapa 1, `DashboardEditItemWrapper` renderiza apenas `item.title` em um card simples — `item.preview` existe no model mas é ignorado até Etapa 2
 - `DashboardComponentOptionsModal` — modal com apenas "Remover" (sem settings ainda)
 - Edit toolbar: `Cancelar | Editar | Confirmar`
 - Ocultar `BottomNavigationBar` em edit mode
@@ -164,7 +165,7 @@ Etapa 3 aprovada.
 - `DashboardPreferencesRepository.save()` já persiste `config` (campo já existe no model)
 
 **UI:**
-- `DashboardAction.UpdateComponentConfig(key, config)` — salva config sem sair do edit mode
+- `DashboardAction.UpdateComponentConfig(key, config)` já declarado no sealed class desde Etapa 1 — Etapa 4 implementa o handler no ViewModel e os controles na modal
 - `DashboardComponentOptionsModal` — expandida com seções de configuração por componente:
   - AccountsOverview: lista de contas com toggle
   - CreditCardsPager: lista de cartões com toggle

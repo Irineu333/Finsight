@@ -997,7 +997,6 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 
 ## 16. Fora do Escopo (V1)
 
-- Configurações individuais de componentes (candidato V2: QuickActions)
 - Múltiplos perfis de dashboard
 - Sync de preferências entre devices
 - Animação de "shake" no estilo iOS para os componentes no edit mode

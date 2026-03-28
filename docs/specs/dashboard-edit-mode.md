@@ -708,15 +708,11 @@ val reorderState = rememberReorderableLazyListState(
 LazyColumn(state = reorderState.listState) {
     items(state.items, key = { it.key }) { item ->  // state: DashboardUiState.Editing
         ReorderableItem(reorderState, key = item.key) { isDragging ->
-            DashboardEditItemCard(
+            DashboardEditItemWrapper(
                 item = item,
-                dragHandle = {
-                    Icon(
-                        imageVector = Icons.Default.DragHandle,
-                        modifier = Modifier.draggableHandle(),
-                    )
-                },
                 isDragging = isDragging,
+                onTap = { modalManager.show(DashboardComponentOptionsModal(item, onAction)) },
+                // draggableHandle() aplicado dentro do wrapper no componente inteiro
             )
         }
     }
@@ -759,12 +755,18 @@ val LocalDashboardDragState = staticCompositionLocalOf { DragToAddState() }
 
 **Nenhum componente possui configurações na V1.**
 
-A arquitetura deve suportar configurações sem implementar nenhuma:
-- `DashboardEditItemCard` recebe `onSettings: (() -> Unit)?`
-- Ícone de engrenagem aparece **apenas se** `onSettings != null`
-- Na V1, todos os componentes passam `onSettings = null`
+As configurações futuras aparecerão como novas opções dentro do `DashboardComponentOptionsModal` — sem mudar a UI do edit mode. Em V1, a modal tem apenas "Remover".
 
-**Candidato para V2:** QuickActions — permitir ocultar/reordenar ações individuais.
+**Candidato para V2:** QuickActions — permitir ocultar/reordenar ações individuais diretamente na modal de opções.
+
+---
+
+## 11.1 Testes
+
+Esta feature não é coberta por testes unitários. A qualidade é validada exclusivamente por critérios visuais e de experiência do usuário:
+- Fidelidade dos componentes em edit mode (remete ao original)
+- Suavidade da transição entre modos
+- Naturalidade das interações de drag e tap
 
 ---
 

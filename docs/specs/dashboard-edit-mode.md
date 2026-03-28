@@ -38,26 +38,42 @@ Dashboard normal
     │       │
     │       ▼
     │   Entra em Edit Mode
-    │   - Bottom nav oculta (AnimatedVisibility)
-    │   - Top bar troca por barra de edição (Cancelar | "Editar" | Confirmar)
-    │   - Componentes ganham drag handle + botão remover
-    │   - Transição suave (spring animation)
+    │   - Bottom nav oculta
+    │   - Top bar → barra de edição (Cancelar | Editar | Confirmar)
+    │   - Componentes ficam no lugar com borda sutil (indicam modo editável)
+    │   - Transição suave (crossfade)
     │
-    ├─ Drag handle → reordena (drag and drop na lista)
+    ├─ Long press + arrastar o componente → reordena por drag and drop
+    │   (o componente inteiro é arrastável, sem ícone de handle)
     │
-    ├─ Botão "–" no componente → remove (animação de saída)
+    ├─ Tap no componente → abre modal de opções
+    │   - "Remover" → remove o componente (com animação de saída)
+    │   - Configurações do componente (se houver)
     │
-    ├─ Botão "+" flutuante (FAB)
+    ├─ Botão "+" na barra de edição
     │       │
     │       ▼
     │   Add Component Panel desliza do bottom
-    │   - Mostra componentes disponíveis (não presentes)
-    │   - Tap para adicionar no final da lista
-    │   - Long press + drag → arrasta para posição específica na lista acima
+    │   - Grid de componentes disponíveis (preview em miniatura)
+    │   - Tap → adiciona no final da lista
+    │   - Long press + drag → arrasta para posição específica na lista
     │
     ├─ "Cancelar" → descarta alterações, volta ao estado original
     └─ "Confirmar" → persiste nova ordem/composição, sai do edit mode
 ```
+
+### Anti-padrões de reordenação (explicitamente proibidos)
+
+A reordenação **só pode acontecer por drag and drop**. Qualquer outra forma é critério de reprovação:
+
+```
+❌ Botões de seta (↑ ↓) em cada componente
+❌ Botões "Mover para cima" / "Mover para baixo"
+❌ Campo numérico de posição
+❌ Qualquer interação que não seja arrastar fisicamente o componente
+```
+
+O `MoveComponent(from, to)` existe na `DashboardAction` exclusivamente para ser acionado pelo callback do `sh.calvin.reorderable` após um drag concluído — nunca por um botão.
 
 ---
 

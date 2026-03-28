@@ -35,7 +35,7 @@ Os componentes são representados por cards simplificados (título + placeholder
 
 **Dependência nova:**
 ```kotlin
-implementation("sh.calvin.reorderable:reorderable:2.4.3")
+implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ```
 
 ### O que NÃO entra

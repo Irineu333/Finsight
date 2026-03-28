@@ -14,7 +14,7 @@ composeApp/src/commonMain/kotlin/com/neoutils/finsight/
   database/repository/   ← implementações (Room + Settings)
   ui/screen/dashboard/   ← DashboardScreen, ViewModel, UiState, Action
   ui/component/          ← ModalManager, BottomNavigationBar, componentes compartilhados
-  ui/screen/home/        ← HomeScreen (navigation host, bottom nav)
+  ui/screehome/        ← HomeScreen (navigation host, bottom nav)
   di/                    ← ViewModelModule.kt, RepositoryModule.kt
 ```
 
@@ -40,8 +40,14 @@ composeApp/src/commonMain/kotlin/com/neoutils/finsight/
 
 **Dependência a adicionar no `composeApp/build.gradle.kts`:**
 ```kotlin
-implementation("sh.calvin.reorderable:reorderable:2.4.3")
+implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ```
+
+**Documentação de referência das bibliotecas** (ler antes de implementar):
+- [`docs/references/reorderable-library.md`](../references/reorderable-library.md) — API completa, armadilhas, `longPressDraggableHandle`, scope, `onMove` síncrono
+- [`docs/references/compose-drag-gestures.md`](../references/compose-drag-gestures.md) — `detectDragGesturesAfterLongPress`, drag cross-container, `DragToAddState`
+- [`docs/references/settings-library.md`](../references/settings-library.md) — `multiplatform-settings`, serialização JSON, `MutableStateFlow` bridge
+
 
 ---
 
@@ -602,8 +608,10 @@ Box (fill max size)
 O componente inteiro é draggable (sem ícone de handle) e tappable (sem botão de excluir visível). O `draggableHandle()` é aplicado no wrapper inteiro.
 
 ```kotlin
+// longPressDraggableHandle é extension de ReorderableCollectionItemScope.
+// O scope deve ser passado explicitamente ao extrair este composable para fora do lambda de ReorderableItem.
 @Composable
-fun DashboardEditItemWrapper(
+fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
     isDragging: Boolean,
     onTap: () -> Unit,
@@ -615,7 +623,12 @@ fun DashboardEditItemWrapper(
             // Tap → abre modal de opções (excluir, configurações)
             .clickable(onClick = onTap)
             // Long press + drag → reordena (componente inteiro é o drag handle)
-            .draggableHandle()
+            // IMPORTANTE: usar longPressDraggableHandle (não draggableHandle) pois o item também é clicável.
+            // draggableHandle() iniciaria o drag imediatamente ao toque, bloqueando os cliques.
+            .longPressDraggableHandle(
+                onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+            )
             // Sinaliza estado editável com borda sutil
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
     ) {

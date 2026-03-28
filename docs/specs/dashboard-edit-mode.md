@@ -93,10 +93,11 @@ UI (screen/dashboard/)
 data class DashboardComponentPreference(
     val key: String,
     val position: Int,
+    val config: Map<String, String> = emptyMap(),
 )
 ```
 
-A preferência armazena apenas os componentes **visíveis** em ordem. Componentes ausentes da lista estão disponíveis para adicionar.
+A preferência armazena os componentes **visíveis** em ordem, e o `config` guarda configurações específicas de cada componente como um mapa genérico de strings. Componentes ausentes da lista estão disponíveis para adicionar.
 
 ### 5.2 `IDashboardPreferencesRepository`
 
@@ -751,17 +752,161 @@ val LocalDashboardDragState = staticCompositionLocalOf { DragToAddState() }
 
 ---
 
-## 11. Configurações de Componentes (V1)
+## 11. Configurações de Componentes
 
-**Nenhum componente possui configurações na V1.**
+Cada componente pode ter configurações próprias acessíveis pelo tap em edit mode (`DashboardComponentOptionsModal`). As configurações são persistidas em `DashboardComponentPreference.config` como `Map<String, String>`.
 
-As configurações futuras aparecerão como novas opções dentro do `DashboardComponentOptionsModal` — sem mudar a UI do edit mode. Em V1, a modal tem apenas "Remover".
-
-**Candidato para V2:** QuickActions — permitir ocultar/reordenar ações individuais diretamente na modal de opções.
+Os componentes sem configurações exibem apenas a opção "Remover" na modal.
 
 ---
 
-## 11.1 Testes
+### 11.1 TotalBalance
+
+Sem configurações. Sempre exibe o saldo consolidado de todas as contas.
+
+---
+
+### 11.2 ConcreteBalanceStats
+
+Sem configurações. Exibe receitas e despesas reais do mês selecionado.
+
+---
+
+### 11.3 PendingBalanceStats
+
+Sem configurações. Exibe pendências dos recorrentes do mês selecionado.
+
+---
+
+### 11.4 AccountsOverview
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Contas excluídas da visão | `excluded_account_ids` | IDs separados por vírgula | `""` (todas) | Seleção múltipla de contas |
+
+**Na modal:** lista de contas com toggle para incluir/excluir cada uma.
+
+**Impacto no builder:** filtra a lista de contas antes de construir o componente, usando os IDs excluídos do config.
+
+```kotlin
+object AccountsOverviewConfig {
+    const val EXCLUDED_ACCOUNT_IDS = "excluded_account_ids"
+}
+```
+
+---
+
+### 11.5 CreditCardsPager
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Cartões excluídos da visão | `excluded_card_ids` | IDs separados por vírgula | `""` (todos) | Seleção múltipla de cartões |
+
+**Na modal:** lista de cartões com toggle para incluir/excluir cada um.
+
+**Impacto no builder:** filtra a lista de cartões antes de construir o componente.
+
+```kotlin
+object CreditCardsPagerConfig {
+    const val EXCLUDED_CARD_IDS = "excluded_card_ids"
+}
+```
+
+---
+
+### 11.6 SpendingPager
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Máximo de categorias exibidas | `max_categories` | Int como string | `"-1"` (todas) | 3, 5, 10, todas |
+
+**Na modal:** seleção do limite (segmented button ou radio group).
+
+**Impacto no builder:** aplica `.take(maxCategories)` na lista de `CategorySpending` antes de construir o componente. `-1` = sem limite.
+
+```kotlin
+object SpendingPagerConfig {
+    const val MAX_CATEGORIES = "max_categories"
+    const val ALL = "-1"
+}
+```
+
+---
+
+### 11.7 PendingRecurring
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Horizonte de dias | `days_ahead` | Int como string | `"30"` | 7, 14, 30 |
+
+**Na modal:** seleção do horizonte (segmented button ou radio group).
+
+**Impacto no builder:** filtra recorrentes cujo próximo vencimento está dentro de `days_ahead` dias a partir de hoje.
+
+```kotlin
+object PendingRecurringConfig {
+    const val DAYS_AHEAD = "days_ahead"
+    const val DEFAULT_DAYS_AHEAD = 30
+}
+```
+
+---
+
+### 11.8 Recents
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Número de transações exibidas | `count` | Int como string | `"4"` | 4, 6, 8, 10 |
+
+**Na modal:** seleção da quantidade (segmented button).
+
+**Impacto no builder:** aplica `.take(count)` nas operações recentes.
+
+```kotlin
+object RecentsConfig {
+    const val COUNT = "count"
+    const val DEFAULT_COUNT = 4
+}
+```
+
+---
+
+### 11.9 QuickActions
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Ações ocultas | `hidden_actions` | Enum names separados por vírgula | `""` (nenhuma oculta) | BUDGETS, CATEGORIES, CREDIT_CARDS, ACCOUNTS, RECURRING, REPORTS, INSTALLMENTS |
+
+**Na modal:** lista de todas as 7 ações com toggle para mostrar/ocultar cada uma. Pelo menos 1 ação deve permanecer visível (validação na modal).
+
+**Impacto no builder:** filtra `QuickActionType.entries` removendo as ações ocultas.
+
+```kotlin
+object QuickActionsConfig {
+    const val HIDDEN_ACTIONS = "hidden_actions"
+}
+```
+
+---
+
+### 11.10 Leitura de config no `DashboardComponentsBuilder`
+
+O builder recebe a lista de `DashboardComponentPreference` e usa `config` ao construir cada componente:
+
+```kotlin
+// Exemplo para Recents
+private fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents {
+    val count = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
+    val operations = input.operations.take(count)
+    return DashboardComponent.Recents(operations = operations, hasMore = input.operations.size > count)
+}
+```
+
+O `DashboardViewModel` passa o config da preferência correspondente ao construir cada componente.
+
+---
+
+## 11.11 Testes
 
 Esta feature não é coberta por testes unitários. A qualidade é validada exclusivamente por critérios visuais e de experiência do usuário:
 - Fidelidade dos componentes em edit mode (remete ao original)

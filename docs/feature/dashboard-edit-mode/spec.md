@@ -715,9 +715,28 @@ class DashboardComponentOptionsModal(
     @Composable
     override fun Content() {
         val modalManager = LocalModalManager.current
+        val topSpacing = item.config[DashboardComponentConfig.TOP_SPACING] == "true"
         Column {
             Text(stringUiText(item.title), style = MaterialTheme.typography.titleMedium)
             HorizontalDivider()
+            // Configuração universal — presente em todos os componentes
+            ListItem(
+                headlineContent = { Text(stringResource(Res.string.component_config_top_spacing)) },
+                leadingContent = { Icon(Icons.Rounded.SpaceBar, contentDescription = null) },
+                trailingContent = {
+                    Switch(
+                        checked = topSpacing,
+                        onCheckedChange = { enabled ->
+                            val newConfig = item.config.toMutableMap().apply {
+                                put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
+                            }
+                            onAction(DashboardAction.UpdateComponentConfig(item.key, newConfig))
+                        },
+                    )
+                },
+            )
+            HorizontalDivider()
+            // Configurações específicas do componente (se houver) aparecem aqui — V4
             ListItem(
                 headlineContent = { Text(stringResource(Res.string.remove_component)) },
                 leadingContent = { Icon(Icons.Rounded.Delete, contentDescription = null) },
@@ -731,7 +750,7 @@ class DashboardComponentOptionsModal(
 }
 ```
 
-Em V1: apenas a opção "Remover". A estrutura já suporta adicionar opções de configuração por componente em versões futuras.
+Em V1: toggle "Espaçamento superior" + opção "Remover". As configurações específicas por componente são adicionadas em Etapa 4.
 
 ---
 
@@ -923,7 +942,37 @@ val LocalDashboardDragState = staticCompositionLocalOf { DragToAddState() }
 
 Cada componente pode ter configurações próprias acessíveis pelo tap em edit mode (`DashboardComponentOptionsModal`). As configurações são persistidas em `DashboardComponentPreference.config` como `Map<String, String>`.
 
-Os componentes sem configurações exibem apenas a opção "Remover" na modal.
+Os componentes sem configurações específicas exibem apenas a opção "Remover" + a configuração universal de espaçamento.
+
+---
+
+### 11.0 Configuração Universal — Espaçamento Superior
+
+Disponível para **todos** os 9 componentes.
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Espaçamento superior extra | `top_spacing` | `"true"` / `"false"` | `"false"` | toggle |
+
+**Na modal:** toggle "Espaçamento superior" presente em todos os componentes, acima da opção "Remover".
+
+**Impacto na renderização:** quando `top_spacing == "true"`, adiciona um `Spacer(Modifier.height(16.dp))` acima do componente no `DashboardViewingContent`. O espaço é parte do wrapper do componente, não do componente em si — portanto não afeta o preview em edit mode.
+
+```kotlin
+object DashboardComponentConfig {
+    const val TOP_SPACING = "top_spacing"
+}
+```
+
+**Leitura no `DashboardViewingContent`:**
+```kotlin
+// No wrapper de cada componente no LazyColumn
+val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
+if (topSpacing) Spacer(Modifier.height(16.dp))
+DashboardComponentContent(component, onAction)
+```
+
+Onde `config` é obtido de `DashboardComponentPreference.config` para o componente correspondente — o `DashboardViewingContent` recebe as preferências junto com os componentes, ou o `DashboardComponent` carrega o config ao ser construído. A abordagem preferida é o `DashboardComponentsBuilder` ignorar `top_spacing` (não afeta dados) e o config ser lido diretamente das preferências no `DashboardViewingContent`.
 
 ---
 
@@ -1128,6 +1177,7 @@ viewModel {
 <string name="edit_mode_cancel">Cancelar</string>
 <string name="edit_mode_title">Editar</string>
 <string name="add_component_title">Adicionar componente</string>
+<string name="component_config_top_spacing">Espaçamento superior</string>
 ```
 
 ---

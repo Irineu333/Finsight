@@ -152,7 +152,8 @@ Etapa 3 aprovada.
 
 **Domain:**
 - `DashboardComponentPreference.config: Map<String, String>` — já no model desde Etapa 1, mas não usado
-- Config constants por componente:
+- Config constants:
+  - `DashboardComponentConfig.TOP_SPACING` — universal, todos os componentes
   - `AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS`
   - `CreditCardsPagerConfig.EXCLUDED_CARD_IDS`
   - `SpendingPagerConfig.MAX_CATEGORIES`
@@ -165,18 +166,24 @@ Etapa 3 aprovada.
 
 **UI:**
 - `DashboardAction.UpdateComponentConfig(key, config)` já declarado no sealed class desde Etapa 1 — Etapa 4 implementa o handler no ViewModel e os controles na modal
-- `DashboardComponentOptionsModal` — expandida com seções de configuração por componente:
-  - AccountsOverview: lista de contas com toggle
-  - CreditCardsPager: lista de cartões com toggle
-  - SpendingPager: segmented button (3 / 5 / 10 / Todas)
-  - PendingRecurring: segmented button (7 / 14 / 30 dias)
-  - Recents: segmented button (4 / 6 / 8 / 10)
-  - QuickActions: lista de 7 ações com toggle (mínimo 1 visível)
-- `DashboardComponentsBuilder` — lê `config` ao construir cada componente
+- `DashboardComponentOptionsModal` — expandida com:
+  - Toggle "Espaçamento superior" presente em **todos** os componentes (universal)
+  - Configurações específicas por componente abaixo:
+    - AccountsOverview: lista de contas com toggle
+    - CreditCardsPager: lista de cartões com toggle
+    - SpendingPager: segmented button (3 / 5 / 10 / Todas)
+    - PendingRecurring: segmented button (7 / 14 / 30 dias)
+    - Recents: segmented button (4 / 6 / 8 / 10)
+    - QuickActions: lista de 7 ações com toggle (mínimo 1 visível)
+- `DashboardViewingContent` — lê `top_spacing` do config e insere `Spacer(16.dp)` acima do componente quando habilitado
+- `DashboardComponentsBuilder` — lê configs específicos ao construir cada componente (ignora `top_spacing`, que é renderização pura)
 
 ### Critérios de aceite
-- [ ] Tap em um componente com configuração disponível exibe as opções na modal
-- [ ] Componentes sem configuração exibem apenas "Remover"
+- [ ] Toggle "Espaçamento superior" aparece na modal de todos os componentes
+- [ ] Ativar espaçamento superior adiciona espaço visível acima do componente ao confirmar o edit mode
+- [ ] Desativar remove o espaçamento
+- [ ] Espaçamento persiste entre sessões do app
+- [ ] Tap em um componente com configuração específica disponível exibe as opções na modal
 - [ ] QuickActions: desativar uma ação a remove do componente na dashboard
 - [ ] QuickActions: não é possível desativar todas as ações (validação na modal)
 - [ ] Recents: alterar o número de itens reflete imediatamente ao confirmar o edit mode

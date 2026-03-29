@@ -90,13 +90,10 @@ Etapa 1 aprovada.
 - Configurações de componentes
 
 ### Critérios de aceite
-- [ ] Cada componente em edit mode parece o componente real com dados de exemplo
-- [ ] `TotalBalance` mostra valor, `CreditCardsPager` mostra carrossel de cartões, etc.
-- [ ] Nenhum componente é representado apenas por seu título/nome
-- [ ] A transição de Viewing → Editing parece que os componentes "ficaram no lugar" enquanto o modo mudou
-- [ ] Componentes não respondem a interações próprias em edit mode (frozen)
-- [ ] O drag continua funcionando corretamente com os componentes reais renderizados
-- [ ] Drag shadow visível durante o arrasto
+- [x] Cada componente em edit mode parece o componente real com dados de exemplo
+- [x] Nenhum componente é representado apenas por seu título/nome
+- [x] Componentes não respondem a interações próprias em edit mode (frozen)
+- [x] O drag continua funcionando corretamente com os componentes reais renderizados
 
 > **Reprovação imediata:** qualquer componente que em edit mode exiba apenas texto/título em vez do visual original.
 

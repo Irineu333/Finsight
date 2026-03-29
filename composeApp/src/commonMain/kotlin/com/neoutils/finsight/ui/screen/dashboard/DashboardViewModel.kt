@@ -167,12 +167,9 @@ class DashboardViewModel(
         val availableItems: List<DashboardEditItem>
 
         if (savedPrefs.isEmpty()) {
-            items = DashboardComponentRegistry.entries.map { entry ->
-                DashboardEditItem(
-                    key = entry.key,
-                    title = entry.title,
-                    preview = null,
-                )
+            items = DashboardComponentRegistry.entries.mapNotNull { entry ->
+                val preview = DashboardComponentMocks.forKey(entry.key) ?: return@mapNotNull null
+                DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
             }
             availableItems = emptyList()
         } else {
@@ -180,16 +177,15 @@ class DashboardViewModel(
             items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
                 val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
                     ?: return@mapNotNull null
-                DashboardEditItem(
-                    key = pref.key,
-                    title = entry.title,
-                    config = pref.config,
-                    preview = null,
-                )
+                val preview = DashboardComponentMocks.forKey(pref.key) ?: return@mapNotNull null
+                DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
             }
             availableItems = DashboardComponentRegistry.entries
                 .filter { it.key !in presentKeys }
-                .map { entry -> DashboardEditItem(key = entry.key, title = entry.title) }
+                .mapNotNull { entry ->
+                    val preview = DashboardComponentMocks.forKey(entry.key) ?: return@mapNotNull null
+                    DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
+                }
         }
 
         return DashboardUiState.Editing(

@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
@@ -140,8 +141,7 @@ fun DashboardScreen(
                             QuickActionType.SUPPORT -> navigationDispatcher.dispatch(NavigationDestination.Support)
                         }
                     },
-                    modalManager = modalManager,
-                    navigationDispatcher = navigationDispatcher,
+
                     onAction = viewModel::onAction,
                 )
 
@@ -237,29 +237,29 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
             .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-            .clickable(onClick = onTap)
-            .longPressDraggableHandle(
-                onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
-                onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = colorScheme.surfaceContainer,
-        ),
-        shape = RoundedCornerShape(12.dp),
+            .clip(RoundedCornerShape(12.dp))
+            .background(colorScheme.background),
     ) {
-        Text(
-            text = stringUiText(item.title),
+        DashboardComponentContent(
+            component = item.preview,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 22.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+                .matchParentSize()
+                .background(colorScheme.scrim.copy(alpha = 0.04f))
+                .clickable(onClick = onTap)
+                .longPressDraggableHandle(
+                    onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                    onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                ),
         )
     }
 }
@@ -269,8 +269,7 @@ private fun DashboardViewingContent(
     state: DashboardUiState.Viewing,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     onOpenQuickAction: (QuickActionType) -> Unit,
-    modalManager: ModalManager,
-    navigationDispatcher: NavigationDispatcher,
+
     onAction: (DashboardAction) -> Unit,
 ) {
     LazyColumn(
@@ -282,226 +281,214 @@ private fun DashboardViewingContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         state.components.forEach { component ->
-            when (component) {
-                is DashboardComponent.TotalBalance -> {
-                    item(key = component.key) {
-                        TotalBalanceCard(
-                            balance = component.amount,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
+            val hasLeadingSpace = component is DashboardComponent.AccountsOverview ||
+                component is DashboardComponent.CreditCardsPager ||
+                component is DashboardComponent.SpendingPager ||
+                component is DashboardComponent.PendingRecurring ||
+                component is DashboardComponent.Recents ||
+                component is DashboardComponent.QuickActions
 
-                is DashboardComponent.ConcreteBalanceStats -> {
-                    item(key = component.key) {
-                        DashboardConcreteBalanceSection(
-                            component = component,
-                            openTransactions = openTransactions,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
-
-                is DashboardComponent.PendingBalanceStats -> {
-                    item(key = component.key) {
-                        DashboardPendingBalanceSection(
-                            component = component,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
-
-                is DashboardComponent.AccountsOverview -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    item(key = component.key) {
-                        DashboardAccountsRow(
-                            accounts = component.accounts,
-                            onOpenAccounts = { onOpenQuickAction(QuickActionType.ACCOUNTS) },
-                            onAccountClick = { accountId ->
-                                navigationDispatcher.dispatch(
-                                    NavigationDestination.Accounts(accountId = accountId)
-                                )
-                            },
-                            onAddAccount = {
-                                modalManager.show(AccountFormModal())
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
-
-                is DashboardComponent.CreditCardsPager -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    item(key = component.key) {
-                        DashboardCreditCardsSection(
-                            component = component,
-                            onOpenCreditCards = { onOpenQuickAction(QuickActionType.CREDIT_CARDS) },
-                            navigationDispatcher = navigationDispatcher,
-                            modalManager = modalManager,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
-
-                is DashboardComponent.SpendingPager -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    item(key = component.key) {
-                        DashboardSpendingSection(
-                            component = component,
-                            modalManager = modalManager,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItem()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
-
-                is DashboardComponent.PendingRecurring -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    item(key = "${component.key}_header") {
-                        DashboardSectionHeader(
-                            title = stringResource(Res.string.dashboard_pending_recurring),
-                            onClick = { onOpenQuickAction(QuickActionType.RECURRING) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-
-                    items(
-                        items = component.recurringList,
-                        key = { recurring -> "${component.key}_${recurring.id}" },
-                    ) { recurring ->
-                        PendingRecurringCard(
-                            recurring = recurring,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                            onClick = {
-                                val targetDate = Clock.System.now()
-                                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                                    .date.yearMonth
-                                    .safeOnDay(recurring.dayOfMonth)
-
-                                modalManager.show(ConfirmRecurringModal(recurring, targetDate))
-                            },
-                        )
-                    }
-                }
-
-                is DashboardComponent.Recents -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    item(key = "${component.key}_header") {
-                        DashboardSectionHeader(
-                            title = stringResource(Res.string.dashboard_recents),
-                            onClick = { openTransactions(null, null) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-
-                    itemsIndexed(
-                        items = component.operations,
-                        key = { _, operation -> "${component.key}_${operation.id}" },
-                    ) { index, operation ->
-                        val isLastWithFade = component.hasMore && index == component.operations.lastIndex
-
-                        OperationCard(
-                            operation = operation,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                                .then(
-                                    if (isLastWithFade) {
-                                        Modifier
-                                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-                                            .drawWithContent {
-                                                drawContent()
-                                                drawRect(
-                                                    brush = Brush.verticalGradient(
-                                                        colors = listOf(Color.Black, Color.Transparent),
-                                                    ),
-                                                    blendMode = BlendMode.DstIn,
-                                                )
-                                            }
-                                    } else {
-                                        Modifier
-                                    }
-                                )
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                            onClick = {
-                                when {
-                                    isLastWithFade -> {
-                                        openTransactions(null, null)
-                                    }
-
-                                    operation.type.isAdjustment -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
-                                    }
-
-                                    else -> {
-                                        modalManager.show(ViewOperationModal(operation))
-                                    }
-                                }
-                            },
-                        )
-                    }
-                }
-
-                is DashboardComponent.QuickActions -> {
-
-                    item { Spacer(Modifier.height(8.dp)) }
-
-                    items(
-                        items = component.actions,
-                        key = { action ->
-                            component.key + action.name
-                        },
-                    ) { action ->
-                        DashboardQuickActionCard(
-                            action = action,
-                            onOpen = onOpenQuickAction,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                        )
-                    }
-                }
+            if (hasLeadingSpace) {
+                item { Spacer(Modifier.height(8.dp)) }
             }
+
+            item(key = component.key) {
+                DashboardComponentContent(
+                    component = component,
+                    openTransactions = openTransactions,
+                    onOpenQuickAction = onOpenQuickAction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (component.isInsetCard) Modifier.padding(horizontal = 16.dp) else Modifier)
+                        .animateItem()
+                        .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardComponentContent(
+    component: DashboardComponent,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit = { _, _ -> },
+    onOpenQuickAction: (QuickActionType) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+    val navigationDispatcher = LocalNavigationDispatcher.current
+
+    when (component) {
+        is DashboardComponent.TotalBalance -> TotalBalanceCard(
+            balance = component.amount,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.ConcreteBalanceStats -> DashboardConcreteBalanceSection(
+            component = component,
+            openTransactions = openTransactions,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.PendingBalanceStats -> DashboardPendingBalanceSection(
+            component = component,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.AccountsOverview -> DashboardAccountsRow(
+            accounts = component.accounts,
+            onOpenAccounts = { onOpenQuickAction(QuickActionType.ACCOUNTS) },
+            onAccountClick = { accountId ->
+                navigationDispatcher.dispatch(NavigationDestination.Accounts(accountId = accountId))
+            },
+            onAddAccount = { modalManager.show(AccountFormModal()) },
+            modifier = modifier,
+        )
+
+        is DashboardComponent.CreditCardsPager -> DashboardCreditCardsSection(
+            component = component,
+            onOpenCreditCards = { onOpenQuickAction(QuickActionType.CREDIT_CARDS) },
+            navigationDispatcher = navigationDispatcher,
+            modalManager = modalManager,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.SpendingPager -> DashboardSpendingSection(
+            component = component,
+            modalManager = modalManager,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.PendingRecurring -> DashboardPendingRecurringSection(
+            component = component,
+            onOpenRecurring = { onOpenQuickAction(QuickActionType.RECURRING) },
+            onItemClick = { recurring ->
+                val targetDate = Clock.System.now()
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .date.yearMonth
+                    .safeOnDay(recurring.dayOfMonth)
+                modalManager.show(ConfirmRecurringModal(recurring, targetDate))
+            },
+            modifier = modifier,
+        )
+
+        is DashboardComponent.Recents -> DashboardRecentsSection(
+            component = component,
+            openTransactions = openTransactions,
+            modalManager = modalManager,
+            modifier = modifier,
+        )
+
+        is DashboardComponent.QuickActions -> DashboardQuickActionsSection(
+            component = component,
+            onOpenQuickAction = onOpenQuickAction,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun DashboardPendingRecurringSection(
+    component: DashboardComponent.PendingRecurring,
+    onOpenRecurring: () -> Unit,
+    onItemClick: (Recurring) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DashboardSectionHeader(
+            title = stringResource(Res.string.dashboard_pending_recurring),
+            onClick = onOpenRecurring,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
+        component.recurringList.forEach { recurring ->
+            PendingRecurringCard(
+                recurring = recurring,
+                onClick = { onItemClick(recurring) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardRecentsSection(
+    component: DashboardComponent.Recents,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
+    modalManager: ModalManager,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DashboardSectionHeader(
+            title = stringResource(Res.string.dashboard_recents),
+            onClick = { openTransactions(null, null) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
+        component.operations.forEachIndexed { index, operation ->
+            val isLastWithFade = component.hasMore && index == component.operations.lastIndex
+            OperationCard(
+                operation = operation,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .then(
+                        if (isLastWithFade) {
+                            Modifier
+                                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                                .drawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(Color.Black, Color.Transparent),
+                                        ),
+                                        blendMode = BlendMode.DstIn,
+                                    )
+                                }
+                        } else {
+                            Modifier
+                        }
+                    ),
+                onClick = {
+                    when {
+                        isLastWithFade -> openTransactions(null, null)
+                        operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
+                        else -> modalManager.show(ViewOperationModal(operation))
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardQuickActionsSection(
+    component: DashboardComponent.QuickActions,
+    onOpenQuickAction: (QuickActionType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        component.actions.forEach { action ->
+            DashboardQuickActionCard(
+                action = action,
+                onOpen = onOpenQuickAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
         }
     }
 }
@@ -843,6 +830,11 @@ private fun PendingRecurringCard(
 }
 
 private enum class SpendingPage { Categories, Budgets }
+
+private val DashboardComponent.isInsetCard: Boolean
+    get() = this is DashboardComponent.TotalBalance ||
+        this is DashboardComponent.ConcreteBalanceStats ||
+        this is DashboardComponent.PendingBalanceStats
 
 /**
  * Intercepts long press at [PointerEventPass.Initial] so it fires even on components that have

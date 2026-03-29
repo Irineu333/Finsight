@@ -99,45 +99,53 @@ Etapa 1 aprovada.
 
 ---
 
-## Etapa 3 — Adicionar componentes
+## Etapa 3 — Adicionar componentes (lista unificada)
 
-**Foco:** painel de adição com preview em miniatura e drag cross-container.
+**Foco:** lista única com seções Ativa e Disponível — drag intra-lista com transição fluida entre seções.
 
 ### Pré-requisito
 Etapa 2 aprovada.
 
 ### O que entra
 
-- `DashboardAction.AddComponent(key, insertAt)` — action de adição
-- `DashboardViewModel.addComponent()` — move de `availableItems` → `items` na posição correta
-- `AddComponentPanel` — overlay in-tree (não é `ModalBottomSheet`):
-  - `AnimatedVisibility(slideInVertically / slideOutVertically)`
-  - `LazyVerticalGrid` de 2 colunas com `DashboardAddItemCard`
-  - Ocupa ~50% da tela; lista editável visível acima
-- `DashboardAddItemCard` — card de item disponível:
-  - Preview em miniatura do componente real (`DashboardComponentContent` em escala reduzida)
-  - Título abaixo
-  - Tap → `AddComponent(key, insertAt = null)` (adiciona no final)
-  - Long press → inicia drag cross-container
-- `DragToAddState` — estado de drag cross-container (CompositionLocal):
-  - `isDragging`, `draggedKey`, `dragOffset`, `dropTargetIndex`
-  - A lista acima calcula `dropTargetIndex` durante o drag
-  - Indicador visual de drop (espaço reservado ou linha) na posição alvo
-- Ghost preview flutuante durante drag cross-container
-- Botão "+" na barra de edição que abre/fecha o painel
+**`DashboardAction.MoveComponent`** — mudança de índices para chaves:
+- `MoveComponent(val from: Int, val to: Int)` → `MoveComponent(val fromKey: String, val toKey: String)`
+
+**`DashboardViewModel.moveComponent(fromKey, toKey)`** — lógica baseada em chave:
+- `toKey == "section_header"` ou `"available_placeholder"` → cruzamento de fronteira (inserção na borda da seção de destino)
+- Caso contrário → reordenação interna ou cruzamento via componente adjacente (determina newActiveCount comparando índices com activeCount)
+- Ver lógica completa na spec seção 10.5
+
+**`DashboardEditingContent`** — `LazyColumn` com lista unificada `EditListEntry`:
+- Sealed interface `EditListEntry`: `Component(item, isActive)` | `SectionHeader` | `AvailablePlaceholder`
+- Único `items(listEntries, key = { it.entryKey })` call — nunca blocos separados
+- `SectionHeader` envolvido em `ReorderableItem(reorderState, key = "section_header", enabled = false)` — **obrigatório para fluência**
+- `AvailablePlaceholder` envolvido em `ReorderableItem(reorderState, key = "available_placeholder", enabled = false)` — exibido quando `availableItems` vazio
+- Cabeçalho **sempre visível** (não some quando seção disponível vazia)
+- `onMove` usa `from.key as? String` / `to.key as? String`
+
+**`DashboardEditItemWrapper`** — parâmetro `isActive: Boolean` adicionado:
+- `isActive = true`: overlay 10%, tap abre modal de opções
+- `isActive = false`: overlay ~35%, sem tap para modal
+
+**`DashboardAvailablePlaceholder`** — placeholder com borda tracejada + ícone + texto, exibido quando `availableItems` vazio
 
 ### O que NÃO entra
 - Configurações de componentes
+- `AddComponentPanel`, `DragToAddState`, drag cross-container
 
 ### Critérios de aceite
-- [ ] Botão "+" na barra de edição abre o painel com animação de slide
-- [ ] Componentes disponíveis são exibidos como miniatura do componente real (não só títulos)
-- [ ] Tap em um componente disponível o adiciona ao final da lista
-- [ ] Long press + drag de um componente do painel → drag cross-container funciona
-- [ ] Durante o drag, a lista acima mostra onde o componente será inserido
-- [ ] Ao soltar, o componente é inserido na posição indicada
-- [ ] Componentes já presentes na dashboard não aparecem no painel
-- [ ] Painel fecha ao confirmar ou cancelar o edit mode
+- [ ] Cabeçalho "Disponíveis para adicionar" é **sempre visível** em edit mode
+- [ ] Quando todos os componentes estão ativos, placeholder com borda tracejada aparece abaixo do cabeçalho
+- [ ] Componentes disponíveis têm visual diferenciado (overlay mais escuro)
+- [ ] Long press + drag de um componente ativo **para abaixo do cabeçalho** → componente é desativado
+- [ ] Long press + drag de um componente inativo **para acima do cabeçalho** → componente é ativado
+- [ ] O drag **não interrompe** ao cruzar a divisória — o gesto continua em um único movimento contínuo
+- [ ] Consegue desativar o último componente inativo arrastando para a área do placeholder
+- [ ] Consegue ativar um componente mesmo sem outros componentes inativos (seção inativa vazia)
+- [ ] A reordenação dentro da seção ativa continua funcionando normalmente
+- [ ] "Confirmar" persiste a nova composição; componentes ativados aparecem no modo visualização
+- [ ] "Cancelar" descarta ativações/desativações e restaura o estado anterior
 
 ---
 

@@ -93,21 +93,21 @@ Dashboard normal
     │   - Top bar → barra de edição (Cancelar | Editar | Confirmar)
     │   - Componentes ficam no lugar com borda sutil (indicam modo editável)
     │   - Transição suave (crossfade)
+    │   - Lista dividida em duas seções por uma divisória:
+    │       • Seção superior: componentes ativos (exibidos na dashboard)
+    │       • Seção inferior: componentes inativos (não exibidos)
+    │     A divisória é sempre visível; a seção inferior existe mesmo quando vazia
     │
     ├─ Long press + arrastar o componente → reordena por drag and drop
     │   (o componente inteiro é arrastável, sem ícone de handle)
+    │   - Arrastar da seção ativa para a inativa → desativa o componente
+    │   - Arrastar da seção inativa para a ativa → ativa o componente
+    │   - A transição entre seções é fluida: o gesto não interrompe ao
+    │     cruzar a divisória, independente de a seção de destino estar vazia
     │
-    ├─ Tap no componente → abre modal de opções
-    │   - "Remover" → remove o componente (com animação de saída)
+    ├─ Tap em componente ativo → abre modal de opções
+    │   - "Remover" → move para seção inativa (com animação de saída)
     │   - Configurações do componente (se houver)
-    │
-    ├─ Botão "+" na barra de edição
-    │       │
-    │       ▼
-    │   Add Component Panel desliza do bottom
-    │   - Grid de componentes disponíveis (preview em miniatura)
-    │   - Tap → adiciona no final da lista
-    │   - Long press + drag → arrasta para posição específica na lista
     │
     ├─ "Cancelar" → descarta alterações, volta ao estado original
     └─ "Confirmar" → persiste nova ordem/composição, sai do edit mode
@@ -340,14 +340,13 @@ sealed class DashboardAction {
     data object EnterEditMode : DashboardAction()
     data object ConfirmEdit : DashboardAction()
     data object CancelEdit : DashboardAction()
-    data class MoveComponent(val from: Int, val to: Int) : DashboardAction()
+    data class MoveComponent(val fromKey: String, val toKey: String) : DashboardAction()
     data class RemoveComponent(val key: String) : DashboardAction()
-    data class AddComponent(val key: String, val insertAt: Int? = null) : DashboardAction()
     data class UpdateComponentConfig(val key: String, val config: Map<String, String>) : DashboardAction()
 }
 ```
 
-`insertAt = null` insere no final da lista.
+`MoveComponent(fromKey, toKey)` usa chaves string estáveis em vez de índices inteiros. O ViewModel determina o tipo de movimento pelo contexto: se `toKey == "section_header"` ou `"available_placeholder"`, é cruzamento de fronteira; caso contrário, é reordenação interna ou cruzamento via componente adjacente. `RemoveComponent` continua existindo para a ação "Remover" na modal (move o item para `availableItems` sem precisar de drag).
 
 ### 7.5 `DashboardViewModel` — novas responsabilidades
 
@@ -390,9 +389,8 @@ class DashboardViewModel(
         is EnterEditMode         -> enterEditMode()
         is ConfirmEdit           -> confirmEdit()
         is CancelEdit            -> cancelEdit()
-        is MoveComponent         -> moveComponent(action.from, action.to)
+        is MoveComponent         -> moveComponent(action.fromKey, action.toKey)
         is RemoveComponent       -> removeComponent(action.key)
-        is AddComponent          -> addComponent(action.key, action.insertAt)
         is UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
         is AdjustBalance         -> { /* ... existente ... */ }
     }
@@ -423,12 +421,14 @@ class DashboardViewModel(
         }
     }
 
-    private fun moveComponent(from: Int, to: Int) {
-        val current = _editingState.value ?: return
-        val items = current.items.toMutableList()
-        items.add(to, items.removeAt(from))
-        _editingState.value = current.copy(items = items)
-    }
+    // moveComponent opera sobre a lista combinada (items + availableItems) usando chaves.
+    // Quando toKey == "section_header" ou "available_placeholder": cruzamento de fronteira
+    //   (fromInActive) → desativa: item vai para o início dos disponíveis (activeCount - 1)
+    //   (!fromInActive) → ativa: item vai para o final dos ativos (activeCount + 1)
+    // Caso contrário: reordenação interna ou cruzamento via componente adjacente
+    //   from e to determinam newActiveCount comparando seus índices com activeCount
+    // Ver lógica completa na seção 10.5 da spec.
+    private fun moveComponent(fromKey: String, toKey: String) { /* ver seção 10.5 */ }
 
     private fun removeComponent(key: String) {
         val current = _editingState.value ?: return
@@ -436,19 +436,6 @@ class DashboardViewModel(
         _editingState.value = current.copy(
             items = current.items.filter { it.key != key },
             availableItems = current.availableItems + removed,
-        )
-    }
-
-    private fun addComponent(key: String, insertAt: Int?) {
-        val current = _editingState.value ?: return
-        val added = current.availableItems.find { it.key == key } ?: return
-        val newItems = current.items.toMutableList().also { list ->
-            if (insertAt != null) list.add(insertAt.coerceIn(0, list.size), added)
-            else list.add(added)
-        }
-        _editingState.value = current.copy(
-            items = newItems,
-            availableItems = current.availableItems.filter { it.key != key },
         )
     }
 
@@ -592,30 +579,13 @@ Como `DashboardViewingContent` e `DashboardEditingContent` renderizam os mesmos 
 
 ### 8.2 `DashboardEditingContent` — estrutura
 
-```
-Box (fill max size)
-├── LazyColumn (lista editável com reorderable)
-│   └── items(state.items, key = { it.key }) { item ->
-│       ReorderableItem { isDragging ->
-│           DashboardEditItemWrapper(
-│               item = item,
-│               isDragging = isDragging,
-│               onTap = { modalManager.show(DashboardComponentOptionsModal(item, onAction)) },
-│           )
-│       }
-│   }
-├── AddComponentPanel (AnimatedVisibility slide from bottom)
-│   └── LazyVerticalGrid(2 colunas) {
-│       items(state.availableItems) { item ->
-│           DashboardAddItemCard(
-│               item = item,
-│               onTap = { onAction(AddComponent(item.key)) },
-│               onDragStart = { dragState.startDrag(item.key) },
-│           )
-│       }
-│   }
-└── DragPreview (Box flutuante, visível durante drag cross-container)
-```
+Lista unificada: itens ativos e disponíveis convivem no **mesmo bloco `items()`** do `LazyColumn`, divididos por um cabeçalho de seção não-arrastável.
+
+**Requisito crítico:** todos os itens devem ser renderizados por um único `items()` call — nunca em blocos separados (`items(state.items)` + `item()` + `items(state.availableItems)`). Com blocos separados, quando um item cruza a fronteira entre seções o seu `ReorderableItem` é desmontado em um bloco e remontado em outro, interrompendo o gesto de drag em andamento.
+
+A solução é uma lista combinada com um sealed interface `EditListEntry` (`Component | SectionHeader | AvailablePlaceholder`). O `SectionHeader` e o `AvailablePlaceholder` são envolvidos em `ReorderableItem(enabled = false)` — visíveis como destinos de drop mas não arrastáveis. Ver seção 10.3 para o racional completo.
+
+**`onMove` baseado em chave:** o callback usa `from.key` e `to.key` (strings estáveis) em vez de `from.index`/`to.index`. O ViewModel interpreta as chaves para determinar o tipo de movimento (intra-seção, cruzamento via componente, cruzamento via cabeçalho). Ver seção 10.4–10.5.
 
 ---
 
@@ -645,8 +615,6 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                 onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
                 onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
             )
-            // Sinaliza estado editável com borda sutil
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
     ) {
         // 1. Renderiza o composable ORIGINAL com dados mock — sem simplificação
         Box(
@@ -754,54 +722,57 @@ Em V1: toggle "Espaçamento superior" + opção "Remover". As configurações es
 
 ---
 
-### 8.4 `DashboardAddItemCard` — preview no painel de adição
+### 8.4 `DashboardEditItemWrapper` — variante inativa
 
-O painel de adição também deve remeter ao componente original, não apenas exibir seu nome. Usa uma versão em escala reduzida (`scale = 0.6f`) do mesmo composable:
+Itens da seção "Disponíveis para adicionar" usam o mesmo `DashboardEditItemWrapper`, mas com `isActive = false`. A variante inativa se diferencia visualmente pelo overlay mais opaco (comunica o estado desativado) e ausência de tap para modal.
 
 ```kotlin
 @Composable
-fun DashboardAddItemCard(
+fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
-    onTap: () -> Unit,
-    onDragStart: () -> Unit,
+    isDragging: Boolean,
+    isActive: Boolean = true,
+    onTap: () -> Unit = {},
 ) {
-    Column(
+    val overlayAlpha = if (isActive) 0.10f else 0.35f
+
+    Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-            .clickable(onClick = onTap)
-            .detectDragGesturesAfterLongPress(onDragStart = { onDragStart() })
-            .padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .fillMaxWidth()
+            .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
+            .then(if (isActive) Modifier.clickable(onClick = onTap) else Modifier)
+            .longPressDraggableHandle(...)
     ) {
-        // Preview em miniatura do componente real
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .graphicsLayer { scaleX = 0.6f; scaleY = 0.6f }
                 .pointerInput(Unit) { /* frozen */ }
         ) {
             DashboardComponentContent(component = item.preview)
         }
 
-        Spacer(Modifier.height(8.dp))
-        Text(stringUiText(item.title), style = MaterialTheme.typography.labelSmall)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = overlayAlpha))
+        )
     }
 }
 ```
+
+Itens inativos não abrem modal ao tap — o único meio de ativação é arrastar para a seção ativa.
 
 ---
 
 ### 8.5 Transição Normal ↔ Edit Mode — detalhes
 
-**Chrome (toolbar + bottom nav):**
+**Chrome (toolbar + bottom nav + FAB):**
 - TopAppBar: `AnimatedContent(targetState = isEditMode)` — a toolbar normal e a de edição fazem crossfade
 - BottomNavigationBar: `AnimatedVisibility(visible = !isEditMode, enter = slideInVertically { it }, exit = slideOutVertically { it })`
+- FAB: some em edit mode (comportamento atual mantido) — não há painel a abrir
 
 **Por componente:**
-Não há affordances visuais explícitas (sem drag handle, sem botão remover). A borda sutil (`outlineVariant`) é o único indicador de que o componente está em modo editável. O `Crossfade` global cria a transição natural de visualização → edição.
+Não há affordances visuais explícitas (sem drag handle, sem botão remover, sem borda). O overlay translúcido sobre o componente é o único indicador de que está em modo editável. O `Crossfade` global cria a transição natural de visualização → edição.
 
 **Ativação por long press em qualquer componente:**
 ```kotlin
@@ -814,7 +785,7 @@ Modifier.combinedClickable(
 
 **Detecção no HomeScreen:**
 
-O `HomeScreen` já instancia o `DashboardViewModel` (ou pode acessá-lo via Koin `koinViewModel()`). Basta observar o `uiState` coletado como state:
+O `HomeScreen` já instancia o `DashboardViewModel` (ou pode acessá-lo via Koin `koinViewModel()`). Basta observar o `uiState` coletado como state — comportamento atual mantido:
 
 ```kotlin
 // HomeScreen.kt
@@ -822,12 +793,20 @@ val dashboardViewModel: DashboardViewModel = koinViewModel()
 val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
 val isEditMode = dashboardUiState is DashboardUiState.Editing
 
+// Bottom nav — some em edit mode
 AnimatedVisibility(
     visible = !isEditMode,
     enter = slideInVertically { it },
     exit = slideOutVertically { it },
 ) {
     BottomNavigationBar(...)
+}
+
+// FAB — some em edit mode (não há painel a abrir)
+AnimatedVisibility(visible = !isEditMode) {
+    FloatingActionButton(onClick = { modalManager.show(AddTransactionModal()) }) {
+        Icon(Icons.Default.Add, contentDescription = null)
+    }
 }
 ```
 
@@ -839,102 +818,233 @@ O `DashboardViewModel` é `single` no escopo do `NavBackStackEntry` do route `Ho
 
 ```
 [ Cancelar ]   ────── Editar ──────   [ Confirmar ]
+                                                       [FAB +/×] ← bottom-right (FabPosition.End)
 ```
 
 Substituí a TopAppBar normal via `AnimatedContent(targetState = isEditMode)`. Ambas as versões têm a mesma altura para evitar layout shift durante a transição.
 
+O botão de abrir/fechar o `AddComponentPanel` é o FAB reposicionado — não há elemento adicional na toolbar de edição.
+
 ---
 
-## 9. AddComponentPanel
+## 9. Lista unificada — seções Ativa e Disponível
 
-**Não é um `ModalBottomSheet` do `ModalManager`.** É um overlay in-tree renderizado dentro do `DashboardScreen`, necessário para compartilhar o espaço de coordenadas com a lista de componentes e viabilizar o drag cross-container.
+Não existe `AddComponentPanel`. A lista de edição é única e contém duas seções separadas por um cabeçalho fixo sempre visível:
 
 ```
 ╔══════════════════════════════╗
-║  [Lista editável]            ║  ← área de drop (scroll parcial)
-║                              ║
-║  ┌── drop indicator ──────┐  ║
-║                              ║
-╠══════════════════════════════╣  ← divisor animado
-║  Adicionar componente    [✕] ║
-║  ┌──────────┐ ┌──────────┐  ║
-║  │  ██████  │ │ ┌──┐┌──┐ │  ║  ← miniatura do TotalBalance
-║  │  R$5.450 │ │ │  ││  │ │  ║  ← miniatura do CreditCardsPager
-║  └──────────┘ └──────────┘  ║
-║  ┌──────────┐ ┌──────────┐  ║
-║  │ ▓▓ Rec.  │ │ ↑ ↓ Gastos│  ║  ← miniaturas dos demais
-║  └──────────┘ └──────────┘  ║
+║   R$ 5.450,00                ║  ← ativo — DashboardEditItemWrapper (isActive=true)
+╚══════════════════════════════╝
+╔══════════════════════════════╗
+║  ┌──────┐ ┌──────┐           ║  ← ativo
+╚══════════════════════════════╝
+
+──── Disponíveis para adicionar ────  ← cabeçalho fixo — SEMPRE VISÍVEL
+
+╔══════════════════════════════╗  ← disponível — DashboardEditItemWrapper (isActive=false)
+║  [componente dimmed]         ║     overlay mais opaco, sem tap para modal
 ╚══════════════════════════════╝
 ```
 
-- Painel ocupa ~50% da altura da tela
-- Dashboard list ocupa o espaço restante acima (scrollável para o usuário ver onde vai inserir)
-- `AnimatedVisibility(enter = slideInVertically { it }, exit = slideOutVertically { it })`
-- Abre ao clicar no FAB "+" flutuante no canto da edit toolbar
-- Grid de 2 colunas com `DashboardAddItemCard` — preview em miniatura + título abaixo
-- Os cards do painel também devem remeter ao componente original (via `DashboardComponentContent` em escala reduzida)
+Quando `availableItems` estiver vazio, o cabeçalho permanece visível e um placeholder é exibido no lugar dos itens disponíveis:
+
+```
+──── Disponíveis para adicionar ────  ← sempre visível
+
+  ┌ - - - - - - - - - - - - - - ┐
+  |  ↓  Arraste aqui para       |  ← placeholder com borda tracejada
+  |     ocultar um componente   |
+  └ - - - - - - - - - - - - - - ┘
+```
+
+**Regras de ativação/desativação:**
+- Arrastar qualquer item **para acima do cabeçalho** → ativa (entra em `items`)
+- Arrastar qualquer item **para abaixo do cabeçalho** → desativa (entra em `availableItems`)
+- O cabeçalho em si é o ponto de cruzamento — mover um item "sobre" o cabeçalho é suficiente para mudar de seção
+- **Sem tap para ativar/desativar** — drag é o único meio de transição entre seções
+
+**Requisito crítico de fluência:**
+O gesto de drag **nunca deve ser interrompido** ao cruzar a divisória, independentemente de qual seção estiver vazia. O usuário deve conseguir arrastar livremente de qualquer posição da seção ativa para qualquer posição da seção disponível (e vice-versa) em um único gesto contínuo.
 
 ---
 
 ## 10. Drag & Drop
 
-### 10.1 Reordenação na lista (in-list drag)
+### 10.1 Biblioteca e versão
 
 **Biblioteca:** `sh.calvin.reorderable:reorderable` (Compose Multiplatform compatível)
 
 ```kotlin
 // build.gradle.kts (composeApp)
-implementation("sh.calvin.reorderable:reorderable:2.4.3")
+implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ```
 
-```kotlin
-val reorderState = rememberReorderableLazyListState(
-    onMove = { from, to -> onAction(MoveComponent(from.index, to.index)) }
-)
+### 10.2 Estrutura de dados da lista (`EditListEntry`)
 
-LazyColumn(state = reorderState.listState) {
-    items(state.items, key = { it.key }) { item ->  // state: DashboardUiState.Editing
-        ReorderableItem(reorderState, key = item.key) { isDragging ->
-            DashboardEditItemWrapper(
-                item = item,
-                isDragging = isDragging,
-                onTap = { modalManager.show(DashboardComponentOptionsModal(item, onAction)) },
-                // draggableHandle() aplicado dentro do wrapper no componente inteiro
+A lista unificada é representada por um sealed interface `EditListEntry` que combina todos os itens em um único `items()` call:
+
+```kotlin
+private sealed interface EditListEntry {
+    data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
+    data object SectionHeader : EditListEntry
+    data object AvailablePlaceholder : EditListEntry
+}
+
+private val EditListEntry.entryKey: String
+    get() = when (this) {
+        is EditListEntry.Component    -> item.key
+        EditListEntry.SectionHeader   -> "section_header"
+        EditListEntry.AvailablePlaceholder -> "available_placeholder"
+    }
+```
+
+A lista é construída como:
+
+```kotlin
+val listEntries = remember(state.items, state.availableItems) {
+    buildList<EditListEntry> {
+        state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
+        add(EditListEntry.SectionHeader)
+        if (state.availableItems.isEmpty()) {
+            add(EditListEntry.AvailablePlaceholder)
+        } else {
+            state.availableItems.forEach { add(EditListEntry.Component(it, isActive = false)) }
+        }
+    }
+}
+```
+
+**Requisito crítico:** todos os itens renderizados pelo `LazyColumn` devem pertencer ao **mesmo e único `items()` call**. Jamais usar blocos separados (`items(state.items)` + `item()` + `items(state.availableItems)`). Com blocos separados, quando um item cruza a fronteira entre seções o seu `ReorderableItem` é desmontado em um bloco e remontado em outro, interrompendo o gesto de drag em andamento.
+
+### 10.3 `SectionHeader` dentro de `ReorderableItem(enabled = false)`
+
+**Crítico para fluência do drag:** o `SectionHeader` deve ser envolvido em `ReorderableItem(reorderState, key = "section_header", enabled = false)`.
+
+```kotlin
+EditListEntry.SectionHeader -> {
+    ReorderableItem(reorderState, key = "section_header", enabled = false) {
+        Text(
+            text = stringResource(Res.string.dashboard_edit_available_section),
+            ...
+        )
+    }
+}
+```
+
+**Por que isso é necessário:**
+
+A biblioteca `sh.calvin.reorderable` funciona no modelo swap-adjacente: o `onMove` dispara um passo por vez (`from → from±1`). Quando um item chega ao vizinho do cabeçalho, o próximo `onMove` precisa "passar pelo" cabeçalho para chegar ao outro lado.
+
+Se o `SectionHeader` estiver **fora** de `ReorderableItem`:
+- A biblioteca o ignora como destino de drop
+- Dispara diretamente `onMove(último_ativo, primeiro_inativo)` pulando o cabeçalho
+- O ViewModel coloca o item na posição do cabeçalho (inserção de fronteira)
+- O índice real no `LazyColumn` pós-atualização difere do `to.index` esperado pela biblioteca
+- A biblioteca detecta discrepância → **cancela o drag**
+
+Se o `SectionHeader` estiver **dentro** de `ReorderableItem(enabled = false)`:
+- A biblioteca o enxerga como destino válido (`to`)
+- Dispara `onMove(último_ativo, section_header)` ou `onMove(primeiro_inativo, section_header)`
+- O ViewModel interpreta `toKey == "section_header"` como inserção de fronteira
+- O item fica exatamente em `to.index` após a atualização de estado
+- Sem discrepância → **drag continua**
+
+O `enabled = false` garante que o cabeçalho não pode ser arrastado (não pode ser `from`), mas pode ser `to`.
+
+O `AvailablePlaceholder` também deve estar em `ReorderableItem(enabled = false)` pelo mesmo motivo — é o único destino de drop quando `availableItems` está vazio.
+
+### 10.4 `MoveComponent` baseado em chave (não em índice)
+
+`DashboardAction.MoveComponent` usa `fromKey: String` e `toKey: String` em vez de índices inteiros:
+
+```kotlin
+data class MoveComponent(val fromKey: String, val toKey: String) : DashboardAction()
+```
+
+O callback `onMove` extrai as chaves:
+
+```kotlin
+val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+    val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+    val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+    onAction(DashboardAction.MoveComponent(fromKey, toKey))
+    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+}
+```
+
+**Por que chaves em vez de índices:**
+
+O `onMove` pode ser chamado com o estado de índices desatualizado (stale) quando há re-composição concorrente. Chaves são estáveis independente de reordenações — `fromKey` e `toKey` identificam os itens sem ambiguidade mesmo após mudanças no tamanho da lista.
+
+### 10.5 Lógica de `moveComponent` no ViewModel
+
+```kotlin
+private fun moveComponent(fromKey: String, toKey: String) {
+    val current = _editingState.value ?: return
+
+    val allItems = current.items + current.availableItems
+    val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
+
+    val activeCount = current.items.size
+
+    when (toKey) {
+        "section_header", "available_placeholder" -> {
+            // Cruzamento de fronteira: inserção na borda da seção de destino
+            val fromInActive = fromIndex < activeCount
+            val mutable = allItems.toMutableList()
+            val moved = mutable.removeAt(fromIndex)
+            if (fromInActive) {
+                // Ativo → inativo: insere no início dos disponíveis (logo após o cabeçalho)
+                val newActiveCount = activeCount - 1
+                mutable.add(newActiveCount, moved)
+                _editingState.value = current.copy(
+                    items = mutable.take(newActiveCount),
+                    availableItems = mutable.drop(newActiveCount),
+                )
+            } else {
+                // Inativo → ativo: insere no final dos ativos (logo antes do cabeçalho)
+                mutable.add(activeCount - 1, moved)
+                val newActiveCount = activeCount + 1
+                _editingState.value = current.copy(
+                    items = mutable.take(newActiveCount),
+                    availableItems = mutable.drop(newActiveCount),
+                )
+            }
+        }
+        else -> {
+            // Reordenação dentro da mesma seção ou cruzamento via componente adjacente
+            val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
+            val fromInActive = fromIndex < activeCount
+            val toInActive = toIndex < activeCount
+
+            val mutable = allItems.toMutableList()
+            val moved = mutable.removeAt(fromIndex)
+            mutable.add(toIndex.coerceAtMost(mutable.size), moved)
+
+            val newActiveCount = when {
+                fromInActive && !toInActive -> activeCount - 1
+                !fromInActive && toInActive -> activeCount + 1
+                else -> activeCount
+            }
+            _editingState.value = current.copy(
+                items = mutable.take(newActiveCount),
+                availableItems = mutable.drop(newActiveCount),
             )
         }
     }
 }
 ```
 
-### 10.2 Drag do painel para a lista (cross-container drag)
+### 10.6 Armadilhas conhecidas
 
-**Abordagem:** `DragToAddState` com `pointerInput`.
-
-```kotlin
-// ui/screen/dashboard/DragToAddState.kt
-class DragToAddState {
-    var isDragging by mutableStateOf(false)
-    var draggedKey by mutableStateOf<String?>(null)
-    var dragOffset by mutableStateOf(Offset.Zero)
-    var dropTargetIndex by mutableStateOf<Int?>(null)
-
-    fun startDrag(key: String, startOffset: Offset) { ... }
-    fun updateDrag(delta: Offset) { dragOffset += delta }
-    fun endDrag(): Int? { val idx = dropTargetIndex; reset(); return idx }
-    fun cancelDrag() { reset() }
-    private fun reset() { isDragging = false; draggedKey = null; dragOffset = Offset.Zero; dropTargetIndex = null }
-}
-
-val LocalDashboardDragState = staticCompositionLocalOf { DragToAddState() }
-```
-
-**Fluxo:**
-1. Long press em `DashboardAddItemCard` → `dragState.startDrag(key, offset)`
-2. Durante drag: a lista acima detecta `dragState.dragOffset` via `Modifier.onGloballyPositioned` e calcula `dropTargetIndex`
-3. Ghost preview renderizado no `Box` pai na posição `dragOffset`
-4. Release: `onAction(AddComponent(dragState.draggedKey!!, insertAt = dragState.endDrag()))`
-
-**Desktop:** `detectDragGesturesAfterLongPress` funciona com mouse drag no Desktop sem mudanças adicionais.
+| Sintoma | Causa raiz | Solução |
+|---------|-----------|---------|
+| Drag cancela ao cruzar a divisória | `SectionHeader` fora de `ReorderableItem` — biblioteca pula o header, índice esperado diverge do real | Envolver `SectionHeader` em `ReorderableItem(enabled=false)` |
+| Impossível desativar quando seção disponível está vazia | Sem destino de drop abaixo do cabeçalho | Exibir `AvailablePlaceholder` em `ReorderableItem(enabled=false)` quando `availableItems` vazio |
+| Item vai para posição errada ao cruzar seção | Inserção na posição do item de destino em vez da borda da seção | Quando `toKey == "section_header"`, usar inserção de fronteira no ViewModel |
+| `IndexOutOfBoundsException` no `add` | Remoção de elemento reduz o tamanho antes do `add` | Separar `removeAt` e `add`; usar `.coerceAtMost(mutable.size)` |
+| Drag correto mas com índices stale | Usar `from.index`/`to.index` após re-composição | Usar `from.key`/`to.key` (estável) em vez de índices |
+| Item inativo aparece na seção errada | Dois blocos `items()` separados destroem e recriam `ReorderableItem` ao cruzar seção | Único bloco `items(listEntries)` com `EditListEntry` sealed |
 
 ---
 

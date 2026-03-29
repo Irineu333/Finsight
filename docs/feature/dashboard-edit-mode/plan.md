@@ -135,17 +135,17 @@ Etapa 2 aprovada.
 - `AddComponentPanel`, `DragToAddState`, drag cross-container
 
 ### Critérios de aceite
-- [ ] Cabeçalho "Disponíveis para adicionar" é **sempre visível** em edit mode
-- [ ] Quando todos os componentes estão ativos, placeholder com borda tracejada aparece abaixo do cabeçalho
-- [ ] Componentes disponíveis têm visual diferenciado (overlay mais escuro)
-- [ ] Long press + drag de um componente ativo **para abaixo do cabeçalho** → componente é desativado
-- [ ] Long press + drag de um componente inativo **para acima do cabeçalho** → componente é ativado
-- [ ] O drag **não interrompe** ao cruzar a divisória — o gesto continua em um único movimento contínuo
-- [ ] Consegue desativar o último componente inativo arrastando para a área do placeholder
-- [ ] Consegue ativar um componente mesmo sem outros componentes inativos (seção inativa vazia)
-- [ ] A reordenação dentro da seção ativa continua funcionando normalmente
-- [ ] "Confirmar" persiste a nova composição; componentes ativados aparecem no modo visualização
-- [ ] "Cancelar" descarta ativações/desativações e restaura o estado anterior
+- [x] Cabeçalho "Disponíveis para adicionar" é **sempre visível** em edit mode
+- [x] Quando todos os componentes estão ativos, placeholder com borda tracejada aparece abaixo do cabeçalho
+- [x] Componentes disponíveis têm visual diferenciado (overlay mais escuro)
+- [x] Long press + drag de um componente ativo **para abaixo do cabeçalho** → componente é desativado
+- [x] Long press + drag de um componente inativo **para acima do cabeçalho** → componente é ativado
+- [x] O drag **não interrompe** ao cruzar a divisória — o gesto continua em um único movimento contínuo
+- [x] Consegue desativar um componente mesmo sem outros componentes inativos
+- [x] Consegue ativar um componente mesmo sem outros componentes ativos
+- [x] A reordenação dentro da seção ativa continua funcionando normalmente
+- [x] "Confirmar" persiste a nova composição; componentes ativados aparecem no modo visualização
+- [x] "Cancelar" descarta ativações/desativações e restaura o estado anterior
 
 ---
 

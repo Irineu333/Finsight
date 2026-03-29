@@ -701,4 +701,6 @@
     <string name="dashboard_edit_confirm">Confirmar</string>
     <string name="dashboard_edit_cancel">Cancelar</string>
     <string name="remove_component">Remover</string>
+    <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
+    <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
 </resources>

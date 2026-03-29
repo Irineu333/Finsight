@@ -93,9 +93,8 @@ class DashboardViewModel(
         is DashboardAction.EnterEditMode -> enterEditMode()
         is DashboardAction.ConfirmEdit -> confirmEdit()
         is DashboardAction.CancelEdit -> cancelEdit()
-        is DashboardAction.MoveComponent -> moveComponent(action.from, action.to)
+        is DashboardAction.MoveComponent -> moveComponent(action.fromKey, action.toKey)
         is DashboardAction.RemoveComponent -> removeComponent(action.key)
-        is DashboardAction.AddComponent -> addComponent(action.key, action.insertAt)
         is DashboardAction.UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
         is DashboardAction.AdjustBalance -> Unit
     }
@@ -123,11 +122,55 @@ class DashboardViewModel(
         }
     }
 
-    private fun moveComponent(from: Int, to: Int) {
+    private fun moveComponent(fromKey: String, toKey: String) {
         val current = _editingState.value ?: return
-        val items = current.items.toMutableList()
-        items.add(to, items.removeAt(from))
-        _editingState.value = current.copy(items = items)
+
+        val allItems = current.items + current.availableItems
+        val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
+
+        val activeCount = current.items.size
+
+        when (toKey) {
+            "section_header", "available_placeholder" -> {
+                val fromInActive = fromIndex < activeCount
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                if (fromInActive) {
+                    val newActiveCount = activeCount - 1
+                    mutable.add(newActiveCount, moved)
+                    _editingState.value = current.copy(
+                        items = mutable.take(newActiveCount),
+                        availableItems = mutable.drop(newActiveCount),
+                    )
+                } else {
+                    mutable.add(activeCount, moved)
+                    val newActiveCount = activeCount + 1
+                    _editingState.value = current.copy(
+                        items = mutable.take(newActiveCount),
+                        availableItems = mutable.drop(newActiveCount),
+                    )
+                }
+            }
+            else -> {
+                val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
+                val fromInActive = fromIndex < activeCount
+                val toInActive = toIndex < activeCount
+
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                mutable.add(toIndex.coerceAtMost(mutable.size), moved)
+
+                val newActiveCount = when {
+                    fromInActive && !toInActive -> activeCount - 1
+                    !fromInActive && toInActive -> activeCount + 1
+                    else -> activeCount
+                }
+                _editingState.value = current.copy(
+                    items = mutable.take(newActiveCount),
+                    availableItems = mutable.drop(newActiveCount),
+                )
+            }
+        }
     }
 
     private fun removeComponent(key: String) {
@@ -136,19 +179,6 @@ class DashboardViewModel(
         _editingState.value = current.copy(
             items = current.items.filter { it.key != key },
             availableItems = current.availableItems + removed,
-        )
-    }
-
-    private fun addComponent(key: String, insertAt: Int?) {
-        val current = _editingState.value ?: return
-        val added = current.availableItems.find { it.key == key } ?: return
-        val newItems = current.items.toMutableList().also { list ->
-            if (insertAt != null) list.add(insertAt.coerceIn(0, list.size), added)
-            else list.add(added)
-        }
-        _editingState.value = current.copy(
-            items = newItems,
-            availableItems = current.availableItems.filter { it.key != key },
         )
     }
 

@@ -583,7 +583,7 @@ Lista unificada: itens ativos e disponíveis convivem no **mesmo bloco `items()`
 
 **Requisito crítico:** todos os itens devem ser renderizados por um único `items()` call — nunca em blocos separados (`items(state.items)` + `item()` + `items(state.availableItems)`). Com blocos separados, quando um item cruza a fronteira entre seções o seu `ReorderableItem` é desmontado em um bloco e remontado em outro, interrompendo o gesto de drag em andamento.
 
-A solução é uma lista combinada com um sealed interface `EditListEntry` (`Component | SectionHeader | AvailablePlaceholder`). O `SectionHeader` e o `AvailablePlaceholder` são envolvidos em `ReorderableItem(enabled = false)` — visíveis como destinos de drop mas não arrastáveis. Ver seção 10.3 para o racional completo.
+A solução é uma lista combinada com um sealed interface `EditListEntry` (`Component | SectionHeader | AvailablePlaceholder`). O `SectionHeader` e o `AvailablePlaceholder` são envolvidos em `ReorderableItem` **sem `draggableHandle`** — visíveis como destinos de drop mas não arrastáveis. Ver seção 10.3 para o racional completo.
 
 **`onMove` baseado em chave:** o callback usa `from.key` e `to.key` (strings estáveis) em vez de `from.index`/`to.index`. O ViewModel interpreta as chaves para determinar o tipo de movimento (intra-seção, cruzamento via componente, cruzamento via cabeçalho). Ver seção 10.4–10.5.
 
@@ -599,13 +599,11 @@ O componente inteiro é draggable (sem ícone de handle) e tappable (sem botão 
 @Composable
 fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
-    isDragging: Boolean,
     onTap: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
             // Tap → abre modal de opções (excluir, configurações)
             .clickable(onClick = onTap)
             // Long press + drag → reordena (componente inteiro é o drag handle)
@@ -730,7 +728,6 @@ Itens da seção "Disponíveis para adicionar" usam o mesmo `DashboardEditItemWr
 @Composable
 fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
-    isDragging: Boolean,
     isActive: Boolean = true,
     onTap: () -> Unit = {},
 ) {
@@ -739,8 +736,7 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
-            .then(if (isActive) Modifier.clickable(onClick = onTap) else Modifier)
+            .clickable(enabled = isActive, onClick = onTap)
             .longPressDraggableHandle(...)
     ) {
         Box(
@@ -916,13 +912,13 @@ val listEntries = remember(state.items, state.availableItems) {
 
 **Requisito crítico:** todos os itens renderizados pelo `LazyColumn` devem pertencer ao **mesmo e único `items()` call**. Jamais usar blocos separados (`items(state.items)` + `item()` + `items(state.availableItems)`). Com blocos separados, quando um item cruza a fronteira entre seções o seu `ReorderableItem` é desmontado em um bloco e remontado em outro, interrompendo o gesto de drag em andamento.
 
-### 10.3 `SectionHeader` dentro de `ReorderableItem(enabled = false)`
+### 10.3 `SectionHeader` dentro de `ReorderableItem` sem handle
 
-**Crítico para fluência do drag:** o `SectionHeader` deve ser envolvido em `ReorderableItem(reorderState, key = "section_header", enabled = false)`.
+**Crítico para fluência do drag:** o `SectionHeader` deve ser envolvido em `ReorderableItem(reorderState, key = "section_header")` — sem `draggableHandle`.
 
 ```kotlin
 EditListEntry.SectionHeader -> {
-    ReorderableItem(reorderState, key = "section_header", enabled = false) {
+    ReorderableItem(reorderState, key = "section_header") {
         Text(
             text = stringResource(Res.string.dashboard_edit_available_section),
             ...
@@ -937,21 +933,27 @@ A biblioteca `sh.calvin.reorderable` funciona no modelo swap-adjacente: o `onMov
 
 Se o `SectionHeader` estiver **fora** de `ReorderableItem`:
 - A biblioteca o ignora como destino de drop
-- Dispara diretamente `onMove(último_ativo, primeiro_inativo)` pulando o cabeçalho
-- O ViewModel coloca o item na posição do cabeçalho (inserção de fronteira)
-- O índice real no `LazyColumn` pós-atualização difere do `to.index` esperado pela biblioteca
-- A biblioteca detecta discrepância → **cancela o drag**
+- Quando a seção de destino está vazia, nenhum `onMove` dispara → impossível cruzar a fronteira
 
-Se o `SectionHeader` estiver **dentro** de `ReorderableItem(enabled = false)`:
+Se o `SectionHeader` estiver **dentro** de `ReorderableItem` sem handle:
 - A biblioteca o enxerga como destino válido (`to`)
 - Dispara `onMove(último_ativo, section_header)` ou `onMove(primeiro_inativo, section_header)`
 - O ViewModel interpreta `toKey == "section_header"` como inserção de fronteira
-- O item fica exatamente em `to.index` após a atualização de estado
-- Sem discrepância → **drag continua**
+- Sem handle → o cabeçalho não pode ser arrastado (`from`), apenas recebido (`to`)
 
-O `enabled = false` garante que o cabeçalho não pode ser arrastado (não pode ser `from`), mas pode ser `to`.
+**Atenção:** `enabled = false` NÃO deve ser usado. Embora pareça a solução para "não arrastável mas destino válido", na prática a biblioteca exclui itens com `enabled = false` completamente do sistema de drop — eles não disparam `onMove` nem como `to`. O mecanismo correto para "destino mas não origem" é `ReorderableItem` sem `draggableHandle`.
 
-O `AvailablePlaceholder` também deve estar em `ReorderableItem(enabled = false)` pelo mesmo motivo — é o único destino de drop quando `availableItems` está vazio.
+O `AvailablePlaceholder` segue a mesma regra — envolvido em `ReorderableItem` sem handle, sendo o único destino de drop quando `availableItems` está vazio. O `onMove` também deve ignorar `fromKey == "section_header"` ou `"available_placeholder"` como medida de segurança:
+
+```kotlin
+) { from, to ->
+    val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+    val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+    if (fromKey == "section_header" || fromKey == "available_placeholder") return@rememberReorderableLazyListState
+    onAction(DashboardAction.MoveComponent(fromKey, toKey))
+    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+}
+```
 
 ### 10.4 `MoveComponent` baseado em chave (não em índice)
 
@@ -1003,7 +1005,7 @@ private fun moveComponent(fromKey: String, toKey: String) {
                 )
             } else {
                 // Inativo → ativo: insere no final dos ativos (logo antes do cabeçalho)
-                mutable.add(activeCount - 1, moved)
+                mutable.add(activeCount, moved)
                 val newActiveCount = activeCount + 1
                 _editingState.value = current.copy(
                     items = mutable.take(newActiveCount),

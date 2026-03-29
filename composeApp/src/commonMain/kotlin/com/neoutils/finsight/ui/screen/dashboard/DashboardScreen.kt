@@ -36,6 +36,11 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -188,6 +193,19 @@ private fun DashboardEditToolbar(
     )
 }
 
+private sealed interface EditListEntry {
+    data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
+    data object SectionHeader : EditListEntry
+    data object AvailablePlaceholder : EditListEntry
+}
+
+private val EditListEntry.entryKey: String
+    get() = when (this) {
+        is EditListEntry.Component -> item.key
+        EditListEntry.SectionHeader -> "section_header"
+        EditListEntry.AvailablePlaceholder -> "available_placeholder"
+    }
+
 @Composable
 private fun DashboardEditingContent(
     state: DashboardUiState.Editing,
@@ -200,8 +218,25 @@ private fun DashboardEditingContent(
     val reorderState = rememberReorderableLazyListState(
         lazyListState = lazyListState,
     ) { from, to ->
-        onAction(DashboardAction.MoveComponent(from.index, to.index))
+        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+        if (fromKey == "section_header" || fromKey == "available_placeholder") return@rememberReorderableLazyListState
+        onAction(DashboardAction.MoveComponent(fromKey, toKey))
         haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+    }
+
+    val listEntries = remember(state.items, state.availableItems) {
+        buildList {
+            state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
+            add(EditListEntry.SectionHeader)
+            if (state.availableItems.isEmpty()) {
+                add(EditListEntry.AvailablePlaceholder)
+            } else {
+                state.availableItems.forEach {
+                    add(EditListEntry.Component(it, isActive = false))
+                }
+            }
+        }
     }
 
     LazyColumn(
@@ -213,16 +248,44 @@ private fun DashboardEditingContent(
         ),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(state.items, key = { it.key }) { item ->
-            ReorderableItem(reorderState, key = item.key) {
-                DashboardEditItemWrapper(
-                    item = item,
-                    onTap = {
-                        modalManager.show(
-                            DashboardComponentOptionsModal(item = item, onAction = onAction)
+        items(listEntries, key = { it.entryKey }) { entry ->
+            when (entry) {
+                is EditListEntry.Component -> {
+                    ReorderableItem(reorderState, key = entry.item.key) {
+                        DashboardEditItemWrapper(
+                            item = entry.item,
+                            isActive = entry.isActive,
+                            onTap = {
+                                modalManager.show(
+                                    DashboardComponentOptionsModal(item = entry.item, onAction = onAction)
+                                )
+                            },
                         )
-                    },
-                )
+                    }
+                }
+
+                EditListEntry.SectionHeader -> {
+                    ReorderableItem(reorderState, key = "section_header") {
+                        Text(
+                            text = stringResource(Res.string.dashboard_edit_available_section),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    }
+                }
+
+                EditListEntry.AvailablePlaceholder -> {
+                    ReorderableItem(reorderState, key = "available_placeholder") {
+                        DashboardAvailablePlaceholder(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+                }
             }
         }
     }
@@ -231,13 +294,13 @@ private fun DashboardEditingContent(
 @Composable
 private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
-    onTap: () -> Unit,
+    isActive: Boolean = true,
+    onTap: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
+    val overlayAlpha = if (isActive) 0.10f else 0.35f
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    Box(modifier = Modifier.fillMaxWidth()) {
         DashboardComponentContent(
             variant = item.preview,
             modifier = Modifier.fillMaxWidth(),
@@ -246,11 +309,41 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clickable(onClick = onTap)
+                .clickable(enabled = isActive, onClick = onTap)
                 .longPressDraggableHandle(
                     onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
                     onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
-                ),
+                )
+                .background(colorScheme.surface.copy(alpha = overlayAlpha)),
+        )
+    }
+}
+
+@Composable
+private fun DashboardAvailablePlaceholder(modifier: Modifier = Modifier) {
+    val borderColor = colorScheme.outlineVariant
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .height(80.dp)
+            .drawBehind {
+                drawRoundRect(
+                    color = borderColor,
+                    style = Stroke(
+                        width = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)),
+                    ),
+                    cornerRadius = CornerRadius(12.dp.toPx()),
+                )
+            },
+    ) {
+        Text(
+            text = stringResource(Res.string.dashboard_edit_available_placeholder),
+            style = MaterialTheme.typography.bodySmall,
+            color = colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
     }
 }

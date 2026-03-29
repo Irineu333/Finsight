@@ -97,3 +97,71 @@ if (savedPrefs.isEmpty()) {
 ## Observação sobre recorrência (Issue 1)
 
 O problema do long press em componentes com ação é recorrente em implementações de IA porque a solução intuitiva (`pointerInput { detectTapGestures }`) funciona em componentes *sem* ação mas falha silenciosamente nos que têm. A distinção entre `PointerEventPass.Main` e `PointerEventPass.Initial` não é óbvia, e a causa do bug não produz nenhum erro visível — o gesto simplesmente é ignorado.
+
+---
+
+## Issue 4 — Scroll da dashboard aciona o modo edição
+
+**Severidade:** Crítica — resolvida
+
+**Descrição:**
+Ao rolar a dashboard verticalmente, o modo edição podia ser acionado mesmo sem o usuário manter o dedo parado em um componente. O comportamento esperado é: `scroll` apenas rola a lista; modo edição só entra com `long press` sem deslocamento de scroll.
+
+**Causa raiz:**
+O `interceptLongPress` introduzido na correção do Issue 1 aguardava apenas o timeout de long press e verificava se o dedo ainda estava pressionado. Como o detector rodava no `PointerEventPass.Initial`, ele continuava vendo os eventos antes do `LazyColumn` consumir o gesto de scroll. Na prática, bastava manter o dedo pressionado enquanto iniciava a rolagem para o timeout expirar e o callback de `EnterEditMode` disparar, porque o detector não cancelava ao exceder o `touchSlop` nem ao perceber que o movimento já tinha sido consumido pelo scroll.
+
+**Correção:**
+Manter o detector no `PointerEventPass.Initial`, mas adicionar critérios explícitos de cancelamento do long press:
+
+- Cancelar se a distância entre a posição atual e o `down` inicial ultrapassar `viewConfiguration.touchSlop`
+- Cancelar se, no `PointerEventPass.Final`, o `PointerInputChange` tiver sido consumido pelo scroll
+- Disparar `onLongPress()` apenas quando o toque completar o timeout sem release e sem cancelamento
+
+```kotlin
+private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
+    awaitEachGesture {
+        val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+        var released = false
+        var canceled = false
+
+        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+            while (true) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (!change.pressed) {
+                    released = true
+                    break
+                }
+
+                if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    canceled = true
+                    break
+                }
+
+                val finalEvent = awaitPointerEvent(pass = PointerEventPass.Final)
+                val finalChange = finalEvent.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (finalChange.isConsumed) {
+                    canceled = true
+                    break
+                }
+            }
+        }
+
+        if (!released && !canceled) onLongPress()
+    }
+}
+```
+
+**Resultado esperado após a correção:**
+
+- `Long press` com dedo parado em qualquer componente continua entrando em edit mode
+- `Scroll` vertical da dashboard não aciona edit mode
+- Componentes com `clickable` interno continuam permitindo a interceptação do long press externo

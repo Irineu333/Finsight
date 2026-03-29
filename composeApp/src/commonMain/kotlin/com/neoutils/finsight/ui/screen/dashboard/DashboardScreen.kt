@@ -68,6 +68,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.stringUiText
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -849,20 +850,42 @@ private enum class SpendingPage { Categories, Budgets }
  * running on [PointerEventPass.Main] compete with the outer detector and win, silently swallowing
  * the gesture before the long press threshold is reached.
  */
-private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(Unit) {
+private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
     awaitEachGesture {
-        awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+        val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
         var released = false
+        var canceled = false
         withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
             while (true) {
                 val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                if (!event.changes.any { it.pressed }) {
+                val change = event.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (!change.pressed) {
                     released = true
+                    break
+                }
+
+                if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    canceled = true
+                    break
+                }
+
+                val finalEvent = awaitPointerEvent(pass = PointerEventPass.Final)
+                val finalChange = finalEvent.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (finalChange.isConsumed) {
+                    canceled = true
                     break
                 }
             }
         }
-        if (!released) onLongPress()
+        if (!released && !canceled) onLongPress()
     }
 }
 

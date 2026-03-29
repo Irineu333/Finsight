@@ -46,10 +46,10 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 - Configurações de componentes
 
 ### Critérios de aceite
-- [ ] Long press em qualquer componente entra no modo edição com transição suave
+- [x] Long press em qualquer componente entra no modo edição com transição suave
 - [x] Bottom nav desaparece ao entrar em edit mode
 - [x] Toolbar de edição aparece (Cancelar | Editar | Confirmar)
-- [ ] Componentes são arrastáveis por long press + drag (o componente inteiro, sem ícone de handle)
+- [x] Componentes são arrastáveis por long press + drag (o componente inteiro, sem ícone de handle)
 - [x] A ordem dos componentes muda visualmente durante o drag
 - [x] Tap em um componente abre a modal de opções com "Remover" ()
 - [x] "Remover" remove o componente da lista com animação de saída

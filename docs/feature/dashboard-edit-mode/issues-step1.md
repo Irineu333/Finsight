@@ -2,42 +2,63 @@
 
 ## Issue 1 — Long press não aciona o modo edição em componentes com ação
 
-**Severidade:** Crítica
+**Severidade:** Crítica — resolvida
 
 **Descrição:**
-Componentes que possuem ação própria (ex.: tap para navegar, tap para abrir modal) não estão detectando o gesto de long press para entrar no modo edição. O gesto é consumido pela ação do componente antes de chegar ao handler de long press.
+Componentes que possuem ação própria (ex.: tap para navegar, tap para abrir modal) não detectavam o gesto de long press para entrar no modo edição.
 
-**Comportamento esperado:**
-Long press em **qualquer** componente deve acionar o modo edição, independentemente de o componente ter ou não ação de tap associada.
+**Causa raiz:**
+`detectTapGestures` usa `PointerEventPass.Main` por padrão. Os componentes filhos com `clickable`/`combinedClickable` também rodam no Main pass e competem com o detector externo — o filho vence por ser processado primeiro na cadeia de modifiers, engolindo o gesto antes de o threshold de long press ser atingido.
 
-**Comportamento atual:**
-Componentes com ação própria ignoram o long press — o modo edição não é acionado.
+**Correção:**
+Substituir `pointerInput { detectTapGestures(onLongPress = ...) }` por uma extensão `interceptLongPress` que usa `PointerEventPass.Initial`. O Initial pass intercepta eventos *antes* de qualquer filho na árvore de composables, garantindo que o detector externo sempre veja o gesto independentemente das ações internas do componente.
 
-**Observação:**
-Este é um problema recorrente nas implementações de IA desta feature, indicando que a solução adotada não trata corretamente a coexistência de `clickable`/`combinedClickable` com o gesture de long press em nível de container.
+```kotlin
+private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+        var released = false
+        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+            while (true) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                if (!event.changes.any { it.pressed }) {
+                    released = true
+                    break
+                }
+            }
+        }
+        if (!released) onLongPress()
+    }
+}
+```
 
 ---
 
 ## Issue 2 — Arrastar componente não funciona corretamente no modo edição
 
-**Severidade:** Crítica
+**Severidade:** Crítica — resolvida
 
 **Descrição:**
-No modo edição, o gesto de arrastar está com comportamento bugado. Não é possível mover livremente o item por todas as posições da lista de forma fluida.
+No modo edição, o gesto de arrastar estava com comportamento bugado. Não era possível mover livremente o item por todas as posições da lista de forma fluida.
 
-**Comportamento esperado:**
-- O componente (card simplificado na etapa 1) deve ser arrastável por todas as posições da lista.
-- A reordenação deve ser fluida: os demais itens recuam visualmente enquanto o item arrastado se move.
-- A posição é consolidada ao soltar o item.
+**Causa raiz:**
+`Crossfade(targetState = uiState)` usa identidade de objeto para comparação. A cada `MoveComponent`, o ViewModel gera um novo objeto `DashboardUiState.Editing` com os itens reordenados — objeto diferente do anterior. Isso faz o `Crossfade` acreditar que precisa animar para um novo estado, destruindo e recriando o composable filho (incluindo `lazyListState` e `reorderState`) no meio do drag. O drag perde sua âncora de estado e quebra.
 
-**Comportamento atual:**
-O arrasto não responde corretamente ao gesto — o item não se move livremente ou não reflete a posição esperada durante e após o drag.
+**Correção:**
+Usar `Transition<T>.Crossfade(contentKey = { it::class })` em vez do `Crossfade` standalone. A API de extensão em `Transition` expõe o parâmetro `contentKey`, que faz a animação disparar apenas quando o *tipo* do estado muda (`Loading → Viewing → Editing`), não quando o *conteúdo* muda dentro do mesmo tipo. Reordenações dentro do `Editing` não destroem mais o composable.
+
+```kotlin
+// Antes — quebra o drag
+Crossfade(targetState = uiState) { state -> ... }
+
+// Depois — anima só na troca de modo
+updateTransition(targetState = uiState).Crossfade(
+    contentKey = { it::class },
+) { state -> ... }
+```
 
 ---
 
-## Requisitos não negociáveis (referência para a correção)
+## Observação sobre recorrência (Issue 1)
 
-1. Long press em **qualquer** componente deve acionar o modo edição — inclusive componentes com ação de tap.
-2. No modo edição, o componente deve ser arrastável livremente por todas as posições, com reordenação visual fluida e consolidação ao soltar.
-
-> Estes dois comportamentos são gate para aprovação da etapa 1.
+O problema do long press em componentes com ação é recorrente em implementações de IA porque a solução intuitiva (`pointerInput { detectTapGestures }`) funciona em componentes *sem* ação mas falha silenciosamente nos que têm. A distinção entre `PointerEventPass.Main` e `PointerEventPass.Initial` não é óbvia, e a causa do bug não produz nenhum erro visível — o gesto simplesmente é ignorado.

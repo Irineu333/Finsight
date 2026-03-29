@@ -2,19 +2,22 @@
     ExperimentalMaterial3Api::class,
     ExperimentalTime::class,
     ExperimentalSharedTransitionApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class,
+    ExperimentalAnimationApi::class
 )
 
 package com.neoutils.finsight.ui.screen.dashboard
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -37,6 +40,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -84,30 +88,38 @@ fun DashboardScreen(
     val modalManager = LocalModalManager.current
     val navigationDispatcher = LocalNavigationDispatcher.current
 
+    val updateTransition = updateTransition(targetState = uiState)
+
     Scaffold(
         topBar = {
-            AnimatedContent(targetState = uiState is DashboardUiState.Editing) { editMode ->
-                if (editMode) {
-                    DashboardEditToolbar(
-                        onCancel = { viewModel.onAction(DashboardAction.CancelEdit) },
-                        onConfirm = { viewModel.onAction(DashboardAction.ConfirmEdit) },
-                    )
-                } else {
-                    TopAppBar(
-                        title = {
-                            Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = colorScheme.background,
-                        ),
-                    )
+            updateTransition.Crossfade(
+                contentKey = { it::class },
+            ) {
+                when (it) {
+                    is DashboardUiState.Editing -> {
+                        DashboardEditToolbar(
+                            onCancel = { viewModel.onAction(DashboardAction.CancelEdit) },
+                            onConfirm = { viewModel.onAction(DashboardAction.ConfirmEdit) },
+                        )
+                    }
+
+                    else -> {
+                        TopAppBar(
+                            title = {
+                                Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = colorScheme.background,
+                            ),
+                        )
+                    }
                 }
             }
         },
         contentWindowInsets = WindowInsets(),
     ) { paddingValues ->
-        Crossfade(
-            targetState = uiState,
+        updateTransition.Crossfade(
+            contentKey = { it::class },
             modifier = Modifier.padding(paddingValues),
         ) { state ->
             when (state) {
@@ -278,11 +290,7 @@ private fun DashboardViewingContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -296,11 +304,7 @@ private fun DashboardViewingContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -313,11 +317,7 @@ private fun DashboardViewingContent(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -341,11 +341,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -363,11 +359,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -383,11 +375,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -403,11 +391,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
 
@@ -420,11 +404,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                             onClick = {
                                 val targetDate = Clock.System.now()
                                     .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -448,11 +428,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
 
@@ -484,11 +460,7 @@ private fun DashboardViewingContent(
                                         Modifier
                                     }
                                 )
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                             onClick = {
                                 when {
                                     isLastWithFade -> {
@@ -524,11 +496,7 @@ private fun DashboardViewingContent(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
-                                    )
-                                },
+                                .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                         )
                     }
                 }
@@ -874,6 +842,29 @@ private fun PendingRecurringCard(
 }
 
 private enum class SpendingPage { Categories, Budgets }
+
+/**
+ * Intercepts long press at [PointerEventPass.Initial] so it fires even on components that have
+ * their own tap/click handlers. Without this, child [clickable]/[combinedClickable] modifiers
+ * running on [PointerEventPass.Main] compete with the outer detector and win, silently swallowing
+ * the gesture before the long press threshold is reached.
+ */
+private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+        var released = false
+        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+            while (true) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                if (!event.changes.any { it.pressed }) {
+                    released = true
+                    break
+                }
+            }
+        }
+        if (!released) onLongPress()
+    }
+}
 
 @Composable
 private fun TotalBalanceCard(

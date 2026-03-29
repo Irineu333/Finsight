@@ -47,14 +47,14 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 
 ### Critérios de aceite
 - [ ] Long press em qualquer componente entra no modo edição com transição suave
-- [ ] Bottom nav desaparece ao entrar em edit mode
-- [ ] Toolbar de edição aparece (Cancelar | Editar | Confirmar)
+- [x] Bottom nav desaparece ao entrar em edit mode
+- [x] Toolbar de edição aparece (Cancelar | Editar | Confirmar)
 - [ ] Componentes são arrastáveis por long press + drag (o componente inteiro, sem ícone de handle)
-- [ ] A ordem dos componentes muda visualmente durante o drag
-- [ ] Tap em um componente abre a modal de opções com "Remover"
-- [ ] "Remover" remove o componente da lista com animação de saída
-- [ ] "Confirmar" persiste a nova ordem e composição — ao reabrir o app a ordem é mantida
-- [ ] "Cancelar" descarta as alterações e restaura o estado anterior
+- [x] A ordem dos componentes muda visualmente durante o drag
+- [x] Tap em um componente abre a modal de opções com "Remover" ()
+- [x] "Remover" remove o componente da lista com animação de saída
+- [x] "Confirmar" persiste a nova ordem e composição — ao reabrir o app a ordem é mantida
+- [x] "Cancelar" descarta as alterações e restaura o estado anterior
 
 > **Reprovação imediata:** reordenação por botões ↑↓ ou qualquer controle que não seja drag físico.
 

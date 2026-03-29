@@ -1,14 +1,22 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class, ExperimentalSharedTransitionApi::class)
+@file:OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalTime::class,
+    ExperimentalSharedTransitionApi::class,
+    ExperimentalFoundationApi::class
+)
 
 package com.neoutils.finsight.ui.screen.dashboard
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -25,7 +34,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,69 +69,206 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sh.calvin.reorderable.ReorderableCollectionItemScope
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @Composable
 fun DashboardScreen(
     openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
-    viewModel: DashboardViewModel = koinViewModel()
+    viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
     val navigationDispatcher = LocalNavigationDispatcher.current
 
-    DashboardContent(
-        uiState = uiState,
-        openTransactions = openTransactions,
-        onOpenQuickAction = { type ->
-            when (type) {
-                QuickActionType.BUDGETS -> navigationDispatcher.dispatch(NavigationDestination.Budgets)
-                QuickActionType.CATEGORIES -> navigationDispatcher.dispatch(NavigationDestination.Categories)
-                QuickActionType.CREDIT_CARDS -> navigationDispatcher.dispatch(NavigationDestination.CreditCards())
-                QuickActionType.ACCOUNTS -> navigationDispatcher.dispatch(NavigationDestination.Accounts())
-                QuickActionType.RECURRING -> navigationDispatcher.dispatch(NavigationDestination.Recurring)
-                QuickActionType.REPORTS -> navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
-                QuickActionType.INSTALLMENTS -> navigationDispatcher.dispatch(NavigationDestination.Installments)
-                QuickActionType.SUPPORT -> navigationDispatcher.dispatch(NavigationDestination.Support)
+    Scaffold(
+        topBar = {
+            AnimatedContent(targetState = uiState is DashboardUiState.Editing) { editMode ->
+                if (editMode) {
+                    DashboardEditToolbar(
+                        onCancel = { viewModel.onAction(DashboardAction.CancelEdit) },
+                        onConfirm = { viewModel.onAction(DashboardAction.ConfirmEdit) },
+                    )
+                } else {
+                    TopAppBar(
+                        title = {
+                            Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = colorScheme.background,
+                        ),
+                    )
+                }
             }
         },
-        modalManager = modalManager,
-        navigationDispatcher = navigationDispatcher,
+        contentWindowInsets = WindowInsets(),
+    ) { paddingValues ->
+        Crossfade(
+            targetState = uiState,
+            modifier = Modifier.padding(paddingValues),
+        ) { state ->
+            when (state) {
+                is DashboardUiState.Loading -> DashboardLoadingContent()
+                is DashboardUiState.Viewing -> DashboardViewingContent(
+                    state = state,
+                    openTransactions = openTransactions,
+                    onOpenQuickAction = { type ->
+                        when (type) {
+                            QuickActionType.BUDGETS -> navigationDispatcher.dispatch(NavigationDestination.Budgets)
+                            QuickActionType.CATEGORIES -> navigationDispatcher.dispatch(NavigationDestination.Categories)
+                            QuickActionType.CREDIT_CARDS -> navigationDispatcher.dispatch(NavigationDestination.CreditCards())
+                            QuickActionType.ACCOUNTS -> navigationDispatcher.dispatch(NavigationDestination.Accounts())
+                            QuickActionType.RECURRING -> navigationDispatcher.dispatch(NavigationDestination.Recurring)
+                            QuickActionType.REPORTS -> navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
+                            QuickActionType.INSTALLMENTS -> navigationDispatcher.dispatch(NavigationDestination.Installments)
+                            QuickActionType.SUPPORT -> navigationDispatcher.dispatch(NavigationDestination.Support)
+                        }
+                    },
+                    modalManager = modalManager,
+                    navigationDispatcher = navigationDispatcher,
+                    onAction = viewModel::onAction,
+                )
+
+                is DashboardUiState.Editing -> DashboardEditingContent(
+                    state = state,
+                    onAction = viewModel::onAction,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardLoadingContent() {
+    Box(modifier = Modifier.fillMaxSize())
+}
+
+@Composable
+private fun DashboardEditToolbar(
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    TopAppBar(
+        navigationIcon = {
+            TextButton(onClick = onCancel) {
+                Text(text = stringResource(Res.string.dashboard_edit_cancel))
+            }
+        },
+        title = {
+            Text(
+                text = stringResource(Res.string.dashboard_edit_title),
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        },
+        actions = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(Res.string.dashboard_edit_confirm))
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = colorScheme.background,
+        ),
     )
 }
 
 @Composable
-private fun DashboardContent(
+private fun DashboardEditingContent(
+    state: DashboardUiState.Editing,
+    onAction: (DashboardAction) -> Unit,
+) {
+    val modalManager = LocalModalManager.current
+    val haptic = LocalHapticFeedback.current
+    val lazyListState = rememberLazyListState()
+
+    val reorderState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
+    ) { from, to ->
+        onAction(DashboardAction.MoveComponent(from.index, to.index))
+        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+    }
+
+    LazyColumn(
+        state = lazyListState,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(
+            top = 8.dp,
+            bottom = 32.dp,
+        ),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        items(state.items, key = { it.key }) { item ->
+            ReorderableItem(reorderState, key = item.key) { isDragging ->
+                DashboardEditItemWrapper(
+                    item = item,
+                    isDragging = isDragging,
+                    onTap = {
+                        modalManager.show(
+                            DashboardComponentOptionsModal(item = item, onAction = onAction)
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
+    item: DashboardEditItem,
+    isDragging: Boolean,
+    onTap: () -> Unit,
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .shadow(if (isDragging) 8.dp else 0.dp, shape = RoundedCornerShape(12.dp))
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+            .clickable(onClick = onTap)
+            .longPressDraggableHandle(
+                onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+        ),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Text(
+            text = stringUiText(item.title),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 22.dp),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun DashboardViewingContent(
+    state: DashboardUiState.Viewing,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     onOpenQuickAction: (QuickActionType) -> Unit,
-    uiState: DashboardUiState,
     modalManager: ModalManager,
     navigationDispatcher: NavigationDispatcher,
-) = Scaffold(
-    topBar = {
-        TopAppBar(
-            title = {
-                Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = colorScheme.background,
-            ),
-        )
-    },
-    contentWindowInsets = WindowInsets(),
-) { paddingValues ->
+    onAction: (DashboardAction) -> Unit,
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
             top = 8.dp,
             bottom = 32.dp,
         ),
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        uiState.components.forEach { component ->
+        state.components.forEach { component ->
             when (component) {
                 is DashboardComponent.TotalBalance -> {
                     item(key = component.key) {
@@ -127,7 +277,12 @@ private fun DashboardContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -140,7 +295,12 @@ private fun DashboardContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -152,7 +312,12 @@ private fun DashboardContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -175,7 +340,12 @@ private fun DashboardContent(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -192,7 +362,12 @@ private fun DashboardContent(
                             modalManager = modalManager,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -207,7 +382,12 @@ private fun DashboardContent(
                             modalManager = modalManager,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .animateItem(),
+                                .animateItem()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -222,7 +402,12 @@ private fun DashboardContent(
                             onClick = { onOpenQuickAction(QuickActionType.RECURRING) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 16.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
 
@@ -234,7 +419,12 @@ private fun DashboardContent(
                             recurring = recurring,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 16.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                             onClick = {
                                 val targetDate = Clock.System.now()
                                     .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -257,7 +447,12 @@ private fun DashboardContent(
                             onClick = { openTransactions(null, null) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(horizontal = 16.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
 
@@ -288,7 +483,12 @@ private fun DashboardContent(
                                     } else {
                                         Modifier
                                     }
-                                ),
+                                )
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                             onClick = {
                                 when {
                                     isLastWithFade -> {
@@ -323,7 +523,12 @@ private fun DashboardContent(
                             onOpen = onOpenQuickAction,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { onAction(DashboardAction.EnterEditMode) }
+                                    )
+                                },
                         )
                     }
                 }
@@ -838,5 +1043,43 @@ private fun PageIndicator(
                     shape = CircleShape
                 )
         )
+    }
+}
+
+class DashboardComponentOptionsModal(
+    private val item: DashboardEditItem,
+    private val onAction: (DashboardAction) -> Unit,
+) : ModalBottomSheet() {
+
+    @Composable
+    override fun ColumnScope.BottomSheetContent() {
+        val modalManager = LocalModalManager.current
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
+            Text(
+                text = stringUiText(item.title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = 16.dp),
+            )
+            HorizontalDivider()
+            ListItem(
+                headlineContent = { Text(stringResource(Res.string.remove_component)) },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = null,
+                    )
+                },
+                modifier = Modifier.clickable {
+                    onAction(DashboardAction.RemoveComponent(item.key))
+                    modalManager.dismiss()
+                },
+            )
+        }
     }
 }

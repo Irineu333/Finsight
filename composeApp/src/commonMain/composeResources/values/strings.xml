@@ -684,4 +684,21 @@
     <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
     <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 31.</string>
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
+
+    <!-- Dashboard Component Names -->
+    <string name="component_total_balance">Saldo Total</string>
+    <string name="component_balance_stats">Receitas e Despesas</string>
+    <string name="component_pending_balance">Pendências</string>
+    <string name="component_accounts_overview">Contas</string>
+    <string name="component_credit_cards">Cartões de Crédito</string>
+    <string name="component_spending">Gastos</string>
+    <string name="component_pending_recurring">Recorrentes Pendentes</string>
+    <string name="component_recents">Recentes</string>
+    <string name="component_quick_actions">Atalhos</string>
+
+    <!-- Dashboard Edit Mode -->
+    <string name="dashboard_edit_title">Editar</string>
+    <string name="dashboard_edit_confirm">Confirmar</string>
+    <string name="dashboard_edit_cancel">Cancelar</string>
+    <string name="remove_component">Remover</string>
 </resources>

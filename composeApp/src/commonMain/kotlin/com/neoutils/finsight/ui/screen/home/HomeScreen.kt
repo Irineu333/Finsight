@@ -2,13 +2,17 @@
 
 package com.neoutils.finsight.ui.screen.home
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -20,10 +24,13 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationItem
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
+import com.neoutils.finsight.ui.screen.dashboard.DashboardUiState
+import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
 import com.neoutils.finsight.util.TransactionTargetNavType
 import com.neoutils.finsight.util.TransactionTypeNavType
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.reflect.typeOf
 
 @Composable
@@ -31,6 +38,10 @@ fun HomeScreen() {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
+
+    val dashboardViewModel: DashboardViewModel = koinViewModel()
+    val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
+    val isEditMode = dashboardUiState is DashboardUiState.Editing
 
     val selectedItem = when {
         currentBackStackEntry?.destination?.route?.contains(
@@ -47,26 +58,32 @@ fun HomeScreen() {
     Scaffold(
         contentWindowInsets = WindowInsets(),
         bottomBar = {
-            BottomNavigationBar(
-                selectedItem = selectedItem,
-                onItemSelected = { item ->
-                    navController.navigate(
-                        route = when (item) {
-                            NavigationItem.Dashboard -> HomeRoute.Dashboard
-                            NavigationItem.Transactions -> HomeRoute.Transactions()
-                        },
-                    ) {
-                        launchSingleTop = true
+            AnimatedVisibility(
+                visible = !isEditMode,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it },
+            ) {
+                BottomNavigationBar(
+                    selectedItem = selectedItem,
+                    onItemSelected = { item ->
+                        navController.navigate(
+                            route = when (item) {
+                                NavigationItem.Dashboard -> HomeRoute.Dashboard
+                                NavigationItem.Transactions -> HomeRoute.Transactions()
+                            },
+                        ) {
+                            launchSingleTop = true
 
-                        popUpTo(HomeRoute.Dashboard::class) {
-                            inclusive = false
+                            popUpTo(HomeRoute.Dashboard::class) {
+                                inclusive = false
+                            }
                         }
+                    },
+                    onAddClick = {
+                        modalManager.show(AddTransactionModal())
                     }
-                },
-                onAddClick = {
-                    modalManager.show(AddTransactionModal())
-                }
-            )
+                )
+            }
         }
     ) { paddingValues ->
         NavHost(
@@ -76,6 +93,7 @@ fun HomeScreen() {
         ) {
             composable<HomeRoute.Dashboard> {
                 DashboardScreen(
+                    viewModel = dashboardViewModel,
                     openTransactions = { filterType, filterTarget ->
                         navController.navigate(
                             HomeRoute.Transactions(

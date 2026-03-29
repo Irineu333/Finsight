@@ -5,7 +5,7 @@ A spec completa está em [`spec.md`](spec.md).
 
 ---
 
-## Etapa 1 — Modo edição com drag and drop em lista simples
+## Etapa 1 — Modo edição com drag and drop em lista simples (Implementado)
 
 **Foco:** estrutura arquitetural completa + drag and drop funcionando.
 Os componentes são representados por cards simplificados (título + placeholder) nesta etapa — a UI fiel ao original vem na Etapa 2.

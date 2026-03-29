@@ -64,6 +64,9 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation("sh.calvin.reorderable:reorderable:3.0.0")
 
             // Firebase
             implementation(libs.gitlive.firebase.firestore)

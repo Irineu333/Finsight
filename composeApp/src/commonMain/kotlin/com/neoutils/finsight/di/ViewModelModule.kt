@@ -30,6 +30,7 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
+import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
@@ -109,6 +110,7 @@ val viewModelModule = module {
             recurringOccurrenceRepository = get(),
             ensureDefaultAccountUseCase = get(),
             dashboardComponentsBuilder = get(),
+            dashboardPreferencesRepository = get(),
         )
     }
 

@@ -2,16 +2,19 @@
 
 package com.neoutils.finsight.ui.screen.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,9 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.component.BottomNavigationBar
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.NavigationItem
+import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.dashboard.DashboardUiState
@@ -60,8 +61,8 @@ fun HomeScreen() {
         bottomBar = {
             AnimatedVisibility(
                 visible = !isEditMode,
-                enter = slideInVertically { it },
-                exit = slideOutVertically { it },
+                enter = slideInVertically { it } + expandVertically(),
+                exit = shrinkVertically() + slideOutVertically { it },
             ) {
                 BottomNavigationBar(
                     selectedItem = selectedItem,
@@ -78,13 +79,34 @@ fun HomeScreen() {
                                 inclusive = false
                             }
                         }
-                    },
-                    onAddClick = {
-                        modalManager.show(AddTransactionModal())
                     }
                 )
             }
-        }
+        },
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = !isEditMode,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .offset(y = 40.dp)
+                    .size(56.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        modalManager.show(AddTransactionModal())
+                    },
+                    contentColor = Color.White,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Center,
     ) { paddingValues ->
         NavHost(
             navController = navController,

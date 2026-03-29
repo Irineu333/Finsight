@@ -31,7 +31,7 @@ sealed class DashboardUiState {
 data class DashboardEditItem(
     val key: String,
     val title: UiText,
-    val preview: DashboardComponent,
+    val preview: DashboardComponentVariant,
     val config: Map<String, String> = emptyMap(),
 )
 

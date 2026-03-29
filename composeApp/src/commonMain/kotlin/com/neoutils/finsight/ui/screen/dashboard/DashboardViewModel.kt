@@ -168,7 +168,7 @@ class DashboardViewModel(
 
         if (savedPrefs.isEmpty()) {
             items = DashboardComponentRegistry.entries.mapNotNull { entry ->
-                val preview = DashboardComponentMocks.forKey(entry.key) ?: return@mapNotNull null
+                val preview = DashboardComponentVariant.previewForKey(entry.key) ?: return@mapNotNull null
                 DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
             }
             availableItems = emptyList()
@@ -177,13 +177,13 @@ class DashboardViewModel(
             items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
                 val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
                     ?: return@mapNotNull null
-                val preview = DashboardComponentMocks.forKey(pref.key) ?: return@mapNotNull null
+                val preview = DashboardComponentVariant.previewForKey(pref.key) ?: return@mapNotNull null
                 DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
             }
             availableItems = DashboardComponentRegistry.entries
                 .filter { it.key !in presentKeys }
                 .mapNotNull { entry ->
-                    val preview = DashboardComponentMocks.forKey(entry.key) ?: return@mapNotNull null
+                    val preview = DashboardComponentVariant.previewForKey(entry.key) ?: return@mapNotNull null
                     DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
                 }
         }

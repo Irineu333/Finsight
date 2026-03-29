@@ -165,3 +165,83 @@ private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = poi
 - `Long press` com dedo parado em qualquer componente continua entrando em edit mode
 - `Scroll` vertical da dashboard não aciona edit mode
 - Componentes com `clickable` interno continuam permitindo a interceptação do long press externo
+
+---
+
+## Issue 5 — Long press curto aciona edit mode e também a ação do componente
+
+**Severidade:** Crítica — resolvida
+
+**Descrição:**
+Em componentes com ação própria na dashboard, um `long press` curto podia disparar dois efeitos no mesmo gesto:
+
+- entrar no modo edição
+- executar a ação original do componente no `pointer up`
+
+Exemplo real: pressionar por tempo suficiente no card de cartões fazia a dashboard entrar em modo edição e, na soltura do dedo, também abrir a tela de cartões.
+
+**Causa raiz:**
+O `interceptLongPress` já reconhecia corretamente o gesto no `PointerEventPass.Initial` e disparava `EnterEditMode`, mas encerrava o detector logo em seguida. Como os eventos restantes do gesto não eram consumidos, o `clickable`/`Card(onClick)` interno ainda recebia o `up` e concluía o `tap`.
+
+Na prática, o modo edição “ganhava” o threshold do long press, mas não cancelava explicitamente a ação de tap do componente filho.
+
+**Correção:**
+Após disparar `onLongPress()`, continuar observando o mesmo ponteiro e consumir todos os eventos até o dedo ser solto. Isso espelha o comportamento do `clickable` nativo do Compose: quando o long press vence, o restante do gesto deixa de estar disponível para a ação de click.
+
+```kotlin
+private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
+    awaitEachGesture {
+        val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
+        var released = false
+        var canceled = false
+
+        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+            while (true) {
+                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (!change.pressed) {
+                    released = true
+                    break
+                }
+
+                if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) {
+                    canceled = true
+                    break
+                }
+
+                val finalEvent = awaitPointerEvent(pass = PointerEventPass.Final)
+                val finalChange = finalEvent.changes.firstOrNull { it.id == down.id } ?: run {
+                    canceled = true
+                    break
+                }
+
+                if (finalChange.isConsumed) {
+                    canceled = true
+                    break
+                }
+            }
+        }
+
+        if (released || canceled) return@awaitEachGesture
+
+        onLongPress()
+
+        while (true) {
+            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+            event.changes.forEach { it.consume() }
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) break
+        }
+    }
+}
+```
+
+**Resultado esperado após a correção:**
+
+- `Tap` curto continua executando apenas a ação do componente
+- `Long press` continua entrando no modo edição
+- O mesmo gesto nunca dispara edit mode e ação de navegação/modal ao mesmo tempo

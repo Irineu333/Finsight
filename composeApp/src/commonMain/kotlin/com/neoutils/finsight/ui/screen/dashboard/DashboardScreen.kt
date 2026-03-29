@@ -848,7 +848,8 @@ private enum class SpendingPage { Categories, Budgets }
  * Intercepts long press at [PointerEventPass.Initial] so it fires even on components that have
  * their own tap/click handlers. Without this, child [clickable]/[combinedClickable] modifiers
  * running on [PointerEventPass.Main] compete with the outer detector and win, silently swallowing
- * the gesture before the long press threshold is reached.
+ * the gesture before the long press threshold is reached. Once the long press wins, it consumes
+ * the remaining pointer events until release so the inner tap action cannot complete on pointer up.
  */
 private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
     awaitEachGesture {
@@ -885,7 +886,18 @@ private fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = poi
                 }
             }
         }
-        if (!released && !canceled) onLongPress()
+        if (released || canceled) {
+            return@awaitEachGesture
+        }
+
+        onLongPress()
+
+        while (true) {
+            val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+            event.changes.forEach { it.consume() }
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) break
+        }
     }
 }
 

@@ -459,32 +459,48 @@ class DashboardViewModel(
         )
     }
 
-    // Constrói o EditingState a partir do Viewing atual + preferências salvas
-    // Preserva configs existentes em cada item; componentes ausentes do Viewing ficam em availableItems
+    // Regra de visibilidade em edit mode:
+    //   items        = componentes adicionados pelo usuário (prefs salvas), ou todos os 9 se sem prefs
+    //   availableItems = componentes explicitamente removidos pelo usuário (ausentes das prefs)
+    //
+    // "Sem dados no modo visualização" ≠ "removido pelo usuário":
+    //   - CreditCardsPager sem cartões cadastrados → aparece em items (adicionado, mas sem dados)
+    //   - CreditCardsPager removido pelo usuário   → aparece em availableItems
+    //
+    // A fonte de verdade é sempre o registry/preferências — nunca o viewing.components,
+    // que está filtrado por dados e não reflete a intenção do usuário.
     private fun buildEditingState(
         viewing: DashboardUiState.Viewing,
         savedPrefs: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val prefsByKey = savedPrefs.associateBy { it.key }
-        val presentKeys = viewing.components.map { it.key }.toSet()
+        val items: List<DashboardEditItem>
+        val availableItems: List<DashboardEditItem>
 
-        val items = viewing.components.mapNotNull { component ->
-            val entry = DashboardComponentRegistry.entries.find { it.key == component.key } ?: return@mapNotNull null
-            DashboardEditItem(
-                key = component.key,
-                title = entry.title,
-                config = prefsByKey[component.key]?.config ?: emptyMap(),
-                preview = DashboardComponentMocks.forKey(component.key) ?: return@mapNotNull null,
-            )
-        }
-
-        val availableItems = DashboardComponentRegistry.entries
-            .filter { it.key !in presentKeys }
-            .mapNotNull { entry ->
+        if (savedPrefs.isEmpty()) {
+            // Sem preferências salvas: todos os 9 componentes do registry são exibidos na ordem padrão
+            items = DashboardComponentRegistry.entries.mapNotNull { entry ->
                 DashboardComponentMocks.forKey(entry.key)?.let { mock ->
                     DashboardEditItem(key = entry.key, title = entry.title, preview = mock)
                 }
             }
+            availableItems = emptyList()
+        } else {
+            // Com preferências: items = o que está nas prefs (ordem salva); available = o restante do registry
+            val presentKeys = savedPrefs.map { it.key }.toSet()
+            items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
+                val entry = DashboardComponentRegistry.entries.find { it.key == pref.key } ?: return@mapNotNull null
+                DashboardComponentMocks.forKey(pref.key)?.let { mock ->
+                    DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = mock)
+                }
+            }
+            availableItems = DashboardComponentRegistry.entries
+                .filter { it.key !in presentKeys }
+                .mapNotNull { entry ->
+                    DashboardComponentMocks.forKey(entry.key)?.let { mock ->
+                        DashboardEditItem(key = entry.key, title = entry.title, preview = mock)
+                    }
+                }
+        }
 
         return DashboardUiState.Editing(
             yearMonth = viewing.yearMonth,

@@ -55,6 +55,8 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 - [x] "Remover" remove o componente da lista com animação de saída
 - [x] "Confirmar" persiste a nova ordem e composição — ao reabrir o app a ordem é mantida
 - [x] "Cancelar" descarta as alterações e restaura o estado anterior
+- [x] Todos os componentes adicionados aparecem em edit mode, mesmo que sem dados no modo visualização
+- [x] Componentes explicitamente removidos pelo usuário não aparecem em edit mode (ficam em availableItems)
 
 > **Reprovação imediata:** reordenação por botões ↑↓ ou qualquer controle que não seja drag físico.
 

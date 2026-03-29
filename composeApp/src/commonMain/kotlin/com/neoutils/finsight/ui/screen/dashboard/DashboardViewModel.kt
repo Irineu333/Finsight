@@ -163,25 +163,34 @@ class DashboardViewModel(
         viewing: DashboardUiState.Viewing,
         savedPrefs: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val prefsByKey = savedPrefs.associateBy { it.key }
-        val presentKeys = viewing.components.map { it.key }.toSet()
+        val items: List<DashboardEditItem>
+        val availableItems: List<DashboardEditItem>
 
-        val items = viewing.components.mapNotNull { component ->
-            val entry = DashboardComponentRegistry.entries.find { it.key == component.key }
-                ?: return@mapNotNull null
-            DashboardEditItem(
-                key = component.key,
-                title = entry.title,
-                config = prefsByKey[component.key]?.config ?: emptyMap(),
-                preview = null,
-            )
-        }
-
-        val availableItems = DashboardComponentRegistry.entries
-            .filter { it.key !in presentKeys }
-            .map { entry ->
-                DashboardEditItem(key = entry.key, title = entry.title)
+        if (savedPrefs.isEmpty()) {
+            items = DashboardComponentRegistry.entries.map { entry ->
+                DashboardEditItem(
+                    key = entry.key,
+                    title = entry.title,
+                    preview = null,
+                )
             }
+            availableItems = emptyList()
+        } else {
+            val presentKeys = savedPrefs.map { it.key }.toSet()
+            items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
+                val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
+                    ?: return@mapNotNull null
+                DashboardEditItem(
+                    key = pref.key,
+                    title = entry.title,
+                    config = pref.config,
+                    preview = null,
+                )
+            }
+            availableItems = DashboardComponentRegistry.entries
+                .filter { it.key !in presentKeys }
+                .map { entry -> DashboardEditItem(key = entry.key, title = entry.title) }
+        }
 
         return DashboardUiState.Editing(
             yearMonth = viewing.yearMonth,

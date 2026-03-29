@@ -59,6 +59,41 @@ updateTransition(targetState = uiState).Crossfade(
 
 ---
 
+## Issue 3 — Modo edição exibe apenas componentes com dados
+
+**Severidade:** Funcional — resolvida
+
+**Descrição:**
+Ao entrar no modo edição, apenas os componentes que possuíam dados eram exibidos na lista de itens. Componentes sem dados (ex.: `CreditCardsPager` sem cartões cadastrados, `SpendingPager` sem gastos) apareciam em `availableItems` como se tivessem sido removidos pelo usuário — tornando impossível reordenar um componente que ainda não tinha conteúdo.
+
+**Causa raiz:**
+`buildEditingState()` construía `items` iterando `viewing.components` — a lista de componentes já filtrada pelo `DashboardComponentsBuilder`, que omite componentes sem dados no modo visualização. A distinção entre "componente removido pelo usuário" e "componente sem dados" não existia: ambos iam parar em `availableItems`.
+
+**Correção:**
+Dissociar a fonte de verdade do modo edição do estado filtrado do modo visualização:
+
+- **Sem preferências salvas** → `items` = todos os entries do `DashboardComponentRegistry` na ordem padrão; `availableItems` = vazio
+- **Com preferências salvas** → `items` = o que está nas preferências (na ordem salva); `availableItems` = entries do registry que não estão nas preferências (explicitamente removidos pelo usuário)
+
+A filtragem por dados (`DashboardComponentsBuilder`) continua aplicada exclusivamente no modo visualização.
+
+```kotlin
+// Antes — usa a lista já filtrada por dados
+val items = viewing.components.mapNotNull { component -> ... }
+val availableItems = DashboardComponentRegistry.entries.filter { it.key !in presentKeys }
+
+// Depois — usa registry/preferências, independente de dados
+if (savedPrefs.isEmpty()) {
+    items = DashboardComponentRegistry.entries.map { entry -> DashboardEditItem(...) }
+    availableItems = emptyList()
+} else {
+    items = savedPrefs.sortedBy { it.position }.mapNotNull { pref -> ... }
+    availableItems = DashboardComponentRegistry.entries.filter { it.key !in presentKeys }
+}
+```
+
+---
+
 ## Observação sobre recorrência (Issue 1)
 
 O problema do long press em componentes com ação é recorrente em implementações de IA porque a solução intuitiva (`pointerInput { detectTapGestures }`) funciona em componentes *sem* ação mas falha silenciosamente nos que têm. A distinção entre `PointerEventPass.Main` e `PointerEventPass.Initial` não é óbvia, e a causa do bug não produz nenhum erro visível — o gesto simplesmente é ignorado.

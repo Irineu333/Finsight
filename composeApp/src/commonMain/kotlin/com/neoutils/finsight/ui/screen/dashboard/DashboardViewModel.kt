@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.extension.combine
-import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -63,6 +62,7 @@ class DashboardViewModel(
         preferences,
     ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val configByKey = preferences.associate { it.key to it.config }
 
         val allComponents = dashboardComponentsBuilder.build(
             input = DashboardComponentsInput(
@@ -75,6 +75,7 @@ class DashboardViewModel(
                 occurrences = occurrences,
                 today = today,
                 targetMonth = today.yearMonth,
+                configByKey = configByKey,
             ),
         )
 
@@ -83,6 +84,9 @@ class DashboardViewModel(
         DashboardUiState.Viewing(
             yearMonth = today.yearMonth,
             components = ordered,
+            accounts = accounts,
+            creditCards = creditCards,
+            configByKey = configByKey,
         )
     }
 
@@ -155,6 +159,7 @@ class DashboardViewModel(
                     )
                 }
             }
+
             else -> {
                 val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
                 val fromInActive = fromIndex < activeCount
@@ -220,6 +225,8 @@ class DashboardViewModel(
             yearMonth = viewing.yearMonth,
             items = items,
             availableItems = availableItems,
+            accounts = viewing.accounts,
+            creditCards = viewing.creditCards,
         )
     }
 

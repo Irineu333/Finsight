@@ -162,7 +162,7 @@ Melhorias de arquitetura, performance e robustez aplicadas após Etapa 3:
 
 ---
 
-## Etapa 4 — Configurações de componentes
+## Etapa 4 — Configurações de componentes (Implementado)
 
 **Foco:** modal de configuração por componente, com persistência dos configs.
 
@@ -200,16 +200,16 @@ Etapa 3 aprovada.
 - `DashboardComponentsBuilder` — lê configs específicos ao construir cada componente (ignora `top_spacing`, que é renderização pura)
 
 ### Critérios de aceite
-- [ ] Toggle "Espaçamento superior" aparece na modal de todos os componentes
-- [ ] Ativar espaçamento superior adiciona espaço visível acima do componente ao confirmar o edit mode
-- [ ] Desativar remove o espaçamento
-- [ ] Espaçamento persiste entre sessões do app
-- [ ] Tap em um componente com configuração específica disponível exibe as opções na modal
-- [ ] QuickActions: desativar uma ação a remove do componente na dashboard
-- [ ] QuickActions: não é possível desativar todas as ações (validação na modal)
-- [ ] Recents: alterar o número de itens reflete imediatamente ao confirmar o edit mode
-- [ ] PendingRecurring: alterar o horizonte de dias reflete ao confirmar
-- [ ] SpendingPager: alterar o limite de categorias reflete ao confirmar
-- [ ] AccountsOverview: excluir uma conta a remove do componente
-- [ ] CreditCardsPager: excluir um cartão o remove do componente
-- [ ] Todas as configurações persistem entre sessões do app
+- [x] Toggle "Espaçamento superior" aparece na modal de todos os componentes
+- [x] Ativar espaçamento superior adiciona espaço visível acima do componente ao confirmar o edit mode
+- [x] Desativar remove o espaçamento
+- [x] Espaçamento persiste entre sessões do app
+- [x] Tap em um componente com configuração específica disponível exibe as opções na modal
+- [x] QuickActions: desativar uma ação a remove do componente na dashboard
+- [x] QuickActions: não é possível desativar todas as ações (validação na modal)
+- [x] Recents: alterar o número de itens reflete imediatamente ao confirmar o edit mode
+- [x] PendingRecurring: alterar o horizonte de dias reflete ao confirmar
+- [x] SpendingPager: alterar o limite de categorias reflete ao confirmar
+- [x] AccountsOverview: excluir uma conta a remove do componente
+- [x] CreditCardsPager: excluir um cartão o remove do componente
+- [x] Todas as configurações persistem entre sessões do app

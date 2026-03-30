@@ -703,4 +703,11 @@
     <string name="remove_component">Remover</string>
     <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
     <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
+
+    <!-- Dashboard Component Config -->
+    <string name="component_config_top_spacing">Espaçamento superior</string>
+    <string name="component_config_max_categories">Máximo de categorias</string>
+    <string name="component_config_days_ahead">Dias à frente</string>
+    <string name="component_config_count">Quantidade de itens</string>
+    <string name="component_config_all">Todas</string>
 </resources>

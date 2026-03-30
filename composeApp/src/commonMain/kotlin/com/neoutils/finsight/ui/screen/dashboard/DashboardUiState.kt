@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.YearMonth
@@ -22,12 +23,17 @@ sealed class DashboardUiState {
     data class Viewing(
         override val yearMonth: YearMonth,
         val components: List<DashboardComponent>,
+        val accounts: List<Account> = emptyList(),
+        val creditCards: List<CreditCard> = emptyList(),
+        val configByKey: Map<String, Map<String, String>> = emptyMap(),
     ) : DashboardUiState()
 
     data class Editing(
         override val yearMonth: YearMonth,
         val items: List<DashboardEditItem>,
         val availableItems: List<DashboardEditItem>,
+        val accounts: List<Account> = emptyList(),
+        val creditCards: List<CreditCard> = emptyList(),
     ) : DashboardUiState()
 }
 

@@ -706,9 +706,11 @@
     <string name="dashboard_empty_title">Sua dashboard está vazia</string>
     <string name="dashboard_empty_description">Adicione componentes para voltar a personalizar a visualização.</string>
     <string name="dashboard_empty_action">Editar dashboard</string>
+    <string name="dashboard_credit_cards_empty_state">Adicione cartões ou ajuste a seleção deste componente.</string>
 
     <!-- Dashboard Component Config -->
     <string name="component_config_top_spacing">Espaçamento superior</string>
+    <string name="component_config_show_empty_state">Exibir empty state</string>
     <string name="component_config_max_categories">Máximo de categorias</string>
     <string name="component_config_days_ahead">Dias à frente</string>
     <string name="component_config_count">Quantidade de itens</string>

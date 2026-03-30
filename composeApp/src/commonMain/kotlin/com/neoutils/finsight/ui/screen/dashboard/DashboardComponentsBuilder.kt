@@ -139,7 +139,8 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.CreditCardsPager? {
-        if (input.creditCards.isEmpty()) return null
+        val showEmptyState = config[DashboardComponentConfig.SHOW_EMPTY_STATE] == "true"
+        if (input.creditCards.isEmpty() && !showEmptyState) return null
 
         val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
             ?.split(",")
@@ -157,10 +158,13 @@ class DashboardComponentsBuilder(
                 )
             }
 
-        return if (creditCardsWithBills.isNotEmpty()) {
-            DashboardComponent.CreditCardsPager(creditCards = creditCardsWithBills)
-        } else {
-            null
+        return when {
+            creditCardsWithBills.isNotEmpty() -> DashboardComponent.CreditCardsPager.Content(
+                creditCards = creditCardsWithBills,
+            )
+
+            showEmptyState -> DashboardComponent.CreditCardsPager.Empty
+            else -> null
         }
     }
 

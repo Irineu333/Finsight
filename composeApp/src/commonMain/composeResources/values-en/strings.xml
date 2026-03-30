@@ -668,4 +668,6 @@
     <string name="dashboard_empty_title">Your dashboard is empty</string>
     <string name="dashboard_empty_description">Add components to customize this view again.</string>
     <string name="dashboard_empty_action">Edit dashboard</string>
+    <string name="dashboard_credit_cards_empty_state">Add credit cards or adjust this component selection.</string>
+    <string name="component_config_show_empty_state">Show empty state</string>
 </resources>

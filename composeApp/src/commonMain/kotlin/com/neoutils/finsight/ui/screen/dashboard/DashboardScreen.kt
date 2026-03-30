@@ -31,6 +31,8 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -64,6 +66,7 @@ import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
@@ -718,10 +721,6 @@ private fun DashboardCreditCardsSection(
     val modalManager = LocalModalManager.current
     val component = variant.component
 
-    val pagerState = rememberPagerState(
-        pageCount = { component.creditCards.size },
-    )
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -749,68 +748,89 @@ private fun DashboardCreditCardsSection(
             }
         }
 
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 8.dp,
-            modifier = Modifier.fillMaxWidth(),
-        ) { page ->
-            val creditCardUi = component.creditCards[page]
+        when (component) {
+            DashboardComponent.CreditCardsPager.Empty -> {
+                DashboardCreditCardsEmptyCard(
+                    onCreateCard = {
+                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                            modalManager.show(CreditCardFormModal())
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
+            }
 
-            CreditCardCard(
-                creditCard = creditCardUi.creditCard,
-                invoiceUi = creditCardUi.invoiceUi,
-                modifier = Modifier.fillMaxWidth(),
-                variant = CreditCardCardVariant.Dashboard(
-                    onClick = {
-                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            navigationDispatcher.dispatch(
-                                NavigationDestination.CreditCards(creditCardId = creditCardUi.creditCard.id)
-                            )
-                        }
-                    },
-                    onCloseInvoice = {
-                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
-                            }
-                        }
-                    },
-                    onPayInvoice = {
-                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(
-                                    PayInvoiceModal(invoice = it.invoice, currentBillAmount = it.amount)
-                                )
-                            }
-                        }
-                    },
-                    onAdvancePayment = {
-                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(
-                                    AdvancePaymentModal(invoice = it.invoice, currentBillAmount = it.amount)
-                                )
-                            }
-                        }
-                    },
-                    onEditAmount = {
-                        if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            creditCardUi.invoiceUi?.let {
-                                modalManager.show(EditInvoiceBalanceModal(initialInvoice = it.invoice))
-                            }
-                        }
-                    },
-                ),
-            )
-        }
+            is DashboardComponent.CreditCardsPager.Content -> {
+                val pagerState = rememberPagerState(
+                    pageCount = { component.creditCards.size },
+                )
 
-        if (component.creditCards.size > 1) {
-            PageIndicator(
-                count = component.creditCards.size,
-                current = pagerState.currentPage,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                HorizontalPager(
+                    state = pagerState,
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    pageSpacing = 8.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { page ->
+                    val creditCardUi = component.creditCards[page]
+
+                    CreditCardCard(
+                        creditCard = creditCardUi.creditCard,
+                        invoiceUi = creditCardUi.invoiceUi,
+                        modifier = Modifier.fillMaxWidth(),
+                        variant = CreditCardCardVariant.Dashboard(
+                            onClick = {
+                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                                    navigationDispatcher.dispatch(
+                                        NavigationDestination.CreditCards(creditCardId = creditCardUi.creditCard.id)
+                                    )
+                                }
+                            },
+                            onCloseInvoice = {
+                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                                    }
+                                }
+                            },
+                            onPayInvoice = {
+                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            PayInvoiceModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                        )
+                                    }
+                                }
+                            },
+                            onAdvancePayment = {
+                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(
+                                            AdvancePaymentModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                        )
+                                    }
+                                }
+                            },
+                            onEditAmount = {
+                                if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
+                                    creditCardUi.invoiceUi?.let {
+                                        modalManager.show(EditInvoiceBalanceModal(initialInvoice = it.invoice))
+                                    }
+                                }
+                            },
+                        ),
+                    )
+                }
+
+                if (component.creditCards.size > 1) {
+                    PageIndicator(
+                        count = component.creditCards.size,
+                        current = pagerState.currentPage,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         }
     }
 }
@@ -1175,6 +1195,69 @@ private fun DashboardAccountsRow(
 }
 
 @Composable
+private fun DashboardCreditCardsEmptyCard(
+    onCreateCard: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surfaceContainer,
+            contentColor = colorScheme.onSurface,
+        ),
+        shape = RoundedCornerShape(20.dp),
+        modifier = modifier,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+        ) {
+            Surface(
+                color = colorScheme.primary.copy(alpha = 0.12f),
+                contentColor = colorScheme.primary,
+                shape = CircleShape,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CreditCard,
+                    contentDescription = null,
+                    modifier = Modifier.padding(14.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(Res.string.credit_cards_empty),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(Res.string.dashboard_credit_cards_empty_state),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = onCreateCard,
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = stringResource(Res.string.credit_cards_create))
+            }
+        }
+    }
+}
+
+@Composable
 private fun DashboardAddAccountCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -1390,9 +1473,24 @@ private fun CreditCardsPagerConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
+    val showEmptyState = config[DashboardComponentConfig.SHOW_EMPTY_STATE] == "true"
     val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
         ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
         ?: emptySet()
+
+    ListItem(
+        headlineContent = { Text(stringResource(Res.string.component_config_show_empty_state)) },
+        trailingContent = {
+            Switch(
+                checked = showEmptyState,
+                onCheckedChange = { enabled ->
+                    onConfigChange(config.toMutableMap().apply {
+                        put(DashboardComponentConfig.SHOW_EMPTY_STATE, enabled.toString())
+                    })
+                },
+            )
+        },
+    )
 
     creditCards.forEach { card ->
         val included = card.id !in excludedIds

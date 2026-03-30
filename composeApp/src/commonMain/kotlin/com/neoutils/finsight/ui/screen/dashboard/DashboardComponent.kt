@@ -64,13 +64,19 @@ sealed interface DashboardComponent {
         }
     }
 
-    data class CreditCardsPager(
-        val creditCards: List<CreditCardUi>,
-        override val key: String = KEY,
-    ) : DashboardComponent {
+    sealed interface CreditCardsPager : DashboardComponent {
+        override val key: String
+            get() = KEY
+
         companion object {
             const val KEY = "credit_cards_pager"
         }
+
+        data class Content(
+            val creditCards: List<CreditCardUi>,
+        ) : CreditCardsPager
+
+        data object Empty : CreditCardsPager
     }
 
     data class SpendingPager(
@@ -346,7 +352,7 @@ private object DashboardComponentPreviewFactory {
         ),
     )
 
-    val creditCardsPager = DashboardComponent.CreditCardsPager(
+    val creditCardsPager = DashboardComponent.CreditCardsPager.Content(
         creditCards = listOf(
             CreditCardUi(
                 creditCard = CreditCard(

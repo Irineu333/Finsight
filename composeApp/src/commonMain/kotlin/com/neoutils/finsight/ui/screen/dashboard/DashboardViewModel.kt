@@ -41,13 +41,8 @@ class DashboardViewModel(
         .observeUnpaidInvoices()
         .map { invoices -> invoices.associateBy { it.creditCard.id } }
 
-    private val preferences: StateFlow<List<DashboardComponentPreference>> =
+    private val preferences: StateFlow<List<DashboardComponentPreference>?> =
         dashboardPreferencesRepository.observe()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue = emptyList(),
-            )
 
     private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
@@ -62,7 +57,7 @@ class DashboardViewModel(
         preferences,
     ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val effectivePrefs = preferences.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
         val configByKey = effectivePrefs.associate { it.key to it.config }
 
         val allComponents = dashboardComponentsBuilder.build(
@@ -201,9 +196,9 @@ class DashboardViewModel(
 
     private fun buildEditingState(
         viewing: DashboardUiState.Viewing,
-        savedPrefs: List<DashboardComponentPreference>,
+        savedPrefs: List<DashboardComponentPreference>?,
     ): DashboardUiState.Editing {
-        val effectivePrefs = savedPrefs.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
         val presentKeys = effectivePrefs.map { it.key }.toSet()
 
         val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->

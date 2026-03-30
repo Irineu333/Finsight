@@ -1227,15 +1227,17 @@ class DashboardComponentOptionsModal(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
         ) {
             Text(
                 text = stringUiText(item.title),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(vertical = 16.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
             )
-            HorizontalDivider()
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
             ListItem(

@@ -31,12 +31,10 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,6 +52,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -257,7 +257,9 @@ private fun DashboardEditingContent(
                                     modalManager.show(
                                         DashboardComponentOptionsModal(
                                             item = entry.item,
-                                            onAction = onAction
+                                            accounts = state.accounts,
+                                            creditCards = state.creditCards,
+                                            onAction = onAction,
                                         )
                                     )
                                 }
@@ -366,18 +368,22 @@ private fun DashboardViewingContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         state.components.forEach { component ->
+            val config = state.configByKey[component.key] ?: emptyMap()
+            val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
             val variant = component.toViewingVariant(
                 openTransactions = openTransactions,
                 onOpenQuickAction = onOpenQuickAction,
             )
             item(key = component.key) {
-                DashboardComponentContent(
-                    variant = variant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                        .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
-                )
+                Column(modifier = Modifier.animateItem()) {
+                    if (topSpacing) Spacer(modifier = Modifier.height(16.dp))
+                    DashboardComponentContent(
+                        variant = variant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
+                    )
+                }
             }
         }
     }
@@ -1204,12 +1210,19 @@ private fun PageIndicator(
 
 class DashboardComponentOptionsModal(
     private val item: DashboardEditItem,
+    private val accounts: List<Account>,
+    private val creditCards: List<CreditCard>,
     private val onAction: (DashboardAction) -> Unit,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val modalManager = LocalModalManager.current
+        var config by remember { mutableStateOf(item.config) }
+
+        fun updateConfig(newConfig: Map<String, String>) {
+            config = newConfig
+            onAction(DashboardAction.UpdateComponentConfig(item.key, newConfig))
+        }
 
         Column(
             modifier = Modifier
@@ -1223,19 +1236,258 @@ class DashboardComponentOptionsModal(
                 modifier = Modifier.padding(vertical = 16.dp),
             )
             HorizontalDivider()
+
+            val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
             ListItem(
-                headlineContent = { Text(stringResource(Res.string.remove_component)) },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Rounded.Delete,
-                        contentDescription = null,
+                headlineContent = { Text(stringResource(Res.string.component_config_top_spacing)) },
+                leadingContent = { Icon(Icons.Rounded.SpaceBar, contentDescription = null) },
+                trailingContent = {
+                    Switch(
+                        checked = topSpacing,
+                        onCheckedChange = { enabled ->
+                            updateConfig(config.toMutableMap().apply {
+                                put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
+                            })
+                        },
                     )
                 },
-                modifier = Modifier.clickable {
-                    onAction(DashboardAction.RemoveComponent(item.key))
-                    modalManager.dismiss()
-                },
             )
+
+            when (item.key) {
+                DashboardComponent.AccountsOverview.KEY -> {
+                    HorizontalDivider()
+                    AccountsOverviewConfigContent(
+                        accounts = accounts,
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.CreditCardsPager.KEY -> {
+                    HorizontalDivider()
+                    CreditCardsPagerConfigContent(
+                        creditCards = creditCards,
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.SpendingPager.KEY -> {
+                    HorizontalDivider()
+                    SpendingPagerConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.PendingRecurring.KEY -> {
+                    HorizontalDivider()
+                    PendingRecurringConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.Recents.KEY -> {
+                    HorizontalDivider()
+                    RecentsConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.QuickActions.KEY -> {
+                    HorizontalDivider()
+                    QuickActionsConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun AccountsOverviewConfigContent(
+    accounts: List<Account>,
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
+        ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
+        ?: emptySet()
+
+    accounts.forEach { account ->
+        val included = account.id !in excludedIds
+        ListItem(
+            headlineContent = { Text(account.name) },
+            trailingContent = {
+                Switch(
+                    checked = included,
+                    onCheckedChange = { checked ->
+                        val newExcluded = if (checked) excludedIds - account.id else excludedIds + account.id
+                        onConfigChange(config.toMutableMap().apply {
+                            put(AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS, newExcluded.joinToString(","))
+                        })
+                    },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun CreditCardsPagerConfigContent(
+    creditCards: List<CreditCard>,
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
+        ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
+        ?: emptySet()
+
+    creditCards.forEach { card ->
+        val included = card.id !in excludedIds
+        ListItem(
+            headlineContent = { Text(card.name) },
+            trailingContent = {
+                Switch(
+                    checked = included,
+                    onCheckedChange = { checked ->
+                        val newExcluded = if (checked) excludedIds - card.id else excludedIds + card.id
+                        onConfigChange(config.toMutableMap().apply {
+                            put(CreditCardsPagerConfig.EXCLUDED_CARD_IDS, newExcluded.joinToString(","))
+                        })
+                    },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun SpendingPagerConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val options = listOf(3, 5, 10, -1)
+    val current = config[SpendingPagerConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
+
+    ListItem(
+        headlineContent = { Text(stringResource(Res.string.component_config_max_categories)) },
+        trailingContent = {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
+                options.forEachIndexed { index, value ->
+                    SegmentedButton(
+                        selected = current == value,
+                        onClick = {
+                            onConfigChange(config.toMutableMap().apply {
+                                put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
+                            })
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        icon = {},
+                    ) {
+                        Text(
+                            text = if (value == -1) stringResource(Res.string.component_config_all) else value.toString(),
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun PendingRecurringConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val options = listOf(7, 14, 30)
+    val current = config[PendingRecurringConfig.DAYS_AHEAD]?.toIntOrNull()
+        ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
+
+    ListItem(
+        headlineContent = { Text(stringResource(Res.string.component_config_days_ahead)) },
+        trailingContent = {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
+                options.forEachIndexed { index, value ->
+                    SegmentedButton(
+                        selected = current == value,
+                        onClick = {
+                            onConfigChange(config.toMutableMap().apply {
+                                put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
+                            })
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        icon = {},
+                    ) {
+                        Text(text = "$value", fontSize = 12.sp)
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun RecentsConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val options = listOf(4, 6, 8, 10)
+    val current = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
+
+    ListItem(
+        headlineContent = { Text(stringResource(Res.string.component_config_count)) },
+        trailingContent = {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
+                options.forEachIndexed { index, value ->
+                    SegmentedButton(
+                        selected = current == value,
+                        onClick = {
+                            onConfigChange(config.toMutableMap().apply {
+                                put(RecentsConfig.COUNT, value.toString())
+                            })
+                        },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        icon = {},
+                    ) {
+                        Text(text = "$value", fontSize = 12.sp)
+                    }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun QuickActionsConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
+        ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
+    val visibleCount = QuickActionType.entries.count { it.name !in hiddenActions }
+
+    QuickActionType.entries.forEach { action ->
+        val isVisible = action.name !in hiddenActions
+        ListItem(
+            headlineContent = { Text(stringUiText(action.title)) },
+            trailingContent = {
+                Switch(
+                    checked = isVisible,
+                    enabled = !isVisible || visibleCount > 1,
+                    onCheckedChange = { checked ->
+                        val newHidden = if (checked) hiddenActions - action.name else hiddenActions + action.name
+                        onConfigChange(config.toMutableMap().apply {
+                            put(QuickActionsConfig.HIDDEN_ACTIONS, newHidden.joinToString(","))
+                        })
+                    },
+                )
+            },
+        )
     }
 }

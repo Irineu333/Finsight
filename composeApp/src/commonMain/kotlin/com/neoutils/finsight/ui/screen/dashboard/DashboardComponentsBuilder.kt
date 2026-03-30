@@ -13,12 +13,14 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
+import kotlinx.datetime.yearMonth
 
 data class DashboardComponentsInput(
     val operations: List<Operation>,
@@ -30,6 +32,7 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
+    val configByKey: Map<String, Map<String, String>> = emptyMap(),
 )
 
 class DashboardComponentsBuilder(
@@ -48,16 +51,19 @@ class DashboardComponentsBuilder(
             occurrences = input.occurrences,
             today = input.today,
         )
+
+        fun configFor(key: String) = input.configByKey[key] ?: emptyMap()
+
         return listOfNotNull(
             totalBalance(input, allTransactions),
             concreteBalanceStats(input),
             pendingBalanceStats(pendingRecurring),
-            accountsOverview(input, allTransactions),
-            creditCardsPager(input),
-            spendingPager(input, allTransactions),
-            pendingRecurring(pendingRecurring),
-            recents(input),
-            quickActions(),
+            accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
+            creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
+            spendingPager(input, allTransactions, configFor(DashboardComponent.SpendingPager.KEY)),
+            pendingRecurring(pendingRecurring, input, configFor(DashboardComponent.PendingRecurring.KEY)),
+            recents(input, configFor(DashboardComponent.Recents.KEY)),
+            quickActions(configFor(DashboardComponent.QuickActions.KEY)),
         )
     }
 
@@ -106,41 +112,53 @@ class DashboardComponentsBuilder(
     private fun accountsOverview(
         input: DashboardComponentsInput,
         allTransactions: List<Transaction>,
+        config: Map<String, String>,
     ): DashboardComponent.AccountsOverview? {
-        val accountsUi = input.accounts.map { account ->
-            val accountTransactions = allTransactions.filter { it.account?.id == account.id }
-            val balance = accountTransactions.sumOf { it.signedImpact() }
-            DashboardAccountUi(
-                account = account,
-                balance = balance,
-            )
-        }
+        val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
+            ?.split(",")
+            ?.filter { it.isNotEmpty() }
+            ?.mapNotNull { it.toLongOrNull() }
+            ?.toSet() ?: emptySet()
+
+        val accountsUi = input.accounts
+            .filter { it.id !in excludedIds }
+            .map { account ->
+                val accountTransactions = allTransactions.filter { it.account?.id == account.id }
+                val balance = accountTransactions.sumOf { it.signedImpact() }
+                DashboardAccountUi(account = account, balance = balance)
+            }
 
         return if (accountsUi.size > 1) {
-            DashboardComponent.AccountsOverview(
-                accounts = accountsUi,
-            )
+            DashboardComponent.AccountsOverview(accounts = accountsUi)
         } else {
             null
         }
     }
 
-    private suspend fun creditCardsPager(input: DashboardComponentsInput): DashboardComponent.CreditCardsPager? {
+    private suspend fun creditCardsPager(
+        input: DashboardComponentsInput,
+        config: Map<String, String>,
+    ): DashboardComponent.CreditCardsPager? {
         if (input.creditCards.isEmpty()) return null
 
-        val creditCardsWithBills = input.creditCards.map { creditCard ->
-            val invoice = input.invoicesByCreditCardId[creditCard.id]
+        val excludedIds = config[CreditCardsPagerConfig.EXCLUDED_CARD_IDS]
+            ?.split(",")
+            ?.filter { it.isNotEmpty() }
+            ?.mapNotNull { it.toLongOrNull() }
+            ?.toSet() ?: emptySet()
 
-            CreditCardUi(
-                creditCard = creditCard,
-                invoiceUi = invoice?.let { invoiceUiMapper.toUi(invoice = it) },
-            )
-        }
+        val creditCardsWithBills = input.creditCards
+            .filter { it.id !in excludedIds }
+            .map { creditCard ->
+                val invoice = input.invoicesByCreditCardId[creditCard.id]
+                CreditCardUi(
+                    creditCard = creditCard,
+                    invoiceUi = invoice?.let { invoiceUiMapper.toUi(invoice = it) },
+                )
+            }
 
         return if (creditCardsWithBills.isNotEmpty()) {
-            DashboardComponent.CreditCardsPager(
-                creditCards = creditCardsWithBills,
-            )
+            DashboardComponent.CreditCardsPager(creditCards = creditCardsWithBills)
         } else {
             null
         }
@@ -149,11 +167,16 @@ class DashboardComponentsBuilder(
     private fun spendingPager(
         input: DashboardComponentsInput,
         allTransactions: List<Transaction>,
+        config: Map<String, String>,
     ): DashboardComponent.SpendingPager? {
+        val maxCategories = config[SpendingPagerConfig.MAX_CATEGORIES]
+            ?.toIntOrNull() ?: SpendingPagerConfig.ALL.toInt()
+
         val categorySpending = calculateCategorySpendingUseCase(
             transactions = allTransactions,
             forYearMonth = input.targetMonth,
-        )
+        ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
+
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = input.budgets,
             transactions = allTransactions,
@@ -171,44 +194,60 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun pendingRecurring(pendingRecurring: List<Recurring>): DashboardComponent.PendingRecurring? {
-        return if (pendingRecurring.isNotEmpty()) {
-            DashboardComponent.PendingRecurring(
-                recurringList = pendingRecurring,
-            )
+    private fun pendingRecurring(
+        pendingRecurring: List<Recurring>,
+        input: DashboardComponentsInput,
+        config: Map<String, String>,
+    ): DashboardComponent.PendingRecurring? {
+        val daysAhead = config[PendingRecurringConfig.DAYS_AHEAD]
+            ?.toIntOrNull() ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
+
+        val filtered = pendingRecurring.filter { recurring ->
+            val effectiveDay = input.today.yearMonth.effectiveDay(recurring.dayOfMonth)
+            input.today.day - effectiveDay <= daysAhead
+        }
+
+        return if (filtered.isNotEmpty()) {
+            DashboardComponent.PendingRecurring(recurringList = filtered)
         } else {
             null
         }
     }
 
-    private fun recents(input: DashboardComponentsInput): DashboardComponent.Recents? {
+    private fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents? {
+        val count = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
         val presentOperations = input.operations.filter { it.date <= input.today }
         val recentOperations = presentOperations
             .sortedByDescending { it.date }
-            .take(4)
+            .take(count)
 
         return if (recentOperations.isNotEmpty()) {
             DashboardComponent.Recents(
                 operations = recentOperations,
-                hasMore = presentOperations.size > 3,
+                hasMore = presentOperations.size > count,
             )
         } else {
             null
         }
     }
 
-    private fun quickActions(): DashboardComponent.QuickActions {
-        return DashboardComponent.QuickActions(
-            actions = listOfNotNull(
-                QuickActionType.BUDGETS,
-                QuickActionType.CATEGORIES,
-                QuickActionType.CREDIT_CARDS,
-                QuickActionType.ACCOUNTS,
-                QuickActionType.RECURRING,
-                QuickActionType.REPORTS,
-                QuickActionType.INSTALLMENTS,
-                QuickActionType.SUPPORT.takeUnless { isDesktop },
-            ),
+    private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions {
+        val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
+            ?.split(",")
+            ?.filter { it.isNotEmpty() }
+            ?.toSet() ?: emptySet()
+
+        val allActions = listOfNotNull(
+            QuickActionType.BUDGETS,
+            QuickActionType.CATEGORIES,
+            QuickActionType.CREDIT_CARDS,
+            QuickActionType.ACCOUNTS,
+            QuickActionType.RECURRING,
+            QuickActionType.REPORTS,
+            QuickActionType.INSTALLMENTS,
+            QuickActionType.SUPPORT.takeUnless { isDesktop },
         )
+
+        return DashboardComponent.QuickActions(actions = allActions.filter { it.name !in hiddenActions })
     }
 }

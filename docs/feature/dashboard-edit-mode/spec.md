@@ -171,12 +171,14 @@ A preferência armazena os componentes **visíveis** em ordem, e o `config` guar
 ```kotlin
 // domain/repository/IDashboardPreferencesRepository.kt
 interface IDashboardPreferencesRepository {
-    fun observe(): Flow<List<DashboardComponentPreference>>
+    fun observe(): StateFlow<List<DashboardComponentPreference>?>
     suspend fun save(preferences: List<DashboardComponentPreference>)
 }
 ```
 
-Sem `currentPreferences()` síncrono — o ViewModel mantém um `StateFlow<List<DashboardComponentPreference>>` iniciado com `SharingStarted.Eagerly` e usa `.value` quando precisar do valor atual de forma síncrona.
+Sem `currentPreferences()` síncrono. O próprio repositório expõe um `StateFlow` já carregado e com semântica explícita:
+- `null` = ainda não existe preferência salva (primeira abertura)
+- `emptyList()` = o usuário removeu todos os componentes e confirmou a edição
 
 ---
 
@@ -192,7 +194,7 @@ class DashboardPreferencesRepository(
 
     private val _preferences = MutableStateFlow(load())
 
-    override fun observe(): Flow<List<DashboardComponentPreference>> = _preferences
+    override fun observe(): StateFlow<List<DashboardComponentPreference>?> = _preferences
 
     override suspend fun save(preferences: List<DashboardComponentPreference>) {
         val json = Json.encodeToString(preferences.map { it.toSerializable() })
@@ -200,12 +202,12 @@ class DashboardPreferencesRepository(
         _preferences.value = preferences
     }
 
-    private fun load(): List<DashboardComponentPreference> {
-        val json = settings.getStringOrNull(KEY) ?: return emptyList()
+    private fun load(): List<DashboardComponentPreference>? {
+        val json = settings.getStringOrNull(KEY) ?: return null
         return runCatching {
             Json.decodeFromString<List<SerializablePreference>>(json)
                 .map { it.toDomain() }
-        }.getOrDefault(emptyList())
+        }.getOrNull()
     }
 
     @Serializable
@@ -220,6 +222,8 @@ class DashboardPreferencesRepository(
     }
 }
 ```
+
+Essa distinção entre `null` e lista vazia evita ambiguidade entre "primeira abertura" e "dashboard vazia salva pelo usuário".
 
 ---
 
@@ -332,7 +336,7 @@ sealed class DashboardAction {
 
 ### 7.5 `DashboardViewModel` — novas responsabilidades
 
-`_editingState` é um `MutableStateFlow<DashboardUiState.Editing?>` separado que, quando não-nulo, tem prioridade sobre o estado reativo dos repositórios. Isso congela a UI durante a edição sem cancelar os flows de dados.
+`_editingState` é um `MutableStateFlow<DashboardUiState.Editing?>` separado que, quando não-nulo, tem prioridade sobre o estado reativo dos repositórios. Isso congela a UI durante a edição sem cancelar os flows de dados. As preferências da dashboard usam semântica tri-state: `null` para primeira abertura, lista preenchida para composição salva, `emptyList()` para dashboard vazia salva.
 
 ```kotlin
 class DashboardViewModel(
@@ -341,11 +345,8 @@ class DashboardViewModel(
     private val dashboardComponentsBuilder: DashboardComponentsBuilder,
 ) : ViewModel() {
 
-    // Preferences como StateFlow Eagerly — já carregado antes do usuário tocar em editar,
-    // eliminando a necessidade de criar nova subscrição em enterEditMode()
-    private val preferences: StateFlow<List<DashboardComponentPreference>> =
+    private val preferences: StateFlow<List<DashboardComponentPreference>?> =
         dashboardPreferencesRepository.observe()
-            .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     // Editing state — quando não-nulo, sobrescreve o Viewing reativo
     private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
@@ -355,7 +356,8 @@ class DashboardViewModel(
         preferences,  // usa o StateFlow já ativo
         // ... demais flows de repositórios ...
     ) { preferences, /* ... */ ->
-        val ordered = applyPreferences(preferences, builtComponents)
+        val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
+        val ordered = applyPreferences(effectivePrefs, builtComponents)
         DashboardUiState.Viewing(yearMonth = targetMonth, components = ordered)
     }
 
@@ -379,7 +381,6 @@ class DashboardViewModel(
         is UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
     }
 
-    // Síncrono — preferences.value está sempre disponível via StateFlow Eagerly.
     private fun enterEditMode() {
         val current = uiState.value as? DashboardUiState.Viewing ?: return
         _editingState.value = buildEditingState(current, preferences.value)
@@ -437,14 +438,13 @@ class DashboardViewModel(
     //
     // A fonte de verdade é sempre o registry/preferências — nunca o viewing.components,
     // que está filtrado por dados e não reflete a intenção do usuário.
+    // null        = primeira abertura, usa defaults do registry
+    // emptyList() = dashboard vazia salva pelo usuário
     private fun buildEditingState(
         viewing: DashboardUiState.Viewing,
-        savedPrefs: List<DashboardComponentPreference>,
+        savedPrefs: List<DashboardComponentPreference>?,
     ): DashboardUiState.Editing {
-        // Sem prefs salvas → usa defaults do registry (primeira abertura)
-        // Com prefs salvas → usa a ordem e composição persistidas
-        // Mesma lógica em ambos os casos: items = prefs ordenadas, available = resto do registry
-        val effectivePrefs = savedPrefs.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
         val presentKeys = effectivePrefs.map { it.key }.toSet()
 
         val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
@@ -474,7 +474,6 @@ class DashboardViewModel(
         preferences: List<DashboardComponentPreference>,
         all: List<DashboardComponent>,
     ): List<DashboardComponent> {
-        if (preferences.isEmpty()) return all
         val byKey = all.associateBy { it.key }
         return preferences.sortedBy { it.position }.mapNotNull { byKey[it.key] }
     }
@@ -1206,8 +1205,9 @@ Esta feature não é coberta por testes unitários. A qualidade é validada excl
 
 | Cenário | Comportamento |
 |---------|--------------|
-| Primeira abertura | Usa `DashboardComponentRegistry.defaultPreferences()` |
+| Primeira abertura | `observe()` retorna `null`, e o ViewModel usa `DashboardComponentRegistry.defaultPreferences()` |
 | Preferências salvas | Aplica ordem e filtra componentes ausentes |
+| Dashboard esvaziada pelo usuário | Persiste `[]` e renderiza sem componentes |
 | Novo componente adicionado no app (futuro) | Aparece no final da lista por ser ausente das preferências |
 | Componente removido do app (futuro) | Ignorado silenciosamente ao carregar |
 

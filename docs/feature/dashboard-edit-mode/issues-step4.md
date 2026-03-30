@@ -39,4 +39,46 @@ val ordered = applyPreferences(effectivePrefs, allComponents)
 O fallback `if (preferences.isEmpty()) return all` em `applyPreferences` foi removido por ser dead code.
 
 **Observação sobre recorrência:**
-Sempre que um estado inicial é definido em múltiplos lugares (`defaultPreferences()` no editing, `if (isEmpty) return all` no viewing), há risco de divergência silenciosa. A regra é: um único lugar define o estado padrão e todos os outros o leem via `effectivePrefs` (ou equivalente). Não inicializar no repositório foi uma escolha deliberada para evitar double-emit na inicialização do `StateFlow.Eagerly` (que causaria flash visual).
+Sempre que um estado inicial é definido em múltiplos lugares (`defaultPreferences()` no editing, `if (isEmpty) return all` no viewing), há risco de divergência silenciosa. A regra é: um único lugar define o estado padrão e todos os outros o leem via `effectivePrefs` (ou equivalente). A solução evoluiu depois para distinguir explicitamente `null` (primeira abertura) de `emptyList()` (dashboard vazia salva), removendo a ambiguidade sem precisar de fallback por lista vazia.
+
+---
+
+## Issue 2 — Remover todos os componentes resetava a dashboard para o padrão
+
+**Severidade:** Alta — resolvida
+
+**Descrição:**
+Ao remover todos os componentes da dashboard e confirmar a edição, a próxima renderização voltava para a composição padrão em vez de manter a dashboard vazia.
+
+**Causa raiz:**
+O sistema tratava `emptyList()` com dois significados incompatíveis:
+
+1. **Primeira abertura sem preferências salvas**
+2. **Dashboard intencionalmente vazia após o usuário remover tudo**
+
+Como o `DashboardViewModel` fazia fallback com:
+
+```kotlin
+val effectivePrefs = preferences.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+```
+
+qualquer lista vazia era reinterpretada como "usar defaults", inclusive a lista vazia persistida após o usuário remover todos os componentes.
+
+**Correção:**
+Mudar o contrato do repositório para expor `StateFlow<List<DashboardComponentPreference>?>`, com semântica explícita:
+
+- `null` = nenhuma preferência salva ainda
+- `emptyList()` = dashboard vazia salva pelo usuário
+
+Com isso, o ViewModel passa a fazer fallback apenas para `null`:
+
+```kotlin
+val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
+```
+
+e o `buildEditingState` usa a mesma regra.
+
+**Resultado:**
+- Primeira abertura continua exibindo a dashboard padrão
+- Dashboard vazia permanece vazia após confirmar a remoção de todos os componentes
+- O modo edição e o modo visualização passam a compartilhar a mesma semântica de estado

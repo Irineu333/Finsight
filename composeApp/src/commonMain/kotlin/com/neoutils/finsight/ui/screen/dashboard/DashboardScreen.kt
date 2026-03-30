@@ -1374,30 +1374,36 @@ private fun SpendingPagerConfigContent(
     val options = listOf(3, 5, 10, -1)
     val current = config[SpendingPagerConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
 
-    ListItem(
-        headlineContent = { Text(stringResource(Res.string.component_config_max_categories)) },
-        trailingContent = {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
-                options.forEachIndexed { index, value ->
-                    SegmentedButton(
-                        selected = current == value,
-                        onClick = {
-                            onConfigChange(config.toMutableMap().apply {
-                                put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
-                            })
-                        },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                        icon = {},
-                    ) {
-                        Text(
-                            text = if (value == -1) stringResource(Res.string.component_config_all) else value.toString(),
-                            fontSize = 12.sp,
-                        )
-                    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.component_config_max_categories),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, value ->
+                SegmentedButton(
+                    selected = current == value,
+                    onClick = {
+                        onConfigChange(config.toMutableMap().apply {
+                            put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
+                        })
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    icon = {},
+                ) {
+                    Text(
+                        text = if (value == -1) stringResource(Res.string.component_config_all) else value.toString(),
+                        fontSize = 12.sp,
+                    )
                 }
             }
-        },
-    )
+        }
+    }
 }
 
 @Composable
@@ -1409,27 +1415,33 @@ private fun PendingRecurringConfigContent(
     val current = config[PendingRecurringConfig.DAYS_AHEAD]?.toIntOrNull()
         ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
 
-    ListItem(
-        headlineContent = { Text(stringResource(Res.string.component_config_days_ahead)) },
-        trailingContent = {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
-                options.forEachIndexed { index, value ->
-                    SegmentedButton(
-                        selected = current == value,
-                        onClick = {
-                            onConfigChange(config.toMutableMap().apply {
-                                put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
-                            })
-                        },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                        icon = {},
-                    ) {
-                        Text(text = "$value", fontSize = 12.sp)
-                    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.component_config_days_ahead),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, value ->
+                SegmentedButton(
+                    selected = current == value,
+                    onClick = {
+                        onConfigChange(config.toMutableMap().apply {
+                            put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
+                        })
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    icon = {},
+                ) {
+                    Text(text = "$value", fontSize = 12.sp)
                 }
             }
-        },
-    )
+        }
+    }
 }
 
 @Composable
@@ -1440,27 +1452,33 @@ private fun RecentsConfigContent(
     val options = listOf(4, 6, 8, 10)
     val current = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
 
-    ListItem(
-        headlineContent = { Text(stringResource(Res.string.component_config_count)) },
-        trailingContent = {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.height(32.dp)) {
-                options.forEachIndexed { index, value ->
-                    SegmentedButton(
-                        selected = current == value,
-                        onClick = {
-                            onConfigChange(config.toMutableMap().apply {
-                                put(RecentsConfig.COUNT, value.toString())
-                            })
-                        },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                        icon = {},
-                    ) {
-                        Text(text = "$value", fontSize = 12.sp)
-                    }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.component_config_count),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, value ->
+                SegmentedButton(
+                    selected = current == value,
+                    onClick = {
+                        onConfigChange(config.toMutableMap().apply {
+                            put(RecentsConfig.COUNT, value.toString())
+                        })
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    icon = {},
+                ) {
+                    Text(text = "$value", fontSize = 12.sp)
                 }
             }
-        },
-    )
+        }
+    }
 }
 
 @Composable

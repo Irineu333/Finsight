@@ -33,8 +33,24 @@ object DashboardComponentRegistry {
         DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     8),
     )
 
+    private val defaultTopSpacingKeys = setOf(
+        DashboardComponent.AccountsOverview.KEY,
+        DashboardComponent.CreditCardsPager.KEY,
+        DashboardComponent.SpendingPager.KEY,
+        DashboardComponent.PendingRecurring.KEY,
+        DashboardComponent.Recents.KEY,
+        DashboardComponent.QuickActions.KEY,
+    )
+
     fun defaultPreferences(): List<DashboardComponentPreference> =
-        entries.map { DashboardComponentPreference(it.key, it.defaultPosition) }
+        entries.map { entry ->
+            val config = if (entry.key in defaultTopSpacingKeys) {
+                mapOf(DashboardComponentConfig.TOP_SPACING to "true")
+            } else {
+                emptyMap()
+            }
+            DashboardComponentPreference(entry.key, entry.defaultPosition, config)
+        }
 
     fun titleFor(key: String): UiText =
         entries.find { it.key == key }?.title ?: UiText.Raw(key)

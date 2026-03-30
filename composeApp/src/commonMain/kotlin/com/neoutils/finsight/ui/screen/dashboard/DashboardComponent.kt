@@ -107,7 +107,7 @@ sealed interface DashboardComponent {
         override val key: String = KEY,
     ) : DashboardComponent {
         companion object {
-            const val KEY = "quick_actions_"
+            const val KEY = "quick_actions"
         }
     }
 }

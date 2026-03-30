@@ -42,24 +42,33 @@ class DashboardComponentsBuilder(
 ) {
 
     suspend fun build(input: DashboardComponentsInput): List<DashboardComponent> {
+        val allTransactions = input.operations.flatMap { it.transactions }
+        val pendingRecurring = getPendingRecurringUseCase(
+            recurringList = input.recurringList,
+            occurrences = input.occurrences,
+            today = input.today,
+        )
         return listOfNotNull(
-            totalBalance(input),
+            totalBalance(input, allTransactions),
             concreteBalanceStats(input),
-            pendingBalanceStats(input),
-            accountsOverview(input),
+            pendingBalanceStats(pendingRecurring),
+            accountsOverview(input, allTransactions),
             creditCardsPager(input),
-            spendingPager(input),
-            pendingRecurring(input),
+            spendingPager(input, allTransactions),
+            pendingRecurring(pendingRecurring),
             recents(input),
             quickActions(),
         )
     }
 
-    private fun totalBalance(input: DashboardComponentsInput): DashboardComponent.TotalBalance {
+    private fun totalBalance(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+    ): DashboardComponent.TotalBalance {
         return DashboardComponent.TotalBalance(
             amount = calculateBalanceUseCase(
                 target = input.targetMonth,
-                transactions = allTransactions(input),
+                transactions = allTransactions,
             ),
         )
     }
@@ -80,12 +89,7 @@ class DashboardComponentsBuilder(
         )
     }
 
-    private fun pendingBalanceStats(input: DashboardComponentsInput): DashboardComponent.PendingBalanceStats? {
-        val pendingRecurring = getPendingRecurringUseCase(
-            recurringList = input.recurringList,
-            occurrences = input.occurrences,
-            today = input.today,
-        )
+    private fun pendingBalanceStats(pendingRecurring: List<Recurring>): DashboardComponent.PendingBalanceStats? {
         val pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount }
         val pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount }
 
@@ -99,10 +103,12 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun accountsOverview(input: DashboardComponentsInput): DashboardComponent.AccountsOverview? {
-        val transactions = allTransactions(input)
+    private fun accountsOverview(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+    ): DashboardComponent.AccountsOverview? {
         val accountsUi = input.accounts.map { account ->
-            val accountTransactions = transactions.filter { it.account?.id == account.id }
+            val accountTransactions = allTransactions.filter { it.account?.id == account.id }
             val balance = accountTransactions.sumOf { it.signedImpact() }
             DashboardAccountUi(
                 account = account,
@@ -140,15 +146,17 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun spendingPager(input: DashboardComponentsInput): DashboardComponent.SpendingPager? {
-        val transactions = allTransactions(input)
+    private fun spendingPager(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+    ): DashboardComponent.SpendingPager? {
         val categorySpending = calculateCategorySpendingUseCase(
-            transactions = transactions,
+            transactions = allTransactions,
             forYearMonth = input.targetMonth,
         )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = input.budgets,
-            transactions = transactions,
+            transactions = allTransactions,
             recurringList = input.recurringList,
             operations = input.operations,
         )
@@ -163,13 +171,7 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun pendingRecurring(input: DashboardComponentsInput): DashboardComponent.PendingRecurring? {
-        val pendingRecurring = getPendingRecurringUseCase(
-            recurringList = input.recurringList,
-            occurrences = input.occurrences,
-            today = input.today,
-        )
-
+    private fun pendingRecurring(pendingRecurring: List<Recurring>): DashboardComponent.PendingRecurring? {
         return if (pendingRecurring.isNotEmpty()) {
             DashboardComponent.PendingRecurring(
                 recurringList = pendingRecurring,
@@ -208,9 +210,5 @@ class DashboardComponentsBuilder(
                 QuickActionType.SUPPORT.takeUnless { isDesktop },
             ),
         )
-    }
-
-    private fun allTransactions(input: DashboardComponentsInput): List<Transaction> {
-        return input.operations.flatMap { it.transactions }
     }
 }

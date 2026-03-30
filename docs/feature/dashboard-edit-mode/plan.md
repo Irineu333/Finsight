@@ -149,6 +149,19 @@ Etapa 2 aprovada.
 
 ---
 
+## Refatoração pós-Etapa 3 (Implementado)
+
+Melhorias de arquitetura, performance e robustez aplicadas após Etapa 3:
+
+- **Bug corrigido:** `QuickActions.KEY` tinha trailing underscore (`"quick_actions_"` → `"quick_actions"`)
+- **Dead code removido:** `DashboardAction.AdjustBalance` era no-op — removido da sealed class e do ViewModel
+- **Race condition eliminada:** `preferences` agora é um `StateFlow` com `SharingStarted.Eagerly`; `enterEditMode()` tornou-se síncrono via `preferences.value`
+- **Lógica unificada:** `buildEditingState` unificado com `savedPrefs.ifEmpty { defaultPreferences() }` — elimina branch duplicada
+- **Performance:** `allTransactions` e `getPendingRecurringUseCase` computados uma vez por `build()` em vez de 3× e 2×
+- **Constantes extraídas:** `EDIT_SECTION_HEADER_KEY` / `EDIT_AVAILABLE_PLACEHOLDER_KEY` em `DashboardUiState.kt` — eliminam acoplamento por strings literais entre Screen e ViewModel
+
+---
+
 ## Etapa 4 — Configurações de componentes
 
 **Foco:** modal de configuração por componente, com persistência dos configs.

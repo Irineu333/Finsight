@@ -42,6 +42,14 @@ class DashboardViewModel(
         .observeUnpaidInvoices()
         .map { invoices -> invoices.associateBy { it.creditCard.id } }
 
+    private val preferences: StateFlow<List<DashboardComponentPreference>> =
+        dashboardPreferencesRepository.observe()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = emptyList(),
+            )
+
     private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
     private val viewingState: Flow<DashboardUiState> = combine(
@@ -52,7 +60,7 @@ class DashboardViewModel(
         budgetRepository.observeAllBudgets(),
         recurringRepository.observeAllRecurring(),
         recurringOccurrenceRepository.observeAllOccurrences(),
-        dashboardPreferencesRepository.observe(),
+        preferences,
     ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
@@ -96,15 +104,11 @@ class DashboardViewModel(
         is DashboardAction.MoveComponent -> moveComponent(action.fromKey, action.toKey)
         is DashboardAction.RemoveComponent -> removeComponent(action.key)
         is DashboardAction.UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
-        is DashboardAction.AdjustBalance -> Unit
     }
 
     private fun enterEditMode() {
-        viewModelScope.launch {
-            val current = uiState.value as? DashboardUiState.Viewing ?: return@launch
-            val savedPrefs = dashboardPreferencesRepository.observe().first()
-            _editingState.value = buildEditingState(current, savedPrefs)
-        }
+        val current = uiState.value as? DashboardUiState.Viewing ?: return
+        _editingState.value = buildEditingState(current, preferences.value)
     }
 
     private fun cancelEdit() {
@@ -131,7 +135,7 @@ class DashboardViewModel(
         val activeCount = current.items.size
 
         when (toKey) {
-            "section_header", "available_placeholder" -> {
+            EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
                 val fromInActive = fromIndex < activeCount
                 val mutable = allItems.toMutableList()
                 val moved = mutable.removeAt(fromIndex)
@@ -193,30 +197,24 @@ class DashboardViewModel(
         viewing: DashboardUiState.Viewing,
         savedPrefs: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val items: List<DashboardEditItem>
-        val availableItems: List<DashboardEditItem>
+        val effectivePrefs = savedPrefs.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val presentKeys = effectivePrefs.map { it.key }.toSet()
 
-        if (savedPrefs.isEmpty()) {
-            items = DashboardComponentRegistry.entries.mapNotNull { entry ->
-                val preview = DashboardComponentVariant.previewForKey(entry.key) ?: return@mapNotNull null
+        val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
+            val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
+                ?: return@mapNotNull null
+            val preview = DashboardComponentVariant.previewForKey(pref.key)
+                ?: return@mapNotNull null
+            DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
+        }
+
+        val availableItems = DashboardComponentRegistry.entries
+            .filter { it.key !in presentKeys }
+            .mapNotNull { entry ->
+                val preview = DashboardComponentVariant.previewForKey(entry.key)
+                    ?: return@mapNotNull null
                 DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
             }
-            availableItems = emptyList()
-        } else {
-            val presentKeys = savedPrefs.map { it.key }.toSet()
-            items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
-                val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
-                    ?: return@mapNotNull null
-                val preview = DashboardComponentVariant.previewForKey(pref.key) ?: return@mapNotNull null
-                DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
-            }
-            availableItems = DashboardComponentRegistry.entries
-                .filter { it.key !in presentKeys }
-                .mapNotNull { entry ->
-                    val preview = DashboardComponentVariant.previewForKey(entry.key) ?: return@mapNotNull null
-                    DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
-                }
-        }
 
         return DashboardUiState.Editing(
             yearMonth = viewing.yearMonth,

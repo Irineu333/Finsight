@@ -176,7 +176,7 @@ interface IDashboardPreferencesRepository {
 }
 ```
 
-Sem `currentPreferences()` síncrono — o ViewModel usa `first()` quando precisar do valor atual.
+Sem `currentPreferences()` síncrono — o ViewModel mantém um `StateFlow<List<DashboardComponentPreference>>` iniciado com `SharingStarted.Eagerly` e usa `.value` quando precisar do valor atual de forma síncrona.
 
 ---
 
@@ -256,39 +256,24 @@ object DashboardComponentRegistry {
 }
 ```
 
-### 7.2 `DashboardComponentMocks`
+### 7.2 Mocks de preview
 
-Fornece instâncias estáticas de cada componente com dados de exemplo para preview no edit mode.
+Os dados de exemplo para o modo edição **não** estão em um arquivo separado. Vivem em `DashboardComponent.kt` como `private object DashboardComponentPreviewFactory`, e são acessados via `DashboardComponentVariant.previewForKey(key)` que retorna a variante `Preview` pré-populada de cada componente:
 
 ```kotlin
-// ui/screen/dashboard/DashboardComponentMocks.kt
-object DashboardComponentMocks {
-    val totalBalance = DashboardComponent.TotalBalance(amount = 5_450.00)
-    val concreteBalanceStats = DashboardComponent.ConcreteBalanceStats(income = 8_200.00, expense = 2_750.00)
-    val pendingBalanceStats = DashboardComponent.PendingBalanceStats(pendingIncome = 1_200.00, pendingExpense = 350.00)
-    val accountsOverview = DashboardComponent.AccountsOverview(accounts = mockAccounts())
-    val creditCardsPager = DashboardComponent.CreditCardsPager(creditCards = mockCreditCards())
-    val spendingPager = DashboardComponent.SpendingPager(categorySpending = mockSpending(), budgetProgress = mockBudgets())
-    val pendingRecurring = DashboardComponent.PendingRecurring(recurringList = mockRecurring())
-    val recents = DashboardComponent.Recents(operations = mockOperations(), hasMore = true)
-    val quickActions = DashboardComponent.QuickActions(actions = QuickActionType.entries)
-
-    fun forKey(key: String): DashboardComponent? = when (key) {
-        "total_balance"          -> totalBalance
-        "balance_stats_concrete" -> concreteBalanceStats
-        "balance_stats_pending"  -> pendingBalanceStats
-        "accounts_overview"      -> accountsOverview
-        "credit_cards_pager"     -> creditCardsPager
-        "spending_pager"         -> spendingPager
-        "pending_recurring"      -> pendingRecurring
-        "recents"                -> recents
-        "quick_actions"          -> quickActions
-        else                     -> null
+// Em DashboardComponent.kt (companion de DashboardComponentVariant)
+companion object {
+    fun previewForKey(key: String): DashboardComponentVariant? = when (key) {
+        DashboardComponent.TotalBalance.KEY        -> TotalBalance.Preview()
+        DashboardComponent.ConcreteBalanceStats.KEY -> ConcreteBalanceStats.Preview()
+        // ... demais tipos ...
+        DashboardComponent.QuickActions.KEY        -> QuickActions.Preview()
+        else -> null
     }
-
-    // private mock factories...
 }
 ```
+
+Cada `Preview` instancia o componente com `DashboardComponentPreviewFactory` (privado) que contém dados mock realistas.
 
 ### 7.3 `DashboardUiState` — sealed class
 
@@ -318,8 +303,8 @@ sealed class DashboardUiState {
 data class DashboardEditItem(
     val key: String,
     val title: UiText,
+    val preview: DashboardComponentVariant,          // variante Preview do componente — dados mock para renderização
     val config: Map<String, String> = emptyMap(),    // carrega config salvo (para preservar em confirmEdit)
-    val preview: DashboardComponent,                 // instância mock para renderização
 )
 ```
 
@@ -334,9 +319,6 @@ data class DashboardEditItem(
 ```kotlin
 // ui/screen/dashboard/DashboardAction.kt
 sealed class DashboardAction {
-    data class AdjustBalance(val target: Double) : DashboardAction()
-
-    // Edit mode
     data object EnterEditMode : DashboardAction()
     data object ConfirmEdit : DashboardAction()
     data object CancelEdit : DashboardAction()
@@ -346,7 +328,7 @@ sealed class DashboardAction {
 }
 ```
 
-`MoveComponent(fromKey, toKey)` usa chaves string estáveis em vez de índices inteiros. O ViewModel determina o tipo de movimento pelo contexto: se `toKey == "section_header"` ou `"available_placeholder"`, é cruzamento de fronteira; caso contrário, é reordenação interna ou cruzamento via componente adjacente. `RemoveComponent` continua existindo para a ação "Remover" na modal (move o item para `availableItems` sem precisar de drag).
+`MoveComponent(fromKey, toKey)` usa chaves string estáveis em vez de índices inteiros. O ViewModel determina o tipo de movimento pelo contexto: se `toKey == EDIT_SECTION_HEADER_KEY` ou `EDIT_AVAILABLE_PLACEHOLDER_KEY`, é cruzamento de fronteira; caso contrário, é reordenação interna ou cruzamento via componente adjacente. `RemoveComponent` continua existindo para a ação "Remover" na modal (move o item para `availableItems` sem precisar de drag).
 
 ### 7.5 `DashboardViewModel` — novas responsabilidades
 
@@ -359,15 +341,18 @@ class DashboardViewModel(
     private val dashboardComponentsBuilder: DashboardComponentsBuilder,
 ) : ViewModel() {
 
-    // Snapshot para suportar CancelEdit sem re-salvar
-    private var preferencesSnapshot: List<DashboardComponentPreference> = emptyList()
+    // Preferences como StateFlow Eagerly — já carregado antes do usuário tocar em editar,
+    // eliminando a necessidade de criar nova subscrição em enterEditMode()
+    private val preferences: StateFlow<List<DashboardComponentPreference>> =
+        dashboardPreferencesRepository.observe()
+            .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     // Editing state — quando não-nulo, sobrescreve o Viewing reativo
     private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
     // Flow reativo que sempre produz Loading → Viewing
     private val viewingState: Flow<DashboardUiState> = combine(
-        dashboardPreferencesRepository.observe(),
+        preferences,  // usa o StateFlow já ativo
         // ... demais flows de repositórios ...
     ) { preferences, /* ... */ ->
         val ordered = applyPreferences(preferences, builtComponents)
@@ -392,16 +377,12 @@ class DashboardViewModel(
         is MoveComponent         -> moveComponent(action.fromKey, action.toKey)
         is RemoveComponent       -> removeComponent(action.key)
         is UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
-        is AdjustBalance         -> { /* ... existente ... */ }
     }
 
+    // Síncrono — preferences.value está sempre disponível via StateFlow Eagerly.
     private fun enterEditMode() {
-        // Lança coroutine pois precisa do primeiro valor das preferências salvas
-        viewModelScope.launch {
-            val current = uiState.value as? DashboardUiState.Viewing ?: return@launch
-            val savedPrefs = dashboardPreferencesRepository.observe().first()
-            _editingState.value = buildEditingState(current, savedPrefs)
-        }
+        val current = uiState.value as? DashboardUiState.Viewing ?: return
+        _editingState.value = buildEditingState(current, preferences.value)
     }
 
     // cancelEdit NÃO re-salva no repositório — o repositório não foi modificado durante o edit mode.
@@ -460,34 +441,27 @@ class DashboardViewModel(
         viewing: DashboardUiState.Viewing,
         savedPrefs: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val items: List<DashboardEditItem>
-        val availableItems: List<DashboardEditItem>
+        // Sem prefs salvas → usa defaults do registry (primeira abertura)
+        // Com prefs salvas → usa a ordem e composição persistidas
+        // Mesma lógica em ambos os casos: items = prefs ordenadas, available = resto do registry
+        val effectivePrefs = savedPrefs.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val presentKeys = effectivePrefs.map { it.key }.toSet()
 
-        if (savedPrefs.isEmpty()) {
-            // Sem preferências salvas: todos os 9 componentes do registry são exibidos na ordem padrão
-            items = DashboardComponentRegistry.entries.mapNotNull { entry ->
-                DashboardComponentMocks.forKey(entry.key)?.let { mock ->
-                    DashboardEditItem(key = entry.key, title = entry.title, preview = mock)
-                }
-            }
-            availableItems = emptyList()
-        } else {
-            // Com preferências: items = o que está nas prefs (ordem salva); available = o restante do registry
-            val presentKeys = savedPrefs.map { it.key }.toSet()
-            items = savedPrefs.sortedBy { it.position }.mapNotNull { pref ->
-                val entry = DashboardComponentRegistry.entries.find { it.key == pref.key } ?: return@mapNotNull null
-                DashboardComponentMocks.forKey(pref.key)?.let { mock ->
-                    DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = mock)
-                }
-            }
-            availableItems = DashboardComponentRegistry.entries
-                .filter { it.key !in presentKeys }
-                .mapNotNull { entry ->
-                    DashboardComponentMocks.forKey(entry.key)?.let { mock ->
-                        DashboardEditItem(key = entry.key, title = entry.title, preview = mock)
-                    }
-                }
+        val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
+            val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
+                ?: return@mapNotNull null
+            val preview = DashboardComponentVariant.previewForKey(pref.key)
+                ?: return@mapNotNull null
+            DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
         }
+
+        val availableItems = DashboardComponentRegistry.entries
+            .filter { it.key !in presentKeys }
+            .mapNotNull { entry ->
+                val preview = DashboardComponentVariant.previewForKey(entry.key)
+                    ?: return@mapNotNull null
+                DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
+            }
 
         return DashboardUiState.Editing(
             yearMonth = viewing.yearMonth,
@@ -636,22 +610,22 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
 `DashboardComponentContent` é o mesmo switch `when(component)` que já existe no `DashboardViewingContent` — extraído para uma função compartilhada no mesmo arquivo ou em `DashboardComponents.kt`:
 
 ```kotlin
-// Assinatura — mesmo when(component) do DashboardViewingContent, sem lógica adicional
+// Assinatura — when(variant) compartilhado entre Viewing e Editing
 @Composable
 fun DashboardComponentContent(
-    component: DashboardComponent,
-    onAction: (DashboardAction) -> Unit = {},
+    variant: DashboardComponentVariant,
+    modifier: Modifier = Modifier,
 ) {
-    when (component) {
-        is DashboardComponent.TotalBalance        -> TotalBalanceCard(component, onAction)
-        is DashboardComponent.ConcreteBalanceStats -> DashboardConcreteBalanceSection(component, onAction)
+    when (variant) {
+        is DashboardComponentVariant.TotalBalance        -> TotalBalanceCard(variant, modifier)
+        is DashboardComponentVariant.ConcreteBalanceStats -> DashboardConcreteBalanceSection(variant, modifier)
         // ... demais tipos
     }
 }
 ```
 
-Em `DashboardViewingContent`, substituir o `when(component)` inline por `DashboardComponentContent(component, onAction)`.
-Em `DashboardEditItemWrapper`, chamar `DashboardComponentContent(item.preview)` — sem `onAction` (componente frozen).
+Em `DashboardViewingContent`, cada componente é convertido para sua variante `Viewing` via `component.toViewingVariant(...)` antes de chamar `DashboardComponentContent`.
+Em `DashboardEditItemWrapper`, `item.preview` já é uma `DashboardComponentVariant.XxxType.Preview` — chamado diretamente sem callbacks de interação (componente frozen).
 
 **Resolução de conflito de gestos:** `clickable` dispara no tap-up sem movimento; `draggableHandle` só ativa após long press + movimento. Eles coexistem naturalmente sem conflito.
 
@@ -722,38 +696,19 @@ Em V1: toggle "Espaçamento superior" + opção "Remover". As configurações es
 
 ### 8.4 `DashboardEditItemWrapper` — variante inativa
 
-Itens da seção "Disponíveis para adicionar" usam o mesmo `DashboardEditItemWrapper`, mas com `isActive = false`. A variante inativa se diferencia visualmente pelo overlay mais opaco (comunica o estado desativado) e ausência de tap para modal.
+Itens da seção "Disponíveis para adicionar" usam o mesmo `DashboardEditItemWrapper`, mas com `modifier = Modifier.alpha(0.6f)` aplicado externamente no call site (no `DashboardEditingContent`). O callback `onTap` é passado vazio para itens inativos — a verificação de `isActive` ocorre no call site antes de mostrar a modal.
 
 ```kotlin
-@Composable
-fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
-    item: DashboardEditItem,
-    isActive: Boolean = true,
-    onTap: () -> Unit = {},
-) {
-    val overlayAlpha = if (isActive) 0.10f else 0.35f
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = isActive, onClick = onTap)
-            .longPressDraggableHandle(...)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) { /* frozen */ }
-        ) {
-            DashboardComponentContent(component = item.preview)
+// DashboardEditingContent — call site
+DashboardEditItemWrapper(
+    item = entry.item,
+    onTap = {
+        if (entry.isActive) {
+            modalManager.show(DashboardComponentOptionsModal(item = entry.item, onAction = onAction))
         }
-
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = overlayAlpha))
-        )
-    }
-}
+    },
+    modifier = Modifier.alpha(if (entry.isActive) 1f else 0.6f),
+)
 ```
 
 Itens inativos não abrem modal ao tap — o único meio de ativação é arrastar para a seção ativa.
@@ -886,11 +841,15 @@ private sealed interface EditListEntry {
     data object AvailablePlaceholder : EditListEntry
 }
 
+// Constantes definidas em DashboardUiState.kt — acessíveis por Screen e ViewModel no mesmo pacote
+// internal const val EDIT_SECTION_HEADER_KEY = "section_header"
+// internal const val EDIT_AVAILABLE_PLACEHOLDER_KEY = "available_placeholder"
+
 private val EditListEntry.entryKey: String
     get() = when (this) {
-        is EditListEntry.Component    -> item.key
-        EditListEntry.SectionHeader   -> "section_header"
-        EditListEntry.AvailablePlaceholder -> "available_placeholder"
+        is EditListEntry.Component         -> item.key
+        EditListEntry.SectionHeader        -> EDIT_SECTION_HEADER_KEY
+        EditListEntry.AvailablePlaceholder -> EDIT_AVAILABLE_PLACEHOLDER_KEY
     }
 ```
 
@@ -949,7 +908,7 @@ O `AvailablePlaceholder` segue a mesma regra — envolvido em `ReorderableItem` 
 ) { from, to ->
     val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
     val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-    if (fromKey == "section_header" || fromKey == "available_placeholder") return@rememberReorderableLazyListState
+    if (fromKey == EDIT_SECTION_HEADER_KEY || fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY) return@rememberReorderableLazyListState
     onAction(DashboardAction.MoveComponent(fromKey, toKey))
     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 }
@@ -990,7 +949,7 @@ private fun moveComponent(fromKey: String, toKey: String) {
     val activeCount = current.items.size
 
     when (toKey) {
-        "section_header", "available_placeholder" -> {
+        EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
             // Cruzamento de fronteira: inserção na borda da seção de destino
             val fromInActive = fromIndex < activeCount
             val mutable = allItems.toMutableList()
@@ -1043,7 +1002,7 @@ private fun moveComponent(fromKey: String, toKey: String) {
 |---------|-----------|---------|
 | Drag cancela ao cruzar a divisória | `SectionHeader` fora de `ReorderableItem` — biblioteca pula o header, índice esperado diverge do real | Envolver `SectionHeader` em `ReorderableItem(enabled=false)` |
 | Impossível desativar quando seção disponível está vazia | Sem destino de drop abaixo do cabeçalho | Exibir `AvailablePlaceholder` em `ReorderableItem(enabled=false)` quando `availableItems` vazio |
-| Item vai para posição errada ao cruzar seção | Inserção na posição do item de destino em vez da borda da seção | Quando `toKey == "section_header"`, usar inserção de fronteira no ViewModel |
+| Item vai para posição errada ao cruzar seção | Inserção na posição do item de destino em vez da borda da seção | Quando `toKey == EDIT_SECTION_HEADER_KEY`, usar inserção de fronteira no ViewModel |
 | `IndexOutOfBoundsException` no `add` | Remoção de elemento reduz o tamanho antes do `add` | Separar `removeAt` e `add`; usar `.coerceAtMost(mutable.size)` |
 | Drag correto mas com índices stale | Usar `from.index`/`to.index` após re-composição | Usar `from.key`/`to.key` (estável) em vez de índices |
 | Item inativo aparece na seção errada | Dois blocos `items()` separados destroem e recriam `ReorderableItem` ao cruzar seção | Único bloco `items(listEntries)` com `EditListEntry` sealed |

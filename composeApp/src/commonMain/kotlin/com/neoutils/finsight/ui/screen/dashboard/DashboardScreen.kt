@@ -37,21 +37,20 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,7 +82,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -202,8 +200,8 @@ private sealed interface EditListEntry {
 private val EditListEntry.entryKey: String
     get() = when (this) {
         is EditListEntry.Component -> item.key
-        EditListEntry.SectionHeader -> "section_header"
-        EditListEntry.AvailablePlaceholder -> "available_placeholder"
+        EditListEntry.SectionHeader -> EDIT_SECTION_HEADER_KEY
+        EditListEntry.AvailablePlaceholder -> EDIT_AVAILABLE_PLACEHOLDER_KEY
     }
 
 @Composable
@@ -220,7 +218,7 @@ private fun DashboardEditingContent(
     ) { from, to ->
         val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
         val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-        if (fromKey == "section_header" || fromKey == "available_placeholder") return@rememberReorderableLazyListState
+        if (fromKey == EDIT_SECTION_HEADER_KEY || fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY) return@rememberReorderableLazyListState
         onAction(DashboardAction.MoveComponent(fromKey, toKey))
         haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
@@ -254,12 +252,17 @@ private fun DashboardEditingContent(
                     ReorderableItem(reorderState, key = entry.item.key) {
                         DashboardEditItemWrapper(
                             item = entry.item,
-                            isActive = entry.isActive,
                             onTap = {
-                                modalManager.show(
-                                    DashboardComponentOptionsModal(item = entry.item, onAction = onAction)
-                                )
+                                if (entry.isActive) {
+                                    modalManager.show(
+                                        DashboardComponentOptionsModal(
+                                            item = entry.item,
+                                            onAction = onAction
+                                        )
+                                    )
+                                }
                             },
+                            modifier = Modifier.alpha(alpha = if (entry.isActive) 1f else 0.6f)
                         )
                     }
                 }
@@ -294,13 +297,12 @@ private fun DashboardEditingContent(
 @Composable
 private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
-    isActive: Boolean = true,
+    modifier: Modifier = Modifier,
     onTap: () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
-    val overlayAlpha = if (isActive) 0.10f else 0.35f
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = modifier.fillMaxWidth()) {
         DashboardComponentContent(
             variant = item.preview,
             modifier = Modifier.fillMaxWidth(),
@@ -309,12 +311,11 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clickable(enabled = isActive, onClick = onTap)
+                .clickable(onClick = onTap)
                 .longPressDraggableHandle(
                     onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
                     onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
-                )
-                .background(colorScheme.surface.copy(alpha = overlayAlpha)),
+                ),
         )
     }
 }

@@ -1,9 +1,9 @@
 package com.neoutils.finsight.domain.repository
 
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
 interface IDashboardPreferencesRepository {
-    fun observe(): Flow<List<DashboardComponentPreference>>
+    fun observe(): StateFlow<List<DashboardComponentPreference>?>
     suspend fun save(preferences: List<DashboardComponentPreference>)
 }

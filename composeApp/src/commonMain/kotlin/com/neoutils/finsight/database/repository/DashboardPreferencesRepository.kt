@@ -3,8 +3,8 @@ package com.neoutils.finsight.database.repository
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.russhwolf.settings.Settings
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -15,7 +15,7 @@ class DashboardPreferencesRepository(
 
     private val _preferences = MutableStateFlow(load())
 
-    override fun observe(): Flow<List<DashboardComponentPreference>> = _preferences
+    override fun observe(): StateFlow<List<DashboardComponentPreference>?> = _preferences
 
     override suspend fun save(preferences: List<DashboardComponentPreference>) {
         val json = Json.encodeToString(preferences.map {
@@ -25,12 +25,12 @@ class DashboardPreferencesRepository(
         _preferences.value = preferences
     }
 
-    private fun load(): List<DashboardComponentPreference> {
-        val json = settings.getStringOrNull(KEY) ?: return emptyList()
+    private fun load(): List<DashboardComponentPreference>? {
+        val json = settings.getStringOrNull(KEY) ?: return null
         return runCatching {
             Json.decodeFromString<List<SerializablePreference>>(json)
                 .map { DashboardComponentPreference(key = it.key, position = it.position, config = it.config) }
-        }.getOrDefault(emptyList())
+        }.getOrNull()
     }
 
     @Serializable

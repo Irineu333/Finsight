@@ -62,7 +62,8 @@ class DashboardViewModel(
         preferences,
     ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val configByKey = preferences.associate { it.key to it.config }
+        val effectivePrefs = preferences.ifEmpty { DashboardComponentRegistry.defaultPreferences() }
+        val configByKey = effectivePrefs.associate { it.key to it.config }
 
         val allComponents = dashboardComponentsBuilder.build(
             input = DashboardComponentsInput(
@@ -79,7 +80,7 @@ class DashboardViewModel(
             ),
         )
 
-        val ordered = applyPreferences(preferences, allComponents)
+        val ordered = applyPreferences(effectivePrefs, allComponents)
 
         DashboardUiState.Viewing(
             yearMonth = today.yearMonth,
@@ -234,7 +235,6 @@ class DashboardViewModel(
         preferences: List<DashboardComponentPreference>,
         all: List<DashboardComponent>,
     ): List<DashboardComponent> {
-        if (preferences.isEmpty()) return all
         val byKey = all.associateBy { it.key }
         return preferences.sortedBy { it.position }.mapNotNull { byKey[it.key] }
     }

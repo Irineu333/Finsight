@@ -21,10 +21,10 @@ Os componentes são representados por cards simplificados (título + placeholder
 
 **UI:**
 - `DashboardComponentRegistry` — registro dos 9 componentes com título e posição default
-- `DashboardUiState` selada: `Loading`, `Viewing`, `Editing`
+- `DashboardUiState` selada: `Loading`, `Empty`, `Viewing`, `Editing`
 - `DashboardAction` expandida: `EnterEditMode`, `ConfirmEdit`, `CancelEdit`, `MoveComponent`, `RemoveComponent`
 - `DashboardViewModel` — lógica de edit mode com `_editingState` separado do combine reativo
-- `DashboardScreen` — `Crossfade` entre `Loading`, `Viewing`, `Editing`
+- `DashboardScreen` — `Crossfade` entre `Loading`, `Empty`, `Viewing`, `Editing`
 - `DashboardEditingContent` — `LazyColumn` com `sh.calvin.reorderable`, cards simplificados
   - Em Etapa 1, `DashboardEditItemWrapper` renderiza apenas `item.title` em um card simples — `item.preview` existe no model mas é ignorado até Etapa 2
 - `DashboardComponentOptionsModal` — modal com apenas "Remover" (sem settings ainda)

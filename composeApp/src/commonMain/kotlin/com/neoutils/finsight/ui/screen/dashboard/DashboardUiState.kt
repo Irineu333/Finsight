@@ -20,6 +20,12 @@ sealed class DashboardUiState {
         override val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
     ) : DashboardUiState()
 
+    data class Empty(
+        override val yearMonth: YearMonth,
+        val accounts: List<Account> = emptyList(),
+        val creditCards: List<CreditCard> = emptyList(),
+    ) : DashboardUiState()
+
     data class Viewing(
         override val yearMonth: YearMonth,
         val components: List<DashboardComponent>,

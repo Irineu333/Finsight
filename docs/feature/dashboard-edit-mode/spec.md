@@ -141,7 +141,7 @@ Data (database/)
 UI (screen/dashboard/)
   DashboardComponentRegistry          ← registro de todos os componentes disponíveis
   DashboardComponentMocks             ← dados de exemplo para preview no edit mode
-  DashboardUiState (Loading | Viewing | Editing) ← estados como tipos distintos
+  DashboardUiState (Loading | Empty | Viewing | Editing) ← estados como tipos distintos
   DashboardAction                     ← ações de edição
   DashboardViewModel                  ← orquestra preferências + dados reais
   DashboardScreen                     ← renderiza normal e edit mode
@@ -292,6 +292,10 @@ sealed class DashboardUiState {
         override val yearMonth: YearMonth = Clock.System.now().toYearMonth(),
     ) : DashboardUiState()
 
+    data class Empty(
+        override val yearMonth: YearMonth,
+    ) : DashboardUiState()
+
     data class Viewing(
         override val yearMonth: YearMonth,
         val components: List<DashboardComponent>,
@@ -313,6 +317,7 @@ data class DashboardEditItem(
 ```
 
 - `Loading` — carregamento inicial antes dos repositórios emitirem
+- `Empty` — dashboard sem componentes visíveis, com affordance explícita para voltar ao modo edição
 - `Viewing` — modo normal, componentes reais com dados ao vivo
 - `Editing` — modo edição, componentes são previews (mock data), editáveis pelo usuário
 
@@ -351,14 +356,18 @@ class DashboardViewModel(
     // Editing state — quando não-nulo, sobrescreve o Viewing reativo
     private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
-    // Flow reativo que sempre produz Loading → Viewing
+    // Flow reativo que sempre produz Loading → Empty/Viewing
     private val viewingState: Flow<DashboardUiState> = combine(
         preferences,  // usa o StateFlow já ativo
         // ... demais flows de repositórios ...
     ) { preferences, /* ... */ ->
         val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
         val ordered = applyPreferences(effectivePrefs, builtComponents)
-        DashboardUiState.Viewing(yearMonth = targetMonth, components = ordered)
+        if (ordered.isEmpty()) {
+            DashboardUiState.Empty(yearMonth = targetMonth)
+        } else {
+            DashboardUiState.Viewing(yearMonth = targetMonth, components = ordered)
+        }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(
@@ -382,8 +391,26 @@ class DashboardViewModel(
     }
 
     private fun enterEditMode() {
-        val current = uiState.value as? DashboardUiState.Viewing ?: return
-        _editingState.value = buildEditingState(current, preferences.value)
+        when (val current = uiState.value) {
+            is DashboardUiState.Viewing ->
+                openEditingState(current.yearMonth, current.accounts, current.creditCards)
+            is DashboardUiState.Empty ->
+                openEditingState(current.yearMonth, current.accounts, current.creditCards)
+            else -> Unit
+        }
+    }
+
+    private fun openEditingState(
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
+    ) {
+        _editingState.value = buildEditingState(
+            yearMonth = yearMonth,
+            accounts = accounts,
+            creditCards = creditCards,
+            savedPrefs = preferences.value,
+        )
     }
 
     // cancelEdit NÃO re-salva no repositório — o repositório não foi modificado durante o edit mode.
@@ -441,7 +468,9 @@ class DashboardViewModel(
     // null        = primeira abertura, usa defaults do registry
     // emptyList() = dashboard vazia salva pelo usuário
     private fun buildEditingState(
-        viewing: DashboardUiState.Viewing,
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
         savedPrefs: List<DashboardComponentPreference>?,
     ): DashboardUiState.Editing {
         val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
@@ -464,9 +493,11 @@ class DashboardViewModel(
             }
 
         return DashboardUiState.Editing(
-            yearMonth = viewing.yearMonth,
+            yearMonth = yearMonth,
             items = items,
             availableItems = availableItems,
+            accounts = accounts,
+            creditCards = creditCards,
         )
     }
 
@@ -540,6 +571,7 @@ Crossfade(
 ) { state ->
     when (state) {
         is DashboardUiState.Loading -> DashboardLoadingContent()
+        is DashboardUiState.Empty -> DashboardEmptyContent(onAction)
         is DashboardUiState.Viewing -> DashboardViewingContent(state, onAction)
         is DashboardUiState.Editing -> DashboardEditingContent(state, onAction)
     }
@@ -1280,7 +1312,7 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 
 | Decisão | Alternativa descartada | Motivo |
 |---------|----------------------|--------|
-| `DashboardUiState` como sealed class (`Loading`, `Viewing`, `Editing`) | `data class` com `editState: EditState?` | Modo edição é um estado distinto, não uma extensão opcional do modo normal — sealed class elimina estados impossíveis e segue o padrão do projeto |
+| `DashboardUiState` como sealed class (`Loading`, `Empty`, `Viewing`, `Editing`) | `data class` com `editState: EditState?` | Loading, dashboard vazia, visualização e edição são estados distintos da tela; modelá-los separadamente elimina estados impossíveis e segue o padrão do projeto |
 | `_editingState: MutableStateFlow<Editing?>` separado do combine reativo | Unificar tudo em um único combine | Separa responsabilidades: dados ao vivo ficam no `viewingState`, edição em curso fica no `_editingState` — evita reconstrução do estado de edição a cada emissão dos repositórios |
 | `DashboardComponentContent` extraído como função compartilhada | Duplicar o `when(component)` em Viewing e Editing | Garante que edit mode renderiza EXATAMENTE o mesmo composable que o modo normal — sem risco de divergência visual |
 | `Crossfade` no nível da tela para a transição de modo | `AnimatedContent` com slides | Como ambos os modos renderizam os mesmos componentes nas mesmas posições, o crossfade cria a ilusão de affordances aparecendo in-place sem custo de implementação de shared elements |

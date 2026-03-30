@@ -129,6 +129,7 @@ fun DashboardScreen(
         ) { state ->
             when (state) {
                 is DashboardUiState.Loading -> DashboardLoadingContent()
+                is DashboardUiState.Empty -> DashboardEmptyContent(onAction = viewModel::onAction)
                 is DashboardUiState.Viewing -> DashboardViewingContent(
                     state = state,
                     openTransactions = openTransactions,
@@ -384,6 +385,50 @@ private fun DashboardViewingContent(
                             .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardEmptyContent(
+    onAction: (DashboardAction) -> Unit,
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.dashboard_empty_title),
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(Res.string.dashboard_empty_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { onAction(DashboardAction.EnterEditMode) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(text = stringResource(Res.string.dashboard_empty_action))
             }
         }
     }

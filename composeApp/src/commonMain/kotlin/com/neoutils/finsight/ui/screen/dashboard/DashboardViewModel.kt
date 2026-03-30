@@ -4,6 +4,8 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -11,6 +13,7 @@ import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
@@ -77,13 +80,21 @@ class DashboardViewModel(
 
         val ordered = applyPreferences(effectivePrefs, allComponents)
 
-        DashboardUiState.Viewing(
-            yearMonth = today.yearMonth,
-            components = ordered,
-            accounts = accounts,
-            creditCards = creditCards,
-            configByKey = configByKey,
-        )
+        if (ordered.isEmpty()) {
+            DashboardUiState.Empty(
+                yearMonth = today.yearMonth,
+                accounts = accounts,
+                creditCards = creditCards,
+            )
+        } else {
+            DashboardUiState.Viewing(
+                yearMonth = today.yearMonth,
+                components = ordered,
+                accounts = accounts,
+                creditCards = creditCards,
+                configByKey = configByKey,
+            )
+        }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(
@@ -107,8 +118,36 @@ class DashboardViewModel(
     }
 
     private fun enterEditMode() {
-        val current = uiState.value as? DashboardUiState.Viewing ?: return
-        _editingState.value = buildEditingState(current, preferences.value)
+        when (val current = uiState.value) {
+            is DashboardUiState.Viewing ->
+                openEditingState(
+                    yearMonth = current.yearMonth,
+                    accounts = current.accounts,
+                    creditCards = current.creditCards,
+                )
+
+            is DashboardUiState.Empty ->
+                openEditingState(
+                    yearMonth = current.yearMonth,
+                    accounts = current.accounts,
+                    creditCards = current.creditCards,
+                )
+
+            else -> Unit
+        }
+    }
+
+    private fun openEditingState(
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
+    ) {
+        _editingState.value = buildEditingState(
+            yearMonth = yearMonth,
+            accounts = accounts,
+            creditCards = creditCards,
+            savedPrefs = preferences.value,
+        )
     }
 
     private fun cancelEdit() {
@@ -195,7 +234,9 @@ class DashboardViewModel(
     }
 
     private fun buildEditingState(
-        viewing: DashboardUiState.Viewing,
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
         savedPrefs: List<DashboardComponentPreference>?,
     ): DashboardUiState.Editing {
         val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
@@ -218,11 +259,11 @@ class DashboardViewModel(
             }
 
         return DashboardUiState.Editing(
-            yearMonth = viewing.yearMonth,
+            yearMonth = yearMonth,
             items = items,
             availableItems = availableItems,
-            accounts = viewing.accounts,
-            creditCards = viewing.creditCards,
+            accounts = accounts,
+            creditCards = creditCards,
         )
     }
 

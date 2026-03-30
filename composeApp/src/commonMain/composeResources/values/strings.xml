@@ -703,6 +703,9 @@
     <string name="remove_component">Remover</string>
     <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
     <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
+    <string name="dashboard_empty_title">Sua dashboard está vazia</string>
+    <string name="dashboard_empty_description">Adicione componentes para voltar a personalizar a visualização.</string>
+    <string name="dashboard_empty_action">Editar dashboard</string>
 
     <!-- Dashboard Component Config -->
     <string name="component_config_top_spacing">Espaçamento superior</string>

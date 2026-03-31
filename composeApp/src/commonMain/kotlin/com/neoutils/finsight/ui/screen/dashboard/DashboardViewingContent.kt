@@ -61,6 +61,7 @@ internal fun DashboardViewingContent(
                     }
                     DashboardComponentContent(
                         variant = variant,
+                        config = config,
                         modifier = Modifier
                             .fillMaxWidth()
                             .interceptLongPress { onAction(DashboardAction.EnterEditMode) },

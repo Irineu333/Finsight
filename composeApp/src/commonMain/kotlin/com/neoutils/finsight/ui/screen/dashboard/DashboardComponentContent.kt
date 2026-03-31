@@ -81,6 +81,7 @@ import kotlin.time.ExperimentalTime
 @Composable
 internal fun DashboardComponentContent(
     variant: DashboardComponentVariant,
+    config: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     when (variant) {
@@ -115,6 +116,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.AccountsOverview -> {
             DashboardAccountsRow(
                 variant = variant,
+                config = config,
                 modifier = modifier,
             )
         }
@@ -122,6 +124,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.CreditCardsPager -> {
             DashboardCreditCardsSection(
                 variant = variant,
+                config = config,
                 modifier = modifier,
             )
         }
@@ -136,6 +139,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.PendingRecurring -> {
             DashboardPendingRecurringSection(
                 variant = variant,
+                config = config,
                 modifier = modifier,
             )
         }
@@ -143,6 +147,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.Recents -> {
             DashboardRecentsSection(
                 variant = variant,
+                config = config,
                 modifier = modifier,
             )
         }
@@ -150,6 +155,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.QuickActions -> {
             DashboardQuickActionsSection(
                 variant = variant,
+                config = config,
                 modifier = modifier,
             )
         }
@@ -159,26 +165,30 @@ internal fun DashboardComponentContent(
 @Composable
 private fun DashboardPendingRecurringSection(
     variant: DashboardComponentVariant.PendingRecurring,
+    config: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
     val component = variant.component
+    val showHeader = config.showHeader()
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        DashboardSectionHeader(
-            title = stringResource(Res.string.dashboard_pending_recurring),
-            onClick = {
-                if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
-                    variant.onOpenQuickAction(QuickActionType.RECURRING)
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        )
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_pending_recurring),
+                onClick = {
+                    if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
+                        variant.onOpenQuickAction(QuickActionType.RECURRING)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
         component.recurringList.forEach { recurring ->
             PendingRecurringCard(
                 recurring = recurring,
@@ -202,26 +212,30 @@ private fun DashboardPendingRecurringSection(
 @Composable
 private fun DashboardRecentsSection(
     variant: DashboardComponentVariant.Recents,
+    config: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
     val component = variant.component
+    val showHeader = config.showHeader()
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        DashboardSectionHeader(
-            title = stringResource(Res.string.dashboard_recents),
-            onClick = {
-                if (variant is DashboardComponentVariant.Recents.Viewing) {
-                    variant.openTransactions(null, null)
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        )
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_recents),
+                onClick = {
+                    if (variant is DashboardComponentVariant.Recents.Viewing) {
+                        variant.openTransactions(null, null)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
         component.operations.forEachIndexed { index, operation ->
             val isLastWithFade = component.hasMore && index == component.operations.lastIndex
             OperationCard(
@@ -263,14 +277,25 @@ private fun DashboardRecentsSection(
 @Composable
 private fun DashboardQuickActionsSection(
     variant: DashboardComponentVariant.QuickActions,
+    config: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val showHeader = config.showHeader()
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = stringResource(Res.string.component_quick_actions),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
+
         component.actions.forEach { action ->
             DashboardQuickActionCard(
                 action = action,
@@ -391,37 +416,30 @@ private fun DashboardCreditCardBalanceSection(
 @Composable
 private fun DashboardCreditCardsSection(
     variant: DashboardComponentVariant.CreditCardsPager,
+    config: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
     val component = variant.component
+    val showHeader = config.showHeader()
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.dashboard_credit_cards),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            TextButton(
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_credit_cards),
                 onClick = {
                     if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                         variant.onOpenQuickAction(QuickActionType.CREDIT_CARDS)
                     }
                 },
-            ) {
-                Text(text = stringResource(Res.string.dashboard_see_all))
-            }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
         }
 
         when (component) {
@@ -572,11 +590,11 @@ private fun DashboardSpendingSection(
 @Composable
 private fun DashboardSectionHeader(
     title: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -585,10 +603,12 @@ private fun DashboardSectionHeader(
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
         )
-        TextButton(onClick = onClick) {
-            Text(
-                text = stringResource(Res.string.dashboard_see_all),
-            )
+        if (onClick != null) {
+            TextButton(onClick = onClick) {
+                Text(
+                    text = stringResource(Res.string.dashboard_see_all),
+                )
+            }
         }
     }
 }
@@ -746,37 +766,30 @@ private fun TotalBalanceCard(
 @Composable
 private fun DashboardAccountsRow(
     variant: DashboardComponentVariant.AccountsOverview,
+    config: Map<String, String>,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
     val component = variant.component
+    val showHeader = config.showHeader()
 
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.dashboard_accounts),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            TextButton(
+        if (showHeader) {
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_accounts),
                 onClick = {
                     if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
                         variant.onOpenQuickAction(QuickActionType.ACCOUNTS)
                     }
                 },
-            ) {
-                Text(text = stringResource(Res.string.dashboard_see_all))
-            }
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
         }
 
         LazyRow(

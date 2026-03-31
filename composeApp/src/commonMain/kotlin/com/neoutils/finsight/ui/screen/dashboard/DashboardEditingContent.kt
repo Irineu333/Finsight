@@ -102,7 +102,7 @@ internal fun DashboardEditingContent(
 
     LazyColumn(
         state = lazyListState,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(
             top = 8.dp,
             bottom = 32.dp,
@@ -182,6 +182,7 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     Box(modifier = modifier.fillMaxWidth()) {
         DashboardComponentContent(
             variant = item.preview,
+            config = mapOf(DashboardComponentConfig.SHOW_HEADER to false.toString()),
             modifier = Modifier.fillMaxWidth(),
         )
 

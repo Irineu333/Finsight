@@ -86,106 +86,148 @@ internal class DashboardComponentOptionsModal(
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
             val showHeader = config.showHeader()
             DashboardConfigCard {
-                if (supportsHeaderVisibilityConfig(item.key)) {
-                    DashboardConfigToggleRow(
-                        title = stringResource(Res.string.component_config_show_header),
-                        checked = showHeader,
-                        onCheckedChange = { enabled ->
-                            updateConfig(config.toMutableMap().apply {
-                                put(DashboardComponentConfig.SHOW_HEADER, enabled.toString())
-                            })
-                        },
-                        leadingIcon = Icons.Rounded.ViewHeadline,
-                    )
+                when (item.key) {
+                    DashboardComponent.AccountsOverview.KEY,
+                    DashboardComponent.CreditCardsPager.KEY,
+                    DashboardComponent.PendingRecurring.KEY,
+                    DashboardComponent.Recents.KEY,
+                    DashboardComponent.QuickActions.KEY -> {
+                        DashboardHeaderVisibilityConfigToggle(
+                            checked = showHeader,
+                            onCheckedChange = { enabled ->
+                                updateConfig(config.toMutableMap().apply {
+                                    put(DashboardComponentConfig.SHOW_HEADER, enabled.toString())
+                                })
+                            },
+                        )
+                    }
                 }
 
-                DashboardConfigToggleRow(
-                    title = stringResource(Res.string.component_config_top_spacing),
+                DashboardTopSpacingConfigToggle(
                     checked = topSpacing,
                     onCheckedChange = { enabled ->
                         updateConfig(config.toMutableMap().apply {
                             put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
                         })
                     },
-                    leadingIcon = Icons.Rounded.SpaceBar,
                 )
             }
 
-            if (hasSpecificDashboardConfig(item.key)) {
-                DashboardConfigSectionLabel(
-                    text = stringResource(Res.string.component_config_content_section),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            when (item.key) {
+                DashboardComponent.ConcreteBalanceStats.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
 
-                when (item.key) {
-                    DashboardComponent.ConcreteBalanceStats.KEY -> {
-                        BalanceStatsConfigContent(
-                            config = config,
-                            defaultHideWhenEmpty = false,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.PendingBalanceStats.KEY -> {
-                        BalanceStatsConfigContent(
-                            config = config,
-                            defaultHideWhenEmpty = true,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.CreditCardBalanceStats.KEY -> {
-                        BalanceStatsConfigContent(
-                            config = config,
-                            defaultHideWhenEmpty = true,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.AccountsOverview.KEY -> {
-                        AccountsOverviewConfigContent(
-                            accounts = accounts,
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.CreditCardsPager.KEY -> {
-                        CreditCardsPagerConfigContent(
-                            creditCards = creditCards,
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.SpendingPager.KEY -> {
-                        SpendingPagerConfigContent(
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.PendingRecurring.KEY -> {
-                        PendingRecurringConfigContent(
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.Recents.KEY -> {
-                        RecentsConfigContent(
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
-
-                    DashboardComponent.QuickActions.KEY -> {
-                        QuickActionsConfigContent(
-                            config = config,
-                            onConfigChange = ::updateConfig,
-                        )
-                    }
+                    BalanceStatsConfigContent(
+                        config = config,
+                        defaultHideWhenEmpty = false,
+                        onConfigChange = ::updateConfig,
+                    )
                 }
+
+                DashboardComponent.PendingBalanceStats.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    BalanceStatsConfigContent(
+                        config = config,
+                        defaultHideWhenEmpty = true,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.CreditCardBalanceStats.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    BalanceStatsConfigContent(
+                        config = config,
+                        defaultHideWhenEmpty = true,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.AccountsOverview.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    AccountsOverviewConfigContent(
+                        accounts = accounts,
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.CreditCardsPager.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    CreditCardsPagerConfigContent(
+                        creditCards = creditCards,
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.SpendingPager.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    SpendingPagerConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.PendingRecurring.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    PendingRecurringConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.Recents.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    RecentsConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                DashboardComponent.QuickActions.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    QuickActionsConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
+                else -> Unit
             }
         }
     }
@@ -221,6 +263,33 @@ private fun DashboardConfigCard(
     }
 }
 
+@Composable
+private fun DashboardHeaderVisibilityConfigToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    DashboardConfigToggleRow(
+        title = stringResource(Res.string.component_config_show_header),
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        leadingIcon = Icons.Rounded.ViewHeadline,
+    )
+}
+
+@Composable
+private fun DashboardTopSpacingConfigToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    DashboardConfigToggleRow(
+        title = stringResource(Res.string.component_config_top_spacing),
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        leadingIcon = Icons.Rounded.SpaceBar,
+    )
+}
+
+@Composable
 private fun DashboardConfigToggleRow(
     title: String,
     checked: Boolean,
@@ -368,32 +437,6 @@ private fun DashboardSegmentedOptionCard(
             }
         }
     }
-}
-
-private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
-    DashboardComponent.ConcreteBalanceStats.KEY,
-    DashboardComponent.PendingBalanceStats.KEY,
-    DashboardComponent.CreditCardBalanceStats.KEY,
-    DashboardComponent.AccountsOverview.KEY,
-    DashboardComponent.CreditCardsPager.KEY,
-    DashboardComponent.SpendingPager.KEY,
-    DashboardComponent.PendingRecurring.KEY,
-    DashboardComponent.Recents.KEY,
-    DashboardComponent.QuickActions.KEY,
-    -> true
-
-    else -> false
-}
-
-private fun supportsHeaderVisibilityConfig(key: String): Boolean = when (key) {
-    DashboardComponent.AccountsOverview.KEY,
-    DashboardComponent.CreditCardsPager.KEY,
-    DashboardComponent.PendingRecurring.KEY,
-    DashboardComponent.Recents.KEY,
-    DashboardComponent.QuickActions.KEY,
-    -> true
-
-    else -> false
 }
 
 @Composable

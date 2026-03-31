@@ -66,7 +66,12 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
 ## Code Style
-- Documentation is the code (avoid comments, write clear code).
-- Follow best programming practices (Return First Pattern, SOLID, DRY).
-- High cohesion and low coupling.
-- Don't make the code worse.
+- Write clear code; comments are the exception, not a crutch.
+- Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:
+    1. Do not duplicate logic
+    2. Do not increase complexity
+    3. Do not duplicate code
+- Apply DRY with judgment, not mechanically. 
+- Reuse code in an explicit way with low coupling, without hiding business decisions.
+- Extract code when there is a clear responsibility, high cohesion, and low coupling. 
+- Every change must maintain or improve code clarity.

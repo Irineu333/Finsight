@@ -68,7 +68,8 @@ class DashboardComponentsBuilder(
             ),
             accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
             creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
-            spendingPager(input, allTransactions, configFor(DashboardComponent.SpendingPager.KEY)),
+            spendingByCategory(input, allTransactions, configFor(DashboardComponent.SpendingByCategory.KEY)),
+            budgets(input, allTransactions),
             pendingRecurring(
                 pendingRecurring = pendingRecurring,
                 input = input,
@@ -223,19 +224,32 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun spendingPager(
+    private fun spendingByCategory(
         input: DashboardComponentsInput,
         allTransactions: List<Transaction>,
         config: Map<String, String>,
-    ): DashboardComponent.SpendingPager? {
-        val maxCategories = config[SpendingPagerConfig.MAX_CATEGORIES]
-            ?.toIntOrNull() ?: SpendingPagerConfig.ALL.toInt()
+    ): DashboardComponent.SpendingByCategory? {
+        val maxCategories = config[SpendingByCategoryConfig.MAX_CATEGORIES]
+            ?.toIntOrNull() ?: SpendingByCategoryConfig.ALL.toInt()
 
         val categorySpending = calculateCategorySpendingUseCase(
             transactions = allTransactions,
             forYearMonth = input.targetMonth,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 
+        return if (categorySpending.isNotEmpty()) {
+            DashboardComponent.SpendingByCategory(
+                categorySpending = categorySpending,
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun budgets(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+    ): DashboardComponent.Budgets? {
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = input.budgets,
             transactions = allTransactions,
@@ -243,9 +257,8 @@ class DashboardComponentsBuilder(
             operations = input.operations,
         )
 
-        return if (categorySpending.isNotEmpty() || budgetProgress.isNotEmpty()) {
-            DashboardComponent.SpendingPager(
-                categorySpending = categorySpending,
+        return if (budgetProgress.isNotEmpty()) {
+            DashboardComponent.Budgets(
                 budgetProgress = budgetProgress,
             )
         } else {

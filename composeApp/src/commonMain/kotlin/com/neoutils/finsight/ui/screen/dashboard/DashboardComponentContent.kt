@@ -129,8 +129,15 @@ internal fun DashboardComponentContent(
             )
         }
 
-        is DashboardComponentVariant.SpendingPager -> {
-            DashboardSpendingSection(
+        is DashboardComponentVariant.SpendingByCategory -> {
+            DashboardSpendingByCategorySection(
+                variant = variant,
+                modifier = modifier,
+            )
+        }
+
+        is DashboardComponentVariant.Budgets -> {
+            DashboardBudgetsSection(
                 variant = variant,
                 modifier = modifier,
             )
@@ -533,61 +540,45 @@ private fun DashboardCreditCardsSection(
 }
 
 @Composable
-private fun DashboardSpendingSection(
-    variant: DashboardComponentVariant.SpendingPager,
+private fun DashboardSpendingByCategorySection(
+    variant: DashboardComponentVariant.SpendingByCategory,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
     val component = variant.component
 
-    val pages = buildList {
-        if (component.budgetProgress.isNotEmpty()) add(SpendingPage.Budgets)
-        if (component.categorySpending.isNotEmpty()) add(SpendingPage.Categories)
-    }
-
-    val pagerState = rememberPagerState(pageCount = { pages.size })
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            pageSpacing = 16.dp,
-            modifier = Modifier.fillMaxWidth(),
-        ) { page ->
-            when (pages[page]) {
-                SpendingPage.Categories -> CategorySpendingCard(
-                    categorySpending = component.categorySpending,
-                    modifier = Modifier.fillMaxWidth(),
-                    onCategoryClick = { category ->
-                        if (variant is DashboardComponentVariant.SpendingPager.Viewing) {
-                            modalManager.show(ViewCategoryModal(category))
-                        }
-                    },
-                )
-
-                SpendingPage.Budgets -> BudgetProgressCard(
-                    budgetProgress = component.budgetProgress,
-                    modifier = Modifier.fillMaxWidth(),
-                    onBudgetClick = { budget ->
-                        if (variant is DashboardComponentVariant.SpendingPager.Viewing) {
-                            modalManager.show(ViewBudgetModal(budget))
-                        }
-                    },
-                )
+    CategorySpendingCard(
+        categorySpending = component.categorySpending,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        onCategoryClick = { category ->
+            if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
+                modalManager.show(ViewCategoryModal(category))
             }
         }
+    )
+}
 
-        if (pages.size > 1) {
-            PageIndicator(
-                count = pages.size,
-                current = pagerState.currentPage,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
+@Composable
+private fun DashboardBudgetsSection(
+    variant: DashboardComponentVariant.Budgets,
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+    val component = variant.component
+
+    BudgetProgressCard(
+        budgetProgress = component.budgetProgress,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        onBudgetClick = { budget ->
+            if (variant is DashboardComponentVariant.Budgets.Viewing) {
+                modalManager.show(ViewBudgetModal(budget))
+            }
+        },
+    )
 }
 
 @Composable
@@ -721,8 +712,6 @@ private fun PendingRecurringCard(
         }
     }
 }
-
-private enum class SpendingPage { Categories, Budgets }
 
 @Composable
 private fun TotalBalanceCard(

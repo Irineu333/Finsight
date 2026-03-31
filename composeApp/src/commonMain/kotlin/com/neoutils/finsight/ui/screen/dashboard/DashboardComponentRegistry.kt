@@ -6,11 +6,12 @@ import com.neoutils.finsight.resources.component_accounts_overview
 import com.neoutils.finsight.resources.component_balance_stats
 import com.neoutils.finsight.resources.component_credit_card_balance_stats
 import com.neoutils.finsight.resources.component_credit_cards
+import com.neoutils.finsight.resources.component_budgets
 import com.neoutils.finsight.resources.component_pending_balance
 import com.neoutils.finsight.resources.component_pending_recurring
 import com.neoutils.finsight.resources.component_quick_actions
 import com.neoutils.finsight.resources.component_recents
-import com.neoutils.finsight.resources.component_spending
+import com.neoutils.finsight.resources.component_spending_by_category
 import com.neoutils.finsight.resources.component_total_balance
 import com.neoutils.finsight.util.UiText
 
@@ -29,16 +30,18 @@ object DashboardComponentRegistry {
         DashboardRegistryEntry(DashboardComponent.CreditCardBalanceStats.KEY, UiText.Res(Res.string.component_credit_card_balance_stats), 3),
         DashboardRegistryEntry(DashboardComponent.AccountsOverview.KEY,     UiText.Res(Res.string.component_accounts_overview), 4),
         DashboardRegistryEntry(DashboardComponent.CreditCardsPager.KEY,     UiText.Res(Res.string.component_credit_cards),      5),
-        DashboardRegistryEntry(DashboardComponent.SpendingPager.KEY,        UiText.Res(Res.string.component_spending),          6),
-        DashboardRegistryEntry(DashboardComponent.PendingRecurring.KEY,     UiText.Res(Res.string.component_pending_recurring), 7),
-        DashboardRegistryEntry(DashboardComponent.Recents.KEY,              UiText.Res(Res.string.component_recents),           8),
-        DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     9),
+        DashboardRegistryEntry(DashboardComponent.SpendingByCategory.KEY,   UiText.Res(Res.string.component_spending_by_category), 6),
+        DashboardRegistryEntry(DashboardComponent.Budgets.KEY,              UiText.Res(Res.string.component_budgets),          7),
+        DashboardRegistryEntry(DashboardComponent.PendingRecurring.KEY,     UiText.Res(Res.string.component_pending_recurring), 8),
+        DashboardRegistryEntry(DashboardComponent.Recents.KEY,              UiText.Res(Res.string.component_recents),           9),
+        DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     10),
     )
 
     private val defaultTopSpacingKeys = setOf(
         DashboardComponent.AccountsOverview.KEY,
         DashboardComponent.CreditCardsPager.KEY,
-        DashboardComponent.SpendingPager.KEY,
+        DashboardComponent.SpendingByCategory.KEY,
+        DashboardComponent.Budgets.KEY,
         DashboardComponent.PendingRecurring.KEY,
         DashboardComponent.Recents.KEY,
         DashboardComponent.QuickActions.KEY,

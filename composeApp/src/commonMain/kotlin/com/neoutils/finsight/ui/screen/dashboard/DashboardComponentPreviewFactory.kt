@@ -85,34 +85,41 @@ object DashboardComponentPreviewFactory {
         ),
     )
 
-    val spendingPager = DashboardComponent.SpendingPager(
-        categorySpending = listOf(
-            CategorySpending(category = mockExpenseCategory, amount = 450.0, percentage = 0.35),
-            CategorySpending(
-                category = Category(
-                    id = 3,
-                    name = "Transporte",
-                    icon = CategoryLazyIcon("directions_car"),
-                    type = Category.Type.EXPENSE,
-                    createdAt = 0,
-                ),
-                amount = 280.0,
-                percentage = 0.22,
+    private val mockCategorySpending = listOf(
+        CategorySpending(category = mockExpenseCategory, amount = 450.0, percentage = 61.64),
+        CategorySpending(
+            category = Category(
+                id = 3,
+                name = "Transporte",
+                icon = CategoryLazyIcon("directions_car"),
+                type = Category.Type.EXPENSE,
+                createdAt = 0,
             ),
+            amount = 280.0,
+            percentage = 38.36,
         ),
-        budgetProgress = listOf(
-            BudgetProgress(
-                budget = Budget(
-                    id = 1,
-                    title = "Alimentação",
-                    categories = listOf(mockExpenseCategory),
-                    iconKey = "shopping",
-                    amount = 600.0,
-                    createdAt = 0,
-                ),
-                spent = 450.0,
+    )
+
+    private val mockBudgetProgress = listOf(
+        BudgetProgress(
+            budget = Budget(
+                id = 1,
+                title = "Alimentação",
+                categories = listOf(mockExpenseCategory),
+                iconKey = "shopping",
+                amount = 600.0,
+                createdAt = 0,
             ),
+            spent = 450.0,
         ),
+    )
+
+    val spendingByCategory = DashboardComponent.SpendingByCategory(
+        categorySpending = mockCategorySpending,
+    )
+
+    val budgets = DashboardComponent.Budgets(
+        budgetProgress = mockBudgetProgress,
     )
 
     val pendingRecurring = DashboardComponent.PendingRecurring(

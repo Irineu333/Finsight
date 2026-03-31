@@ -83,13 +83,21 @@ sealed interface DashboardComponent {
         data object Empty : CreditCardsPager
     }
 
-    data class SpendingPager(
+    data class SpendingByCategory(
         val categorySpending: List<CategorySpending>,
+        override val key: String = KEY,
+    ) : DashboardComponent {
+        companion object {
+            const val KEY = "spending_by_category"
+        }
+    }
+
+    data class Budgets(
         val budgetProgress: List<BudgetProgress>,
         override val key: String = KEY,
     ) : DashboardComponent {
         companion object {
-            const val KEY = "spending_pager"
+            const val KEY = "budgets"
         }
     }
 
@@ -144,7 +152,8 @@ fun DashboardComponent.toViewingVariant(
         onOpenQuickAction = onOpenQuickAction,
     )
 
-    is DashboardComponent.SpendingPager -> DashboardComponentVariant.SpendingPager.Viewing(component = this)
+    is DashboardComponent.SpendingByCategory -> DashboardComponentVariant.SpendingByCategory.Viewing(component = this)
+    is DashboardComponent.Budgets -> DashboardComponentVariant.Budgets.Viewing(component = this)
     is DashboardComponent.PendingRecurring -> DashboardComponentVariant.PendingRecurring.Viewing(
         component = this,
         onOpenQuickAction = onOpenQuickAction,

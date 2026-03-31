@@ -16,7 +16,7 @@ object CreditCardsPagerConfig {
     const val EXCLUDED_CARD_IDS = "excluded_card_ids"
 }
 
-object SpendingPagerConfig {
+object SpendingByCategoryConfig {
     const val MAX_CATEGORIES = "max_categories"
     const val ALL = "-1"
 }

@@ -179,13 +179,13 @@ internal class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.SpendingPager.KEY -> {
+                DashboardComponent.SpendingByCategory.KEY -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    SpendingPagerConfigContent(
+                    SpendingByCategoryConfigContent(
                         config = config,
                         onConfigChange = ::updateConfig,
                     )
@@ -542,12 +542,12 @@ private fun CreditCardsPagerConfigContent(
 }
 
 @Composable
-private fun SpendingPagerConfigContent(
+private fun SpendingByCategoryConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
     val options = listOf(3, 5, 10, -1)
-    val current = config[SpendingPagerConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
+    val current = config[SpendingByCategoryConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
     val allLabel = stringResource(Res.string.component_config_all)
 
     DashboardSegmentedOptionCard(
@@ -556,7 +556,7 @@ private fun SpendingPagerConfigContent(
         current = current,
         onOptionSelected = { value ->
             onConfigChange(config.toMutableMap().apply {
-                put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
+                put(SpendingByCategoryConfig.MAX_CATEGORIES, value.toString())
             })
         },
         optionLabel = { value ->

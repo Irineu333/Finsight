@@ -83,16 +83,29 @@ sealed interface DashboardComponentVariant {
         ) : CreditCardsPager
     }
 
-    sealed interface SpendingPager : DashboardComponentVariant {
-        override val component: DashboardComponent.SpendingPager
+    sealed interface SpendingByCategory : DashboardComponentVariant {
+        override val component: DashboardComponent.SpendingByCategory
 
         data class Viewing(
-            override val component: DashboardComponent.SpendingPager,
-        ) : SpendingPager
+            override val component: DashboardComponent.SpendingByCategory,
+        ) : SpendingByCategory
 
         data class Preview(
-            override val component: DashboardComponent.SpendingPager = DashboardComponentPreviewFactory.spendingPager,
-        ) : SpendingPager
+            override val component: DashboardComponent.SpendingByCategory =
+                DashboardComponentPreviewFactory.spendingByCategory,
+        ) : SpendingByCategory
+    }
+
+    sealed interface Budgets : DashboardComponentVariant {
+        override val component: DashboardComponent.Budgets
+
+        data class Viewing(
+            override val component: DashboardComponent.Budgets,
+        ) : Budgets
+
+        data class Preview(
+            override val component: DashboardComponent.Budgets = DashboardComponentPreviewFactory.budgets,
+        ) : Budgets
     }
 
     sealed interface PendingRecurring : DashboardComponentVariant {
@@ -142,7 +155,8 @@ sealed interface DashboardComponentVariant {
             DashboardComponent.CreditCardBalanceStats.KEY -> CreditCardBalanceStats.Preview()
             DashboardComponent.AccountsOverview.KEY -> AccountsOverview.Preview()
             DashboardComponent.CreditCardsPager.KEY -> CreditCardsPager.Preview()
-            DashboardComponent.SpendingPager.KEY -> SpendingPager.Preview()
+            DashboardComponent.SpendingByCategory.KEY -> SpendingByCategory.Preview()
+            DashboardComponent.Budgets.KEY -> Budgets.Preview()
             DashboardComponent.PendingRecurring.KEY -> PendingRecurring.Preview()
             DashboardComponent.Recents.KEY -> Recents.Preview()
             DashboardComponent.QuickActions.KEY -> QuickActions.Preview()

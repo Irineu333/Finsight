@@ -114,6 +114,7 @@ class DashboardComponentsBuilder(
         allTransactions: List<Transaction>,
         config: Map<String, String>,
     ): DashboardComponent.AccountsOverview? {
+        val hideSingleAccount = config[AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT] != "false"
         val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
             ?.split(",")
             ?.filter { it.isNotEmpty() }
@@ -128,7 +129,7 @@ class DashboardComponentsBuilder(
                 DashboardAccountUi(account = account, balance = balance)
             }
 
-        return if (accountsUi.size > 1) {
+        return if (accountsUi.isNotEmpty() && !(hideSingleAccount && accountsUi.size == 1)) {
             DashboardComponent.AccountsOverview(accounts = accountsUi)
         } else {
             null

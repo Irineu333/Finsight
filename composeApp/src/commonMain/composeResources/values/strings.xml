@@ -713,6 +713,7 @@
     <string name="component_config_content_section">Conteúdo</string>
     <string name="component_config_top_spacing">Espaçamento superior</string>
     <string name="component_config_hide_single_account">Ocultar conta única</string>
+    <string name="component_config_hide_when_empty">Ocultar sem dados</string>
     <string name="component_config_show_empty_state">Exibir empty state</string>
     <string name="component_config_max_categories">Máximo de categorias</string>
     <string name="component_config_days_ahead">Dias à frente</string>

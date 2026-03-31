@@ -35,6 +35,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material3.*
@@ -692,6 +693,7 @@ private fun DashboardPendingBalanceSection(
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
+    val showBothCards = component.pendingIncome <= 0.0 && component.pendingExpense <= 0.0
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -699,7 +701,7 @@ private fun DashboardPendingBalanceSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
     ) {
-        if (component.pendingIncome > 0.0) {
+        if (component.pendingIncome > 0.0 || showBothCards) {
             BalanceCard(
                 balance = component.pendingIncome,
                 modifier = Modifier.weight(1f),
@@ -707,7 +709,7 @@ private fun DashboardPendingBalanceSection(
             )
         }
 
-        if (component.pendingExpense > 0.0) {
+        if (component.pendingExpense > 0.0 || showBothCards) {
             BalanceCard(
                 balance = component.pendingExpense,
                 modifier = Modifier.weight(1f),
@@ -1400,6 +1402,22 @@ class DashboardComponentOptionsModal(
                 )
 
                 when (item.key) {
+                    DashboardComponent.ConcreteBalanceStats.KEY -> {
+                        BalanceStatsConfigContent(
+                            config = config,
+                            defaultHideWhenEmpty = false,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
+
+                    DashboardComponent.PendingBalanceStats.KEY -> {
+                        BalanceStatsConfigContent(
+                            config = config,
+                            defaultHideWhenEmpty = true,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
+
                     DashboardComponent.AccountsOverview.KEY -> {
                         AccountsOverviewConfigContent(
                             accounts = accounts,
@@ -1638,6 +1656,8 @@ private fun DashboardSegmentedOptionCard(
 }
 
 private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
+    DashboardComponent.ConcreteBalanceStats.KEY,
+    DashboardComponent.PendingBalanceStats.KEY,
     DashboardComponent.AccountsOverview.KEY,
     DashboardComponent.CreditCardsPager.KEY,
     DashboardComponent.SpendingPager.KEY,
@@ -1647,6 +1667,28 @@ private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
     -> true
 
     else -> false
+}
+
+@Composable
+private fun BalanceStatsConfigContent(
+    config: Map<String, String>,
+    defaultHideWhenEmpty: Boolean,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val hideWhenEmpty = config.hideWhenEmpty(defaultValue = defaultHideWhenEmpty)
+
+    DashboardConfigCard {
+        DashboardConfigToggleRow(
+            title = stringResource(Res.string.component_config_hide_when_empty),
+            checked = hideWhenEmpty,
+            onCheckedChange = { enabled ->
+                onConfigChange(config.toMutableMap().apply {
+                    put(DashboardComponentConfig.HIDE_WHEN_EMPTY, enabled.toString())
+                })
+            },
+            leadingIcon = Icons.Default.VisibilityOff,
+        )
+    }
 }
 
 @Composable

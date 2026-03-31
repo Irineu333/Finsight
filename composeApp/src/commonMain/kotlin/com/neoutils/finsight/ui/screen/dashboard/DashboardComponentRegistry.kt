@@ -51,6 +51,9 @@ object DashboardComponentRegistry {
                 if (entry.key == DashboardComponent.AccountsOverview.KEY) {
                     put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
                 }
+                if (entry.key == DashboardComponent.PendingBalanceStats.KEY) {
+                    put(DashboardComponentConfig.HIDE_WHEN_EMPTY, "true")
+                }
             }
             DashboardComponentPreference(entry.key, entry.defaultPosition, config)
         }

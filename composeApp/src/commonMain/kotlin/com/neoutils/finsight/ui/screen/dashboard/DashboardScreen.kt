@@ -24,8 +24,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -45,12 +47,14 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -1346,6 +1350,7 @@ class DashboardComponentOptionsModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         var config by remember { mutableStateOf(item.config) }
+        val scrollState = rememberScrollState()
 
         fun updateConfig(newConfig: Map<String, String>) {
             config = newConfig
@@ -1355,87 +1360,292 @@ class DashboardComponentOptionsModal(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = stringUiText(item.title),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
-            ListItem(
-                headlineContent = { Text(stringResource(Res.string.component_config_top_spacing)) },
-                leadingContent = { Icon(Icons.Rounded.SpaceBar, contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = topSpacing,
-                        onCheckedChange = { enabled ->
-                            updateConfig(config.toMutableMap().apply {
-                                put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
-                            })
-                        },
-                    )
-                },
+            DashboardConfigSectionLabel(
+                text = stringResource(Res.string.component_config_layout_section),
+                modifier = Modifier.fillMaxWidth(),
             )
 
-            when (item.key) {
-                DashboardComponent.AccountsOverview.KEY -> {
-                    HorizontalDivider()
-                    AccountsOverviewConfigContent(
-                        accounts = accounts,
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
-                }
+            val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
+            DashboardConfigCard {
+                DashboardConfigToggleRow(
+                    title = stringResource(Res.string.component_config_top_spacing),
+                    checked = topSpacing,
+                    onCheckedChange = { enabled ->
+                        updateConfig(config.toMutableMap().apply {
+                            put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
+                        })
+                    },
+                    leadingIcon = Icons.Rounded.SpaceBar,
+                )
+            }
 
-                DashboardComponent.CreditCardsPager.KEY -> {
-                    HorizontalDivider()
-                    CreditCardsPagerConfigContent(
-                        creditCards = creditCards,
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
-                }
+            if (hasSpecificDashboardConfig(item.key)) {
+                DashboardConfigSectionLabel(
+                    text = stringResource(Res.string.component_config_content_section),
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-                DashboardComponent.SpendingPager.KEY -> {
-                    HorizontalDivider()
-                    SpendingPagerConfigContent(
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
-                }
+                when (item.key) {
+                    DashboardComponent.AccountsOverview.KEY -> {
+                        AccountsOverviewConfigContent(
+                            accounts = accounts,
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
 
-                DashboardComponent.PendingRecurring.KEY -> {
-                    HorizontalDivider()
-                    PendingRecurringConfigContent(
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
-                }
+                    DashboardComponent.CreditCardsPager.KEY -> {
+                        CreditCardsPagerConfigContent(
+                            creditCards = creditCards,
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
 
-                DashboardComponent.Recents.KEY -> {
-                    HorizontalDivider()
-                    RecentsConfigContent(
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
-                }
+                    DashboardComponent.SpendingPager.KEY -> {
+                        SpendingPagerConfigContent(
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
 
-                DashboardComponent.QuickActions.KEY -> {
-                    HorizontalDivider()
-                    QuickActionsConfigContent(
-                        config = config,
-                        onConfigChange = ::updateConfig,
-                    )
+                    DashboardComponent.PendingRecurring.KEY -> {
+                        PendingRecurringConfigContent(
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
+
+                    DashboardComponent.Recents.KEY -> {
+                        RecentsConfigContent(
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
+
+                    DashboardComponent.QuickActions.KEY -> {
+                        QuickActionsConfigContent(
+                            config = config,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun DashboardConfigSectionLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(horizontal = 4.dp),
+    )
+}
+
+@Composable
+private fun DashboardConfigCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun DashboardConfigToggleRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    leadingIcon: ImageVector? = null,
+    supportingText: String? = null,
+    enabled: Boolean = true,
+) {
+    val titleColor = if (enabled) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.6f)
+    val supportingColor = if (enabled) {
+        colorScheme.onSurfaceVariant
+    } else {
+        colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (leadingIcon != null) {
+            DashboardConfigLeadingIcon(
+                icon = leadingIcon,
+                enabled = enabled,
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = titleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            if (supportingText != null) {
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = supportingColor,
+                )
+            }
+        }
+
+        Switch(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = colorScheme.primary,
+                checkedTrackColor = colorScheme.primary.copy(alpha = 0.35f),
+                checkedBorderColor = colorScheme.primary,
+                uncheckedThumbColor = colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = colorScheme.surfaceVariant,
+                uncheckedBorderColor = colorScheme.outline,
+                disabledCheckedThumbColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                disabledCheckedTrackColor = colorScheme.surfaceVariant,
+                disabledCheckedBorderColor = colorScheme.outlineVariant,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun DashboardConfigLeadingIcon(
+    icon: ImageVector,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val accentColor = if (enabled) colorScheme.primary else colorScheme.onSurfaceVariant
+
+    Surface(
+        modifier = modifier.size(36.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = accentColor.copy(alpha = if (enabled) 0.12f else 0.08f),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accentColor,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardConfigDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = colorScheme.outlineVariant.copy(alpha = 0.6f),
+    )
+}
+
+@Composable
+private fun DashboardSegmentedOptionCard(
+    title: String,
+    options: List<Int>,
+    current: Int,
+    onOptionSelected: (Int) -> Unit,
+    optionLabel: (Int) -> String,
+) {
+    val segmentedColors = SegmentedButtonDefaults.colors(
+        activeContainerColor = colorScheme.primary.copy(alpha = 0.2f),
+        activeContentColor = colorScheme.primary,
+        activeBorderColor = colorScheme.primary,
+        inactiveContainerColor = colorScheme.surfaceContainerHighest,
+        inactiveContentColor = colorScheme.onSurfaceVariant,
+        inactiveBorderColor = colorScheme.outline,
+    )
+
+    DashboardConfigCard {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurface,
+            )
+
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                options.forEachIndexed { index, value ->
+                    SegmentedButton(
+                        selected = current == value,
+                        onClick = { onOptionSelected(value) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        colors = segmentedColors,
+                        icon = {},
+                    ) {
+                        Text(
+                            text = optionLabel(value),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
+    DashboardComponent.AccountsOverview.KEY,
+    DashboardComponent.CreditCardsPager.KEY,
+    DashboardComponent.SpendingPager.KEY,
+    DashboardComponent.PendingRecurring.KEY,
+    DashboardComponent.Recents.KEY,
+    DashboardComponent.QuickActions.KEY,
+    -> true
+
+    else -> false
 }
 
 @Composable
@@ -1448,22 +1658,20 @@ private fun AccountsOverviewConfigContent(
         ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
         ?: emptySet()
 
-    accounts.forEach { account ->
-        val included = account.id !in excludedIds
-        ListItem(
-            headlineContent = { Text(account.name) },
-            trailingContent = {
-                Switch(
-                    checked = included,
-                    onCheckedChange = { checked ->
-                        val newExcluded = if (checked) excludedIds - account.id else excludedIds + account.id
-                        onConfigChange(config.toMutableMap().apply {
-                            put(AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS, newExcluded.joinToString(","))
-                        })
-                    },
-                )
-            },
-        )
+    DashboardConfigCard {
+        accounts.forEach { account ->
+            val included = account.id !in excludedIds
+            DashboardConfigToggleRow(
+                title = account.name,
+                checked = included,
+                onCheckedChange = { checked ->
+                    val newExcluded = if (checked) excludedIds - account.id else excludedIds + account.id
+                    onConfigChange(config.toMutableMap().apply {
+                        put(AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS, newExcluded.joinToString(","))
+                    })
+                },
+            )
+        }
     }
 }
 
@@ -1478,36 +1686,31 @@ private fun CreditCardsPagerConfigContent(
         ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
         ?: emptySet()
 
-    ListItem(
-        headlineContent = { Text(stringResource(Res.string.component_config_show_empty_state)) },
-        trailingContent = {
-            Switch(
-                checked = showEmptyState,
-                onCheckedChange = { enabled ->
+    DashboardConfigCard {
+        DashboardConfigToggleRow(
+            title = stringResource(Res.string.component_config_show_empty_state),
+            checked = showEmptyState,
+            onCheckedChange = { enabled ->
+                onConfigChange(config.toMutableMap().apply {
+                    put(DashboardComponentConfig.SHOW_EMPTY_STATE, enabled.toString())
+                })
+            },
+            leadingIcon = Icons.Default.CreditCard,
+        )
+
+        creditCards.forEach { card ->
+            val included = card.id !in excludedIds
+            DashboardConfigToggleRow(
+                title = card.name,
+                checked = included,
+                onCheckedChange = { checked ->
+                    val newExcluded = if (checked) excludedIds - card.id else excludedIds + card.id
                     onConfigChange(config.toMutableMap().apply {
-                        put(DashboardComponentConfig.SHOW_EMPTY_STATE, enabled.toString())
+                        put(CreditCardsPagerConfig.EXCLUDED_CARD_IDS, newExcluded.joinToString(","))
                     })
                 },
             )
-        },
-    )
-
-    creditCards.forEach { card ->
-        val included = card.id !in excludedIds
-        ListItem(
-            headlineContent = { Text(card.name) },
-            trailingContent = {
-                Switch(
-                    checked = included,
-                    onCheckedChange = { checked ->
-                        val newExcluded = if (checked) excludedIds - card.id else excludedIds + card.id
-                        onConfigChange(config.toMutableMap().apply {
-                            put(CreditCardsPagerConfig.EXCLUDED_CARD_IDS, newExcluded.joinToString(","))
-                        })
-                    },
-                )
-            },
-        )
+        }
     }
 }
 
@@ -1518,37 +1721,25 @@ private fun SpendingPagerConfigContent(
 ) {
     val options = listOf(3, 5, 10, -1)
     val current = config[SpendingPagerConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
+    val allLabel = stringResource(Res.string.component_config_all)
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = stringResource(Res.string.component_config_max_categories),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, value ->
-                SegmentedButton(
-                    selected = current == value,
-                    onClick = {
-                        onConfigChange(config.toMutableMap().apply {
-                            put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
-                        })
-                    },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    icon = {},
-                ) {
-                    Text(
-                        text = if (value == -1) stringResource(Res.string.component_config_all) else value.toString(),
-                        fontSize = 12.sp,
-                    )
-                }
+    DashboardSegmentedOptionCard(
+        title = stringResource(Res.string.component_config_max_categories),
+        options = options,
+        current = current,
+        onOptionSelected = { value ->
+            onConfigChange(config.toMutableMap().apply {
+                put(SpendingPagerConfig.MAX_CATEGORIES, value.toString())
+            })
+        },
+        optionLabel = { value ->
+            if (value == -1) {
+                allLabel
+            } else {
+                value.toString()
             }
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -1560,33 +1751,17 @@ private fun PendingRecurringConfigContent(
     val current = config[PendingRecurringConfig.DAYS_AHEAD]?.toIntOrNull()
         ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = stringResource(Res.string.component_config_days_ahead),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, value ->
-                SegmentedButton(
-                    selected = current == value,
-                    onClick = {
-                        onConfigChange(config.toMutableMap().apply {
-                            put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
-                        })
-                    },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    icon = {},
-                ) {
-                    Text(text = "$value", fontSize = 12.sp)
-                }
-            }
-        }
-    }
+    DashboardSegmentedOptionCard(
+        title = stringResource(Res.string.component_config_days_ahead),
+        options = options,
+        current = current,
+        onOptionSelected = { value ->
+            onConfigChange(config.toMutableMap().apply {
+                put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
+            })
+        },
+        optionLabel = { value -> value.toString() },
+    )
 }
 
 @Composable
@@ -1597,33 +1772,17 @@ private fun RecentsConfigContent(
     val options = listOf(4, 6, 8, 10)
     val current = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = stringResource(Res.string.component_config_count),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, value ->
-                SegmentedButton(
-                    selected = current == value,
-                    onClick = {
-                        onConfigChange(config.toMutableMap().apply {
-                            put(RecentsConfig.COUNT, value.toString())
-                        })
-                    },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    icon = {},
-                ) {
-                    Text(text = "$value", fontSize = 12.sp)
-                }
-            }
-        }
-    }
+    DashboardSegmentedOptionCard(
+        title = stringResource(Res.string.component_config_count),
+        options = options,
+        current = current,
+        onOptionSelected = { value ->
+            onConfigChange(config.toMutableMap().apply {
+                put(RecentsConfig.COUNT, value.toString())
+            })
+        },
+        optionLabel = { value -> value.toString() },
+    )
 }
 
 @Composable
@@ -1635,22 +1794,27 @@ private fun QuickActionsConfigContent(
         ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
     val visibleCount = QuickActionType.entries.count { it.name !in hiddenActions }
 
-    QuickActionType.entries.forEach { action ->
-        val isVisible = action.name !in hiddenActions
-        ListItem(
-            headlineContent = { Text(stringUiText(action.title)) },
-            trailingContent = {
-                Switch(
-                    checked = isVisible,
-                    enabled = !isVisible || visibleCount > 1,
-                    onCheckedChange = { checked ->
-                        val newHidden = if (checked) hiddenActions - action.name else hiddenActions + action.name
-                        onConfigChange(config.toMutableMap().apply {
-                            put(QuickActionsConfig.HIDDEN_ACTIONS, newHidden.joinToString(","))
-                        })
-                    },
-                )
-            },
-        )
+    DashboardConfigCard {
+        QuickActionType.entries.forEach { action ->
+            val isVisible = action.name !in hiddenActions
+            val canToggle = !isVisible || visibleCount > 1
+
+            DashboardConfigToggleRow(
+                title = stringUiText(action.title),
+                checked = isVisible,
+                enabled = canToggle,
+                supportingText = if (!canToggle) {
+                    stringResource(Res.string.component_config_min_visible_action)
+                } else {
+                    null
+                },
+                onCheckedChange = { checked ->
+                    val newHidden = if (checked) hiddenActions - action.name else hiddenActions + action.name
+                    onConfigChange(config.toMutableMap().apply {
+                        put(QuickActionsConfig.HIDDEN_ACTIONS, newHidden.joinToString(","))
+                    })
+                },
+            )
+        }
     }
 }

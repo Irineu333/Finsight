@@ -16,7 +16,7 @@ import com.neoutils.finsight.report.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
 import com.neoutils.finsight.resources.report_viewer_badge_credit_card
-import com.neoutils.finsight.ui.screen.report.ReportRoute
+import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.channels.Channel
@@ -27,10 +27,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 
 class ReportViewerViewModel(
-    private val route: ReportRoute.Viewer,
+    private val params: ReportViewerParams,
     private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
@@ -40,24 +39,24 @@ class ReportViewerViewModel(
     private val renderer: ReportDocumentRenderer,
 ) : ViewModel() {
 
-    private val startDate = LocalDate.parse(route.startDate)
-    private val endDate = LocalDate.parse(route.endDate)
+    private val startDate = params.startDate
+    private val endDate = params.endDate
 
-    private val perspective: ReportPerspective = when (route.perspectiveType) {
+    private val perspective: ReportPerspective = when (params.perspectiveType) {
         PerspectiveTab.CREDIT_CARD -> ReportPerspective.CreditCardPerspective(
-            creditCardId = requireNotNull(route.creditCardId),
+            creditCardId = requireNotNull(params.creditCardId),
         )
 
         PerspectiveTab.ACCOUNT -> ReportPerspective.AccountPerspective(
-            accountIds = route.accountIds,
+            accountIds = params.accountIds,
         )
     }
 
     private val invoicesFlow = when {
-        route.invoiceIds.isEmpty() -> flowOf(emptyList())
+        params.invoiceIds.isEmpty() -> flowOf(emptyList())
         else -> invoiceRepository.observeInvoicesByCreditCard(
-            requireNotNull(route.creditCardId)
-        ).map { invoices -> invoices.filter { it.id in route.invoiceIds } }
+            requireNotNull(params.creditCardId)
+        ).map { invoices -> invoices.filter { it.id in params.invoiceIds } }
     }
 
     private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
@@ -125,7 +124,7 @@ class ReportViewerViewModel(
         }
 
         val categorySpending = when {
-            !route.includeSpendingByCategory -> null
+            !params.includeSpendingByCategory -> null
             invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
             else -> calculateReportCategorySpendingUseCase(
                 operations = operations,
@@ -137,7 +136,7 @@ class ReportViewerViewModel(
         }
 
         val categoryIncome = when {
-            !route.includeIncomeByCategory -> null
+            !params.includeIncomeByCategory -> null
             invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
             else -> calculateReportCategorySpendingUseCase(
                 operations = operations,
@@ -148,7 +147,7 @@ class ReportViewerViewModel(
             )
         }
 
-        val transactionsMap = if (route.includeTransactionList) {
+        val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
                 operations.filter { op ->
                     op.targetInvoice?.id in invoiceIds ||

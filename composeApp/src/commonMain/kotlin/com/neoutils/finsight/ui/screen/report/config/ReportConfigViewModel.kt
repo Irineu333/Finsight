@@ -8,8 +8,10 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.ui.screen.report.ReportRoute
+import com.neoutils.finsight.ui.screen.report.ReportViewerParams
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class ReportConfigViewModel(
@@ -20,6 +22,8 @@ class ReportConfigViewModel(
 
     private val initialConfig = ReportConfigUiState.initial()
     private val config = MutableStateFlow(initialConfig)
+    private val _events = Channel<ReportConfigEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private val invoicesFlow = config
         .map { it.selectedCreditCardId }
@@ -100,6 +104,12 @@ class ReportConfigViewModel(
             is ReportConfigAction.ToggleTransactionList -> {
                 config.update { it.copy(includeTransactionList = action.enabled) }
             }
+
+            ReportConfigAction.GenerateReport -> {
+                buildViewerParams()?.let { params ->
+                    _events.send(ReportConfigEvent.NavigateToViewer(params))
+                }
+            }
         }
     }
 
@@ -123,15 +133,16 @@ class ReportConfigViewModel(
         }
     }
 
-    // TODO: improve this
-    fun buildViewerRoute(state: ReportConfigUiState): ReportRoute.Viewer? {
+    private fun buildViewerParams(
+        state: ReportConfigUiState = uiState.value
+    ): ReportViewerParams? {
         if (!state.isValid) return null
         return when (state.selectedTab) {
-            PerspectiveTab.ACCOUNT -> ReportRoute.Viewer(
+            PerspectiveTab.ACCOUNT -> ReportViewerParams(
                 perspectiveType = PerspectiveTab.ACCOUNT,
                 accountIds = state.selectedAccountIds.toList(),
-                startDate = state.startDate.toString(),
-                endDate = state.endDate.toString(),
+                startDate = state.startDate,
+                endDate = state.endDate,
                 includeSpendingByCategory = state.includeSpendingByCategory,
                 includeIncomeByCategory = state.includeIncomeByCategory,
                 includeTransactionList = state.includeTransactionList,
@@ -140,12 +151,12 @@ class ReportConfigViewModel(
             PerspectiveTab.CREDIT_CARD -> {
                 val selected = state.invoices.filter { it.id in state.selectedInvoiceIds }
                 if (selected.isEmpty()) return null
-                ReportRoute.Viewer(
+                ReportViewerParams(
                     perspectiveType = PerspectiveTab.CREDIT_CARD,
                     creditCardId = state.selectedCreditCardId,
                     invoiceIds = selected.map { it.id },
-                    startDate = selected.minOf { it.openingDate }.toString(),
-                    endDate = selected.maxOf { it.closingDate }.toString(),
+                    startDate = selected.minOf { it.openingDate },
+                    endDate = selected.maxOf { it.closingDate },
                     includeSpendingByCategory = state.includeSpendingByCategory,
                     includeIncomeByCategory = state.includeIncomeByCategory,
                     includeTransactionList = state.includeTransactionList,

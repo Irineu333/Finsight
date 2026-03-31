@@ -39,6 +39,7 @@ import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.report.ReportRoute
+import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
@@ -50,7 +51,7 @@ import org.koin.core.parameter.parametersOf
 fun ReportViewerScreen(
     route: ReportRoute.Viewer,
     onNavigateBack: () -> Unit = {},
-    viewModel: ReportViewerViewModel = koinViewModel { parametersOf(route) },
+    viewModel: ReportViewerViewModel = koinViewModel { parametersOf(route.toParams()) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

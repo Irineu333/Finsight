@@ -29,9 +29,9 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.LocalNavigator
+import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.NavigationAction
+import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.ui.model.OperationUi
@@ -67,7 +67,7 @@ class ViewOperationModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val manager = LocalModalManager.current
-        val navigator = LocalNavigator.current
+        val navigationDispatcher = LocalNavigationDispatcher.current
 
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
@@ -207,7 +207,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigator.navigate(NavigationAction.Accounts(account.id))
+                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
                         }
                     )
                 }
@@ -219,7 +219,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigator.navigate(NavigationAction.Accounts(account.id))
+                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
                         }
                     )
                 }
@@ -233,7 +233,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigator.navigate(NavigationAction.Accounts(account.id))
+                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
                         }
                     )
                 }
@@ -247,7 +247,9 @@ class ViewOperationModal(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()
-                        navigator.navigate(NavigationAction.CreditCards(creditCard.id))
+                        navigationDispatcher.dispatch(
+                            NavigationDestination.CreditCards(creditCard.id)
+                        )
                     }
                 )
             } ?: run {
@@ -271,7 +273,9 @@ class ViewOperationModal(
                     onClick = creditCardId?.let {
                         {
                             manager.dismissAll()
-                            navigator.navigate(NavigationAction.InvoiceTransactions(it))
+                            navigationDispatcher.dispatch(
+                                NavigationDestination.InvoiceTransactions(it)
+                            )
                         }
                     }
                 )
@@ -284,7 +288,7 @@ class ViewOperationModal(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()
-                        navigator.navigate(NavigationAction.Installments)
+                        navigationDispatcher.dispatch(NavigationDestination.Installments)
                     }
                 )
             }

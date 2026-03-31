@@ -47,20 +47,6 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManager provided") }
-val LocalNavigator = compositionLocalOf<Navigator> { Navigator {} }
-
-class Navigator(private val onNavigate: (NavigationAction) -> Unit) {
-    fun navigate(action: NavigationAction) {
-        onNavigate(action)
-    }
-}
-
-sealed class NavigationAction {
-    data class InvoiceTransactions(val creditCardId: Long) : NavigationAction()
-    data class CreditCards(val creditCardId: Long) : NavigationAction()
-    data class Accounts(val accountId: Long? = null) : NavigationAction()
-    data object Installments : NavigationAction()
-}
 
 class ModalManager {
 
@@ -96,12 +82,10 @@ class ModalManager {
 
 @Composable
 fun ModalManagerHost(
-    onNavigate: (NavigationAction) -> Unit = {},
     content: @Composable () -> Unit
 ) {
 
     val modalManager = koinInject<ModalManager>()
-    val navigator = Navigator(onNavigate)
     val formatter = koinInject<CurrencyFormatter>()
     val dateFormats = DateFormats(
         monthNames = MonthNames(
@@ -131,7 +115,6 @@ fun ModalManagerHost(
 
     CompositionLocalProvider(
         LocalModalManager provides modalManager,
-        LocalNavigator provides navigator,
         LocalCurrencyFormatter provides formatter,
         LocalDateFormats provides dateFormats,
     ) {

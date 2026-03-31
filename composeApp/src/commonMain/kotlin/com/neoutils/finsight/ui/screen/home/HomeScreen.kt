@@ -15,16 +15,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navOptions
 import androidx.navigation.toRoute
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationItem
+import com.neoutils.finsight.ui.component.NavigationDispatcherProvider
 import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.component.NavigationAction
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.util.PerspectiveTabNavType
 import com.neoutils.finsight.util.TransactionTargetNavType
@@ -48,149 +47,113 @@ import kotlin.reflect.typeOf
 fun AppNavHost() = Surface {
 
     val navController = rememberNavController()
+    val navigationDispatcher = rememberAppNavigationDispatcher(navController)
 
-    ModalManagerHost(
-        onNavigate = { action ->
-            when (action) {
-                is NavigationAction.InvoiceTransactions -> {
-                    navController.navigate(AppRoute.InvoiceTransactions(action.creditCardId))
-                }
-                is NavigationAction.CreditCards -> {
-                    navController.navigate(AppRoute.CreditCards(action.creditCardId))
-                }
-                is NavigationAction.Accounts -> {
-                    navController.navigate(AppRoute.Accounts(action.accountId))
-                }
-                is NavigationAction.Installments -> {
-                    navController.navigate(AppRoute.Installments)
-                }
-            }
-        }
-    ) {
-        SharedTransitionProvider {
-            NavHost(
-                navController = navController,
-                startDestination = AppRoute.Home,
-            ) {
-                composable<AppRoute.Home> {
-                    CompositionLocalProvider(
-                        LocalAnimatedVisibilityScope provides this
-                    ) {
-                        HomeScreen(
-                            openCategories = {
-                                navController.navigate(AppRoute.Categories)
-                            },
-                            openCreditCards = {
-                                navController.navigate(AppRoute.CreditCards())
-                            },
-                            openAccounts = {
-                                navController.navigate(AppRoute.Accounts())
-                            },
-                            openInstallments = {
-                                navController.navigate(AppRoute.Installments)
-                            },
-                            openBudgets = {
-                                navController.navigate(AppRoute.Budgets)
-                            },
-                            openRecurring = {
-                                navController.navigate(AppRoute.Recurring)
-                            },
-                            openReports = {
-                                navController.navigate(AppRoute.ReportConfig)
-                            },
-                        )
-                    }
-                }
-
-                composable<AppRoute.Categories> {
-                    CategoriesScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
+    ModalManagerHost {
+        NavigationDispatcherProvider(dispatcher = navigationDispatcher) {
+            SharedTransitionProvider {
+                NavHost(
+                    navController = navController,
+                    startDestination = AppRoute.Home,
+                ) {
+                    composable<AppRoute.Home> {
+                        CompositionLocalProvider(
+                            LocalAnimatedVisibilityScope provides this
+                        ) {
+                            HomeScreen()
                         }
-                    )
-                }
+                    }
 
-                composable<AppRoute.CreditCards> { backStackEntry ->
-                    val route = backStackEntry.toRoute<AppRoute.CreditCards>()
-                    CompositionLocalProvider(
-                        LocalAnimatedVisibilityScope provides this
-                    ) {
-                        CreditCardsScreen(
-                            initialCreditCardId = route.creditCardId,
+                    composable<AppRoute.Categories> {
+                        CategoriesScreen(
                             onNavigateBack = {
                                 navController.navigateUp()
                             }
                         )
                     }
-                }
 
-                composable<AppRoute.InvoiceTransactions> { backStackEntry ->
-                    val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
-                    InvoiceTransactionsScreen(
-                        creditCardId = route.creditCardId,
-                        onNavigateBack = {
-                            navController.navigateUp()
+                    composable<AppRoute.CreditCards> { backStackEntry ->
+                        val route = backStackEntry.toRoute<AppRoute.CreditCards>()
+                        CompositionLocalProvider(
+                            LocalAnimatedVisibilityScope provides this
+                        ) {
+                            CreditCardsScreen(
+                                initialCreditCardId = route.creditCardId,
+                                onNavigateBack = {
+                                    navController.navigateUp()
+                                }
+                            )
                         }
-                    )
-                }
+                    }
 
-                composable<AppRoute.Accounts> { backStackEntry ->
-                    val route = backStackEntry.toRoute<AppRoute.Accounts>()
-                    AccountsScreen(
-                        initialAccountId = route.accountId,
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        }
-                    )
-                }
+                    composable<AppRoute.InvoiceTransactions> { backStackEntry ->
+                        val route = backStackEntry.toRoute<AppRoute.InvoiceTransactions>()
+                        InvoiceTransactionsScreen(
+                            creditCardId = route.creditCardId,
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
+                    }
 
-                composable<AppRoute.Installments> {
-                    InstallmentsScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        }
-                    )
-                }
+                    composable<AppRoute.Accounts> { backStackEntry ->
+                        val route = backStackEntry.toRoute<AppRoute.Accounts>()
+                        AccountsScreen(
+                            initialAccountId = route.accountId,
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
+                    }
 
-                composable<AppRoute.Budgets> {
-                    BudgetsScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        }
-                    )
-                }
+                    composable<AppRoute.Installments> {
+                        InstallmentsScreen(
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
+                    }
 
-                composable<AppRoute.Recurring> {
-                    RecurringScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        }
-                    )
-                }
+                    composable<AppRoute.Budgets> {
+                        BudgetsScreen(
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
+                    }
 
-                composable<AppRoute.ReportConfig> {
-                    ReportConfigScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        },
-                        onNavigateToViewer = { route ->
-                            navController.navigate(route)
-                        },
-                    )
-                }
+                    composable<AppRoute.Recurring> {
+                        RecurringScreen(
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            }
+                        )
+                    }
 
-                composable<AppRoute.ReportViewer>(
-                    typeMap = mapOf(
-                        typeOf<PerspectiveTab>() to PerspectiveTabNavType()
-                    )
-                ) { backStackEntry ->
-                    val route = backStackEntry.toRoute<AppRoute.ReportViewer>()
-                    ReportViewerScreen(
-                        route = route,
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        },
-                    )
+                    composable<AppRoute.ReportConfig> {
+                        ReportConfigScreen(
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            },
+                            onNavigateToViewer = { route ->
+                                navController.navigate(route)
+                            },
+                        )
+                    }
+
+                    composable<AppRoute.ReportViewer>(
+                        typeMap = mapOf(
+                            typeOf<PerspectiveTab>() to PerspectiveTabNavType()
+                        )
+                    ) { backStackEntry ->
+                        val route = backStackEntry.toRoute<AppRoute.ReportViewer>()
+                        ReportViewerScreen(
+                            route = route,
+                            onNavigateBack = {
+                                navController.navigateUp()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -198,15 +161,7 @@ fun AppNavHost() = Surface {
 }
 
 @Composable
-fun HomeScreen(
-    openCategories: () -> Unit = {},
-    openCreditCards: () -> Unit = {},
-    openAccounts: () -> Unit = {},
-    openInstallments: () -> Unit = {},
-    openBudgets: () -> Unit = {},
-    openRecurring: () -> Unit = {},
-    openReports: () -> Unit = {},
-) {
+fun HomeScreen() {
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -263,13 +218,6 @@ fun HomeScreen(
                             )
                         )
                     },
-                    openCategories = openCategories,
-                    openCreditCards = openCreditCards,
-                    openAccounts = openAccounts,
-                    openInstallments = openInstallments,
-                    openBudgets = openBudgets,
-                    openRecurring = openRecurring,
-                    openReports = openReports,
                 )
             }
 

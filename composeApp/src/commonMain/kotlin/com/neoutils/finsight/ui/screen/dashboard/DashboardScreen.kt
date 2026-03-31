@@ -74,51 +74,29 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-
 @Composable
 fun DashboardScreen(
     openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
-    openCategories: () -> Unit = {},
-    openCreditCards: () -> Unit = {},
-    openAccounts: () -> Unit = {},
-    openInstallments: () -> Unit = {},
-    openBudgets: () -> Unit = {},
-    openRecurring: () -> Unit = {},
-    openReports: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
-    val navigator = LocalNavigator.current
+    val navigationDispatcher = LocalNavigationDispatcher.current
 
     DashboardContent(
         uiState = uiState,
         openTransactions = openTransactions,
-        onOpenCategories = openCategories,
-        onOpenCreditCards = openCreditCards,
-        onOpenAccounts = openAccounts,
-        onOpenInstallments = openInstallments,
-        onOpenBudgets = openBudgets,
-        onOpenRecurring = openRecurring,
-        onOpenReports = openReports,
         modalManager = modalManager,
-        navigator = navigator
+        navigationDispatcher = navigationDispatcher,
     )
 }
 
 @Composable
 private fun DashboardContent(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
-    onOpenCategories: () -> Unit,
-    onOpenCreditCards: () -> Unit,
-    onOpenAccounts: () -> Unit,
-    onOpenInstallments: () -> Unit,
-    onOpenBudgets: () -> Unit,
-    onOpenRecurring: () -> Unit,
-    onOpenReports: () -> Unit,
     uiState: DashboardUiState,
     modalManager: ModalManager,
-    navigator: Navigator
+    navigationDispatcher: NavigationDispatcher,
 ) = Scaffold(
     topBar = {
         TopAppBar(
@@ -217,9 +195,13 @@ private fun DashboardContent(
             item(key = "accounts_overview") {
                 DashboardAccountsRow(
                     accounts = uiState.accounts,
-                    onOpenAccounts = onOpenAccounts,
+                    onOpenAccounts = {
+                        navigationDispatcher.dispatch(NavigationDestination.Accounts())
+                    },
                     onAccountClick = { accountId ->
-                        navigator.navigate(NavigationAction.Accounts(accountId = accountId))
+                        navigationDispatcher.dispatch(
+                            NavigationDestination.Accounts(accountId = accountId)
+                        )
                     },
                     onAddAccount = {
                         modalManager.show(AccountFormModal())
@@ -255,7 +237,11 @@ private fun DashboardContent(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                         )
-                        TextButton(onClick = onOpenCreditCards) {
+                        TextButton(
+                            onClick = {
+                                navigationDispatcher.dispatch(NavigationDestination.CreditCards())
+                            }
+                        ) {
                             Text(text = stringResource(Res.string.dashboard_see_all))
                         }
                     }
@@ -274,8 +260,8 @@ private fun DashboardContent(
                             modifier = Modifier.fillMaxWidth(),
                             variant = CreditCardCardVariant.Dashboard(
                                 onClick = {
-                                    navigator.navigate(
-                                        NavigationAction.CreditCards(
+                                    navigationDispatcher.dispatch(
+                                        NavigationDestination.CreditCards(
                                             creditCardId = creditCardUi.creditCard.id
                                         )
                                     )
@@ -388,13 +374,17 @@ private fun DashboardContent(
                         .animateItem(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.dashboard_pending_recurring),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    TextButton(onClick = onOpenRecurring) {
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.dashboard_pending_recurring),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    TextButton(
+                        onClick = {
+                            navigationDispatcher.dispatch(NavigationDestination.Recurring)
+                        }
+                    ) {
                         Text(text = stringResource(Res.string.dashboard_see_all))
                     }
                 }
@@ -500,7 +490,9 @@ private fun DashboardContent(
             key = "open_budgets_action"
         ) {
             Card(
-                onClick = onOpenBudgets,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Budgets)
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -532,7 +524,9 @@ private fun DashboardContent(
             key = "open_category_action"
         ) {
             Card(
-                onClick = onOpenCategories,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Categories)
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -564,7 +558,9 @@ private fun DashboardContent(
             key = "open_credit_card_action"
         ) {
             Card(
-                onClick = onOpenCreditCards,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.CreditCards())
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -596,7 +592,9 @@ private fun DashboardContent(
             key = "open_accounts_action"
         ) {
             Card(
-                onClick = onOpenAccounts,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Accounts())
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -628,7 +626,9 @@ private fun DashboardContent(
             key = "open_recurring_action"
         ) {
             Card(
-                onClick = onOpenRecurring,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Recurring)
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -660,7 +660,9 @@ private fun DashboardContent(
             key = "open_reports_action"
         ) {
             Card(
-                onClick = onOpenReports,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,
@@ -692,7 +694,9 @@ private fun DashboardContent(
             key = "open_installments_action"
         ) {
             Card(
-                onClick = onOpenInstallments,
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Installments)
+                },
                 colors = CardDefaults.cardColors(
                     containerColor = colorScheme.surfaceContainer,
                     contentColor = colorScheme.onSurface,

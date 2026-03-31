@@ -77,7 +77,7 @@ private fun CreditCardsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
-    val navigator = LocalNavigator.current
+    val navigationDispatcher = LocalNavigationDispatcher.current
 
     Scaffold(
         topBar = {
@@ -155,8 +155,10 @@ private fun CreditCardsContent(
                                 onAction(CreditCardsAction.SelectCard(index))
                             },
                             onCardClick = { creditCardUi ->
-                                navigator.navigate(
-                                    NavigationAction.InvoiceTransactions(creditCardUi.creditCard.id)
+                                navigationDispatcher.dispatch(
+                                    NavigationDestination.InvoiceTransactions(
+                                        creditCardUi.creditCard.id
+                                    )
                                 )
                             },
                             onEditInvoice = { invoice ->

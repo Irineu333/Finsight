@@ -3,9 +3,11 @@
 package com.neoutils.finsight.ui.screen.support
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,12 +16,13 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,6 +43,7 @@ fun SupportIssueScreen(
     },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
         topBar = {
@@ -103,7 +107,12 @@ fun SupportIssueScreen(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues),
+                        .padding(paddingValues)
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                focusManager.clearFocus(force = true)
+                            }
+                        },
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
@@ -332,7 +341,8 @@ private fun ReplyComposer(
             },
             modifier = Modifier
                 .padding(16.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars)
+                .imePadding()
+                .navigationBarsPadding()
                 .fillMaxWidth(),
             minLines = 1,
             maxLines = 4,

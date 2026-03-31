@@ -13,10 +13,8 @@ sealed class SupportUiState {
     data class Content(
         val issues: List<SupportIssue>,
         override val showActive: Boolean = true,
-        val integrationPending: Boolean = false,
     ) : SupportUiState() {
-        val waitingSupportCount: Int
-            get() = issues.count { it.isWaitingSupportReply }
+        val waitingSupportCount = issues.count { it.isWaitingSupportReply }
     }
 
     data class Empty(

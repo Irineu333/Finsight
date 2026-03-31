@@ -104,12 +104,6 @@ fun SupportScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (uiState.integrationPending) {
-                        item(key = "integration_note") {
-                            IntegrationPendingCard()
-                        }
-                    }
-
                     item(key = "overview") {
                         SupportOverviewCard(uiState = uiState)
                     }
@@ -192,44 +186,6 @@ private fun EmptySupportState(
             modifier = Modifier.padding(top = 16.dp),
         ) {
             Text(text = stringResource(Res.string.support_empty_cta))
-        }
-    }
-}
-
-@Composable
-private fun IntegrationPendingCard(
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Icon(
-                imageVector = Icons.Default.Campaign,
-                contentDescription = null,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(Res.string.support_integration_title),
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(Res.string.support_integration_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
         }
     }
 }

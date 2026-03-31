@@ -114,8 +114,6 @@
     <string name="support_empty_title">Open a direct support channel</string>
     <string name="support_empty_body">Let users report bugs, request improvements, and follow your reply without leaving the app.</string>
     <string name="support_empty_cta">Open first issue</string>
-    <string name="support_integration_title">Temporary data layer</string>
-    <string name="support_integration_body">Issues on this screen are still in memory only. TODO: connect the chosen support backend.</string>
     <string name="support_overview_waiting">%1$d waiting for a reply</string>
     <string name="support_overview_total">%1$d issues total</string>
     <string name="support_type_bug">Bug</string>

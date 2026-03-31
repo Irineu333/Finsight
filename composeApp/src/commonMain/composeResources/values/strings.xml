@@ -119,8 +119,6 @@
     <string name="support_empty_title">Abra um canal direto com você</string>
     <string name="support_empty_body">Permita que o usuário relate bugs, peça melhorias e acompanhe seu retorno sem sair do app.</string>
     <string name="support_empty_cta">Abrir primeira issue</string>
-    <string name="support_integration_title">Camada de dados provisória</string>
-    <string name="support_integration_body">As issues desta tela ainda estao em memoria. TODO: conectar o backend de suporte escolhido.</string>
     <string name="support_overview_waiting">%1$d aguardando resposta</string>
     <string name="support_overview_total">%1$d issues no total</string>
     <string name="support_filter_active">Ativas</string>

@@ -574,9 +574,13 @@ private fun PendingRecurringConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
-    val options = listOf(7, 14, 30)
-    val current = config[PendingRecurringConfig.DAYS_AHEAD]?.toIntOrNull()
-        ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
+    val options = listOf(0, 7, 15, 30)
+    val current = config[PendingRecurringConfig.UPCOMING_DAYS_AHEAD]?.toIntOrNull()
+        ?: PendingRecurringConfig.DEFAULT_UPCOMING_DAYS_AHEAD
+    val todayLabel = stringResource(Res.string.component_config_today)
+    val sevenDaysLabel = stringResource(Res.string.component_config_7_days)
+    val fifteenDaysLabel = stringResource(Res.string.component_config_15_days)
+    val thisMonthLabel = stringResource(Res.string.component_config_this_month)
 
     DashboardSegmentedOptionCard(
         title = stringResource(Res.string.component_config_days_ahead),
@@ -584,10 +588,17 @@ private fun PendingRecurringConfigContent(
         current = current,
         onOptionSelected = { value ->
             onConfigChange(config.toMutableMap().apply {
-                put(PendingRecurringConfig.DAYS_AHEAD, value.toString())
+                put(PendingRecurringConfig.UPCOMING_DAYS_AHEAD, value.toString())
             })
         },
-        optionLabel = { value -> value.toString() },
+        optionLabel = { value ->
+            when (value) {
+                0 -> todayLabel
+                7 -> sevenDaysLabel
+                15 -> fifteenDaysLabel
+                else -> thisMonthLabel
+            }
+        },
     )
 }
 

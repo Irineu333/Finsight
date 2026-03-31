@@ -49,6 +49,16 @@ sealed interface DashboardComponent {
         }
     }
 
+    data class CreditCardBalanceStats(
+        val payment: Double,
+        val expense: Double,
+        override val key: String = KEY,
+    ) : DashboardComponent {
+        companion object {
+            const val KEY = "balance_stats_credit_card"
+        }
+    }
+
     data class AccountsOverview(
         val accounts: List<DashboardAccountUi>,
         override val key: String = KEY,
@@ -123,6 +133,7 @@ fun DashboardComponent.toViewingVariant(
     )
 
     is DashboardComponent.PendingBalanceStats -> DashboardComponentVariant.PendingBalanceStats.Viewing(component = this)
+    is DashboardComponent.CreditCardBalanceStats -> DashboardComponentVariant.CreditCardBalanceStats.Viewing(component = this)
     is DashboardComponent.AccountsOverview -> DashboardComponentVariant.AccountsOverview.Viewing(
         component = this,
         onOpenQuickAction = onOpenQuickAction,

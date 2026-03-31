@@ -120,6 +120,14 @@ internal class DashboardComponentOptionsModal(
                         )
                     }
 
+                    DashboardComponent.CreditCardBalanceStats.KEY -> {
+                        BalanceStatsConfigContent(
+                            config = config,
+                            defaultHideWhenEmpty = true,
+                            onConfigChange = ::updateConfig,
+                        )
+                    }
+
                     DashboardComponent.AccountsOverview.KEY -> {
                         AccountsOverviewConfigContent(
                             accounts = accounts,
@@ -360,6 +368,7 @@ private fun DashboardSegmentedOptionCard(
 private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
     DashboardComponent.ConcreteBalanceStats.KEY,
     DashboardComponent.PendingBalanceStats.KEY,
+    DashboardComponent.CreditCardBalanceStats.KEY,
     DashboardComponent.AccountsOverview.KEY,
     DashboardComponent.CreditCardsPager.KEY,
     DashboardComponent.SpendingPager.KEY,

@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.component_accounts_overview
 import com.neoutils.finsight.resources.component_balance_stats
+import com.neoutils.finsight.resources.component_credit_card_balance_stats
 import com.neoutils.finsight.resources.component_credit_cards
 import com.neoutils.finsight.resources.component_pending_balance
 import com.neoutils.finsight.resources.component_pending_recurring
@@ -25,12 +26,13 @@ object DashboardComponentRegistry {
         DashboardRegistryEntry(DashboardComponent.TotalBalance.KEY,          UiText.Res(Res.string.component_total_balance),     0),
         DashboardRegistryEntry(DashboardComponent.ConcreteBalanceStats.KEY, UiText.Res(Res.string.component_balance_stats),     1),
         DashboardRegistryEntry(DashboardComponent.PendingBalanceStats.KEY,  UiText.Res(Res.string.component_pending_balance),   2),
-        DashboardRegistryEntry(DashboardComponent.AccountsOverview.KEY,     UiText.Res(Res.string.component_accounts_overview), 3),
-        DashboardRegistryEntry(DashboardComponent.CreditCardsPager.KEY,     UiText.Res(Res.string.component_credit_cards),      4),
-        DashboardRegistryEntry(DashboardComponent.SpendingPager.KEY,        UiText.Res(Res.string.component_spending),          5),
-        DashboardRegistryEntry(DashboardComponent.PendingRecurring.KEY,     UiText.Res(Res.string.component_pending_recurring), 6),
-        DashboardRegistryEntry(DashboardComponent.Recents.KEY,              UiText.Res(Res.string.component_recents),           7),
-        DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     8),
+        DashboardRegistryEntry(DashboardComponent.CreditCardBalanceStats.KEY, UiText.Res(Res.string.component_credit_card_balance_stats), 3),
+        DashboardRegistryEntry(DashboardComponent.AccountsOverview.KEY,     UiText.Res(Res.string.component_accounts_overview), 4),
+        DashboardRegistryEntry(DashboardComponent.CreditCardsPager.KEY,     UiText.Res(Res.string.component_credit_cards),      5),
+        DashboardRegistryEntry(DashboardComponent.SpendingPager.KEY,        UiText.Res(Res.string.component_spending),          6),
+        DashboardRegistryEntry(DashboardComponent.PendingRecurring.KEY,     UiText.Res(Res.string.component_pending_recurring), 7),
+        DashboardRegistryEntry(DashboardComponent.Recents.KEY,              UiText.Res(Res.string.component_recents),           8),
+        DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     9),
     )
 
     private val defaultTopSpacingKeys = setOf(
@@ -42,20 +44,32 @@ object DashboardComponentRegistry {
         DashboardComponent.QuickActions.KEY,
     )
 
+    private val defaultDisabledKeys = setOf(
+        DashboardComponent.CreditCardBalanceStats.KEY,
+    )
+
+    fun defaultConfigFor(key: String): Map<String, String> = buildMap {
+        if (key in defaultTopSpacingKeys) {
+            put(DashboardComponentConfig.TOP_SPACING, "true")
+        }
+        if (key == DashboardComponent.AccountsOverview.KEY) {
+            put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
+        }
+        if (
+            key == DashboardComponent.PendingBalanceStats.KEY ||
+            key == DashboardComponent.CreditCardBalanceStats.KEY
+        ) {
+            put(DashboardComponentConfig.HIDE_WHEN_EMPTY, "true")
+        }
+    }
+
     fun defaultPreferences(): List<DashboardComponentPreference> =
-        entries.map { entry ->
-            val config = buildMap {
-                if (entry.key in defaultTopSpacingKeys) {
-                    put(DashboardComponentConfig.TOP_SPACING, "true")
-                }
-                if (entry.key == DashboardComponent.AccountsOverview.KEY) {
-                    put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
-                }
-                if (entry.key == DashboardComponent.PendingBalanceStats.KEY) {
-                    put(DashboardComponentConfig.HIDE_WHEN_EMPTY, "true")
-                }
-            }
-            DashboardComponentPreference(entry.key, entry.defaultPosition, config)
+        entries.filterNot { it.key in defaultDisabledKeys }.map { entry ->
+            DashboardComponentPreference(
+                key = entry.key,
+                position = entry.defaultPosition,
+                config = defaultConfigFor(entry.key),
+            )
         }
 
     fun titleFor(key: String): UiText =

@@ -203,6 +203,7 @@ private fun DashboardEditToolbar(
 
 private sealed interface EditListEntry {
     data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
+    data object ActivePlaceholder : EditListEntry
     data object SectionHeader : EditListEntry
     data object AvailablePlaceholder : EditListEntry
 }
@@ -210,6 +211,7 @@ private sealed interface EditListEntry {
 private val EditListEntry.entryKey: String
     get() = when (this) {
         is EditListEntry.Component -> item.key
+        EditListEntry.ActivePlaceholder -> EDIT_ACTIVE_PLACEHOLDER_KEY
         EditListEntry.SectionHeader -> EDIT_SECTION_HEADER_KEY
         EditListEntry.AvailablePlaceholder -> EDIT_AVAILABLE_PLACEHOLDER_KEY
     }
@@ -228,14 +230,24 @@ private fun DashboardEditingContent(
     ) { from, to ->
         val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
         val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-        if (fromKey == EDIT_SECTION_HEADER_KEY || fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY) return@rememberReorderableLazyListState
+        if (
+            fromKey == EDIT_ACTIVE_PLACEHOLDER_KEY ||
+            fromKey == EDIT_SECTION_HEADER_KEY ||
+            fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY
+        ) {
+            return@rememberReorderableLazyListState
+        }
         onAction(DashboardAction.MoveComponent(fromKey, toKey))
         haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
     val listEntries = remember(state.items, state.availableItems) {
         buildList {
-            state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
+            if (state.items.isEmpty()) {
+                add(EditListEntry.ActivePlaceholder)
+            } else {
+                state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
+            }
             add(EditListEntry.SectionHeader)
             if (state.availableItems.isEmpty()) {
                 add(EditListEntry.AvailablePlaceholder)
@@ -279,6 +291,17 @@ private fun DashboardEditingContent(
                     }
                 }
 
+                EditListEntry.ActivePlaceholder -> {
+                    ReorderableItem(reorderState, key = EDIT_ACTIVE_PLACEHOLDER_KEY) {
+                        DashboardEditPlaceholder(
+                            text = stringResource(Res.string.dashboard_edit_active_placeholder),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        )
+                    }
+                }
+
                 EditListEntry.SectionHeader -> {
                     ReorderableItem(reorderState, key = "section_header") {
                         Text(
@@ -293,8 +316,9 @@ private fun DashboardEditingContent(
                 }
 
                 EditListEntry.AvailablePlaceholder -> {
-                    ReorderableItem(reorderState, key = "available_placeholder") {
-                        DashboardAvailablePlaceholder(
+                    ReorderableItem(reorderState, key = EDIT_AVAILABLE_PLACEHOLDER_KEY) {
+                        DashboardEditPlaceholder(
+                            text = stringResource(Res.string.dashboard_edit_available_placeholder),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
@@ -333,7 +357,10 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
 }
 
 @Composable
-private fun DashboardAvailablePlaceholder(modifier: Modifier = Modifier) {
+private fun DashboardEditPlaceholder(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     val borderColor = colorScheme.outlineVariant
 
     Box(
@@ -352,7 +379,7 @@ private fun DashboardAvailablePlaceholder(modifier: Modifier = Modifier) {
             },
     ) {
         Text(
-            text = stringResource(Res.string.dashboard_edit_available_placeholder),
+            text = text,
             style = MaterialTheme.typography.bodySmall,
             color = colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

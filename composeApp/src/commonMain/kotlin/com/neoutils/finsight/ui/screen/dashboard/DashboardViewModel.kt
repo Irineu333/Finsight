@@ -174,6 +174,19 @@ class DashboardViewModel(
         val activeCount = current.items.size
 
         when (toKey) {
+            EDIT_ACTIVE_PLACEHOLDER_KEY -> {
+                if (activeCount != 0) return
+
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                mutable.add(0, moved)
+
+                _editingState.value = current.copy(
+                    items = mutable.take(1),
+                    availableItems = mutable.drop(1),
+                )
+            }
+
             EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
                 val fromInActive = fromIndex < activeCount
                 val mutable = allItems.toMutableList()

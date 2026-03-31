@@ -44,10 +44,13 @@ object DashboardComponentRegistry {
 
     fun defaultPreferences(): List<DashboardComponentPreference> =
         entries.map { entry ->
-            val config = if (entry.key in defaultTopSpacingKeys) {
-                mapOf(DashboardComponentConfig.TOP_SPACING to "true")
-            } else {
-                emptyMap()
+            val config = buildMap {
+                if (entry.key in defaultTopSpacingKeys) {
+                    put(DashboardComponentConfig.TOP_SPACING, "true")
+                }
+                if (entry.key == DashboardComponent.AccountsOverview.KEY) {
+                    put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
+                }
             }
             DashboardComponentPreference(entry.key, entry.defaultPosition, config)
         }

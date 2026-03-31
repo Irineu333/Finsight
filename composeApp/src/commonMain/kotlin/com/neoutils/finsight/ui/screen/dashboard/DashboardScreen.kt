@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.rounded.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.SpaceBar
@@ -1654,11 +1655,25 @@ private fun AccountsOverviewConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
+    val hideSingleAccount = config[AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT] != "false"
     val excludedIds = config[AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS]
         ?.split(",")?.filter { it.isNotEmpty() }?.mapNotNull { it.toLongOrNull() }?.toSet()
         ?: emptySet()
 
     DashboardConfigCard {
+        DashboardConfigToggleRow(
+            title = stringResource(Res.string.component_config_hide_single_account),
+            checked = hideSingleAccount,
+            onCheckedChange = { enabled ->
+                onConfigChange(config.toMutableMap().apply {
+                    put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, enabled.toString())
+                })
+            },
+            leadingIcon = Icons.Default.AccountBalanceWallet,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         accounts.forEach { account ->
             val included = account.id !in excludedIds
             DashboardConfigToggleRow(

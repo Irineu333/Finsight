@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 object DashboardComponentConfig {
     const val TOP_SPACING = "top_spacing"
     const val SHOW_EMPTY_STATE = "show_empty_state"
+    const val HIDE_WHEN_EMPTY = "hide_when_empty"
 }
 
 object AccountsOverviewConfig {
@@ -32,3 +33,6 @@ object RecentsConfig {
 object QuickActionsConfig {
     const val HIDDEN_ACTIONS = "hidden_actions"
 }
+
+fun Map<String, String>.hideWhenEmpty(defaultValue: Boolean): Boolean =
+    get(DashboardComponentConfig.HIDE_WHEN_EMPTY)?.toBoolean() ?: defaultValue

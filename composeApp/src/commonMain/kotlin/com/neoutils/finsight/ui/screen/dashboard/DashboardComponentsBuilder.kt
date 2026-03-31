@@ -56,8 +56,11 @@ class DashboardComponentsBuilder(
 
         return listOfNotNull(
             totalBalance(input, allTransactions),
-            concreteBalanceStats(input),
-            pendingBalanceStats(pendingRecurring),
+            concreteBalanceStats(input, configFor(DashboardComponent.ConcreteBalanceStats.KEY)),
+            pendingBalanceStats(
+                pendingRecurring = pendingRecurring,
+                config = configFor(DashboardComponent.PendingBalanceStats.KEY),
+            ),
             accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
             creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
             spendingPager(input, allTransactions, configFor(DashboardComponent.SpendingPager.KEY)),
@@ -79,7 +82,10 @@ class DashboardComponentsBuilder(
         )
     }
 
-    private fun concreteBalanceStats(input: DashboardComponentsInput): DashboardComponent.ConcreteBalanceStats {
+    private fun concreteBalanceStats(
+        input: DashboardComponentsInput,
+        config: Map<String, String>,
+    ): DashboardComponent.ConcreteBalanceStats? {
         val transactionsForStats = input.operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
             .flatMap { it.transactions }
@@ -89,17 +95,26 @@ class DashboardComponentsBuilder(
             forYearMonth = input.targetMonth,
         )
 
+        val isEmpty = stats.income <= 0.0 && stats.expense <= 0.0
+        if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {
+            return null
+        }
+
         return DashboardComponent.ConcreteBalanceStats(
             income = stats.income,
             expense = stats.expense,
         )
     }
 
-    private fun pendingBalanceStats(pendingRecurring: List<Recurring>): DashboardComponent.PendingBalanceStats? {
+    private fun pendingBalanceStats(
+        pendingRecurring: List<Recurring>,
+        config: Map<String, String>,
+    ): DashboardComponent.PendingBalanceStats? {
         val pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount }
         val pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount }
+        val isEmpty = pendingIncome <= 0.0 && pendingExpense <= 0.0
 
-        return if (pendingIncome > 0.0 || pendingExpense > 0.0) {
+        return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
             DashboardComponent.PendingBalanceStats(
                 pendingIncome = pendingIncome,
                 pendingExpense = pendingExpense,

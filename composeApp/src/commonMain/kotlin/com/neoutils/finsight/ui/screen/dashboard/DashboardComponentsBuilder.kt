@@ -61,6 +61,11 @@ class DashboardComponentsBuilder(
                 pendingRecurring = pendingRecurring,
                 config = configFor(DashboardComponent.PendingBalanceStats.KEY),
             ),
+            creditCardBalanceStats(
+                input = input,
+                allTransactions = allTransactions,
+                config = configFor(DashboardComponent.CreditCardBalanceStats.KEY),
+            ),
             accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
             creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
             spendingPager(input, allTransactions, configFor(DashboardComponent.SpendingPager.KEY)),
@@ -118,6 +123,36 @@ class DashboardComponentsBuilder(
             DashboardComponent.PendingBalanceStats(
                 pendingIncome = pendingIncome,
                 pendingExpense = pendingExpense,
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun creditCardBalanceStats(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+        config: Map<String, String>,
+    ): DashboardComponent.CreditCardBalanceStats? {
+        val monthTransactions = allTransactions.filter { it.date.yearMonth == input.targetMonth }
+
+        val payment = monthTransactions
+            .filter { it.target == Transaction.Target.CREDIT_CARD }
+            .filter { it.type == Transaction.Type.INCOME }
+            .filter { it.isInvoicePayment }
+            .sumOf { it.amount }
+
+        val expense = monthTransactions
+            .filter { it.target == Transaction.Target.CREDIT_CARD }
+            .filter { it.type == Transaction.Type.EXPENSE }
+            .sumOf { it.amount }
+
+        val isEmpty = payment <= 0.0 && expense <= 0.0
+
+        return if (!isEmpty || !config.hideWhenEmpty(defaultValue = true)) {
+            DashboardComponent.CreditCardBalanceStats(
+                payment = payment,
+                expense = expense,
             )
         } else {
             null

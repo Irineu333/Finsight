@@ -48,6 +48,11 @@ object DashboardComponentPreviewFactory {
         pendingExpense = 300.0,
     )
 
+    val creditCardBalanceStats = DashboardComponent.CreditCardBalanceStats(
+        payment = 640.0,
+        expense = 2150.0,
+    )
+
     val accountsOverview = DashboardComponent.AccountsOverview(
         accounts = listOf(
             DashboardAccountUi(account = mockAccount, balance = 2500.0),

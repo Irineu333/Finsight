@@ -485,6 +485,8 @@
     <string name="balance_card_income">Receitas</string>
     <string name="balance_card_expense">Despesas</string>
     <string name="balance_card_invoices">Faturas</string>
+    <string name="balance_card_invoice_payments">Pagamentos</string>
+    <string name="balance_card_credit_card_expense">Gasto no Cartão</string>
     <string name="balance_card_current_invoice">Fatura Atual</string>
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
@@ -689,6 +691,7 @@
     <string name="component_total_balance">Saldo Total</string>
     <string name="component_balance_stats">Receitas e Despesas</string>
     <string name="component_pending_balance">Pendências</string>
+    <string name="component_credit_card_balance_stats">Entradas e Saídas no Cartão</string>
     <string name="component_accounts_overview">Contas</string>
     <string name="component_credit_cards">Cartões de Crédito</string>
     <string name="component_spending">Gastos</string>

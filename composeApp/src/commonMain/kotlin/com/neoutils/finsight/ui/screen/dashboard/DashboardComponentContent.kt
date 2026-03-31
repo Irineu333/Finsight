@@ -105,6 +105,13 @@ internal fun DashboardComponentContent(
             )
         }
 
+        is DashboardComponentVariant.CreditCardBalanceStats -> {
+            DashboardCreditCardBalanceSection(
+                variant = variant,
+                modifier = modifier,
+            )
+        }
+
         is DashboardComponentVariant.AccountsOverview -> {
             DashboardAccountsRow(
                 variant = variant,
@@ -351,6 +358,33 @@ private fun DashboardPendingBalanceSection(
                 config = BalanceCardConfig.PendingExpense,
             )
         }
+    }
+}
+
+@Composable
+private fun DashboardCreditCardBalanceSection(
+    variant: DashboardComponentVariant.CreditCardBalanceStats,
+    modifier: Modifier = Modifier,
+) {
+    val component = variant.component
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        BalanceCard(
+            balance = component.payment,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.InvoicePayment,
+        )
+
+        BalanceCard(
+            balance = component.expense,
+            modifier = Modifier.weight(1f),
+            config = BalanceCardConfig.CreditCardExpense,
+        )
     }
 }
 

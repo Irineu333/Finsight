@@ -268,7 +268,12 @@ class DashboardViewModel(
             .mapNotNull { entry ->
                 val preview = DashboardComponentVariant.previewForKey(entry.key)
                     ?: return@mapNotNull null
-                DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
+                DashboardEditItem(
+                    key = entry.key,
+                    title = entry.title,
+                    config = DashboardComponentRegistry.defaultConfigFor(entry.key),
+                    preview = preview,
+                )
             }
 
         return DashboardUiState.Editing(

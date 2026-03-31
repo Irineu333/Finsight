@@ -44,6 +44,19 @@ sealed interface DashboardComponentVariant {
         ) : PendingBalanceStats
     }
 
+    sealed interface CreditCardBalanceStats : DashboardComponentVariant {
+        override val component: DashboardComponent.CreditCardBalanceStats
+
+        data class Viewing(
+            override val component: DashboardComponent.CreditCardBalanceStats,
+        ) : CreditCardBalanceStats
+
+        data class Preview(
+            override val component: DashboardComponent.CreditCardBalanceStats =
+                DashboardComponentPreviewFactory.creditCardBalanceStats,
+        ) : CreditCardBalanceStats
+    }
+
     sealed interface AccountsOverview : DashboardComponentVariant {
         override val component: DashboardComponent.AccountsOverview
 
@@ -126,6 +139,7 @@ sealed interface DashboardComponentVariant {
             DashboardComponent.TotalBalance.KEY -> TotalBalance.Preview()
             DashboardComponent.ConcreteBalanceStats.KEY -> ConcreteBalanceStats.Preview()
             DashboardComponent.PendingBalanceStats.KEY -> PendingBalanceStats.Preview()
+            DashboardComponent.CreditCardBalanceStats.KEY -> CreditCardBalanceStats.Preview()
             DashboardComponent.AccountsOverview.KEY -> AccountsOverview.Preview()
             DashboardComponent.CreditCardsPager.KEY -> CreditCardsPager.Preview()
             DashboardComponent.SpendingPager.KEY -> SpendingPager.Preview()

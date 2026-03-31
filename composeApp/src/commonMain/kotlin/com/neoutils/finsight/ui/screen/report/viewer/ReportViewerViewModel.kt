@@ -16,7 +16,7 @@ import com.neoutils.finsight.report.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
 import com.neoutils.finsight.resources.report_viewer_badge_credit_card
-import com.neoutils.finsight.ui.screen.home.AppRoute
+import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.channels.Channel
@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 class ReportViewerViewModel(
-    private val route: AppRoute.ReportViewer,
+    private val route: ReportRoute.Viewer,
     private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,

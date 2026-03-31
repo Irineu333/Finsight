@@ -5,13 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.neoutils.finsight.ui.component.FormattingLocalsHost
-import com.neoutils.finsight.ui.component.LocalAnimatedVisibilityScope
-import com.neoutils.finsight.ui.component.ModalManagerHost
-import com.neoutils.finsight.ui.component.NavigationDispatcherProvider
-import com.neoutils.finsight.ui.component.SharedTransitionProvider
+import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
@@ -19,6 +16,7 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
+import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
@@ -113,29 +111,33 @@ fun AppNavHost() = Surface {
                             )
                         }
 
-                        composable<AppRoute.ReportConfig> {
-                            ReportConfigScreen(
-                                onNavigateBack = {
-                                    navController.navigateUp()
-                                },
-                                onNavigateToViewer = { route ->
-                                    navController.navigate(route)
-                                },
-                            )
-                        }
+                        navigation<AppRoute.Reports>(
+                            startDestination = ReportRoute.Config,
+                        ) {
+                            composable<ReportRoute.Config> {
+                                ReportConfigScreen(
+                                    onNavigateBack = {
+                                        navController.navigateUp()
+                                    },
+                                    onNavigateToViewer = { route ->
+                                        navController.navigate(route)
+                                    },
+                                )
+                            }
 
-                        composable<AppRoute.ReportViewer>(
-                            typeMap = mapOf(
-                                typeOf<PerspectiveTab>() to PerspectiveTabNavType()
-                            )
-                        ) { backStackEntry ->
-                            val route = backStackEntry.toRoute<AppRoute.ReportViewer>()
-                            ReportViewerScreen(
-                                route = route,
-                                onNavigateBack = {
-                                    navController.navigateUp()
-                                },
-                            )
+                            composable<ReportRoute.Viewer>(
+                                typeMap = mapOf(
+                                    typeOf<PerspectiveTab>() to PerspectiveTabNavType()
+                                )
+                            ) { backStackEntry ->
+                                val route = backStackEntry.toRoute<ReportRoute.Viewer>()
+                                ReportViewerScreen(
+                                    route = route,
+                                    onNavigateBack = {
+                                        navController.navigateUp()
+                                    },
+                                )
+                            }
                         }
                     }
                 }

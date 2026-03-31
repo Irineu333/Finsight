@@ -33,7 +33,7 @@ import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
-import com.neoutils.finsight.ui.screen.home.AppRoute
+import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -43,7 +43,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ReportConfigScreen(
     onNavigateBack: () -> Unit = {},
-    onNavigateToViewer: (AppRoute.ReportViewer) -> Unit = {},
+    onNavigateToViewer: (ReportRoute.Viewer) -> Unit = {},
     viewModel: ReportConfigViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

@@ -40,7 +40,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.ReportConfig -> {
-                navController.navigate(AppRoute.ReportConfig)
+                navController.navigate(AppRoute.Reports)
             }
         }
     }

@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.ui.screen.home.AppRoute
+import com.neoutils.finsight.ui.screen.report.ReportRoute
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -123,10 +123,11 @@ class ReportConfigViewModel(
         }
     }
 
-    fun buildViewerRoute(state: ReportConfigUiState): AppRoute.ReportViewer? {
+    // TODO: improve this
+    fun buildViewerRoute(state: ReportConfigUiState): ReportRoute.Viewer? {
         if (!state.isValid) return null
         return when (state.selectedTab) {
-            PerspectiveTab.ACCOUNT -> AppRoute.ReportViewer(
+            PerspectiveTab.ACCOUNT -> ReportRoute.Viewer(
                 perspectiveType = PerspectiveTab.ACCOUNT,
                 accountIds = state.selectedAccountIds.toList(),
                 startDate = state.startDate.toString(),
@@ -139,7 +140,7 @@ class ReportConfigViewModel(
             PerspectiveTab.CREDIT_CARD -> {
                 val selected = state.invoices.filter { it.id in state.selectedInvoiceIds }
                 if (selected.isEmpty()) return null
-                AppRoute.ReportViewer(
+                ReportRoute.Viewer(
                     perspectiveType = PerspectiveTab.CREDIT_CARD,
                     creditCardId = state.selectedCreditCardId,
                     invoiceIds = selected.map { it.id },

@@ -1,7 +1,7 @@
 name: iosApp
 
 options:
-  bundleIdPrefix: com.neoutils.finance
+  bundleIdPrefix: com.neoutils.finsight
   deploymentTarget:
     iOS: "18.2"
   minimizedProjectReferenceProxies: true
@@ -17,10 +17,13 @@ configFiles:
 
 settings:
   base:
-    PRODUCT_NAME: finance
+    PRODUCT_NAME: Finsight
+    PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finsight
+    MARKETING_VERSION: "1.5.0"
+    CURRENT_PROJECT_VERSION: "18"
 
 targets:
-  iosApp:
+  Finsight:
     type: application
     platform: iOS
 
@@ -33,8 +36,8 @@ targets:
       path: iosApp/Info.plist
       properties:
         CADisableMinimumFrameDurationOnPhone: true
-        CFBundleShortVersionString: "1.5.0"
-        CFBundleVersion: "18"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
 
     scheme:
       testTargets: []
@@ -48,8 +51,8 @@ targets:
         DEVELOPMENT_TEAM: QCCLMVRVB2
 
         # Product Settings
-        PRODUCT_NAME: finance
-        PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finance.finance
+        PRODUCT_NAME: Finsight
+        PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finsight
         TARGETED_DEVICE_FAMILY: "1,2"
 
         # Swift
@@ -102,10 +105,10 @@ targets:
         showEnvVarsInLog: false
 
 schemes:
-  iosApp:
+  Finsight:
     build:
       targets:
-        iosApp: all
+        Finsight: all
     run:
       config: Debug
     test:

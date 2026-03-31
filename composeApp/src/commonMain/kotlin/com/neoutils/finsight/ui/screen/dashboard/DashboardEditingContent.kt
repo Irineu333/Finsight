@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,35 +41,6 @@ import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-
-@Composable
-internal fun DashboardEditToolbar(
-    onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    TopAppBar(
-        navigationIcon = {
-            TextButton(onClick = onCancel) {
-                Text(text = stringResource(Res.string.dashboard_edit_cancel))
-            }
-        },
-        title = {
-            Text(
-                text = stringResource(Res.string.dashboard_edit_title),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-        },
-        actions = {
-            TextButton(onClick = onConfirm) {
-                Text(text = stringResource(Res.string.dashboard_edit_confirm))
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colorScheme.background,
-        ),
-    )
-}
 
 private sealed interface EditListEntry {
     data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry

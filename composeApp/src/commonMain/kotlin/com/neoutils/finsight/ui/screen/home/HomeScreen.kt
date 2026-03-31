@@ -3,10 +3,8 @@
 package com.neoutils.finsight.ui.screen.home
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -42,7 +40,11 @@ fun HomeScreen() {
 
     val dashboardViewModel: DashboardViewModel = koinViewModel()
     val dashboardUiState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
-    val isEditMode = dashboardUiState is DashboardUiState.Editing
+
+    val dashboardUiStateTransition = updateTransition(
+        targetState = dashboardUiState,
+        label = "DashboardUiStateTransition"
+    )
 
     val selectedItem = when {
         currentBackStackEntry?.destination?.route?.contains(
@@ -59,10 +61,11 @@ fun HomeScreen() {
     Scaffold(
         contentWindowInsets = WindowInsets(),
         bottomBar = {
-            AnimatedVisibility(
-                visible = !isEditMode,
+            dashboardUiStateTransition.AnimatedVisibility(
+                visible = { it !is DashboardUiState.Editing },
                 enter = slideInVertically { it } + expandVertically(),
                 exit = shrinkVertically() + slideOutVertically { it },
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 BottomNavigationBar(
                     selectedItem = selectedItem,
@@ -84,8 +87,8 @@ fun HomeScreen() {
             }
         },
         floatingActionButton = {
-            AnimatedVisibility(
-                visible = !isEditMode,
+            dashboardUiStateTransition.AnimatedVisibility(
+                visible = { it !is DashboardUiState.Editing },
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier

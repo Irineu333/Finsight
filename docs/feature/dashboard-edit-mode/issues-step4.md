@@ -82,3 +82,65 @@ e o `buildEditingState` usa a mesma regra.
 - Primeira abertura continua exibindo a dashboard padrão
 - Dashboard vazia permanece vazia após confirmar a remoção de todos os componentes
 - O modo edição e o modo visualização passam a compartilhar a mesma semântica de estado
+
+---
+
+## Issue 3 — Configuração de "dias à frente" em recorrentes pendentes tinha semântica errada
+
+**Severidade:** Média — resolvida
+
+**Descrição:**
+O componente `PendingRecurring` expunha uma configuração chamada "Dias à frente" com opções como 7, 14 e 30, mas o comportamento real não mostrava recorrências futuras dentro dessa janela.
+
+Na prática, os itens só começavam a aparecer a partir da data de vencimento, e a configuração apenas limitava por quantos dias um item já vencido continuava visível. Isso tornava a opção enganosa para o usuário e conflitava com a regra de negócio esperada para pendências.
+
+**Causa raiz:**
+O builder aplicava a configuração em cima da lista já produzida por `GetPendingRecurringUseCase`.
+
+Esse use case já filtrava apenas recorrências:
+
+- ativas
+- sem ocorrência confirmada/ignorada no mês atual
+- cujo dia efetivo no mês atual já tivesse chegado
+
+Ou seja, a lista de entrada para o componente já continha somente pendências vencidas ou vencendo hoje.
+
+Depois disso, o builder aplicava um segundo filtro:
+
+```kotlin
+val filtered = pendingRecurring.filter { recurring ->
+    val effectiveDay = input.today.yearMonth.effectiveDay(recurring.dayOfMonth)
+    input.today.day - effectiveDay <= daysAhead
+}
+```
+
+Esse cálculo não media "quantos dias à frente faltam para vencer", e sim "quantos dias se passaram desde o vencimento". O nome do config e o efeito real estavam desalinhados.
+
+**Correção:**
+Separar explicitamente dois conceitos:
+
+1. **Pendência:** recorrências vencidas ou vencendo hoje continuam visíveis até serem confirmadas ou ignoradas.
+2. **Horizonte futuro:** uma nova configuração controla quantos dias à frente o componente também deve exibir recorrências ainda não vencidas.
+
+O comportamento final ficou assim:
+
+- pendências permanecem sempre visíveis até serem tratadas
+- recorrências futuras entram opcionalmente dentro de uma janela configurável
+- a configuração passa a usar a chave `upcoming_days_ahead`
+- o default passa a ser `0` (`Hoje`)
+- as opções passam a ser `Hoje`, `7 dias`, `15 dias` e `Este mês`
+
+No builder, o componente agora combina:
+
+- `pendingRecurring` vindas do use case
+- `upcomingRecurring` calculadas a partir da lista total de recorrências ativas do mês ainda não tratadas
+
+Depois disso, a lista é ordenada pelo dia efetivo de vencimento, o que faz mais sentido do que a ordem anterior por `createdAt`.
+
+**Resultado:**
+- A semântica do config passa a bater com o rótulo exibido ao usuário
+- Pendências não desaparecem sozinhas por janela arbitrária de atraso
+- O componente consegue funcionar tanto como lista de pendências quanto como preview do que está para vencer
+
+**Observação sobre recorrência:**
+Quando um config de UI descreve um conceito temporal, o nome da chave precisa refletir exatamente o eixo de filtragem. "Dias à frente" sugere janela futura; se a implementação estiver medindo dias desde o vencimento, o nome correto é outro. Misturar esses dois significados no mesmo config cria comportamento aparentemente "bugado" mesmo quando o código está executando como escrito.

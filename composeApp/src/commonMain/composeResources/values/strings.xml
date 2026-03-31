@@ -722,6 +722,10 @@
     <string name="component_config_show_empty_state">Exibir empty state</string>
     <string name="component_config_max_categories">Máximo de categorias</string>
     <string name="component_config_days_ahead">Dias à frente</string>
+    <string name="component_config_today">Hoje</string>
+    <string name="component_config_7_days">7 dias</string>
+    <string name="component_config_15_days">15 dias</string>
+    <string name="component_config_this_month">Este mês</string>
     <string name="component_config_count">Quantidade de itens</string>
     <string name="component_config_all">Todas</string>
     <string name="component_config_min_visible_action">Mantenha pelo menos uma ação visível</string>

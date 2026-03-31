@@ -69,7 +69,11 @@ class DashboardComponentsBuilder(
             accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
             creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
             spendingPager(input, allTransactions, configFor(DashboardComponent.SpendingPager.KEY)),
-            pendingRecurring(pendingRecurring, input, configFor(DashboardComponent.PendingRecurring.KEY)),
+            pendingRecurring(
+                pendingRecurring = pendingRecurring,
+                input = input,
+                config = configFor(DashboardComponent.PendingRecurring.KEY),
+            ),
             recents(input, configFor(DashboardComponent.Recents.KEY)),
             quickActions(configFor(DashboardComponent.QuickActions.KEY)),
         )
@@ -254,16 +258,34 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.PendingRecurring? {
-        val daysAhead = config[PendingRecurringConfig.DAYS_AHEAD]
-            ?.toIntOrNull() ?: PendingRecurringConfig.DEFAULT_DAYS_AHEAD
+        val daysAhead = config[PendingRecurringConfig.UPCOMING_DAYS_AHEAD]
+            ?.toIntOrNull() ?: PendingRecurringConfig.DEFAULT_UPCOMING_DAYS_AHEAD
+        val currentYearMonth = input.today.yearMonth
+        val pendingIds = pendingRecurring.map { it.id }.toSet()
+        val handledRecurringIds = input.occurrences
+            .asSequence()
+            .filter { it.yearMonth == currentYearMonth }
+            .map { it.recurringId }
+            .toSet()
 
-        val filtered = pendingRecurring.filter { recurring ->
-            val effectiveDay = input.today.yearMonth.effectiveDay(recurring.dayOfMonth)
-            input.today.day - effectiveDay <= daysAhead
+        val upcomingRecurring = input.recurringList.filter { recurring ->
+            val effectiveDay = currentYearMonth.effectiveDay(recurring.dayOfMonth)
+
+            recurring.isActive &&
+                recurring.id !in handledRecurringIds &&
+                recurring.id !in pendingIds &&
+                effectiveDay > input.today.day &&
+                effectiveDay - input.today.day <= daysAhead
         }
 
-        return if (filtered.isNotEmpty()) {
-            DashboardComponent.PendingRecurring(recurringList = filtered)
+        val visibleRecurring = (pendingRecurring + upcomingRecurring)
+            .sortedWith(
+                compareBy<Recurring> { currentYearMonth.effectiveDay(it.dayOfMonth) }
+                    .thenBy { it.createdAt }
+            )
+
+        return if (visibleRecurring.isNotEmpty()) {
+            DashboardComponent.PendingRecurring(recurringList = visibleRecurring)
         } else {
             null
         }

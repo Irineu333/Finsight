@@ -22,8 +22,8 @@ object SpendingPagerConfig {
 }
 
 object PendingRecurringConfig {
-    const val DAYS_AHEAD = "days_ahead"
-    const val DEFAULT_DAYS_AHEAD = 30
+    const val UPCOMING_DAYS_AHEAD = "upcoming_days_ahead"
+    const val DEFAULT_UPCOMING_DAYS_AHEAD = 0
 }
 
 object RecentsConfig {

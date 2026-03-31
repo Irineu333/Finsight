@@ -194,10 +194,13 @@ private fun DashboardPendingRecurringSection(
                 recurring = recurring,
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
-                        val targetDate = Clock.System.now()
+                        val currentDate = Clock.System.now()
                             .toLocalDateTime(TimeZone.currentSystemDefault())
-                            .date.yearMonth
+                            .date
+                        val targetDate = currentDate.yearMonth
                             .safeOnDay(recurring.dayOfMonth)
+                            .takeIf { it <= currentDate }
+                            ?: currentDate
                         modalManager.show(ConfirmRecurringModal(recurring, targetDate))
                     }
                 },

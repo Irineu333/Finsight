@@ -14,6 +14,17 @@ val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { nu
 val LocalAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope?> { null }
 
 @Composable
+context(scope: AnimatedVisibilityScope)
+fun AnimatedVisibilityScopeProvider(
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalAnimatedVisibilityScope provides scope,
+        content = content,
+    )
+}
+
+@Composable
 fun SharedTransitionProvider(
     content: @Composable SharedTransitionScope.() -> Unit
 ) {

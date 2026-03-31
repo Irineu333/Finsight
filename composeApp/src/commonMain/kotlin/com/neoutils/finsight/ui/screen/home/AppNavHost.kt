@@ -2,7 +2,6 @@ package com.neoutils.finsight.ui.screen.home
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -40,9 +39,7 @@ fun AppNavHost() = Surface {
                         startDestination = AppRoute.Home,
                     ) {
                         composable<AppRoute.Home> {
-                            CompositionLocalProvider(
-                                LocalAnimatedVisibilityScope provides this
-                            ) {
+                            AnimatedVisibilityScopeProvider {
                                 HomeScreen()
                             }
                         }
@@ -57,9 +54,7 @@ fun AppNavHost() = Surface {
 
                         composable<AppRoute.CreditCards> { backStackEntry ->
                             val route = backStackEntry.toRoute<AppRoute.CreditCards>()
-                            CompositionLocalProvider(
-                                LocalAnimatedVisibilityScope provides this
-                            ) {
+                            AnimatedVisibilityScopeProvider {
                                 CreditCardsScreen(
                                     initialCreditCardId = route.creditCardId,
                                     onNavigateBack = {

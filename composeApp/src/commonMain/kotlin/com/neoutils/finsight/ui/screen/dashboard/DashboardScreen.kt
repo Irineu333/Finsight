@@ -4,10 +4,9 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
@@ -25,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -33,39 +31,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
-import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.resources.dashboard_accounts
-import com.neoutils.finsight.resources.dashboard_budgets
-import com.neoutils.finsight.resources.dashboard_categories
-import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_installments
-import com.neoutils.finsight.resources.dashboard_pending_recurring
-import com.neoutils.finsight.resources.dashboard_add_account
-import com.neoutils.finsight.resources.dashboard_recents
-import com.neoutils.finsight.resources.dashboard_recurring
-import com.neoutils.finsight.resources.dashboard_reports
-import com.neoutils.finsight.resources.dashboard_see_all
-import com.neoutils.finsight.resources.dashboard_total_balance
-import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.isDesktop
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
@@ -713,6 +698,40 @@ private fun DashboardContent(
                 ) {
                     Text(
                         text = stringResource(Res.string.dashboard_installments),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForwardIos,
+                        modifier = Modifier.size(18.dp),
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+
+        if (!isDesktop) item(
+            key = "open_support_action"
+        ) {
+            Card(
+                onClick = {
+                    navigationDispatcher.dispatch(NavigationDestination.Support)
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surfaceContainer,
+                    contentColor = colorScheme.onSurface,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.dashboard_support),
                         modifier = Modifier.weight(1f),
                     )
                     Icon(

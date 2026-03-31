@@ -21,6 +21,7 @@ sealed interface NavigationDestination {
     data object Budgets : NavigationDestination
     data object Recurring : NavigationDestination
     data object ReportConfig : NavigationDestination
+    data object Support : NavigationDestination
 }
 
 @Composable

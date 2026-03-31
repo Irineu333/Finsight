@@ -42,6 +42,10 @@ internal class AppNavigationDispatcher(
             NavigationDestination.ReportConfig -> {
                 navController.navigate(AppRoute.Reports)
             }
+
+            NavigationDestination.Support -> {
+                navController.navigate(AppRoute.Support)
+            }
         }
     }
 }

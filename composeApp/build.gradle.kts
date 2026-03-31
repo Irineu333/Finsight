@@ -10,12 +10,13 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    alias(libs.plugins.googleServices)
 }
 
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
             freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
         }
     }
@@ -64,6 +65,10 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
 
+            // Firebase
+            implementation(libs.gitlive.firebase.firestore)
+            implementation(libs.gitlive.firebase.auth)
+
             // Arrow
             implementation(libs.arrow.core)
             // implementation(libs.arrow.fx.coroutines)
@@ -103,8 +108,8 @@ android {
         applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 18
-        versionName = "1.5.0"
+        versionCode = 19
+        versionName = "1.6.0-rc01"
     }
     packaging {
         resources {
@@ -133,8 +138,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
@@ -155,7 +160,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.neoutils.finsight"
-            packageVersion = "1.5.0"
+            packageVersion = "1.6.0"
         }
     }
 }

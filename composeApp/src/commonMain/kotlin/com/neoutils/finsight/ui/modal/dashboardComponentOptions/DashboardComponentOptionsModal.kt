@@ -12,8 +12,8 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.rounded.SpaceBar
+import androidx.compose.material.icons.rounded.ViewHeadline
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -84,7 +84,21 @@ internal class DashboardComponentOptionsModal(
             )
 
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
+            val showHeader = config.showHeader()
             DashboardConfigCard {
+                if (supportsHeaderVisibilityConfig(item.key)) {
+                    DashboardConfigToggleRow(
+                        title = stringResource(Res.string.component_config_show_header),
+                        checked = showHeader,
+                        onCheckedChange = { enabled ->
+                            updateConfig(config.toMutableMap().apply {
+                                put(DashboardComponentConfig.SHOW_HEADER, enabled.toString())
+                            })
+                        },
+                        leadingIcon = Icons.Rounded.ViewHeadline,
+                    )
+                }
+
                 DashboardConfigToggleRow(
                     title = stringResource(Res.string.component_config_top_spacing),
                     checked = topSpacing,
@@ -207,7 +221,6 @@ private fun DashboardConfigCard(
     }
 }
 
-@Composable
 private fun DashboardConfigToggleRow(
     title: String,
     checked: Boolean,
@@ -307,14 +320,6 @@ private fun DashboardConfigLeadingIcon(
 }
 
 @Composable
-private fun DashboardConfigDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        color = colorScheme.outlineVariant.copy(alpha = 0.6f),
-    )
-}
-
-@Composable
 private fun DashboardSegmentedOptionCard(
     title: String,
     options: List<Int>,
@@ -372,6 +377,17 @@ private fun hasSpecificDashboardConfig(key: String): Boolean = when (key) {
     DashboardComponent.AccountsOverview.KEY,
     DashboardComponent.CreditCardsPager.KEY,
     DashboardComponent.SpendingPager.KEY,
+    DashboardComponent.PendingRecurring.KEY,
+    DashboardComponent.Recents.KEY,
+    DashboardComponent.QuickActions.KEY,
+    -> true
+
+    else -> false
+}
+
+private fun supportsHeaderVisibilityConfig(key: String): Boolean = when (key) {
+    DashboardComponent.AccountsOverview.KEY,
+    DashboardComponent.CreditCardsPager.KEY,
     DashboardComponent.PendingRecurring.KEY,
     DashboardComponent.Recents.KEY,
     DashboardComponent.QuickActions.KEY,

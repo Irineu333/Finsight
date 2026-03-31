@@ -669,6 +669,7 @@
     <string name="dashboard_empty_description">Add components to customize this view again.</string>
     <string name="dashboard_empty_action">Edit dashboard</string>
     <string name="dashboard_credit_cards_empty_state">Add credit cards or adjust this component selection.</string>
+    <string name="component_config_show_header">Show header</string>
     <string name="component_config_hide_single_account">Hide single account</string>
     <string name="component_config_show_empty_state">Show empty state</string>
 </resources>

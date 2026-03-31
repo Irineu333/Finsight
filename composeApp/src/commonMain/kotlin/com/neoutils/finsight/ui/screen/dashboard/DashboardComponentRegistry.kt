@@ -52,6 +52,9 @@ object DashboardComponentRegistry {
         if (key in defaultTopSpacingKeys) {
             put(DashboardComponentConfig.TOP_SPACING, "true")
         }
+        if (key == DashboardComponent.QuickActions.KEY) {
+            put(DashboardComponentConfig.SHOW_HEADER, "false")
+        }
         if (key == DashboardComponent.AccountsOverview.KEY) {
             put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
         }

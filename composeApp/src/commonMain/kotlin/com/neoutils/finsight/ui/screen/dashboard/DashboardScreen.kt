@@ -118,18 +118,6 @@ fun DashboardScreen(
                     DashboardViewingContent(
                         state = state,
                         openTransactions = openTransactions,
-                        onOpenQuickAction = { type ->
-                            when (type) {
-                                QuickActionType.BUDGETS -> navigationDispatcher.dispatch(NavigationDestination.Budgets)
-                                QuickActionType.CATEGORIES -> navigationDispatcher.dispatch(NavigationDestination.Categories)
-                                QuickActionType.CREDIT_CARDS -> navigationDispatcher.dispatch(NavigationDestination.CreditCards())
-                                QuickActionType.ACCOUNTS -> navigationDispatcher.dispatch(NavigationDestination.Accounts())
-                                QuickActionType.RECURRING -> navigationDispatcher.dispatch(NavigationDestination.Recurring)
-                                QuickActionType.REPORTS -> navigationDispatcher.dispatch(NavigationDestination.ReportConfig)
-                                QuickActionType.INSTALLMENTS -> navigationDispatcher.dispatch(NavigationDestination.Installments)
-                                QuickActionType.SUPPORT -> navigationDispatcher.dispatch(NavigationDestination.Support)
-                            }
-                        },
                         onAction = viewModel::onAction,
                     )
                 }

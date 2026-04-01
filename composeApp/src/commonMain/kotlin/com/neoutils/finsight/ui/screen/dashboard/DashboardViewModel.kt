@@ -89,7 +89,7 @@ class DashboardViewModel(
         } else {
             DashboardUiState.Viewing(
                 yearMonth = today.yearMonth,
-                components = ordered,
+                items = ordered.map { DashboardComponentVariant.forComponent(it) },
                 accounts = accounts,
                 creditCards = creditCards,
                 configByKey = configByKey,

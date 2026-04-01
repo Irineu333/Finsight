@@ -36,7 +36,6 @@ import org.jetbrains.compose.resources.stringResource
 internal fun DashboardViewingContent(
     state: DashboardUiState.Viewing,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
-    onOpenQuickAction: (QuickActionType) -> Unit,
     onAction: (DashboardAction) -> Unit,
 ) {
     LazyColumn(
@@ -47,14 +46,11 @@ internal fun DashboardViewingContent(
         ),
         modifier = Modifier.fillMaxSize(),
     ) {
-        state.components.forEach { component ->
-            val config = state.configByKey[component.key] ?: emptyMap()
+        state.items.forEach { variant ->
+            val config = state.configByKey[variant.key] ?: emptyMap()
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
-            val variant = component.toViewingVariant(
-                openTransactions = openTransactions,
-                onOpenQuickAction = onOpenQuickAction,
-            )
-            item(key = component.key) {
+
+            item(key = variant.key) {
                 Column(modifier = Modifier.animateItem()) {
                     if (topSpacing) {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -62,6 +58,7 @@ internal fun DashboardViewingContent(
                     DashboardComponentContent(
                         variant = variant,
                         config = config,
+                        openTransactions = openTransactions,
                         modifier = Modifier
                             .fillMaxWidth()
                             .interceptLongPress { onAction(DashboardAction.EnterEditMode) },

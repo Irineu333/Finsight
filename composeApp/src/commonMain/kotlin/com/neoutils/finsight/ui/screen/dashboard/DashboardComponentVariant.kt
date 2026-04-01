@@ -34,7 +34,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.ConcreteBalanceStats,
-            val openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
         ) : ConcreteBalanceStats
 
         data object Preview : ConcreteBalanceStats {
@@ -80,7 +79,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.AccountsOverview,
-            val onOpenQuickAction: (QuickActionType) -> Unit,
         ) : AccountsOverview
 
         data object Preview : AccountsOverview {
@@ -115,7 +113,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.CreditCardsPager,
-            val onOpenQuickAction: (QuickActionType) -> Unit,
         ) : CreditCardsPager
 
         data object Preview : CreditCardsPager {
@@ -251,7 +248,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.PendingRecurring,
-            val onOpenQuickAction: (QuickActionType) -> Unit,
         ) : PendingRecurring
 
         data object Preview : PendingRecurring {
@@ -307,7 +303,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.Recents,
-            val openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
         ) : Recents
 
         data object Preview : Recents {
@@ -439,7 +434,6 @@ sealed interface DashboardComponentVariant {
 
         data class Viewing(
             override val component: DashboardComponent.QuickActions,
-            val onOpenQuickAction: (QuickActionType) -> Unit,
         ) : QuickActions
 
         data object Preview : QuickActions {
@@ -450,6 +444,21 @@ sealed interface DashboardComponentVariant {
     }
 
     companion object {
+        fun forComponent(component: DashboardComponent): DashboardComponentVariant = when (component) {
+            is DashboardComponent.TotalBalance -> TotalBalance.Viewing(component)
+            is DashboardComponent.ConcreteBalanceStats -> ConcreteBalanceStats.Viewing(component)
+            is DashboardComponent.PendingBalanceStats -> PendingBalanceStats.Viewing(component)
+            is DashboardComponent.CreditCardBalanceStats -> CreditCardBalanceStats.Viewing(component)
+            is DashboardComponent.AccountsOverview -> AccountsOverview.Viewing(component)
+            is DashboardComponent.CreditCardsPager -> CreditCardsPager.Viewing(component)
+            is DashboardComponent.SpendingByCategory -> SpendingByCategory.Viewing(component)
+            is DashboardComponent.IncomeByCategory -> IncomeByCategory.Viewing(component)
+            is DashboardComponent.Budgets -> Budgets.Viewing(component)
+            is DashboardComponent.PendingRecurring -> PendingRecurring.Viewing(component)
+            is DashboardComponent.Recents -> Recents.Viewing(component)
+            is DashboardComponent.QuickActions -> QuickActions.Viewing(component)
+        }
+
         fun previewForKey(key: String): DashboardComponentVariant? = when (key) {
             DashboardComponentKey.TOTAL_BALANCE.value -> TotalBalance.Preview
             DashboardComponentKey.CONCRETE_BALANCE_STATS.value -> ConcreteBalanceStats.Preview

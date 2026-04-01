@@ -14,6 +14,7 @@ import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_reports
 import com.neoutils.finsight.resources.dashboard_support
+import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.util.UiText
 
@@ -117,54 +118,40 @@ sealed interface DashboardComponent {
     }
 }
 
-fun DashboardComponent.toViewingVariant(
-    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
-    onOpenQuickAction: (QuickActionType) -> Unit,
-): DashboardComponentVariant = when (this) {
-    is DashboardComponent.TotalBalance -> DashboardComponentVariant.TotalBalance.Viewing(component = this)
-    is DashboardComponent.ConcreteBalanceStats -> DashboardComponentVariant.ConcreteBalanceStats.Viewing(
-        component = this,
-        openTransactions = openTransactions,
-    )
-
-    is DashboardComponent.PendingBalanceStats -> DashboardComponentVariant.PendingBalanceStats.Viewing(component = this)
-    is DashboardComponent.CreditCardBalanceStats -> DashboardComponentVariant.CreditCardBalanceStats.Viewing(component = this)
-    is DashboardComponent.AccountsOverview -> DashboardComponentVariant.AccountsOverview.Viewing(
-        component = this,
-        onOpenQuickAction = onOpenQuickAction,
-    )
-
-    is DashboardComponent.CreditCardsPager -> DashboardComponentVariant.CreditCardsPager.Viewing(
-        component = this,
-        onOpenQuickAction = onOpenQuickAction,
-    )
-
-    is DashboardComponent.SpendingByCategory -> DashboardComponentVariant.SpendingByCategory.Viewing(component = this)
-    is DashboardComponent.IncomeByCategory -> DashboardComponentVariant.IncomeByCategory.Viewing(component = this)
-    is DashboardComponent.Budgets -> DashboardComponentVariant.Budgets.Viewing(component = this)
-    is DashboardComponent.PendingRecurring -> DashboardComponentVariant.PendingRecurring.Viewing(
-        component = this,
-        onOpenQuickAction = onOpenQuickAction,
-    )
-
-    is DashboardComponent.Recents -> DashboardComponentVariant.Recents.Viewing(
-        component = this,
-        openTransactions = openTransactions,
-    )
-
-    is DashboardComponent.QuickActions -> DashboardComponentVariant.QuickActions.Viewing(
-        component = this,
-        onOpenQuickAction = onOpenQuickAction,
-    )
-}
-
-enum class QuickActionType(val title: UiText) {
-    BUDGETS(title = UiText.Res(Res.string.dashboard_budgets)),
-    CATEGORIES(title = UiText.Res(Res.string.dashboard_categories)),
-    CREDIT_CARDS(title = UiText.Res(Res.string.dashboard_credit_cards)),
-    ACCOUNTS(title = UiText.Res(Res.string.dashboard_accounts)),
-    RECURRING(title = UiText.Res(Res.string.dashboard_recurring)),
-    REPORTS(title = UiText.Res(Res.string.dashboard_reports)),
-    INSTALLMENTS(title = UiText.Res(Res.string.dashboard_installments)),
-    SUPPORT(title = UiText.Res(Res.string.dashboard_support)),
+enum class QuickActionType(
+    val title: UiText,
+    val destination: NavigationDestination,
+) {
+    BUDGETS(
+        title = UiText.Res(Res.string.dashboard_budgets),
+        destination = NavigationDestination.Budgets,
+    ),
+    CATEGORIES(
+        title = UiText.Res(Res.string.dashboard_categories),
+        destination = NavigationDestination.Categories,
+    ),
+    CREDIT_CARDS(
+        title = UiText.Res(Res.string.dashboard_credit_cards),
+        destination = NavigationDestination.CreditCards(),
+    ),
+    ACCOUNTS(
+        title = UiText.Res(Res.string.dashboard_accounts),
+        destination = NavigationDestination.Accounts(),
+    ),
+    RECURRING(
+        title = UiText.Res(Res.string.dashboard_recurring),
+        destination = NavigationDestination.Recurring,
+    ),
+    REPORTS(
+        title = UiText.Res(Res.string.dashboard_reports),
+        destination = NavigationDestination.ReportConfig,
+    ),
+    INSTALLMENTS(
+        title = UiText.Res(Res.string.dashboard_installments),
+        destination = NavigationDestination.Installments,
+    ),
+    SUPPORT(
+        title = UiText.Res(Res.string.dashboard_support),
+        destination = NavigationDestination.Support,
+    ),
 }

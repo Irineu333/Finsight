@@ -29,7 +29,7 @@ sealed class DashboardUiState {
 
     data class Viewing(
         override val yearMonth: YearMonth,
-        val components: List<DashboardComponent>,
+        val items: List<DashboardComponentVariant>,
         val accounts: List<Account> = emptyList(),
         val creditCards: List<CreditCard> = emptyList(),
         val configByKey: Map<String, Map<String, String>> = emptyMap(),

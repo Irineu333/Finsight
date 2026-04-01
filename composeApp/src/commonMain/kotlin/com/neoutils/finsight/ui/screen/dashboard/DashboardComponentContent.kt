@@ -82,8 +82,11 @@ import kotlin.time.ExperimentalTime
 internal fun DashboardComponentContent(
     variant: DashboardComponentVariant,
     config: Map<String, String> = emptyMap(),
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
+    val navigationDispatcher = LocalNavigationDispatcher.current
+
     when (variant) {
         is DashboardComponentVariant.TotalBalance -> {
             TotalBalanceCard(
@@ -95,6 +98,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.ConcreteBalanceStats -> {
             DashboardConcreteBalanceSection(
                 variant = variant,
+                openTransactions = openTransactions,
                 modifier = modifier,
             )
         }
@@ -117,6 +121,7 @@ internal fun DashboardComponentContent(
             DashboardAccountsRow(
                 variant = variant,
                 config = config,
+                onOpenAccounts = { navigationDispatcher.dispatch(NavigationDestination.Accounts()) },
                 modifier = modifier,
             )
         }
@@ -125,6 +130,7 @@ internal fun DashboardComponentContent(
             DashboardCreditCardsSection(
                 variant = variant,
                 config = config,
+                onOpenCreditCards = { navigationDispatcher.dispatch(NavigationDestination.CreditCards()) },
                 modifier = modifier,
             )
         }
@@ -154,6 +160,7 @@ internal fun DashboardComponentContent(
             DashboardPendingRecurringSection(
                 variant = variant,
                 config = config,
+                onOpenRecurring = { navigationDispatcher.dispatch(NavigationDestination.Recurring) },
                 modifier = modifier,
             )
         }
@@ -162,6 +169,7 @@ internal fun DashboardComponentContent(
             DashboardRecentsSection(
                 variant = variant,
                 config = config,
+                openTransactions = openTransactions,
                 modifier = modifier,
             )
         }
@@ -170,6 +178,7 @@ internal fun DashboardComponentContent(
             DashboardQuickActionsSection(
                 variant = variant,
                 config = config,
+                onNavigate = { navigationDispatcher.dispatch(it) },
                 modifier = modifier,
             )
         }
@@ -180,6 +189,7 @@ internal fun DashboardComponentContent(
 private fun DashboardPendingRecurringSection(
     variant: DashboardComponentVariant.PendingRecurring,
     config: Map<String, String>,
+    onOpenRecurring: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
@@ -195,7 +205,7 @@ private fun DashboardPendingRecurringSection(
                 title = stringResource(Res.string.dashboard_pending_recurring),
                 onClick = {
                     if (variant is DashboardComponentVariant.PendingRecurring.Viewing) {
-                        variant.onOpenQuickAction(QuickActionType.RECURRING)
+                        onOpenRecurring()
                     }
                 },
                 modifier = Modifier
@@ -230,6 +240,7 @@ private fun DashboardPendingRecurringSection(
 private fun DashboardRecentsSection(
     variant: DashboardComponentVariant.Recents,
     config: Map<String, String>,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
@@ -245,7 +256,7 @@ private fun DashboardRecentsSection(
                 title = stringResource(Res.string.dashboard_recents),
                 onClick = {
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
-                        variant.openTransactions(null, null)
+                        openTransactions(null, null)
                     }
                 },
                 modifier = Modifier
@@ -280,7 +291,7 @@ private fun DashboardRecentsSection(
                 onClick = {
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
-                            isLastWithFade -> variant.openTransactions(null, null)
+                            isLastWithFade -> openTransactions(null, null)
                             operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
                             else -> modalManager.show(ViewOperationModal(operation))
                         }
@@ -295,6 +306,7 @@ private fun DashboardRecentsSection(
 private fun DashboardQuickActionsSection(
     variant: DashboardComponentVariant.QuickActions,
     config: Map<String, String>,
+    onNavigate: (NavigationDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
@@ -318,7 +330,7 @@ private fun DashboardQuickActionsSection(
                 action = action,
                 onOpen = { type ->
                     if (variant is DashboardComponentVariant.QuickActions.Viewing) {
-                        variant.onOpenQuickAction(type)
+                        onNavigate(type.destination)
                     }
                 },
                 modifier = Modifier
@@ -332,6 +344,7 @@ private fun DashboardQuickActionsSection(
 @Composable
 private fun DashboardConcreteBalanceSection(
     variant: DashboardComponentVariant.ConcreteBalanceStats,
+    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
@@ -352,7 +365,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Income,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        variant.openTransactions(Transaction.Type.INCOME, null)
+                        openTransactions(Transaction.Type.INCOME, null)
                     }
                 },
             )
@@ -363,7 +376,7 @@ private fun DashboardConcreteBalanceSection(
                 config = BalanceCardConfig.Expense,
                 onClick = {
                     if (variant is DashboardComponentVariant.ConcreteBalanceStats.Viewing) {
-                        variant.openTransactions(Transaction.Type.EXPENSE, null)
+                        openTransactions(Transaction.Type.EXPENSE, null)
                     }
                 },
             )
@@ -434,6 +447,7 @@ private fun DashboardCreditCardBalanceSection(
 private fun DashboardCreditCardsSection(
     variant: DashboardComponentVariant.CreditCardsPager,
     config: Map<String, String>,
+    onOpenCreditCards: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
@@ -450,7 +464,7 @@ private fun DashboardCreditCardsSection(
                 title = stringResource(Res.string.dashboard_credit_cards),
                 onClick = {
                     if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                        variant.onOpenQuickAction(QuickActionType.CREDIT_CARDS)
+                        onOpenCreditCards()
                     }
                 },
                 modifier = Modifier
@@ -788,6 +802,7 @@ private fun TotalBalanceCard(
 private fun DashboardAccountsRow(
     variant: DashboardComponentVariant.AccountsOverview,
     config: Map<String, String>,
+    onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
@@ -804,7 +819,7 @@ private fun DashboardAccountsRow(
                 title = stringResource(Res.string.dashboard_accounts),
                 onClick = {
                     if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
-                        variant.onOpenQuickAction(QuickActionType.ACCOUNTS)
+                        onOpenAccounts()
                     }
                 },
                 modifier = Modifier

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,12 +33,6 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationDispatcher = LocalNavigationDispatcher.current
-
-    DisposableEffect(viewModel) {
-        onDispose {
-            viewModel.onAction(DashboardAction.CancelEdit)
-        }
-    }
 
     HomeChromeEffect(
         config = when (uiState) {

@@ -45,3 +45,31 @@ if (ordered.isEmpty()) {
 - A dashboard pode continuar intencionalmente vazia
 - O usuário mantém um caminho claro para voltar ao modo edição
 - O comportamento padrão de `long press` em componentes continua inalterado quando há conteúdo
+
+## Issue 2 — Dashboard saindo do modo edição com configuration changes (Android)
+
+**Severidade:** Média — resolvida
+
+**Descrição:**
+No Android, ao rotacionar a tela ou disparar qualquer outra mudança de configuração enquanto a dashboard estava no modo edição, a tela voltava automaticamente para o modo de visualização, perdendo as alterações não confirmadas.
+
+**Causa raiz:**
+A `DashboardScreen` utilizava um `DisposableEffect` que disparava o cancelamento da edição quando o composable era descartado:
+
+```kotlin
+DisposableEffect(viewModel) {
+    onDispose {
+        viewModel.onAction(DashboardAction.CancelEdit)
+    }
+}
+```
+
+Embora o `DashboardViewModel` sobreviva a mudanças de configuração (por ser um `viewModel` do Koin), o `DisposableEffect` é disparado durante a recriação da `Activity`, forçando o estado de volta para `Viewing`.
+
+**Correção:**
+Remover o `DisposableEffect` que forçava o `CancelEdit` no `onDispose`. Como o `DashboardViewModel` preserva o estado `_editingState` corretamente durante a mudança de configuração, a UI agora restaura o estado de edição após a recriação.
+
+**Decisão de produto incorporada na solução:**
+- Preservar o progresso do usuário durante mudanças de configuração.
+- Permitir que o modo edição sobreviva à navegação entre abas da `HomeScreen` (Dashboard/Transações), permitindo que o usuário consulte informações em outra tela sem perder sua configuração em andamento.
+- O cancelamento ou confirmação continua sendo explícito através dos botões na TopAppBar.

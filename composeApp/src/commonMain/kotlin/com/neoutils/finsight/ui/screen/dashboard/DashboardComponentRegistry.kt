@@ -16,12 +16,6 @@ import com.neoutils.finsight.resources.component_spending_by_category
 import com.neoutils.finsight.resources.component_total_balance
 import com.neoutils.finsight.util.UiText
 
-data class DashboardRegistryEntry(
-    val key: String,
-    val title: UiText,
-    val defaultPosition: Int,
-)
-
 object DashboardComponentRegistry {
 
     val entries: List<DashboardRegistryEntry> = listOf(
@@ -132,4 +126,7 @@ object DashboardComponentRegistry {
                 config = defaultConfigFor(entry.key),
             )
         }
+
+    fun titleFor(key: String): UiText =
+        entries.find { it.key == key }?.title ?: UiText.Raw(key)
 }

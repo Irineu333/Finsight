@@ -4,34 +4,7 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.dashboard_accounts
-import com.neoutils.finsight.resources.dashboard_budgets
-import com.neoutils.finsight.resources.dashboard_categories
-import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_installments
-import com.neoutils.finsight.resources.dashboard_recurring
-import com.neoutils.finsight.resources.dashboard_reports
-import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
-import com.neoutils.finsight.util.UiText
-
-enum class DashboardComponentKey(val value: String) {
-    TOTAL_BALANCE("total_balance"),
-    CONCRETE_BALANCE_STATS("balance_stats_concrete"),
-    PENDING_BALANCE_STATS("balance_stats_pending"),
-    CREDIT_CARD_BALANCE_STATS("balance_stats_credit_card"),
-    ACCOUNTS_OVERVIEW("accounts_overview"),
-    CREDIT_CARDS_PAGER("credit_cards_pager"),
-    SPENDING_BY_CATEGORY("spending_by_category"),
-    INCOME_BY_CATEGORY("income_by_category"),
-    BUDGETS("budgets"),
-    PENDING_RECURRING("pending_recurring"),
-    RECENTS("recents"),
-    QUICK_ACTIONS("quick_actions"),
-}
 
 sealed interface DashboardComponent {
     val key: String
@@ -116,42 +89,4 @@ sealed interface DashboardComponent {
     ) : DashboardComponent {
         override val key = DashboardComponentKey.QUICK_ACTIONS.value
     }
-}
-
-enum class QuickActionType(
-    val title: UiText,
-    val destination: NavigationDestination,
-) {
-    BUDGETS(
-        title = UiText.Res(Res.string.dashboard_budgets),
-        destination = NavigationDestination.Budgets,
-    ),
-    CATEGORIES(
-        title = UiText.Res(Res.string.dashboard_categories),
-        destination = NavigationDestination.Categories,
-    ),
-    CREDIT_CARDS(
-        title = UiText.Res(Res.string.dashboard_credit_cards),
-        destination = NavigationDestination.CreditCards(),
-    ),
-    ACCOUNTS(
-        title = UiText.Res(Res.string.dashboard_accounts),
-        destination = NavigationDestination.Accounts(),
-    ),
-    RECURRING(
-        title = UiText.Res(Res.string.dashboard_recurring),
-        destination = NavigationDestination.Recurring,
-    ),
-    REPORTS(
-        title = UiText.Res(Res.string.dashboard_reports),
-        destination = NavigationDestination.ReportConfig,
-    ),
-    INSTALLMENTS(
-        title = UiText.Res(Res.string.dashboard_installments),
-        destination = NavigationDestination.Installments,
-    ),
-    SUPPORT(
-        title = UiText.Res(Res.string.dashboard_support),
-        destination = NavigationDestination.Support,
-    ),
 }

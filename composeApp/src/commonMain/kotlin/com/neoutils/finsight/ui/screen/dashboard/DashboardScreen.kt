@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,6 +21,8 @@ import com.neoutils.finsight.resources.dashboard_edit_confirm
 import com.neoutils.finsight.resources.dashboard_edit_title
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
+import com.neoutils.finsight.ui.screen.home.HomeChromeEffect
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -32,11 +35,33 @@ fun DashboardScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationDispatcher = LocalNavigationDispatcher.current
 
+    DisposableEffect(viewModel) {
+        onDispose {
+            viewModel.onAction(DashboardAction.CancelEdit)
+        }
+    }
+
+    HomeChromeEffect(
+        config = when (uiState) {
+            is DashboardUiState.Loading,
+            is DashboardUiState.Empty,
+            is DashboardUiState.Viewing -> {
+                HomeChromeConfig.Default
+            }
+
+            is DashboardUiState.Editing -> {
+                HomeChromeConfig.ContentOnly
+            }
+        }
+    )
+
     val transition = updateTransition(targetState = uiState)
 
     Scaffold(
         topBar = {
-            transition.Crossfade(contentKey = { it::class }) { state ->
+            transition.Crossfade(
+                contentKey = { it::class }
+            ) { state ->
                 when (state) {
                     is DashboardUiState.Editing -> {
                         CenterAlignedTopAppBar(

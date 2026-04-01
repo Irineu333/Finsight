@@ -28,6 +28,7 @@ kotlinx-serialization-json = "1.8.0"
 kotlinSerialization = "2.3.10"
 
 arrow = "2.2.1"
+compose-settings = "3.1.0"
 
 gitlive-firebase = "2.1.0"
 google-services = "4.4.2"
@@ -62,6 +63,9 @@ multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", vers
 multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+
+compose-settings-tiles = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
+compose-settings-tiles-extended = { module = "com.github.alorma.compose-settings:ui-tiles-extended", version.ref = "compose-settings" }
 
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines", version.ref = "arrow" }

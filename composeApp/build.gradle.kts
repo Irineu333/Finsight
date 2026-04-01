@@ -67,6 +67,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
 
             implementation("sh.calvin.reorderable:reorderable:3.0.0")
+            implementation(libs.compose.settings.tiles)
+            implementation(libs.compose.settings.tiles.extended)
 
             // Firebase
             implementation(libs.gitlive.firebase.firestore)

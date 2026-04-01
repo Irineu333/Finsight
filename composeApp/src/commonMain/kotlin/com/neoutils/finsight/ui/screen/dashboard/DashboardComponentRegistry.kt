@@ -25,49 +25,49 @@ data class DashboardRegistryEntry(
 object DashboardComponentRegistry {
 
     val entries: List<DashboardRegistryEntry> = listOf(
-        DashboardRegistryEntry(DashboardComponent.TotalBalance.KEY,          UiText.Res(Res.string.component_total_balance),     0),
-        DashboardRegistryEntry(DashboardComponent.ConcreteBalanceStats.KEY, UiText.Res(Res.string.component_balance_stats),     1),
-        DashboardRegistryEntry(DashboardComponent.PendingBalanceStats.KEY,  UiText.Res(Res.string.component_pending_balance),   2),
-        DashboardRegistryEntry(DashboardComponent.CreditCardBalanceStats.KEY, UiText.Res(Res.string.component_credit_card_balance_stats), 3),
-        DashboardRegistryEntry(DashboardComponent.AccountsOverview.KEY,     UiText.Res(Res.string.component_accounts_overview), 4),
-        DashboardRegistryEntry(DashboardComponent.CreditCardsPager.KEY,     UiText.Res(Res.string.component_credit_cards),      5),
-        DashboardRegistryEntry(DashboardComponent.SpendingByCategory.KEY,   UiText.Res(Res.string.component_spending_by_category), 6),
-        DashboardRegistryEntry(DashboardComponent.IncomeByCategory.KEY,     UiText.Res(Res.string.component_income_by_category),   7),
-        DashboardRegistryEntry(DashboardComponent.Budgets.KEY,              UiText.Res(Res.string.component_budgets),          8),
-        DashboardRegistryEntry(DashboardComponent.PendingRecurring.KEY,     UiText.Res(Res.string.component_pending_recurring), 9),
-        DashboardRegistryEntry(DashboardComponent.Recents.KEY,              UiText.Res(Res.string.component_recents),           10),
-        DashboardRegistryEntry(DashboardComponent.QuickActions.KEY,         UiText.Res(Res.string.component_quick_actions),     11),
+        DashboardRegistryEntry(DashboardComponentKey.TOTAL_BALANCE.value,          UiText.Res(Res.string.component_total_balance),     0),
+        DashboardRegistryEntry(DashboardComponentKey.CONCRETE_BALANCE_STATS.value, UiText.Res(Res.string.component_balance_stats),     1),
+        DashboardRegistryEntry(DashboardComponentKey.PENDING_BALANCE_STATS.value,  UiText.Res(Res.string.component_pending_balance),   2),
+        DashboardRegistryEntry(DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value, UiText.Res(Res.string.component_credit_card_balance_stats), 3),
+        DashboardRegistryEntry(DashboardComponentKey.ACCOUNTS_OVERVIEW.value,     UiText.Res(Res.string.component_accounts_overview), 4),
+        DashboardRegistryEntry(DashboardComponentKey.CREDIT_CARDS_PAGER.value,     UiText.Res(Res.string.component_credit_cards),      5),
+        DashboardRegistryEntry(DashboardComponentKey.SPENDING_BY_CATEGORY.value,   UiText.Res(Res.string.component_spending_by_category), 6),
+        DashboardRegistryEntry(DashboardComponentKey.INCOME_BY_CATEGORY.value,     UiText.Res(Res.string.component_income_by_category),   7),
+        DashboardRegistryEntry(DashboardComponentKey.BUDGETS.value,              UiText.Res(Res.string.component_budgets),          8),
+        DashboardRegistryEntry(DashboardComponentKey.PENDING_RECURRING.value,     UiText.Res(Res.string.component_pending_recurring), 9),
+        DashboardRegistryEntry(DashboardComponentKey.RECENTS.value,              UiText.Res(Res.string.component_recents),           10),
+        DashboardRegistryEntry(DashboardComponentKey.QUICK_ACTIONS.value,         UiText.Res(Res.string.component_quick_actions),     11),
     )
 
     private val defaultTopSpacingKeys = setOf(
-        DashboardComponent.AccountsOverview.KEY,
-        DashboardComponent.CreditCardsPager.KEY,
-        DashboardComponent.SpendingByCategory.KEY,
-        DashboardComponent.IncomeByCategory.KEY,
-        DashboardComponent.Budgets.KEY,
-        DashboardComponent.PendingRecurring.KEY,
-        DashboardComponent.Recents.KEY,
-        DashboardComponent.QuickActions.KEY,
+        DashboardComponentKey.ACCOUNTS_OVERVIEW.value,
+        DashboardComponentKey.CREDIT_CARDS_PAGER.value,
+        DashboardComponentKey.SPENDING_BY_CATEGORY.value,
+        DashboardComponentKey.INCOME_BY_CATEGORY.value,
+        DashboardComponentKey.BUDGETS.value,
+        DashboardComponentKey.PENDING_RECURRING.value,
+        DashboardComponentKey.RECENTS.value,
+        DashboardComponentKey.QUICK_ACTIONS.value,
     )
 
     private val defaultDisabledKeys = setOf(
-        DashboardComponent.CreditCardBalanceStats.KEY,
-        DashboardComponent.IncomeByCategory.KEY,
+        DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value,
+        DashboardComponentKey.INCOME_BY_CATEGORY.value,
     )
 
     fun defaultConfigFor(key: String): Map<String, String> = buildMap {
         if (key in defaultTopSpacingKeys) {
             put(DashboardComponentConfig.TOP_SPACING, "true")
         }
-        if (key == DashboardComponent.QuickActions.KEY) {
+        if (key == DashboardComponentKey.QUICK_ACTIONS.value) {
             put(DashboardComponentConfig.SHOW_HEADER, "false")
         }
-        if (key == DashboardComponent.AccountsOverview.KEY) {
+        if (key == DashboardComponentKey.ACCOUNTS_OVERVIEW.value) {
             put(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT, "true")
         }
         if (
-            key == DashboardComponent.PendingBalanceStats.KEY ||
-            key == DashboardComponent.CreditCardBalanceStats.KEY
+            key == DashboardComponentKey.PENDING_BALANCE_STATS.value ||
+            key == DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value
         ) {
             put(DashboardComponentConfig.HIDE_WHEN_EMPTY, "true")
         }

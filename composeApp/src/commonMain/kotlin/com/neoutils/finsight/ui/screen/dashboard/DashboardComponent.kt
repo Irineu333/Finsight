@@ -17,64 +17,60 @@ import com.neoutils.finsight.resources.dashboard_support
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.util.UiText
 
+enum class DashboardComponentKey(val value: String) {
+    TOTAL_BALANCE("total_balance"),
+    CONCRETE_BALANCE_STATS("balance_stats_concrete"),
+    PENDING_BALANCE_STATS("balance_stats_pending"),
+    CREDIT_CARD_BALANCE_STATS("balance_stats_credit_card"),
+    ACCOUNTS_OVERVIEW("accounts_overview"),
+    CREDIT_CARDS_PAGER("credit_cards_pager"),
+    SPENDING_BY_CATEGORY("spending_by_category"),
+    INCOME_BY_CATEGORY("income_by_category"),
+    BUDGETS("budgets"),
+    PENDING_RECURRING("pending_recurring"),
+    RECENTS("recents"),
+    QUICK_ACTIONS("quick_actions"),
+}
+
 sealed interface DashboardComponent {
     val key: String
 
     data class TotalBalance(
         val amount: Double,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "total_balance"
-        }
+        override val key = DashboardComponentKey.TOTAL_BALANCE.value
     }
 
     data class ConcreteBalanceStats(
         val income: Double,
         val expense: Double,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "balance_stats_concrete"
-        }
+        override val key = DashboardComponentKey.CONCRETE_BALANCE_STATS.value
     }
 
     data class PendingBalanceStats(
         val pendingIncome: Double,
         val pendingExpense: Double,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "balance_stats_pending"
-        }
+        override val key = DashboardComponentKey.PENDING_BALANCE_STATS.value
     }
 
     data class CreditCardBalanceStats(
         val payment: Double,
         val expense: Double,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "balance_stats_credit_card"
-        }
+        override val key = DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value
     }
 
     data class AccountsOverview(
         val accounts: List<DashboardAccountUi>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "accounts_overview"
-        }
+        override val key = DashboardComponentKey.ACCOUNTS_OVERVIEW.value
     }
 
     sealed interface CreditCardsPager : DashboardComponent {
         override val key: String
-            get() = KEY
-
-        companion object {
-            const val KEY = "credit_cards_pager"
-        }
+            get() = DashboardComponentKey.CREDIT_CARDS_PAGER.value
 
         data class Content(
             val creditCards: List<CreditCardUi>,
@@ -85,57 +81,39 @@ sealed interface DashboardComponent {
 
     data class SpendingByCategory(
         val categorySpending: List<CategorySpending>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "spending_by_category"
-        }
+        override val key = DashboardComponentKey.SPENDING_BY_CATEGORY.value
     }
 
     data class IncomeByCategory(
         val categoryIncome: List<CategorySpending>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "income_by_category"
-        }
+        override val key = DashboardComponentKey.INCOME_BY_CATEGORY.value
     }
 
     data class Budgets(
         val budgetProgress: List<BudgetProgress>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "budgets"
-        }
+        override val key = DashboardComponentKey.BUDGETS.value
     }
 
     data class PendingRecurring(
         val recurringList: List<Recurring>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "pending_recurring"
-        }
+        override val key = DashboardComponentKey.PENDING_RECURRING.value
     }
 
     data class Recents(
         val operations: List<Operation>,
         val hasMore: Boolean,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "recents"
-        }
+        override val key = DashboardComponentKey.RECENTS.value
     }
 
     data class QuickActions(
         val actions: List<QuickActionType>,
-        override val key: String = KEY,
     ) : DashboardComponent {
-        companion object {
-            const val KEY = "quick_actions"
-        }
+        override val key = DashboardComponentKey.QUICK_ACTIONS.value
     }
 }
 

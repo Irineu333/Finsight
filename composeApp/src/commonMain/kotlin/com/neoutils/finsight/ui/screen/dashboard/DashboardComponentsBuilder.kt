@@ -58,28 +58,28 @@ class DashboardComponentsBuilder(
 
         return listOfNotNull(
             totalBalance(input, allTransactions),
-            concreteBalanceStats(input, configFor(DashboardComponent.ConcreteBalanceStats.KEY)),
+            concreteBalanceStats(input, configFor(DashboardComponentKey.CONCRETE_BALANCE_STATS.value)),
             pendingBalanceStats(
                 pendingRecurring = pendingRecurring,
-                config = configFor(DashboardComponent.PendingBalanceStats.KEY),
+                config = configFor(DashboardComponentKey.PENDING_BALANCE_STATS.value),
             ),
             creditCardBalanceStats(
                 input = input,
                 allTransactions = allTransactions,
-                config = configFor(DashboardComponent.CreditCardBalanceStats.KEY),
+                config = configFor(DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value),
             ),
-            accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
-            creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
-            spendingByCategory(input, allTransactions, configFor(DashboardComponent.SpendingByCategory.KEY)),
-            incomeByCategory(input, allTransactions, configFor(DashboardComponent.IncomeByCategory.KEY)),
+            accountsOverview(input, allTransactions, configFor(DashboardComponentKey.ACCOUNTS_OVERVIEW.value)),
+            creditCardsPager(input, configFor(DashboardComponentKey.CREDIT_CARDS_PAGER.value)),
+            spendingByCategory(input, allTransactions, configFor(DashboardComponentKey.SPENDING_BY_CATEGORY.value)),
+            incomeByCategory(input, allTransactions, configFor(DashboardComponentKey.INCOME_BY_CATEGORY.value)),
             budgets(input, allTransactions),
             pendingRecurring(
                 pendingRecurring = pendingRecurring,
                 input = input,
-                config = configFor(DashboardComponent.PendingRecurring.KEY),
+                config = configFor(DashboardComponentKey.PENDING_RECURRING.value),
             ),
-            recents(input, configFor(DashboardComponent.Recents.KEY)),
-            quickActions(configFor(DashboardComponent.QuickActions.KEY)),
+            recents(input, configFor(DashboardComponentKey.RECENTS.value)),
+            quickActions(configFor(DashboardComponentKey.QUICK_ACTIONS.value)),
         )
     }
 

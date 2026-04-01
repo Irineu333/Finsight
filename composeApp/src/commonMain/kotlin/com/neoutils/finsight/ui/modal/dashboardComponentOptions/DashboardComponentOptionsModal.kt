@@ -87,11 +87,11 @@ class DashboardComponentOptionsModal(
             val showHeader = config.showHeader()
             DashboardConfigCard {
                 when (item.key) {
-                    DashboardComponent.AccountsOverview.KEY,
-                    DashboardComponent.CreditCardsPager.KEY,
-                    DashboardComponent.PendingRecurring.KEY,
-                    DashboardComponent.Recents.KEY,
-                    DashboardComponent.QuickActions.KEY -> {
+                    DashboardComponentKey.ACCOUNTS_OVERVIEW.value,
+                    DashboardComponentKey.CREDIT_CARDS_PAGER.value,
+                    DashboardComponentKey.PENDING_RECURRING.value,
+                    DashboardComponentKey.RECENTS.value,
+                    DashboardComponentKey.QUICK_ACTIONS.value -> {
                         DashboardHeaderVisibilityConfigToggle(
                             checked = showHeader,
                             onCheckedChange = { enabled ->
@@ -114,7 +114,7 @@ class DashboardComponentOptionsModal(
             }
 
             when (item.key) {
-                DashboardComponent.ConcreteBalanceStats.KEY -> {
+                DashboardComponentKey.CONCRETE_BALANCE_STATS.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -127,7 +127,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.PendingBalanceStats.KEY -> {
+                DashboardComponentKey.PENDING_BALANCE_STATS.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -140,7 +140,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.CreditCardBalanceStats.KEY -> {
+                DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -153,7 +153,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.AccountsOverview.KEY -> {
+                DashboardComponentKey.ACCOUNTS_OVERVIEW.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -166,7 +166,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.CreditCardsPager.KEY -> {
+                DashboardComponentKey.CREDIT_CARDS_PAGER.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -179,7 +179,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.SpendingByCategory.KEY -> {
+                DashboardComponentKey.SPENDING_BY_CATEGORY.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -191,7 +191,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.IncomeByCategory.KEY -> {
+                DashboardComponentKey.INCOME_BY_CATEGORY.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -203,7 +203,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.PendingRecurring.KEY -> {
+                DashboardComponentKey.PENDING_RECURRING.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -215,7 +215,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.Recents.KEY -> {
+                DashboardComponentKey.RECENTS.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),
@@ -227,7 +227,7 @@ class DashboardComponentOptionsModal(
                     )
                 }
 
-                DashboardComponent.QuickActions.KEY -> {
+                DashboardComponentKey.QUICK_ACTIONS.value -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
                         modifier = Modifier.fillMaxWidth(),

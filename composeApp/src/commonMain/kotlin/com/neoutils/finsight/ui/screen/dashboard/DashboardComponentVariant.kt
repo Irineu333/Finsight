@@ -451,18 +451,18 @@ sealed interface DashboardComponentVariant {
 
     companion object {
         fun previewForKey(key: String): DashboardComponentVariant? = when (key) {
-            DashboardComponent.TotalBalance.KEY -> TotalBalance.Preview
-            DashboardComponent.ConcreteBalanceStats.KEY -> ConcreteBalanceStats.Preview
-            DashboardComponent.PendingBalanceStats.KEY -> PendingBalanceStats.Preview
-            DashboardComponent.CreditCardBalanceStats.KEY -> CreditCardBalanceStats.Preview
-            DashboardComponent.AccountsOverview.KEY -> AccountsOverview.Preview
-            DashboardComponent.CreditCardsPager.KEY -> CreditCardsPager.Preview
-            DashboardComponent.SpendingByCategory.KEY -> SpendingByCategory.Preview
-            DashboardComponent.IncomeByCategory.KEY -> IncomeByCategory.Preview
-            DashboardComponent.Budgets.KEY -> Budgets.Preview
-            DashboardComponent.PendingRecurring.KEY -> PendingRecurring.Preview
-            DashboardComponent.Recents.KEY -> Recents.Preview
-            DashboardComponent.QuickActions.KEY -> QuickActions.Preview
+            DashboardComponentKey.TOTAL_BALANCE.value -> TotalBalance.Preview
+            DashboardComponentKey.CONCRETE_BALANCE_STATS.value -> ConcreteBalanceStats.Preview
+            DashboardComponentKey.PENDING_BALANCE_STATS.value -> PendingBalanceStats.Preview
+            DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value -> CreditCardBalanceStats.Preview
+            DashboardComponentKey.ACCOUNTS_OVERVIEW.value -> AccountsOverview.Preview
+            DashboardComponentKey.CREDIT_CARDS_PAGER.value -> CreditCardsPager.Preview
+            DashboardComponentKey.SPENDING_BY_CATEGORY.value -> SpendingByCategory.Preview
+            DashboardComponentKey.INCOME_BY_CATEGORY.value -> IncomeByCategory.Preview
+            DashboardComponentKey.BUDGETS.value -> Budgets.Preview
+            DashboardComponentKey.PENDING_RECURRING.value -> PendingRecurring.Preview
+            DashboardComponentKey.RECENTS.value -> Recents.Preview
+            DashboardComponentKey.QUICK_ACTIONS.value -> QuickActions.Preview
             else -> null
         }
     }

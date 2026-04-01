@@ -1,21 +1,9 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
 
-package com.neoutils.finsight.ui.modal
+package com.neoutils.finsight.ui.modal.date
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,36 +24,44 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-class DateRangePickerModal(
-    private val initialStartDate: LocalDate? = null,
-    private val initialEndDate: LocalDate? = null,
-    private val onRangeSelected: (start: LocalDate, end: LocalDate) -> Unit,
+class DatePickerModal(
+    private val initialDate: LocalDate,
+    private val onDateSelected: (LocalDate) -> Unit,
+    private val minDate: LocalDate? = null,
+    private val maxDate: LocalDate? = null,
 ) : ModalBottomSheet() {
+
+    val selectableDates = object : SelectableDates {
+        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+            val date = millisToLocalDate(utcTimeMillis)
+            val afterMin = minDate?.let { date >= it } ?: true
+            val beforeMax = maxDate?.let { date <= it } ?: true
+            return afterMin && beforeMax
+        }
+    }
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val state = rememberDateRangePickerState(
-            initialSelectedStartDateMillis = initialStartDate?.let { localDateToMillis(it) },
-            initialSelectedEndDateMillis = initialEndDate?.let { localDateToMillis(it) },
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = localDateToMillis(initialDate),
+            selectableDates = selectableDates
         )
 
         val confirmEnabled by remember {
-            derivedStateOf {
-                state.selectedStartDateMillis != null && state.selectedEndDateMillis != null
-            }
+            derivedStateOf { datePickerState.selectedDateMillis != null }
         }
 
         val manager = LocalModalManager.current
 
-        DateRangePicker(
-            state = state,
+        DatePicker(
+            state = datePickerState,
             headline = null,
             title = null,
             showModeToggle = false,
             colors = DatePickerDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
-            modifier = Modifier.fillMaxHeight(fraction = 0.6f),
         )
 
         Row(
@@ -75,16 +71,16 @@ class DateRangePickerModal(
                 .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
         ) {
-            TextButton(onClick = { manager.dismiss() }) {
+            TextButton(
+                onClick = { manager.dismiss() }
+            ) {
                 Text(stringResource(Res.string.date_picker_cancel))
             }
 
             Button(
                 onClick = {
-                    val start = state.selectedStartDateMillis?.let { millisToLocalDate(it) }
-                    val end = state.selectedEndDateMillis?.let { millisToLocalDate(it) }
-                    if (start != null && end != null) {
-                        onRangeSelected(start, end)
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        onDateSelected(millisToLocalDate(millis))
                     }
                     manager.dismiss()
                 },

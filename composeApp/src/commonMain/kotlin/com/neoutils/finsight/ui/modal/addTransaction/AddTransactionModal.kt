@@ -30,7 +30,7 @@ import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
-import com.neoutils.finsight.ui.modal.DatePickerModal
+import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.theme.Expense

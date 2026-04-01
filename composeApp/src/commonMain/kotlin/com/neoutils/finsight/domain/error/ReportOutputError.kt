@@ -1,4 +1,4 @@
-package com.neoutils.finsight.report
+package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_output_error_io_error

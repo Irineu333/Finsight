@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.ReportTableLabels
 import com.neoutils.finsight.domain.model.ReportTone
 import com.neoutils.finsight.domain.model.TransactionGroup
 import com.neoutils.finsight.domain.model.TransactionItem
+import com.neoutils.finsight.ui.screen.report.render.HtmlReportDocumentRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

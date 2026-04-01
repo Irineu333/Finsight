@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.modal.DateRangePickerModal
+import com.neoutils.finsight.ui.modal.date.DateRangePickerModal
 import kotlinx.datetime.*
 import kotlinx.datetime.format.char
 import org.jetbrains.compose.resources.StringResource

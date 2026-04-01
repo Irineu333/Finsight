@@ -10,6 +10,7 @@ import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.ui.screen.root.App
 import org.koin.core.context.startKoin
 import platform.UIKit.UIViewController
 

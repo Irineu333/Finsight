@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.home
+package com.neoutils.finsight.ui.screen.root
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -16,6 +16,8 @@ import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
+import com.neoutils.finsight.ui.screen.home.AppRoute
+import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen

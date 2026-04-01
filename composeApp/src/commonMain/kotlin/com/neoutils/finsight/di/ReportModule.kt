@@ -1,7 +1,7 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.report.HtmlReportDocumentRenderer
-import com.neoutils.finsight.report.ReportDocumentRenderer
+import com.neoutils.finsight.ui.screen.report.render.HtmlReportDocumentRenderer
+import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import org.koin.core.module.Module
 import org.koin.dsl.module
 

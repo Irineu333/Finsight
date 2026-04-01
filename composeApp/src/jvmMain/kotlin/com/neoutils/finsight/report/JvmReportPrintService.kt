@@ -2,8 +2,10 @@ package com.neoutils.finsight.report
 
 import arrow.core.Either
 import arrow.core.left
+import com.neoutils.finsight.domain.error.ReportOutputError
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.extension.PlatformContext
+import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import java.awt.Desktop
 import java.io.File
 import kotlinx.coroutines.Dispatchers

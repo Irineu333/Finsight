@@ -1,7 +1,6 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.ui.screen.root
 
 import androidx.compose.runtime.Composable
-import com.neoutils.finsight.ui.screen.home.AppNavHost
 import com.neoutils.finsight.ui.theme.FinsightTheme
 
 @Composable

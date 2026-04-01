@@ -2,20 +2,29 @@
 
 package com.neoutils.finsight.ui.screen.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -26,8 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -37,12 +48,14 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.dashboardComponentOptions.DashboardComponentOptionsModal
+import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private sealed interface EditListEntry {
+
     data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
     data object ActivePlaceholder : EditListEntry
     data object SectionHeader : EditListEntry
@@ -179,22 +192,59 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    Box(modifier = modifier.fillMaxWidth()) {
-        DashboardComponentContent(
-            variant = item.preview,
-            config = mapOf(DashboardComponentConfig.SHOW_HEADER to false.toString()),
-            modifier = Modifier.fillMaxWidth(),
-        )
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        color = colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringUiText(item.title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Icon(
+                        imageVector = Icons.Default.DragHandle,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
 
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable(onClick = onTap)
-                .longPressDraggableHandle(
-                    onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
-                    onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
-                ),
-        )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                DashboardComponentContent(
+                    variant = item.preview,
+                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to false.toString()),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // Global Overlay
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(onClick = onTap)
+                    .longPressDraggableHandle(
+                        onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                        onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                    ),
+            )
+        }
     }
 }
 

@@ -33,7 +33,7 @@ private val LightColorScheme = lightColorScheme(
 
     surfaceContainer = LightCardBackground,
     surfaceContainerLow = LightCardBackground,
-    surfaceContainerHighest = LightSurface2,
+    surfaceContainerHighest = LightSurface1,
 
     error = Error,
     onError = Color.White,

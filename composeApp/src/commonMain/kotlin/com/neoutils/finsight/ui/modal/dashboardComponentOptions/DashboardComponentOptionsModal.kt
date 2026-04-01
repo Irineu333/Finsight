@@ -45,7 +45,7 @@ import com.neoutils.finsight.ui.screen.dashboard.*
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 
-internal class DashboardComponentOptionsModal(
+class DashboardComponentOptionsModal(
     private val item: DashboardEditItem,
     private val accounts: List<Account>,
     private val creditCards: List<CreditCard>,

@@ -23,7 +23,6 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
-
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
 import com.neoutils.finsight.util.TransactionTargetNavType
 import com.neoutils.finsight.util.TransactionTypeNavType

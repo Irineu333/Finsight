@@ -93,6 +93,7 @@ val viewModelModule = module {
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
+            calculateCategoryIncomeUseCase = get(),
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),

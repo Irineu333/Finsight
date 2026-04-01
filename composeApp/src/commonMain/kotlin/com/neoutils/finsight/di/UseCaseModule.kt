@@ -27,6 +27,7 @@ import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
@@ -90,6 +91,8 @@ val useCaseModules = module {
     factory { CalculateTransactionStatsUseCase() }
 
     factory { CalculateCategorySpendingUseCase() }
+
+    factory { CalculateCategoryIncomeUseCase() }
 
     factory { CalculateReportStatsUseCase() }
 

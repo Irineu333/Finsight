@@ -695,6 +695,7 @@
     <string name="component_accounts_overview">Contas</string>
     <string name="component_credit_cards">Cartões de Crédito</string>
     <string name="component_spending_by_category">Gastos por Categoria</string>
+    <string name="component_income_by_category">Receitas por Categoria</string>
     <string name="component_budgets">Orçamentos</string>
     <string name="component_pending_recurring">Recorrentes Pendentes</string>
     <string name="component_recents">Recentes</string>

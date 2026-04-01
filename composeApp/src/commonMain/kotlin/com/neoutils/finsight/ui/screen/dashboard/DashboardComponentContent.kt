@@ -136,6 +136,13 @@ internal fun DashboardComponentContent(
             )
         }
 
+        is DashboardComponentVariant.IncomeByCategory -> {
+            DashboardIncomeByCategorySection(
+                variant = variant,
+                modifier = modifier,
+            )
+        }
+
         is DashboardComponentVariant.Budgets -> {
             DashboardBudgetsSection(
                 variant = variant,
@@ -554,6 +561,28 @@ private fun DashboardSpendingByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
+                modalManager.show(ViewCategoryModal(category))
+            }
+        }
+    )
+}
+
+@Composable
+private fun DashboardIncomeByCategorySection(
+    variant: DashboardComponentVariant.IncomeByCategory,
+    modifier: Modifier = Modifier,
+) {
+    val modalManager = LocalModalManager.current
+    val component = variant.component
+
+    CategorySpendingCard(
+        categorySpending = component.categoryIncome,
+        title = stringResource(Res.string.component_income_by_category),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        onCategoryClick = { category ->
+            if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
                 modalManager.show(ViewCategoryModal(category))
             }
         }

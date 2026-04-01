@@ -191,6 +191,18 @@ internal class DashboardComponentOptionsModal(
                     )
                 }
 
+                DashboardComponent.IncomeByCategory.KEY -> {
+                    DashboardConfigSectionLabel(
+                        text = stringResource(Res.string.component_config_content_section),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    IncomeByCategoryConfigContent(
+                        config = config,
+                        onConfigChange = ::updateConfig,
+                    )
+                }
+
                 DashboardComponent.PendingRecurring.KEY -> {
                     DashboardConfigSectionLabel(
                         text = stringResource(Res.string.component_config_content_section),
@@ -557,6 +569,34 @@ private fun SpendingByCategoryConfigContent(
         onOptionSelected = { value ->
             onConfigChange(config.toMutableMap().apply {
                 put(SpendingByCategoryConfig.MAX_CATEGORIES, value.toString())
+            })
+        },
+        optionLabel = { value ->
+            if (value == -1) {
+                allLabel
+            } else {
+                value.toString()
+            }
+        },
+    )
+}
+
+@Composable
+private fun IncomeByCategoryConfigContent(
+    config: Map<String, String>,
+    onConfigChange: (Map<String, String>) -> Unit,
+) {
+    val options = listOf(3, 5, 10, -1)
+    val current = config[IncomeByCategoryConfig.MAX_CATEGORIES]?.toIntOrNull() ?: -1
+    val allLabel = stringResource(Res.string.component_config_all)
+
+    DashboardSegmentedOptionCard(
+        title = stringResource(Res.string.component_config_max_categories),
+        options = options,
+        current = current,
+        onOptionSelected = { value ->
+            onConfigChange(config.toMutableMap().apply {
+                put(IncomeByCategoryConfig.MAX_CATEGORIES, value.toString())
             })
         },
         optionLabel = { value ->

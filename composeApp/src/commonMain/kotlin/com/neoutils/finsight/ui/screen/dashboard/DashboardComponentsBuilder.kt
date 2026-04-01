@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
@@ -39,6 +40,7 @@ class DashboardComponentsBuilder(
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
+    private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
@@ -69,6 +71,7 @@ class DashboardComponentsBuilder(
             accountsOverview(input, allTransactions, configFor(DashboardComponent.AccountsOverview.KEY)),
             creditCardsPager(input, configFor(DashboardComponent.CreditCardsPager.KEY)),
             spendingByCategory(input, allTransactions, configFor(DashboardComponent.SpendingByCategory.KEY)),
+            incomeByCategory(input, allTransactions, configFor(DashboardComponent.IncomeByCategory.KEY)),
             budgets(input, allTransactions),
             pendingRecurring(
                 pendingRecurring = pendingRecurring,
@@ -240,6 +243,28 @@ class DashboardComponentsBuilder(
         return if (categorySpending.isNotEmpty()) {
             DashboardComponent.SpendingByCategory(
                 categorySpending = categorySpending,
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun incomeByCategory(
+        input: DashboardComponentsInput,
+        allTransactions: List<Transaction>,
+        config: Map<String, String>,
+    ): DashboardComponent.IncomeByCategory? {
+        val maxCategories = config[IncomeByCategoryConfig.MAX_CATEGORIES]
+            ?.toIntOrNull() ?: IncomeByCategoryConfig.ALL.toInt()
+
+        val categoryIncome = calculateCategoryIncomeUseCase(
+            transactions = allTransactions,
+            forYearMonth = input.targetMonth,
+        ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
+
+        return if (categoryIncome.isNotEmpty()) {
+            DashboardComponent.IncomeByCategory(
+                categoryIncome = categoryIncome,
             )
         } else {
             null

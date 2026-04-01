@@ -21,6 +21,11 @@ object SpendingByCategoryConfig {
     const val ALL = "-1"
 }
 
+object IncomeByCategoryConfig {
+    const val MAX_CATEGORIES = "max_categories"
+    const val ALL = "-1"
+}
+
 object PendingRecurringConfig {
     const val UPCOMING_DAYS_AHEAD = "upcoming_days_ahead"
     const val DEFAULT_UPCOMING_DAYS_AHEAD = 0

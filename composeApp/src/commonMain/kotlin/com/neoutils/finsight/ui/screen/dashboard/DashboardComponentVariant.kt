@@ -96,6 +96,19 @@ sealed interface DashboardComponentVariant {
         ) : SpendingByCategory
     }
 
+    sealed interface IncomeByCategory : DashboardComponentVariant {
+        override val component: DashboardComponent.IncomeByCategory
+
+        data class Viewing(
+            override val component: DashboardComponent.IncomeByCategory,
+        ) : IncomeByCategory
+
+        data class Preview(
+            override val component: DashboardComponent.IncomeByCategory =
+                DashboardComponentPreviewFactory.incomeByCategory,
+        ) : IncomeByCategory
+    }
+
     sealed interface Budgets : DashboardComponentVariant {
         override val component: DashboardComponent.Budgets
 
@@ -156,6 +169,7 @@ sealed interface DashboardComponentVariant {
             DashboardComponent.AccountsOverview.KEY -> AccountsOverview.Preview()
             DashboardComponent.CreditCardsPager.KEY -> CreditCardsPager.Preview()
             DashboardComponent.SpendingByCategory.KEY -> SpendingByCategory.Preview()
+            DashboardComponent.IncomeByCategory.KEY -> IncomeByCategory.Preview()
             DashboardComponent.Budgets.KEY -> Budgets.Preview()
             DashboardComponent.PendingRecurring.KEY -> PendingRecurring.Preview()
             DashboardComponent.Recents.KEY -> Recents.Preview()

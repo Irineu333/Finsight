@@ -92,6 +92,15 @@ sealed interface DashboardComponent {
         }
     }
 
+    data class IncomeByCategory(
+        val categoryIncome: List<CategorySpending>,
+        override val key: String = KEY,
+    ) : DashboardComponent {
+        companion object {
+            const val KEY = "income_by_category"
+        }
+    }
+
     data class Budgets(
         val budgetProgress: List<BudgetProgress>,
         override val key: String = KEY,
@@ -153,6 +162,7 @@ fun DashboardComponent.toViewingVariant(
     )
 
     is DashboardComponent.SpendingByCategory -> DashboardComponentVariant.SpendingByCategory.Viewing(component = this)
+    is DashboardComponent.IncomeByCategory -> DashboardComponentVariant.IncomeByCategory.Viewing(component = this)
     is DashboardComponent.Budgets -> DashboardComponentVariant.Budgets.Viewing(component = this)
     is DashboardComponent.PendingRecurring -> DashboardComponentVariant.PendingRecurring.Viewing(
         component = this,

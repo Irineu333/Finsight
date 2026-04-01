@@ -118,6 +118,23 @@ object DashboardComponentPreviewFactory {
         categorySpending = mockCategorySpending,
     )
 
+    val incomeByCategory = DashboardComponent.IncomeByCategory(
+        categoryIncome = listOf(
+            CategorySpending(category = mockIncomeCategory, amount = 3200.0, percentage = 84.21),
+            CategorySpending(
+                category = Category(
+                    id = 4,
+                    name = "Freelance",
+                    icon = CategoryLazyIcon("laptop"),
+                    type = Category.Type.INCOME,
+                    createdAt = 0,
+                ),
+                amount = 600.0,
+                percentage = 15.79,
+            ),
+        ),
+    )
+
     val budgets = DashboardComponent.Budgets(
         budgetProgress = mockBudgetProgress,
     )

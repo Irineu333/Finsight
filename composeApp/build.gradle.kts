@@ -111,8 +111,8 @@ android {
         applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 20
-        versionName = "1.6.0"
+        versionCode = 22
+        versionName = "1.7.0-rc02"
     }
     packaging {
         resources {
@@ -163,7 +163,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.neoutils.finsight"
-            packageVersion = "1.6.0"
+            packageVersion = "1.7.0"
         }
     }
 }

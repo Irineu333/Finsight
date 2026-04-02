@@ -37,6 +37,12 @@
     <string name="transfer_error_future_date">Transfer date cannot be in the future.</string>
     <string name="transfer_error_unknown">Unable to complete the transfer.</string>
 
+    <!-- Installment errors -->
+    <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>
+    <string name="installment_error_blocked_invoice">One of the installments coincides with a blocked invoice.</string>
+    <string name="installment_error_missing_credit_card">Select a card to register the installment.</string>
+    <string name="installment_error_missing_invoice">Select an invoice to register the installment.</string>
+
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_transactions">Transactions</string>
@@ -68,10 +74,6 @@
     <string name="report_config_include_spending_by_category">Spending by category</string>
     <string name="report_config_include_income_by_category">Income by category</string>
     <string name="report_config_include_transactions">Transaction list</string>
-    <string name="report_config_accounts">Accounts</string>
-    <string name="report_config_no_accounts">No accounts registered</string>
-    <string name="report_config_credit_cards">Cards</string>
-    <string name="report_config_invoice">Invoice</string>
     <string name="report_config_generate">Generate Report</string>
     <string name="report_config_cancel">Cancel</string>
     <string name="report_config_confirm">Confirm</string>
@@ -81,6 +83,10 @@
     <string name="report_config_period_this_month">This month</string>
     <string name="report_config_period_last_month">Last month</string>
     <string name="report_config_period_this_year">This year</string>
+    <string name="report_config_accounts">Accounts</string>
+    <string name="report_config_no_accounts">No accounts registered</string>
+    <string name="report_config_credit_cards">Cards</string>
+    <string name="report_config_invoice">Invoice</string>
 
     <!-- Report Viewer Screen -->
     <string name="report_viewer_title">Report</string>
@@ -102,7 +108,6 @@
     <string name="report_output_share_success">Report shared successfully.</string>
     <string name="report_output_share_success_with_location">Report saved to: %1$s</string>
     <string name="report_output_print_queued">Report sent to printer queue.</string>
-    <string name="report_output_error_unsupported_format">Unsupported export format.</string>
     <string name="report_output_error_printing_unsupported">Printing is not available on this platform.</string>
     <string name="report_output_error_generic">Unable to complete report operation.</string>
     <string name="report_output_column_category">Category</string>
@@ -116,11 +121,11 @@
     <string name="support_empty_cta">Open first issue</string>
     <string name="support_overview_waiting">%1$d waiting for a reply</string>
     <string name="support_overview_total">%1$d issues total</string>
+    <string name="support_filter_active">Active</string>
+    <string name="support_filter_inactive">Inactive</string>
     <string name="support_type_bug">Bug</string>
     <string name="support_type_feature">Feature</string>
     <string name="support_type_question">Question</string>
-    <string name="support_filter_active">Active</string>
-    <string name="support_filter_inactive">Inactive</string>
     <string name="support_status_open">Open</string>
     <string name="support_status_planned">Planned</string>
     <string name="support_status_doing">In progress</string>
@@ -136,10 +141,12 @@
     <string name="support_messages_empty_body">The first reply in this conversation will appear here.</string>
     <string name="support_reply_message_label">Message</string>
     <string name="support_reply_send">Reply</string>
-    <string name="support_author_you">You</string>
-    <string name="support_author_support">Support</string>
     <string name="support_chat_divider_today">Today</string>
     <string name="support_chat_divider_yesterday">Yesterday</string>
+    <string name="support_author_you">You</string>
+    <string name="support_author_support">Support</string>
+
+    <!-- Support errors -->
     <string name="support_error_empty_title">Title is required.</string>
     <string name="support_error_empty_description">Description is required.</string>
     <string name="support_error_empty_message">Message cannot be empty.</string>
@@ -305,6 +312,10 @@
     <string name="budget_form_icon_helper">Tap to open the icon list</string>
     <string name="budget_form_icon_modal_title">Choose a budget icon</string>
     <string name="budget_form_limit_label">Limit</string>
+    <string name="budget_form_limit_type_fixed">$</string>
+    <string name="budget_form_limit_type_percentage">%</string>
+    <string name="budget_form_percentage_label">Percentage</string>
+    <string name="budget_form_recurring_income_label">Base income</string>
     <string name="budget_form_save">Save</string>
 
     <!-- Add Transaction Modal -->
@@ -322,6 +333,7 @@
     <string name="add_installment_date_label">Date</string>
     <string name="add_installment_save">Save</string>
     <string name="add_installment_initial_invoice">Initial Invoice</string>
+    <string name="add_installment_error_generic">Error registering installment.</string>
 
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Delete Transaction</string>
@@ -459,6 +471,7 @@
     <string name="view_category_edit">Edit</string>
 
     <!-- View Budget Modal -->
+    <string name="view_budget_percentage_label">Percentage</string>
     <string name="view_budget_limit_label">Limit</string>
     <string name="view_budget_spent_label">Spent</string>
     <string name="view_budget_exceeded_by_label">Exceeded by</string>
@@ -472,6 +485,8 @@
     <string name="balance_card_income">Income</string>
     <string name="balance_card_expense">Expenses</string>
     <string name="balance_card_invoices">Invoices</string>
+    <string name="balance_card_invoice_payments">Payments</string>
+    <string name="balance_card_credit_card_expense">Card Expense</string>
     <string name="balance_card_current_invoice">Current Invoice</string>
     <string name="balance_card_pending_income">Pending Income</string>
     <string name="balance_card_pending_expense">Pending Expenses</string>
@@ -486,6 +501,7 @@
     <string name="summary_card_see_invoices">See invoices</string>
 
     <string name="operation_card_transfer">Transfer</string>
+    <string name="operation_card_payment">Invoice Payment</string>
     <string name="operation_card_balance_adjustment">Balance Adjustment</string>
     <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
 
@@ -646,18 +662,23 @@
 
     <!-- Reactivate Recurring Modal -->
     <string name="reactivate_recurring_title">Reactivate recurring</string>
-    <string name="reactivate_recurring_message">Do you want to reactivate "%1$s"? New pending items will be generated from this recurring entry again.</string>
+    <string name="reactivate_recurring_message">Do you want to reactivate \"%1$s\"? New pending items will be generated from this recurring entry again.</string>
     <string name="reactivate_recurring_confirm">Reactivate</string>
 
     <!-- Stop Recurring Modal -->
     <string name="stop_recurring_title">Stop recurring</string>
-    <string name="stop_recurring_message">Do you want to stop "%1$s"? Existing entries will stay linked, but no new pending items will be created.</string>
+    <string name="stop_recurring_message">Do you want to stop \"%1$s\"? Existing entries will stay linked, but no new pending items will be created.</string>
     <string name="stop_recurring_confirm">Stop</string>
 
     <!-- Delete Recurring Modal -->
     <string name="delete_recurring_title">Delete recurring</string>
-    <string name="delete_recurring_message">Do you want to delete "%1$s"? This action cannot be undone.</string>
+    <string name="delete_recurring_message">Do you want to delete \"%1$s\"? This action cannot be undone.</string>
     <string name="delete_recurring_confirm">Delete</string>
+
+    <!-- Report Output Errors -->
+    <string name="report_output_error_unsupported_format">Unsupported report format.</string>
+    <string name="report_output_error_io_error">Failed to process the report.</string>
+    <string name="report_output_error_unknown">An unexpected error occurred.</string>
 
     <!-- Recurring Errors -->
     <string name="recurring_error_amount_required">Amount is required.</string>
@@ -665,11 +686,62 @@
     <string name="recurring_error_title_or_category_required">Provide a title or category.</string>
     <string name="recurring_error_invalid_day">Day must be between 1 and 31.</string>
     <string name="recurring_error_account_required">Account is required.</string>
+
+    <!-- Dashboard Component Names -->
+    <string name="component_total_balance">Total Balance</string>
+    <string name="component_balance_stats">Income and Expenses</string>
+    <string name="component_pending_balance">Pending</string>
+    <string name="component_credit_card_balance_stats">Card Entries and Exits</string>
+    <string name="component_accounts_overview">Accounts</string>
+    <string name="component_credit_cards">Credit Cards</string>
+    <string name="component_spending_by_category">Spending by Category</string>
+    <string name="component_income_by_category">Income by Category</string>
+    <string name="component_budgets">Budgets</string>
+    <string name="component_pending_recurring">Pending Recurring</string>
+    <string name="component_recents">Recent</string>
+    <string name="component_quick_actions">Shortcuts</string>
+
+    <!-- Dashboard Edit Mode -->
+    <string name="dashboard_edit_title">Edit</string>
+    <string name="dashboard_edit_confirm">Confirm</string>
+    <string name="dashboard_edit_cancel">Cancel</string>
+    <string name="remove_component">Remove</string>
+    <string name="dashboard_edit_active_placeholder">Drag here to add a component</string>
+    <string name="dashboard_edit_available_section">Available to add</string>
+    <string name="dashboard_edit_available_placeholder">Drag here to hide a component</string>
     <string name="dashboard_empty_title">Your dashboard is empty</string>
     <string name="dashboard_empty_description">Add components to customize this view again.</string>
     <string name="dashboard_empty_action">Edit dashboard</string>
     <string name="dashboard_credit_cards_empty_state">Add credit cards or adjust this component selection.</string>
+
+    <!-- Dashboard Component Config -->
+    <string name="component_config_layout_section">Layout</string>
+    <string name="component_config_content_section">Content</string>
     <string name="component_config_show_header">Show header</string>
+    <string name="component_config_top_spacing">Top spacing</string>
     <string name="component_config_hide_single_account">Hide single account</string>
+    <string name="component_config_hide_when_empty">Hide when empty</string>
     <string name="component_config_show_empty_state">Show empty state</string>
+    <string name="component_config_max_categories">Max categories</string>
+    <string name="component_config_days_ahead">Days ahead</string>
+    <string name="component_config_today">Today</string>
+    <string name="component_config_7_days">7 days</string>
+    <string name="component_config_15_days">15 days</string>
+    <string name="component_config_this_month">This month</string>
+    <string name="component_config_count">Item count</string>
+    <string name="component_config_all">All</string>
+    <string name="component_config_min_visible_action">Keep at least one action visible</string>
+
+    <!-- Dashboard Preview Mock Data -->
+    <string name="preview_account_main">Wallet</string>
+    <string name="preview_account_savings">Savings</string>
+    <string name="preview_card_nubank">Nubank</string>
+    <string name="preview_category_food">Food</string>
+    <string name="preview_category_transport">Transport</string>
+    <string name="preview_category_salary">Salary</string>
+    <string name="preview_category_freelance">Freelance</string>
+    <string name="preview_transaction_supermarket">Supermarket</string>
+    <string name="preview_transaction_netflix">Netflix</string>
+    <string name="preview_transaction_spotify">Spotify</string>
+    <string name="preview_budget_food">Food</string>
 </resources>

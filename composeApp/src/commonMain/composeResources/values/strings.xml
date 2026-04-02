@@ -731,4 +731,17 @@
     <string name="component_config_count">Quantidade de itens</string>
     <string name="component_config_all">Todas</string>
     <string name="component_config_min_visible_action">Mantenha pelo menos uma ação visível</string>
+
+    <!-- Dashboard Preview Mock Data -->
+    <string name="preview_account_main">Carteira</string>
+    <string name="preview_account_savings">Poupança</string>
+    <string name="preview_card_nubank">Nubank</string>
+    <string name="preview_category_food">Alimentação</string>
+    <string name="preview_category_transport">Transporte</string>
+    <string name="preview_category_salary">Salário</string>
+    <string name="preview_category_freelance">Freelance</string>
+    <string name="preview_transaction_supermarket">Supermercado</string>
+    <string name="preview_transaction_netflix">Netflix</string>
+    <string name="preview_transaction_spotify">Spotify</string>
+    <string name="preview_budget_food">Alimentação</string>
 </resources>

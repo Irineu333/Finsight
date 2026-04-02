@@ -30,6 +30,7 @@ class DashboardViewModel(
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
     private val dashboardComponentsBuilder: DashboardComponentsBuilder,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
+    private val dashboardPreviewFactory: IDashboardPreviewFactory,
 ) : ViewModel() {
 
     init {
@@ -118,26 +119,29 @@ class DashboardViewModel(
     }
 
     private fun enterEditMode() {
-        when (val current = uiState.value) {
-            is DashboardUiState.Viewing ->
-                openEditingState(
-                    yearMonth = current.yearMonth,
-                    accounts = current.accounts,
-                    creditCards = current.creditCards,
-                )
+        val current = uiState.value
+        viewModelScope.launch {
+            when (current) {
+                is DashboardUiState.Viewing ->
+                    openEditingState(
+                        yearMonth = current.yearMonth,
+                        accounts = current.accounts,
+                        creditCards = current.creditCards,
+                    )
 
-            is DashboardUiState.Empty ->
-                openEditingState(
-                    yearMonth = current.yearMonth,
-                    accounts = current.accounts,
-                    creditCards = current.creditCards,
-                )
+                is DashboardUiState.Empty ->
+                    openEditingState(
+                        yearMonth = current.yearMonth,
+                        accounts = current.accounts,
+                        creditCards = current.creditCards,
+                    )
 
-            else -> Unit
+                else -> Unit
+            }
         }
     }
 
-    private fun openEditingState(
+    private suspend fun openEditingState(
         yearMonth: YearMonth,
         accounts: List<Account>,
         creditCards: List<CreditCard>,
@@ -246,7 +250,7 @@ class DashboardViewModel(
         )
     }
 
-    private fun buildEditingState(
+    private suspend fun buildEditingState(
         yearMonth: YearMonth,
         accounts: List<Account>,
         creditCards: List<CreditCard>,
@@ -258,7 +262,7 @@ class DashboardViewModel(
         val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
             val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
                 ?: return@mapNotNull null
-            val preview = DashboardComponentVariant.previewForKey(pref.key)
+            val preview = dashboardPreviewFactory.createPreview(pref.key)
                 ?: return@mapNotNull null
             DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
         }
@@ -266,7 +270,7 @@ class DashboardViewModel(
         val availableItems = DashboardComponentRegistry.entries
             .filter { it.key !in presentKeys }
             .mapNotNull { entry ->
-                val preview = DashboardComponentVariant.previewForKey(entry.key)
+                val preview = dashboardPreviewFactory.createPreview(entry.key)
                     ?: return@mapNotNull null
                 DashboardEditItem(
                     key = entry.key,

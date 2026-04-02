@@ -47,6 +47,8 @@ import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
+import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
+import com.neoutils.finsight.ui.screen.dashboard.IDashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
 import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
@@ -100,6 +102,8 @@ val viewModelModule = module {
         )
     }
 
+    single<IDashboardPreviewFactory> { DashboardPreviewFactory() }
+
     viewModel {
         DashboardViewModel(
             operationRepository = get(),
@@ -112,6 +116,7 @@ val viewModelModule = module {
             ensureDefaultAccountUseCase = get(),
             dashboardComponentsBuilder = get(),
             dashboardPreferencesRepository = get(),
+            dashboardPreviewFactory = get(),
         )
     }
 

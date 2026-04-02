@@ -15,7 +15,7 @@ class CalculateReportStatsUseCaseTest {
 
     @Test
     fun accountPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
-        val account = Account(id = 1, name = "Conta Principal")
+        val account = Account(id = 1, name = "Carteira")
         val otherAccount = Account(id = 2, name = "Conta Secundaria")
 
         val operations = listOf(

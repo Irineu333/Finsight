@@ -58,7 +58,7 @@
     <string name="dashboard_support">Support</string>
     <string name="dashboard_default">Default</string>
     <string name="dashboard_current_balance">Current Balance</string>
-    <string name="dashboard_total_balance">Total balance</string>
+    <string name="dashboard_total_balance">Total Balance</string>
     <string name="dashboard_add_account">Add account</string>
     <string name="dashboard_reports">Reports</string>
 
@@ -613,7 +613,7 @@
 
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recurring</string>
-    <string name="dashboard_pending_recurring">Pending</string>
+    <string name="dashboard_pending_recurring">Recurring</string>
 
     <!-- Recurring Screen -->
     <string name="recurring_screen_title">Recurring</string>
@@ -689,15 +689,15 @@
 
     <!-- Dashboard Component Names -->
     <string name="component_total_balance">Total Balance</string>
-    <string name="component_balance_stats">Income and Expenses</string>
-    <string name="component_pending_balance">Pending</string>
-    <string name="component_credit_card_balance_stats">Card Entries and Exits</string>
+    <string name="component_balance_stats">Balance</string>
+    <string name="component_pending_balance">Pending Balance</string>
+    <string name="component_credit_card_balance_stats">Card Balance</string>
     <string name="component_accounts_overview">Accounts</string>
     <string name="component_credit_cards">Credit Cards</string>
     <string name="component_spending_by_category">Spending by Category</string>
     <string name="component_income_by_category">Income by Category</string>
     <string name="component_budgets">Budgets</string>
-    <string name="component_pending_recurring">Pending Recurring</string>
+    <string name="component_pending_recurring">Recurring</string>
     <string name="component_recents">Recent</string>
     <string name="component_quick_actions">Shortcuts</string>
 

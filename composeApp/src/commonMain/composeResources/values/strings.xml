@@ -58,7 +58,7 @@
     <string name="dashboard_support">Suporte</string>
     <string name="dashboard_default">Padrão</string>
     <string name="dashboard_current_balance">Saldo Atual</string>
-    <string name="dashboard_total_balance">Saldo total</string>
+    <string name="dashboard_total_balance">Saldo Total</string>
     <string name="dashboard_add_account">Adicionar conta</string>
     <string name="dashboard_reports">Relatórios</string>
 
@@ -613,7 +613,7 @@
 
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recorrentes</string>
-    <string name="dashboard_pending_recurring">Pendentes</string>
+    <string name="dashboard_pending_recurring">Recorrências</string>
 
     <!-- Recurring Screen -->
     <string name="recurring_screen_title">Recorrentes</string>
@@ -689,15 +689,15 @@
 
     <!-- Dashboard Component Names -->
     <string name="component_total_balance">Saldo Total</string>
-    <string name="component_balance_stats">Receitas e Despesas</string>
-    <string name="component_pending_balance">Pendências</string>
-    <string name="component_credit_card_balance_stats">Entradas e Saídas no Cartão</string>
+    <string name="component_balance_stats">Balanço</string>
+    <string name="component_pending_balance">Balanço Pendente</string>
+    <string name="component_credit_card_balance_stats">Balanço do Cartão</string>
     <string name="component_accounts_overview">Contas</string>
     <string name="component_credit_cards">Cartões de Crédito</string>
     <string name="component_spending_by_category">Gastos por Categoria</string>
     <string name="component_income_by_category">Receitas por Categoria</string>
     <string name="component_budgets">Orçamentos</string>
-    <string name="component_pending_recurring">Recorrentes Pendentes</string>
+    <string name="component_pending_recurring">Recorrências</string>
     <string name="component_recents">Recentes</string>
     <string name="component_quick_actions">Atalhos</string>
 

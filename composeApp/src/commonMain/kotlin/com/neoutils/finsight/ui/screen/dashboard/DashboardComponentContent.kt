@@ -915,7 +915,6 @@ private fun DashboardCreditCardsEmptyCard(
 
             Button(
                 onClick = onCreateCard,
-                shape = RoundedCornerShape(12.dp),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))

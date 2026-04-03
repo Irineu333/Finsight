@@ -31,7 +31,6 @@ sealed class DashboardUiState {
         val items: List<DashboardComponentVariant>,
         val accounts: List<Account> = emptyList(),
         val creditCards: List<CreditCard> = emptyList(),
-        val configByKey: Map<String, Map<String, String>> = emptyMap(),
     ) : DashboardUiState()
 
     data class Editing(

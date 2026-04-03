@@ -2,62 +2,59 @@
 
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
+import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
-import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
+import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
+import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
+import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
-import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
-import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
+import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
+import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
+import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
+import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
+import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
+import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
-import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
+import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
-import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
-import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
-import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
-import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
-import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
-import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
-import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
-import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
-import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
-import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
-import com.neoutils.finsight.ui.screen.dashboard.IDashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
 import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 val viewModelModule = module {
 
@@ -102,7 +99,10 @@ val viewModelModule = module {
         )
     }
 
-    single<IDashboardPreviewFactory> { DashboardPreviewFactory() }
+    single { GetDashboardPreferencesUseCase(get()) }
+    factory { BuildDashboardViewingUseCase(get()) }
+
+    single { DashboardPreviewFactory() }
 
     viewModel {
         DashboardViewModel(
@@ -114,7 +114,8 @@ val viewModelModule = module {
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
             ensureDefaultAccountUseCase = get(),
-            dashboardComponentsBuilder = get(),
+            getDashboardPreferences = get(),
+            buildDashboardViewingUseCase = get(),
             dashboardPreferencesRepository = get(),
             dashboardPreviewFactory = get(),
         )

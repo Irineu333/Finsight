@@ -229,7 +229,6 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
 
                 DashboardComponentContent(
                     variant = item.preview,
-                    config = mapOf(DashboardComponentConfig.SHOW_HEADER to false.toString()),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

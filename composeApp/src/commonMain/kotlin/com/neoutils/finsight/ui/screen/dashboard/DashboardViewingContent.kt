@@ -47,7 +47,7 @@ internal fun DashboardViewingContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         state.items.forEach { variant ->
-            val config = state.configByKey[variant.key] ?: emptyMap()
+            val config = variant.config
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
 
             item(key = variant.key) {
@@ -57,7 +57,6 @@ internal fun DashboardViewingContent(
                     }
                     DashboardComponentContent(
                         variant = variant,
-                        config = config,
                         openTransactions = openTransactions,
                         modifier = Modifier
                             .fillMaxWidth()

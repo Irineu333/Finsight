@@ -8,7 +8,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
+import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,9 +30,10 @@ class DashboardViewModel(
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
-    private val dashboardComponentsBuilder: DashboardComponentsBuilder,
+    private val getDashboardPreferences: GetDashboardPreferencesUseCase,
+    private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
-    private val dashboardPreviewFactory: IDashboardPreviewFactory,
+    private val dashboardPreviewFactory: DashboardPreviewFactory,
 ) : ViewModel() {
 
     init {
@@ -43,12 +46,18 @@ class DashboardViewModel(
 
     private val invoices = invoiceRepository
         .observeUnpaidInvoices()
-        .map { invoices -> invoices.associateBy { it.creditCard.id } }
+        .map { invoices ->
+            invoices.associateBy { it.creditCard.id }
+        }
 
-    private val preferences: StateFlow<List<DashboardComponentPreference>?> =
-        dashboardPreferencesRepository.observe()
+    private val preferences = getDashboardPreferences()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
 
-    private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
+    private val editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
     private val viewingState: Flow<DashboardUiState> = combine(
         invoices,
@@ -61,10 +70,8 @@ class DashboardViewModel(
         preferences,
     ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
-        val configByKey = effectivePrefs.associate { it.key to it.config }
 
-        val allComponents = dashboardComponentsBuilder.build(
+        val items = buildDashboardViewingUseCase(
             input = DashboardComponentsInput(
                 operations = operations,
                 creditCards = creditCards,
@@ -75,13 +82,11 @@ class DashboardViewModel(
                 occurrences = occurrences,
                 today = today,
                 targetMonth = today.yearMonth,
-                configByKey = configByKey,
             ),
+            preferences = preferences,
         )
 
-        val ordered = applyPreferences(effectivePrefs, allComponents)
-
-        if (ordered.isEmpty()) {
+        if (items.isEmpty()) {
             DashboardUiState.Empty(
                 yearMonth = today.yearMonth,
                 accounts = accounts,
@@ -90,16 +95,15 @@ class DashboardViewModel(
         } else {
             DashboardUiState.Viewing(
                 yearMonth = today.yearMonth,
-                items = ordered.map { DashboardComponentVariant.forComponent(it) },
+                items = items,
                 accounts = accounts,
                 creditCards = creditCards,
-                configByKey = configByKey,
             )
         }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(
-        _editingState,
+        editingState,
         viewingState,
     ) { editing, viewing ->
         editing ?: viewing
@@ -110,12 +114,29 @@ class DashboardViewModel(
     )
 
     fun onAction(action: DashboardAction) = when (action) {
-        is DashboardAction.EnterEditMode -> enterEditMode()
-        is DashboardAction.ConfirmEdit -> confirmEdit()
-        is DashboardAction.CancelEdit -> cancelEdit()
-        is DashboardAction.MoveComponent -> moveComponent(action.fromKey, action.toKey)
-        is DashboardAction.RemoveComponent -> removeComponent(action.key)
-        is DashboardAction.UpdateComponentConfig -> updateComponentConfig(action.key, action.config)
+        is DashboardAction.EnterEditMode -> {
+            enterEditMode()
+        }
+
+        is DashboardAction.ConfirmEdit -> {
+            confirmEdit()
+        }
+
+        is DashboardAction.CancelEdit -> {
+            editingState.value = null
+        }
+
+        is DashboardAction.MoveComponent -> {
+            moveComponent(action.fromKey, action.toKey)
+        }
+
+        is DashboardAction.RemoveComponent -> {
+            removeComponent(action.key)
+        }
+
+        is DashboardAction.UpdateComponentConfig -> {
+            updateComponentConfig(action.key, action.config)
+        }
     }
 
     private fun enterEditMode() {
@@ -146,31 +167,28 @@ class DashboardViewModel(
         accounts: List<Account>,
         creditCards: List<CreditCard>,
     ) {
-        _editingState.value = buildEditingState(
+        editingState.value = buildEditingState(
             yearMonth = yearMonth,
             accounts = accounts,
             creditCards = creditCards,
-            savedPrefs = preferences.value,
+            preferences = preferences.value,
         )
     }
 
-    private fun cancelEdit() {
-        _editingState.value = null
-    }
-
-    private fun confirmEdit() {
-        viewModelScope.launch {
-            val editing = _editingState.value ?: return@launch
-            val prefs = editing.items.mapIndexed { i, item ->
-                DashboardComponentPreference(key = item.key, position = i, config = item.config)
-            }
-            dashboardPreferencesRepository.save(prefs)
-            _editingState.value = null
+    private fun confirmEdit() = viewModelScope.launch {
+        val editing = editingState.value ?: return@launch
+        val prefs = editing.items.mapIndexed { i, item ->
+            DashboardComponentPreference(
+                key = item.key,
+                position = i, config = item.config
+            )
         }
+        dashboardPreferencesRepository.save(prefs)
+        editingState.value = null
     }
 
     private fun moveComponent(fromKey: String, toKey: String) {
-        val current = _editingState.value ?: return
+        val current = editingState.value ?: return
 
         val allItems = current.items + current.availableItems
         val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
@@ -185,7 +203,7 @@ class DashboardViewModel(
                 val moved = mutable.removeAt(fromIndex)
                 mutable.add(0, moved)
 
-                _editingState.value = current.copy(
+                editingState.value = current.copy(
                     items = mutable.take(1),
                     availableItems = mutable.drop(1),
                 )
@@ -198,14 +216,14 @@ class DashboardViewModel(
                 if (fromInActive) {
                     val newActiveCount = activeCount - 1
                     mutable.add(newActiveCount, moved)
-                    _editingState.value = current.copy(
+                    editingState.value = current.copy(
                         items = mutable.take(newActiveCount),
                         availableItems = mutable.drop(newActiveCount),
                     )
                 } else {
                     mutable.add(activeCount, moved)
                     val newActiveCount = activeCount + 1
-                    _editingState.value = current.copy(
+                    editingState.value = current.copy(
                         items = mutable.take(newActiveCount),
                         availableItems = mutable.drop(newActiveCount),
                     )
@@ -226,7 +244,7 @@ class DashboardViewModel(
                     !fromInActive && toInActive -> activeCount + 1
                     else -> activeCount
                 }
-                _editingState.value = current.copy(
+                editingState.value = current.copy(
                     items = mutable.take(newActiveCount),
                     availableItems = mutable.drop(newActiveCount),
                 )
@@ -235,18 +253,28 @@ class DashboardViewModel(
     }
 
     private fun removeComponent(key: String) {
-        val current = _editingState.value ?: return
-        val removed = current.items.find { it.key == key } ?: return
-        _editingState.value = current.copy(
+        val current = editingState.value ?: return
+        val item = current.items.find { it.key == key } ?: return
+
+        editingState.value = current.copy(
             items = current.items.filter { it.key != key },
-            availableItems = current.availableItems + removed,
+            availableItems = current.availableItems + item,
         )
     }
 
-    private fun updateComponentConfig(key: String, config: Map<String, String>) {
-        val current = _editingState.value ?: return
-        _editingState.value = current.copy(
-            items = current.items.map { if (it.key == key) it.copy(config = config) else it },
+    private fun updateComponentConfig(
+        key: String,
+        config: Map<String, String>
+    ) {
+        val current = editingState.value ?: return
+
+        editingState.value = current.copy(
+            items = current.items.map { item ->
+                when (item.key) {
+                    key -> item.copy(config = config)
+                    else -> item
+                }
+            },
         )
     }
 
@@ -254,29 +282,29 @@ class DashboardViewModel(
         yearMonth: YearMonth,
         accounts: List<Account>,
         creditCards: List<CreditCard>,
-        savedPrefs: List<DashboardComponentPreference>?,
+        preferences: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
-        val presentKeys = effectivePrefs.map { it.key }.toSet()
 
-        val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
-            val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
-                ?: return@mapNotNull null
-            val preview = dashboardPreviewFactory.createPreview(pref.key)
-                ?: return@mapNotNull null
-            DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
+        val items = preferences.sortedBy {
+            it.position
+        }.mapNotNull { pref ->
+            val preview = dashboardPreviewFactory.createPreview(pref.key) ?: return@mapNotNull null
+
+            DashboardEditItem(
+                preview = preview,
+                config = pref.config,
+            )
         }
 
-        val availableItems = DashboardComponentRegistry.entries
+        val presentKeys = preferences.map { it.key }.toSet()
+
+        val availableItems = DashboardComponentType.entries
             .filter { it.key !in presentKeys }
             .mapNotNull { entry ->
-                val preview = dashboardPreviewFactory.createPreview(entry.key)
-                    ?: return@mapNotNull null
+                val preview = dashboardPreviewFactory.createPreview(entry.key) ?: return@mapNotNull null
                 DashboardEditItem(
-                    key = entry.key,
-                    title = entry.title,
-                    config = DashboardComponentRegistry.defaultConfigFor(entry.key),
                     preview = preview,
+                    config = preview.config,
                 )
             }
 
@@ -287,13 +315,5 @@ class DashboardViewModel(
             accounts = accounts,
             creditCards = creditCards,
         )
-    }
-
-    private fun applyPreferences(
-        preferences: List<DashboardComponentPreference>,
-        all: List<DashboardComponent>,
-    ): List<DashboardComponent> {
-        val byKey = all.associateBy { it.key }
-        return preferences.sortedBy { it.position }.mapNotNull { byKey[it.key] }
     }
 }

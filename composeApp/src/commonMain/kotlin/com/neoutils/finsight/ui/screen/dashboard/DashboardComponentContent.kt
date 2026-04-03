@@ -81,7 +81,6 @@ import kotlin.time.ExperimentalTime
 @Composable
 internal fun DashboardComponentContent(
     variant: DashboardComponentVariant,
-    config: Map<String, String> = emptyMap(),
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
@@ -120,7 +119,6 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.AccountsOverview -> {
             DashboardAccountsRow(
                 variant = variant,
-                config = config,
                 onOpenAccounts = { navigationDispatcher.dispatch(NavigationDestination.Accounts()) },
                 modifier = modifier,
             )
@@ -129,7 +127,6 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.CreditCardsPager -> {
             DashboardCreditCardsSection(
                 variant = variant,
-                config = config,
                 onOpenCreditCards = { navigationDispatcher.dispatch(NavigationDestination.CreditCards()) },
                 modifier = modifier,
             )
@@ -159,7 +156,6 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.PendingRecurring -> {
             DashboardPendingRecurringSection(
                 variant = variant,
-                config = config,
                 onOpenRecurring = { navigationDispatcher.dispatch(NavigationDestination.Recurring) },
                 modifier = modifier,
             )
@@ -168,7 +164,6 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.Recents -> {
             DashboardRecentsSection(
                 variant = variant,
-                config = config,
                 openTransactions = openTransactions,
                 modifier = modifier,
             )
@@ -177,7 +172,6 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.QuickActions -> {
             DashboardQuickActionsSection(
                 variant = variant,
-                config = config,
                 onNavigate = { navigationDispatcher.dispatch(it) },
                 modifier = modifier,
             )
@@ -188,13 +182,12 @@ internal fun DashboardComponentContent(
 @Composable
 private fun DashboardPendingRecurringSection(
     variant: DashboardComponentVariant.PendingRecurring,
-    config: Map<String, String>,
     onOpenRecurring: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
     val component = variant.component
-    val showHeader = config.showHeader()
+    val showHeader = variant.config.showHeader()
 
     Column(
         modifier = modifier,
@@ -239,13 +232,12 @@ private fun DashboardPendingRecurringSection(
 @Composable
 private fun DashboardRecentsSection(
     variant: DashboardComponentVariant.Recents,
-    config: Map<String, String>,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
     val component = variant.component
-    val showHeader = config.showHeader()
+    val showHeader = variant.config.showHeader()
 
     Column(
         modifier = modifier,
@@ -305,12 +297,11 @@ private fun DashboardRecentsSection(
 @Composable
 private fun DashboardQuickActionsSection(
     variant: DashboardComponentVariant.QuickActions,
-    config: Map<String, String>,
     onNavigate: (NavigationDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
-    val showHeader = config.showHeader()
+    val showHeader = variant.config.showHeader()
 
     Column(
         modifier = modifier,
@@ -446,14 +437,13 @@ private fun DashboardCreditCardBalanceSection(
 @Composable
 private fun DashboardCreditCardsSection(
     variant: DashboardComponentVariant.CreditCardsPager,
-    config: Map<String, String>,
     onOpenCreditCards: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
     val component = variant.component
-    val showHeader = config.showHeader()
+    val showHeader = variant.config.showHeader()
 
     Column(
         modifier = modifier,
@@ -801,14 +791,13 @@ private fun TotalBalanceCard(
 @Composable
 private fun DashboardAccountsRow(
     variant: DashboardComponentVariant.AccountsOverview,
-    config: Map<String, String>,
     onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
     val component = variant.component
-    val showHeader = config.showHeader()
+    val showHeader = variant.config.showHeader()
 
     Column(
         modifier = modifier,

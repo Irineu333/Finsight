@@ -33,7 +33,11 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
-    val configByKey: Map<String, Map<String, String>> = emptyMap(),
+)
+
+data class DashboardBuilderContext(
+    val allTransactions: List<Transaction>,
+    val pendingRecurring: List<Recurring>,
 )
 
 class DashboardComponentsBuilder(
@@ -46,40 +50,66 @@ class DashboardComponentsBuilder(
     private val invoiceUiMapper: InvoiceUiMapper,
 ) {
 
-    suspend fun build(input: DashboardComponentsInput): List<DashboardComponent> {
-        val allTransactions = input.operations.flatMap { it.transactions }
-        val pendingRecurring = getPendingRecurringUseCase(
-            recurringList = input.recurringList,
-            occurrences = input.occurrences,
-            today = input.today,
-        )
+    suspend fun build(
+        key: String,
+        input: DashboardComponentsInput,
+        context: DashboardBuilderContext,
+        config: Map<String, String>,
+    ): DashboardComponent? {
+        return when (key) {
+            DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input, context.allTransactions)
+            DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
+            DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
+                pendingRecurring = context.pendingRecurring,
+                config = config,
+            )
 
-        fun configFor(key: String) = input.configByKey[key] ?: emptyMap()
+            DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key -> creditCardBalanceStats(
+                input = input,
+                allTransactions = context.allTransactions,
+                config = config,
+            )
 
-        return listOfNotNull(
-            totalBalance(input, allTransactions),
-            concreteBalanceStats(input, configFor(DashboardComponentKey.CONCRETE_BALANCE_STATS.value)),
-            pendingBalanceStats(
-                pendingRecurring = pendingRecurring,
-                config = configFor(DashboardComponentKey.PENDING_BALANCE_STATS.value),
-            ),
-            creditCardBalanceStats(
+            DashboardComponentType.ACCOUNTS_OVERVIEW.key -> accountsOverview(
                 input = input,
-                allTransactions = allTransactions,
-                config = configFor(DashboardComponentKey.CREDIT_CARD_BALANCE_STATS.value),
-            ),
-            accountsOverview(input, allTransactions, configFor(DashboardComponentKey.ACCOUNTS_OVERVIEW.value)),
-            creditCardsPager(input, configFor(DashboardComponentKey.CREDIT_CARDS_PAGER.value)),
-            spendingByCategory(input, allTransactions, configFor(DashboardComponentKey.SPENDING_BY_CATEGORY.value)),
-            incomeByCategory(input, allTransactions, configFor(DashboardComponentKey.INCOME_BY_CATEGORY.value)),
-            budgets(input, allTransactions),
-            pendingRecurring(
-                pendingRecurring = pendingRecurring,
+                allTransactions = context.allTransactions,
+                config = config
+            )
+
+            DashboardComponentType.CREDIT_CARDS_PAGER.key -> creditCardsPager(input, config)
+            DashboardComponentType.SPENDING_BY_CATEGORY.key -> spendingByCategory(
                 input = input,
-                config = configFor(DashboardComponentKey.PENDING_RECURRING.value),
-            ),
-            recents(input, configFor(DashboardComponentKey.RECENTS.value)),
-            quickActions(configFor(DashboardComponentKey.QUICK_ACTIONS.value)),
+                allTransactions = context.allTransactions,
+                config = config
+            )
+
+            DashboardComponentType.INCOME_BY_CATEGORY.key -> incomeByCategory(
+                input = input,
+                allTransactions = context.allTransactions,
+                config = config
+            )
+
+            DashboardComponentType.BUDGETS.key -> budgets(input, context.allTransactions)
+            DashboardComponentType.PENDING_RECURRING.key -> pendingRecurring(
+                pendingRecurring = context.pendingRecurring,
+                input = input,
+                config = config,
+            )
+
+            DashboardComponentType.RECENTS.key -> recents(input, config)
+            DashboardComponentType.QUICK_ACTIONS.key -> quickActions(config)
+            else -> null
+        }
+    }
+
+    fun createContext(input: DashboardComponentsInput): DashboardBuilderContext {
+        return DashboardBuilderContext(
+            allTransactions = input.operations.flatMap { it.transactions },
+            pendingRecurring = getPendingRecurringUseCase(
+                recurringList = input.recurringList,
+                occurrences = input.occurrences,
+                today = input.today,
+            )
         )
     }
 

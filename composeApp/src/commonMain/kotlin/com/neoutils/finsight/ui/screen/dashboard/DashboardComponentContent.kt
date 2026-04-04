@@ -486,6 +486,7 @@ private fun DashboardCreditCardsSection(
                     state = pagerState,
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     pageSpacing = 8.dp,
+                    userScrollEnabled = variant is DashboardComponentVariant.CreditCardsPager.Viewing,
                     modifier = Modifier.fillMaxWidth(),
                 ) { page ->
                     val creditCardUi = component.creditCards[page]
@@ -820,6 +821,8 @@ private fun DashboardAccountsRow(
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
+            userScrollEnabled = variant is DashboardComponentVariant.AccountsOverview.Viewing,
+            modifier = Modifier.fillMaxWidth(),
         ) {
             items(
                 items = component.accounts.sortedByDescending { it.account.isDefault },

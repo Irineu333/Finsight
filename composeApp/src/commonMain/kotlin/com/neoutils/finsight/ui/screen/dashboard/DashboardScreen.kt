@@ -32,7 +32,6 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val navigationDispatcher = LocalNavigationDispatcher.current
 
     HomeChromeEffect(
         config = when (uiState) {

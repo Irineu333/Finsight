@@ -20,25 +20,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -54,24 +47,8 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-private sealed interface EditListEntry {
-
-    data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
-    data object ActivePlaceholder : EditListEntry
-    data object SectionHeader : EditListEntry
-    data object AvailablePlaceholder : EditListEntry
-}
-
-private val EditListEntry.entryKey: String
-    get() = when (this) {
-        is EditListEntry.Component -> item.key
-        EditListEntry.ActivePlaceholder -> EDIT_ACTIVE_PLACEHOLDER_KEY
-        EditListEntry.SectionHeader -> EDIT_SECTION_HEADER_KEY
-        EditListEntry.AvailablePlaceholder -> EDIT_AVAILABLE_PLACEHOLDER_KEY
-    }
-
 @Composable
-internal fun DashboardEditingContent(
+fun DashboardEditingContent(
     state: DashboardUiState.Editing,
     onAction: (DashboardAction) -> Unit,
 ) {
@@ -79,39 +56,27 @@ internal fun DashboardEditingContent(
     val haptic = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
 
-    val reorderState = rememberReorderableLazyListState(
-        lazyListState = lazyListState,
-    ) { from, to ->
-        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-        if (
-            fromKey == EDIT_ACTIVE_PLACEHOLDER_KEY ||
-            fromKey == EDIT_SECTION_HEADER_KEY ||
-            fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY
-        ) {
-            return@rememberReorderableLazyListState
+    val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+
+        val fromKey = when (from.key) {
+            EditListEntry.ActivePlaceholder.key,
+            EditListEntry.SectionHeader.key,
+            EditListEntry.AvailablePlaceholder.key -> return@rememberReorderableLazyListState
+
+            else -> from.key.toString()
         }
-        onAction(DashboardAction.MoveComponent(fromKey, toKey))
+
+        onAction(
+            DashboardAction.MoveComponent(
+                fromKey = fromKey,
+                toKey = to.key.toString(),
+            )
+        )
+
         haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
-    val listEntries = remember(state.items, state.availableItems) {
-        buildList {
-            if (state.items.isEmpty()) {
-                add(EditListEntry.ActivePlaceholder)
-            } else {
-                state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
-            }
-            add(EditListEntry.SectionHeader)
-            if (state.availableItems.isEmpty()) {
-                add(EditListEntry.AvailablePlaceholder)
-            } else {
-                state.availableItems.forEach {
-                    add(EditListEntry.Component(it, isActive = false))
-                }
-            }
-        }
-    }
+    val entries = rememberDashboardEditListEntries(state)
 
     LazyColumn(
         state = lazyListState,
@@ -122,10 +87,16 @@ internal fun DashboardEditingContent(
         ),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(listEntries, key = { it.entryKey }) { entry ->
-            when (entry) {
-                is EditListEntry.Component -> {
-                    ReorderableItem(reorderState, key = entry.item.key) {
+        items(
+            items = entries,
+            key = { it.key }
+        ) { entry ->
+            ReorderableItem(
+                state = reorderState,
+                key = entry.key,
+            ) {
+                when (entry) {
+                    is EditListEntry.Component -> {
                         DashboardEditItemWrapper(
                             item = entry.item,
                             onTap = {
@@ -140,13 +111,11 @@ internal fun DashboardEditingContent(
                                     )
                                 }
                             },
-                            modifier = Modifier.alpha(alpha = if (entry.isActive) 1f else 0.6f)
+                            modifier = Modifier.alpha(alpha = if (entry.isActive) 1f else 0.6f),
                         )
                     }
-                }
 
-                EditListEntry.ActivePlaceholder -> {
-                    ReorderableItem(reorderState, key = EDIT_ACTIVE_PLACEHOLDER_KEY) {
+                    EditListEntry.ActivePlaceholder -> {
                         DashboardEditPlaceholder(
                             text = stringResource(Res.string.dashboard_edit_active_placeholder),
                             modifier = Modifier
@@ -154,10 +123,8 @@ internal fun DashboardEditingContent(
                                 .padding(horizontal = 16.dp),
                         )
                     }
-                }
 
-                EditListEntry.SectionHeader -> {
-                    ReorderableItem(reorderState, key = EDIT_SECTION_HEADER_KEY) {
+                    EditListEntry.SectionHeader -> {
                         Text(
                             text = stringResource(Res.string.dashboard_edit_available_section),
                             style = MaterialTheme.typography.labelMedium,
@@ -167,10 +134,8 @@ internal fun DashboardEditingContent(
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                }
 
-                EditListEntry.AvailablePlaceholder -> {
-                    ReorderableItem(reorderState, key = EDIT_AVAILABLE_PLACEHOLDER_KEY) {
+                    EditListEntry.AvailablePlaceholder -> {
                         DashboardEditPlaceholder(
                             text = stringResource(Res.string.dashboard_edit_available_placeholder),
                             modifier = Modifier
@@ -193,12 +158,12 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     val haptic = LocalHapticFeedback.current
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, colorScheme.outlineVariant),
         color = colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(bottom = 16.dp)) {

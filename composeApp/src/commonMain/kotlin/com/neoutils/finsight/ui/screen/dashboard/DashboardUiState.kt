@@ -9,10 +9,6 @@ import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-internal const val EDIT_SECTION_HEADER_KEY = "section_header"
-internal const val EDIT_ACTIVE_PLACEHOLDER_KEY = "active_placeholder"
-internal const val EDIT_AVAILABLE_PLACEHOLDER_KEY = "available_placeholder"
-
 sealed class DashboardUiState {
     abstract val yearMonth: YearMonth
 

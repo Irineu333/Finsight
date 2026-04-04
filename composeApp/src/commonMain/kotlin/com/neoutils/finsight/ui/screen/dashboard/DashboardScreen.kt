@@ -106,7 +106,9 @@ fun DashboardScreen(
             modifier = Modifier.padding(paddingValues),
         ) { state ->
             when (state) {
-                is DashboardUiState.Loading -> Unit
+                is DashboardUiState.Loading -> {
+                    DashboardLoadingContent()
+                }
                 is DashboardUiState.Empty -> {
                     DashboardEmptyContent(
                         onAction = viewModel::onAction

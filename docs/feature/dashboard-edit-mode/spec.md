@@ -1,5 +1,7 @@
 # Spec: Dashboard Customizável — Modo Edição
 
+> Documento alinhado com a implementação atual. Referências a etapas antigas existem apenas quando ajudam a explicar decisões de arquitetura ou trade-offs já incorporados ao código.
+
 ## 0. Contexto do projeto (leitura obrigatória antes de implementar)
 
 **Package base:** `com.neoutils.finsight`
@@ -14,20 +16,22 @@ composeApp/src/commonMain/kotlin/com/neoutils/finsight/
   database/repository/   ← implementações (Room + Settings)
   ui/screen/dashboard/   ← DashboardScreen, ViewModel, UiState, Action
   ui/component/          ← ModalManager, BottomNavigationBar, componentes compartilhados
-  ui/screehome/        ← HomeScreen (navigation host, bottom nav)
+  ui/screen/home/      ← HomeScreen (navigation host, bottom nav)
   di/                    ← ViewModelModule.kt, RepositoryModule.kt
 ```
 
-**Arquivos existentes que serão modificados:**
+**Arquivos principais da feature:**
 - `ui/screen/dashboard/DashboardScreen.kt` — tela principal da dashboard
-- `ui/screen/dashboard/DashboardViewModel.kt` — ViewModel atual sem edit mode
-- `ui/screen/dashboard/DashboardUiState.kt` — atualmente `data class`, será substituído por sealed class
-- `ui/screen/dashboard/DashboardAction.kt` — atualmente só tem `AdjustBalance`
-- `ui/screen/dashboard/DashboardComponent.kt` — sealed interface com 9 tipos (não modificar)
-- `ui/screen/dashboard/DashboardComponentsBuilder.kt` — builder dos componentes (receberá config)
-- `ui/screen/home/HomeScreen.kt` — precisa observar edit mode para ocultar bottom nav
-- `di/ViewModelModule.kt` — adicionar `dashboardPreferencesRepository`
-- `di/RepositoryModule.kt` — registrar `DashboardPreferencesRepository`
+- `ui/screen/dashboard/DashboardViewModel.kt` — orquestra viewing/editing, persistência e configs
+- `ui/screen/dashboard/DashboardUiState.kt` — estados `Loading | Empty | Viewing | Editing`
+- `ui/screen/dashboard/DashboardAction.kt` — ações de edição, drag e configuração
+- `ui/screen/dashboard/DashboardComponent.kt` — sealed interface dos componentes da dashboard
+- `ui/screen/dashboard/DashboardComponentsBuilder.kt` — builder dos componentes com dados reais + config
+- `ui/screen/dashboard/DashboardComponentType.kt` — enum com keys e defaults
+- `ui/screen/dashboard/DashboardPreviewFactory.kt` — previews realistas para edit mode
+- `ui/screen/home/HomeScreen.kt` — chrome/bottom nav/FAB reagem ao edit mode
+- `di/ViewModelModule.kt` — wiring de use cases e preview factory
+- `di/RepositoryModule.kt` — wiring de `DashboardPreferencesRepository`
 
 **Padrões obrigatórios do projeto:**
 - `UiText.Res(Res.string.xxx)` para strings traduzíveis; `UiText.Raw(str)` apenas para valores dinâmicos
@@ -38,7 +42,7 @@ composeApp/src/commonMain/kotlin/com/neoutils/finsight/
 - Arrow `Either` / `flatMap` para error handling (não necessário nesta feature)
 - Sem comentários no código — o código deve ser autoexplicativo
 
-**Dependência a adicionar no `composeApp/build.gradle.kts`:**
+**Dependência usada pela feature (`composeApp/build.gradle.kts`):**
 ```kotlin
 implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ```
@@ -53,12 +57,14 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 
 ## 1. Contexto da feature
 
-A dashboard possui 9 componentes fixos renderizados em sequência. Esta feature permite ao usuário personalizar quais componentes aparecem e em qual ordem, via um modo de edição acionado por long press.
+A dashboard possui 12 componentes possíveis. O usuário pode personalizar quais componentes aparecem, em qual ordem e com quais configurações, via um modo de edição acionado por long press nos componentes renderizados ou pelo CTA explícito do estado vazio.
 
-**Estado atual da branch `feature/dashboard-edit-mode`:**
-- Arquitetura componentizada já existe (`DashboardComponent` sealed interface com 9 tipos)
-- Sem modo edição implementado (branch está no estado pós-refactor de componentização)
-- `DashboardPreferencesRepository` e `DashboardComponentRegistry` existem apenas em histórico git (WIP anterior resetado)
+**Estado atual da implementação:**
+- `DashboardUiState` é selado (`Loading | Empty | Viewing | Editing`)
+- Preferências são persistidas em `Settings` via `DashboardPreferencesRepository`
+- A ordenação e a visibilidade usam duas seções no edit mode: ativos e disponíveis
+- Configurações por componente são editadas na `DashboardComponentOptionsModal`
+- O fluxo final não usa mais uma ação explícita de "Remover" na modal; ativar/desativar acontece por drag entre seções
 
 ---
 
@@ -68,12 +74,15 @@ A dashboard possui 9 componentes fixos renderizados em sequência. Esta feature 
 |-----|-----------|-----------|
 | `total_balance` | TotalBalance | Saldo total consolidado |
 | `balance_stats_concrete` | ConcreteBalanceStats | Receitas e despesas do mês |
-| `balance_stats_pending` | PendingBalanceStats | Pendências de recorrentes |
+| `balance_stats_pending` | PendingBalanceStats | Balanço pendente de recorrentes |
+| `balance_stats_credit_card` | CreditCardBalanceStats | Pagamentos e gastos com cartões no mês |
 | `accounts_overview` | AccountsOverview | Lista de contas com saldos |
 | `credit_cards_pager` | CreditCardsPager | Pager de cartões com faturas |
-| `spending_pager` | SpendingPager | Gastos por categoria e orçamentos |
+| `spending_by_category` | SpendingByCategory | Gastos por categoria |
+| `income_by_category` | IncomeByCategory | Receitas por categoria |
+| `budgets` | Budgets | Progresso de orçamentos |
 | `pending_recurring` | PendingRecurring | Recorrentes pendentes de confirmação |
-| `recents` | Recents | Últimas 4 transações |
+| `recents` | Recents | Últimas transações |
 | `quick_actions` | QuickActions | Atalhos de navegação |
 
 Todos removíveis. Ordem e visibilidade são definidas pelo usuário.
@@ -90,7 +99,7 @@ Dashboard normal
     │       ▼
     │   Entra em Edit Mode
     │   - Bottom nav oculta
-    │   - Top bar → barra de edição (Cancelar | Editar | Confirmar)
+    │   - Top bar → barra de edição (Cancelar | título do modo edição | Confirmar)
     │   - Componentes ficam no lugar com borda sutil (indicam modo editável)
     │   - Transição suave (crossfade)
     │   - Lista dividida em duas seções por uma divisória:
@@ -99,15 +108,15 @@ Dashboard normal
     │     A divisória é sempre visível; a seção inferior existe mesmo quando vazia
     │
     ├─ Long press + arrastar o componente → reordena por drag and drop
-    │   (o componente inteiro é arrastável, sem ícone de handle)
+    │   (o componente inteiro é arrastável — o ícone de handle é puramente visual)
     │   - Arrastar da seção ativa para a inativa → desativa o componente
     │   - Arrastar da seção inativa para a ativa → ativa o componente
     │   - A transição entre seções é fluida: o gesto não interrompe ao
     │     cruzar a divisória, independente de a seção de destino estar vazia
     │
     ├─ Tap em componente ativo → abre modal de opções
-    │   - "Remover" → move para seção inativa (com animação de saída)
-    │   - Configurações do componente (se houver)
+    │   - Configurações de layout e conteúdo do componente
+    │   - Ativação/desativação não acontece na modal; ocorre por drag entre seções
     │
     ├─ "Cancelar" → descarta alterações, volta ao estado original
     └─ "Confirmar" → persiste nova ordem/composição, sai do edit mode
@@ -134,19 +143,20 @@ O `MoveComponent(from, to)` existe na `DashboardAction` exclusivamente para ser 
 Domain
   DashboardComponentPreference        ← model de preferência
   IDashboardPreferencesRepository     ← interface
+  GetDashboardPreferencesUseCase      ← mapeia null → defaults; expõe Flow<List<...>>
+  BuildDashboardViewingUseCase        ← constrói lista de DashboardComponentVariant a partir de prefs + dados
 
 Data (database/)
   DashboardPreferencesRepository      ← persiste em Settings (JSON)
 
 UI (screen/dashboard/)
-  DashboardComponentRegistry          ← registro de todos os componentes disponíveis
-  DashboardComponentMocks             ← dados de exemplo para preview no edit mode
+  DashboardComponentType              ← enum com key + defaultConfig de cada componente
+  DashboardPreviewFactory             ← gera DashboardComponentVariant.Preview com dados mock para edit mode
+  DashboardComponentsBuilder          ← constrói DashboardComponent com dados reais e config
   DashboardUiState (Loading | Empty | Viewing | Editing) ← estados como tipos distintos
   DashboardAction                     ← ações de edição
   DashboardViewModel                  ← orquestra preferências + dados reais
   DashboardScreen                     ← renderiza normal e edit mode
-  AddComponentPanel                   ← painel in-tree de adição (não é Modal)
-  DragToAddState                      ← estado global de drag cross-container
 ```
 
 ---
@@ -179,6 +189,8 @@ interface IDashboardPreferencesRepository {
 Sem `currentPreferences()` síncrono. O próprio repositório expõe um `StateFlow` já carregado e com semântica explícita:
 - `null` = ainda não existe preferência salva (primeira abertura)
 - `emptyList()` = o usuário removeu todos os componentes e confirmou a edição
+
+> Ver issues/issues-step4.md — Issues 1 e 2 (motivação da semântica null vs emptyList e dos configs padrão).
 
 ---
 
@@ -229,55 +241,90 @@ Essa distinção entre `null` e lista vazia evita ambiguidade entre "primeira ab
 
 ## 7. UI Layer
 
-### 7.1 `DashboardComponentRegistry`
+### 7.1 `DashboardComponentType`
+
+Enum que centraliza a chave e a config padrão de cada componente. Substitui o `DashboardComponentRegistry` previsto anteriormente — título e posição padrão passaram a viver em `DashboardComponentVariant` (título) e `GetDashboardPreferencesUseCase` (ordem padrão), respectivamente.
 
 ```kotlin
-// ui/screen/dashboard/DashboardComponentRegistry.kt
-data class DashboardRegistryEntry(
+// ui/screen/dashboard/DashboardComponentType.kt
+enum class DashboardComponentType(
     val key: String,
-    val title: UiText,
-    val defaultPosition: Int,
-)
+    val defaultConfig: Map<String, String> = emptyMap(),
+) {
+    TOTAL_BALANCE(key = "total_balance"),
+    CONCRETE_BALANCE_STATS(key = "balance_stats_concrete"),
+    PENDING_BALANCE_STATS(
+        key = "balance_stats_pending",
+        defaultConfig = mapOf(DashboardComponentConfig.HIDE_WHEN_EMPTY to "true"),
+    ),
+    CREDIT_CARD_BALANCE_STATS(
+        key = "balance_stats_credit_card",
+        defaultConfig = mapOf(DashboardComponentConfig.HIDE_WHEN_EMPTY to "true"),
+    ),
+    ACCOUNTS_OVERVIEW(
+        key = "accounts_overview",
+        defaultConfig = mapOf(
+            DashboardComponentConfig.TOP_SPACING to "true",
+            AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT to "true",
+        ),
+    ),
+    CREDIT_CARDS_PAGER(
+        key = "credit_cards_pager",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    SPENDING_BY_CATEGORY(
+        key = "spending_by_category",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    INCOME_BY_CATEGORY(
+        key = "income_by_category",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    BUDGETS(
+        key = "budgets",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    PENDING_RECURRING(
+        key = "pending_recurring",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    RECENTS(
+        key = "recents",
+        defaultConfig = mapOf(DashboardComponentConfig.TOP_SPACING to "true"),
+    ),
+    QUICK_ACTIONS(
+        key = "quick_actions",
+        defaultConfig = mapOf(
+            DashboardComponentConfig.TOP_SPACING to "true",
+            DashboardComponentConfig.SHOW_HEADER to "false",
+        ),
+    );
 
-object DashboardComponentRegistry {
-    val entries: List<DashboardRegistryEntry> = listOf(
-        DashboardRegistryEntry("total_balance",          UiText.Res(Res.string.component_total_balance),        0),
-        DashboardRegistryEntry("balance_stats_concrete", UiText.Res(Res.string.component_balance_stats),        1),
-        DashboardRegistryEntry("balance_stats_pending",  UiText.Res(Res.string.component_pending_balance),      2),
-        DashboardRegistryEntry("accounts_overview",      UiText.Res(Res.string.component_accounts_overview),    3),
-        DashboardRegistryEntry("credit_cards_pager",     UiText.Res(Res.string.component_credit_cards),         4),
-        DashboardRegistryEntry("spending_pager",         UiText.Res(Res.string.component_spending),             5),
-        DashboardRegistryEntry("pending_recurring",      UiText.Res(Res.string.component_pending_recurring),    6),
-        DashboardRegistryEntry("recents",                UiText.Res(Res.string.component_recents),              7),
-        DashboardRegistryEntry("quick_actions",          UiText.Res(Res.string.component_quick_actions),        8),
-    )
-
-    fun defaultPreferences(): List<DashboardComponentPreference> =
-        entries.map { DashboardComponentPreference(it.key, it.defaultPosition) }
-
-    fun titleFor(key: String): UiText =
-        entries.find { it.key == key }?.title ?: UiText.Raw(key)
+    companion object {
+        fun fromKey(key: String): DashboardComponentType? = entries.find { it.key == key }
+    }
 }
 ```
 
-### 7.2 Mocks de preview
+### 7.2 `DashboardPreviewFactory`
 
-Os dados de exemplo para o modo edição **não** estão em um arquivo separado. Vivem em `DashboardComponent.kt` como `private object DashboardComponentPreviewFactory`, e são acessados via `DashboardComponentVariant.previewForKey(key)` que retorna a variante `Preview` pré-populada de cada componente:
+Classe separada responsável por criar instâncias de `DashboardComponentVariant.Preview` com dados mock realistas para cada componente. É registrada como `single` no Koin e injetada no `DashboardViewModel`.
 
 ```kotlin
-// Em DashboardComponent.kt (companion de DashboardComponentVariant)
-companion object {
-    fun previewForKey(key: String): DashboardComponentVariant? = when (key) {
-        DashboardComponent.TotalBalance.KEY        -> TotalBalance.Preview()
-        DashboardComponent.ConcreteBalanceStats.KEY -> ConcreteBalanceStats.Preview()
-        // ... demais tipos ...
-        DashboardComponent.QuickActions.KEY        -> QuickActions.Preview()
+// ui/screen/dashboard/DashboardPreviewFactory.kt
+class DashboardPreviewFactory {
+    suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
+        DashboardComponentType.TOTAL_BALANCE.key ->
+            DashboardComponentVariant.TotalBalance.Preview(
+                component = DashboardComponent.TotalBalance(amount = 5432.10),
+            )
+        // ... demais tipos com dados mock realistas ...
         else -> null
     }
 }
 ```
 
-Cada `Preview` instancia o componente com `DashboardComponentPreviewFactory` (privado) que contém dados mock realistas.
+O método é `suspend` porque usa `getString()` de resources para os textos dos mocks (nomes de conta, categoria, etc.). É chamado exclusivamente dentro de `viewModelScope.launch` no `buildEditingState`.
 
 ### 7.3 `DashboardUiState` — sealed class
 
@@ -294,32 +341,41 @@ sealed class DashboardUiState {
 
     data class Empty(
         override val yearMonth: YearMonth,
+        val accounts: List<Account> = emptyList(),
+        val creditCards: List<CreditCard> = emptyList(),
     ) : DashboardUiState()
 
     data class Viewing(
         override val yearMonth: YearMonth,
-        val components: List<DashboardComponent>,
+        val items: List<DashboardComponentVariant>,  // variantes com dados reais + config
+        val accounts: List<Account> = emptyList(),
+        val creditCards: List<CreditCard> = emptyList(),
     ) : DashboardUiState()
 
     data class Editing(
         override val yearMonth: YearMonth,
         val items: List<DashboardEditItem>,          // componentes atualmente na dashboard
         val availableItems: List<DashboardEditItem>, // disponíveis para adicionar
+        val accounts: List<Account> = emptyList(),   // passados para configs de AccountsOverview
+        val creditCards: List<CreditCard> = emptyList(), // passados para configs de CreditCardsPager
     ) : DashboardUiState()
 }
 
 data class DashboardEditItem(
-    val key: String,
-    val title: UiText,
-    val preview: DashboardComponentVariant,          // variante Preview do componente — dados mock para renderização
-    val config: Map<String, String> = emptyMap(),    // carrega config salvo (para preservar em confirmEdit)
-)
+    val preview: DashboardComponentVariant,  // variante Preview — dados mock + config padrão
+    val config: Map<String, String> = emptyMap(),
+) {
+    val key: String get() = preview.key
+    val title: UiText get() = preview.title
+}
 ```
 
 - `Loading` — carregamento inicial antes dos repositórios emitirem
-- `Empty` — dashboard sem componentes visíveis, com affordance explícita para voltar ao modo edição
-- `Viewing` — modo normal, componentes reais com dados ao vivo
-- `Editing` — modo edição, componentes são previews (mock data), editáveis pelo usuário
+- `Empty` — dashboard sem componentes visíveis, com affordance explícita para abrir edição (ver issues/issues.md — Issue 1)
+- `Viewing` — modo normal; `items` contém `DashboardComponentVariant.Viewing` com dados ao vivo
+- `Editing` — modo edição; `items` contém `DashboardComponentVariant.Preview` com dados mock
+
+`accounts` e `creditCards` estão presentes em `Empty`, `Viewing` e `Editing` para que o `enterEditMode` os repasse ao `buildEditingState` sem nova consulta ao repositório.
 
 `yearMonth` é `abstract` pois aparece no seletor de mês em ambos os modos visíveis.
 
@@ -337,41 +393,44 @@ sealed class DashboardAction {
 }
 ```
 
-`MoveComponent(fromKey, toKey)` usa chaves string estáveis em vez de índices inteiros. O ViewModel determina o tipo de movimento pelo contexto: se `toKey == EDIT_SECTION_HEADER_KEY` ou `EDIT_AVAILABLE_PLACEHOLDER_KEY`, é cruzamento de fronteira; caso contrário, é reordenação interna ou cruzamento via componente adjacente. `RemoveComponent` continua existindo para a ação "Remover" na modal (move o item para `availableItems` sem precisar de drag).
+`MoveComponent(fromKey, toKey)` usa chaves string estáveis em vez de índices inteiros. O ViewModel determina o tipo de movimento pelo contexto: se `toKey == EDIT_SECTION_HEADER_KEY` ou `EDIT_AVAILABLE_PLACEHOLDER_KEY`, é cruzamento de fronteira; caso contrário, é reordenação interna ou cruzamento via componente adjacente. `RemoveComponent` permanece no sealed class por compatibilidade de fluxo e simplicidade de estado, mas o UX final consolidado usa drag entre seções para ativar/desativar componentes.
 
 ### 7.5 `DashboardViewModel` — novas responsabilidades
 
-`_editingState` é um `MutableStateFlow<DashboardUiState.Editing?>` separado que, quando não-nulo, tem prioridade sobre o estado reativo dos repositórios. Isso congela a UI durante a edição sem cancelar os flows de dados. As preferências da dashboard usam semântica tri-state: `null` para primeira abertura, lista preenchida para composição salva, `emptyList()` para dashboard vazia salva.
+`editingState` é um `MutableStateFlow<DashboardUiState.Editing?>` separado que, quando não-nulo, tem prioridade sobre o estado reativo dos repositórios. Isso congela a UI durante a edição sem cancelar os flows de dados. As preferências da dashboard usam semântica tri-state: `null` para primeira abertura, lista preenchida para composição salva, `emptyList()` para dashboard vazia salva.
 
 ```kotlin
 class DashboardViewModel(
     // ... repositórios existentes ...
+    private val getDashboardPreferences: GetDashboardPreferencesUseCase,
+    private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
-    private val dashboardComponentsBuilder: DashboardComponentsBuilder,
+    private val dashboardPreviewFactory: DashboardPreviewFactory,
+    // DashboardComponentsBuilder é detalhe interno de BuildDashboardViewingUseCase — não injetado aqui
 ) : ViewModel() {
 
-    private val preferences: StateFlow<List<DashboardComponentPreference>?> =
-        dashboardPreferencesRepository.observe()
+    // StateFlow<List<...>> — nunca nulo; null do repositório já mapeado para defaults pelo UseCase
+    private val preferences = getDashboardPreferences()
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     // Editing state — quando não-nulo, sobrescreve o Viewing reativo
-    private val _editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
+    private val editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
     // Flow reativo que sempre produz Loading → Empty/Viewing
     private val viewingState: Flow<DashboardUiState> = combine(
-        preferences,  // usa o StateFlow já ativo
-        // ... demais flows de repositórios ...
+        preferences,
+        // ... demais flows de repositórios (operações, cartões, contas, orçamentos, recorrentes) ...
     ) { preferences, /* ... */ ->
-        val effectivePrefs = preferences ?: DashboardComponentRegistry.defaultPreferences()
-        val ordered = applyPreferences(effectivePrefs, builtComponents)
-        if (ordered.isEmpty()) {
-            DashboardUiState.Empty(yearMonth = targetMonth)
+        val items = buildDashboardViewingUseCase(input = dashboardInput, preferences = preferences)
+        if (items.isEmpty()) {
+            DashboardUiState.Empty(yearMonth = targetMonth, accounts = accounts, creditCards = creditCards)
         } else {
-            DashboardUiState.Viewing(yearMonth = targetMonth, components = ordered)
+            DashboardUiState.Viewing(yearMonth = targetMonth, items = items, accounts = accounts, creditCards = creditCards)
         }
     }
 
     val uiState: StateFlow<DashboardUiState> = combine(
-        _editingState,
+        editingState,
         viewingState,
     ) { editing, viewing ->
         editing ?: viewing                          // Editing tem prioridade sobre Viewing
@@ -391,47 +450,50 @@ class DashboardViewModel(
     }
 
     private fun enterEditMode() {
-        when (val current = uiState.value) {
-            is DashboardUiState.Viewing ->
-                openEditingState(current.yearMonth, current.accounts, current.creditCards)
-            is DashboardUiState.Empty ->
-                openEditingState(current.yearMonth, current.accounts, current.creditCards)
-            else -> Unit
+        val current = uiState.value
+        viewModelScope.launch {
+            when (current) {
+                is DashboardUiState.Viewing ->
+                    openEditingState(current.yearMonth, current.accounts, current.creditCards)
+                is DashboardUiState.Empty ->
+                    openEditingState(current.yearMonth, current.accounts, current.creditCards)
+                else -> Unit
+            }
         }
     }
 
-    private fun openEditingState(
+    private suspend fun openEditingState(
         yearMonth: YearMonth,
         accounts: List<Account>,
         creditCards: List<CreditCard>,
     ) {
-        _editingState.value = buildEditingState(
+        editingState.value = buildEditingState(
             yearMonth = yearMonth,
             accounts = accounts,
             creditCards = creditCards,
-            savedPrefs = preferences.value,
+            preferences = preferences.value,
         )
     }
 
     // cancelEdit NÃO re-salva no repositório — o repositório não foi modificado durante o edit mode.
-    // Basta limpar _editingState e o viewingState reativo volta a comandar com as prefs anteriores.
+    // Basta limpar editingState e o viewingState reativo volta a comandar com as prefs anteriores.
     private fun cancelEdit() {
-        _editingState.value = null
+        editingState.value = null
     }
 
     private fun confirmEdit() {
         viewModelScope.launch {
-            val editing = _editingState.value ?: return@launch
+            val editing = editingState.value ?: return@launch
             val prefs = editing.items.mapIndexed { i, item ->
                 DashboardComponentPreference(key = item.key, position = i, config = item.config)
             }
             dashboardPreferencesRepository.save(prefs)
-            _editingState.value = null
+            editingState.value = null
         }
     }
 
     // moveComponent opera sobre a lista combinada (items + availableItems) usando chaves.
-    // Quando toKey == "section_header" ou "available_placeholder": cruzamento de fronteira
+    // Quando toKey == "section_header", "active_placeholder" ou "available_placeholder": cruzamento de fronteira
     //   (fromInActive) → desativa: item vai para o início dos disponíveis (activeCount - 1)
     //   (!fromInActive) → ativa: item vai para o final dos ativos (activeCount + 1)
     // Caso contrário: reordenação interna ou cruzamento via componente adjacente
@@ -440,56 +502,49 @@ class DashboardViewModel(
     private fun moveComponent(fromKey: String, toKey: String) { /* ver seção 10.5 */ }
 
     private fun removeComponent(key: String) {
-        val current = _editingState.value ?: return
+        val current = editingState.value ?: return
         val removed = current.items.find { it.key == key } ?: return
-        _editingState.value = current.copy(
+        editingState.value = current.copy(
             items = current.items.filter { it.key != key },
             availableItems = current.availableItems + removed,
         )
     }
 
     private fun updateComponentConfig(key: String, config: Map<String, String>) {
-        val current = _editingState.value ?: return
-        _editingState.value = current.copy(
+        val current = editingState.value ?: return
+        editingState.value = current.copy(
             items = current.items.map { if (it.key == key) it.copy(config = config) else it },
         )
     }
 
     // Regra de visibilidade em edit mode:
-    //   items        = componentes adicionados pelo usuário (prefs salvas), ou todos os 9 se sem prefs
-    //   availableItems = componentes explicitamente removidos pelo usuário (ausentes das prefs)
+    //   items          = componentes nas prefs salvas (já não-nulas graças ao UseCase)
+    //   availableItems = componentes do enum DashboardComponentType ausentes das prefs
     //
     // "Sem dados no modo visualização" ≠ "removido pelo usuário":
     //   - CreditCardsPager sem cartões cadastrados → aparece em items (adicionado, mas sem dados)
     //   - CreditCardsPager removido pelo usuário   → aparece em availableItems
     //
-    // A fonte de verdade é sempre o registry/preferências — nunca o viewing.components,
+    // A fonte de verdade são as preferências — nunca o viewingState,
     // que está filtrado por dados e não reflete a intenção do usuário.
-    // null        = primeira abertura, usa defaults do registry
-    // emptyList() = dashboard vazia salva pelo usuário
-    private fun buildEditingState(
+    // Ver issues/issues-step1.md — Issue 3.
+    private suspend fun buildEditingState(
         yearMonth: YearMonth,
         accounts: List<Account>,
         creditCards: List<CreditCard>,
-        savedPrefs: List<DashboardComponentPreference>?,
+        preferences: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
-        val effectivePrefs = savedPrefs ?: DashboardComponentRegistry.defaultPreferences()
-        val presentKeys = effectivePrefs.map { it.key }.toSet()
-
-        val items = effectivePrefs.sortedBy { it.position }.mapNotNull { pref ->
-            val entry = DashboardComponentRegistry.entries.find { it.key == pref.key }
-                ?: return@mapNotNull null
-            val preview = DashboardComponentVariant.previewForKey(pref.key)
-                ?: return@mapNotNull null
-            DashboardEditItem(key = pref.key, title = entry.title, config = pref.config, preview = preview)
+        val items = preferences.sortedBy { it.position }.mapNotNull { pref ->
+            val preview = dashboardPreviewFactory.createPreview(pref.key) ?: return@mapNotNull null
+            DashboardEditItem(preview = preview, config = pref.config)
         }
 
-        val availableItems = DashboardComponentRegistry.entries
+        val presentKeys = preferences.map { it.key }.toSet()
+        val availableItems = DashboardComponentType.entries
             .filter { it.key !in presentKeys }
             .mapNotNull { entry ->
-                val preview = DashboardComponentVariant.previewForKey(entry.key)
-                    ?: return@mapNotNull null
-                DashboardEditItem(key = entry.key, title = entry.title, preview = preview)
+                val preview = dashboardPreviewFactory.createPreview(entry.key) ?: return@mapNotNull null
+                DashboardEditItem(preview = preview, config = preview.config)
             }
 
         return DashboardUiState.Editing(
@@ -499,14 +554,6 @@ class DashboardViewModel(
             accounts = accounts,
             creditCards = creditCards,
         )
-    }
-
-    private fun applyPreferences(
-        preferences: List<DashboardComponentPreference>,
-        all: List<DashboardComponent>,
-    ): List<DashboardComponent> {
-        val byKey = all.associateBy { it.key }
-        return preferences.sortedBy { it.position }.mapNotNull { byKey[it.key] }
     }
 }
 ```
@@ -526,14 +573,13 @@ O critério concreto:
 - Ao entrar no modo edição, o usuário deve perceber que os componentes **ficaram no lugar** enquanto o modo de interação mudou
 
 **Modelo de interação no edit mode:**
-- **Long press + drag** no componente → reordena (o componente inteiro é o handle de drag)
+- **Long press + drag** no componente → reordena (o componente inteiro é arrastável — o ícone de handle é um hint visual, não o único ponto de arraste)
 - **Tap** no componente → abre modal de opções (excluir, configurações futuras)
-- **Sem ícone de drag handle** — não polui o visual do componente
 - **Sem botão de excluir** — a exclusão fica na modal de opções
 
-**Anti-padrões explicitamente proibidos:**
+**Anti-padrão explicitamente proibido — drag acionado apenas pelo ícone de handle:**
 ```
-┌─────────────────────────────┐   ← ERRADO: lista genérica com só título
+┌─────────────────────────────┐   ← ERRADO: só o ☰ é arrastável; componente não renderizado
 │ ☰  Saldo Total          [−] │
 │ ☰  Cartões de Crédito   [−] │
 │ ☰  Contas               [−] │
@@ -543,13 +589,17 @@ O critério concreto:
 **Padrão correto:**
 ```
 ╔═════════════════════════════╗   ← borda sutil indica modo editável (ex: outline)
+║  Saldo Total           ☰   ║   ← cabeçalho: título + ícone DragHandle (hint visual)
+╠═════════════════════════════╣
 ║                             ║
 ║   R$ 5.450,00               ║   ← TotalBalance renderizado com mock data
 ║                             ║
 ╚═════════════════════════════╝
-  ↑ tap → abre modal de opções | long press → arrasta para reordenar
+  ↑ tap → abre modal de opções | long press em qualquer ponto → arrasta para reordenar
 
 ╔═════════════════════════════╗
+║  Cartões de Crédito    ☰   ║
+╠═════════════════════════════╣
 ║  ┌────────┐ ┌────────┐      ║   ← CreditCardsPager renderizado com mock data
 ║  │ VISA   │ │ MASTER │      ║
 ║  │ •••4521│ │ •••7832│      ║
@@ -565,10 +615,12 @@ A transição entre modos deve parecer que affordances de edição **aparecem so
 **Abordagem:** `Crossfade` no nível do conteúdo principal, com ambos os modos renderizando o mesmo conjunto de itens na mesma ordem e com os mesmos tamanhos.
 
 ```kotlin
-Crossfade(
-    targetState = uiState,
-    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-) { state ->
+// Usar Transition.Crossfade com contentKey = { it::class } — NÃO o Crossfade standalone.
+// O Crossfade standalone compara identidade de objeto: cada MoveComponent gera um novo
+// DashboardUiState.Editing, o que destrói e recria o composable (incluindo lazyListState
+// e reorderState) no meio de um drag. Ver issues/issues-step1.md — Issue 2.
+val transition = updateTransition(targetState = uiState)
+transition.Crossfade(contentKey = { it::class }) { state ->
     when (state) {
         is DashboardUiState.Loading -> DashboardLoadingContent()
         is DashboardUiState.Empty -> DashboardEmptyContent(onAction)
@@ -596,7 +648,7 @@ A solução é uma lista combinada com um sealed interface `EditListEntry` (`Com
 
 ### 8.3 `DashboardEditItemWrapper` — renderização fiel ao original
 
-O componente inteiro é draggable (sem ícone de handle) e tappable (sem botão de excluir visível). O `draggableHandle()` é aplicado no wrapper inteiro.
+O componente inteiro é draggable e tappable (sem botão de excluir visível). O `longPressDraggableHandle()` é aplicado em um overlay `Box` que cobre o wrapper inteiro — o ícone `DragHandle` no cabeçalho é apenas um hint visual, não o ponto de arraste.
 
 ```kotlin
 // longPressDraggableHandle é extension de ReorderableCollectionItemScope.
@@ -606,34 +658,40 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     item: DashboardEditItem,
     onTap: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            // Tap → abre modal de opções (excluir, configurações)
-            .clickable(onClick = onTap)
-            // Long press + drag → reordena (componente inteiro é o drag handle)
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        color = colorScheme.surfaceContainerHighest.copy(alpha = 0.9f),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(bottom = 16.dp)) {
+                // Cabeçalho: título do componente + ícone DragHandle (hint visual apenas)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(text = stringUiText(item.title), style = MaterialTheme.typography.labelMedium)
+                    Icon(imageVector = Icons.Default.DragHandle, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+                // Preview do componente com dados mock — mesmo composable do Viewing
+                DashboardComponentContent(variant = item.preview, modifier = Modifier.fillMaxWidth())
+            }
+
+            // Overlay global: intercepta tap e long press + drag no wrapper inteiro
             // IMPORTANTE: usar longPressDraggableHandle (não draggableHandle) pois o item também é clicável.
             // draggableHandle() iniciaria o drag imediatamente ao toque, bloqueando os cliques.
-            .longPressDraggableHandle(
-                onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
-                onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(onClick = onTap)
+                    .longPressDraggableHandle(
+                        onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                        onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                    )
             )
-    ) {
-        // 1. Renderiza o composable ORIGINAL com dados mock — sem simplificação
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) { /* consome todos os eventos — componente frozen */ }
-        ) {
-            DashboardComponentContent(component = item.preview)  // mesmo composable do Viewing
         }
-
-        // 2. Overlay translúcido mínimo (só para comunicar estado não-interativo)
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.10f))
-        )
     }
 }
 ```
@@ -664,64 +722,73 @@ Em `DashboardEditItemWrapper`, `item.preview` já é uma `DashboardComponentVari
 
 ### 8.3.1 `DashboardComponentOptionsModal`
 
-Modal de opções acionada pelo tap no componente em edit mode. Implementada como `ModalBottomSheet` do `ModalManager`.
+Modal de opções acionada pelo tap em um componente ativo no edit mode. Implementada como `ModalBottomSheet` do `ModalManager`.
 
 ```
 ╔══════════════════════════════╗
 ║  Saldo Total                 ║  ← título do componente (item.title)
 ╠══════════════════════════════╣
-║  🗑  Remover                 ║  ← RemoveComponent action + dismiss modal
+║  Layout                      ║  ← seção universal
+║  - Mostrar cabeçalho*        ║
+║  - Espaçamento superior      ║
 ║                              ║
-║  (configurações futuras      ║  ← V2: settings específicas do componente
-║   aparecem aqui)             ║
+║  Conteúdo*                   ║  ← configs específicas do componente
 ╚══════════════════════════════╝
+
+* quando aplicável ao componente
 ```
 
 ```kotlin
 class DashboardComponentOptionsModal(
     private val item: DashboardEditItem,
+    private val accounts: List<Account>,
+    private val creditCards: List<CreditCard>,
     private val onAction: (DashboardAction) -> Unit,
 ) : ModalBottomSheet() {
 
     @Composable
-    override fun Content() {
-        val modalManager = LocalModalManager.current
-        val topSpacing = item.config[DashboardComponentConfig.TOP_SPACING] == "true"
-        Column {
-            Text(stringUiText(item.title), style = MaterialTheme.typography.titleMedium)
-            HorizontalDivider()
-            // Configuração universal — presente em todos os componentes
-            ListItem(
-                headlineContent = { Text(stringResource(Res.string.component_config_top_spacing)) },
-                leadingContent = { Icon(Icons.Rounded.SpaceBar, contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = topSpacing,
-                        onCheckedChange = { enabled ->
-                            val newConfig = item.config.toMutableMap().apply {
-                                put(DashboardComponentConfig.TOP_SPACING, enabled.toString())
-                            }
-                            onAction(DashboardAction.UpdateComponentConfig(item.key, newConfig))
-                        },
-                    )
-                },
-            )
-            HorizontalDivider()
-            // Configurações específicas do componente (se houver) aparecem aqui — V4
-            ListItem(
-                headlineContent = { Text(stringResource(Res.string.remove_component)) },
-                leadingContent = { Icon(Icons.Rounded.Delete, contentDescription = null) },
-                modifier = Modifier.clickable {
-                    onAction(DashboardAction.RemoveComponent(item.key))
-                    modalManager.dismiss()
-                },
-            )
+    override fun ColumnScope.BottomSheetContent() {
+        var config by remember { mutableStateOf(item.config) }
+
+        fun updateConfig(newConfig: Map<String, String>) {
+            config = newConfig
+            onAction(DashboardAction.UpdateComponentConfig(item.key, newConfig))
+        }
+
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Text(stringUiText(item.title), style = MaterialTheme.typography.titleLarge)
+
+            // Seção Layout — presente em todos os componentes
+            DashboardConfigSectionLabel(stringResource(Res.string.component_config_layout_section))
+
+            // SHOW_HEADER — para: AccountsOverview, CreditCardsPager, PendingRecurring, Recents, QuickActions
+            // TOP_SPACING — para todos os componentes
+
+            // Seção Conteúdo — presente apenas nos componentes com configs específicas
+            when (item.key) {
+                // ver seção 11 da spec
+            }
         }
     }
 }
 ```
 
-Em V1: toggle "Espaçamento superior" + opção "Remover". As configurações específicas por componente são adicionadas em Etapa 4.
+Instanciação no call site (em `DashboardEditingContent`):
+
+```kotlin
+modalManager.show(
+    DashboardComponentOptionsModal(
+        item = entry.item,
+        accounts = state.accounts,
+        creditCards = state.creditCards,
+        onAction = onAction,
+    )
+)
+```
+
+`accounts` e `creditCards` são passados diretamente do `DashboardUiState.Editing` para que os configs de `AccountsOverview` e `CreditCardsPager` possam listar as entidades reais como toggles.
+
+O modal atual é exclusivamente configuracional. Ativação e desativação de componentes acontecem na própria lista unificada, por drag entre as seções ativa e disponível.
 
 ---
 
@@ -735,7 +802,14 @@ DashboardEditItemWrapper(
     item = entry.item,
     onTap = {
         if (entry.isActive) {
-            modalManager.show(DashboardComponentOptionsModal(item = entry.item, onAction = onAction))
+            modalManager.show(
+                DashboardComponentOptionsModal(
+                    item = entry.item,
+                    accounts = state.accounts,
+                    creditCards = state.creditCards,
+                    onAction = onAction,
+                )
+            )
         }
     },
     modifier = Modifier.alpha(if (entry.isActive) 1f else 0.6f),
@@ -758,11 +832,15 @@ Não há affordances visuais explícitas (sem drag handle, sem botão remover, s
 
 **Ativação por long press em qualquer componente:**
 ```kotlin
-// Aplicado no wrapper de cada componente no DashboardViewingContent
-Modifier.combinedClickable(
-    onLongClick = { onAction(EnterEditMode) },
-    onClick = { /* interação normal do componente */ },
-)
+// Aplicado no wrapper de cada componente no DashboardViewingContent.
+// interceptLongPress é uma extension de Modifier em /extension/Modifier.kt que usa
+// PointerEventPass.Initial para interceptar o gesto antes dos filhos — necessário porque
+// componentes com clickable/combinedClickable consomem o evento no Main pass, impedindo
+// que um detector externo acumule o threshold de long press.
+// Também cancela corretamente ao detectar scroll (touchSlop) ou evento consumido pelo filho,
+// e consome os eventos restantes após disparar para evitar que a ação do filho também execute.
+// Ver issues/issues-step1.md — Issues 1, 4 e 5.
+Modifier.interceptLongPress { onAction(DashboardAction.EnterEditMode) }
 ```
 
 **Detecção no HomeScreen:**
@@ -866,37 +944,48 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 A lista unificada é representada por um sealed interface `EditListEntry` que combina todos os itens em um único `items()` call:
 
 ```kotlin
-private sealed interface EditListEntry {
-    data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry
-    data object SectionHeader : EditListEntry
-    data object AvailablePlaceholder : EditListEntry
+sealed interface EditListEntry {
+    val key: String
+
+    data class Component(val item: DashboardEditItem, val isActive: Boolean) : EditListEntry {
+        override val key = item.key
+    }
+    data object ActivePlaceholder : EditListEntry {
+        override val key = EDIT_ACTIVE_PLACEHOLDER_KEY
+    }
+    data object SectionHeader : EditListEntry {
+        override val key = EDIT_SECTION_HEADER_KEY
+    }
+    data object AvailablePlaceholder : EditListEntry {
+        override val key = EDIT_AVAILABLE_PLACEHOLDER_KEY
+    }
 }
 
-// Constantes definidas em DashboardUiState.kt — acessíveis por Screen e ViewModel no mesmo pacote
-// internal const val EDIT_SECTION_HEADER_KEY = "section_header"
-// internal const val EDIT_AVAILABLE_PLACEHOLDER_KEY = "available_placeholder"
-
-private val EditListEntry.entryKey: String
-    get() = when (this) {
-        is EditListEntry.Component         -> item.key
-        EditListEntry.SectionHeader        -> EDIT_SECTION_HEADER_KEY
-        EditListEntry.AvailablePlaceholder -> EDIT_AVAILABLE_PLACEHOLDER_KEY
-    }
+// Constantes definidas em DashboardEditListEntries.kt
+const val EDIT_SECTION_HEADER_KEY = "section_header"
+const val EDIT_ACTIVE_PLACEHOLDER_KEY = "active_placeholder"
+const val EDIT_AVAILABLE_PLACEHOLDER_KEY = "available_placeholder"
 ```
 
 A lista é construída como:
 
 ```kotlin
-val listEntries = remember(state.items, state.availableItems) {
-    buildList<EditListEntry> {
-        state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
-        add(EditListEntry.SectionHeader)
-        if (state.availableItems.isEmpty()) {
-            add(EditListEntry.AvailablePlaceholder)
-        } else {
-            state.availableItems.forEach { add(EditListEntry.Component(it, isActive = false)) }
+@Composable
+fun rememberDashboardEditListEntries(state: DashboardUiState.Editing): List<EditListEntry> =
+    remember(state.items, state.availableItems) {
+        buildList {
+            if (state.items.isEmpty()) {
+                add(EditListEntry.ActivePlaceholder)
+            } else {
+                state.items.forEach { add(EditListEntry.Component(it, isActive = true)) }
+            }
+            add(EditListEntry.SectionHeader)
+            if (state.availableItems.isEmpty()) {
+                add(EditListEntry.AvailablePlaceholder)
+            } else {
+                state.availableItems.forEach { add(EditListEntry.Component(it, isActive = false)) }
+            }
         }
-    }
 }
 ```
 
@@ -931,16 +1020,19 @@ Se o `SectionHeader` estiver **dentro** de `ReorderableItem` sem handle:
 - O ViewModel interpreta `toKey == "section_header"` como inserção de fronteira
 - Sem handle → o cabeçalho não pode ser arrastado (`from`), apenas recebido (`to`)
 
-**Atenção:** `enabled = false` NÃO deve ser usado. Embora pareça a solução para "não arrastável mas destino válido", na prática a biblioteca exclui itens com `enabled = false` completamente do sistema de drop — eles não disparam `onMove` nem como `to`. O mecanismo correto para "destino mas não origem" é `ReorderableItem` sem `draggableHandle`.
+**Atenção:** `enabled = false` NÃO deve ser usado. Embora pareça a solução para "não arrastável mas destino válido", na prática a biblioteca exclui itens com `enabled = false` completamente do sistema de drop — eles não disparam `onMove` nem como `to`. O mecanismo correto para "destino mas não origem" é `ReorderableItem` sem `draggableHandle`. _(ver issues/issues-step3.md — Issue 2)_
 
-O `AvailablePlaceholder` segue a mesma regra — envolvido em `ReorderableItem` sem handle, sendo o único destino de drop quando `availableItems` está vazio. O `onMove` também deve ignorar `fromKey == "section_header"` ou `"available_placeholder"` como medida de segurança:
+O `AvailablePlaceholder` e o `ActivePlaceholder` seguem a mesma regra — envolvidos em `ReorderableItem` sem handle, servindo como destinos de drop quando suas respectivas seções estão vazias. O `onMove` ignora todos os placeholders e o cabeçalho como origem:
 
 ```kotlin
 ) { from, to ->
-    val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-    val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-    if (fromKey == EDIT_SECTION_HEADER_KEY || fromKey == EDIT_AVAILABLE_PLACEHOLDER_KEY) return@rememberReorderableLazyListState
-    onAction(DashboardAction.MoveComponent(fromKey, toKey))
+    val fromKey = when (from.key) {
+        EditListEntry.ActivePlaceholder.key,
+        EditListEntry.SectionHeader.key,
+        EditListEntry.AvailablePlaceholder.key -> return@rememberReorderableLazyListState
+        else -> from.key.toString()
+    }
+    onAction(DashboardAction.MoveComponent(fromKey = fromKey, toKey = to.key.toString()))
     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 }
 ```
@@ -972,7 +1064,7 @@ O `onMove` pode ser chamado com o estado de índices desatualizado (stale) quand
 
 ```kotlin
 private fun moveComponent(fromKey: String, toKey: String) {
-    val current = _editingState.value ?: return
+    val current = editingState.value ?: return
 
     val allItems = current.items + current.availableItems
     val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
@@ -980,29 +1072,42 @@ private fun moveComponent(fromKey: String, toKey: String) {
     val activeCount = current.items.size
 
     when (toKey) {
+        EDIT_ACTIVE_PLACEHOLDER_KEY -> {
+            // Ativa o item quando a seção ativa está vazia (só funciona se activeCount == 0)
+            if (activeCount != 0) return
+            val mutable = allItems.toMutableList()
+            val moved = mutable.removeAt(fromIndex)
+            mutable.add(0, moved)
+            editingState.value = current.copy(
+                items = mutable.take(1),
+                availableItems = mutable.drop(1),
+            )
+        }
+
         EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
             // Cruzamento de fronteira: inserção na borda da seção de destino
             val fromInActive = fromIndex < activeCount
             val mutable = allItems.toMutableList()
             val moved = mutable.removeAt(fromIndex)
             if (fromInActive) {
-                // Ativo → inativo: insere no início dos disponíveis (logo após o cabeçalho)
+                // Ativo → inativo: insere no início dos disponíveis
                 val newActiveCount = activeCount - 1
                 mutable.add(newActiveCount, moved)
-                _editingState.value = current.copy(
+                editingState.value = current.copy(
                     items = mutable.take(newActiveCount),
                     availableItems = mutable.drop(newActiveCount),
                 )
             } else {
-                // Inativo → ativo: insere no final dos ativos (logo antes do cabeçalho)
+                // Inativo → ativo: insere no final dos ativos
                 mutable.add(activeCount, moved)
                 val newActiveCount = activeCount + 1
-                _editingState.value = current.copy(
+                editingState.value = current.copy(
                     items = mutable.take(newActiveCount),
                     availableItems = mutable.drop(newActiveCount),
                 )
             }
         }
+
         else -> {
             // Reordenação dentro da mesma seção ou cruzamento via componente adjacente
             val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
@@ -1018,7 +1123,7 @@ private fun moveComponent(fromKey: String, toKey: String) {
                 !fromInActive && toInActive -> activeCount + 1
                 else -> activeCount
             }
-            _editingState.value = current.copy(
+            editingState.value = current.copy(
                 items = mutable.take(newActiveCount),
                 availableItems = mutable.drop(newActiveCount),
             )
@@ -1031,8 +1136,9 @@ private fun moveComponent(fromKey: String, toKey: String) {
 
 | Sintoma | Causa raiz | Solução |
 |---------|-----------|---------|
-| Drag cancela ao cruzar a divisória | `SectionHeader` fora de `ReorderableItem` — biblioteca pula o header, índice esperado diverge do real | Envolver `SectionHeader` em `ReorderableItem(enabled=false)` |
-| Impossível desativar quando seção disponível está vazia | Sem destino de drop abaixo do cabeçalho | Exibir `AvailablePlaceholder` em `ReorderableItem(enabled=false)` quando `availableItems` vazio |
+| Drag cancela ao cruzar a divisória | `SectionHeader` fora de `ReorderableItem` — biblioteca pula o header, índice esperado diverge do real | Envolver `SectionHeader` em `ReorderableItem` sem `draggableHandle` (não usar `enabled=false`) |
+| Impossível desativar quando seção disponível está vazia | Sem destino de drop abaixo do cabeçalho | Exibir `AvailablePlaceholder` em `ReorderableItem` sem `draggableHandle` quando `availableItems` vazio |
+| Impossível ativar quando seção ativa está vazia | Sem destino de drop acima do cabeçalho | Exibir `ActivePlaceholder` em `ReorderableItem` sem `draggableHandle` quando `items` vazio |
 | Item vai para posição errada ao cruzar seção | Inserção na posição do item de destino em vez da borda da seção | Quando `toKey == EDIT_SECTION_HEADER_KEY`, usar inserção de fronteira no ViewModel |
 | `IndexOutOfBoundsException` no `add` | Remoção de elemento reduz o tamanho antes do `add` | Separar `removeAt` e `add`; usar `.coerceAtMost(mutable.size)` |
 | Drag correto mas com índices stale | Usar `from.index`/`to.index` após re-composição | Usar `from.key`/`to.key` (estável) em vez de índices |
@@ -1044,55 +1150,77 @@ private fun moveComponent(fromKey: String, toKey: String) {
 
 Cada componente pode ter configurações próprias acessíveis pelo tap em edit mode (`DashboardComponentOptionsModal`). As configurações são persistidas em `DashboardComponentPreference.config` como `Map<String, String>`.
 
-Os componentes sem configurações específicas exibem apenas a opção "Remover" + a configuração universal de espaçamento.
+Os componentes sem configurações específicas exibem apenas a configuração universal de layout.
 
 ---
 
-### 11.0 Configuração Universal — Espaçamento Superior
+### 11.0 Configurações Universais de Layout
 
-Disponível para **todos** os 9 componentes.
+Disponíveis para **todos** os 12 componentes. Exibidas na seção "Layout" da modal.
 
 | Config | Chave | Tipo | Default | Opções |
 |--------|-------|------|---------|--------|
 | Espaçamento superior extra | `top_spacing` | `"true"` / `"false"` | `"false"` | toggle |
+| Exibir cabeçalho | `show_header` | `"true"` / `"false"` | `"true"` | toggle (apenas em alguns) |
 
-**Na modal:** toggle "Espaçamento superior" presente em todos os componentes, acima da opção "Remover".
+**`top_spacing`:** quando `"true"`, adiciona um `Spacer(Modifier.height(16.dp))` acima do componente no `DashboardViewingContent`. O espaço é parte do wrapper — não afeta o preview em edit mode.
 
-**Impacto na renderização:** quando `top_spacing == "true"`, adiciona um `Spacer(Modifier.height(16.dp))` acima do componente no `DashboardViewingContent`. O espaço é parte do wrapper do componente, não do componente em si — portanto não afeta o preview em edit mode.
+**`show_header`:** controla a visibilidade do cabeçalho do componente. Disponível apenas para: `AccountsOverview`, `CreditCardsPager`, `PendingRecurring`, `Recents`, `QuickActions`.
 
 ```kotlin
 object DashboardComponentConfig {
     const val TOP_SPACING = "top_spacing"
+    const val SHOW_HEADER = "show_header"
+    const val SHOW_EMPTY_STATE = "show_empty_state"
+    const val HIDE_WHEN_EMPTY = "hide_when_empty"
 }
 ```
 
 **Leitura no `DashboardViewingContent`:**
 ```kotlin
-// No wrapper de cada componente no LazyColumn
+// No wrapper de cada componente no LazyColumn — config vem da DashboardComponentVariant.config
 val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"
 if (topSpacing) Spacer(Modifier.height(16.dp))
-DashboardComponentContent(component, onAction)
+DashboardComponentContent(variant = variant, modifier = Modifier.fillMaxWidth())
 ```
 
-Onde `config` é obtido de `DashboardComponentPreference.config` para o componente correspondente — o `DashboardViewingContent` recebe as preferências junto com os componentes, ou o `DashboardComponent` carrega o config ao ser construído. A abordagem preferida é o `DashboardComponentsBuilder` ignorar `top_spacing` (não afeta dados) e o config ser lido diretamente das preferências no `DashboardViewingContent`.
+`DashboardComponentsBuilder` ignora `top_spacing` e `show_header` ao construir dados — eles são exclusivos da camada de renderização.
 
 ---
 
 ### 11.1 TotalBalance
 
-Sem configurações. Sempre exibe o saldo consolidado de todas as contas.
+Sem configurações de conteúdo. Sempre exibe o saldo consolidado de todas as contas.
 
 ---
 
 ### 11.2 ConcreteBalanceStats
 
-Sem configurações. Exibe receitas e despesas reais do mês selecionado.
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Ocultar sem dados | `hide_when_empty` | `"true"` / `"false"` | `"false"` | toggle |
+
+**Impacto no builder:** quando `"true"` e receitas = 0 e despesas = 0, o builder retorna `null` e o componente não é exibido no modo visualização.
 
 ---
 
 ### 11.3 PendingBalanceStats
 
-Sem configurações. Exibe pendências dos recorrentes do mês selecionado.
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Ocultar sem dados | `hide_when_empty` | `"true"` / `"false"` | `"true"` | toggle |
+
+Default `"true"` — o componente é oculto automaticamente quando não há recorrentes pendentes.
+
+---
+
+### 11.3b CreditCardBalanceStats
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Ocultar sem dados | `hide_when_empty` | `"true"` / `"false"` | `"true"` | toggle |
+
+Default `"true"` — oculto automaticamente quando não há pagamentos ou despesas de cartão no mês.
 
 ---
 
@@ -1100,14 +1228,16 @@ Sem configurações. Exibe pendências dos recorrentes do mês selecionado.
 
 | Config | Chave | Tipo | Default | Opções |
 |--------|-------|------|---------|--------|
+| Ocultar quando há apenas uma conta | `hide_single_account` | `"true"` / `"false"` | `"true"` | toggle |
 | Contas excluídas da visão | `excluded_account_ids` | IDs separados por vírgula | `""` (todas) | Seleção múltipla de contas |
 
-**Na modal:** lista de contas com toggle para incluir/excluir cada uma.
+**Na modal:** toggle "Ocultar conta única" + lista de contas com toggle para incluir/excluir cada uma.
 
-**Impacto no builder:** filtra a lista de contas antes de construir o componente, usando os IDs excluídos do config.
+**Impacto no builder:** filtra contas excluídas; quando `hide_single_account == "true"` e só resta uma conta após o filtro, o componente não é exibido.
 
 ```kotlin
 object AccountsOverviewConfig {
+    const val HIDE_SINGLE_ACCOUNT = "hide_single_account"
     const val EXCLUDED_ACCOUNT_IDS = "excluded_account_ids"
 }
 ```
@@ -1118,11 +1248,12 @@ object AccountsOverviewConfig {
 
 | Config | Chave | Tipo | Default | Opções |
 |--------|-------|------|---------|--------|
+| Exibir empty state | `show_empty_state` | `"true"` / `"false"` | `"false"` | toggle |
 | Cartões excluídos da visão | `excluded_card_ids` | IDs separados por vírgula | `""` (todos) | Seleção múltipla de cartões |
 
-**Na modal:** lista de cartões com toggle para incluir/excluir cada um.
+**Na modal:** toggle "Exibir empty state" + lista de cartões com toggle para incluir/excluir cada um.
 
-**Impacto no builder:** filtra a lista de cartões antes de construir o componente.
+**Impacto no builder:** quando não há cartões cadastrados (ou todos excluídos) e `show_empty_state == "false"`, o componente não é exibido; quando `"true"`, exibe `CreditCardsPager.Empty`.
 
 ```kotlin
 object CreditCardsPagerConfig {
@@ -1130,20 +1261,22 @@ object CreditCardsPagerConfig {
 }
 ```
 
+`SHOW_EMPTY_STATE` usa a chave de `DashboardComponentConfig.SHOW_EMPTY_STATE`.
+
 ---
 
-### 11.6 SpendingPager
+### 11.6 SpendingByCategory
 
 | Config | Chave | Tipo | Default | Opções |
 |--------|-------|------|---------|--------|
 | Máximo de categorias exibidas | `max_categories` | Int como string | `"-1"` (todas) | 3, 5, 10, todas |
 
-**Na modal:** seleção do limite (segmented button ou radio group).
+**Na modal:** seleção do limite com segmented button.
 
-**Impacto no builder:** aplica `.take(maxCategories)` na lista de `CategorySpending` antes de construir o componente. `-1` = sem limite.
+**Impacto no builder:** aplica `.take(maxCategories)` na lista de `CategorySpending`. `-1` = sem limite.
 
 ```kotlin
-object SpendingPagerConfig {
+object SpendingByCategoryConfig {
     const val MAX_CATEGORIES = "max_categories"
     const val ALL = "-1"
 }
@@ -1151,20 +1284,45 @@ object SpendingPagerConfig {
 
 ---
 
+### 11.6b IncomeByCategory
+
+| Config | Chave | Tipo | Default | Opções |
+|--------|-------|------|---------|--------|
+| Máximo de categorias exibidas | `max_categories` | Int como string | `"-1"` (todas) | 3, 5, 10, todas |
+
+Idêntico ao `SpendingByCategory`, mas para receitas.
+
+```kotlin
+object IncomeByCategoryConfig {
+    const val MAX_CATEGORIES = "max_categories"
+    const val ALL = "-1"
+}
+```
+
+---
+
+### 11.6c Budgets
+
+Sem configurações de conteúdo. Exibe todos os orçamentos com progresso de gastos.
+
+---
+
 ### 11.7 PendingRecurring
 
 | Config | Chave | Tipo | Default | Opções |
 |--------|-------|------|---------|--------|
-| Horizonte de dias | `days_ahead` | Int como string | `"30"` | 7, 14, 30 |
+| Dias à frente | `upcoming_days_ahead` | Int como string | `"0"` | 0 (hoje), 7, 15, 30 |
 
-**Na modal:** seleção do horizonte (segmented button ou radio group).
+> Ver issues/issues-step4.md — Issue 3
 
-**Impacto no builder:** filtra recorrentes cujo próximo vencimento está dentro de `days_ahead` dias a partir de hoje.
+**Na modal:** segmented button com opções: Hoje / 7 dias / 15 dias / Este mês.
+
+**Impacto no builder:** além das recorrentes já vencidas (pendentes), inclui as que vencem nos próximos `upcoming_days_ahead` dias. `0` = apenas as pendentes do dia atual.
 
 ```kotlin
 object PendingRecurringConfig {
-    const val DAYS_AHEAD = "days_ahead"
-    const val DEFAULT_DAYS_AHEAD = 30
+    const val UPCOMING_DAYS_AHEAD = "upcoming_days_ahead"
+    const val DEFAULT_UPCOMING_DAYS_AHEAD = 0
 }
 ```
 
@@ -1237,11 +1395,11 @@ Esta feature não é coberta por testes unitários. A qualidade é validada excl
 
 | Cenário | Comportamento |
 |---------|--------------|
-| Primeira abertura | `observe()` retorna `null`, e o ViewModel usa `DashboardComponentRegistry.defaultPreferences()` |
-| Preferências salvas | Aplica ordem e filtra componentes ausentes |
-| Dashboard esvaziada pelo usuário | Persiste `[]` e renderiza sem componentes |
-| Novo componente adicionado no app (futuro) | Aparece no final da lista por ser ausente das preferências |
-| Componente removido do app (futuro) | Ignorado silenciosamente ao carregar |
+| Primeira abertura | `observe()` retorna `null`; `GetDashboardPreferencesUseCase` mapeia para defaults de `DashboardComponentType` |
+| Preferências salvas | Aplica ordem e config salvas; componentes ausentes das prefs aparecem em `availableItems` no edit mode |
+| Dashboard esvaziada pelo usuário | Persiste `[]`; `GetDashboardPreferencesUseCase` emite `[]` (não mapeia lista vazia para defaults) |
+| Novo componente adicionado ao enum (futuro) | Aparece em `availableItems` no edit mode por ser ausente das prefs salvas |
+| Componente removido do enum (futuro) | Ignorado silenciosamente ao carregar prefs (`mapNotNull { createPreview(it.key) }`) |
 
 ---
 
@@ -1254,10 +1412,17 @@ single<IDashboardPreferencesRepository> {
 }
 
 // ViewModelModule.kt
+single { GetDashboardPreferencesUseCase(get()) }       // single — StateFlow compartilhado
+factory { BuildDashboardViewingUseCase(get()) }        // factory — sem estado
+single { DashboardPreviewFactory() }                   // single — sem estado, mas suspend (resources)
+
 viewModel {
     DashboardViewModel(
-        // ... existentes ...
+        // ... repositórios existentes ...
+        getDashboardPreferences = get(),
+        buildDashboardViewingUseCase = get(),
         dashboardPreferencesRepository = get(),
+        dashboardPreviewFactory = get(),
     )
 }
 ```
@@ -1267,20 +1432,64 @@ viewModel {
 ## 14. Strings necessárias (`strings.xml`)
 
 ```xml
+<!-- Nomes dos componentes -->
 <string name="component_total_balance">Saldo Total</string>
-<string name="component_balance_stats">Receitas e Despesas</string>
+<string name="component_balance_stats">Balanço</string>
 <string name="component_pending_balance">Balanço Pendente</string>
+<string name="component_credit_card_balance_stats">Balanço do Cartão</string>
 <string name="component_accounts_overview">Contas</string>
 <string name="component_credit_cards">Cartões de Crédito</string>
-<string name="component_spending">Gastos por Categoria</string>
-<string name="component_pending_recurring">Recorrentes Pendentes</string>
-<string name="component_recents">Transações Recentes</string>
-<string name="component_quick_actions">Ações Rápidas</string>
-<string name="edit_mode_confirm">Confirmar</string>
-<string name="edit_mode_cancel">Cancelar</string>
-<string name="edit_mode_title">Editar</string>
-<string name="add_component_title">Adicionar componente</string>
+<string name="component_spending_by_category">Gastos por Categoria</string>
+<string name="component_income_by_category">Receitas por Categoria</string>
+<string name="component_budgets">Orçamentos</string>
+<string name="component_pending_recurring">Recorrências</string>
+<string name="component_recents">Recentes</string>
+<string name="component_quick_actions">Atalhos</string>
+
+<!-- Edit mode toolbar -->
+<string name="dashboard_edit_title">Editar</string>
+<string name="dashboard_edit_confirm">Confirmar</string>
+<string name="dashboard_edit_cancel">Cancelar</string>
+
+<!-- Placeholders da lista de edição -->
+<string name="dashboard_edit_active_placeholder">Arraste aqui para adicionar um componente</string>
+<string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
+<string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
+
+<!-- Seções da modal de configuração -->
+<string name="component_config_layout_section">Layout</string>
+<string name="component_config_content_section">Conteúdo</string>
+
+<!-- Configs universais -->
+<string name="component_config_show_header">Exibir cabeçalho</string>
 <string name="component_config_top_spacing">Espaçamento superior</string>
+
+<!-- Configs de conteúdo -->
+<string name="component_config_hide_single_account">Ocultar conta única</string>
+<string name="component_config_hide_when_empty">Ocultar sem dados</string>
+<string name="component_config_show_empty_state">Exibir empty state</string>
+<string name="component_config_max_categories">Máximo de categorias</string>
+<string name="component_config_days_ahead">Dias à frente</string>
+<string name="component_config_today">Hoje</string>
+<string name="component_config_7_days">7 dias</string>
+<string name="component_config_15_days">15 dias</string>
+<string name="component_config_this_month">Este mês</string>
+<string name="component_config_count">Quantidade de itens</string>
+<string name="component_config_all">Todas</string>
+<string name="component_config_min_visible_action">Mantenha pelo menos uma ação visível</string>
+
+<!-- Dados de preview (mock) — usados pelo DashboardPreviewFactory -->
+<string name="preview_account_main">Carteira</string>
+<string name="preview_account_savings">Poupança</string>
+<string name="preview_card_nubank">Nubank</string>
+<string name="preview_category_food">Alimentação</string>
+<string name="preview_category_transport">Transporte</string>
+<string name="preview_category_salary">Salário</string>
+<string name="preview_category_freelance">Freelance</string>
+<string name="preview_transaction_supermarket">Supermercado</string>
+<string name="preview_transaction_netflix">Netflix</string>
+<string name="preview_transaction_spotify">Spotify</string>
+<string name="preview_budget_food">Alimentação</string>
 ```
 
 ---
@@ -1313,12 +1522,12 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 | Decisão | Alternativa descartada | Motivo |
 |---------|----------------------|--------|
 | `DashboardUiState` como sealed class (`Loading`, `Empty`, `Viewing`, `Editing`) | `data class` com `editState: EditState?` | Loading, dashboard vazia, visualização e edição são estados distintos da tela; modelá-los separadamente elimina estados impossíveis e segue o padrão do projeto |
-| `_editingState: MutableStateFlow<Editing?>` separado do combine reativo | Unificar tudo em um único combine | Separa responsabilidades: dados ao vivo ficam no `viewingState`, edição em curso fica no `_editingState` — evita reconstrução do estado de edição a cada emissão dos repositórios |
+| `editingState: MutableStateFlow<Editing?>` separado do combine reativo | Unificar tudo em um único combine | Separa responsabilidades: dados ao vivo ficam no `viewingState`, edição em curso fica no `editingState` — evita reconstrução do estado de edição a cada emissão dos repositórios |
 | `DashboardComponentContent` extraído como função compartilhada | Duplicar o `when(component)` em Viewing e Editing | Garante que edit mode renderiza EXATAMENTE o mesmo composable que o modo normal — sem risco de divergência visual |
 | `Crossfade` no nível da tela para a transição de modo | `AnimatedContent` com slides | Como ambos os modos renderizam os mesmos componentes nas mesmas posições, o crossfade cria a ilusão de affordances aparecendo in-place sem custo de implementação de shared elements |
 | Componentes em edit mode: composable original com mock data + overlay | Card simplificado com título | Critério de aceite — o modo edição deve remeter ao modo visualização; lista genérica com títulos é explicitamente reprovada |
 | Componente inteiro como drag handle (sem ícone) | Ícone `DragHandle` dedicado | Preferência do produto: ícone de handle polui o visual do componente; long press no corpo é mais limpo e intuitivo |
-| Tap no componente → modal de opções (excluir + futuras configs) | Botão "−" visível no componente | Preferência do produto: botão de excluir polui o visual; a modal centraliza opções e escala para configurações futuras sem mudar a UI do edit mode |
+| Tap no componente → modal de opções de configuração | Botão "−" visível no componente | Preferência do produto: controles explícitos de exclusão poluem o visual; a modal centraliza configurações, enquanto ativação/desativação fica no drag entre seções |
 | `AddComponentPanel` como overlay in-tree | `ModalBottomSheet` do `ModalManager` | Drag cross-container requer espaço de coordenadas compartilhado |
 | `russhwolf/settings` + JSON para persistência | Room (nova tabela) | Sem relações, sem queries — settings é suficiente e já disponível |
 | `sh.calvin.reorderable` para drag in-list | `detectDragGesturesAfterLongPress` manual | API de alto nível, multiplatform, menos boilerplate |

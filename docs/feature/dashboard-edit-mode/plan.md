@@ -1,7 +1,11 @@
 # Plano: Dashboard Customizável — Modo Edição
 
-Implementação dividida em 4 etapas independentes e validáveis.
+Evolução registrada em 5 etapas independentes e validáveis.
 A spec completa está em [`spec.md`](spec.md).
+
+> Este documento registra a evolução da implementação. Quando houver conflito entre uma etapa intermediária e o comportamento final, prevalecem a `spec.md`, o código atual e as correções registradas em `issues/`.
+>
+> Observação importante: a ação explícita de `"Remover"` na modal existiu nas etapas iniciais, mas foi substituída no fluxo final pelo modelo de seções ativa/disponível. Hoje a ativação e a desativação acontecem por drag entre seções; a modal ficou dedicada a configurações.
 
 ---
 
@@ -20,15 +24,15 @@ Os componentes são representados por cards simplificados (título + placeholder
 - `DashboardPreferencesRepository` — persiste em `Settings` + JSON
 
 **UI:**
-- `DashboardComponentRegistry` — registro dos 9 componentes com título e posição default
+- `DashboardComponentRegistry` — registro inicial dos componentes com título e posição default (substituído depois por `DashboardComponentType`)
 - `DashboardUiState` selada: `Loading`, `Empty`, `Viewing`, `Editing`
 - `DashboardAction` expandida: `EnterEditMode`, `ConfirmEdit`, `CancelEdit`, `MoveComponent`, `RemoveComponent`
-- `DashboardViewModel` — lógica de edit mode com `_editingState` separado do combine reativo
+- `DashboardViewModel` — lógica de edit mode com `editingState` separado do combine reativo
 - `DashboardScreen` — `Crossfade` entre `Loading`, `Empty`, `Viewing`, `Editing`
 - `DashboardEditingContent` — `LazyColumn` com `sh.calvin.reorderable`, cards simplificados
   - Em Etapa 1, `DashboardEditItemWrapper` renderiza apenas `item.title` em um card simples — `item.preview` existe no model mas é ignorado até Etapa 2
-- `DashboardComponentOptionsModal` — modal com apenas "Remover" (sem settings ainda)
-- Edit toolbar: `Cancelar | Editar | Confirmar`
+- `DashboardComponentOptionsModal` — modal inicial com apenas "Remover" (substituída depois pela modal de configurações)
+- Edit toolbar: `Cancelar | [título do modo edição] | Confirmar`
 - Ocultar `BottomNavigationBar` em edit mode
 - Long press em qualquer componente no `DashboardViewingContent` → `EnterEditMode`
 - `DashboardPreferencesRepository` no DI
@@ -48,17 +52,18 @@ implementation("sh.calvin.reorderable:reorderable:3.0.0")
 ### Critérios de aceite
 - [x] Long press em qualquer componente entra no modo edição com transição suave
 - [x] Bottom nav desaparece ao entrar em edit mode
-- [x] Toolbar de edição aparece (Cancelar | Editar | Confirmar)
-- [x] Componentes são arrastáveis por long press + drag (o componente inteiro, sem ícone de handle)
+- [x] Toolbar de edição aparece (`Cancelar | [título] | Confirmar`)
+- [x] Componentes são arrastáveis por long press + drag no componente inteiro (ícone de handle é puramente visual)
 - [x] A ordem dos componentes muda visualmente durante o drag
-- [x] Tap em um componente abre a modal de opções com "Remover" ()
-- [x] "Remover" remove o componente da lista com animação de saída
+- [x] Na etapa inicial, tap em um componente abria uma modal simples com "Remover" (fluxo depois substituído pelo modelo ativo/disponível)
 - [x] "Confirmar" persiste a nova ordem e composição — ao reabrir o app a ordem é mantida
 - [x] "Cancelar" descarta as alterações e restaura o estado anterior
 - [x] Todos os componentes adicionados aparecem em edit mode, mesmo que sem dados no modo visualização
 - [x] Componentes explicitamente removidos pelo usuário não aparecem em edit mode (ficam em availableItems)
 
 > **Reprovação imediata:** reordenação por botões ↑↓ ou qualquer controle que não seja drag físico.
+
+> **Issues:** [issues/issues-step1.md](issues/issues-step1.md)
 
 ---
 
@@ -97,6 +102,8 @@ Etapa 1 aprovada.
 
 > **Reprovação imediata:** qualquer componente que em edit mode exiba apenas texto/título em vez do visual original.
 
+> **Issues:** [issues/issues.md](issues/issues.md)
+
 ---
 
 ## Etapa 3 — Adicionar componentes (lista unificada)
@@ -119,8 +126,8 @@ Etapa 2 aprovada.
 **`DashboardEditingContent`** — `LazyColumn` com lista unificada `EditListEntry`:
 - Sealed interface `EditListEntry`: `Component(item, isActive)` | `SectionHeader` | `AvailablePlaceholder`
 - Único `items(listEntries, key = { it.entryKey })` call — nunca blocos separados
-- `SectionHeader` envolvido em `ReorderableItem(reorderState, key = "section_header", enabled = false)` — **obrigatório para fluência**
-- `AvailablePlaceholder` envolvido em `ReorderableItem(reorderState, key = "available_placeholder", enabled = false)` — exibido quando `availableItems` vazio
+- `SectionHeader` envolvido em `ReorderableItem(reorderState, key = "section_header")` — sem `draggableHandle`, mas ainda destino válido de drop
+- `AvailablePlaceholder` envolvido em `ReorderableItem(reorderState, key = "available_placeholder")` — sem `draggableHandle`, exibido quando `availableItems` vazio
 - Cabeçalho **sempre visível** (não some quando seção disponível vazia)
 - `onMove` usa `from.key as? String` / `to.key as? String`
 
@@ -147,18 +154,7 @@ Etapa 2 aprovada.
 - [x] "Confirmar" persiste a nova composição; componentes ativados aparecem no modo visualização
 - [x] "Cancelar" descarta ativações/desativações e restaura o estado anterior
 
----
-
-## Refatoração pós-Etapa 3 (Implementado)
-
-Melhorias de arquitetura, performance e robustez aplicadas após Etapa 3:
-
-- **Bug corrigido:** `QuickActions.KEY` tinha trailing underscore (`"quick_actions_"` → `"quick_actions"`)
-- **Dead code removido:** `DashboardAction.AdjustBalance` era no-op — removido da sealed class e do ViewModel
-- **Acesso síncrono às preferências:** o repositório expõe `StateFlow` já carregado; `enterEditMode()` usa `preferences.value` sem criar coleta adicional
-- **Semântica corrigida:** `null` significa primeira abertura; `emptyList()` significa dashboard vazia salva pelo usuário
-- **Performance:** `allTransactions` e `getPendingRecurringUseCase` computados uma vez por `build()` em vez de 3× e 2×
-- **Constantes extraídas:** `EDIT_SECTION_HEADER_KEY` / `EDIT_AVAILABLE_PLACEHOLDER_KEY` em `DashboardUiState.kt` — eliminam acoplamento por strings literais entre Screen e ViewModel
+> **Issues:** [issues/issues-step3.md](issues/issues-step3.md)
 
 ---
 
@@ -177,8 +173,9 @@ Etapa 3 aprovada.
   - `DashboardComponentConfig.TOP_SPACING` — universal, todos os componentes
   - `AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS`
   - `CreditCardsPagerConfig.EXCLUDED_CARD_IDS`
-  - `SpendingPagerConfig.MAX_CATEGORIES`
-  - `PendingRecurringConfig.DAYS_AHEAD`
+  - `SpendingByCategoryConfig.MAX_CATEGORIES`
+  - `IncomeByCategoryConfig.MAX_CATEGORIES`
+  - `PendingRecurringConfig.UPCOMING_DAYS_AHEAD`
   - `RecentsConfig.COUNT`
   - `QuickActionsConfig.HIDDEN_ACTIONS`
 
@@ -189,11 +186,13 @@ Etapa 3 aprovada.
 - `DashboardAction.UpdateComponentConfig(key, config)` já declarado no sealed class desde Etapa 1 — Etapa 4 implementa o handler no ViewModel e os controles na modal
 - `DashboardComponentOptionsModal` — expandida com:
   - Toggle "Espaçamento superior" presente em **todos** os componentes (universal)
+  - Ação de remover deixa de ser o fluxo principal; ativação/desativação passa a ocorrer por drag entre as seções ativa e disponível
   - Configurações específicas por componente abaixo:
     - AccountsOverview: lista de contas com toggle
     - CreditCardsPager: lista de cartões com toggle
-    - SpendingPager: segmented button (3 / 5 / 10 / Todas)
-    - PendingRecurring: segmented button (7 / 14 / 30 dias)
+    - SpendingByCategory: segmented button (3 / 5 / 10 / Todas)
+    - IncomeByCategory: segmented button (3 / 5 / 10 / Todas)
+    - PendingRecurring: segmented button (Hoje / 7 dias / 15 dias / Este mês)
     - Recents: segmented button (4 / 6 / 8 / 10)
     - QuickActions: lista de 7 ações com toggle (mínimo 1 visível)
 - `DashboardViewingContent` — lê `top_spacing` do config e insere `Spacer(16.dp)` acima do componente quando habilitado
@@ -208,8 +207,50 @@ Etapa 3 aprovada.
 - [x] QuickActions: desativar uma ação a remove do componente na dashboard
 - [x] QuickActions: não é possível desativar todas as ações (validação na modal)
 - [x] Recents: alterar o número de itens reflete imediatamente ao confirmar o edit mode
-- [x] PendingRecurring: alterar o horizonte de dias reflete ao confirmar
-- [x] SpendingPager: alterar o limite de categorias reflete ao confirmar
+- [x] PendingRecurring: alterar o horizonte futuro reflete ao confirmar
+- [x] SpendingByCategory: alterar o limite de categorias reflete ao confirmar
+- [x] IncomeByCategory: alterar o limite de categorias reflete ao confirmar
 - [x] AccountsOverview: excluir uma conta a remove do componente
 - [x] CreditCardsPager: excluir um cartão o remove do componente
 - [x] Todas as configurações persistem entre sessões do app
+
+> **Issues:** [issues/issues-step4.md](issues/issues-step4.md)
+
+---
+
+## Etapa 5 — Melhorias e Refatoração (Implementado)
+
+Melhorias arquiteturais aplicadas após a conclusão da Etapa 4, consolidando decisões que evoluíram durante a implementação:
+
+**Novos componentes:**
+- `CreditCardBalanceStats` (`balance_stats_credit_card`) — pagamentos e gastos com cartão no mês
+- `IncomeByCategory` (`income_by_category`) — receitas por categoria
+- `Budgets` (`budgets`) — progresso de orçamentos
+- `SpendingPager` foi separado em `SpendingByCategory` + `Budgets` (componentes independentes)
+
+**Refatorações estruturais:**
+- **`DashboardComponentRegistry` eliminado:** substituído por `DashboardComponentType` enum — título migrou para `DashboardComponentVariant.title`, defaults para `GetDashboardPreferencesUseCase`
+- **`GetDashboardPreferencesUseCase` extraído:** lógica `null → defaults` saiu do ViewModel; o ViewModel recebe sempre `List<DashboardComponentPreference>` não-nula via `stateIn(Eagerly)`
+- **`BuildDashboardViewingUseCase` extraído:** constrói `List<DashboardComponentVariant>` a partir de prefs + dados reais; separa responsabilidade do ViewModel
+- **`DashboardComponentMocks` eliminado → `DashboardPreviewFactory`:** classe separada injetável via Koin; `suspend` pois usa `getString()` de resources
+- **`DashboardUiState.Viewing.items`** agora é `List<DashboardComponentVariant>` em vez de `List<DashboardComponent>` — unifica o contrato de `DashboardComponentContent` entre Viewing e Editing
+- **`DashboardUiState.Empty`/`Viewing`/`Editing`** recebem `accounts` e `creditCards` — necessário para popular os configs de `AccountsOverview` e `CreditCardsPager` na modal sem nova consulta ao repositório
+- **`DashboardEditItem`** simplificado: campos `key` e `title` removidos (derivados de `preview.key` e `preview.title`)
+
+**Melhorias no edit mode:**
+- **`ActivePlaceholder` adicionado ao `EditListEntry`:** resolve o drop quando a seção ativa está completamente vazia; tratado como caso `EDIT_ACTIVE_PLACEHOLDER_KEY` no `moveComponent`
+- **`DashboardEditPlaceholder`** compartilhado entre `ActivePlaceholder` e `AvailablePlaceholder` (antes havia só `DashboardAvailablePlaceholder`)
+- **`interceptLongPress`** substituiu `combinedClickable(onLongClick)` na detecção do long press em `DashboardViewingContent`
+- **`DashboardEditItemWrapper` redesenhado:** adicionado cabeçalho com título do componente + ícone `DragHandle` acima do preview; diferenciação ativo/inativo trocada de overlay colorido para `alpha` (1f ativo, 0.6f inativo) aplicado externamente no `DashboardEditingContent`
+- **`DashboardComponentOptionsModal`** recebe `accounts` e `creditCards` explicitamente (necessário para as configs adicionadas na Etapa 4)
+- **Modal organizada em seções:** "Layout" (universal) e "Conteúdo" (específica por componente)
+
+**Configs adicionadas além do planejado em Etapa 4:**
+- `SHOW_HEADER` — visibilidade do cabeçalho (AccountsOverview, CreditCardsPager, PendingRecurring, Recents, QuickActions)
+- `HIDE_WHEN_EMPTY` — para ConcreteBalanceStats, PendingBalanceStats e CreditCardBalanceStats
+- `SHOW_EMPTY_STATE` — para CreditCardsPager
+- `HIDE_SINGLE_ACCOUNT` — para AccountsOverview
+
+**Renomeações de config keys:**
+- `SpendingPagerConfig.MAX_CATEGORIES` → `SpendingByCategoryConfig.MAX_CATEGORIES` + `IncomeByCategoryConfig.MAX_CATEGORIES`
+- `PendingRecurringConfig.DAYS_AHEAD` → `PendingRecurringConfig.UPCOMING_DAYS_AHEAD` (default 0, não 30; opções: 0/7/15/30)

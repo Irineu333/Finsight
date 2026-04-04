@@ -33,12 +33,12 @@ sealed interface EditListEntry {
 @Composable
 fun rememberDashboardEditListEntries(
     state: DashboardUiState.Editing,
-): List<EditListEntry> = remember(state.items, state.availableItems) {
+): List<EditListEntry> = remember(state.activeItems, state.availableItems) {
     buildList {
-        if (state.items.isEmpty()) {
+        if (state.activeItems.isEmpty()) {
             add(EditListEntry.ActivePlaceholder)
         } else {
-            state.items.forEach {
+            state.activeItems.forEach {
                 add(
                     EditListEntry.Component(
                         item = it,

@@ -31,7 +31,7 @@ sealed class DashboardUiState {
 
     data class Editing(
         override val yearMonth: YearMonth,
-        val items: List<DashboardEditItem>,
+        val activeItems: List<DashboardEditItem>,
         val availableItems: List<DashboardEditItem>,
         val accounts: List<Account> = emptyList(),
         val creditCards: List<CreditCard> = emptyList(),

@@ -177,7 +177,7 @@ class DashboardViewModel(
 
     private fun confirmEdit() = viewModelScope.launch {
         val editing = editingState.value ?: return@launch
-        val prefs = editing.items.mapIndexed { i, item ->
+        val prefs = editing.activeItems.mapIndexed { i, item ->
             DashboardComponentPreference(
                 key = item.key,
                 position = i, config = item.config
@@ -190,10 +190,10 @@ class DashboardViewModel(
     private fun moveComponent(fromKey: String, toKey: String) {
         val current = editingState.value ?: return
 
-        val allItems = current.items + current.availableItems
+        val allItems = current.activeItems + current.availableItems
         val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
 
-        val activeCount = current.items.size
+        val activeCount = current.activeItems.size
 
         when (toKey) {
             EDIT_ACTIVE_PLACEHOLDER_KEY -> {
@@ -204,7 +204,7 @@ class DashboardViewModel(
                 mutable.add(0, moved)
 
                 editingState.value = current.copy(
-                    items = mutable.take(1),
+                    activeItems = mutable.take(1),
                     availableItems = mutable.drop(1),
                 )
             }
@@ -217,14 +217,14 @@ class DashboardViewModel(
                     val newActiveCount = activeCount - 1
                     mutable.add(newActiveCount, moved)
                     editingState.value = current.copy(
-                        items = mutable.take(newActiveCount),
+                        activeItems = mutable.take(newActiveCount),
                         availableItems = mutable.drop(newActiveCount),
                     )
                 } else {
                     mutable.add(activeCount, moved)
                     val newActiveCount = activeCount + 1
                     editingState.value = current.copy(
-                        items = mutable.take(newActiveCount),
+                        activeItems = mutable.take(newActiveCount),
                         availableItems = mutable.drop(newActiveCount),
                     )
                 }
@@ -245,7 +245,7 @@ class DashboardViewModel(
                     else -> activeCount
                 }
                 editingState.value = current.copy(
-                    items = mutable.take(newActiveCount),
+                    activeItems = mutable.take(newActiveCount),
                     availableItems = mutable.drop(newActiveCount),
                 )
             }
@@ -254,10 +254,10 @@ class DashboardViewModel(
 
     private fun removeComponent(key: String) {
         val current = editingState.value ?: return
-        val item = current.items.find { it.key == key } ?: return
+        val item = current.activeItems.find { it.key == key } ?: return
 
         editingState.value = current.copy(
-            items = current.items.filter { it.key != key },
+            activeItems = current.activeItems.filter { it.key != key },
             availableItems = current.availableItems + item,
         )
     }
@@ -269,7 +269,7 @@ class DashboardViewModel(
         val current = editingState.value ?: return
 
         editingState.value = current.copy(
-            items = current.items.map { item ->
+            activeItems = current.activeItems.map { item ->
                 when (item.key) {
                     key -> item.copy(config = config)
                     else -> item
@@ -285,7 +285,7 @@ class DashboardViewModel(
         preferences: List<DashboardComponentPreference>,
     ): DashboardUiState.Editing {
 
-        val items = preferences.sortedBy {
+        val activeItems = preferences.sortedBy {
             it.position
         }.mapNotNull { pref ->
             val preview = dashboardPreviewFactory.createPreview(pref.key) ?: return@mapNotNull null
@@ -310,7 +310,7 @@ class DashboardViewModel(
 
         return DashboardUiState.Editing(
             yearMonth = yearMonth,
-            items = items,
+            activeItems = activeItems,
             availableItems = availableItems,
             accounts = accounts,
             creditCards = creditCards,

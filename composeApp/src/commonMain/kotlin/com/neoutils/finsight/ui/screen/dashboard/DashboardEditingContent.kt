@@ -182,12 +182,7 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                         style = MaterialTheme.typography.labelMedium,
                         color = colorScheme.onSurfaceVariant,
                     )
-                    Icon(
-                        imageVector = Icons.Default.DragHandle,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp),
-                    )
+                    Spacer(modifier = Modifier.size(20.dp))
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -198,7 +193,6 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                 )
             }
 
-            // Global Overlay
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -208,6 +202,24 @@ private fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                         onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
                     ),
             )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DragHandle,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .draggableHandle(
+                            onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                            onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                        ),
+                )
+            }
         }
     }
 }

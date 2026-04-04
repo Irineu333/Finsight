@@ -126,6 +126,10 @@ class DashboardViewModel(
             editingState.value = null
         }
 
+        is DashboardAction.RemoveAllComponents -> removeAllComponents()
+
+        is DashboardAction.AddAllComponents -> addAllComponents()
+
         is DashboardAction.MoveComponent -> {
             moveComponent(action.fromKey, action.toKey)
         }
@@ -246,6 +250,22 @@ class DashboardViewModel(
                 )
             }
         }
+    }
+
+    private fun removeAllComponents() {
+        val current = editingState.value ?: return
+        editingState.value = current.copy(
+            activeItems = emptyList(),
+            availableItems = current.activeItems + current.availableItems,
+        )
+    }
+
+    private fun addAllComponents() {
+        val current = editingState.value ?: return
+        editingState.value = current.copy(
+            activeItems = current.activeItems + current.availableItems,
+            availableItems = emptyList(),
+        )
     }
 
     private fun updateComponentConfig(

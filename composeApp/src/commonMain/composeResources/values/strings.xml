@@ -708,6 +708,8 @@
     <string name="remove_component">Remover</string>
     <string name="dashboard_edit_active_placeholder">Arraste aqui para adicionar um componente</string>
     <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
+    <string name="dashboard_edit_remove_all">Remover tudo</string>
+    <string name="dashboard_edit_add_all">Adicionar tudo</string>
     <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
     <string name="dashboard_empty_title">Sua dashboard está vazia</string>
     <string name="dashboard_empty_description">Adicione componentes para voltar a personalizar a visualização.</string>

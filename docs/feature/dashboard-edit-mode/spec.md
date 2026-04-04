@@ -976,17 +976,17 @@ Não existe `AddComponentPanel`. A lista de edição é única e contém duas se
 ║  ┌──────┐ ┌──────┐           ║  ← ativo
 ╚══════════════════════════════╝
 
-──── Disponíveis para adicionar ────  ← cabeçalho fixo — SEMPRE VISÍVEL
+  Disponíveis para adicionar  ↑ ↓  ← cabeçalho fixo com botões de ação em massa
 
 ╔══════════════════════════════╗  ← disponível — DashboardEditItemWrapper (isActive=false)
-║  [componente dimmed]         ║     overlay mais opaco, sem tap para modal
+║  [componente dimmed]         ║     alpha 0.6f, sem tap para modal
 ╚══════════════════════════════╝
 ```
 
 Quando `availableItems` estiver vazio, o cabeçalho permanece visível e um placeholder é exibido no lugar dos itens disponíveis:
 
 ```
-──── Disponíveis para adicionar ────  ← sempre visível
+  Disponíveis para adicionar  ↑    ← ↓ oculto quando não há itens ativos
 
   ┌ - - - - - - - - - - - - - - ┐
   |  ↓  Arraste aqui para       |  ← placeholder com borda tracejada
@@ -995,10 +995,19 @@ Quando `availableItems` estiver vazio, o cabeçalho permanece visível e um plac
 ```
 
 **Regras de ativação/desativação:**
-- Arrastar qualquer item **para acima do cabeçalho** → ativa (entra em `items`)
+- Arrastar qualquer item **para acima do cabeçalho** → ativa (entra em `activeItems`)
 - Arrastar qualquer item **para abaixo do cabeçalho** → desativa (entra em `availableItems`)
 - O cabeçalho em si é o ponto de cruzamento — mover um item "sobre" o cabeçalho é suficiente para mudar de seção
 - **Sem tap para ativar/desativar** — drag é o único meio de transição entre seções
+
+**Botões de ação em massa no cabeçalho:**
+
+O cabeçalho exibe dois ícones discretos (`Icon` com `Modifier.size(20.dp).clickable`, sem `IconButton`) à direita do título:
+
+- `ArrowUpward` (`dashboard_edit_add_all`) — move todos os `availableItems` para `activeItems`; visível apenas quando `availableItems` não está vazio
+- `ArrowDownward` (`dashboard_edit_remove_all`) — move todos os `activeItems` para `availableItems`; visível apenas quando `activeItems` não está vazio
+
+Ambos disparam `DashboardAction.AddAllComponents` / `DashboardAction.RemoveAllComponents` respectivamente, processados no ViewModel via `addAllComponents()` / `removeAllComponents()`.
 
 **Requisito crítico de fluência:**
 O gesto de drag **nunca deve ser interrompido** ao cruzar a divisória, independentemente de qual seção estiver vazia. O usuário deve conseguir arrastar livremente de qualquer posição da seção ativa para qualquer posição da seção disponível (e vice-versa) em um único gesto contínuo.
@@ -1531,6 +1540,8 @@ viewModel {
 <!-- Placeholders da lista de edição -->
 <string name="dashboard_edit_active_placeholder">Arraste aqui para adicionar um componente</string>
 <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
+<string name="dashboard_edit_remove_all">Remover tudo</string>
+<string name="dashboard_edit_add_all">Adicionar tudo</string>
 <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
 
 <!-- Seções da modal de configuração -->

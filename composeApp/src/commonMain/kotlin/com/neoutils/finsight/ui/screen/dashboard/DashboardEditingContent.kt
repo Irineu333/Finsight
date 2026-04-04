@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
@@ -125,14 +129,48 @@ fun DashboardEditingContent(
                     }
 
                     EditListEntry.SectionHeader -> {
-                        Text(
-                            text = stringResource(Res.string.dashboard_edit_available_section),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = colorScheme.onSurfaceVariant,
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                        )
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.dashboard_edit_available_section),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 8.dp),
+                            )
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                if (state.availableItems.isNotEmpty()) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowUpward,
+                                        contentDescription = stringResource(Res.string.dashboard_edit_add_all),
+                                        tint = colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .clickable { onAction(DashboardAction.AddAllComponents) }
+                                            .padding(2.dp),
+                                    )
+                                }
+
+                                if (state.activeItems.isNotEmpty()) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDownward,
+                                        contentDescription = stringResource(Res.string.dashboard_edit_remove_all),
+                                        tint = colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .clickable { onAction(DashboardAction.RemoveAllComponents) }
+                                            .padding(2.dp),
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     EditListEntry.AvailablePlaceholder -> {

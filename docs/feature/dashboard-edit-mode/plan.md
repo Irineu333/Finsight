@@ -249,6 +249,7 @@ Melhorias arquiteturais aplicadas após a conclusão da Etapa 4, consolidando de
 - **`DashboardComponentOptionsModal`** recebe `accounts` e `creditCards` explicitamente (necessário para as configs adicionadas na Etapa 4)
 - **Modal organizada em seções:** "Layout" (universal) e "Conteúdo" (específica por componente)
 - **Botões de confirmação e cancelamento na modal de configuração:** alterações são mantidas em estado local durante a edição; `onAction(UpdateComponentConfig)` é disparado apenas ao confirmar. Cancelar fecha o modal sem persistir.
+- **Botões de ação em massa no cabeçalho da lista de edição:** ícones `ArrowUpward` (adicionar tudo) e `ArrowDownward` (remover tudo) posicionados à direita do título "Disponíveis para adicionar"; cada um visível apenas quando sua operação é aplicável. Disparam `DashboardAction.AddAllComponents` / `RemoveAllComponents`, processados no ViewModel via funções `addAllComponents()` / `removeAllComponents()`.
 
 **Configs adicionadas além do planejado em Etapa 4:**
 - `SHOW_HEADER` — visibilidade do cabeçalho (AccountsOverview, CreditCardsPager, PendingRecurring, Recents, QuickActions)

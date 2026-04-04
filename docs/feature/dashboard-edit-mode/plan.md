@@ -231,11 +231,14 @@ Melhorias arquiteturais aplicadas após a conclusão da Etapa 4, consolidando de
 **Refatorações estruturais:**
 - **`DashboardComponentRegistry` eliminado:** substituído por `DashboardComponentType` enum — título migrou para `DashboardComponentVariant.title`, defaults para `GetDashboardPreferencesUseCase`
 - **`GetDashboardPreferencesUseCase` extraído:** lógica `null → defaults` saiu do ViewModel; o ViewModel recebe sempre `List<DashboardComponentPreference>` não-nula via `stateIn(Eagerly)`
+- **Configuração inicial da dashboard separada dos defaults do componente:** `GetDashboardPreferencesUseCase.defaultPreferences()` passou a declarar explicitamente a composição inicial; `DashboardComponentType.defaultConfig` ficou restrito a defaults inerentes ao componente, que também devem valer quando ele é adicionado depois
 - **`BuildDashboardViewingUseCase` extraído:** constrói `List<DashboardComponentVariant>` a partir de prefs + dados reais; separa responsabilidade do ViewModel
 - **`DashboardComponentMocks` eliminado → `DashboardPreviewFactory`:** classe separada injetável via Koin; `suspend` pois usa `getString()` de resources
 - **`DashboardUiState.Viewing.items`** agora é `List<DashboardComponentVariant>` em vez de `List<DashboardComponent>` — unifica o contrato de `DashboardComponentContent` entre Viewing e Editing
 - **`DashboardUiState.Empty`/`Viewing`/`Editing`** recebem `accounts` e `creditCards` — necessário para popular os configs de `AccountsOverview` e `CreditCardsPager` na modal sem nova consulta ao repositório
 - **`DashboardEditItem`** simplificado: campos `key` e `title` removidos (derivados de `preview.key` e `preview.title`)
+- **`DashboardUiState.Editing.items` → `activeItems`:** o contrato do estado passou a nomear explicitamente a seção superior do edit mode como a lista de componentes ativos
+- **`DashboardAction.RemoveComponent` removido:** o fluxo morto foi eliminado depois da consolidação do UX final, que usa apenas drag entre as seções ativa e disponível para ativar/desativar componentes
 
 **Melhorias no edit mode:**
 - **`ActivePlaceholder` adicionado ao `EditListEntry`:** resolve o drop quando a seção ativa está completamente vazia; tratado como caso `EDIT_ACTIVE_PLACEHOLDER_KEY` no `moveComponent`

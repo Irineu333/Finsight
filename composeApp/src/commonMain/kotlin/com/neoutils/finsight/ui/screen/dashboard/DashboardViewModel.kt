@@ -299,12 +299,12 @@ class DashboardViewModel(
         val presentKeys = preferences.map { it.key }.toSet()
 
         val availableItems = DashboardComponentType.entries
-            .filter { it.key !in presentKeys }
+            .filterNot { it.key in presentKeys }
             .mapNotNull { entry ->
                 val preview = dashboardPreviewFactory.createPreview(entry.key) ?: return@mapNotNull null
                 DashboardEditItem(
                     preview = preview,
-                    config = preview.config,
+                    config = entry.defaultConfig,
                 )
             }
 

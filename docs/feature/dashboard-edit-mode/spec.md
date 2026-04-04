@@ -789,10 +789,14 @@ Modal de opções acionada pelo tap em um componente ativo no edit mode. Impleme
 ║  - Espaçamento superior      ║
 ║                              ║
 ║  Conteúdo*                   ║  ← configs específicas do componente
+╠══════════════════════════════╣
+║  [Cancelar]   [Confirmar]    ║  ← botões de ação
 ╚══════════════════════════════╝
 
 * quando aplicável ao componente
 ```
+
+As alterações feitas pelo usuário são mantidas em estado local (`var config`). A propagação para o ViewModel ocorre **apenas ao confirmar**: o botão "Confirmar" chama `onAction(DashboardAction.UpdateComponentConfig(...))` e fecha o modal via `manager.dismiss()`. O botão "Cancelar" apenas fecha sem persistir.
 
 ```kotlin
 class DashboardComponentOptionsModal(
@@ -805,10 +809,10 @@ class DashboardComponentOptionsModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         var config by remember { mutableStateOf(item.config) }
+        val modalManager = LocalModalManager.current
 
         fun updateConfig(newConfig: Map<String, String>) {
             config = newConfig
-            onAction(DashboardAction.UpdateComponentConfig(item.key, newConfig))
         }
 
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -823,6 +827,23 @@ class DashboardComponentOptionsModal(
             // Seção Conteúdo — presente apenas nos componentes com configs específicas
             when (item.key) {
                 // ver seção 11 da spec
+            }
+
+            HorizontalDivider()
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = { modalManager.dismiss() }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(Res.string.component_config_cancel))
+                }
+                Button(
+                    onClick = {
+                        onAction(DashboardAction.UpdateComponentConfig(item.key, config))
+                        modalManager.dismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(Res.string.component_config_confirm))
+                }
             }
         }
     }

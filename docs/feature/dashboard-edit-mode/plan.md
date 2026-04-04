@@ -248,6 +248,7 @@ Melhorias arquiteturais aplicadas após a conclusão da Etapa 4, consolidando de
 - **Ícone `DragHandle` arrastável sem long press:** o ícone é posicionado como último filho do `Box` raiz (acima do overlay em Z-order) com `draggableHandle()` — arraste inicia imediatamente ao toque no ícone. O overlay mantém `longPressDraggableHandle()` para o restante do corpo.
 - **`DashboardComponentOptionsModal`** recebe `accounts` e `creditCards` explicitamente (necessário para as configs adicionadas na Etapa 4)
 - **Modal organizada em seções:** "Layout" (universal) e "Conteúdo" (específica por componente)
+- **Botões de confirmação e cancelamento na modal de configuração:** alterações são mantidas em estado local durante a edição; `onAction(UpdateComponentConfig)` é disparado apenas ao confirmar. Cancelar fecha o modal sem persistir.
 
 **Configs adicionadas além do planejado em Etapa 4:**
 - `SHOW_HEADER` — visibilidade do cabeçalho (AccountsOverview, CreditCardsPager, PendingRecurring, Recents, QuickActions)

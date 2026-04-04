@@ -731,6 +731,8 @@
     <string name="component_config_count">Quantidade de itens</string>
     <string name="component_config_all">Todas</string>
     <string name="component_config_min_visible_action">Mantenha pelo menos uma ação visível</string>
+    <string name="component_config_confirm">Confirmar</string>
+    <string name="component_config_cancel">Cancelar</string>
 
     <!-- Dashboard Preview Mock Data -->
     <string name="preview_account_main">Carteira</string>

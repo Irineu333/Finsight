@@ -5,6 +5,5 @@ sealed class DashboardAction {
     data object ConfirmEdit : DashboardAction()
     data object CancelEdit : DashboardAction()
     data class MoveComponent(val fromKey: String, val toKey: String) : DashboardAction()
-    data class RemoveComponent(val key: String) : DashboardAction()
     data class UpdateComponentConfig(val key: String, val config: Map<String, String>) : DashboardAction()
 }

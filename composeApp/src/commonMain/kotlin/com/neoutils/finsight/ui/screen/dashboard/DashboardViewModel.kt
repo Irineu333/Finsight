@@ -130,10 +130,6 @@ class DashboardViewModel(
             moveComponent(action.fromKey, action.toKey)
         }
 
-        is DashboardAction.RemoveComponent -> {
-            removeComponent(action.key)
-        }
-
         is DashboardAction.UpdateComponentConfig -> {
             updateComponentConfig(action.key, action.config)
         }
@@ -250,16 +246,6 @@ class DashboardViewModel(
                 )
             }
         }
-    }
-
-    private fun removeComponent(key: String) {
-        val current = editingState.value ?: return
-        val item = current.activeItems.find { it.key == key } ?: return
-
-        editingState.value = current.copy(
-            activeItems = current.activeItems.filter { it.key != key },
-            availableItems = current.availableItems + item,
-        )
     }
 
     private fun updateComponentConfig(

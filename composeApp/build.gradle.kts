@@ -111,8 +111,8 @@ android {
         applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 22
-        versionName = "1.7.0-rc02"
+        versionCode = 23
+        versionName = "1.7.0-rc03"
     }
     packaging {
         resources {

@@ -621,7 +621,7 @@ O critério concreto:
 **Padrão correto:**
 ```
 ╔═════════════════════════════╗   ← borda sutil indica modo editável (ex: outline)
-║  Saldo Total           ☰   ║   ← cabeçalho: título + ícone DragHandle (hint visual)
+║  Saldo Total           ☰   ║   ← cabeçalho: título + ícone DragHandle (arrastável sem long press)
 ╠═════════════════════════════╣
 ║                             ║
 ║   R$ 5.450,00               ║   ← TotalBalance renderizado com mock data
@@ -680,10 +680,13 @@ A solução é uma lista combinada com um sealed interface `EditListEntry` (`Com
 
 ### 8.3 `DashboardEditItemWrapper` — renderização fiel ao original
 
-O componente inteiro é draggable e tappable (sem botão de excluir visível). O `longPressDraggableHandle()` é aplicado em um overlay `Box` que cobre o wrapper inteiro — o ícone `DragHandle` no cabeçalho é apenas um hint visual, não o ponto de arraste.
+O componente inteiro é draggable e tappable (sem botão de excluir visível). Dois pontos de arraste coexistem:
+
+- **Corpo do componente:** `longPressDraggableHandle()` aplicado em um overlay `Box` que cobre o wrapper inteiro — inicia drag somente após long press, preservando o tap para abrir a modal.
+- **Ícone `DragHandle`:** `draggableHandle()` aplicado diretamente no ícone — inicia drag imediatamente ao toque, sem long press. O ícone é posicionado como último filho do `Box` raiz, ficando acima do overlay em Z-order e interceptando toques em sua área antes do overlay.
 
 ```kotlin
-// longPressDraggableHandle é extension de ReorderableCollectionItemScope.
+// longPressDraggableHandle e draggableHandle são extensions de ReorderableCollectionItemScope.
 // O scope deve ser passado explicitamente ao extrair este composable para fora do lambda de ReorderableItem.
 @Composable
 fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
@@ -698,20 +701,20 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                // Cabeçalho: título do componente + ícone DragHandle (hint visual apenas)
+                // Cabeçalho: título + espaço reservado para o ícone DragHandle
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(text = stringUiText(item.title), style = MaterialTheme.typography.labelMedium)
-                    Icon(imageVector = Icons.Default.DragHandle, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.size(20.dp)) // reserva espaço do ícone
                 }
                 // Preview do componente com dados mock — mesmo composable do Viewing
                 DashboardComponentContent(variant = item.preview, modifier = Modifier.fillMaxWidth())
             }
 
-            // Overlay global: intercepta tap e long press + drag no wrapper inteiro
+            // Overlay global: intercepta tap e long press + drag no corpo do wrapper.
             // IMPORTANTE: usar longPressDraggableHandle (não draggableHandle) pois o item também é clicável.
             // draggableHandle() iniciaria o drag imediatamente ao toque, bloqueando os cliques.
             Box(
@@ -723,6 +726,27 @@ fun ReorderableCollectionItemScope.DashboardEditItemWrapper(
                         onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
                     )
             )
+
+            // Ícone DragHandle acima do overlay (Z-order): arraste imediato sem long press.
+            // Posicionado como último filho do Box para ficar na frente do overlay na ordem de renderização.
+            // Toques na área do ícone são consumidos aqui e não chegam ao overlay abaixo.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DragHandle,
+                    contentDescription = null,
+                    tint = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .draggableHandle(
+                            onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) },
+                            onDragStopped = { haptic.performHapticFeedback(HapticFeedbackType.GestureEnd) },
+                        ),
+                )
+            }
         }
     }
 }
@@ -748,7 +772,7 @@ fun DashboardComponentContent(
 Em `DashboardViewingContent`, cada componente é convertido para sua variante `Viewing` via `component.toViewingVariant(...)` antes de chamar `DashboardComponentContent`.
 Em `DashboardEditItemWrapper`, `item.preview` já é uma `DashboardComponentVariant.XxxType.Preview` — chamado diretamente sem callbacks de interação (componente frozen).
 
-**Resolução de conflito de gestos:** `clickable` dispara no tap-up sem movimento; `draggableHandle` só ativa após long press + movimento. Eles coexistem naturalmente sem conflito.
+**Resolução de conflito de gestos:** `clickable` dispara no tap-up sem movimento; `longPressDraggableHandle` só ativa após long press + movimento. Eles coexistem naturalmente no overlay. O ícone `DragHandle` fica acima do overlay em Z-order, consumindo toques em sua área antes que cheguem ao overlay — nessa área o drag inicia imediatamente, sem long press e sem acionar o tap do overlay.
 
 ---
 
@@ -1558,7 +1582,7 @@ Nenhuma implementação `expect/actual` necessária — tudo via Compose Multipl
 | `DashboardComponentContent` extraído como função compartilhada | Duplicar o `when(component)` em Viewing e Editing | Garante que edit mode renderiza EXATAMENTE o mesmo composable que o modo normal — sem risco de divergência visual |
 | `Crossfade` no nível da tela para a transição de modo | `AnimatedContent` com slides | Como ambos os modos renderizam os mesmos componentes nas mesmas posições, o crossfade cria a ilusão de affordances aparecendo in-place sem custo de implementação de shared elements |
 | Componentes em edit mode: composable original com mock data + overlay | Card simplificado com título | Critério de aceite — o modo edição deve remeter ao modo visualização; lista genérica com títulos é explicitamente reprovada |
-| Componente inteiro como drag handle (sem ícone) | Ícone `DragHandle` dedicado | Preferência do produto: ícone de handle polui o visual do componente; long press no corpo é mais limpo e intuitivo |
+| Long press no corpo + ícone `DragHandle` arrastável sem long press | Ícone `DragHandle` como único ponto de drag, ou drag no corpo sem long press | O ícone é uma affordance visual explícita para usuários que não descobrem o long press; o corpo permite arraste com long press para usuários que já sabem; o drag no ícone sem long press reduz a fricção para quem prefere a affordance visual |
 | Tap no componente → modal de opções de configuração | Botão "−" visível no componente | Preferência do produto: controles explícitos de exclusão poluem o visual; a modal centraliza configurações, enquanto ativação/desativação fica no drag entre seções |
 | `AddComponentPanel` como overlay in-tree | `ModalBottomSheet` do `ModalManager` | Drag cross-container requer espaço de coordenadas compartilhado |
 | `russhwolf/settings` + JSON para persistência | Room (nova tabela) | Sem relações, sem queries — settings é suficiente e já disponível |

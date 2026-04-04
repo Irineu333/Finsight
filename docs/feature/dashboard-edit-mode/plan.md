@@ -245,6 +245,7 @@ Melhorias arquiteturais aplicadas após a conclusão da Etapa 4, consolidando de
 - **`DashboardEditPlaceholder`** compartilhado entre `ActivePlaceholder` e `AvailablePlaceholder` (antes havia só `DashboardAvailablePlaceholder`)
 - **`interceptLongPress`** substituiu `combinedClickable(onLongClick)` na detecção do long press em `DashboardViewingContent`
 - **`DashboardEditItemWrapper` redesenhado:** adicionado cabeçalho com título do componente + ícone `DragHandle` acima do preview; diferenciação ativo/inativo trocada de overlay colorido para `alpha` (1f ativo, 0.6f inativo) aplicado externamente no `DashboardEditingContent`
+- **Ícone `DragHandle` arrastável sem long press:** o ícone é posicionado como último filho do `Box` raiz (acima do overlay em Z-order) com `draggableHandle()` — arraste inicia imediatamente ao toque no ícone. O overlay mantém `longPressDraggableHandle()` para o restante do corpo.
 - **`DashboardComponentOptionsModal`** recebe `accounts` e `creditCards` explicitamente (necessário para as configs adicionadas na Etapa 4)
 - **Modal organizada em seções:** "Layout" (universal) e "Conteúdo" (específica por componente)
 

@@ -144,3 +144,38 @@ Depois disso, a lista é ordenada pelo dia efetivo de vencimento, o que faz mais
 
 **Observação sobre recorrência:**
 Quando um config de UI descreve um conceito temporal, o nome da chave precisa refletir exatamente o eixo de filtragem. "Dias à frente" sugere janela futura; se a implementação estiver medindo dias desde o vencimento, o nome correto é outro. Misturar esses dois significados no mesmo config cria comportamento aparentemente "bugado" mesmo quando o código está executando como escrito.
+
+---
+
+## Issue 4 — Configuração salva sobrevivia ao reativar componente sem default explícito
+
+**Severidade:** Média — resolvida
+
+**Descrição:**
+Algumas configurações de componentes continuavam valendo depois de desativar e reativar o componente. O comportamento era perceptível ao sair do modo edição e entrar novamente: componentes inativos deveriam voltar com a configuração padrão, mas certas chaves antigas reapareciam porque ainda existiam nas preferências salvas.
+
+**Causa raiz:**
+`DashboardComponentType.defaultConfig` não declarava todas as chaves relevantes de cada componente. Quando uma configuração era salva e depois o componente passava a depender do default ao ser restaurado, não havia valor default explícito para sobrescrever aquela chave.
+
+Na prática, o fluxo acabava fazendo merge entre:
+
+- o que existia em `defaultConfig`
+- o que já estava salvo em `DashboardComponentPreference.config`
+
+Se a chave não existia no default, o valor salvo sobrevivia por inércia.
+
+**Correção:**
+Preencher `DashboardComponentType.defaultConfig` com o conjunto completo de configurações iniciais de cada componente, incluindo chaves universais e específicas.
+
+Exemplos do ajuste:
+
+- `top_spacing` passou a existir explicitamente com `"false"` nos componentes em que antes estava implícito
+- configs como `show_header`, `hide_when_empty`, `excluded_account_ids`, `excluded_card_ids`, `count`, `upcoming_days_ahead` e `hidden_actions` passaram a ter valor inicial definido no próprio tipo
+
+**Resultado:**
+- componentes ativos continuam restaurando preferências salvas
+- componentes inativos voltam para o estado inicial definido pelo tipo
+- configs antigas deixam de “vazar” quando a chave não existe mais implicitamente no fluxo de restore
+
+**Observação sobre recorrência:**
+Quando um `defaultConfig` é parcial, ele deixa de ser uma fonte de verdade e vira apenas um patch. Nesse cenário, qualquer valor persistido ausente no default tende a sobreviver sem intenção explícita. Para componentes configuráveis, o default precisa descrever o estado inicial completo, não só uma fração dele.

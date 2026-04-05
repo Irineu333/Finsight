@@ -15,6 +15,14 @@ O que já existe e é relevante para a implementação:
 
 ---
 
+## Referências
+
+Bibliotecas de terceiros relevantes para esta feature.
+
+- [Nome](../../../references/nome.md)
+
+---
+
 ## Etapas
 
 - [ ] [01 — Nome da etapa](steps/01-nome.md)

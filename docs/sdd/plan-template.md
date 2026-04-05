@@ -28,3 +28,11 @@ O que já existe e é relevante para a implementação:
 Desvios são mudanças em relação ao que foi planejado. Registre aqui com impacto para guiar as etapas seguintes.
 
 - **Etapa 01:** [descrição curta do desvio e impacto]
+
+---
+
+## Issues
+
+Issues descobertas durante validação ou revisão de código.
+
+- [ ] [01 — descrição curta](issues/01-descricao.md)

@@ -13,6 +13,9 @@ Use as skills abaixo diretamente dos caminhos locais, sem cópia e sem symlink:
 - `kmp-architecture`: `./.claude/skills/kmp-architecture/SKILL.md`
 - `kmp-unit-testing`: `./.claude/skills/kmp-unit-testing/SKILL.md`
 - `room-database`: `./.claude/skills/room-database/SKILL.md`
+- `sdd-specify`: `./.claude/skills/sdd-specify/SKILL.md`
+- `sdd-plan`: `./.claude/skills/sdd-plan/SKILL.md`
+- `sdd-execute`: `./.claude/skills/sdd-execute/SKILL.md`
 
 ## Regra de acionamento das skills
 - Se o usuário citar uma skill pelo nome, carregue o respectivo `SKILL.md` e siga as instruções.

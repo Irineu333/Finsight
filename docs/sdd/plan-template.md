@@ -17,63 +17,14 @@ O que já existe e é relevante para a implementação:
 
 ## Etapas
 
-### Etapa 1 — [Nome descritivo]
-
-**O que fazer:**
-Descrição objetiva do que deve ser implementado nessa etapa. Inclui quais camadas são tocadas e quais responsabilidades são criadas ou modificadas.
-
-**Arquivos afetados:**
-- `caminho/para/Arquivo.kt` — o que muda
-- `caminho/para/NovoArquivo.kt` — o que cria
-
-**Critério de aceite:**
-
-Validação manual:
-1. ...
-2. ...
-
-Revisão de código:
-- [ ] ...
-- [ ] ...
-
-**Status:** `pendente` | `em andamento` | `concluída` | `concluída com desvio`
-
----
-
-### Etapa 2 — [Nome descritivo]
-
-**O que fazer:**
-...
-
-**Arquivos afetados:**
-- ...
-
-**Critério de aceite:**
-
-Validação manual:
-1. ...
-
-Revisão de código:
-- [ ] ...
-
-**Status:** `pendente`
-
----
-
-<!-- Repita o bloco acima para cada etapa -->
+- [ ] [01 — Nome da etapa](steps/01-nome.md)
+- [ ] [02 — Nome da etapa](steps/02-nome.md)
+- [ ] [03 — Nome da etapa](steps/03-nome.md)
 
 ---
 
 ## Registro de desvios
 
-Desvios são mudanças em relação ao que foi planejado. Devem ser registrados com impacto para guiar as etapas seguintes.
+Desvios são mudanças em relação ao que foi planejado. Registre aqui com impacto para guiar as etapas seguintes.
 
-### Desvio — Etapa N: [descrição curta]
-
-**O que era esperado:** ...
-
-**O que foi feito:** ...
-
-**Por quê:** ...
-
-**Impacto nas etapas seguintes:** ...
+- **Etapa 01:** [descrição curta do desvio e impacto]

@@ -19,9 +19,17 @@ A spec cria um contrato explícito entre intenção e implementação, tornando 
 ## Estrutura de arquivos
 
 ```
-docs/features/{feature}/
-  spec.md    # o que o sistema deve fazer (decisões de produto)
-  plan.md    # como entregar (decisões de engenharia)
+docs/
+  references/        # documentação de bibliotecas de terceiros (compartilhada)
+  features/
+    {feature}/
+      spec.md        # o que o sistema deve fazer (decisões de produto)
+      plan.md        # como entregar (decisões de engenharia)
+      steps/         # etapas de implementação (decisões de engenharia)
+        01-nome.md
+        02-nome.md
+      issues/        # bugs e melhorias descobertas durante a implementação
+        01-descricao.md
 ```
 
 ---
@@ -29,13 +37,16 @@ docs/features/{feature}/
 ## O fluxo
 
 ```
-1. Escrever spec.md
-2. Revisar e ajustar a spec (remover código desnecessário, garantir clareza)
-3. Escrever plan.md dividindo em etapas verificáveis
-4. Implementar uma etapa por vez
-5. Validar manualmente + revisar código contra o critério de aceite
-6. Registrar desvios no plan.md
-7. Repetir a partir do passo 4
+1. Identificar dependências externas e consultar docs/references/
+2. Escrever spec.md
+3. Revisar e ajustar a spec (remover código desnecessário, garantir clareza)
+4. Atualizar docs/references/ se novos padrões de uso foram definidos
+5. Escrever plan.md dividindo em etapas verificáveis
+6. Implementar uma etapa por vez
+7. Validar manualmente + revisar código contra o critério de aceite
+8. Registrar desvios no step e no plan.md
+9. Registrar issues descobertas em issues/
+10. Repetir a partir do passo 6
 ```
 
 A spec raramente muda durante a implementação. O plano pode e deve ser ajustado conforme a implementação avança.
@@ -79,6 +90,16 @@ A spec é o principal mecanismo de prevenção de débito comportamental.
 
 ---
 
+## Referências externas
+
+`docs/references/` contém documentação de bibliotecas de terceiros adaptada ao contexto do projeto. Serve como contexto pré-carregado para a IA — evita buscas repetidas na internet e previne usos incorretos.
+
+- Durante a spec, identifique quais referências são relevantes para a feature e liste-as no `plan.md`. 
+- Pesquise a documentação oficial e resuma os padrões de uso relevantes para o projeto.
+- Se novos padrões de uso forem definidos durante a implementação, atualize a referência correspondente.
+
+---
+
 ## Usando IA para gerar specs
 
 É válido usar IA para gerar o rascunho da spec. Ao revisar, remova:
@@ -101,7 +122,8 @@ Em cada etapa de implementação, forneça:
 
 - Spec completa (o agente precisa da intenção total)
 - Plano completo (o agente precisa saber o que vem depois)
-- Etapa atual destacada ("implemente apenas a etapa N")
+- Arquivo da etapa atual ("implemente apenas a etapa N")
+- Referências relevantes listadas no plano
 - Desvios registrados de etapas anteriores
 
 Sem visão do todo, o agente toma decisões localmente corretas que dificultam etapas futuras.

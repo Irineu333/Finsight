@@ -34,9 +34,9 @@ Read the spec and identify:
 
 Present the analysis to the user and ask for confirmation before proceeding.
 
-### 2. Define the step breakdown
+### 2. Define and validate the step breakdown
 
-Divide the work into small, verifiable steps. Each step should:
+Propose the step breakdown to the user BEFORE writing any files. Each step should:
 
 - Touch as few layers as possible (ideally one).
 - Be independently verifiable (has its own acceptance criteria).
@@ -53,6 +53,15 @@ Typical step progression:
 7. Navigation wiring and DI registration
 
 Not every feature needs all steps. Adapt to the actual scope.
+
+Present the proposed steps as a numbered list with a brief description of each.
+Ask the user:
+- Does the breakdown look right?
+- Are the steps too coarse or too fine?
+- Is the order correct?
+- Any steps to add, remove, or merge?
+
+Do NOT write any files until the user approves the step breakdown.
 
 ### 3. Write the plan
 

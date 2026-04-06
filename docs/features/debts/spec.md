@@ -12,6 +12,9 @@ O que já existe no sistema relevante para essa feature:
 - `Operation` + `Transaction` — infraestrutura de lançamentos que registrará os pagamentos efetuados
 - `Category` — categorias de despesa já existem e podem classificar a dívida
 - `CreditCard` + `Invoice` — referência de ciclo de vida com estados e operações por estado
+- `Recurring` + `RecurringOccurrence` — sistema de pendências com confirmação/skip que serve de modelo para parcelas
+- `GetPendingRecurringUseCase` — padrão de detecção de pendências calculada em memória (sem status PENDING no banco)
+- `ConfirmRecurringUseCase` / `SkipRecurringUseCase` — padrão de efetivação que cria Operation + Occurrence
 - Modais de formulário, confirmação de exclusão e `ModalManager` já implementados
 - Navegação via `AppRoute` (sealed class) com rotas tipadas
 
@@ -68,13 +71,45 @@ Então uma transação de DESPESA é gerada na conta selecionada
      e se o saldo devedor chegar a zero, a dívida passa para status PAGA
 ```
 
+**Visualizar parcelas pendentes**
+```
+Dado que existe uma dívida ativa com plano de parcelas
+     e o dia de vencimento da parcela atual já chegou ou passou
+     e a parcela ainda não foi confirmada nem ignorada
+Quando o usuário acessa a tela de Dívidas
+Então vê a parcela pendente destacada na dívida correspondente
+     e pode confirmar ou ignorar a parcela diretamente
+```
+
+**Confirmar parcela pendente**
+```
+Dado que existe uma parcela pendente
+Quando o usuário abre o modal de confirmação da parcela
+     e confirma com valor (editável, padrão = valor total ÷ qtd de parcelas), data e conta de origem
+Então uma transação de DESPESA é gerada na conta selecionada
+     e o saldo devedor da dívida é reduzido pelo valor confirmado
+     e a ocorrência da parcela é registrada como CONFIRMADA
+     e se o saldo devedor chegar a zero, a dívida passa para status PAGA
+```
+
+**Ignorar parcela pendente**
+```
+Dado que existe uma parcela pendente
+Quando o usuário opta por ignorar a parcela
+Então nenhuma transação é gerada
+     e o saldo devedor não é alterado
+     e a ocorrência da parcela é registrada como IGNORADA
+     e a parcela some da lista de pendências
+```
+
 **Visualizar detalhes de uma dívida**
 ```
 Dado que existe uma dívida cadastrada
 Quando o usuário abre os detalhes da dívida
 Então vê: nome, credor, valor total, saldo devedor, data de início, data de vencimento (se informada)
-     e vê o plano de parcelas (se configurado): quantidade, valor por parcela
+     e vê o plano de parcelas (se configurado): quantidade, valor por parcela, dia do mês
      e vê o histórico de pagamentos realizados com data, valor e conta de origem
+     e vê o histórico de ocorrências de parcelas (confirmadas e ignoradas)
 ```
 
 ---
@@ -84,10 +119,27 @@ Então vê: nome, credor, valor total, saldo devedor, data de início, data de v
 **Dívida com plano de parcelas**
 ```
 Dado que o usuário está cadastrando uma dívida
-Quando configura um plano de parcelas informando a quantidade
+Quando configura um plano de parcelas informando quantidade e dia do mês de vencimento
 Então o sistema exibe o valor estimado por parcela (valor total ÷ quantidade de parcelas)
-     e o plano fica registrado como referência
-     mas o usuário ainda pode pagar qualquer valor a qualquer momento (pagamento livre)
+     e o plano fica registrado com o dia de vencimento mensal
+     e a cada mês, quando o dia de vencimento chega, a próxima parcela não-tratada aparece como pendente
+     mas o usuário ainda pode pagar qualquer valor a qualquer momento via pagamento livre
+```
+
+**Parcelas pendentes não bloqueiam pagamentos livres**
+```
+Dado que existe uma dívida ativa com parcelas pendentes
+Quando o usuário registra um pagamento livre
+Então o pagamento é processado normalmente
+     e as parcelas pendentes permanecem disponíveis para confirmação ou ignorar
+```
+
+**Dívida quitada com parcelas pendentes restantes**
+```
+Dado que uma dívida ativa tem parcelas pendentes e saldo devedor maior que zero
+Quando o saldo devedor chega a zero (por pagamento livre ou confirmação de parcela)
+Então a dívida passa para status PAGA
+     e as parcelas restantes não aparecem mais como pendentes
 ```
 
 **Pagamento que zera o saldo**
@@ -175,14 +227,19 @@ Então o pagamento não é salvo
 - O saldo devedor é calculado como: `valor total − soma de todos os pagamentos registrados`
 - Um pagamento não pode exceder o saldo devedor atual
 - Uma dívida com saldo devedor igual a zero assume automaticamente o status PAGA
-- Dívidas PAGAS não aceitam novos pagamentos
+- Dívidas PAGAS não aceitam novos pagamentos nem geram novas parcelas pendentes
 - Todo pagamento gera obrigatoriamente uma transação de DESPESA em uma conta
 - O lançamento inicial (quando optado) gera uma transação de RECEITA na conta selecionada, com a data de início da dívida
 - Não é possível alterar o valor total de uma dívida que já possui pagamentos, pois isso invalidaria o histórico
 - A exclusão de uma dívida não estorna as transações já geradas pelos pagamentos
 - Credor é informação textual livre (não é uma entidade do sistema)
-- O plano de parcelas é apenas uma referência visual; não cria agendamentos nem parcelas individuais no sistema
-- Data de vencimento é opcional
+- Data de vencimento global da dívida é opcional e independente do plano de parcelas
+- **Plano de parcelas:** requer quantidade de parcelas e dia do mês de vencimento; o valor por parcela é `valor total ÷ quantidade` (calculado, não armazenado)
+- **Detecção de parcela pendente:** calculada em memória — uma parcela é pendente quando a dívida está ATIVA, o dia de vencimento do mês corrente já chegou ou passou, o número da parcela não ultrapassa o total configurado e não existe ocorrência (CONFIRMADA ou IGNORADA) para aquele ciclo
+- **Ciclo de parcela:** determinado pelos meses decorridos desde o mês de início da dívida (mês 1 = mês de criação); a parcela N é devida no mês N a partir do início
+- **Confirmar parcela** é equivalente a registrar um pagamento livre, mas iniciado pelo sistema de pendências; o valor padrão é o valor estimado por parcela, porém editável
+- **Ignorar parcela** registra a ocorrência como IGNORADA sem gerar transação; o saldo devedor não é alterado
+- Pagamentos livres e confirmação de parcelas coexistem; ambos reduzem o mesmo saldo devedor
 
 ---
 
@@ -201,7 +258,7 @@ Então o pagamento não é salvo
 - Dívidas que terceiros têm com o usuário (contas a receber)
 - Importação automática de dívidas a partir de extratos bancários
 - Relatórios ou gráficos específicos de endividamento
-- Agendamento automático de parcelas como lançamentos futuros
+- Agendamento automático de parcelas como transações futuras no extrato
 - Integração das dívidas no Dashboard (resumo na tela inicial)
 - Vinculação de dívidas a categorias no orçamento
 
@@ -220,15 +277,23 @@ Então o pagamento não é salvo
 7. Editar nome/credor/vencimento de uma dívida com pagamentos → alterações salvas
 8. Tentar alterar valor total de dívida com pagamentos → opção bloqueada ou erro
 9. Reabrir dívida paga → status volta para ATIVA, histórico de pagamentos preservado
-10. Criar dívida com plano de parcelas → valor por parcela exibido corretamente (total ÷ qtd)
+10. Criar dívida com plano de parcelas (ex: 12x, dia 10) → valor por parcela exibido corretamente (total ÷ 12)
+11. Com dia de vencimento já passado no mês corrente → parcela aparece como pendente na tela de dívidas
+12. Confirmar parcela pendente (valor editável, conta selecionada) → transação de despesa gerada, saldo devedor reduz, parcela some das pendências
+13. Ignorar parcela pendente → nenhuma transação gerada, saldo devedor inalterado, parcela some das pendências
+14. Registrar pagamento livre em dívida com parcelas pendentes → saldo reduz, parcelas pendentes permanecem
+15. Zerar saldo por pagamento livre enquanto ainda havia parcelas futuras → dívida PAGA, próximas parcelas não aparecem mais como pendentes
 
 ### Revisão de código
 
-- [ ] `Debt` e `DebtPayment` pertencem ao domínio, sem dependências de framework
-- [ ] `DebtRepository` e `DebtPaymentRepository` são interfaces no domínio
+- [ ] `Debt` e `DebtInstallmentOccurrence` pertencem ao domínio, sem dependências de framework
+- [ ] `DebtRepository` e `DebtInstallmentOccurrenceRepository` são interfaces no domínio
 - [ ] `DebtError` e `DebtPaymentError` seguem o padrão com `message` e `toUiText()`
 - [ ] Pagamentos usam use cases existentes de transação para gerar os lançamentos
 - [ ] Saldo devedor é calculado em use case, não no ViewModel nem na UI
+- [ ] Detecção de parcelas pendentes é calculada em memória (use case), sem status PENDING no banco
+- [ ] Confirmar parcela cria Operation + DebtInstallmentOccurrence (CONFIRMADA), análogo a `ConfirmRecurringUseCase`
+- [ ] Ignorar parcela cria apenas DebtInstallmentOccurrence (IGNORADA), sem Operation
 - [ ] `DebtUiState` segue o padrão Loading/Empty/Content
 - [ ] Dívidas PAGAS ficam fora do estado `Content` principal (seção separada ou flag de toggle)
 - [ ] Exclusão de dívida apresenta modal de confirmação antes de executar

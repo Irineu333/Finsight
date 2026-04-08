@@ -13,23 +13,34 @@ class DashboardPreferencesRepository(
     private val settings: Settings,
 ) : IDashboardPreferencesRepository {
 
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
     private val _preferences = MutableStateFlow(load())
 
     override fun observe(): StateFlow<List<DashboardComponentPreference>?> = _preferences
 
     override suspend fun save(preferences: List<DashboardComponentPreference>) {
-        val json = Json.encodeToString(preferences.map {
+        val encoded = json.encodeToString(preferences.map {
             SerializablePreference(key = it.key, position = it.position, config = it.config)
         })
-        settings.putString(KEY, json)
+        settings.putString(KEY, encoded)
         _preferences.value = preferences
     }
 
     private fun load(): List<DashboardComponentPreference>? {
-        val json = settings.getStringOrNull(KEY) ?: return null
+        val encoded = settings.getStringOrNull(KEY) ?: return null
         return runCatching {
-            Json.decodeFromString<List<SerializablePreference>>(json)
-                .map { DashboardComponentPreference(key = it.key, position = it.position, config = it.config) }
+            json.decodeFromString<List<SerializablePreference>>(encoded)
+                .map {
+                    DashboardComponentPreference(
+                        key = it.key,
+                        position = it.position,
+                        config = it.config
+                    )
+                }
         }.getOrNull()
     }
 

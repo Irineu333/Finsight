@@ -56,35 +56,26 @@
     <string name="dashboard_accounts">Accounts</string>
     <string name="dashboard_installments">Installments</string>
     <string name="dashboard_support">Support</string>
-    <string name="dashboard_default">Default</string>
-    <string name="dashboard_current_balance">Current Balance</string>
     <string name="dashboard_total_balance">Total Balance</string>
     <string name="dashboard_add_account">Add account</string>
     <string name="dashboard_reports">Reports</string>
 
     <!-- Report Config Screen -->
     <string name="report_config_title">New Report</string>
-    <string name="report_config_perspective">Perspective</string>
     <string name="report_config_sections">Sections</string>
     <string name="report_config_perspective_account">Account</string>
     <string name="report_config_perspective_credit_card">Credit Card</string>
     <string name="report_config_date_range">Period</string>
-    <string name="report_config_start_date">Start date</string>
-    <string name="report_config_end_date">End date</string>
     <string name="report_config_include_spending_by_category">Spending by category</string>
     <string name="report_config_include_income_by_category">Income by category</string>
     <string name="report_config_include_transactions">Transaction list</string>
     <string name="report_config_generate">Generate Report</string>
-    <string name="report_config_cancel">Cancel</string>
-    <string name="report_config_confirm">Confirm</string>
-    <string name="report_config_period_select">Tap to select</string>
     <string name="report_config_period_last_7_days">Last 7 days</string>
     <string name="report_config_period_last_30_days">Last 30 days</string>
     <string name="report_config_period_this_month">This month</string>
     <string name="report_config_period_last_month">Last month</string>
     <string name="report_config_period_this_year">This year</string>
     <string name="report_config_accounts">Accounts</string>
-    <string name="report_config_no_accounts">No accounts registered</string>
     <string name="report_config_credit_cards">Cards</string>
     <string name="report_config_invoice">Invoice</string>
 
@@ -105,11 +96,6 @@
     <string name="report_viewer_action_share_html">Share HTML</string>
     <string name="report_viewer_action_print">Print</string>
     <string name="report_output_generated_at">Generated at</string>
-    <string name="report_output_share_success">Report shared successfully.</string>
-    <string name="report_output_share_success_with_location">Report saved to: %1$s</string>
-    <string name="report_output_print_queued">Report sent to printer queue.</string>
-    <string name="report_output_error_printing_unsupported">Printing is not available on this platform.</string>
-    <string name="report_output_error_generic">Unable to complete report operation.</string>
     <string name="report_output_column_category">Category</string>
     <string name="report_output_column_transaction">Transaction</string>
     <string name="report_output_column_amount">Amount</string>
@@ -135,16 +121,12 @@
     <string name="support_form_title_label">Title</string>
     <string name="support_form_description_label">Description</string>
     <string name="support_form_submit">Send</string>
-    <string name="support_detail_empty">Issue not found.</string>
-    <string name="support_detail_fallback_title">Issue</string>
     <string name="support_messages_empty_title">No messages yet</string>
     <string name="support_messages_empty_body">The first reply in this conversation will appear here.</string>
     <string name="support_reply_message_label">Message</string>
     <string name="support_reply_send">Reply</string>
     <string name="support_chat_divider_today">Today</string>
     <string name="support_chat_divider_yesterday">Yesterday</string>
-    <string name="support_author_you">You</string>
-    <string name="support_author_support">Support</string>
 
     <!-- Support errors -->
     <string name="support_error_empty_title">Title is required.</string>
@@ -294,15 +276,12 @@
     <string name="category_form_edit_title">Edit Category</string>
     <string name="category_form_new_title">New Category</string>
     <string name="category_form_name_label">Name</string>
-    <string name="category_form_icon_label">Icon</string>
     <string name="category_form_icon_select">Select icon</string>
     <string name="category_form_icon_helper">Tap to open the icon list</string>
     <string name="category_form_icon_modal_title">Choose an icon</string>
     <string name="category_form_expense">Expense</string>
     <string name="category_form_income">Income</string>
     <string name="category_form_save">Save</string>
-    <string name="category_form_see_less">See less</string>
-    <string name="category_form_see_more">See more (%1$d)</string>
 
     <!-- Budget Form Modal -->
     <string name="budget_form_edit_title">Edit Budget</string>
@@ -412,10 +391,6 @@
     <string name="edit_invoice_balance_save">Save</string>
 
     <!-- Edit Invoice Payment Modal -->
-    <string name="edit_invoice_payment_title">Edit Invoice Payment</string>
-    <string name="edit_invoice_payment_amount_label">Amount</string>
-    <string name="edit_invoice_payment_date_label">Date</string>
-    <string name="edit_invoice_payment_save">Save</string>
 
     <!-- Edit Transaction Modal -->
     <string name="edit_transaction_title">Edit Transaction</string>
@@ -442,7 +417,6 @@
     <string name="view_operation_invoice_label">Invoice</string>
     <string name="view_operation_installment_label">Installment</string>
     <string name="view_operation_recurring_label">Recurring</string>
-    <string name="view_operation_recurring_cycle_value">Cycle %1$d</string>
     <string name="view_operation_deleted">Deleted</string>
     <string name="view_operation_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
     <string name="view_operation_delete">Delete</string>
@@ -520,7 +494,6 @@
 
     <string name="multi_category_selector_none">None</string>
     <string name="multi_category_selector_and">and</string>
-    <string name="multi_category_selector_plural">%1$d categories</string>
     <string name="multi_category_selector_label">Categories</string>
 
     <string name="credit_card_ui_current_invoice">Current Invoice</string>
@@ -531,8 +504,6 @@
     <string name="credit_card_ui_day">Day %1$d</string>
     <string name="credit_card_ui_edit_invoice">Edit invoice</string>
 
-    <string name="dashboard_credit_card_current_invoice">Current Invoice</string>
-    <string name="dashboard_credit_card_available_limit">Available Limit</string>
     <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
     <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
     <string name="dashboard_credit_card_advance">Advance</string>
@@ -543,12 +514,6 @@
     <string name="invoice_summary_card_invoice">Invoice</string>
     <string name="invoice_summary_card_edit_invoice">Edit invoice</string>
 
-    <string name="credit_card_total_title">Credit Cards</string>
-    <string name="credit_card_total_invoice_singular">%1$d invoice</string>
-    <string name="credit_card_total_invoice_plural">%1$d invoices</string>
-    <string name="credit_card_total_expenses">Expenses</string>
-    <string name="credit_card_total_advance_payments">Advance Payments</string>
-    <string name="credit_card_total_invoices">Invoices</string>
 
     <string name="category_spending_card_title">Spending by Category</string>
 
@@ -633,10 +598,8 @@
     <string name="recurring_form_amount_label">Amount</string>
     <string name="recurring_form_day_label">Day of month</string>
     <string name="recurring_form_save">Save</string>
-    <string name="recurring_form_delete">Delete Recurring</string>
 
     <!-- Confirm Recurring Modal -->
-    <string name="recurring_confirm_subtitle">Review and confirm the entry</string>
     <string name="recurring_confirm_amount_label">Amount</string>
     <string name="recurring_confirm_date_label">Date</string>
     <string name="recurring_confirm_button">Confirm</string>
@@ -644,7 +607,6 @@
 
     <!-- Recurring status -->
     <string name="recurring_status_active">Active</string>
-    <string name="recurring_status_pending">Pending</string>
     <string name="recurring_status_inactive">Inactive</string>
 
     <!-- View Recurring Modal -->
@@ -705,9 +667,10 @@
     <string name="dashboard_edit_title">Edit</string>
     <string name="dashboard_edit_confirm">Confirm</string>
     <string name="dashboard_edit_cancel">Cancel</string>
-    <string name="remove_component">Remove</string>
     <string name="dashboard_edit_active_placeholder">Drag here to add a component</string>
     <string name="dashboard_edit_available_section">Available to add</string>
+    <string name="dashboard_edit_remove_all">Remove all</string>
+    <string name="dashboard_edit_add_all">Add all</string>
     <string name="dashboard_edit_available_placeholder">Drag here to hide a component</string>
     <string name="dashboard_empty_title">Your dashboard is empty</string>
     <string name="dashboard_empty_description">Add components to customize this view again.</string>
@@ -731,6 +694,8 @@
     <string name="component_config_count">Item count</string>
     <string name="component_config_all">All</string>
     <string name="component_config_min_visible_action">Keep at least one action visible</string>
+    <string name="component_config_confirm">Confirm</string>
+    <string name="component_config_cancel">Cancel</string>
 
     <!-- Dashboard Preview Mock Data -->
     <string name="preview_account_main">Wallet</string>

@@ -5,6 +5,8 @@ import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.ui.screen.dashboard.AccountsOverviewConfig
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentConfig
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentType
+import com.neoutils.finsight.ui.screen.dashboard.QuickActionType
+import com.neoutils.finsight.ui.screen.dashboard.QuickActionsConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -88,6 +90,9 @@ class GetDashboardPreferencesUseCase(
             config = mapOf(
                 DashboardComponentConfig.TOP_SPACING to "true",
                 DashboardComponentConfig.SHOW_HEADER to "true",
+                QuickActionsConfig.HIDDEN_ACTIONS to listOf(
+                    QuickActionType.SUPPORT.name
+                ).joinToString(","),
             ),
         ),
     )

@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.databaseModule
 import com.neoutils.finsight.di.mapperModule
 import com.neoutils.finsight.di.reportModule
@@ -22,6 +23,7 @@ fun main() = application {
             repositoryModule,
             useCaseModules,
             reportModule,
+            analyticsModule,
             viewModelModule,
         )
     }

@@ -42,12 +42,12 @@ Criar a interface `Analytics` no domínio, as implementações de plataforma e o
 2. No Desktop, abrir o app e confirmar que nenhuma exceção é lançada (sem analytics real).
 
 **Revisão de código:**
-- [ ] `Analytics` é uma interface em `domain/analytics/` sem dependências de plataforma
-- [ ] Implementações Firebase estão em `androidMain` e `iosMain` — nunca em `commonMain`
-- [ ] `NoOpAnalytics` em `jvmMain` implementa todos os métodos sem nenhuma lógica
-- [ ] Dependência `firebase-analytics` declarada apenas para Android e iOS no `build.gradle.kts`
-- [ ] `Analytics` registrado como `single {}` no Koin
-- [ ] `analyticsModule` adicionado nos três entry points
+- [x] `Analytics` é uma interface em `domain/analytics/` sem dependências de plataforma
+- [x] Implementações Firebase estão em `androidMain` e `iosMain` — nunca em `commonMain`
+- [x] `NoOpAnalytics` em `jvmMain` implementa todos os métodos sem nenhuma lógica
+- [x] Dependência `firebase-analytics` declarada apenas para Android e iOS no `build.gradle.kts`
+- [x] `Analytics` registrado como `single {}` no Koin
+- [x] `analyticsModule` adicionado nos três entry points
 
 ---
 

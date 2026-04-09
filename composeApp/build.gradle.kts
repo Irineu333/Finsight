@@ -82,6 +82,10 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+            implementation(libs.gitlive.firebase.analytics)
+        }
+        iosMain.dependencies {
+            implementation(libs.gitlive.firebase.analytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

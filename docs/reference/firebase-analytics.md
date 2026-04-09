@@ -37,8 +37,8 @@ Firebase.analytics.logEvent("event_name")
 ### Evento de screen view (padrão Firebase)
 
 ```kotlin
-Firebase.analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW) {
-    param(FirebaseAnalytics.Param.SCREEN_NAME, "screen_name")
+Firebase.analytics.logEvent(FirebaseAnalyticsEvents.SCREEN_VIEW) {
+    param(FirebaseAnalyticsParam.SCREEN_NAME, "screen_name")
 }
 ```
 

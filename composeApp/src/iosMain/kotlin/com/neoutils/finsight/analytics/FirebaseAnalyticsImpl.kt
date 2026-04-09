@@ -2,14 +2,16 @@ package com.neoutils.finsight.analytics
 
 import com.neoutils.finsight.domain.analytics.Analytics
 import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.analytics.FirebaseAnalyticsEvents
+import dev.gitlive.firebase.analytics.FirebaseAnalyticsParam
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.analytics.logEvent
 
 class FirebaseAnalyticsImpl : Analytics {
 
     override fun logScreenView(screenName: String) {
-        Firebase.analytics.logEvent("screen_view") {
-            param("screen_name", screenName)
+        Firebase.analytics.logEvent(FirebaseAnalyticsEvents.SCREEN_VIEW) {
+            param(FirebaseAnalyticsParam.SCREEN_NAME, screenName)
         }
     }
 

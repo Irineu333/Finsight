@@ -30,14 +30,6 @@ class EditAccountBalanceViewModel(
     private val modalManager: ModalManager
 ) : ViewModel() {
 
-    init {
-        initialAccount()
-    }
-
-    private fun initialAccount() = viewModelScope.launch {
-        selectedAccount.value = accountRepository.getAccountById(account.id) ?: account
-    }
-
     private val accounts = flow {
         emit(accountRepository.getAllAccounts())
     }
@@ -52,6 +44,10 @@ class EditAccountBalanceViewModel(
             )
         }
     }
+
+    private val timeZone get() = TimeZone.currentSystemDefault()
+
+    private val currentDate get() = Clock.System.now().toLocalDateTime(timeZone).date
 
     val uiState = combine(
         accounts,
@@ -73,8 +69,13 @@ class EditAccountBalanceViewModel(
         initialValue = EditAccountBalanceUiState.Loading
     )
 
-    private val timeZone get() = TimeZone.currentSystemDefault()
-    private val currentDate get() = Clock.System.now().toLocalDateTime(timeZone).date
+    init {
+        initialAccount()
+    }
+
+    private fun initialAccount() = viewModelScope.launch {
+        selectedAccount.value = accountRepository.getAccountById(account.id) ?: account
+    }
 
     fun onAction(action: EditAccountBalanceAction) {
         when (action) {

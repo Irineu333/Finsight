@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
@@ -152,21 +153,9 @@ private fun MonthGrid(
     val currentYearMonth = remember {
         Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
     }
+    val dateFormats = LocalDateFormats.current
 
-    val months = listOf(
-        Month.JANUARY to "JAN",
-        Month.FEBRUARY to "FEV",
-        Month.MARCH to "MAR",
-        Month.APRIL to "ABR",
-        Month.MAY to "MAI",
-        Month.JUNE to "JUN",
-        Month.JULY to "JUL",
-        Month.AUGUST to "AGO",
-        Month.SEPTEMBER to "SET",
-        Month.OCTOBER to "OUT",
-        Month.NOVEMBER to "NOV",
-        Month.DECEMBER to "DEZ"
-    )
+    val months = Month.entries
 
     Column(
         modifier = modifier,
@@ -177,12 +166,12 @@ private fun MonthGrid(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                row.forEach { (month, label) ->
+                row.forEach { month ->
                     val isCurrentMonth = selectedYear == currentYearMonth.year &&
                         month == currentYearMonth.month
 
                     MonthChip(
-                        label = label,
+                        label = dateFormats.monthName(month).take(3).uppercase(),
                         isSelected = month == selectedMonth,
                         isCurrentMonth = isCurrentMonth,
                         onClick = { onMonthSelected(month) },

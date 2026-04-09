@@ -5,6 +5,7 @@ package com.neoutils.finsight.util
 import androidx.compose.runtime.compositionLocalOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.Month
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
@@ -29,6 +30,8 @@ class DateFormats(
     private val monthNames: MonthNames,
     private val dayOfWeekNames: DayOfWeekNames,
 ) {
+    fun monthName(month: Month): String = monthNames.names[month.ordinal]
+
     private val abbreviatedMonthNames = MonthNames(monthNames.names.map { it.take(3) })
 
     val dayOfWeek = LocalDate.Format {

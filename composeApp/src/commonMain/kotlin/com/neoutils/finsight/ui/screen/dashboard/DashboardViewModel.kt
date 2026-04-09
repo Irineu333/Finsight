@@ -4,31 +4,19 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.extension.signedImpact
-import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.extension.toYearMonth
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
-import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.DashboardComponentPreference
+import com.neoutils.finsight.domain.repository.*
+import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
-import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
-import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
-import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.combine
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -41,13 +29,11 @@ class DashboardViewModel(
     private val budgetRepository: IBudgetRepository,
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
-    private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
-    private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
-    private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
-    private val invoiceUiMapper: InvoiceUiMapper,
+    private val getDashboardPreferences: GetDashboardPreferencesUseCase,
+    private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
+    private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
+    private val dashboardPreviewFactory: DashboardPreviewFactory,
 ) : ViewModel() {
 
     init {
@@ -57,101 +43,283 @@ class DashboardViewModel(
     }
 
     private val instant get() = Clock.System.now()
-    private val currentMonth get() = instant.toYearMonth()
 
-    private val invoicesFlow = invoiceRepository
+    private val invoices = invoiceRepository
         .observeUnpaidInvoices()
         .map { invoices ->
             invoices.associateBy { it.creditCard.id }
         }
 
-    val uiState = combine(
+    private val preferences = getDashboardPreferences()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
+
+    private val editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
+
+    private val viewingState: Flow<DashboardUiState> = combine(
+        invoices,
         operationRepository.observeAllOperations(),
         creditCardRepository.observeAllCreditCards(),
-        invoicesFlow,
         accountRepository.observeAllAccounts(),
         budgetRepository.observeAllBudgets(),
         recurringRepository.observeAllRecurring(),
         recurringOccurrenceRepository.observeAllOccurrences(),
-    ) { operations, creditCards, invoices, accounts, budgets, recurringList, occurrences ->
+        preferences,
+    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val transactions = operations.flatMap { it.transactions }
-        val transactionsForStats = operations
-            .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
-            .flatMap { it.transactions }
 
-        val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
-            forYearMonth = currentMonth
-        )
-
-        val pendingRecurring = getPendingRecurringUseCase(
-            recurringList = recurringList,
-            occurrences = occurrences,
-            today = today,
-        )
-
-        val categorySpending = calculateCategorySpendingUseCase(
-            transactions = transactions,
-            forYearMonth = currentMonth
-        )
-
-        val creditCardsWithBills = creditCards.map { creditCard ->
-            val invoice = invoices[creditCard.id]
-
-            CreditCardUi(
-                creditCard = creditCard,
-                invoiceUi = invoice?.let {
-                    invoiceUiMapper.toUi(
-                        invoice = it,
-                    )
-                },
-            )
-        }
-
-        val accountsUi = accounts.map { account ->
-            val accountTransactions = transactions.filter { it.account?.id == account.id }
-            val balance = accountTransactions.sumOf { it.signedImpact() }
-            DashboardAccountUi(
-                account = account,
-                balance = balance,
-            )
-        }
-
-        val presentOperations = operations.filter { it.date <= today }
-
-        DashboardUiState(
-            accounts = accountsUi,
-            recents = presentOperations.sortedByDescending { it.date }.take(4),
-            hasMoreRecents = presentOperations.size > 3,
-            balance = DashboardUiState.BalanceStats(
-                income = stats.income,
-                expense = stats.expense,
-                payment = operations
-                    .filter { it.kind == Operation.Kind.PAYMENT }
-                    .filter { it.date.yearMonth == currentMonth }
-                    .sumOf { it.amount },
-                balance = calculateBalanceUseCase(
-                    target = currentMonth,
-                    transactions = transactions,
-                ),
-                pendingIncome = pendingRecurring.filter { it.type.isIncome }.sumOf { it.amount },
-                pendingExpense = pendingRecurring.filter { it.type.isExpense }.sumOf { it.amount },
-            ),
-            yearMonth = currentMonth,
-            categorySpending = categorySpending,
-            creditCards = creditCardsWithBills,
-            budgetProgress = calculateBudgetProgressUseCase(
-                budgets = budgets,
-                transactions = transactions,
-                recurringList = recurringList,
+        val items = buildDashboardViewingUseCase(
+            input = DashboardComponentsInput(
                 operations = operations,
+                creditCards = creditCards,
+                invoicesByCreditCardId = invoices,
+                accounts = accounts,
+                budgets = budgets,
+                recurringList = recurringList,
+                occurrences = occurrences,
+                today = today,
+                targetMonth = today.yearMonth,
             ),
-            pendingRecurring = pendingRecurring,
+            preferences = preferences,
         )
+
+        if (items.isEmpty()) {
+            DashboardUiState.Empty(
+                yearMonth = today.yearMonth,
+                accounts = accounts,
+                creditCards = creditCards,
+            )
+        } else {
+            DashboardUiState.Viewing(
+                yearMonth = today.yearMonth,
+                items = items,
+                accounts = accounts,
+                creditCards = creditCards,
+            )
+        }
+    }
+
+    val uiState: StateFlow<DashboardUiState> = combine(
+        editingState,
+        viewingState,
+    ) { editing, viewing ->
+        editing ?: viewing
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DashboardUiState(),
+        initialValue = DashboardUiState.Loading(),
     )
+
+    fun onAction(action: DashboardAction) = when (action) {
+        is DashboardAction.EnterEditMode -> {
+            enterEditMode()
+        }
+
+        is DashboardAction.ConfirmEdit -> {
+            confirmEdit()
+        }
+
+        is DashboardAction.CancelEdit -> {
+            editingState.value = null
+        }
+
+        is DashboardAction.RemoveAllComponents -> removeAllComponents()
+
+        is DashboardAction.AddAllComponents -> addAllComponents()
+
+        is DashboardAction.MoveComponent -> {
+            moveComponent(action.fromKey, action.toKey)
+        }
+
+        is DashboardAction.UpdateComponentConfig -> {
+            updateComponentConfig(action.key, action.config)
+        }
+    }
+
+    private fun enterEditMode() {
+        val current = uiState.value
+        viewModelScope.launch {
+            when (current) {
+                is DashboardUiState.Viewing ->
+                    openEditingState(
+                        yearMonth = current.yearMonth,
+                        accounts = current.accounts,
+                        creditCards = current.creditCards,
+                    )
+
+                is DashboardUiState.Empty ->
+                    openEditingState(
+                        yearMonth = current.yearMonth,
+                        accounts = current.accounts,
+                        creditCards = current.creditCards,
+                    )
+
+                else -> Unit
+            }
+        }
+    }
+
+    private suspend fun openEditingState(
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
+    ) {
+        editingState.value = buildEditingState(
+            yearMonth = yearMonth,
+            accounts = accounts,
+            creditCards = creditCards,
+            preferences = preferences.value,
+        )
+    }
+
+    private fun confirmEdit() = viewModelScope.launch {
+        val editing = editingState.value ?: return@launch
+        val prefs = editing.activeItems.mapIndexed { i, item ->
+            DashboardComponentPreference(
+                key = item.key,
+                position = i, config = item.config
+            )
+        }
+        dashboardPreferencesRepository.save(prefs)
+        editingState.value = null
+    }
+
+    private fun moveComponent(fromKey: String, toKey: String) {
+        val current = editingState.value ?: return
+
+        val allItems = current.activeItems + current.availableItems
+        val fromIndex = allItems.indexOfFirst { it.key == fromKey }.takeIf { it >= 0 } ?: return
+
+        val activeCount = current.activeItems.size
+
+        when (toKey) {
+            EDIT_ACTIVE_PLACEHOLDER_KEY -> {
+                if (activeCount != 0) return
+
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                mutable.add(0, moved)
+
+                editingState.value = current.copy(
+                    activeItems = mutable.take(1),
+                    availableItems = mutable.drop(1),
+                )
+            }
+
+            EDIT_SECTION_HEADER_KEY, EDIT_AVAILABLE_PLACEHOLDER_KEY -> {
+                val fromInActive = fromIndex < activeCount
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                if (fromInActive) {
+                    val newActiveCount = activeCount - 1
+                    mutable.add(newActiveCount, moved)
+                    editingState.value = current.copy(
+                        activeItems = mutable.take(newActiveCount),
+                        availableItems = mutable.drop(newActiveCount),
+                    )
+                } else {
+                    mutable.add(activeCount, moved)
+                    val newActiveCount = activeCount + 1
+                    editingState.value = current.copy(
+                        activeItems = mutable.take(newActiveCount),
+                        availableItems = mutable.drop(newActiveCount),
+                    )
+                }
+            }
+
+            else -> {
+                val toIndex = allItems.indexOfFirst { it.key == toKey }.takeIf { it >= 0 } ?: return
+                val fromInActive = fromIndex < activeCount
+                val toInActive = toIndex < activeCount
+
+                val mutable = allItems.toMutableList()
+                val moved = mutable.removeAt(fromIndex)
+                mutable.add(toIndex.coerceAtMost(mutable.size), moved)
+
+                val newActiveCount = when {
+                    fromInActive && !toInActive -> activeCount - 1
+                    !fromInActive && toInActive -> activeCount + 1
+                    else -> activeCount
+                }
+                editingState.value = current.copy(
+                    activeItems = mutable.take(newActiveCount),
+                    availableItems = mutable.drop(newActiveCount),
+                )
+            }
+        }
+    }
+
+    private fun removeAllComponents() {
+        val current = editingState.value ?: return
+        editingState.value = current.copy(
+            activeItems = emptyList(),
+            availableItems = current.activeItems + current.availableItems,
+        )
+    }
+
+    private fun addAllComponents() {
+        val current = editingState.value ?: return
+        editingState.value = current.copy(
+            activeItems = current.activeItems + current.availableItems,
+            availableItems = emptyList(),
+        )
+    }
+
+    private fun updateComponentConfig(
+        key: String,
+        config: Map<String, String>
+    ) {
+        val current = editingState.value ?: return
+
+        editingState.value = current.copy(
+            activeItems = current.activeItems.map { item ->
+                when (item.key) {
+                    key -> item.copy(config = config)
+                    else -> item
+                }
+            },
+        )
+    }
+
+    private suspend fun buildEditingState(
+        yearMonth: YearMonth,
+        accounts: List<Account>,
+        creditCards: List<CreditCard>,
+        preferences: List<DashboardComponentPreference>,
+    ): DashboardUiState.Editing {
+
+        val activeItems = preferences.sortedBy {
+            it.position
+        }.mapNotNull { pref ->
+            val preview = dashboardPreviewFactory.createPreview(pref.key) ?: return@mapNotNull null
+
+            DashboardEditItem(
+                preview = preview,
+                config = pref.config,
+            )
+        }
+
+        val presentKeys = preferences.map { it.key }.toSet()
+
+        val availableItems = DashboardComponentType.entries
+            .filterNot { it.key in presentKeys }
+            .mapNotNull { entry ->
+                val preview = dashboardPreviewFactory.createPreview(entry.key) ?: return@mapNotNull null
+                DashboardEditItem(
+                    preview = preview,
+                    config = entry.defaultConfig,
+                )
+            }
+
+        return DashboardUiState.Editing(
+            yearMonth = yearMonth,
+            activeItems = activeItems,
+            availableItems = availableItems,
+            accounts = accounts,
+            creditCards = creditCards,
+        )
+    }
 }

@@ -64,6 +64,9 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation("sh.calvin.reorderable:reorderable:3.0.0")
 
             // Firebase
             implementation(libs.gitlive.firebase.firestore)
@@ -108,8 +111,8 @@ android {
         applicationId = "com.neoutils.finsight"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 20
-        versionName = "1.6.0"
+        versionCode = 23
+        versionName = "1.7.0-rc03"
     }
     packaging {
         resources {
@@ -160,7 +163,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.neoutils.finsight"
-            packageVersion = "1.6.0"
+            packageVersion = "1.7.0"
         }
     }
 }

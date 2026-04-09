@@ -30,18 +30,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.balance_card_credit_card_expense
 import com.neoutils.finsight.resources.balance_card_current_balance
 import com.neoutils.finsight.resources.balance_card_current_invoice
 import com.neoutils.finsight.resources.balance_card_expense
 import com.neoutils.finsight.resources.balance_card_income
 import com.neoutils.finsight.resources.balance_card_invoices
+import com.neoutils.finsight.resources.balance_card_invoice_payments
 import com.neoutils.finsight.resources.balance_card_pay_invoice
 import com.neoutils.finsight.resources.balance_card_pending_expense
 import com.neoutils.finsight.resources.balance_card_pending_income
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
 @Composable
@@ -238,10 +240,48 @@ data class BalanceCardConfig(
                 ),
                 titleStyle = TextStyle(
                     fontSize = 14.sp,
-                    color = InvoicePayment
+                    color = InvoicePaymentColor
                 ),
                 padding = PaddingValues(16.dp),
-                container = InvoicePayment.copy(alpha = 0.15f),
+                container = InvoicePaymentColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val InvoicePayment
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.CreditCard,
+                title = stringResource(Res.string.balance_card_invoice_payments),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = InvoicePaymentColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = InvoicePaymentColor.copy(alpha = 0.15f),
+                shape = shapes.large
+            )
+
+        val CreditCardExpense
+            @Composable
+            get() = BalanceCardConfig(
+                icon = Icons.Default.ArrowDownward,
+                title = stringResource(Res.string.balance_card_credit_card_expense),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                ),
+                titleStyle = TextStyle(
+                    fontSize = 14.sp,
+                    color = ExpenseColor
+                ),
+                padding = PaddingValues(16.dp),
+                container = ExpenseColor.copy(alpha = 0.15f),
                 shape = shapes.large
             )
 

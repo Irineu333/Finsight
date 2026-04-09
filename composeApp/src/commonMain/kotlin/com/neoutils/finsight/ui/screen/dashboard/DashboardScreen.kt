@@ -7,6 +7,8 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -18,6 +20,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_edit_cancel
 import com.neoutils.finsight.resources.dashboard_edit_confirm
 import com.neoutils.finsight.resources.dashboard_edit_title
+import com.neoutils.finsight.resources.dashboard_support
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
@@ -87,9 +90,23 @@ fun DashboardScreen(
                     }
 
                     else -> {
+                        val navigationDispatcher = LocalNavigationDispatcher.current
+
                         TopAppBar(
                             title = {
                                 Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
+                            },
+                            actions = {
+                                IconButton(
+                                    onClick = {
+                                        navigationDispatcher.dispatch(NavigationDestination.Support)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.SupportAgent,
+                                        contentDescription = stringResource(Res.string.dashboard_support),
+                                    )
+                                }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = colorScheme.background,

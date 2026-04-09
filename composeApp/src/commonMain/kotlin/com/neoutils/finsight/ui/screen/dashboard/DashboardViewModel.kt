@@ -67,8 +67,9 @@ class DashboardViewModel(
         budgetRepository.observeAllBudgets(),
         recurringRepository.observeAllRecurring(),
         recurringOccurrenceRepository.observeAllOccurrences(),
+        dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, preferences ->
+    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         val items = buildDashboardViewingUseCase(
@@ -96,6 +97,7 @@ class DashboardViewModel(
             DashboardUiState.Viewing(
                 yearMonth = today.yearMonth,
                 items = items,
+                showEditTip = !editTipDismissed,
                 accounts = accounts,
                 creditCards = creditCards,
             )
@@ -142,6 +144,7 @@ class DashboardViewModel(
     private fun enterEditMode() {
         val current = uiState.value
         viewModelScope.launch {
+            dashboardPreferencesRepository.dismissEditTip()
             when (current) {
                 is DashboardUiState.Viewing ->
                     openEditingState(

@@ -19,8 +19,15 @@ class DashboardPreferencesRepository(
     }
 
     private val _preferences = MutableStateFlow(load())
+    private val _editTipDismissed = MutableStateFlow(settings.getBoolean(EDIT_TIP_DISMISSED_KEY, false))
 
     override fun observe(): StateFlow<List<DashboardComponentPreference>?> = _preferences
+    override fun observeEditTipDismissed(): StateFlow<Boolean> = _editTipDismissed
+
+    override suspend fun dismissEditTip() {
+        settings.putBoolean(EDIT_TIP_DISMISSED_KEY, true)
+        _editTipDismissed.value = true
+    }
 
     override suspend fun save(preferences: List<DashboardComponentPreference>) {
         val encoded = json.encodeToString(preferences.map {
@@ -53,5 +60,6 @@ class DashboardPreferencesRepository(
 
     companion object {
         private const val KEY = "dashboard_preferences"
+        private const val EDIT_TIP_DISMISSED_KEY = "dashboard_edit_tip_dismissed"
     }
 }

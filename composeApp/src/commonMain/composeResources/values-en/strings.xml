@@ -672,6 +672,8 @@
     <string name="dashboard_edit_remove_all">Remove all</string>
     <string name="dashboard_edit_add_all">Add all</string>
     <string name="dashboard_edit_available_placeholder">Drag here to hide a component</string>
+    <string name="dashboard_edit_tip_title">Customize your dashboard</string>
+    <string name="dashboard_edit_tip_description">Long press any component to enter edit mode.</string>
     <string name="dashboard_empty_title">Your dashboard is empty</string>
     <string name="dashboard_empty_description">Add components to customize this view again.</string>
     <string name="dashboard_empty_action">Edit dashboard</string>

@@ -47,6 +47,18 @@ internal fun DashboardViewingContent(
         ),
         modifier = Modifier.fillMaxSize(),
     ) {
+        if (state.showEditTip) {
+            item(key = "edit_tip") {
+                DashboardEditTip(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp)
+                        .animateItem(),
+                )
+            }
+        }
+
         state.items.forEach { variant ->
             val config = variant.config
             val topSpacing = config[DashboardComponentConfig.TOP_SPACING] == "true"

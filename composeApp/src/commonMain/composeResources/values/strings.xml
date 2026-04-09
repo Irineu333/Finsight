@@ -672,6 +672,8 @@
     <string name="dashboard_edit_remove_all">Remover tudo</string>
     <string name="dashboard_edit_add_all">Adicionar tudo</string>
     <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
+    <string name="dashboard_edit_tip_title">Personalize sua dashboard</string>
+    <string name="dashboard_edit_tip_description">Pressione e segure qualquer componente para entrar no modo edição.</string>
     <string name="dashboard_empty_title">Sua dashboard está vazia</string>
     <string name="dashboard_empty_description">Adicione componentes para voltar a personalizar a visualização.</string>
     <string name="dashboard_empty_action">Editar dashboard</string>

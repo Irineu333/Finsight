@@ -7,11 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
-import com.neoutils.finsight.ui.component.FormattingLocalsHost
-import com.neoutils.finsight.ui.component.ModalManagerHost
-import com.neoutils.finsight.ui.component.NavigationDispatcherProvider
-import com.neoutils.finsight.ui.component.SharedTransitionProvider
+import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
@@ -38,8 +34,8 @@ fun AppNavHost() = Surface {
     val navigationDispatcher = rememberAppNavigationDispatcher(navController)
 
     FormattingLocalsHost {
-        ModalManagerHost {
-            NavigationDispatcherProvider(dispatcher = navigationDispatcher) {
+        NavigationDispatcherProvider(dispatcher = navigationDispatcher) {
+            ModalManagerHost {
                 SharedTransitionProvider {
                     NavHost(
                         navController = navController,

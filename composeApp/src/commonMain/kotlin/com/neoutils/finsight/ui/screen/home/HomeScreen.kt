@@ -52,6 +52,10 @@ fun HomeScreen() {
         else -> NavigationItem.Dashboard
     }
 
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("home")
+    }
+
     LaunchedEffect(selectedItem) {
         val screenName = when (selectedItem) {
             NavigationItem.Dashboard -> "dashboard"

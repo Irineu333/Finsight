@@ -79,6 +79,7 @@ Todas as telas principais rastreadas com `screen_view`:
 
 | Tela | `screen_name` |
 |---|---|
+| Home | `home` |
 | Dashboard | `dashboard` |
 | Transactions | `transactions` |
 | Accounts | `accounts` |

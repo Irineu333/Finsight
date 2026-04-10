@@ -66,4 +66,9 @@ Telas e `screen_name` correspondentes (conforme spec):
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+**Adicionado `screen_view` para `home` (não estava na spec original)**
+
+- **Esperado:** spec original não incluía a tela `Home` (apenas `dashboard` e `transactions`)
+- **Feito:** adicionado `LaunchedEffect(Unit)` no `HomeScreen` disparando `screen_name: home`, mantendo o `LaunchedEffect(selectedItem)` para dashboard/transactions
+- **Por quê:** decisão de produto para comparar número de acessos à home com acessos às tabs individuais
+- **Impacto:** spec atualizada para incluir `home` na tabela de screen views; nenhuma etapa seguinte afetada

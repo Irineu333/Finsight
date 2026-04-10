@@ -40,7 +40,7 @@
 
 ## Registro de desvios
 
-_Nenhum desvio registrado._
+- **Etapa 02:** adicionado `screen_view` para `home` — decisão de produto para comparar acessos à home com acessos às tabs. Spec atualizada.
 
 ---
 

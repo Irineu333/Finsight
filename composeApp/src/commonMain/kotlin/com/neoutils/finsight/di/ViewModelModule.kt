@@ -221,6 +221,7 @@ val viewModelModule = module {
             invoiceRepository = get(),
             addInstallmentUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -269,6 +270,7 @@ val viewModelModule = module {
             operationRepository = get(),
             installmentRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 

@@ -37,9 +37,9 @@ Adicionar chamadas de analytics nos ViewModels de parcelas, **após confirmaçã
 2. Deletar parcelas → confirmar `delete_installments` com `category` e `installments_count` corretos.
 
 **Revisão de código:**
-- [ ] `installments_count` é o número de parcelas, não um valor monetário
-- [ ] `category` é o nome da categoria (não ID, não valor)
-- [ ] Eventos disparados após sucesso do use case
+- [x] `installments_count` é o número de parcelas, não um valor monetário
+- [x] `category` é o nome da categoria (não ID, não valor)
+- [x] Eventos disparados após sucesso do use case
 
 ---
 

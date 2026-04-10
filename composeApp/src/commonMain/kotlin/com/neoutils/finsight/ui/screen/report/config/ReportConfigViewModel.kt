@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.report.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -18,6 +19,7 @@ class ReportConfigViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildReportViewerParams: BuildReportViewerParamsUseCase,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val config = MutableStateFlow(ReportConfig.initial())
@@ -117,6 +119,19 @@ class ReportConfigViewModel(
 
             ReportConfigAction.GenerateReport -> {
                 buildReportViewerParams(config.value)?.let { params ->
+                    val target = when (params.perspectiveType) {
+                        PerspectiveTab.CREDIT_CARD -> "credit_card"
+                        PerspectiveTab.ACCOUNT -> "account"
+                    }
+                    val sections = buildList {
+                        if (params.includeSpendingByCategory) add("spending_by_category")
+                        if (params.includeIncomeByCategory) add("income_by_category")
+                        if (params.includeTransactionList) add("transaction_list")
+                    }.joinToString(",")
+                    analytics.logEvent(
+                        name = "generate_report",
+                        params = mapOf("target" to target, "sections" to sections),
+                    )
                     _events.send(ReportConfigEvent.NavigateToViewer(params))
                 }
             }

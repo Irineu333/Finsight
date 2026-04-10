@@ -43,13 +43,21 @@ Exemplo com duas seções ativas: `"spending_by_category,transaction_list"`.
 4. Imprimir relatório → confirmar `print_report` sem parâmetros.
 
 **Revisão de código:**
-- [ ] `generate_report` disparado ao renderizar o relatório, não ao abrir a config
-- [ ] `sections` lista apenas as seções ativas, separadas por vírgula
-- [ ] `target` reflete `account` ou `credit_card` conforme a perspectiva selecionada
-- [ ] Nenhum parâmetro contém dados financeiros ou período
+- [x] `generate_report` disparado ao confirmar a geração, não ao abrir a config
+- [x] `sections` lista apenas as seções ativas, separadas por vírgula
+- [x] `target` reflete `account` ou `credit_card` conforme a perspectiva selecionada
+- [x] Nenhum parâmetro contém dados financeiros ou período
 
 ---
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+`generate_report` foi movido do `ReportViewerViewModel` para o `ReportConfigViewModel`.
+
+**Esperado:** disparar no `ReportViewerViewModel` ao carregar o relatório.
+
+**Feito:** disparar em `ReportConfigAction.GenerateReport` no `ReportConfigViewModel`, antes de navegar para o viewer.
+
+**Por quê:** o ViewModel de configuração já possui o momento exato em que o usuário confirma a geração, com todos os parâmetros disponíveis. Disparar no viewer seria equivalente, mas acoplaria o evento à navegação em vez de à intenção do usuário.
+
+**Impacto:** nenhum — o evento é disparado uma única vez por geração, com os mesmos parâmetros.

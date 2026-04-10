@@ -492,6 +492,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             invoiceRepository = get(),
             buildReportViewerParams = get(),
+            analytics = get(),
         )
     }
 
@@ -505,6 +506,7 @@ val viewModelModule = module {
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
             renderer = get(),
+            analytics = get(),
         )
     }
 

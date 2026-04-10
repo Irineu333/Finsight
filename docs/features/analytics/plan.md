@@ -33,7 +33,7 @@
 - [x] [09 — Eventos: Recurring](steps/09-events-recurring.md)
 - [x] [10 — Eventos: Categories](steps/10-events-categories.md)
 - [x] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
-- [ ] [12 — Eventos: Reports](steps/12-events-reports.md)
+- [x] [12 — Eventos: Reports](steps/12-events-reports.md)
 - [ ] [13 — Eventos: Support](steps/13-events-support.md)
 
 ---
@@ -42,6 +42,7 @@
 
 - **Etapa 02:** adicionado `screen_view` para `home` — decisão de produto para comparar acessos à home com acessos às tabs. Spec atualizada.
 - **Etapa 03:** `App.kt` passa a fazer `signInAnonymously()` no startup para garantir `user_id` desde a primeira sessão. `FirebaseSupportRepository` recebeu `Analytics` e chama `setUserId` após o login anônimo como fallback.
+- **Etapa 12:** `generate_report` movido de `ReportViewerViewModel` para `ReportConfigViewModel` — disparado ao confirmar a geração (antes da navegação), não ao carregar o viewer.
 
 ---
 

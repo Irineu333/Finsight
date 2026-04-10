@@ -30,7 +30,7 @@
 - [x] [06 — Eventos: Credit Cards](steps/06-events-credit-cards.md)
 - [x] [07 — Eventos: Installments](steps/07-events-installments.md)
 - [x] [08 — Eventos: Budgets](steps/08-events-budgets.md)
-- [ ] [09 — Eventos: Recurring](steps/09-events-recurring.md)
+- [x] [09 — Eventos: Recurring](steps/09-events-recurring.md)
 - [ ] [10 — Eventos: Categories](steps/10-events-categories.md)
 - [ ] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
 - [ ] [12 — Eventos: Reports](steps/12-events-reports.md)

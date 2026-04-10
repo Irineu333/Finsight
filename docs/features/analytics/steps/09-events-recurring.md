@@ -54,10 +54,10 @@ Adicionar chamadas de analytics nos ViewModels de recorrências, **após confirm
 7. Deletar recorrência → confirmar `delete_recurring`.
 
 **Revisão de código:**
-- [ ] `confirm_recurring` e `skip_recurring` são disparados pela ação correta em `ConfirmRecurringViewModel`
-- [ ] `create_recurring` e `edit_recurring` diferenciados pelo modo do formulário
-- [ ] Nenhum parâmetro contém dados financeiros ou datas
-- [ ] Todos os 7 eventos implementados
+- [x] `confirm_recurring` e `skip_recurring` são disparados pela ação correta em `ConfirmRecurringViewModel`
+- [x] `create_recurring` e `edit_recurring` diferenciados pelo modo do formulário
+- [x] Nenhum parâmetro contém dados financeiros ou datas
+- [x] Todos os 7 eventos implementados
 
 ---
 

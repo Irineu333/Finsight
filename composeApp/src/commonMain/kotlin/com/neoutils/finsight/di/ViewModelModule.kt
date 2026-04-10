@@ -450,6 +450,7 @@ val viewModelModule = module {
             creditCardRepository = get(),
             saveRecurringUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -458,6 +459,7 @@ val viewModelModule = module {
             recurring = it.get(),
             recurringRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -466,6 +468,7 @@ val viewModelModule = module {
             recurring = it.get(),
             stopRecurringUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -474,6 +477,7 @@ val viewModelModule = module {
             recurring = it.get(),
             reactivateRecurringUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -511,6 +515,7 @@ val viewModelModule = module {
             confirmRecurringUseCase = get(),
             skipRecurringUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 }

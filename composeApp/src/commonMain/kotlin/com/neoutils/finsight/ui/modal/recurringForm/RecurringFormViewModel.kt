@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.form.RecurringForm
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -23,6 +24,7 @@ class RecurringFormViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val saveRecurringUseCase: SaveRecurringUseCase,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow(recurring?.account)
@@ -86,6 +88,14 @@ class RecurringFormViewModel(
                 createdAt = recurring?.createdAt,
                 isActive = recurring?.isActive ?: true,
             ).onRight {
+                analytics.logEvent(
+                    name = if (recurring != null) "edit_recurring" else "create_recurring",
+                    params = buildMap {
+                        put("type", form.type.name.lowercase())
+                        put("target", if (form.creditCard != null) "credit_card" else "account")
+                        form.category?.let { put("category", it.name) }
+                    }
+                )
                 modalManager.dismissAll()
             }
         }

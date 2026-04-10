@@ -276,7 +276,8 @@ val viewModelModule = module {
         DeleteFutureInvoiceViewModel(
             invoice = it.get(),
             deleteFutureInvoiceUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -313,6 +314,7 @@ val viewModelModule = module {
             modalManager = get(),
             debounceManager = get(),
             creditCardPeriod = get(),
+            analytics = get(),
         )
     }
 
@@ -321,6 +323,7 @@ val viewModelModule = module {
             creditCard = it.get(),
             deleteCreditCardUseCase = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -365,6 +368,7 @@ val viewModelModule = module {
             invoiceRepository = get(),
             creditCardRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -376,6 +380,7 @@ val viewModelModule = module {
             calculateInvoiceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -383,7 +388,8 @@ val viewModelModule = module {
         CloseInvoiceViewModel(
             invoiceId = it.get(),
             closeInvoiceUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -392,7 +398,8 @@ val viewModelModule = module {
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
             accountRepository = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -400,7 +407,8 @@ val viewModelModule = module {
         ReopenInvoiceViewModel(
             invoiceId = it.get(),
             reopenInvoiceUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 

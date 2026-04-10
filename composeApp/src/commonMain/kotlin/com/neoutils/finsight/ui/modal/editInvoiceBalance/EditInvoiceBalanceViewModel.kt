@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -22,7 +23,8 @@ class EditInvoiceBalanceViewModel(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val timeZone get() = TimeZone.currentSystemDefault()
@@ -101,6 +103,7 @@ class EditInvoiceBalanceViewModel(
             adjustmentDate = currentDate
         )
 
+        analytics.logEvent("adjust_invoice_balance")
         modalManager.dismiss()
     }
 }

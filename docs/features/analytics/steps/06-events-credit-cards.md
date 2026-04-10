@@ -54,9 +54,9 @@ Todos sem parâmetros adicionais — nenhum dado financeiro (sem valores, limite
 9. Realizar pagamento antecipado → confirmar `advance_invoice_payment`.
 
 **Revisão de código:**
-- [ ] `create_credit_card` e `edit_credit_card` diferenciados pelo modo do formulário
-- [ ] Nenhum parâmetro contém dados financeiros
-- [ ] Todos os 9 eventos implementados
+- [x] `create_credit_card` e `edit_credit_card` diferenciados pelo modo do formulário
+- [x] Nenhum parâmetro contém dados financeiros
+- [x] Todos os 9 eventos implementados
 
 ---
 

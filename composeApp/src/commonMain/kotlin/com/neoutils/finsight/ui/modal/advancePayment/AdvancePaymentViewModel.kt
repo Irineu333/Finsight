@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,8 @@ class AdvancePaymentViewModel(
     private val invoiceId: Long,
     private val advanceInvoicePaymentUseCase: AdvanceInvoicePaymentUseCase,
     private val accountRepository: IAccountRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
@@ -68,6 +70,7 @@ class AdvancePaymentViewModel(
             date = date,
             account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
         ).onRight {
+            analytics.logEvent("advance_invoice_payment")
             modalManager.dismissAll()
         }
     }

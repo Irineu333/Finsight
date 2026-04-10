@@ -39,9 +39,9 @@ Adicionar chamadas de analytics no ViewModel de categorias, **após confirmaçã
 3. Deletar categoria → confirmar `delete_category` com `name` e `type`.
 
 **Revisão de código:**
-- [ ] `create_category` e `edit_category` diferenciados pelo modo do formulário
-- [ ] `name` e `type` presentes nos três eventos
-- [ ] Eventos disparados após sucesso do repositório
+- [x] `create_category` e `edit_category` diferenciados pelo modo do formulário
+- [x] `name` e `type` presentes nos três eventos
+- [x] Eventos disparados após sucesso do repositório
 
 ---
 

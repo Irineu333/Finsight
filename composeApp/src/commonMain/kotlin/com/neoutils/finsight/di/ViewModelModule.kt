@@ -292,7 +292,8 @@ val viewModelModule = module {
             repository = get(),
             validateCategoryName = get(),
             modalManager = get(),
-            debounceManager = get()
+            debounceManager = get(),
+            analytics = get(),
         )
     }
 
@@ -336,7 +337,8 @@ val viewModelModule = module {
         DeleteCategoryViewModel(
             category = it.get(),
             repository = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 

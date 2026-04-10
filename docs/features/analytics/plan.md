@@ -50,4 +50,4 @@
 
 ## Issues
 
-_Nenhuma issue registrada._
+- [x] [01 — Firebase não inicializado no Desktop](issues/01-firebase-not-initialized-desktop.md)

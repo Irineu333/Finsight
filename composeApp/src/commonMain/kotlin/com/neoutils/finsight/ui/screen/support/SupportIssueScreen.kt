@@ -31,6 +31,8 @@ import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -42,8 +44,13 @@ fun SupportIssueScreen(
         parametersOf(issueId)
     },
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("support_issue")
+    }
 
     Scaffold(
         topBar = {

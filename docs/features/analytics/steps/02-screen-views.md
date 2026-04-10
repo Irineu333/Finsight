@@ -58,9 +58,9 @@ Telas e `screen_name` correspondentes (conforme spec):
 4. Voltar ao Dashboard e trocar de tab → confirmar que `screen_view` é disparado novamente.
 
 **Revisão de código:**
-- [ ] Chamada feita via `LaunchedEffect(Unit)` (ou chave adequada para tab switching) — não no `init {}` do ViewModel
-- [ ] `screen_name` segue exatamente os valores definidos na spec (`snake_case`, sem variações)
-- [ ] Todas as 13 telas da spec estão cobertas
+- [x] Chamada feita via `LaunchedEffect(Unit)` (ou chave adequada para tab switching) — não no `init {}` do ViewModel
+- [x] `screen_name` segue exatamente os valores definidos na spec (`snake_case`, sem variações)
+- [x] Todas as 13 telas da spec estão cobertas
 
 ---
 

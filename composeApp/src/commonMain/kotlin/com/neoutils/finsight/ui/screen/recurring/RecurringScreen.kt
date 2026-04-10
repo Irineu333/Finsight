@@ -20,7 +20,10 @@ import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,8 +65,13 @@ fun RecurringScreen(
     onNavigateBack: () -> Unit = {},
     viewModel: RecurringViewModel = koinViewModel(),
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("recurring")
+    }
 
     Scaffold(
         topBar = {

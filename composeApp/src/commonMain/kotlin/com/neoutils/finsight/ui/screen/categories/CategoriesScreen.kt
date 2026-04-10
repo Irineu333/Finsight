@@ -27,6 +27,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -52,7 +54,12 @@ fun CategoriesScreen(
     onNavigateBack: () -> Unit = {},
     viewModel: CategoriesViewModel = koinViewModel()
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("categories")
+    }
 
     CategoriesContent(
         uiState = uiState,

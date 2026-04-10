@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,8 +33,13 @@ fun SupportScreen(
     onOpenIssue: (String) -> Unit = {},
     viewModel: SupportViewModel = koinViewModel(),
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val modalManager = LocalModalManager.current
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("support")
+    }
 
     Scaffold(
         topBar = {

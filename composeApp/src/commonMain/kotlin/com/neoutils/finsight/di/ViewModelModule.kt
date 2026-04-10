@@ -141,6 +141,7 @@ val viewModelModule = module {
             validateBudgetTitle = get(),
             modalManager = get(),
             debounceManager = get(),
+            analytics = get(),
         )
     }
 
@@ -149,6 +150,7 @@ val viewModelModule = module {
             budget = it.get(),
             budgetRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 

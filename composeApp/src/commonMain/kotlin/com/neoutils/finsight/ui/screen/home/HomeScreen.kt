@@ -57,11 +57,7 @@ fun HomeScreen() {
     }
 
     LaunchedEffect(selectedItem) {
-        val screenName = when (selectedItem) {
-            NavigationItem.Dashboard -> "dashboard"
-            NavigationItem.Transactions -> "transactions"
-        }
-        analytics.logScreenView(screenName)
+        analytics.logScreenView(selectedItem.screenName)
     }
 
     val homeChromeTransition = updateTransition(

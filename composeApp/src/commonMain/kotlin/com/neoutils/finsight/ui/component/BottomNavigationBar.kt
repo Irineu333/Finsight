@@ -51,8 +51,9 @@ fun BottomNavigationBar(
 
 enum class NavigationItem(
     val icon: ImageVector,
-    val labelRes: StringResource
+    val labelRes: StringResource,
+    val screenName: String,
 ) {
-    Dashboard(Icons.Default.Dashboard, Res.string.nav_dashboard),
-    Transactions(Icons.Default.Receipt, Res.string.nav_transactions)
+    Dashboard(Icons.Default.Dashboard, Res.string.nav_dashboard, "dashboard"),
+    Transactions(Icons.Default.Receipt, Res.string.nav_transactions, "transactions")
 }

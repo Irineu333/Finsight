@@ -5,11 +5,10 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 
 class CreateTransaction(params: Map<String, String>) : Event("create_transaction", params) {
-    constructor(form: TransactionForm, isInstallment: Boolean) : this(
+    constructor(form: TransactionForm) : this(
         buildMap {
             put("type", form.type.name.lowercase())
             put("target", form.target.name.lowercase())
-            put("is_installment", isInstallment.toString())
             form.category?.let { put("category", it.name) }
         }
     )

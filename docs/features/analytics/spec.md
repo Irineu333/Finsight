@@ -241,8 +241,8 @@ Usando o Firebase Console (DebugView) com o app em modo debug no Android:
 2. Navegar para cada tela principal → confirmar `screen_view` com o `screen_name` correspondente.
 
 **Transactions**
-3. Criar uma transação de receita em conta → confirmar `create_transaction` com `type: income`, `target: account`, `is_installment: false`.
-4. Criar uma transação de despesa parcelada em cartão → confirmar `create_transaction` com `type: expense`, `target: credit_card`, `is_installment: true`.
+3. Criar uma transação de receita em conta → confirmar `create_transaction` com `type: income`, `target: account` (sem `is_installment`).
+4. Criar uma transação de despesa parcelada em cartão → confirmar `create_installments` com `installments_count` correto; confirmar que `create_transaction` **não** é disparado.
 5. Cancelar a criação → confirmar que nenhum evento foi disparado.
 6. Editar e deletar uma transação → confirmar `edit_transaction` e `delete_transaction` com `type`, `target` e `category` corretos.
 

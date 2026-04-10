@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
@@ -111,7 +112,7 @@ class AddTransactionViewModel(
             ).onLeft {
                 // TODO: register exception
             }.onRight {
-                analytics.logEvent(CreateTransaction(form, isInstallment = true))
+                analytics.logEvent(CreateInstallments(form, count = form.installments))
                 modalManager.dismiss()
             }
 
@@ -135,7 +136,7 @@ class AddTransactionViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
-                analytics.logEvent(CreateTransaction(form, isInstallment = false))
+                analytics.logEvent(CreateTransaction(form))
                 modalManager.dismiss()
             }
     }

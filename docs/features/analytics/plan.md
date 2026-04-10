@@ -44,6 +44,7 @@
 - **Etapa 02:** adicionado `screen_view` para `home` — decisão de produto para comparar acessos à home com acessos às tabs. Spec atualizada.
 - **Etapa 03:** `App.kt` passa a fazer `signInAnonymously()` no startup para garantir `user_id` desde a primeira sessão. `FirebaseSupportRepository` recebeu `Analytics` e chama `setUserId` após o login anônimo como fallback.
 - **Etapa 12:** `generate_report` movido de `ReportViewerViewModel` para `ReportConfigViewModel` — disparado ao confirmar a geração (antes da navegação), não ao carregar o viewer.
+- **Etapa 15:** `is_installment` removido de `create_transaction`; `AddTransactionViewModel` usa `create_installments` no branch de parcelamento.
 
 ---
 

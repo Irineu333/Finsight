@@ -41,6 +41,7 @@
 ## Registro de desvios
 
 - **Etapa 02:** adicionado `screen_view` para `home` — decisão de produto para comparar acessos à home com acessos às tabs. Spec atualizada.
+- **Etapa 03:** `App.kt` passa a fazer `signInAnonymously()` no startup para garantir `user_id` desde a primeira sessão. `FirebaseSupportRepository` recebeu `Analytics` e chama `setUserId` após o login anônimo como fallback.
 
 ---
 

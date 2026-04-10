@@ -41,4 +41,12 @@ Comportamento esperado:
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+**Esperado:** `App.kt` apenas lê `currentUser?.uid` e chama `setUserId`. `FirebaseSupportRepository` não estava no escopo.
+
+**Feito:**
+- `App.kt` faz `signInAnonymously()` se não houver sessão ativa, garantindo um `user_id` desde a primeira abertura do app.
+- `FirebaseSupportRepository` recebeu `Analytics` via construtor e chama `setUserId` após `signInAnonymously()`, cobrindo o caso em que o login anônimo ocorra fora do startup.
+
+**Por quê:** sem o login anônimo no startup, eventos da primeira sessão ficavam sem `user_id`. O `FirebaseSupportRepository` foi atualizado como fallback para o mesmo motivo.
+
+**Impacto nas etapas seguintes:** nenhum.

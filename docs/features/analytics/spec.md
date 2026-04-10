@@ -284,7 +284,7 @@ Usando o Firebase Console (DebugView) com o app em modo debug no Android:
 - [x] Implementação no-op está em `jvmMain`
 - [x] `user_id` obtido do Firebase Auth (`currentUser?.uid`) — não gerado manualmente
 - [x] mesmo `user_id` usado entre sessões (persistência gerenciada pelo Firebase Auth)
-- [ ] Nenhum parâmetro contém dados financeiros (valores, saldos)
-- [ ] Eventos disparados após confirmação bem-sucedida, não no clique do botão
+- [x] Nenhum parâmetro contém dados financeiros (valores, saldos)
+- [x] Eventos disparados após confirmação bem-sucedida, não no clique do botão
 - [x] `Analytics` registrado como `single {}` no Koin em módulo separado
-- [ ] Todos os eventos da tabela estão implementados
+- [x] Todos os eventos da tabela estão implementados

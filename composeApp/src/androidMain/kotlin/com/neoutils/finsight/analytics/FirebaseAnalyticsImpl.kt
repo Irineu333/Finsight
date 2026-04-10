@@ -1,6 +1,7 @@
 package com.neoutils.finsight.analytics
 
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.Event
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.FirebaseAnalyticsEvents
 import dev.gitlive.firebase.analytics.FirebaseAnalyticsParam
@@ -15,9 +16,9 @@ class FirebaseAnalyticsImpl : Analytics {
         }
     }
 
-    override fun logEvent(name: String, params: Map<String, String>) {
-        Firebase.analytics.logEvent(name) {
-            params.forEach { (key, value) -> param(key, value) }
+    override fun logEvent(event: Event) {
+        Firebase.analytics.logEvent(event.name) {
+            event.params.forEach { (key, value) -> param(key, value) }
         }
     }
 

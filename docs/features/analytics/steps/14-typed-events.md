@@ -84,12 +84,12 @@ Centralizar todos os eventos em objetos/classes no pacote `domain/analytics/even
 2. Firebase DebugView (Android): disparar qualquer evento (ex: criar transação) → confirmar que o evento chega com nome e params corretos
 
 **Revisão de código:**
-- [ ] `abstract class Event` sem dependências externas — fica em `domain/analytics/`
-- [ ] Eventos sem params declarados como `object`, eventos com params como `class`
-- [ ] Secondary constructors nos eventos que recebem modelos de domínio — mapeamento fora dos ViewModels
-- [ ] `FirebaseAnalyticsImpl` usa `event.name` e `event.params` — sem lógica adicional
-- [ ] Nenhum ViewModel monta `buildMap` ou passa string literal de nome de evento
-- [ ] `logEvent(name: String, params: Map<String, String>)` removido da interface e de todas as implementações
+- [x] `abstract class Event` sem dependências externas — fica em `domain/analytics/`
+- [x] Eventos sem params declarados como `object`, eventos com params como `class`
+- [x] Secondary constructors nos eventos que recebem modelos de domínio — mapeamento fora dos ViewModels
+- [x] `FirebaseAnalyticsImpl` usa `event.name` e `event.params` — sem lógica adicional
+- [x] Nenhum ViewModel monta `buildMap` ou passa string literal de nome de evento
+- [x] `logEvent(name: String, params: Map<String, String>)` removido da interface e de todas as implementações
 
 ---
 

@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -134,13 +135,7 @@ class AddInstallmentViewModel(
                 )
             )
         }.onRight {
-            analytics.logEvent(
-                name = "create_installments",
-                params = buildMap {
-                    form.category?.let { put("category", it.name) }
-                    put("installments_count", installments.toString())
-                }
-            )
+            analytics.logEvent(CreateInstallments(form, count = installments))
             modalManager.dismiss()
         }
     }

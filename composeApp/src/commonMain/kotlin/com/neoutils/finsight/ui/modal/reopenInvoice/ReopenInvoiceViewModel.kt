@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.modal.reopenInvoice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.ReopenInvoice
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
@@ -18,7 +19,7 @@ class ReopenInvoiceViewModel(
         reopenInvoiceUseCase(
             invoiceId = invoiceId,
         ).onRight {
-            analytics.logEvent("reopen_invoice")
+            analytics.logEvent(ReopenInvoice)
             modalManager.dismissAll()
         }
     }

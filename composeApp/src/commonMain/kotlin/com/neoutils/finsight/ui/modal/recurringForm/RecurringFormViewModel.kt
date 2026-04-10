@@ -8,6 +8,8 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateRecurring
+import com.neoutils.finsight.domain.analytics.event.EditRecurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -89,12 +91,7 @@ class RecurringFormViewModel(
                 isActive = recurring?.isActive ?: true,
             ).onRight {
                 analytics.logEvent(
-                    name = if (recurring != null) "edit_recurring" else "create_recurring",
-                    params = buildMap {
-                        put("type", form.type.name.lowercase())
-                        put("target", if (form.creditCard != null) "credit_card" else "account")
-                        form.category?.let { put("category", it.name) }
-                    }
+                    if (recurring != null) EditRecurring(form) else CreateRecurring(form)
                 )
                 modalManager.dismissAll()
             }

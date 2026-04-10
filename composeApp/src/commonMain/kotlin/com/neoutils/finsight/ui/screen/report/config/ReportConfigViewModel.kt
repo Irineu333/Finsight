@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.report.config
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.GenerateReport
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -128,10 +129,7 @@ class ReportConfigViewModel(
                         if (params.includeIncomeByCategory) add("income_by_category")
                         if (params.includeTransactionList) add("transaction_list")
                     }.joinToString(",")
-                    analytics.logEvent(
-                        name = "generate_report",
-                        params = mapOf("target" to target, "sections" to sections),
-                    )
+                    analytics.logEvent(GenerateReport(target, sections))
                     _events.send(ReportConfigEvent.NavigateToViewer(params))
                 }
             }

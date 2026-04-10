@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.TransferBetweenAccounts
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
@@ -97,7 +98,7 @@ class TransferBetweenAccountsViewModel(
                 )
             )
         }.onRight {
-            analytics.logEvent("transfer_between_accounts")
+            analytics.logEvent(TransferBetweenAccounts)
             modalManager.dismiss()
         }
     }

@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -110,15 +111,7 @@ class AddTransactionViewModel(
             ).onLeft {
                 // TODO: register exception
             }.onRight {
-                analytics.logEvent(
-                    name = "create_transaction",
-                    params = buildMap {
-                        put("type", form.type.name.lowercase())
-                        put("target", form.target.name.lowercase())
-                        put("is_installment", "true")
-                        form.category?.let { put("category", it.name) }
-                    }
-                )
+                analytics.logEvent(CreateTransaction(form, isInstallment = true))
                 modalManager.dismiss()
             }
 
@@ -142,15 +135,7 @@ class AddTransactionViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
-                analytics.logEvent(
-                    name = "create_transaction",
-                    params = buildMap {
-                        put("type", form.type.name.lowercase())
-                        put("target", form.target.name.lowercase())
-                        put("is_installment", "false")
-                        form.category?.let { put("category", it.name) }
-                    }
-                )
+                analytics.logEvent(CreateTransaction(form, isInstallment = false))
                 modalManager.dismiss()
             }
     }

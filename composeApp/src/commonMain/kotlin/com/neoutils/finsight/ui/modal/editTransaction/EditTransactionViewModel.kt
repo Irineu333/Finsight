@@ -13,6 +13,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.EditTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.extension.combine
@@ -127,14 +128,7 @@ class EditTransactionViewModel(
         }.onLeft {
             // TODO: register exception
         }.onRight {
-            analytics.logEvent(
-                name = "edit_transaction",
-                params = buildMap {
-                    put("type", form.type.name.lowercase())
-                    put("target", form.target.name.lowercase())
-                    form.category?.let { put("category", it.name) }
-                }
-            )
+            analytics.logEvent(EditTransaction(form))
             modalManager.dismissAll()
         }
     }

@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.modal.reactivateRecurring
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.ReactivateRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -17,14 +18,7 @@ class ReactivateRecurringViewModel(
 
     fun reactivate() = viewModelScope.launch {
         reactivateRecurringUseCase(recurring).onRight {
-            analytics.logEvent(
-                name = "reactivate_recurring",
-                params = buildMap {
-                    put("type", recurring.type.name.lowercase())
-                    put("target", if (recurring.creditCard != null) "credit_card" else "account")
-                    recurring.category?.let { put("category", it.name) }
-                }
-            )
+            analytics.logEvent(ReactivateRecurring(recurring))
             modalManager.dismissAll()
         }
     }

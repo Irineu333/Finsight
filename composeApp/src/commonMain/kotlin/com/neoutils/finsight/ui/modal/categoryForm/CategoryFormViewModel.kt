@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateCategory
+import com.neoutils.finsight.domain.analytics.event.EditCategory
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
@@ -131,13 +133,7 @@ class CategoryFormViewModel(
                     icon = CategoryLazyIcon(icon.value.key)
                 )
             )
-            analytics.logEvent(
-                name = "edit_category",
-                params = mapOf(
-                    "name" to name.trim(),
-                    "type" to category.type.name.lowercase(),
-                )
-            )
+            analytics.logEvent(EditCategory(name.trim(), category.type))
             modalManager.dismissAll()
             return@launch
         }
@@ -150,13 +146,7 @@ class CategoryFormViewModel(
                 createdAt = Clock.System.now().toEpochMilliseconds()
             )
         )
-        analytics.logEvent(
-            name = "create_category",
-            params = mapOf(
-                "name" to name.trim(),
-                "type" to type.value.name.lowercase(),
-            )
-        )
+        analytics.logEvent(CreateCategory(name.trim(), type.value))
         modalManager.dismiss()
     }
 }

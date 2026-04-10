@@ -35,7 +35,7 @@
 - [x] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
 - [x] [12 — Eventos: Reports](steps/12-events-reports.md)
 - [x] [13 — Eventos: Support](steps/13-events-support.md)
-- [ ] [14 — Eventos tipados](steps/14-typed-events.md)
+- [x] [14 — Eventos tipados](steps/14-typed-events.md)
 
 ---
 

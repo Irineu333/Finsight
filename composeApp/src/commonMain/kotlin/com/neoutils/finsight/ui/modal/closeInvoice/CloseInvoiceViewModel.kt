@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.modal.closeInvoice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CloseInvoice
 import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
@@ -20,7 +21,7 @@ class CloseInvoiceViewModel(
             invoiceId,
             closingDate
         ).onRight {
-            analytics.logEvent("close_invoice")
+            analytics.logEvent(CloseInvoice)
             modalManager.dismissAll()
         }
     }

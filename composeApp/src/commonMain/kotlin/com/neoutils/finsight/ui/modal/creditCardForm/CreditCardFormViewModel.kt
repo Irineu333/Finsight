@@ -8,6 +8,8 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
+import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
@@ -177,7 +179,7 @@ class CreditCardFormViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
-                analytics.logEvent("edit_credit_card")
+                analytics.logEvent(EditCreditCard)
                 modalManager.dismissAll()
             }
 
@@ -189,7 +191,7 @@ class CreditCardFormViewModel(
         ).onLeft {
             // TODO: register exception
         }.onRight {
-            analytics.logEvent("create_credit_card")
+            analytics.logEvent(CreateCreditCard)
             modalManager.dismiss()
         }
     }

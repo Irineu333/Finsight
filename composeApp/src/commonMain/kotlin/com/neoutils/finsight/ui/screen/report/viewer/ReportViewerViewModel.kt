@@ -3,6 +3,8 @@ package com.neoutils.finsight.ui.screen.report.viewer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.PrintReport
+import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
@@ -215,12 +217,12 @@ class ReportViewerViewModel(
         when (action) {
             is ReportViewerAction.Share -> {
                 _events.send(ReportViewerEvent.Share(renderer.render(action.layout)))
-                analytics.logEvent("share_report")
+                analytics.logEvent(ShareReport)
             }
 
             is ReportViewerAction.Print -> {
                 _events.send(ReportViewerEvent.Print(renderer.render(action.layout)))
-                analytics.logEvent("print_report")
+                analytics.logEvent(PrintReport)
             }
         }
     }

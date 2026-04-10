@@ -5,6 +5,8 @@ package com.neoutils.finsight.ui.screen.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.EnterDashboardEditMode
+import com.neoutils.finsight.domain.analytics.event.SaveDashboardLayout
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
@@ -178,7 +180,7 @@ class DashboardViewModel(
             creditCards = creditCards,
             preferences = preferences.value,
         )
-        analytics.logEvent("enter_dashboard_edit_mode")
+        analytics.logEvent(EnterDashboardEditMode)
     }
 
     private fun confirmEdit() = viewModelScope.launch {
@@ -190,10 +192,7 @@ class DashboardViewModel(
             )
         }
         dashboardPreferencesRepository.save(prefs)
-        analytics.logEvent(
-            name = "save_dashboard_layout",
-            params = mapOf("components" to editing.activeItems.joinToString(",") { it.key })
-        )
+        analytics.logEvent(SaveDashboardLayout(editing.activeItems.joinToString(",") { it.key }))
         editingState.value = null
     }
 

@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.modal.deleteRecurring
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.DeleteRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.ui.component.ModalManager
@@ -17,14 +18,7 @@ class DeleteRecurringViewModel(
 
     fun delete() = viewModelScope.launch {
         recurringRepository.delete(recurring)
-        analytics.logEvent(
-            name = "delete_recurring",
-            params = buildMap {
-                put("type", recurring.type.name.lowercase())
-                put("target", if (recurring.creditCard != null) "credit_card" else "account")
-                recurring.category?.let { put("category", it.name) }
-            }
-        )
+        analytics.logEvent(DeleteRecurring(recurring))
         modalManager.dismissAll()
     }
 }

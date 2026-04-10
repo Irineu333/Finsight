@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.support
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateSupportIssue
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
@@ -50,10 +51,7 @@ class SupportViewModel(
     fun createIssue(draft: SupportIssueDraft) {
         viewModelScope.launch {
             createSupportIssueUseCase(draft)
-            analytics.logEvent(
-                name = "create_support_issue",
-                params = mapOf("type" to draft.type.name.lowercase()),
-            )
+            analytics.logEvent(CreateSupportIssue(draft))
         }
     }
 }

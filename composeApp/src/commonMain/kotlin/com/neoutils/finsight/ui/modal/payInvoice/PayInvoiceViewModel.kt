@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.PayInvoice
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -75,7 +76,7 @@ class PayInvoiceViewModel(
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
             )
         }.onRight {
-            analytics.logEvent("pay_invoice")
+            analytics.logEvent(PayInvoice)
             modalManager.dismissAll()
         }
     }

@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.screen.support
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.SendSupportReply
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,10 +54,7 @@ class SupportIssueViewModel(
 
         viewModelScope.launch {
             addSupportReplyUseCase(issueId = content.issue.id, message = reply)
-            analytics.logEvent(
-                name = "send_support_reply",
-                params = mapOf("type" to content.issue.type.name.lowercase()),
-            )
+            analytics.logEvent(SendSupportReply(content.issue))
         }
     }
 }

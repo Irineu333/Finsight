@@ -9,6 +9,8 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.ConfirmRecurring
+import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
@@ -138,14 +140,7 @@ class ConfirmRecurringViewModel(
             creditCard = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedCreditCard else null,
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
         ).onRight {
-            analytics.logEvent(
-                name = "confirm_recurring",
-                params = buildMap {
-                    put("type", recurring.type.name.lowercase())
-                    put("target", uiState.value.selectedTarget.name.lowercase())
-                    recurring.category?.let { put("category", it.name) }
-                }
-            )
+            analytics.logEvent(ConfirmRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
         }
     }
@@ -156,14 +151,7 @@ class ConfirmRecurringViewModel(
             recurring = recurring,
             date = date,
         ).onRight {
-            analytics.logEvent(
-                name = "skip_recurring",
-                params = buildMap {
-                    put("type", recurring.type.name.lowercase())
-                    put("target", uiState.value.selectedTarget.name.lowercase())
-                    recurring.category?.let { put("category", it.name) }
-                }
-            )
+            analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
         }
     }

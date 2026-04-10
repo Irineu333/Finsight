@@ -46,11 +46,11 @@ Adicionar chamadas de analytics nos ViewModels de criar, editar e deletar transa
 5. Deletar transação → confirmar `delete_transaction` com `type`, `target` e `category` corretos.
 
 **Revisão de código:**
-- [ ] `Analytics` injetado via construtor — não obtido diretamente do Koin dentro do ViewModel
-- [ ] Evento disparado após confirmação de sucesso do repositório, não no clique
-- [ ] Cancelamento não gera evento
-- [ ] Nenhum parâmetro contém valor financeiro, descrição ou nome de conta/cartão
-- [ ] `is_installment` presente apenas em `create_transaction`
+- [x] `Analytics` injetado via construtor — não obtido diretamente do Koin dentro do ViewModel
+- [x] Evento disparado após confirmação de sucesso do repositório, não no clique
+- [x] Cancelamento não gera evento
+- [x] Nenhum parâmetro contém valor financeiro, descrição ou nome de conta/cartão
+- [x] `is_installment` presente apenas em `create_transaction`
 
 ---
 

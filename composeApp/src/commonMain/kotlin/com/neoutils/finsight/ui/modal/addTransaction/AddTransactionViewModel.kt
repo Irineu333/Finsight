@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -29,7 +30,8 @@ class AddTransactionViewModel(
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -108,6 +110,15 @@ class AddTransactionViewModel(
             ).onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(
+                    name = "create_transaction",
+                    params = buildMap {
+                        put("type", form.type.name.lowercase())
+                        put("target", form.target.name.lowercase())
+                        put("is_installment", "true")
+                        form.category?.let { put("category", it.name) }
+                    }
+                )
                 modalManager.dismiss()
             }
 
@@ -131,6 +142,15 @@ class AddTransactionViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(
+                    name = "create_transaction",
+                    params = buildMap {
+                        put("type", form.type.name.lowercase())
+                        put("target", form.target.name.lowercase())
+                        put("is_installment", "false")
+                        form.category?.let { put("category", it.name) }
+                    }
+                )
                 modalManager.dismiss()
             }
     }

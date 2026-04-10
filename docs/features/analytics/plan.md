@@ -25,7 +25,7 @@
 - [x] [01 — Interface `Analytics` + DI](steps/01-interface-analytics-di.md)
 - [x] [02 — Screen views](steps/02-screen-views.md)
 - [x] [03 — Identificação de usuário](steps/03-user-id.md)
-- [ ] [04 — Eventos: Transactions](steps/04-events-transactions.md)
+- [x] [04 — Eventos: Transactions](steps/04-events-transactions.md)
 - [ ] [05 — Eventos: Accounts](steps/05-events-accounts.md)
 - [ ] [06 — Eventos: Credit Cards](steps/06-events-credit-cards.md)
 - [ ] [07 — Eventos: Installments](steps/07-events-installments.md)

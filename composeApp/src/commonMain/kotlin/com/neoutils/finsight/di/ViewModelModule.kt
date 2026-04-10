@@ -233,7 +233,8 @@ val viewModelModule = module {
             accountRepository = get(),
             buildTransactionUseCase = get(),
             addInstallmentUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -247,7 +248,8 @@ val viewModelModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             buildTransactionUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -255,7 +257,8 @@ val viewModelModule = module {
         DeleteTransactionViewModel(
             transaction = it.get(),
             operationRepository = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 

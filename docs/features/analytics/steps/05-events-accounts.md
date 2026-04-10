@@ -46,10 +46,10 @@ Adicionar chamadas de analytics nos ViewModels de contas, **após confirmação 
 6. Ajustar saldo → confirmar `adjust_account_balance` sem parâmetros.
 
 **Revisão de código:**
-- [ ] `is_default` reflete o estado salvo, não o estado anterior
-- [ ] Nenhum parâmetro contém saldo ou nome de conta
-- [ ] `create_account` e `edit_account` diferenciados pelo modo do formulário (criar vs. editar)
-- [ ] Eventos disparados após sucesso do repositório
+- [x] `is_default` reflete o estado salvo, não o estado anterior
+- [x] Nenhum parâmetro contém saldo ou nome de conta
+- [x] `create_account` e `edit_account` diferenciados pelo modo do formulário (criar vs. editar)
+- [x] Eventos disparados após sucesso do repositório
 
 ---
 

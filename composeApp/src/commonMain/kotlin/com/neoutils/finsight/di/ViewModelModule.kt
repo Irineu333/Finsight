@@ -298,7 +298,8 @@ val viewModelModule = module {
             createAccountUseCase = get(),
             updateAccountUseCase = get(),
             modalManager = get(),
-            debounceManager = get()
+            debounceManager = get(),
+            analytics = get(),
         )
     }
 
@@ -336,7 +337,8 @@ val viewModelModule = module {
         DeleteAccountViewModel(
             account = it.get(),
             deleteAccountUseCase = get(),
-            modalManager = get()
+            modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -351,6 +353,7 @@ val viewModelModule = module {
             calculateBalanceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 
@@ -407,6 +410,7 @@ val viewModelModule = module {
             transferBetweenAccountsUseCase = get(),
             accountRepository = get(),
             modalManager = get(),
+            analytics = get(),
         )
     }
 

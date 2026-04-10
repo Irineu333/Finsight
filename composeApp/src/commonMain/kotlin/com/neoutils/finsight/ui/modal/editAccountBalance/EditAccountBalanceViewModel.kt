@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.modal.editAccountBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
@@ -27,7 +28,8 @@ class EditAccountBalanceViewModel(
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val accountRepository: IAccountRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val accounts = flow {
@@ -118,6 +120,7 @@ class EditAccountBalanceViewModel(
             }
         }
 
+        analytics.logEvent("adjust_account_balance")
         modalManager.dismiss()
     }
 }

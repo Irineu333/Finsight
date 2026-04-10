@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
@@ -26,6 +27,7 @@ class AccountFormViewModel(
     private val updateAccountUseCase: UpdateAccountUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val isEditMode = account != null
@@ -131,6 +133,10 @@ class AccountFormViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(
+                    name = "edit_account",
+                    params = mapOf("is_default" to isDefault.value.toString()),
+                )
                 modalManager.dismissAll()
             }
             return@launch
@@ -143,6 +149,10 @@ class AccountFormViewModel(
         ).onLeft {
             // TODO: register exception
         }.onRight {
+            analytics.logEvent(
+                name = "create_account",
+                params = mapOf("is_default" to isDefault.value.toString()),
+            )
             modalManager.dismiss()
         }
     }

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.support
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 class SupportViewModel(
     supportRepository: ISupportRepository,
     private val createSupportIssueUseCase: CreateSupportIssueUseCase,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val _showActive = MutableStateFlow(true)
@@ -48,6 +50,10 @@ class SupportViewModel(
     fun createIssue(draft: SupportIssueDraft) {
         viewModelScope.launch {
             createSupportIssueUseCase(draft)
+            analytics.logEvent(
+                name = "create_support_issue",
+                params = mapOf("type" to draft.type.name.lowercase()),
+            )
         }
     }
 }

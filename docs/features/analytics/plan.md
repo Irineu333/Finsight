@@ -34,7 +34,7 @@
 - [x] [10 — Eventos: Categories](steps/10-events-categories.md)
 - [x] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
 - [x] [12 — Eventos: Reports](steps/12-events-reports.md)
-- [ ] [13 — Eventos: Support](steps/13-events-support.md)
+- [x] [13 — Eventos: Support](steps/13-events-support.md)
 
 ---
 

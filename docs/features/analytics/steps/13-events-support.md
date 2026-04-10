@@ -38,9 +38,9 @@ Adicionar chamadas de analytics nos ViewModels de suporte, **após confirmação
 3. Enviar resposta em um issue → confirmar `send_support_reply` com o `type` do issue correto.
 
 **Revisão de código:**
-- [ ] `type` reflete o tipo do issue (`bug`, `feature`, `question`) — sem conteúdo do usuário
-- [ ] Eventos disparados após sucesso do repositório/use case
-- [ ] `send_support_reply` inclui o `type` do issue pai
+- [x] `type` reflete o tipo do issue (`bug`, `feature`, `question`) — sem conteúdo do usuário
+- [x] Eventos disparados após sucesso do repositório/use case
+- [x] `send_support_reply` inclui o `type` do issue pai
 
 ---
 

@@ -206,6 +206,7 @@ val viewModelModule = module {
         SupportViewModel(
             supportRepository = get(),
             createSupportIssueUseCase = get(),
+            analytics = get(),
         )
     }
 
@@ -214,6 +215,7 @@ val viewModelModule = module {
             issueId = it.get(),
             supportRepository = get(),
             addSupportReplyUseCase = get(),
+            analytics = get(),
         )
     }
 

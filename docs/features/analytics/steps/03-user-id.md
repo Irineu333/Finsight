@@ -32,10 +32,10 @@ Comportamento esperado:
 2. Confirmar que o `user_id` visível no DebugView corresponde ao `uid` do Firebase Auth (verificar via `Firebase.auth.currentUser?.uid` em debug).
 
 **Revisão de código:**
-- [ ] `user_id` obtido de `Firebase.auth.currentUser?.uid` — não gerado manualmente
-- [ ] `setUserId(null)` chamado quando não há sessão ativa
-- [ ] Nenhuma lógica de persistência de ID implementada no app (delegado ao Firebase Auth)
-- [ ] A chamada não bloqueia a composição inicial do app
+- [x] `user_id` obtido de `Firebase.auth.currentUser?.uid` — não gerado manualmente
+- [x] `setUserId(null)` chamado quando não há sessão ativa
+- [x] Nenhuma lógica de persistência de ID implementada no app (delegado ao Firebase Auth)
+- [x] A chamada não bloqueia a composição inicial do app
 
 ---
 

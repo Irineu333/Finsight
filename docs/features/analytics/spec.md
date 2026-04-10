@@ -282,8 +282,8 @@ Usando o Firebase Console (DebugView) com o app em modo debug no Android:
 - [x] `Analytics` é uma interface em camada independente de plataforma
 - [x] Implementação Firebase está em `androidMain` e `iosMain` (não em `commonMain`)
 - [x] Implementação no-op está em `jvmMain`
-- [ ] `user_id` obtido do Firebase Auth (`currentUser?.uid`) — não gerado manualmente
-- [ ] mesmo `user_id` usado entre sessões (persistência gerenciada pelo Firebase Auth)
+- [x] `user_id` obtido do Firebase Auth (`currentUser?.uid`) — não gerado manualmente
+- [x] mesmo `user_id` usado entre sessões (persistência gerenciada pelo Firebase Auth)
 - [ ] Nenhum parâmetro contém dados financeiros (valores, saldos)
 - [ ] Eventos disparados após confirmação bem-sucedida, não no clique do botão
 - [x] `Analytics` registrado como `single {}` no Koin em módulo separado

@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.database.repository
 
+import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
@@ -19,7 +20,9 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-class FirebaseSupportRepository : ISupportRepository {
+class FirebaseSupportRepository(
+    private val analytics: Analytics,
+) : ISupportRepository {
 
     private val auth get() = Firebase.auth
     private val collection get() = Firebase.firestore.collection("support_issues")
@@ -27,6 +30,7 @@ class FirebaseSupportRepository : ISupportRepository {
     private suspend fun currentUserId(): String {
         if (auth.currentUser == null) {
             auth.signInAnonymously()
+            analytics.setUserId(auth.currentUser?.uid)
         }
 
         return requireNotNull(auth.currentUser?.uid) {

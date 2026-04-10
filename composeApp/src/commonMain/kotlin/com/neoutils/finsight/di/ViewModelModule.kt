@@ -119,6 +119,7 @@ val viewModelModule = module {
             buildDashboardViewingUseCase = get(),
             dashboardPreferencesRepository = get(),
             dashboardPreviewFactory = get(),
+            analytics = get(),
         )
     }
 

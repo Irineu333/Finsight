@@ -37,9 +37,9 @@ Adicionar chamadas de analytics no `DashboardViewModel`, **após a ação corres
 3. Cancelar edição sem salvar → confirmar que `save_dashboard_layout` não foi disparado.
 
 **Revisão de código:**
-- [ ] `enter_dashboard_edit_mode` disparado na ativação do modo de edição, não no encerramento
-- [ ] `components` lista somente os ativos, na ordem do dashboard, separados por vírgula
-- [ ] Cancelamento sem salvar não gera `save_dashboard_layout`
+- [x] `enter_dashboard_edit_mode` disparado na ativação do modo de edição, não no encerramento
+- [x] `components` lista somente os ativos, na ordem do dashboard, separados por vírgula
+- [x] Cancelamento sem salvar não gera `save_dashboard_layout`
 
 ---
 

@@ -32,7 +32,7 @@
 - [x] [08 — Eventos: Budgets](steps/08-events-budgets.md)
 - [x] [09 — Eventos: Recurring](steps/09-events-recurring.md)
 - [x] [10 — Eventos: Categories](steps/10-events-categories.md)
-- [ ] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
+- [x] [11 — Eventos: Dashboard](steps/11-events-dashboard.md)
 - [ ] [12 — Eventos: Reports](steps/12-events-reports.md)
 - [ ] [13 — Eventos: Support](steps/13-events-support.md)
 

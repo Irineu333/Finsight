@@ -50,7 +50,7 @@ Ask the user for confirmation before starting implementation.
 
 Write the code following:
 - The spec's mandatory patterns.
-- The project's conventions (`CLAUDE.md`).
+- The project's conventions.
 - The relevant architecture skill references.
 - The step's file list and scope.
 
@@ -104,7 +104,6 @@ If bugs or uncovered cases are discovered during implementation or validation:
 
 After user approval:
 - Check off the step in `plan.md` (`- [x]`).
-- Commit the implementation using the `/commit` skill.
 - Proceed to the next step (back to step 1 of the loop).
 
 ## Rules

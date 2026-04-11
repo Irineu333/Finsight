@@ -1,15 +1,16 @@
 ---
 name: sdd-specify
 description: >
-  SDD Phase 1 — Specification. Gathers information about the feature and existing architecture.
-  Produces spec.md. Use when starting a new feature that follows the Spec-Driven Development workflow.
+  SDD Phase 1 — Specification. Maps the current state of the system and defines the expected
+  behavior. Produces spec.md. Use when starting a new feature that follows the Spec-Driven
+  Development workflow.
 user-invocable: true
 ---
 
 # SDD Phase 1 — Specification
 
 Create the feature specification following the Spec-Driven Development workflow.
-The spec defines *what* the system must do — never *how* to implement it.
+The spec defines *where we are* and *where we're going* — never *how to get there*.
 
 ## Input
 
@@ -17,25 +18,24 @@ The spec defines *what* the system must do — never *how* to implement it.
 
 ## Steps
 
-### 1. Gather context
+### 1. Map current state ("where we are")
 
-Research everything needed to write a precise spec:
+Research what already exists in the system related to this feature:
 
-- **Existing code:** Search the codebase for related entities, screens, repositories, use cases,
-  and models. Understand what the user can already do in this area.
-- **Architecture:** Read the `kmp-architecture` skill references to understand layer responsibilities
-  and patterns that apply.
+- Which entities, models, and data already exist
+- Which screens, flows, and actions the user can already perform in this area
+- Which limitations or dependencies constrain this feature
 
 Present a summary of findings to the user and ask for confirmation before proceeding.
 
-### 2. Write the spec
+### 2. Write the spec ("where we're going")
 
 Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
 Fill in each section:
 
-- **Contexto:** what already exists (from step 1 findings).
-- **Objetivo:** one sentence — the problem this feature solves.
+- **Contexto:** the current state from step 1.
+- **Objetivo:** one sentence — the problem this feature solves or what it enables.
 - **Comportamentos:** scenarios in `Dado / Quando / Então` format. Cover:
   - Main path (happy path)
   - Edge cases

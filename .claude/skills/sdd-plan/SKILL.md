@@ -29,6 +29,7 @@ Read the spec and identify:
 - Which layers are affected (domain / database / ui).
 - Which existing files will be modified vs. created.
 - Dependencies between behaviors (what must be built first).
+- Which external libraries are relevant and whether they are already in the project.
 - Technical risks or unknowns.
 
 Present the analysis to the user and ask for confirmation before proceeding.

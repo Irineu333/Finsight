@@ -29,8 +29,7 @@ Before each step, load the full context as documented in the SDD workflow:
 1. Read `spec.md` — the agent needs the full intended behavior.
 2. Read `plan.md` — the agent needs to know what comes after.
 3. Read the current step file.
-4. Read relevant references listed in `plan.md`.
-5. Read deviations from previous steps (in `plan.md` and completed step files).
+4. Read deviations from previous steps (in `plan.md` and completed step files).
 
 Without the full picture, decisions will be locally correct but globally harmful.
 

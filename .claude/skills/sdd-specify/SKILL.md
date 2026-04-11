@@ -1,9 +1,8 @@
 ---
 name: sdd-specify
 description: >
-  SDD Phase 1 — Specification. Gathers information about the feature, existing architecture,
-  and third-party libraries. Produces spec.md and reference docs. Use when starting a new
-  feature that follows the Spec-Driven Development workflow.
+  SDD Phase 1 — Specification. Gathers information about the feature and existing architecture.
+  Produces spec.md. Use when starting a new feature that follows the Spec-Driven Development workflow.
 user-invocable: true
 ---
 
@@ -26,23 +25,10 @@ Research everything needed to write a precise spec:
   and models. Understand what the user can already do in this area.
 - **Architecture:** Read the `kmp-architecture` skill references to understand layer responsibilities
   and patterns that apply.
-- **Third-party libraries:** Identify any external libraries relevant to this feature. Check if
-  `docs/reference/` already has docs for them.
 
 Present a summary of findings to the user and ask for confirmation before proceeding.
 
-### 2. Create reference docs (if needed)
-
-For each relevant third-party library that does NOT already have a reference in `docs/reference/`:
-
-- Research the library's official documentation (web search).
-- Create a reference file at `docs/reference/{library-name}.md`.
-
-For existing references, update them if new usage patterns are relevant for this feature.
-
-Ask the user to validate the references before proceeding.
-
-### 3. Write the spec
+### 2. Write the spec
 
 Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
@@ -59,7 +45,7 @@ Fill in each section:
 - **Fora do escopo:** what is explicitly excluded (prevents AI extrapolation).
 - **Criterio de aceite:** manual validation steps + code review checklist.
 
-### 4. Validate with user
+### 3. Validate with user
 
 Present the complete spec to the user for review. Ask specifically:
 

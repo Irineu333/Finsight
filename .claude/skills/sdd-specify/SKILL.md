@@ -41,7 +41,7 @@ Fill in each section:
   - Edge cases
   - Expected errors
 - **Regras de negócio:** explicit rules governing the behaviors above.
-- **Padroes obrigatorios:** only patterns NOT already covered by `CLAUDE.md`.
+- **Padroes:** only patterns specific to this feature, not already covered by context project.
 - **Fora do escopo:** what is explicitly excluded (prevents AI extrapolation).
 - **Criterio de aceite:** manual validation steps + code review checklist.
 
@@ -59,6 +59,6 @@ Do NOT proceed to planning until the user explicitly approves the spec.
 ## Rules
 
 - Never include implementation details (queries, internal data structures, function bodies).
-- Code in the spec is allowed ONLY for mandatory architectural patterns with justification.
+- Code in the spec is allowed ONLY for patterns specific to this feature, with justification.
 - If the user suggests implementation details, redirect them to the planning phase.
 - The spec is a product decision document — it changes only when intent changes, never because of technical difficulty.

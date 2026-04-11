@@ -28,7 +28,17 @@ Research what already exists in the system related to this feature:
 
 Present a summary of findings to the user and ask for confirmation before proceeding.
 
-### 2. Write the spec ("where we're going")
+### 2. Clarify ambiguities
+
+Before writing, identify what is unclear or missing:
+
+- Behaviors that could be interpreted in more than one way
+- Edge cases and error scenarios the user hasn't addressed
+- Scope boundaries that aren't explicit
+
+Ask the user directly. Do not assume — unresolved ambiguity in the spec becomes behavioral debt in the implementation.
+
+### 3. Write the spec ("where we're going")
 
 Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
@@ -45,7 +55,7 @@ Fill in each section:
 - **Fora do escopo:** what is explicitly excluded (prevents AI extrapolation).
 - **Criterio de aceite:** manual validation steps + code review checklist.
 
-### 3. Validate with user
+### 4. Validate with user
 
 Present the complete spec to the user for review. Ask specifically:
 

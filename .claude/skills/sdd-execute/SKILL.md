@@ -97,7 +97,7 @@ If the implementation diverged from the plan:
 If bugs or uncovered cases are discovered during implementation or validation:
 
 - Create an issue file in `docs/features/{feature-name}/issues/{NN}-{slug}.md`
-  following the template at `docs/sdd/issue-template.md`.
+  following the template at `.claude/skills/sdd-execute/references/issue-template.md`.
 - Add the issue to the "Issues" section in `plan.md`.
 - Discuss with the user whether to fix now or defer.
 

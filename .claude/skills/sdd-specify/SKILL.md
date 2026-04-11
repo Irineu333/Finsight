@@ -36,7 +36,7 @@ Present a summary of findings to the user and ask for confirmation before procee
 For each relevant third-party library that does NOT already have a reference in `docs/references/`:
 
 - Research the library's official documentation (web search).
-- Create a reference file following the template at `docs/sdd/reference-template.md`.
+- Create a reference file following the template at `.claude/skills/sdd-specify/references/reference-template.md`.
 - Save to `docs/references/{library-name}.md`.
 
 For existing references, update them if new usage patterns are relevant for this feature.
@@ -45,7 +45,7 @@ Ask the user to validate the references before proceeding.
 
 ### 3. Write the spec
 
-Create `docs/features/{feature-name}/spec.md` following the template at `docs/sdd/spec-template.md`.
+Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
 Fill in each section:
 

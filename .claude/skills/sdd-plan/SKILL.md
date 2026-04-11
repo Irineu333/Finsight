@@ -74,7 +74,7 @@ Do NOT write any files until the user approves the step breakdown.
 
 ### 3. Write the plan
 
-Create `docs/features/{feature-name}/plan.md` following the template at `docs/sdd/plan-template.md`.
+Create `docs/features/{feature-name}/plan.md` following the template at `.claude/skills/sdd-plan/references/plan-template.md`.
 
 Fill in:
 
@@ -87,7 +87,7 @@ Fill in:
 ### 4. Write step files
 
 For each step, create `docs/features/{feature-name}/steps/{NN}-{slug}.md` following
-the template at `docs/sdd/step-template.md`.
+the template at `.claude/skills/sdd-plan/references/step-template.md`.
 
 Fill in:
 

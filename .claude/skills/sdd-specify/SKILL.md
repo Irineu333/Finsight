@@ -44,7 +44,7 @@ Ask the user to validate the references before proceeding.
 
 ### 3. Write the spec
 
-Create `docs/features/{feature-name}/spec.md` following the template at `docs/sdd/spec-template.md`.
+Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
 Fill in each section:
 

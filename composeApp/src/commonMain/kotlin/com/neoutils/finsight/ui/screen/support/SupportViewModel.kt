@@ -51,7 +51,12 @@ class SupportViewModel(
     fun createIssue(draft: SupportIssueDraft) {
         viewModelScope.launch {
             createSupportIssueUseCase(draft)
-            analytics.logEvent(CreateSupportIssue(draft))
+                .onLeft {
+                    // TODO: register exception
+                }
+                .onRight {
+                    analytics.logEvent(CreateSupportIssue(draft))
+                }
         }
     }
 }

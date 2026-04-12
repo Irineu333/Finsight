@@ -54,7 +54,12 @@ class SupportIssueViewModel(
 
         viewModelScope.launch {
             addSupportReplyUseCase(issueId = content.issue.id, message = reply)
-            analytics.logEvent(SendSupportReply(content.issue))
+                .onLeft {
+                    // TODO: register exception
+                }
+                .onRight {
+                    analytics.logEvent(SendSupportReply(content.issue))
+                }
         }
     }
 }

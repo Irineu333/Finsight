@@ -30,7 +30,7 @@
 - [x] [01 — Dependência e interface](steps/01-dependency-and-interface.md)
 - [x] [02 — Implementações por plataforma](steps/02-platform-implementations.md)
 - [x] [03 — DI e registro nos entry points](steps/03-di-wiring.md)
-- [ ] [04 — Inicialização do user ID](steps/04-user-id-init.md)
+- [x] [04 — Inicialização do user ID](steps/04-user-id-init.md)
 - [ ] [05 — Refatorar use cases](steps/05-refactor-use-cases.md)
 - [ ] [06 — Reportar exceções](steps/06-report-exceptions.md)
 

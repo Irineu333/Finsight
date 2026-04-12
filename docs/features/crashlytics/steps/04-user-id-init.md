@@ -23,9 +23,9 @@ Em `App.kt`, injetar `Crashlytics` e associar o user ID do Firebase Auth à sess
 2. App Desktop inicia normalmente (no-op executado sem erros).
 
 **Revisão de código:**
-- [ ] `user_id` obtido de `authService.getUserId()` — não gerado manualmente
-- [ ] Chamada feita dentro do `LaunchedEffect(Unit)` existente (sem criar novo efeito)
-- [ ] Nenhum dado pessoal ou financeiro passado para `setUserId`
+- [x] `user_id` obtido de `authService.getUserId()` — não gerado manualmente
+- [x] Chamada feita dentro do `LaunchedEffect(Unit)` existente (sem criar novo efeito)
+- [x] Nenhum dado pessoal ou financeiro passado para `setUserId`
 
 ---
 

@@ -1,5 +1,9 @@
 package com.neoutils.finsight.domain.usecase
 
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.left
+import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
@@ -17,13 +21,13 @@ class AdjustBalanceUseCase(
         targetBalance: Double,
         adjustmentDate: LocalDate,
         account: Account
-    ) {
+    ): Either<Throwable, Unit> {
         val currentBalance = calculateBalanceUseCase(
             target = adjustmentDate.yearMonth,
             accountId = account.id,
         )
 
-        if (targetBalance == currentBalance) return
+        if (targetBalance == currentBalance) return AccountNotAdjustedException().left()
 
         val existingAdjustment = repository.getTransactionsBy(
             type = Transaction.Type.ADJUSTMENT,
@@ -34,42 +38,44 @@ class AdjustBalanceUseCase(
 
         val difference = targetBalance - currentBalance
 
-        if (existingAdjustment == null) {
-            operationRepository.createOperation(
-                kind = Operation.Kind.TRANSACTION,
-                title = null,
-                date = adjustmentDate,
-                categoryId = null,
-                sourceAccountId = account.id,
-                targetCreditCardId = null,
-                targetInvoiceId = null,
-                transactions = listOf(
-                    Transaction(
-                        title = null,
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = difference,
-                        date = adjustmentDate,
-                        account = account,
-                    )
-                ),
-            )
-            return
-        }
-
-        val newAmount = existingAdjustment.amount + difference
-
-        if (newAmount == 0.0) {
-            val operationId = existingAdjustment.operationId
-            if (operationId != null) {
-                operationRepository.deleteOperationById(operationId)
-            } else {
-                repository.delete(existingAdjustment)
+        return catch {
+            if (existingAdjustment == null) {
+                operationRepository.createOperation(
+                    kind = Operation.Kind.TRANSACTION,
+                    title = null,
+                    date = adjustmentDate,
+                    categoryId = null,
+                    sourceAccountId = account.id,
+                    targetCreditCardId = null,
+                    targetInvoiceId = null,
+                    transactions = listOf(
+                        Transaction(
+                            title = null,
+                            type = Transaction.Type.ADJUSTMENT,
+                            amount = difference,
+                            date = adjustmentDate,
+                            account = account,
+                        )
+                    ),
+                )
+                return@catch
             }
-            return
-        }
 
-        repository.update(
-            existingAdjustment.copy(amount = newAmount)
-        )
+            val newAmount = existingAdjustment.amount + difference
+
+            if (newAmount == 0.0) {
+                val operationId = existingAdjustment.operationId
+                if (operationId != null) {
+                    operationRepository.deleteOperationById(operationId)
+                } else {
+                    repository.delete(existingAdjustment)
+                }
+                return@catch
+            }
+
+            repository.update(
+                existingAdjustment.copy(amount = newAmount)
+            )
+        }
     }
 }

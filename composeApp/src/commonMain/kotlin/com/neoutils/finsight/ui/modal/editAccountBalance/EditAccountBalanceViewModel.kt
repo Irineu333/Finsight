@@ -96,32 +96,29 @@ class EditAccountBalanceViewModel(
         val account = selectedAccount.value ?: return@launch
 
         when (type) {
-            EditAccountBalanceModal.Type.CURRENT -> {
-                adjustBalanceUseCase(
-                    targetBalance = targetBalance,
-                    adjustmentDate = currentDate,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.CURRENT -> adjustBalanceUseCase(
+                targetBalance = targetBalance,
+                adjustmentDate = currentDate,
+                account = account,
+            )
 
-            EditAccountBalanceModal.Type.FINAL -> {
-                adjustFinalBalanceUseCase(
-                    targetBalance = targetBalance,
-                    targetMonth = targetMonth,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.FINAL -> adjustFinalBalanceUseCase(
+                targetBalance = targetBalance,
+                targetMonth = targetMonth,
+                account = account,
+            )
 
-            EditAccountBalanceModal.Type.INITIAL -> {
-                adjustInitialBalanceUseCase(
-                    targetBalance = targetBalance,
-                    targetMonth = targetMonth,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.INITIAL -> adjustInitialBalanceUseCase(
+                targetBalance = targetBalance,
+                targetMonth = targetMonth,
+                account = account,
+            )
+        }.onLeft { exception ->
+            /* TODO: register exception */
+            modalManager.dismiss()
+        }.onRight {
+            analytics.logEvent(AdjustAccountBalance)
+            modalManager.dismiss()
         }
-
-        analytics.logEvent(AdjustAccountBalance)
-        modalManager.dismiss()
     }
 }

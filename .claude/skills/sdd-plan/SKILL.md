@@ -30,7 +30,7 @@ Read the spec and identify:
 - Which existing files will be modified vs. created.
 - Dependencies between behaviors (what must be built first).
 - Technical risks or unknowns.
-- Which references from `docs/references/` are relevant.
+- Which references from `docs/reference/` are relevant.
 
 Present the analysis to the user and ask for confirmation before proceeding.
 
@@ -70,7 +70,7 @@ Create `docs/features/{feature-name}/plan.md` following the template at `docs/sd
 Fill in:
 
 - **Contexto tecnico:** existing code, prior decisions, known risks.
-- **Referencias:** links to relevant `docs/references/` files.
+- **Referencias:** links to relevant `docs/reference/` files.
 - **Etapas:** checklist with links to step files.
 - **Registro de desvios:** leave empty (filled during execution).
 - **Issues:** leave empty (filled during execution).

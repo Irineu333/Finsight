@@ -27,17 +27,16 @@ Research everything needed to write a precise spec:
 - **Architecture:** Read the `kmp-architecture` skill references to understand layer responsibilities
   and patterns that apply.
 - **Third-party libraries:** Identify any external libraries relevant to this feature. Check if
-  `docs/references/` already has docs for them.
+  `docs/reference/` already has docs for them.
 
 Present a summary of findings to the user and ask for confirmation before proceeding.
 
 ### 2. Create reference docs (if needed)
 
-For each relevant third-party library that does NOT already have a reference in `docs/references/`:
+For each relevant third-party library that does NOT already have a reference in `docs/reference/`:
 
 - Research the library's official documentation (web search).
-- Create a reference file following the template at `docs/sdd/reference-template.md`.
-- Save to `docs/references/{library-name}.md`.
+- Create a reference file at `docs/reference/{library-name}.md`.
 
 For existing references, update them if new usage patterns are relevant for this feature.
 

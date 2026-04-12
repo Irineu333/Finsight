@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -18,10 +17,10 @@ class ReportConfigViewModel(
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val buildReportViewerParams: BuildReportViewerParamsUseCase,
 ) : ViewModel() {
 
-    private val initialConfig = ReportConfigUiState.initial()
-    private val config = MutableStateFlow(initialConfig)
+    private val config = MutableStateFlow(ReportConfig.initial())
     private val _events = Channel<ReportConfigEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -38,13 +37,14 @@ class ReportConfigViewModel(
         autoSelectInvoice()
     }
 
-    val uiState = combine(
+    val uiState: StateFlow<ReportConfigUiState> = combine(
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
         config,
     ) { accounts, creditCards, invoices, config ->
-        config.copy(
+        ReportConfigUiState.Content(
+            config = config,
             accounts = accounts,
             creditCards = creditCards,
             invoices = invoices.reversed(),
@@ -52,7 +52,7 @@ class ReportConfigViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = initialConfig,
+        initialValue = ReportConfigUiState.Loading,
     )
 
     fun onAction(action: ReportConfigAction) = viewModelScope.launch {
@@ -63,13 +63,16 @@ class ReportConfigViewModel(
 
             is ReportConfigAction.ToggleAccount -> {
                 config.update { state ->
-                    val ids = state.selectedAccountIds.toMutableSet()
-                    if (action.accountId in ids) {
-                        ids.remove(action.accountId)
-                    } else {
-                        ids.add(action.accountId)
-                    }
-                    state.copy(selectedAccountIds = ids)
+                    state.copy(
+                        selectedAccountIds = buildSet {
+                            addAll(state.selectedAccountIds)
+                            if (action.accountId in state.selectedAccountIds) {
+                                remove(action.accountId)
+                            } else {
+                                add(action.accountId)
+                            }
+                        }
+                    )
                 }
             }
 
@@ -79,9 +82,16 @@ class ReportConfigViewModel(
 
             is ReportConfigAction.ToggleInvoice -> {
                 config.update { state ->
-                    val ids = state.selectedInvoiceIds.toMutableSet()
-                    if (action.invoiceId in ids) ids.remove(action.invoiceId) else ids.add(action.invoiceId)
-                    state.copy(selectedInvoiceIds = ids)
+                    state.copy(
+                        selectedInvoiceIds = buildSet {
+                            addAll(state.selectedInvoiceIds)
+                            if (action.invoiceId in state.selectedInvoiceIds) {
+                                remove(action.invoiceId)
+                            } else {
+                                add(action.invoiceId)
+                            }
+                        }
+                    )
                 }
             }
 
@@ -106,7 +116,7 @@ class ReportConfigViewModel(
             }
 
             ReportConfigAction.GenerateReport -> {
-                buildViewerParams()?.let { params ->
+                buildReportViewerParams(config.value)?.let { params ->
                     _events.send(ReportConfigEvent.NavigateToViewer(params))
                 }
             }
@@ -129,38 +139,6 @@ class ReportConfigViewModel(
                 val toSelect = invoices.firstOrNull { it.status == Invoice.Status.OPEN }
                     ?: invoices.firstOrNull()
                 config.update { it.copy(selectedInvoiceIds = setOfNotNull(toSelect?.id)) }
-            }
-        }
-    }
-
-    private fun buildViewerParams(
-        state: ReportConfigUiState = uiState.value
-    ): ReportViewerParams? {
-        if (!state.isValid) return null
-        return when (state.selectedTab) {
-            PerspectiveTab.ACCOUNT -> ReportViewerParams(
-                perspectiveType = PerspectiveTab.ACCOUNT,
-                accountIds = state.selectedAccountIds.toList(),
-                startDate = state.startDate,
-                endDate = state.endDate,
-                includeSpendingByCategory = state.includeSpendingByCategory,
-                includeIncomeByCategory = state.includeIncomeByCategory,
-                includeTransactionList = state.includeTransactionList,
-            )
-
-            PerspectiveTab.CREDIT_CARD -> {
-                val selected = state.invoices.filter { it.id in state.selectedInvoiceIds }
-                if (selected.isEmpty()) return null
-                ReportViewerParams(
-                    perspectiveType = PerspectiveTab.CREDIT_CARD,
-                    creditCardId = state.selectedCreditCardId,
-                    invoiceIds = selected.map { it.id },
-                    startDate = selected.minOf { it.openingDate },
-                    endDate = selected.maxOf { it.closingDate },
-                    includeSpendingByCategory = state.includeSpendingByCategory,
-                    includeIncomeByCategory = state.includeIncomeByCategory,
-                    includeTransactionList = state.includeTransactionList,
-                )
             }
         }
     }

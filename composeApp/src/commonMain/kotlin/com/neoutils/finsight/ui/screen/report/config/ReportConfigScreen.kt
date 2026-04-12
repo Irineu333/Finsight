@@ -104,7 +104,7 @@ private fun ReportConfigContent(
         bottomBar = {
             Button(
                 onClick = onGenerate,
-                enabled = uiState.isValid,
+                enabled = uiState is ReportConfigUiState.Content && uiState.config.isValid,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
@@ -123,6 +123,23 @@ private fun ReportConfigContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (uiState !is ReportConfigUiState.Content) {
+                item(key = "loading") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                }
+                return@LazyColumn
+            }
+
             if (uiState.creditCards.isNotEmpty()) {
                 item(
                     key = "perspective_tabs",
@@ -135,7 +152,7 @@ private fun ReportConfigContent(
                             .animateItem(),
                     ) {
                         SegmentedButton(
-                            selected = uiState.selectedTab == PerspectiveTab.ACCOUNT,
+                            selected = uiState.config.selectedTab == PerspectiveTab.ACCOUNT,
                             onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.ACCOUNT)) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                             colors = segmentedButtonColors,
@@ -144,7 +161,7 @@ private fun ReportConfigContent(
                             Text(stringResource(Res.string.report_config_perspective_account))
                         }
                         SegmentedButton(
-                            selected = uiState.selectedTab == PerspectiveTab.CREDIT_CARD,
+                            selected = uiState.config.selectedTab == PerspectiveTab.CREDIT_CARD,
                             onClick = { onAction(ReportConfigAction.SelectPerspective(PerspectiveTab.CREDIT_CARD)) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                             colors = segmentedButtonColors,
@@ -156,7 +173,7 @@ private fun ReportConfigContent(
                 }
             }
 
-            if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
+            if (uiState.config.selectedTab == PerspectiveTab.ACCOUNT) {
                 item(
                     key = "accounts_title",
                     contentType = "section_title",
@@ -191,7 +208,7 @@ private fun ReportConfigContent(
                                 AccountCard(
                                     account = account,
                                     variant = AccountCardVariant.Selection(
-                                        selected = account.id in uiState.selectedAccountIds,
+                                        selected = account.id in uiState.config.selectedAccountIds,
                                         onClick = { onAction(ReportConfigAction.ToggleAccount(account.id)) },
                                     ),
                                     modifier = Modifier.animateItem(),
@@ -202,7 +219,7 @@ private fun ReportConfigContent(
                 }
             }
 
-            if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
+            if (uiState.config.selectedTab == PerspectiveTab.CREDIT_CARD) {
                 item(
                     key = "credit_cards_title",
                     contentType = "section_title",
@@ -221,7 +238,7 @@ private fun ReportConfigContent(
                     contentType = "credit_cards_pager",
                 ) {
                     val initialPage = uiState.creditCards
-                        .indexOfFirst { it.id == uiState.selectedCreditCardId }
+                        .indexOfFirst { it.id == uiState.config.selectedCreditCardId }
                         .coerceAtLeast(0)
 
                     val pagerState = rememberPagerState(
@@ -251,7 +268,7 @@ private fun ReportConfigContent(
                 }
             }
 
-            if (uiState.selectedTab == PerspectiveTab.ACCOUNT) {
+            if (uiState.config.selectedTab == PerspectiveTab.ACCOUNT) {
                 item(
                     key = "date_range_title",
                     contentType = "section_title",
@@ -271,8 +288,8 @@ private fun ReportConfigContent(
                     contentType = "date_range_card",
                 ) {
                     DateRangeCard(
-                        startDate = uiState.startDate,
-                        endDate = uiState.endDate,
+                        startDate = uiState.config.startDate,
+                        endDate = uiState.config.endDate,
                         onRangeSelected = { start, end ->
                             onAction(ReportConfigAction.SelectStartDate(start))
                             onAction(ReportConfigAction.SelectEndDate(end))
@@ -282,7 +299,7 @@ private fun ReportConfigContent(
                 }
             }
 
-            if (uiState.selectedTab == PerspectiveTab.CREDIT_CARD) {
+            if (uiState.config.selectedTab == PerspectiveTab.CREDIT_CARD) {
                 item(
                     key = "invoice_title",
                     contentType = "section_title",
@@ -314,7 +331,7 @@ private fun ReportConfigContent(
                         ) { invoice ->
                             InvoiceSelectionCard(
                                 invoice = invoice,
-                                selected = invoice.id in uiState.selectedInvoiceIds,
+                                selected = invoice.id in uiState.config.selectedInvoiceIds,
                                 onClick = { onAction(ReportConfigAction.ToggleInvoice(invoice.id)) },
                                 modifier = Modifier.animateItem(),
                             )
@@ -342,13 +359,13 @@ private fun ReportConfigContent(
                 contentType = "sections_card",
             ) {
                 SectionsCard(
-                    includeSpendingByCategory = uiState.includeSpendingByCategory,
-                    includeIncomeByCategory = uiState.includeIncomeByCategory,
-                    includeTransactionList = uiState.includeTransactionList,
+                    includeSpendingByCategory = uiState.config.includeSpendingByCategory,
+                    includeIncomeByCategory = uiState.config.includeIncomeByCategory,
+                    includeTransactionList = uiState.config.includeTransactionList,
                     onToggleSpendingByCategory = { onAction(ReportConfigAction.ToggleSpendingByCategory(it)) },
                     onToggleIncomeByCategory = { onAction(ReportConfigAction.ToggleIncomeByCategory(it)) },
                     onToggleTransactionList = { onAction(ReportConfigAction.ToggleTransactionList(it)) },
-                    showIncomeByCategory = uiState.selectedTab != PerspectiveTab.CREDIT_CARD,
+                    showIncomeByCategory = uiState.config.selectedTab != PerspectiveTab.CREDIT_CARD,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .animateItem(),

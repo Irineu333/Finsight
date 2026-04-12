@@ -44,6 +44,7 @@ import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
+import com.neoutils.finsight.ui.screen.report.config.BuildReportViewerParamsUseCase
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
 import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
@@ -457,11 +458,14 @@ val viewModelModule = module {
         )
     }
 
+    factory { BuildReportViewerParamsUseCase(get()) }
+
     viewModel {
         ReportConfigViewModel(
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            buildReportViewerParams = get(),
         )
     }
 

@@ -29,9 +29,9 @@ Criar os módulos Koin para `Crashlytics` (commonMain + 3 plataformas) e registr
 2. App Desktop inicia sem erros.
 
 **Revisão de código:**
-- [ ] `Crashlytics` registrado como `single {}` (não `factory {}`)
-- [ ] Módulo usa `expect/actual` igual ao padrão do Analytics
-- [ ] `crashlyticsModule` adicionado nos três entry points
+- [x] `Crashlytics` registrado como `single {}` (não `factory {}`)
+- [x] Módulo usa `expect/actual` igual ao padrão do Analytics
+- [x] `crashlyticsModule` adicionado nos três entry points
 
 ---
 

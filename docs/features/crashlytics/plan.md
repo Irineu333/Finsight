@@ -27,7 +27,7 @@
 
 ## Etapas
 
-- [ ] [01 — Dependência e interface](steps/01-dependency-and-interface.md)
+- [x] [01 — Dependência e interface](steps/01-dependency-and-interface.md)
 - [ ] [02 — Implementações por plataforma](steps/02-platform-implementations.md)
 - [ ] [03 — DI e registro nos entry points](steps/03-di-wiring.md)
 - [ ] [04 — Inicialização do user ID](steps/04-user-id-init.md)
@@ -37,6 +37,8 @@
 ---
 
 ## Registro de desvios
+
+- **Etapa 01:** plugin Gradle `com.google.firebase.crashlytics` adicionado (Android); `FirebaseCrashlytics` e `FirebaseAnalytics` adicionados como produtos SPM no `project.yml` (iOS). Desvios necessários para que as plataformas linkassem os frameworks nativos corretamente.
 
 ---
 

@@ -201,16 +201,7 @@ Todas as telas principais rastreadas com `screen_view`:
 
 ## Padrões obrigatórios
 
-- **Abstração via interface no domínio:** o domínio deve definir uma interface `Analytics` (ou equivalente em camada comum). Implementações concretas ficam nas camadas de plataforma. Isso permite o no-op em Desktop e facilita testes.
-
-```kotlin
-// Exemplo de contrato — não inclui detalhes de implementação
-interface Analytics {
-    fun logScreenView(screenName: String)
-    fun logEvent(name: String, params: Map<String, String> = emptyMap())
-    fun setUserId(id: String?)
-}
-```
+- **Abstração via interface no domínio:** o domínio deve definir uma interface `Analytics` (ou equivalente em camada comum). Implementações concretas ficam nas camadas de plataforma. Isso permite o no-op em Desktop e facilita testes. A interface deve expor `logScreenView`, `logEvent` e `setUserId`; a assinatura exata de `logEvent` é decisão de implementação.
 
 - **Injeção via Koin:** `Analytics` registrado como `single {}` com implementação por plataforma, seguindo o mesmo padrão de `DatabaseModule` e `ReportModule`.
 

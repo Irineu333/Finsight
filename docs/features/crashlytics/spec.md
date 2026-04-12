@@ -120,10 +120,10 @@ Usando o Firebase Console (Crashlytics dashboard) com o app em modo debug no And
 
 ### Revisão de código
 
-- [ ] `Crashlytics` é uma interface em camada independente de plataforma
-- [ ] Implementação Firebase está em `androidMain` e `iosMain` (não em `commonMain`)
-- [ ] Implementação no-op está em `jvmMain`
-- [ ] `user_id` obtido do Firebase Auth (`currentUser?.uid`) — não gerado manualmente
-- [ ] `recordException` chamado apenas em blocos que capturam exceções, não em retornos `Either.Left`
-- [ ] Nenhum dado pessoal ou financeiro incluído manualmente nos relatórios
-- [ ] `Crashlytics` registrado como `single {}` no Koin em módulo separado por plataforma
+- [x] `Crashlytics` é uma interface em camada independente de plataforma
+- [x] Implementação Firebase está em `androidMain` e `iosMain` (não em `commonMain`)
+- [x] Implementação no-op está em `jvmMain`
+- [x] `user_id` obtido do Firebase Auth (`currentUser?.uid`) — não gerado manualmente
+- [x] `recordException` chamado apenas em blocos que capturam exceções, não em retornos `Either.Left`
+- [x] Nenhum dado pessoal ou financeiro incluído manualmente nos relatórios
+- [x] `Crashlytics` registrado como `single {}` no Koin em módulo separado por plataforma

@@ -62,14 +62,22 @@ Refatorar todos os use cases que podem lançar exceções inesperadas para retor
 3. Use cases afetados não lançam exceções não tratadas — todos os caminhos retornam Either.
 
 **Revisão de código:**
-- [ ] Todos os use cases que fazem I/O retornam `Either<Throwable, ...>` (ou `Either<XxxException, ...>`)
-- [ ] Nenhum `runCatching` restante nos use cases — todos usam `either { catch { } }`
-- [ ] Validações usam `ensure` / `ensureNotNull` / `raise` — não `throw`
-- [ ] Use cases de validação pura (`ValidateXxx`) mantêm `Either<XxxError, ...>` inalterado
-- [ ] Use cases puros (cálculos) mantêm retorno plain inalterado
+- [x] Todos os use cases que fazem I/O retornam `Either<Throwable, ...>` (ou `Either<XxxException, ...>`)
+- [x] Nenhum `runCatching` restante nos use cases — todos usam `either { catch { } }`
+- [x] Validações usam `ensure` / `ensureNotNull` / `raise` — não `throw`
+- [x] Use cases de validação pura (`ValidateXxx`) mantêm `Either<XxxError, ...>` inalterado
+- [x] Use cases puros (cálculos) mantêm retorno plain inalterado
 
 ---
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+### `CreateSupportIssueUseCase` e `AddSupportReplyUseCase`
+
+**Esperado:** trocar `runCatching` por `either { catch { } }` mantendo `Either<SupportError, ...>`.
+
+**Feito:** tipo do Left alterado para `Either<Throwable, ...>` com criação de `SupportException(val error: SupportError) : Exception(error.message)`. Validações usam `ensure { SupportException(...) }`; I/O usa `catch { }.bind()` sem `.mapLeft`, preservando a exception original do repositório.
+
+**Motivo:** `Either<SupportError, ...>` não é reportável ao Crashlytics — `SupportError` é um enum, não um `Throwable`. A `SupportException` resolve isso: é uma `Exception` com mensagem tipada, e o `catch { }.bind()` sem `.mapLeft` preserva a exception real do repositório no `Either.Left`.
+
+**Impacto na etapa 06:** `SupportViewModel` e `SupportIssueViewModel` receberão `Throwable` (não `SupportError`) no `onLeft`. O cast para `SupportException` permite acessar `exception.error` para exibição na UI quando necessário.

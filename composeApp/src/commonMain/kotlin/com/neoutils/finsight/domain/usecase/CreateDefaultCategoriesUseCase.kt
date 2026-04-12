@@ -2,6 +2,10 @@
 
 package com.neoutils.finsight.domain.usecase
 
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
+import arrow.core.raise.context.bind
+import arrow.core.raise.either
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.resources.Res
@@ -51,18 +55,20 @@ class CreateDefaultCategoriesUseCase(
         Template(UiText.Res(Res.string.category_default_travel), AppIcon.FLIGHT, Category.Type.EXPENSE),
     )
 
-    suspend operator fun invoke() {
+    suspend operator fun invoke(): Either<Throwable, Unit> = either {
         val createdAtBase = Clock.System.now().toEpochMilliseconds()
 
-        templates.forEachIndexed { index, template ->
-            categoryRepository.insert(
-                Category(
-                    name = template.name.asString(),
-                    icon = CategoryLazyIcon(template.icon.key),
-                    type = template.type,
-                    createdAt = createdAtBase + index,
+        catch {
+            templates.forEachIndexed { index, template ->
+                categoryRepository.insert(
+                    Category(
+                        name = template.name.asString(),
+                        icon = CategoryLazyIcon(template.icon.key),
+                        type = template.type,
+                        createdAt = createdAtBase + index,
+                    )
                 )
-            )
-        }
+            }
+        }.bind()
     }
 }

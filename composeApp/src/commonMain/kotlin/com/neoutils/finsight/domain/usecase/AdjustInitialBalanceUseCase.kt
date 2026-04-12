@@ -25,6 +25,7 @@ class AdjustInitialBalanceUseCase(
     ): Either<Throwable, Unit> {
         if (targetMonth > currentYearMonth) return FutureMonthAdjustmentException().left()
 
+
         return adjustBalanceUseCase(
             targetBalance = targetBalance,
             adjustmentDate = targetMonth.minusMonth().lastDay,

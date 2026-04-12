@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 class CategoriesViewModel(
     private val categoryRepository: ICategoryRepository,
     private val createDefaultCategories: CreateDefaultCategoriesUseCase,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedType = MutableStateFlow<Category.Type?>(null)
@@ -49,7 +51,7 @@ class CategoriesViewModel(
         when (action) {
             CategoriesAction.CreateDefaultCategories -> viewModelScope.launch {
                 createDefaultCategories().onLeft {
-                    // TODO: register exception
+                    crashlytics.recordException(it)
                 }
             }
 

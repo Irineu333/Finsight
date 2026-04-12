@@ -10,7 +10,7 @@ class FirebaseCrashlyticsImpl : Crashlytics {
         Firebase.crashlytics.setUserId(id ?: "")
     }
 
-    override fun recordException(e: Exception) {
+    override fun recordException(e: Throwable) {
         Firebase.crashlytics.recordException(e)
     }
 }

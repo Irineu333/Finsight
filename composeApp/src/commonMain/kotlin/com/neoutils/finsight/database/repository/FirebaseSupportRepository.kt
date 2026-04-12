@@ -3,6 +3,7 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
@@ -22,6 +23,7 @@ import kotlin.time.Instant
 
 class FirebaseSupportRepository(
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ISupportRepository {
 
     private val auth get() = Firebase.auth
@@ -48,7 +50,7 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<IssueDocument>().toDomain(doc.id)
-                        }.getOrNull()
+                        }.getOrElse { crashlytics.recordException(it); null }
                     }.sortedByDescending {
                         it.updatedAt
                     }
@@ -62,7 +64,7 @@ class FirebaseSupportRepository(
                 if (doc.exists) {
                     runCatching {
                         doc.data<IssueDocument>().toDomain(doc.id)
-                    }.getOrNull()
+                    }.getOrElse { crashlytics.recordException(it); null }
                 } else null
             }
         )
@@ -77,7 +79,7 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<MessageDocument>().toDomain(doc.id, doc.metadata.hasPendingWrites)
-                        }.getOrNull()
+                        }.getOrElse { crashlytics.recordException(it); null }
                     }.sortedBy { it.createdAt }
                 }
         )

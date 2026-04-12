@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -14,11 +15,12 @@ class DeleteCreditCardViewModel(
     private val deleteCreditCardUseCase: DeleteCreditCardUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     fun deleteCreditCard() = viewModelScope.launch {
         deleteCreditCardUseCase(creditCard).onLeft {
-            // TODO: register exception
+            crashlytics.recordException(it)
         }
         analytics.logEvent(DeleteCreditCard)
         modalManager.dismissAll()

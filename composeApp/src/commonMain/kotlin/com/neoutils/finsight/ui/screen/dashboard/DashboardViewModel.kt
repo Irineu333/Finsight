@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EnterDashboardEditMode
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.SaveDashboardLayout
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
@@ -38,12 +39,13 @@ class DashboardViewModel(
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,
     private val dashboardPreviewFactory: DashboardPreviewFactory,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     init {
         viewModelScope.launch {
             ensureDefaultAccountUseCase().onLeft {
-                // TODO: register exception
+                crashlytics.recordException(it)
             }
         }
     }

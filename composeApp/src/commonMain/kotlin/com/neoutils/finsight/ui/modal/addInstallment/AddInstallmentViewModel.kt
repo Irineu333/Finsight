@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -37,6 +38,7 @@ class AddInstallmentViewModel(
     private val addInstallmentUseCase: AddInstallmentUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -126,6 +128,7 @@ class AddInstallmentViewModel(
             form = form,
             installments = installments,
         ).onLeft {
+            crashlytics.recordException(it)
             _events.send(
                 AddInstallmentEvent.ShowError(
                     when (it) {

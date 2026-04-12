@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PayInvoice
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -25,6 +26,7 @@ class PayInvoiceViewModel(
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
@@ -75,6 +77,8 @@ class PayInvoiceViewModel(
                 date = date,
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
             )
+        }.onLeft {
+            crashlytics.recordException(it)
         }.onRight {
             analytics.logEvent(PayInvoice)
             modalManager.dismissAll()

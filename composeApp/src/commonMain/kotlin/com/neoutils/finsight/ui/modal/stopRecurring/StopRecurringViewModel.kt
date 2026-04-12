@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.StopRecurring
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -14,10 +15,13 @@ class StopRecurringViewModel(
     private val stopRecurringUseCase: StopRecurringUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     fun stop() = viewModelScope.launch {
-        stopRecurringUseCase(recurring).onRight {
+        stopRecurringUseCase(recurring).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(StopRecurring(recurring))
             modalManager.dismissAll()
         }

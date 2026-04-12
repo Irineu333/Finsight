@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ConfirmRecurring
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
@@ -35,6 +36,7 @@ class ConfirmRecurringViewModel(
     private val skipRecurringUseCase: SkipRecurringUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -139,7 +141,9 @@ class ConfirmRecurringViewModel(
             account = if (uiState.value.selectedTarget.isAccount) uiState.value.selectedAccount else null,
             creditCard = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedCreditCard else null,
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
-        ).onRight {
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(ConfirmRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
         }
@@ -150,7 +154,9 @@ class ConfirmRecurringViewModel(
         skipRecurringUseCase(
             recurring = recurring,
             date = date,
-        ).onRight {
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
         }

@@ -2,5 +2,5 @@ package com.neoutils.finsight.domain.crashlytics
 
 interface Crashlytics {
     fun setUserId(id: String?)
-    fun recordException(e: Exception)
+    fun recordException(e: Throwable)
 }

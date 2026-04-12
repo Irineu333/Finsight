@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CloseInvoice
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
@@ -14,13 +15,16 @@ class CloseInvoiceViewModel(
     private val closeInvoiceUseCase: CloseInvoiceUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     fun closeInvoice(closingDate: LocalDate) = viewModelScope.launch {
         closeInvoiceUseCase(
             invoiceId,
             closingDate
-        ).onRight {
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(CloseInvoice)
             modalManager.dismissAll()
         }

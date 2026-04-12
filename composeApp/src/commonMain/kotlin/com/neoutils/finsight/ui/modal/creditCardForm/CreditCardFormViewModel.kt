@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
@@ -36,6 +37,7 @@ class CreditCardFormViewModel(
     private val debounceManager: DebounceManager,
     private val creditCardPeriod: CreditCardPeriod,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val isEditMode = creditCard != null
@@ -177,7 +179,7 @@ class CreditCardFormViewModel(
                     )
                 }
             }.onLeft {
-                // TODO: register exception
+                crashlytics.recordException(it)
             }.onRight {
                 analytics.logEvent(EditCreditCard)
                 modalManager.dismissAll()
@@ -189,7 +191,7 @@ class CreditCardFormViewModel(
         addCreditCardUseCase(
             form = form.value,
         ).onLeft {
-            // TODO: register exception
+            crashlytics.recordException(it)
         }.onRight {
             analytics.logEvent(CreateCreditCard)
             modalManager.dismiss()

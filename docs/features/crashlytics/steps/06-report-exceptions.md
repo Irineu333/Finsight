@@ -79,14 +79,18 @@ Refatorar todos os ViewModels (screens e modals) que chamam use cases retornando
 3. Nenhum `// TODO: register exception` restante no código.
 
 **Revisão de código:**
-- [ ] Todo ViewModel que chama use case com `Either<Throwable, ...>` tem `onLeft { crashlytics.recordException(it) }`
-- [ ] Validações (`Either<XxxError, ...>`) NÃO reportam exceções
-- [ ] `FirebaseSupportRepository` reporta exceções de deserialização silenciadas
-- [ ] `Crashlytics` injetado via construtor (não `koinInject`)
-- [ ] Nenhum `// TODO: register exception` restante
+- [x] Todo ViewModel que chama use case com `Either<Throwable, ...>` tem `onLeft { crashlytics.recordException(it) }`
+- [x] Validações (`Either<XxxError, ...>`) NÃO reportam exceções
+- [x] `FirebaseSupportRepository` reporta exceções de deserialização silenciadas
+- [x] `Crashlytics` injetado via construtor (não `koinInject`)
+- [x] Nenhum `// TODO: register exception` restante
 
 ---
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+**Interface `Crashlytics.recordException`:** O plano assumia `Exception`, mas Arrow's `catch {}` retorna `Either<Throwable, ...>`. Para evitar casts desnecessários em todos os ViewModels, o parâmetro foi alterado para `Throwable` na interface e nas três implementações (`FirebaseCrashlyticsImpl` Android, iOS e `NoOpCrashlytics`). O SDK gitlive também aceita `Throwable`. Impacto: nenhum nas etapas seguintes.
+
+**`CategoriesViewModel`:** Não estava listado no plano, mas continha `// TODO: register exception` para `createDefaultCategories()` que retorna `Either<Throwable, Unit>`. Crashlytics foi injetado e o TODO resolvido. Impacto: nenhum.
+
+**`DeleteBudget/Category/Installment/Recurring/Transaction` ViewModels:** O plano listou esses 5 ViewModels como "reportar onLeft", mas nenhum deles usa `Either` — chamam métodos de repositório diretamente. Não foram modificados. Impacto: nenhum.

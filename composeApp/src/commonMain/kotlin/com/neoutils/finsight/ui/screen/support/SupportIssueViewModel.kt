@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.SendSupportReply
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ class SupportIssueViewModel(
     supportRepository: ISupportRepository,
     private val addSupportReplyUseCase: AddSupportReplyUseCase,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val replyText = MutableStateFlow("")
@@ -55,7 +57,7 @@ class SupportIssueViewModel(
         viewModelScope.launch {
             addSupportReplyUseCase(issueId = content.issue.id, message = reply)
                 .onLeft {
-                    // TODO: register exception
+                    crashlytics.recordException(it)
                 }
                 .onRight {
                     analytics.logEvent(SendSupportReply(content.issue))

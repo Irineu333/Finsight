@@ -32,7 +32,7 @@
 - [x] [03 — DI e registro nos entry points](steps/03-di-wiring.md)
 - [x] [04 — Inicialização do user ID](steps/04-user-id-init.md)
 - [x] [05 — Refatorar use cases](steps/05-refactor-use-cases.md)
-- [ ] [06 — Reportar exceções](steps/06-report-exceptions.md)
+- [x] [06 — Reportar exceções](steps/06-report-exceptions.md)
 
 ---
 
@@ -44,6 +44,10 @@
 
 - **Etapa 01:** plugin Gradle `com.google.firebase.crashlytics` adicionado (Android); `FirebaseCrashlytics` e `FirebaseAnalytics` adicionados como produtos SPM no `project.yml` (iOS). Desvios necessários para que as plataformas linkassem os frameworks nativos corretamente.
 - **Etapa 02:** `setUserId` do SDK aceita apenas `String` não-nulo — implementação usa `id ?: ""` para representar ausência de usuário.
+
+---
+
+- **Etapa 06:** `Crashlytics.recordException` mudou de `Exception` para `Throwable` para alinhar com Arrow (`Either<Throwable>`) e o SDK Firebase. `CategoriesViewModel` adicionado ao escopo (tinha TODO mas não estava no plano). `DeleteBudget/Category/Installment/Recurring/Transaction` ViewModels não foram modificados — não usam `Either`.
 
 ---
 

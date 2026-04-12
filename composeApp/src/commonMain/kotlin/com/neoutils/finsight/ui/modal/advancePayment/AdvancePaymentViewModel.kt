@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdvanceInvoicePayment
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ class AdvancePaymentViewModel(
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
@@ -70,7 +72,9 @@ class AdvancePaymentViewModel(
             amount = amount,
             date = date,
             account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
-        ).onRight {
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(AdvanceInvoicePayment)
             modalManager.dismissAll()
         }

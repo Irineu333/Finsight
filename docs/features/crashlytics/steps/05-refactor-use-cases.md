@@ -72,6 +72,18 @@ Refatorar todos os use cases que podem lançar exceções inesperadas para retor
 
 ## Desvio
 
+### Callers dos use cases refatorados
+
+**Esperado:** callers não modificados nesta etapa.
+
+**Feito:** todos os ViewModels que chamam os use cases refatorados receberam `.onLeft { // TODO: register exception }` nas chamadas afetadas (`DashboardViewModel`, `CategoriesViewModel`, `SupportViewModel`, `SupportIssueViewModel`, `DeleteCreditCardViewModel`, `EditInvoiceBalanceViewModel`, `EditAccountBalanceViewModel`).
+
+**Motivo:** antecipa o trabalho da etapa 06 e garante que os TODOs já estejam nos pontos exatos onde o reporte ao Crashlytics será inserido.
+
+**Impacto na etapa 06:** os TODOs já marcam os locais corretos — basta substituir por `crashlytics.recordException(it)`.
+
+---
+
 ### `CreateSupportIssueUseCase` e `AddSupportReplyUseCase`
 
 **Esperado:** trocar `runCatching` por `either { catch { } }` mantendo `Either<SupportError, ...>`.

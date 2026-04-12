@@ -39,6 +39,7 @@
 ## Registro de desvios
 
 - **Etapa 05:** `CreateSupportIssueUseCase` e `AddSupportReplyUseCase` tiveram o tipo do Left alterado de `Either<SupportError, ...>` para `Either<Throwable, ...>`. Criada `SupportException(val error: SupportError)` para representar erros de validação como `Throwable`. I/O usa `catch { }.bind()` sem `.mapLeft`, preservando a exception original. Impacto na etapa 06: ViewModels de suporte receberão `Throwable` no `onLeft`.
+- **Etapa 05:** ViewModels callers dos use cases refatorados receberam `.onLeft { // TODO: register exception }` antecipando os pontos de reporte da etapa 06.
 
 
 - **Etapa 01:** plugin Gradle `com.google.firebase.crashlytics` adicionado (Android); `FirebaseCrashlytics` e `FirebaseAnalytics` adicionados como produtos SPM no `project.yml` (iOS). Desvios necessários para que as plataformas linkassem os frameworks nativos corretamente.

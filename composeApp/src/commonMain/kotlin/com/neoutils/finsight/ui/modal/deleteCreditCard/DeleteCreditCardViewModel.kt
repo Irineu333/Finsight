@@ -17,7 +17,9 @@ class DeleteCreditCardViewModel(
 ) : ViewModel() {
 
     fun deleteCreditCard() = viewModelScope.launch {
-        deleteCreditCardUseCase(creditCard)
+        deleteCreditCardUseCase(creditCard).onLeft {
+            // TODO: register exception
+        }
         analytics.logEvent(DeleteCreditCard)
         modalManager.dismissAll()
     }

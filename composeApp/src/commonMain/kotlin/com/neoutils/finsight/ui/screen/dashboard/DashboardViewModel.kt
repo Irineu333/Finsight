@@ -42,7 +42,9 @@ class DashboardViewModel(
 
     init {
         viewModelScope.launch {
-            ensureDefaultAccountUseCase()
+            ensureDefaultAccountUseCase().onLeft {
+                // TODO: register exception
+            }
         }
     }
 

@@ -48,7 +48,9 @@ class CategoriesViewModel(
     fun onAction(action: CategoriesAction) {
         when (action) {
             CategoriesAction.CreateDefaultCategories -> viewModelScope.launch {
-                createDefaultCategories()
+                createDefaultCategories().onLeft {
+                    // TODO: register exception
+                }
             }
 
             is CategoriesAction.SelectType -> {

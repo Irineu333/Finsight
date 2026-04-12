@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -97,14 +98,16 @@ class EditInvoiceBalanceViewModel(
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
-        val invoice = selectedInvoice.value
         adjustInvoiceUseCase(
-            invoice = invoice,
+            invoice = selectedInvoice.value,
             target = targetBalance,
             adjustmentDate = currentDate
-        )
-
-        analytics.logEvent(AdjustInvoiceBalance)
-        modalManager.dismiss()
+        ).onLeft { exception ->
+            modalManager.dismiss()
+            /* TODO: register exception */
+        }.onRight {
+            analytics.logEvent(AdjustInvoiceBalance)
+            modalManager.dismiss()
+        }
     }
 }

@@ -70,6 +70,8 @@ After implementation, verify the step's acceptance criteria:
 - Run `./gradlew allTests` if tests were added or modified.
 - Run `./gradlew check` for general verification.
 
+Report the checklist result to the user — state each item as passed or flagged.
+
 ### 4. Report to user
 
 Present the implementation result:
@@ -103,6 +105,8 @@ If bugs or uncovered cases are discovered during implementation or validation:
 ### 7. Mark step complete
 
 After user approval:
+- Ask the user to confirm they have reviewed the code before marking the checklist.
+- Only after the user confirms the code review: mark all "Revisao de codigo" checkboxes as checked (`- [x]`) in the step file.
 - Check off the step in `plan.md` (`- [x]`).
 - Proceed to the next step (back to step 1 of the loop).
 

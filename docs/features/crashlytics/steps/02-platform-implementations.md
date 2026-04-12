@@ -25,14 +25,20 @@ Criar as implementações concretas da interface `Crashlytics`: `FirebaseCrashly
 2. Compilação Desktop sem erros.
 
 **Revisão de código:**
-- [ ] `FirebaseCrashlyticsImpl` implementa `Crashlytics` usando apenas imports de `dev.gitlive.firebase.crashlytics`
-- [ ] `NoOpCrashlytics` não tem nenhuma lógica — apenas `= Unit` em cada método
-- [ ] Nenhum dado pessoal ou financeiro incluído nas chamadas ao SDK
+- [x] `FirebaseCrashlyticsImpl` implementa `Crashlytics` usando apenas imports de `dev.gitlive.firebase.crashlytics`
+- [x] `NoOpCrashlytics` não tem nenhuma lógica — apenas `= Unit` em cada método
+- [x] Nenhum dado pessoal ou financeiro incluído nas chamadas ao SDK
 
 ---
 
 ## Desvio
 
-> Preencha apenas se a implementação divergiu do planejado.
+**O que era esperado:** `recordException(e: Exception)` e `setUserId(id: String?)` mapeando diretamente ao SDK.
 
-**Possível:** A API do gitlive pode diferir do esperado (ex: método se chama diferente). Registrar aqui se isso acontecer.
+**O que foi feito:**
+- `recordException`: sem desvio — `Exception` é subtipo de `Throwable`, passado diretamente.
+- `setUserId`: o SDK do gitlive aceita apenas `String` não-nulo. A implementação usa `id ?: ""` para representar ausência de usuário (limpa o userId no Crashlytics).
+
+**Por quê:** A assinatura real da API é `setUserId(userId: String)` sem nullable — confirmado lendo o source `.jar` da dependência.
+
+**Impacto nas etapas seguintes:** nenhum — a interface do domínio não muda.

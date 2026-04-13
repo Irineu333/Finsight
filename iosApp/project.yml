@@ -19,8 +19,8 @@ settings:
   base:
     PRODUCT_NAME: Finsight
     PRODUCT_BUNDLE_IDENTIFIER: com.neoutils.finsight
-    MARKETING_VERSION: "1.7.1"
-    CURRENT_PROJECT_VERSION: "25"
+    MARKETING_VERSION: "1.8.0"
+    CURRENT_PROJECT_VERSION: "27"
 
 targets:
   Finsight:

@@ -20,12 +20,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class DatePickerModal(
-    private val initialDate: LocalDate,
+    private val initialDate: LocalDate? = null,
     private val onDateSelected: (LocalDate) -> Unit,
     private val minDate: LocalDate? = null,
     private val maxDate: LocalDate? = null,
@@ -44,7 +45,9 @@ class DatePickerModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = localDateToMillis(initialDate),
+            initialSelectedDateMillis = localDateToMillis(
+                initialDate ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            ),
             selectableDates = selectableDates
         )
 

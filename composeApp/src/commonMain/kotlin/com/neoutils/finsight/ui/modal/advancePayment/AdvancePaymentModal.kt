@@ -133,7 +133,7 @@ class AdvancePaymentModal(
                         onClick = {
                             manager.show(
                                 DatePickerModal(
-                                    initialDate = dayMonthYear.parse(date.text.toString()),
+                                    initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
                                     minDate = invoice.openingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->

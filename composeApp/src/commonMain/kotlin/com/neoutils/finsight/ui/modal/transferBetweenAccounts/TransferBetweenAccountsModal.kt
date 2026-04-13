@@ -138,7 +138,7 @@ class TransferBetweenAccountsModal(
                             onClick = {
                                 modalManager.show(
                                     DatePickerModal(
-                                        initialDate = dayMonthYear.parse(date.text.toString()),
+                                        initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
                                         maxDate = currentDate,
                                         onDateSelected = { selectedDate ->
                                             date.edit {

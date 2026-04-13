@@ -11,7 +11,6 @@ import com.neoutils.finsight.domain.repository.ISupportRepository
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
-import dev.gitlive.firebase.firestore.where
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -50,7 +49,9 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<IssueDocument>().toDomain(doc.id)
-                        }.getOrElse { crashlytics.recordException(it); null }
+                        }.onFailure {
+                            crashlytics.recordException(it)
+                        }.getOrNull()
                     }.sortedByDescending {
                         it.updatedAt
                     }
@@ -64,7 +65,9 @@ class FirebaseSupportRepository(
                 if (doc.exists) {
                     runCatching {
                         doc.data<IssueDocument>().toDomain(doc.id)
-                    }.getOrElse { crashlytics.recordException(it); null }
+                    }.onFailure {
+                        crashlytics.recordException(it)
+                    }.getOrNull()
                 } else null
             }
         )
@@ -79,7 +82,9 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<MessageDocument>().toDomain(doc.id, doc.metadata.hasPendingWrites)
-                        }.getOrElse { crashlytics.recordException(it); null }
+                        }.onFailure {
+                            crashlytics.recordException(it)
+                        }.getOrNull()
                     }.sortedBy { it.createdAt }
                 }
         )

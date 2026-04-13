@@ -29,16 +29,17 @@ class AdjustBalanceUseCase(
 
         if (targetBalance == currentBalance) return AccountNotAdjustedException().left()
 
-        val existingAdjustment = repository.getTransactionsBy(
-            type = Transaction.Type.ADJUSTMENT,
-            target = Transaction.Target.ACCOUNT,
-            date = adjustmentDate,
-            accountId = account.id,
-        ).firstOrNull()
-
-        val difference = targetBalance - currentBalance
-
         return catch {
+
+            val existingAdjustment = repository.getTransactionsBy(
+                type = Transaction.Type.ADJUSTMENT,
+                target = Transaction.Target.ACCOUNT,
+                date = adjustmentDate,
+                accountId = account.id,
+            ).firstOrNull()
+
+            val difference = targetBalance - currentBalance
+
             if (existingAdjustment == null) {
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,

@@ -43,6 +43,7 @@ import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -59,8 +60,13 @@ fun ReportViewerScreen(
     val formatter = LocalCurrencyFormatter.current
     val platformContext = LocalPlatformContext.current
 
+    val analytics = koinInject<Analytics>()
     val printService: ReportPrintService = koinInject()
     val shareService: ReportShareService = koinInject()
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("reports_viewer")
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->

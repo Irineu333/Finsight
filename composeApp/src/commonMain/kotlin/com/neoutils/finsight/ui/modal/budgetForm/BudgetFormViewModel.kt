@@ -11,6 +11,9 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateBudget
+import com.neoutils.finsight.domain.analytics.event.EditBudget
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -40,6 +43,7 @@ class BudgetFormViewModel(
     private val validateBudgetTitle: ValidateBudgetTitleUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val isEditMode = budget != null
@@ -217,6 +221,13 @@ class BudgetFormViewModel(
                     )
                 )
             }
+            analytics.logEvent(
+                if (budget != null) {
+                    EditBudget(state.limitType, state.selectedCategories)
+                } else {
+                    CreateBudget(state.limitType, state.selectedCategories)
+                }
+            )
             modalManager.dismissAll()
         }
     }

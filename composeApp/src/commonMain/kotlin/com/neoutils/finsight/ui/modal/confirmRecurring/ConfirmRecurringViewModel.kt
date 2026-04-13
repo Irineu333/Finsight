@@ -8,6 +8,9 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.ConfirmRecurring
+import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
@@ -31,6 +34,7 @@ class ConfirmRecurringViewModel(
     private val confirmRecurringUseCase: ConfirmRecurringUseCase,
     private val skipRecurringUseCase: SkipRecurringUseCase,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -135,7 +139,10 @@ class ConfirmRecurringViewModel(
             account = if (uiState.value.selectedTarget.isAccount) uiState.value.selectedAccount else null,
             creditCard = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedCreditCard else null,
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
-        ).onRight { modalManager.dismiss() }
+        ).onRight {
+            analytics.logEvent(ConfirmRecurring(recurring, uiState.value.selectedTarget))
+            modalManager.dismiss()
+        }
     }
 
     private fun skip() = viewModelScope.launch {
@@ -143,6 +150,9 @@ class ConfirmRecurringViewModel(
         skipRecurringUseCase(
             recurring = recurring,
             date = date,
-        ).onRight { modalManager.dismiss() }
+        ).onRight {
+            analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
+            modalManager.dismiss()
+        }
     }
 }

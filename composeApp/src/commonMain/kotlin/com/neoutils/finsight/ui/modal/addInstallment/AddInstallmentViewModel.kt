@@ -7,6 +7,8 @@ import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -34,6 +36,7 @@ class AddInstallmentViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val addInstallmentUseCase: AddInstallmentUseCase,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -132,6 +135,7 @@ class AddInstallmentViewModel(
                 )
             )
         }.onRight {
+            analytics.logEvent(CreateInstallments(form, count = installments))
             modalManager.dismiss()
         }
     }

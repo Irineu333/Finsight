@@ -38,6 +38,8 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -46,7 +48,12 @@ fun ReportConfigScreen(
     onNavigateToViewer: (ReportViewerParams) -> Unit = {},
     viewModel: ReportConfigViewModel = koinViewModel(),
 ) {
+    val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("reports_config")
+    }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->

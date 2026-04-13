@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateCategory
+import com.neoutils.finsight.domain.analytics.event.EditCategory
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
@@ -27,6 +30,7 @@ class CategoryFormViewModel(
     private val validateCategoryName: ValidateCategoryNameUseCase,
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val isEditMode = category != null
@@ -129,6 +133,7 @@ class CategoryFormViewModel(
                     icon = CategoryLazyIcon(icon.value.key)
                 )
             )
+            analytics.logEvent(EditCategory(name.trim(), category.type))
             modalManager.dismissAll()
             return@launch
         }
@@ -141,6 +146,7 @@ class CategoryFormViewModel(
                 createdAt = Clock.System.now().toEpochMilliseconds()
             )
         )
+        analytics.logEvent(CreateCategory(name.trim(), type.value))
         modalManager.dismiss()
     }
 }

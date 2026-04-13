@@ -11,6 +11,9 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateInstallments
+import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -29,7 +32,8 @@ class AddTransactionViewModel(
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -108,6 +112,7 @@ class AddTransactionViewModel(
             ).onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(CreateInstallments(form, count = form.installments))
                 modalManager.dismiss()
             }
 
@@ -131,6 +136,7 @@ class AddTransactionViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(CreateTransaction(form))
                 modalManager.dismiss()
             }
     }

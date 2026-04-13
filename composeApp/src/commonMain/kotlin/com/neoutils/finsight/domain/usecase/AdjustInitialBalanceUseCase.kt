@@ -2,11 +2,12 @@
 
 package com.neoutils.finsight.domain.usecase
 
+import arrow.core.Either
+import arrow.core.left
+import com.neoutils.finsight.domain.exception.FutureMonthAdjustmentException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.toYearMonth
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.minus
 import kotlinx.datetime.minusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -21,11 +22,10 @@ class AdjustInitialBalanceUseCase(
         targetBalance: Double,
         targetMonth: YearMonth,
         account: Account
-    ) {
+    ): Either<Throwable, Unit> {
+        if (targetMonth > currentYearMonth) return FutureMonthAdjustmentException().left()
 
-        if (targetMonth > currentYearMonth) return
-
-        adjustBalanceUseCase(
+        return adjustBalanceUseCase(
             targetBalance = targetBalance,
             adjustmentDate = targetMonth.minusMonth().lastDay,
             account = account,

@@ -7,6 +7,9 @@ import arrow.core.getOrElse
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
+import com.neoutils.finsight.domain.analytics.event.EditCreditCard
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
@@ -32,6 +35,7 @@ class CreditCardFormViewModel(
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val creditCardPeriod: CreditCardPeriod,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val isEditMode = creditCard != null
@@ -175,6 +179,7 @@ class CreditCardFormViewModel(
             }.onLeft {
                 // TODO: register exception
             }.onRight {
+                analytics.logEvent(EditCreditCard)
                 modalManager.dismissAll()
             }
 
@@ -186,6 +191,7 @@ class CreditCardFormViewModel(
         ).onLeft {
             // TODO: register exception
         }.onRight {
+            analytics.logEvent(CreateCreditCard)
             modalManager.dismiss()
         }
     }

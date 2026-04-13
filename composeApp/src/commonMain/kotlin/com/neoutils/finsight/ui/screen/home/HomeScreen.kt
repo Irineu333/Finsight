@@ -10,7 +10,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import com.neoutils.finsight.domain.analytics.Analytics
+import org.koin.compose.koinInject
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -31,6 +34,7 @@ import kotlin.reflect.typeOf
 
 @Composable
 fun HomeScreen() {
+    val analytics = koinInject<Analytics>()
     val modalManager = LocalModalManager.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -46,6 +50,14 @@ fun HomeScreen() {
         ) == true -> NavigationItem.Transactions
 
         else -> NavigationItem.Dashboard
+    }
+
+    LaunchedEffect(Unit) {
+        analytics.logScreenView("home")
+    }
+
+    LaunchedEffect(selectedItem) {
+        analytics.logScreenView(selectedItem.screenName)
     }
 
     val homeChromeTransition = updateTransition(

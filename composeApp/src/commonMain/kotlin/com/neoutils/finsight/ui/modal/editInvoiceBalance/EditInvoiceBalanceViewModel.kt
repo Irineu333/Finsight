@@ -2,9 +2,12 @@ package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -22,7 +25,8 @@ class EditInvoiceBalanceViewModel(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val invoiceRepository: IInvoiceRepository,
     private val creditCardRepository: ICreditCardRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val timeZone get() = TimeZone.currentSystemDefault()
@@ -94,13 +98,16 @@ class EditInvoiceBalanceViewModel(
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {
-        val invoice = selectedInvoice.value
         adjustInvoiceUseCase(
-            invoice = invoice,
+            invoice = selectedInvoice.value,
             target = targetBalance,
             adjustmentDate = currentDate
-        )
-
-        modalManager.dismiss()
+        ).onLeft { exception ->
+            modalManager.dismiss()
+            /* TODO: register exception */
+        }.onRight {
+            analytics.logEvent(AdjustInvoiceBalance)
+            modalManager.dismiss()
+        }
     }
 }

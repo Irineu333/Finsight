@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.PayInvoice
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -21,7 +23,8 @@ class PayInvoiceViewModel(
     private val payInvoiceUseCase: PayInvoiceUseCase,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val accountRepository: IAccountRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val selectedAccount = MutableStateFlow<Account?>(null)
@@ -73,6 +76,7 @@ class PayInvoiceViewModel(
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
             )
         }.onRight {
+            analytics.logEvent(PayInvoice)
             modalManager.dismissAll()
         }
     }

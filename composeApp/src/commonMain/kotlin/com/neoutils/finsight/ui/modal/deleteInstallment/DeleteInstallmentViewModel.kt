@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.deleteInstallment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.DeleteInstallments
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
@@ -15,6 +17,7 @@ class DeleteInstallmentViewModel(
     private val operationRepository: IOperationRepository,
     private val installmentRepository: IInstallmentRepository,
     private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     fun deleteInstallment() = viewModelScope.launch {
@@ -22,6 +25,7 @@ class DeleteInstallmentViewModel(
             operationRepository.deleteOperationById(operation.id)
         }
         installmentRepository.deleteInstallmentById(installment.id)
+        analytics.logEvent(DeleteInstallments(installment, operations))
         modalManager.dismissAll()
     }
 }

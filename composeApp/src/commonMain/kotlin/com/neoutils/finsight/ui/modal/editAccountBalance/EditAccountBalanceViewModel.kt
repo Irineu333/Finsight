@@ -2,6 +2,8 @@ package com.neoutils.finsight.ui.modal.editAccountBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.AdjustAccountBalance
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
@@ -27,7 +29,8 @@ class EditAccountBalanceViewModel(
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val accountRepository: IAccountRepository,
-    private val modalManager: ModalManager
+    private val modalManager: ModalManager,
+    private val analytics: Analytics,
 ) : ViewModel() {
 
     private val accounts = flow {
@@ -93,31 +96,29 @@ class EditAccountBalanceViewModel(
         val account = selectedAccount.value ?: return@launch
 
         when (type) {
-            EditAccountBalanceModal.Type.CURRENT -> {
-                adjustBalanceUseCase(
-                    targetBalance = targetBalance,
-                    adjustmentDate = currentDate,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.CURRENT -> adjustBalanceUseCase(
+                targetBalance = targetBalance,
+                adjustmentDate = currentDate,
+                account = account,
+            )
 
-            EditAccountBalanceModal.Type.FINAL -> {
-                adjustFinalBalanceUseCase(
-                    targetBalance = targetBalance,
-                    targetMonth = targetMonth,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.FINAL -> adjustFinalBalanceUseCase(
+                targetBalance = targetBalance,
+                targetMonth = targetMonth,
+                account = account,
+            )
 
-            EditAccountBalanceModal.Type.INITIAL -> {
-                adjustInitialBalanceUseCase(
-                    targetBalance = targetBalance,
-                    targetMonth = targetMonth,
-                    account = account,
-                )
-            }
+            EditAccountBalanceModal.Type.INITIAL -> adjustInitialBalanceUseCase(
+                targetBalance = targetBalance,
+                targetMonth = targetMonth,
+                account = account,
+            )
+        }.onLeft { exception ->
+            /* TODO: register exception */
+            modalManager.dismiss()
+        }.onRight {
+            analytics.logEvent(AdjustAccountBalance)
+            modalManager.dismiss()
         }
-
-        modalManager.dismiss()
     }
 }

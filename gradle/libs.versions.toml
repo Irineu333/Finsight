@@ -70,6 +70,7 @@ arrow-resilience = { module = "io.arrow-kt:arrow-resilience", version.ref = "arr
 
 gitlive-firebase-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "gitlive-firebase" }
 gitlive-firebase-auth = { module = "dev.gitlive:firebase-auth", version.ref = "gitlive-firebase" }
+gitlive-firebase-analytics = { module = "dev.gitlive:firebase-analytics", version.ref = "gitlive-firebase" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

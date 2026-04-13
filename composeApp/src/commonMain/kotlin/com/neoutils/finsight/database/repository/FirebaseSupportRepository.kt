@@ -3,6 +3,7 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
@@ -10,7 +11,6 @@ import com.neoutils.finsight.domain.repository.ISupportRepository
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
-import dev.gitlive.firebase.firestore.where
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -22,6 +22,7 @@ import kotlin.time.Instant
 
 class FirebaseSupportRepository(
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ISupportRepository {
 
     private val auth get() = Firebase.auth
@@ -48,6 +49,8 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<IssueDocument>().toDomain(doc.id)
+                        }.onFailure {
+                            crashlytics.recordException(it)
                         }.getOrNull()
                     }.sortedByDescending {
                         it.updatedAt
@@ -62,6 +65,8 @@ class FirebaseSupportRepository(
                 if (doc.exists) {
                     runCatching {
                         doc.data<IssueDocument>().toDomain(doc.id)
+                    }.onFailure {
+                        crashlytics.recordException(it)
                     }.getOrNull()
                 } else null
             }
@@ -77,6 +82,8 @@ class FirebaseSupportRepository(
                     snapshot.documents.mapNotNull { doc ->
                         runCatching {
                             doc.data<MessageDocument>().toDomain(doc.id, doc.metadata.hasPendingWrites)
+                        }.onFailure {
+                            crashlytics.recordException(it)
                         }.getOrNull()
                     }.sortedBy { it.createdAt }
                 }

@@ -1,16 +1,16 @@
 ---
 name: sdd-specify
 description: >
-  SDD Phase 1 — Specification. Gathers information about the feature, existing architecture,
-  and third-party libraries. Produces spec.md and reference docs. Use when starting a new
-  feature that follows the Spec-Driven Development workflow.
+  SDD Phase 1 — Specification. Maps the current state of the system and defines the expected
+  behavior. Produces spec.md. Use when starting a new feature that follows the Spec-Driven
+  Development workflow.
 user-invocable: true
 ---
 
 # SDD Phase 1 — Specification
 
 Create the feature specification following the Spec-Driven Development workflow.
-The spec defines *what* the system must do — never *how* to implement it.
+The spec defines *where we are* and *where we're going* — never *how to get there*.
 
 ## Input
 
@@ -18,44 +18,40 @@ The spec defines *what* the system must do — never *how* to implement it.
 
 ## Steps
 
-### 1. Gather context
+### 1. Map current state ("where we are")
 
-Research everything needed to write a precise spec:
+Research what already exists in the system related to this feature:
 
-- **Existing code:** Search the codebase for related entities, screens, repositories, use cases,
-  and models. Understand what the user can already do in this area.
-- **Architecture:** Read the `kmp-architecture` skill references to understand layer responsibilities
-  and patterns that apply.
-- **Third-party libraries:** Identify any external libraries relevant to this feature. Check if
-  `docs/reference/` already has docs for them.
+- Which entities, models, and data already exist
+- Which screens, flows, and actions the user can already perform in this area
+- Which limitations or dependencies constrain this feature
 
 Present a summary of findings to the user and ask for confirmation before proceeding.
 
-### 2. Create reference docs (if needed)
+### 2. Clarify ambiguities
 
-For each relevant third-party library that does NOT already have a reference in `docs/reference/`:
+Before writing, identify what is unclear or missing:
 
-- Research the library's official documentation (web search).
-- Create a reference file at `docs/reference/{library-name}.md`.
+- Behaviors that could be interpreted in more than one way
+- Edge cases and error scenarios the user hasn't addressed
+- Scope boundaries that aren't explicit
 
-For existing references, update them if new usage patterns are relevant for this feature.
+Ask the user directly. Do not assume — unresolved ambiguity in the spec becomes behavioral debt in the implementation.
 
-Ask the user to validate the references before proceeding.
+### 3. Write the spec ("where we're going")
 
-### 3. Write the spec
-
-Create `docs/features/{feature-name}/spec.md` following the template at `docs/sdd/spec-template.md`.
+Create `docs/features/{feature-name}/spec.md` following the template at `.claude/skills/sdd-specify/references/spec-template.md`.
 
 Fill in each section:
 
-- **Contexto:** what already exists (from step 1 findings).
-- **Objetivo:** one sentence — the problem this feature solves.
+- **Contexto:** the current state from step 1.
+- **Objetivo:** one sentence — the problem this feature solves or what it enables.
 - **Comportamentos:** scenarios in `Dado / Quando / Então` format. Cover:
   - Main path (happy path)
   - Edge cases
   - Expected errors
 - **Regras de negócio:** explicit rules governing the behaviors above.
-- **Padroes obrigatorios:** only patterns NOT already covered by `CLAUDE.md`.
+- **Padroes:** only patterns specific to this feature, not already covered by context project.
 - **Fora do escopo:** what is explicitly excluded (prevents AI extrapolation).
 - **Criterio de aceite:** manual validation steps + code review checklist.
 
@@ -73,6 +69,6 @@ Do NOT proceed to planning until the user explicitly approves the spec.
 ## Rules
 
 - Never include implementation details (queries, internal data structures, function bodies).
-- Code in the spec is allowed ONLY for mandatory architectural patterns with justification.
+- Code in the spec is allowed ONLY for patterns specific to this feature, with justification.
 - If the user suggests implementation details, redirect them to the planning phase.
 - The spec is a product decision document — it changes only when intent changes, never because of technical difficulty.

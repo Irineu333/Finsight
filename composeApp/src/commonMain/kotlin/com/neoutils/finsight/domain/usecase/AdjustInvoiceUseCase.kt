@@ -2,7 +2,8 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.left
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
@@ -20,21 +21,25 @@ class AdjustInvoiceUseCase(
         invoice: Invoice,
         target: Double,
         adjustmentDate: LocalDate
-    ): Either<Throwable, Unit> {
-        val currentInvoice = calculateInvoiceUseCase(invoiceId = invoice.id)
+    ): Either<Throwable, Unit> = either {
+        val currentInvoice = catch {
+            calculateInvoiceUseCase(invoiceId = invoice.id)
+        }.bind()
 
-        if (target == currentInvoice) return InvoiceNotAdjustedException().left()
+        ensure(target != currentInvoice) { InvoiceNotAdjustedException() }
 
-        val existingAdjustment = repository.getTransactionsBy(
-            type = Transaction.Type.ADJUSTMENT,
-            target = Transaction.Target.CREDIT_CARD,
-            invoiceId = invoice.id,
-            date = adjustmentDate
-        ).firstOrNull()
+        val existingAdjustment = catch {
+            repository.getTransactionsBy(
+                type = Transaction.Type.ADJUSTMENT,
+                target = Transaction.Target.CREDIT_CARD,
+                invoiceId = invoice.id,
+                date = adjustmentDate
+            ).firstOrNull()
+        }.bind()
 
         val difference = target - currentInvoice
 
-        return catch {
+        catch {
             if (existingAdjustment == null) {
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
@@ -74,6 +79,6 @@ class AdjustInvoiceUseCase(
             repository.update(
                 existingAdjustment.copy(amount = newAmount)
             )
-        }
+        }.bind()
     }
 }

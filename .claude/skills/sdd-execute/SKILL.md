@@ -29,8 +29,7 @@ Before each step, load the full context as documented in the SDD workflow:
 1. Read `spec.md` — the agent needs the full intended behavior.
 2. Read `plan.md` — the agent needs to know what comes after.
 3. Read the current step file.
-4. Read relevant references listed in `plan.md`.
-5. Read deviations from previous steps (in `plan.md` and completed step files).
+4. Read deviations from previous steps (in `plan.md` and completed step files).
 
 Without the full picture, decisions will be locally correct but globally harmful.
 
@@ -51,7 +50,7 @@ Ask the user for confirmation before starting implementation.
 
 Write the code following:
 - The spec's mandatory patterns.
-- The project's conventions (`CLAUDE.md`).
+- The project's conventions.
 - The relevant architecture skill references.
 - The step's file list and scope.
 
@@ -70,6 +69,8 @@ After implementation, verify the step's acceptance criteria:
 **Automated checks (when applicable):**
 - Run `./gradlew allTests` if tests were added or modified.
 - Run `./gradlew check` for general verification.
+
+Report the checklist result to the user — state each item as passed or flagged.
 
 ### 4. Report to user
 
@@ -97,15 +98,16 @@ If the implementation diverged from the plan:
 If bugs or uncovered cases are discovered during implementation or validation:
 
 - Create an issue file in `docs/features/{feature-name}/issues/{NN}-{slug}.md`
-  following the template at `docs/sdd/issue-template.md`.
+  following the template at `.claude/skills/sdd-execute/references/issue-template.md`.
 - Add the issue to the "Issues" section in `plan.md`.
 - Discuss with the user whether to fix now or defer.
 
 ### 7. Mark step complete
 
 After user approval:
+- Ask the user to confirm they have reviewed the code before marking the checklist.
+- Only after the user confirms the code review: mark all "Revisao de codigo" checkboxes as checked (`- [x]`) in the step file.
 - Check off the step in `plan.md` (`- [x]`).
-- Commit the implementation using the `/commit` skill.
 - Proceed to the next step (back to step 1 of the loop).
 
 ## Rules

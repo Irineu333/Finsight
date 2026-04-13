@@ -2,7 +2,8 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.left
+import arrow.core.raise.either
+import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
@@ -21,24 +22,27 @@ class AdjustBalanceUseCase(
         targetBalance: Double,
         adjustmentDate: LocalDate,
         account: Account
-    ): Either<Throwable, Unit> {
-        val currentBalance = calculateBalanceUseCase(
-            target = adjustmentDate.yearMonth,
-            accountId = account.id,
-        )
+    ): Either<Throwable, Unit> = either {
+        val currentBalance = catch {
+            calculateBalanceUseCase(
+                target = adjustmentDate.yearMonth,
+                accountId = account.id,
+            )
+        }.bind()
 
-        if (targetBalance == currentBalance) return AccountNotAdjustedException().left()
+        ensure(targetBalance != currentBalance) { AccountNotAdjustedException() }
 
-        val existingAdjustment = repository.getTransactionsBy(
-            type = Transaction.Type.ADJUSTMENT,
-            target = Transaction.Target.ACCOUNT,
-            date = adjustmentDate,
-            accountId = account.id,
-        ).firstOrNull()
+        catch {
 
-        val difference = targetBalance - currentBalance
+            val existingAdjustment = repository.getTransactionsBy(
+                type = Transaction.Type.ADJUSTMENT,
+                target = Transaction.Target.ACCOUNT,
+                date = adjustmentDate,
+                accountId = account.id,
+            ).firstOrNull()
 
-        return catch {
+            val difference = targetBalance - currentBalance
+
             if (existingAdjustment == null) {
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
@@ -76,6 +80,6 @@ class AdjustBalanceUseCase(
             repository.update(
                 existingAdjustment.copy(amount = newAmount)
             )
-        }
+        }.bind()
     }
 }

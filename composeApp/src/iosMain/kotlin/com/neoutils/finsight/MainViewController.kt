@@ -3,6 +3,7 @@ package com.neoutils.finsight
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.neoutils.finsight.di.analyticsModule
+import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.databaseModule
 import com.neoutils.finsight.di.mapperModule
@@ -28,6 +29,7 @@ fun MainViewController(): UIViewController {
                     useCaseModules,
                     reportModule,
                     analyticsModule,
+                    crashlyticsModule,
                     authModule,
                     viewModelModule,
                 )

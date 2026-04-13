@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdjustAccountBalance
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
@@ -31,6 +32,7 @@ class EditAccountBalanceViewModel(
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val accounts = flow {
@@ -113,8 +115,8 @@ class EditAccountBalanceViewModel(
                 targetMonth = targetMonth,
                 account = account,
             )
-        }.onLeft { exception ->
-            /* TODO: register exception */
+        }.onLeft {
+            crashlytics.recordException(it)
             modalManager.dismiss()
         }.onRight {
             analytics.logEvent(AdjustAccountBalance)

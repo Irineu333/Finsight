@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateSupportIssue
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
@@ -17,6 +18,7 @@ class SupportViewModel(
     supportRepository: ISupportRepository,
     private val createSupportIssueUseCase: CreateSupportIssueUseCase,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val _showActive = MutableStateFlow(true)
@@ -52,7 +54,7 @@ class SupportViewModel(
         viewModelScope.launch {
             createSupportIssueUseCase(draft)
                 .onLeft {
-                    // TODO: register exception
+                    crashlytics.recordException(it)
                 }
                 .onRight {
                     analytics.logEvent(CreateSupportIssue(draft))

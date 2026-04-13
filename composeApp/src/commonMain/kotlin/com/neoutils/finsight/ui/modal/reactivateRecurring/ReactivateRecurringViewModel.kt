@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ReactivateRecurring
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -14,10 +15,13 @@ class ReactivateRecurringViewModel(
     private val reactivateRecurringUseCase: ReactivateRecurringUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     fun reactivate() = viewModelScope.launch {
-        reactivateRecurringUseCase(recurring).onRight {
+        reactivateRecurringUseCase(recurring).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
             analytics.logEvent(ReactivateRecurring(recurring))
             modalManager.dismissAll()
         }

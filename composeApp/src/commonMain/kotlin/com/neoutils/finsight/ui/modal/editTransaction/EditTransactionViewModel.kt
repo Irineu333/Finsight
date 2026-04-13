@@ -14,6 +14,7 @@ import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EditTransaction
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.extension.combine
@@ -34,6 +35,7 @@ class EditTransactionViewModel(
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
@@ -126,7 +128,7 @@ class EditTransactionViewModel(
                 }
             }
         }.onLeft {
-            // TODO: register exception
+            crashlytics.recordException(it)
         }.onRight {
             analytics.logEvent(EditTransaction(form))
             modalManager.dismissAll()

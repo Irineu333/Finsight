@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
+import arrow.core.Either
+import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.resources.Res
@@ -10,24 +12,30 @@ class EnsureDefaultAccountUseCase(
     private val repository: IAccountRepository,
     private val name: UiText = UiText.Res(Res.string.account_default_name)
 ) {
-    suspend operator fun invoke(): Account {
+    suspend operator fun invoke(): Either<Throwable, Account> = catch {
+
         val existingDefault = repository.getDefaultAccount()
-        if (existingDefault != null) {
-            return existingDefault
-        }
+
+        if (existingDefault != null) return@catch existingDefault
 
         val accounts = repository.getAllAccounts()
-        if (accounts.isNotEmpty()) {
-            val firstAccount = accounts.first()
-            val updatedAccount = firstAccount.copy(isDefault = true)
-            repository.update(updatedAccount)
-            return updatedAccount
-        }
 
-        val newAccount = Account(
-            name = name.asString(),
-            isDefault = true
-        )
-        return newAccount.copy(id = repository.insert(newAccount))
+        if (accounts.isNotEmpty()) {
+            accounts
+                .first()
+                .copy(isDefault = true)
+                .also {
+                    repository.update(it)
+                }
+        } else {
+            Account(
+                name = name.asString(),
+                isDefault = true
+            ).let {
+                it.copy(
+                    id = repository.insert(it)
+                )
+            }
+        }
     }
 }

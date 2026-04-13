@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
@@ -27,6 +28,7 @@ class EditInvoiceBalanceViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val timeZone get() = TimeZone.currentSystemDefault()
@@ -102,9 +104,9 @@ class EditInvoiceBalanceViewModel(
             invoice = selectedInvoice.value,
             target = targetBalance,
             adjustmentDate = currentDate
-        ).onLeft { exception ->
+        ).onLeft {
+            crashlytics.recordException(it)
             modalManager.dismiss()
-            /* TODO: register exception */
         }.onRight {
             analytics.logEvent(AdjustInvoiceBalance)
             modalManager.dismiss()

@@ -1,7 +1,7 @@
 # Spec: [Nome da Feature]
 
 > A spec descreve *o que* o sistema deve fazer. Não inclui como implementar.
-> Código só é válido aqui quando define padrões arquiteturais obrigatórios.
+> Código só é válido aqui para padrões específicos desta feature.
 
 ---
 
@@ -71,11 +71,11 @@ Liste as regras que governam os comportamentos acima. Sejam explícitas sobre co
 
 ---
 
-## Padrões obrigatórios
+## Padrões
 
-Padrões arquiteturais que esta feature deve seguir, com justificativa. Inclua apenas o que não está já coberto pelo CLAUDE.md ou convenções gerais do projeto.
+Padrões específicos desta feature que não estão cobertos pelo contexto do projeto.
 
-- **[Padrão]:** [por que é obrigatório aqui]
+- **[Padrão]:** [justificativa]
 
 ---
 

@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateAccount
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.EditAccount
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
@@ -30,6 +31,7 @@ class AccountFormViewModel(
     private val modalManager: ModalManager,
     private val debounceManager: DebounceManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val isEditMode = account != null
@@ -47,9 +49,7 @@ class AccountFormViewModel(
         )
     )
 
-    private val isDefault = MutableStateFlow(
-        account?.isDefault ?: false
-    )
+    private val isDefault = MutableStateFlow(account?.isDefault ?: false)
 
     val uiState = combine(name, selectedIcon, isDefault, validation) { name, selectedIcon, isDefault, validation ->
         AccountFormUiState(
@@ -133,7 +133,7 @@ class AccountFormViewModel(
                     isDefault = isDefault.value
                 )
             }.onLeft {
-                // TODO: register exception
+                crashlytics.recordException(it)
             }.onRight {
                 analytics.logEvent(EditAccount(isDefault.value))
                 modalManager.dismissAll()
@@ -146,7 +146,7 @@ class AccountFormViewModel(
             isDefault = isDefault.value,
             iconKey = selectedIcon.value.key,
         ).onLeft {
-            // TODO: register exception
+            crashlytics.recordException(it)
         }.onRight {
             analytics.logEvent(CreateAccount(isDefault.value))
             modalManager.dismiss()

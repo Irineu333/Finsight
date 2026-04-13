@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.TransferBetweenAccounts
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
@@ -23,6 +24,7 @@ class TransferBetweenAccountsViewModel(
     accountRepository: com.neoutils.finsight.domain.repository.IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedSourceAccount = MutableStateFlow(initialSourceAccount)
@@ -92,6 +94,7 @@ class TransferBetweenAccountsViewModel(
             amount = amount,
             date = date,
         ).onLeft {
+            crashlytics.recordException(it)
             _events.send(
                 TransferBetweenAccountsEvent.ShowError(
                     it.error.toUiText()

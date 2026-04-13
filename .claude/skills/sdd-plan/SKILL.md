@@ -29,8 +29,8 @@ Read the spec and identify:
 - Which layers are affected (domain / database / ui).
 - Which existing files will be modified vs. created.
 - Dependencies between behaviors (what must be built first).
+- Which external libraries are relevant and whether they are already in the project.
 - Technical risks or unknowns.
-- Which references from `docs/reference/` are relevant.
 
 Present the analysis to the user and ask for confirmation before proceeding.
 
@@ -38,21 +38,11 @@ Present the analysis to the user and ask for confirmation before proceeding.
 
 Propose the step breakdown to the user BEFORE writing any files. Each step should:
 
-- Touch as few layers as possible (ideally one).
 - Be independently verifiable (has its own acceptance criteria).
 - Build on previous steps without requiring rework.
-- Follow the natural dependency order: domain -> database -> ui.
+- Respect natural dependencies (e.g. an interface before its implementation).
 
-Typical step progression:
-1. Domain models and error types
-2. Repository interfaces and use cases
-3. Database entities, DAOs, mappers, repository implementations
-4. Database migrations (if needed)
-5. UI state, ViewModel
-6. UI screen / components
-7. Navigation wiring and DI registration
-
-Not every feature needs all steps. Adapt to the actual scope.
+Derive the breakdown from the spec — let the problem shape the steps.
 
 Present the proposed steps as a numbered list with a brief description of each.
 Ask the user:
@@ -63,22 +53,21 @@ Ask the user:
 
 Do NOT write any files until the user approves the step breakdown.
 
-### 3. Write the plan
+### 3. Write the plan ("How do we get there?")
 
-Create `docs/features/{feature-name}/plan.md` following the template at `docs/sdd/plan-template.md`.
+Create `docs/features/{feature-name}/plan.md` following the template at `.claude/skills/sdd-plan/references/plan-template.md`.
 
 Fill in:
 
 - **Contexto tecnico:** existing code, prior decisions, known risks.
-- **Referencias:** links to relevant `docs/reference/` files.
 - **Etapas:** checklist with links to step files.
 - **Registro de desvios:** leave empty (filled during execution).
 - **Issues:** leave empty (filled during execution).
 
-### 4. Write step files
+### 4. Write step files (“Divide to conquer”)
 
 For each step, create `docs/features/{feature-name}/steps/{NN}-{slug}.md` following
-the template at `docs/sdd/step-template.md`.
+the template at `.claude/skills/sdd-plan/references/step-template.md`.
 
 Fill in:
 

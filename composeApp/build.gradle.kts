@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 kotlin {
@@ -83,9 +84,11 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
             implementation(libs.gitlive.firebase.analytics)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
         iosMain.dependencies {
             implementation(libs.gitlive.firebase.analytics)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

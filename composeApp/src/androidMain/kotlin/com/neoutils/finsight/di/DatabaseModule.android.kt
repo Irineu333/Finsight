@@ -8,5 +8,5 @@ import org.koin.dsl.module
 actual val databasePlatformModule = module {
     single { getDatabaseBuilder(context = get()) }
 
-    single<ISupportRepository> { FirebaseSupportRepository(analytics = get()) }
+    single<ISupportRepository> { FirebaseSupportRepository(analytics = get(), crashlytics = get()) }
 }

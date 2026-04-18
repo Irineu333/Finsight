@@ -1,0 +1,161 @@
+## 1. Preparation: build-logic and settings
+
+- [ ] 1.1 Create `build-logic/` directory with `settings.gradle.kts` and `build.gradle.kts`
+- [ ] 1.2 Create `build-logic/src/main/kotlin/kmp-core.gradle.kts` convention plugin
+- [ ] 1.3 Create `build-logic/src/main/kotlin/kmp-feature-api.gradle.kts` convention plugin
+- [ ] 1.4 Create `build-logic/src/main/kotlin/kmp-feature-impl.gradle.kts` convention plugin
+- [ ] 1.5 Create `build-logic/src/main/kotlin/kmp-database.gradle.kts` convention plugin (auto-adds 6 KSP Room configs)
+- [ ] 1.6 Update root `settings.gradle.kts` to include `pluginManagement { includeBuild("build-logic") }`
+- [ ] 1.7 Verify `./gradlew help` resolves build-logic without errors
+
+## 2. Breaking domain changes (inside :composeApp)
+
+- [ ] 2.1 Add `Recurring.Type { INCOME, EXPENSE }` enum inside `Recurring` model
+- [ ] 2.2 Update `RecurringForm` to use `Recurring.Type` instead of `Transaction.Type`
+- [ ] 2.3 Update `RecurringMapper` to convert `RecurringEntity.Type ↔ Recurring.Type`
+- [ ] 2.4 Replace `CategoryLazyIcon` field with `iconKey: String` in `Category` model
+- [ ] 2.5 Replace `CategoryLazyIcon` field with `iconKey: String` in `Budget` model
+- [ ] 2.6 Update all UI usages of `Category.icon` / `Budget.icon` to construct `CategoryLazyIcon(iconKey)` locally
+- [ ] 2.7 Run `./gradlew :composeApp:testDebugUnitTest` — all tests pass
+
+## 3. :core:utils
+
+- [ ] 3.1 Create `core/utils/` module directory with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 3.2 Register `:core:utils` in `settings.gradle.kts`
+- [ ] 3.3 Move pure Kotlin extensions: `YearMonth`, `Flow`, `Double`, `Instant`, `LocalDateTime`, `Validation`
+- [ ] 3.4 Move utilities: `ObservableMutableMap`, `DebounceManager`
+- [ ] 3.5 Add `:core:utils` dependency in `:composeApp`; remove moved sources from `:composeApp`
+- [ ] 3.6 Verify `:composeApp` compiles
+
+## 4. :core:platform
+
+- [ ] 4.1 Create `core/platform/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 4.2 Register `:core:platform` in `settings.gradle.kts`
+- [ ] 4.3 Move `Platform`, `isDesktop`, `PlatformContext` with expect/actual per platform
+- [ ] 4.4 Add `:core:platform` dependency in `:composeApp`; remove moved sources
+- [ ] 4.5 Verify `:composeApp` compiles
+
+## 5. :core:analytics and :core:auth
+
+- [ ] 5.1 Create `core/analytics/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 5.2 Register `:core:analytics` in `settings.gradle.kts`
+- [ ] 5.3 Move `Analytics`, `Crashlytics`, `Event` interfaces + expect/actual DI platform modules
+- [ ] 5.4 Create `core/auth/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 5.5 Register `:core:auth` in `settings.gradle.kts`
+- [ ] 5.6 Move `AuthService` interface + expect/actual DI platform modules
+- [ ] 5.7 Add `:core:analytics` and `:core:auth` dependencies in `:composeApp`; remove moved sources
+- [ ] 5.8 Verify `:composeApp` compiles
+
+## 6. :core:ui
+
+- [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature-impl` plugin (has Compose)
+- [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
+- [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `CategoryLazyIcon`, `DateFormats`
+- [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`
+- [ ] 6.5 Move shared components: `AccountSelector`, `CategorySelector`, and other shared UI components
+- [ ] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources
+- [ ] 6.7 Verify `:composeApp` compiles
+
+## 7. :core:database
+
+- [ ] 7.1 Create `core/database/` module with `build.gradle.kts` using `kmp-database` plugin
+- [ ] 7.2 Register `:core:database` in `settings.gradle.kts`; add dep on `:core:utils`
+- [ ] 7.3 Move `AppDatabase` and all `@Entity` classes
+- [ ] 7.4 Move all DAOs and Room `@Database` configuration
+- [ ] 7.5 Move all mappers (including updated `RecurringMapper` with `Recurring.Type` conversion)
+- [ ] 7.6 Move all repository implementations (`*RepositoryImpl`)
+- [ ] 7.7 Add `:core:database` dependency in `:composeApp`; remove moved sources
+- [ ] 7.8 Verify `:composeApp` compiles and Room KSP generates correctly
+
+## 8. Feature level 0: accounts
+
+- [ ] 8.1 Create `feature/accounts/api/` with `build.gradle.kts` using `kmp-feature-api` plugin
+- [ ] 8.2 Register `:feature:accounts:api` in `settings.gradle.kts`
+- [ ] 8.3 Move `Account`, `IAccountRepository`, `AccountError`, `AccountException`, `IEnsureDefaultAccountUseCase` to `:feature:accounts:api`
+- [ ] 8.4 Create `feature/accounts/impl/` with `build.gradle.kts` using `kmp-feature-impl` plugin; deps on own `:api` + `:core:*`
+- [ ] 8.5 Register `:feature:accounts:impl` in `settings.gradle.kts`
+- [ ] 8.6 Move all accounts use cases, screen, ViewModel, modals, Koin module, analytics events to `:feature:accounts:impl`
+- [ ] 8.7 Update `:composeApp` to depend on `:feature:accounts:impl`; remove moved sources
+- [ ] 8.8 Verify `:composeApp` compiles
+
+## 9. Feature level 0: categories
+
+- [ ] 9.1 Create `feature/categories/api/` module; move `Category { iconKey: String }`, `ICategoryRepository`
+- [ ] 9.2 Register `:feature:categories:api` in `settings.gradle.kts`
+- [ ] 9.3 Create `feature/categories/impl/` module; move use cases, screen, ViewModel, modals, Koin module
+- [ ] 9.4 Register `:feature:categories:impl` in `settings.gradle.kts`
+- [ ] 9.5 Update `:composeApp`; verify compile
+
+## 10. Feature level 0: creditCards
+
+- [ ] 10.1 Create `feature/creditCards/api/` module; move `CreditCard`, `Invoice`, `ICreditCardRepository`, `IInvoiceRepository`, `IGetOrCreateInvoiceForMonthUseCase`, `InvoiceExt`, errors
+- [ ] 10.2 Register `:feature:creditCards:api` in `settings.gradle.kts`
+- [ ] 10.3 Create `feature/creditCards/impl/` module; move all use cases, screens, ViewModels, modals, Koin module
+- [ ] 10.4 Register `:feature:creditCards:impl` in `settings.gradle.kts`
+- [ ] 10.5 Update `:composeApp`; verify compile
+
+## 11. Feature level 1: transactions
+
+- [ ] 11.1 Create `feature/transactions/api/` module; move `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, repositories interfaces, `IBuildTransactionUseCase`, `ICalculateBalanceUseCase`, nav types, extensions
+- [ ] 11.2 Register `:feature:transactions:api` in `settings.gradle.kts`
+- [ ] 11.3 Create `feature/transactions/impl/` module; deps on own `:api` + `:core:*` + `accounts:api` + `creditCards:api`
+- [ ] 11.4 Move use cases (`BuildTransactionUseCase`, `CalculateBalanceUseCase`, etc.), screen, ViewModel, modals, Koin module
+- [ ] 11.5 Register `:feature:transactions:impl` in `settings.gradle.kts`
+- [ ] 11.6 Update `:composeApp`; verify compile
+
+## 12. Feature level 1: recurring
+
+- [ ] 12.1 Create `feature/recurring/api/` module; move `Recurring { type: Recurring.Type }`, `RecurringOccurrence`, `RecurringForm`, repository interfaces (NO dep on `transactions:api`)
+- [ ] 12.2 Register `:feature:recurring:api` in `settings.gradle.kts`
+- [ ] 12.3 Create `feature/recurring/impl/` module; deps on own `:api` + `transactions:api` + `:core:*`
+- [ ] 12.4 Move use cases, screen, ViewModel, modals, Koin module
+- [ ] 12.5 Register `:feature:recurring:impl` in `settings.gradle.kts`
+- [ ] 12.6 Update `:composeApp`; verify compile
+
+## 13. Feature level 1: installments
+
+- [ ] 13.1 Create `feature/installments/api/` module; move `Installment`, `IInstallmentRepository`
+- [ ] 13.2 Register `:feature:installments:api` in `settings.gradle.kts`
+- [ ] 13.3 Create `feature/installments/impl/` module; deps on own `:api` + `transactions:api` + `creditCards:api`
+- [ ] 13.4 Move use cases, screen, ViewModel, modals, Koin module
+- [ ] 13.5 Register `:feature:installments:impl` in `settings.gradle.kts`
+- [ ] 13.6 Update `:composeApp`; verify compile
+
+## 14. Feature level 1: budgets
+
+- [ ] 14.1 Create `feature/budgets/api/` module; move `Budget { iconKey: String }`, `IBudgetRepository`; dep on `categories:api`
+- [ ] 14.2 Register `:feature:budgets:api` in `settings.gradle.kts`
+- [ ] 14.3 Create `feature/budgets/impl/` module; move use cases, screen, modals, Koin module
+- [ ] 14.4 Register `:feature:budgets:impl` in `settings.gradle.kts`
+- [ ] 14.5 Update `:composeApp`; verify compile
+
+## 15. Feature terminal: report
+
+- [ ] 15.1 Create `feature/report/api/` module; move `ReportDocument`, `ReportLayout`, `ReportPerspective`, `PerspectiveTabNavType`
+- [ ] 15.2 Register `:feature:report:api` in `settings.gradle.kts`
+- [ ] 15.3 Create `feature/report/impl/` module; move screens, ViewModels, services, use cases, Koin module
+- [ ] 15.4 Register `:feature:report:impl` in `settings.gradle.kts`
+- [ ] 15.5 Update `:composeApp`; verify compile
+
+## 16. Feature terminals: dashboard, home, support
+
+- [ ] 16.1 Create `feature/dashboard/impl/` module; deps on `accounts:api`, `creditCards:api`, `categories:api`, `budgets:api`, `recurring:api`, `transactions:api`
+- [ ] 16.2 Move `DashboardScreen`, `DashboardViewModel`, components, modals, use cases, Koin module
+- [ ] 16.3 Register `:feature:dashboard:impl` in `settings.gradle.kts`
+- [ ] 16.4 Create `feature/home/impl/` module; move `HomeScreen`, `HomeRoute`, `AppRoute`, `HomeChrome`
+- [ ] 16.5 Register `:feature:home:impl` in `settings.gradle.kts`
+- [ ] 16.6 Create `feature/support/impl/` module; move `SupportScreen`, screens, use cases, Koin module
+- [ ] 16.7 Register `:feature:support:impl` in `settings.gradle.kts`
+- [ ] 16.8 Update `:composeApp`; verify compile
+
+## 17. :app (rename and wire-up)
+
+- [ ] 17.1 Rename `:composeApp` to `:app` in `settings.gradle.kts` and directory
+- [ ] 17.2 Update `:app/build.gradle.kts` to use `kmp-feature-impl` + Android Application; remove all individual KMP target declarations
+- [ ] 17.3 Ensure `:app` depends on all `:feature:X:impl` modules
+- [ ] 17.4 Move `AppNavHost` to `:app` referencing screens from each `:feature:X:impl`
+- [ ] 17.5 Ensure `startKoin` in `:app` aggregates all Koin modules from each `:feature:X:impl`
+- [ ] 17.6 Remove any remaining domain/database/ui code from `:app` (should only have entry points)
+- [ ] 17.7 Run `./gradlew allTests` — all tests pass
+- [ ] 17.8 Run `./gradlew check` — all verifications pass
+- [ ] 17.9 Build and run on Android, iOS, and Desktop; verify golden paths for all features

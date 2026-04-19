@@ -16,7 +16,7 @@ import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
-import com.neoutils.finsight.isDesktop
+import com.neoutils.finsight.currentPlatform
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
@@ -390,7 +390,7 @@ class DashboardComponentsBuilder(
             QuickActionType.RECURRING,
             QuickActionType.REPORTS,
             QuickActionType.INSTALLMENTS,
-            QuickActionType.SUPPORT.takeUnless { isDesktop },
+            QuickActionType.SUPPORT.takeUnless { currentPlatform.isDesktop },
         )
 
         return DashboardComponent.QuickActions(actions = allActions.filter { it.name !in hiddenActions })

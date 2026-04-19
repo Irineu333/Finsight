@@ -73,6 +73,8 @@ kotlin {
             implementation(libs.gitlive.firebase.firestore)
             implementation(libs.gitlive.firebase.auth)
 
+            implementation(projects.core.utils)
+
             // Arrow
             implementation(libs.arrow.core)
             // implementation(libs.arrow.fx.coroutines)

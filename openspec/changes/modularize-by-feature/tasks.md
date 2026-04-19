@@ -20,12 +20,12 @@
 
 ## 3. :core:utils
 
-- [ ] 3.1 Create `core/utils/` module directory with `build.gradle.kts` using `kmp-library` plugin
-- [ ] 3.2 Register `:core:utils` in `settings.gradle.kts`
-- [ ] 3.3 Move pure Kotlin extensions: `YearMonth`, `Flow`, `Double`, `Instant`, `LocalDateTime`, `Validation`
-- [ ] 3.4 Move utilities: `ObservableMutableMap`, `DebounceManager`
-- [ ] 3.5 Add `:core:utils` dependency in `:composeApp`; remove moved sources from `:composeApp`
-- [ ] 3.6 Verify `:composeApp` compiles
+- [x] 3.1 Create `core/utils/` module directory with `build.gradle.kts` using `kmp-library` plugin
+- [x] 3.2 Register `:core:utils` in `settings.gradle.kts`
+- [x] 3.3 Move pure Kotlin extensions: `YearMonth`, `Flow`, `Double`, `Instant`, `LocalDateTime` (`Validation` deferred to 6.4 — depends on `UiText` which has Compose)
+- [x] 3.4 Move utilities: `ObservableMutableMap`, `DebounceManager`
+- [x] 3.5 Add `:core:utils` dependency in `:composeApp`; remove moved sources from `:composeApp`
+- [x] 3.6 Verify `:composeApp` compiles
 
 ## 4. :core:platform
 
@@ -51,7 +51,7 @@
 - [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
 - [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
 - [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
-- [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`
+- [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)
 - [ ] 6.5 Move shared components: `AccountSelector`, `CategorySelector`, and other shared UI components
 - [ ] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources
 - [ ] 6.7 Verify `:composeApp` compiles

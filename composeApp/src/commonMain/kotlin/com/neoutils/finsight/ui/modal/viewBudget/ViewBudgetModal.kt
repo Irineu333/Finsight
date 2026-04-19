@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -69,7 +69,7 @@ class ViewBudgetModal(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CategoryIconBox(
-                    icon = CategoryLazyIcon(budget.iconKey),
+                    imageVector = AppIcon.fromKey(budget.iconKey).icon,
                     tint = accentColor,
                     modifier = Modifier.size(64.dp),
                     contentPadding = PaddingValues(16.dp),

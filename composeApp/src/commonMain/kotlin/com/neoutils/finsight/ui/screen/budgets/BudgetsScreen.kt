@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
@@ -231,7 +231,7 @@ private fun BudgetProgressItem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CategoryIconBox(
-                    icon = CategoryLazyIcon(progress.budget.iconKey),
+                    imageVector = AppIcon.fromKey(progress.budget.iconKey).icon,
                     tint = accentColor,
                     contentPadding = PaddingValues(8.dp),
                     modifier = Modifier.size(40.dp),

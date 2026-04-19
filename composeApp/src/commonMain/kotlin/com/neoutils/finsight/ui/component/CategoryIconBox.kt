@@ -8,12 +8,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import com.neoutils.finsight.ui.icons.LazyIcon
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.util.AppIcon
 
 @Composable
 fun CategoryIconBox(
@@ -29,7 +29,7 @@ fun CategoryIconBox(
     }
 
     CategoryIconBox(
-        icon = CategoryLazyIcon(category.iconKey),
+        imageVector = AppIcon.fromKey(category.iconKey).icon,
         tint = resolvedColor,
         modifier = modifier,
         shape = shape,
@@ -39,7 +39,7 @@ fun CategoryIconBox(
 
 @Composable
 fun CategoryIconBox(
-    icon: LazyIcon,
+    imageVector: ImageVector,
     tint: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
@@ -51,7 +51,7 @@ fun CategoryIconBox(
         modifier = modifier,
     ) {
         Icon(
-            painter = icon(),
+            imageVector = imageVector,
             contentDescription = null,
             tint = tint,
             modifier = Modifier.padding(contentPadding)

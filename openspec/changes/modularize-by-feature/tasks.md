@@ -15,7 +15,7 @@
 - [x] 2.3 Update `RecurringMapper` to convert `RecurringEntity.Type ↔ Recurring.Type`
 - [x] 2.4 Replace `CategoryLazyIcon` field with `iconKey: String` in `Category` model
 - [x] 2.5 Replace `CategoryLazyIcon` field with `iconKey: String` in `Budget` model
-- [x] 2.6 Update all UI usages of `Category.icon` / `Budget.icon` to construct `CategoryLazyIcon(iconKey)` locally
+- [x] 2.6 Remove `CategoryLazyIcon` and `LazyIcon`; update UI usages to use `AppIcon.fromKey(iconKey).icon` (ImageVector) directly
 - [x] 2.7 Run `./gradlew :composeApp:testDebugUnitTest` — all tests pass
 
 ## 3. :core:utils
@@ -50,7 +50,7 @@
 
 - [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
 - [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
-- [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `CategoryLazyIcon`, `DateFormats`
+- [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
 - [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`
 - [ ] 6.5 Move shared components: `AccountSelector`, `CategorySelector`, and other shared UI components
 - [ ] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources

@@ -75,6 +75,8 @@ kotlin {
 
             implementation(projects.core.utils)
             implementation(projects.core.platform)
+            implementation(projects.core.analytics)
+            implementation(projects.core.auth)
 
             // Arrow
             implementation(libs.arrow.core)
@@ -86,12 +88,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
-            implementation(libs.gitlive.firebase.analytics)
-            implementation(libs.gitlive.firebase.crashlytics)
         }
         iosMain.dependencies {
-            implementation(libs.gitlive.firebase.analytics)
-            implementation(libs.gitlive.firebase.crashlytics)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

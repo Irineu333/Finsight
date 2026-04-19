@@ -36,3 +36,5 @@ plugins {
 include(":composeApp")
 include(":core:utils")
 include(":core:platform")
+include(":core:analytics")
+include(":core:auth")

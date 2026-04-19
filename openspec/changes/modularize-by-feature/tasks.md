@@ -37,14 +37,14 @@
 
 ## 5. :core:analytics and :core:auth
 
-- [ ] 5.1 Create `core/analytics/` module with `build.gradle.kts` using `kmp-library` plugin
-- [ ] 5.2 Register `:core:analytics` in `settings.gradle.kts`
-- [ ] 5.3 Move `Analytics`, `Crashlytics`, `Event` interfaces + expect/actual DI platform modules
-- [ ] 5.4 Create `core/auth/` module with `build.gradle.kts` using `kmp-library` plugin
-- [ ] 5.5 Register `:core:auth` in `settings.gradle.kts`
-- [ ] 5.6 Move `AuthService` interface + expect/actual DI platform modules
-- [ ] 5.7 Add `:core:analytics` and `:core:auth` dependencies in `:composeApp`; remove moved sources
-- [ ] 5.8 Verify `:composeApp` compiles
+- [x] 5.1 Create `core/analytics/` module with `build.gradle.kts` using `kmp-library` plugin
+- [x] 5.2 Register `:core:analytics` in `settings.gradle.kts`
+- [x] 5.3 Move `Analytics`, `Crashlytics`, `Event` interfaces + expect/actual DI platform modules
+- [x] 5.4 Create `core/auth/` module with `build.gradle.kts` using `kmp-library` plugin
+- [x] 5.5 Register `:core:auth` in `settings.gradle.kts`
+- [x] 5.6 Move `AuthService` interface + expect/actual DI platform modules
+- [x] 5.7 Add `:core:analytics` and `:core:auth` dependencies in `:composeApp`; remove moved sources
+- [x] 5.8 Verify `:composeApp` compiles
 
 ## 6. :core:ui
 

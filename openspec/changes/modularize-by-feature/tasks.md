@@ -151,7 +151,7 @@
 ## 17. :app (rename and wire-up)
 
 - [ ] 17.1 Rename `:composeApp` to `:app` in `settings.gradle.kts` and directory
-- [ ] 17.2 Update `:app/build.gradle.kts` to use `kmp-feature-impl` + Android Application; remove all individual KMP target declarations
+- [ ] 17.2 Update `:app/build.gradle.kts` to use `kmp-compose` + `com.android.application` (não `library`); remove all individual KMP target declarations
 - [ ] 17.3 Ensure `:app` depends on all `:feature:X:impl` modules
 - [ ] 17.4 Move `AppNavHost` to `:app` referencing screens from each `:feature:X:impl`
 - [ ] 17.5 Ensure `startKoin` in `:app` aggregates all Koin modules from each `:feature:X:impl`

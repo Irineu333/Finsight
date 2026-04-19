@@ -1,9 +1,7 @@
 package com.neoutils.finsight
 
-interface Platform {
-    val name: String
-}
+enum class Platform { Android, Desktop, IOS }
 
-expect fun getPlatform(): Platform
+expect val currentPlatform: Platform
 
-expect val isDesktop: Boolean
+val isDesktop: Boolean get() = currentPlatform == Platform.Desktop

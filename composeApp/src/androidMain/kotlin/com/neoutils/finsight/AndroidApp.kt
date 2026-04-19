@@ -1,13 +1,14 @@
 package com.neoutils.finsight
 
 import android.app.Application
+import com.neoutils.finsight.database.di.databaseModule
 import com.neoutils.finsight.di.analyticsModule
-import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.authModule
-import com.neoutils.finsight.di.databaseModule
+import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.mapperModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
+import com.neoutils.finsight.di.supportPlatformModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
@@ -24,6 +25,7 @@ class AndroidApp : Application() {
 
             modules(
                 databaseModule,
+                supportPlatformModule,
                 mapperModule,
                 repositoryModule,
                 useCaseModules,

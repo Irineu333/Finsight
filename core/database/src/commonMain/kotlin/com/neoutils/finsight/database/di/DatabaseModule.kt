@@ -1,11 +1,11 @@
-package com.neoutils.finsight.di
+package com.neoutils.finsight.database.di
 
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
-import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
+import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao

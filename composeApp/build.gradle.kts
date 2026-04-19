@@ -8,8 +8,6 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
     alias(libs.plugins.googleServices)
     alias(libs.plugins.firebaseCrashlytics)
 }
@@ -58,8 +56,6 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.datetime)
 
-            implementation(libs.androidx.room.runtime)
-            implementation(libs.androidx.sqlite.bundled)
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
@@ -78,6 +74,7 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.auth)
             implementation(projects.core.ui)
+            implementation(projects.core.database)
 
             // Arrow
             implementation(libs.arrow.core)
@@ -106,10 +103,6 @@ kotlin {
             languageSettings.enableLanguageFeature("ContextParameters")
         }
     }
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
 }
 
 android {
@@ -157,12 +150,6 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    add("kspCommonMainMetadata", libs.androidx.room.compiler)
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspJvm", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
 }
 
 compose.desktop {

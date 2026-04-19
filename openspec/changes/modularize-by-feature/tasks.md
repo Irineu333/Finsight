@@ -58,14 +58,14 @@
 
 ## 7. :core:database
 
-- [ ] 7.1 Create `core/database/` module with `build.gradle.kts` using `kmp-library` plugin; adiciona Room + KSP manualmente
-- [ ] 7.2 Register `:core:database` in `settings.gradle.kts`; add dep on `:core:utils`
-- [ ] 7.3 Move `AppDatabase` and all `@Entity` classes
-- [ ] 7.4 Move all DAOs and Room `@Database` configuration
-- [ ] 7.5 Move all mappers (including updated `RecurringMapper` with `Recurring.Type` conversion)
-- [ ] 7.6 Move all repository implementations (`*RepositoryImpl`)
-- [ ] 7.7 Add `:core:database` dependency in `:composeApp`; remove moved sources
-- [ ] 7.8 Verify `:composeApp` compiles and Room KSP generates correctly
+- [x] 7.1 Create `core/database/` module with `build.gradle.kts` using `kmp-library` plugin; adiciona Room + KSP manualmente
+- [x] 7.2 Register `:core:database` in `settings.gradle.kts`; add dep on `:core:utils`
+- [x] 7.3 Move `AppDatabase` and all `@Entity` classes
+- [x] 7.4 Move all DAOs and Room `@Database` configuration
+- [x] 7.5 Move all mappers (including updated `RecurringMapper` with `Recurring.Type` conversion)
+- [x] 7.6 Move all repository implementations (`*RepositoryImpl`)
+- [x] 7.7 Add `:core:database` dependency in `:composeApp`; remove moved sources
+- [x] 7.8 Verify `:composeApp` compiles and Room KSP generates correctly
 
 ## 8. Feature level 0: accounts
 

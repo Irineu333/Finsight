@@ -29,18 +29,18 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.core.ui.resources.Res
+import com.neoutils.finsight.core.ui.resources.balance_card_credit_card_expense
+import com.neoutils.finsight.core.ui.resources.balance_card_current_balance
+import com.neoutils.finsight.core.ui.resources.balance_card_current_invoice
+import com.neoutils.finsight.core.ui.resources.balance_card_expense
+import com.neoutils.finsight.core.ui.resources.balance_card_income
+import com.neoutils.finsight.core.ui.resources.balance_card_invoices
+import com.neoutils.finsight.core.ui.resources.balance_card_invoice_payments
+import com.neoutils.finsight.core.ui.resources.balance_card_pay_invoice
+import com.neoutils.finsight.core.ui.resources.balance_card_pending_expense
+import com.neoutils.finsight.core.ui.resources.balance_card_pending_income
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.balance_card_credit_card_expense
-import com.neoutils.finsight.resources.balance_card_current_balance
-import com.neoutils.finsight.resources.balance_card_current_invoice
-import com.neoutils.finsight.resources.balance_card_expense
-import com.neoutils.finsight.resources.balance_card_income
-import com.neoutils.finsight.resources.balance_card_invoices
-import com.neoutils.finsight.resources.balance_card_invoice_payments
-import com.neoutils.finsight.resources.balance_card_pay_invoice
-import com.neoutils.finsight.resources.balance_card_pending_expense
-import com.neoutils.finsight.resources.balance_card_pending_income
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as InvoicePaymentColor

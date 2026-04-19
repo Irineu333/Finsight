@@ -48,13 +48,13 @@
 
 ## 6. :core:ui
 
-- [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
-- [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
-- [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
-- [ ] 6.4 Move `PlatformContext` + `LocalPlatformContext` (deferred from 4.3 — JVM actual depends on Compose Desktop), input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)
-- [ ] 6.5 Move shared components: `AccountSelector`, `CategorySelector`, and other shared UI components
-- [ ] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources
-- [ ] 6.7 Verify `:composeApp` compiles
+- [x] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
+- [x] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
+- [x] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
+- [x] 6.4 Move `PlatformContext` + `LocalPlatformContext` (deferred from 4.3 — JVM actual depends on Compose Desktop), input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)
+- [x] 6.5 Move shared components sem dependência de domínio: `FormattingLocalsHost`, `BalanceCard`, `InstallmentCounter`, `IconPickerSelector`, `MonthSelector`, `MonthPickerDropdownMenu`, `SharedTransitionProvider`. Componentes acoplados a modelos de domínio (`AccountSelector`, `CategorySelector`, etc.) ficam no `:composeApp` até seções 8+.
+- [x] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources
+- [x] 6.7 Verify `:composeApp` compiles
 
 ## 7. :core:database
 

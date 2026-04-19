@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Month names -->
+    <string name="month_january">Janeiro</string>
+    <string name="month_february">Fevereiro</string>
+    <string name="month_march">Março</string>
+    <string name="month_april">Abril</string>
+    <string name="month_may">Maio</string>
+    <string name="month_june">Junho</string>
+    <string name="month_july">Julho</string>
+    <string name="month_august">Agosto</string>
+    <string name="month_september">Setembro</string>
+    <string name="month_october">Outubro</string>
+    <string name="month_november">Novembro</string>
+    <string name="month_december">Dezembro</string>
+
+    <!-- Day of week names -->
+    <string name="day_of_week_monday">Seg</string>
+    <string name="day_of_week_tuesday">Ter</string>
+    <string name="day_of_week_wednesday">Qua</string>
+    <string name="day_of_week_thursday">Qui</string>
+    <string name="day_of_week_friday">Sex</string>
+    <string name="day_of_week_saturday">Sáb</string>
+    <string name="day_of_week_sunday">Dom</string>
+
+    <!-- Balance Card -->
+    <string name="balance_card_pay_invoice">Pagar Fatura</string>
+    <string name="balance_card_current_balance">Saldo Atual</string>
+    <string name="balance_card_income">Receitas</string>
+    <string name="balance_card_expense">Despesas</string>
+    <string name="balance_card_invoices">Faturas</string>
+    <string name="balance_card_invoice_payments">Pagamentos</string>
+    <string name="balance_card_credit_card_expense">Gasto no Cartão</string>
+    <string name="balance_card_current_invoice">Fatura Atual</string>
+    <string name="balance_card_pending_income">Receitas Pendentes</string>
+    <string name="balance_card_pending_expense">Despesas Pendentes</string>
+</resources>

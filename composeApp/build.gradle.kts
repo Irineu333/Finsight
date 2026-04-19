@@ -77,6 +77,7 @@ kotlin {
             implementation(projects.core.platform)
             implementation(projects.core.analytics)
             implementation(projects.core.auth)
+            implementation(projects.core.ui)
 
             // Arrow
             implementation(libs.arrow.core)

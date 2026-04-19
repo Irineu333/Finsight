@@ -29,11 +29,11 @@
 
 ## 4. :core:platform
 
-- [ ] 4.1 Create `core/platform/` module with `build.gradle.kts` using `kmp-library` plugin
-- [ ] 4.2 Register `:core:platform` in `settings.gradle.kts`
-- [ ] 4.3 Move `Platform`, `isDesktop`, `PlatformContext` with expect/actual per platform
-- [ ] 4.4 Add `:core:platform` dependency in `:composeApp`; remove moved sources
-- [ ] 4.5 Verify `:composeApp` compiles
+- [x] 4.1 Create `core/platform/` module with `build.gradle.kts` using `kmp-library` plugin
+- [x] 4.2 Register `:core:platform` in `settings.gradle.kts`
+- [x] 4.3 Move `Platform`, `isDesktop` with expect/actual per platform (`PlatformContext` deferred to 6.x — JVM actual depends on `WindowScope` from Compose Desktop)
+- [x] 4.4 Add `:core:platform` dependency in `:composeApp`; remove moved sources
+- [x] 4.5 Verify `:composeApp` compiles
 
 ## 5. :core:analytics and :core:auth
 
@@ -51,7 +51,7 @@
 - [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
 - [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
 - [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
-- [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)
+- [ ] 6.4 Move `PlatformContext` + `LocalPlatformContext` (deferred from 4.3 — JVM actual depends on Compose Desktop), input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)
 - [ ] 6.5 Move shared components: `AccountSelector`, `CategorySelector`, and other shared UI components
 - [ ] 6.6 Add `:core:ui` dependency in `:composeApp`; remove moved sources
 - [ ] 6.7 Verify `:composeApp` compiles

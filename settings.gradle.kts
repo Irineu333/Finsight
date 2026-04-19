@@ -35,3 +35,4 @@ plugins {
 
 include(":composeApp")
 include(":core:utils")
+include(":core:platform")

@@ -74,6 +74,7 @@ kotlin {
             implementation(libs.gitlive.firebase.auth)
 
             implementation(projects.core.utils)
+            implementation(projects.core.platform)
 
             // Arrow
             implementation(libs.arrow.core)

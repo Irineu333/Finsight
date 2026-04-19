@@ -1,12 +1,12 @@
 ## 1. Preparation: build-logic and settings
 
-- [ ] 1.1 Create `build-logic/` directory with `settings.gradle.kts` and `build.gradle.kts`
-- [ ] 1.2 Create `build-logic/src/main/kotlin/kmp-core.gradle.kts` convention plugin
-- [ ] 1.3 Create `build-logic/src/main/kotlin/kmp-feature-api.gradle.kts` convention plugin
-- [ ] 1.4 Create `build-logic/src/main/kotlin/kmp-feature-impl.gradle.kts` convention plugin
-- [ ] 1.5 Create `build-logic/src/main/kotlin/kmp-database.gradle.kts` convention plugin (auto-adds 6 KSP Room configs)
-- [ ] 1.6 Update root `settings.gradle.kts` to include `pluginManagement { includeBuild("build-logic") }`
-- [ ] 1.7 Verify `./gradlew help` resolves build-logic without errors
+- [x] 1.1 Create `build-logic/` directory with `settings.gradle.kts` and `build.gradle.kts`
+- [x] 1.2 Create `build-logic/src/main/kotlin/kmp-library.gradle.kts` convention plugin (base: KMP targets + Android lib + Java 17)
+- [x] 1.3 Create `build-logic/src/main/kotlin/kmp-compose.gradle.kts` convention plugin (applies kmp-library + Compose deps)
+- [x] 1.4 Create `build-logic/src/main/kotlin/kmp-feature.gradle.kts` convention plugin (applies kmp-compose + Koin + Arrow + Navigation)
+- [x] 1.5 ~~kmp-database~~ removido — `:core:database` configura Room/KSP diretamente no próprio `build.gradle.kts`
+- [x] 1.6 Update root `settings.gradle.kts` to include `pluginManagement { includeBuild("build-logic") }`
+- [x] 1.7 Verify `./gradlew help` resolves build-logic without errors
 
 ## 2. Breaking domain changes (inside :composeApp)
 
@@ -20,7 +20,7 @@
 
 ## 3. :core:utils
 
-- [ ] 3.1 Create `core/utils/` module directory with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 3.1 Create `core/utils/` module directory with `build.gradle.kts` using `kmp-library` plugin
 - [ ] 3.2 Register `:core:utils` in `settings.gradle.kts`
 - [ ] 3.3 Move pure Kotlin extensions: `YearMonth`, `Flow`, `Double`, `Instant`, `LocalDateTime`, `Validation`
 - [ ] 3.4 Move utilities: `ObservableMutableMap`, `DebounceManager`
@@ -29,7 +29,7 @@
 
 ## 4. :core:platform
 
-- [ ] 4.1 Create `core/platform/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 4.1 Create `core/platform/` module with `build.gradle.kts` using `kmp-library` plugin
 - [ ] 4.2 Register `:core:platform` in `settings.gradle.kts`
 - [ ] 4.3 Move `Platform`, `isDesktop`, `PlatformContext` with expect/actual per platform
 - [ ] 4.4 Add `:core:platform` dependency in `:composeApp`; remove moved sources
@@ -37,10 +37,10 @@
 
 ## 5. :core:analytics and :core:auth
 
-- [ ] 5.1 Create `core/analytics/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 5.1 Create `core/analytics/` module with `build.gradle.kts` using `kmp-library` plugin
 - [ ] 5.2 Register `:core:analytics` in `settings.gradle.kts`
 - [ ] 5.3 Move `Analytics`, `Crashlytics`, `Event` interfaces + expect/actual DI platform modules
-- [ ] 5.4 Create `core/auth/` module with `build.gradle.kts` using `kmp-core` plugin
+- [ ] 5.4 Create `core/auth/` module with `build.gradle.kts` using `kmp-library` plugin
 - [ ] 5.5 Register `:core:auth` in `settings.gradle.kts`
 - [ ] 5.6 Move `AuthService` interface + expect/actual DI platform modules
 - [ ] 5.7 Add `:core:analytics` and `:core:auth` dependencies in `:composeApp`; remove moved sources
@@ -48,7 +48,7 @@
 
 ## 6. :core:ui
 
-- [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature-impl` plugin (has Compose)
+- [ ] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
 - [ ] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
 - [ ] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `CategoryLazyIcon`, `DateFormats`
 - [ ] 6.4 Move input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`
@@ -58,7 +58,7 @@
 
 ## 7. :core:database
 
-- [ ] 7.1 Create `core/database/` module with `build.gradle.kts` using `kmp-database` plugin
+- [ ] 7.1 Create `core/database/` module with `build.gradle.kts` using `kmp-library` plugin; adiciona Room + KSP manualmente
 - [ ] 7.2 Register `:core:database` in `settings.gradle.kts`; add dep on `:core:utils`
 - [ ] 7.3 Move `AppDatabase` and all `@Entity` classes
 - [ ] 7.4 Move all DAOs and Room `@Database` configuration
@@ -69,10 +69,10 @@
 
 ## 8. Feature level 0: accounts
 
-- [ ] 8.1 Create `feature/accounts/api/` with `build.gradle.kts` using `kmp-feature-api` plugin
+- [ ] 8.1 Create `feature/accounts/api/` with `build.gradle.kts` using `kmp-library` plugin
 - [ ] 8.2 Register `:feature:accounts:api` in `settings.gradle.kts`
 - [ ] 8.3 Move `Account`, `IAccountRepository`, `AccountError`, `AccountException`, `IEnsureDefaultAccountUseCase` to `:feature:accounts:api`
-- [ ] 8.4 Create `feature/accounts/impl/` with `build.gradle.kts` using `kmp-feature-impl` plugin; deps on own `:api` + `:core:*`
+- [ ] 8.4 Create `feature/accounts/impl/` with `build.gradle.kts` using `kmp-feature` plugin; deps on own `:api` + `:core:*`
 - [ ] 8.5 Register `:feature:accounts:impl` in `settings.gradle.kts`
 - [ ] 8.6 Move all accounts use cases, screen, ViewModel, modals, Koin module, analytics events to `:feature:accounts:impl`
 - [ ] 8.7 Update `:composeApp` to depend on `:feature:accounts:impl`; remove moved sources

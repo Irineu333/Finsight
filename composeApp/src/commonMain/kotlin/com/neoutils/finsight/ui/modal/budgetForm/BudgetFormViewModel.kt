@@ -10,7 +10,6 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
@@ -100,7 +99,7 @@ class BudgetFormViewModel(
             .map { it.id }
             .toSet()
 
-        val incomeRecurrings = allRecurrings.filter { it.type == Transaction.Type.INCOME && it.isActive }
+        val incomeRecurrings = allRecurrings.filter { it.type == Recurring.Type.INCOME && it.isActive }
 
         val resolvedSelectedRecurring = fields.selectedRecurring
             ?: budget?.recurringId?.let { id -> incomeRecurrings.find { it.id == id } }

@@ -1,11 +1,9 @@
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-
 data class Category(
     val id: Long = 0,
     val name: String,
-    val icon: CategoryLazyIcon,
+    val iconKey: String,
     val type: Type,
     val createdAt: Long
 ) {

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
@@ -77,7 +78,7 @@ fun OperationCard(
                     ) {
                         if (displayCategory != null) {
                             Icon(
-                                painter = displayCategory.icon(),
+                                painter = CategoryLazyIcon(displayCategory.iconKey)(),
                                 contentDescription = null,
                                 tint = operation.color(displayType),
                                 modifier = Modifier.size(24.dp)

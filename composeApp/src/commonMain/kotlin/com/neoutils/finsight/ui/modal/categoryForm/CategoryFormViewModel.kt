@@ -13,7 +13,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.util.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,7 +52,7 @@ class CategoryFormViewModel(
 
     private val icon = MutableStateFlow(
         if (category != null) {
-            AppIcon.fromKey(category.icon.key)
+            AppIcon.fromKey(category.iconKey)
         } else {
             AppIcon.CATEGORY
         }
@@ -130,7 +129,7 @@ class CategoryFormViewModel(
             repository.update(
                 category.copy(
                     name = name.trim(),
-                    icon = CategoryLazyIcon(icon.value.key)
+                    iconKey = icon.value.key
                 )
             )
             analytics.logEvent(EditCategory(name.trim(), category.type))
@@ -141,7 +140,7 @@ class CategoryFormViewModel(
         repository.insert(
             Category(
                 name = name.trim(),
-                icon = CategoryLazyIcon(icon.value.key),
+                iconKey = icon.value.key,
                 type = type.value,
                 createdAt = Clock.System.now().toEpochMilliseconds()
             )

@@ -23,7 +23,6 @@ import com.neoutils.finsight.resources.category_default_salary
 import com.neoutils.finsight.resources.category_default_subscriptions
 import com.neoutils.finsight.resources.category_default_transport
 import com.neoutils.finsight.resources.category_default_travel
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
@@ -63,7 +62,7 @@ class CreateDefaultCategoriesUseCase(
                 categoryRepository.insert(
                     Category(
                         name = template.name.asString(),
-                        icon = CategoryLazyIcon(template.icon.key),
+                        iconKey = template.icon.key,
                         type = template.type,
                         createdAt = createdAtBase + index,
                     )

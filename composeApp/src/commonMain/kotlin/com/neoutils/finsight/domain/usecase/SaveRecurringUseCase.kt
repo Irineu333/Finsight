@@ -13,7 +13,6 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.extension.moneyToDouble
 import kotlin.time.Clock
@@ -24,7 +23,7 @@ class SaveRecurringUseCase(
 ) {
     suspend operator fun invoke(
         id: Long = 0,
-        type: Transaction.Type,
+        type: Recurring.Type,
         amount: String,
         title: String?,
         dayOfMonth: String,

@@ -10,13 +10,13 @@
 
 ## 2. Breaking domain changes (inside :composeApp)
 
-- [ ] 2.1 Add `Recurring.Type { INCOME, EXPENSE }` enum inside `Recurring` model
-- [ ] 2.2 Update `RecurringForm` to use `Recurring.Type` instead of `Transaction.Type`
-- [ ] 2.3 Update `RecurringMapper` to convert `RecurringEntity.Type ↔ Recurring.Type`
-- [ ] 2.4 Replace `CategoryLazyIcon` field with `iconKey: String` in `Category` model
-- [ ] 2.5 Replace `CategoryLazyIcon` field with `iconKey: String` in `Budget` model
-- [ ] 2.6 Update all UI usages of `Category.icon` / `Budget.icon` to construct `CategoryLazyIcon(iconKey)` locally
-- [ ] 2.7 Run `./gradlew :composeApp:testDebugUnitTest` — all tests pass
+- [x] 2.1 Add `Recurring.Type { INCOME, EXPENSE }` enum inside `Recurring` model
+- [x] 2.2 Update `RecurringForm` to use `Recurring.Type` instead of `Transaction.Type`
+- [x] 2.3 Update `RecurringMapper` to convert `RecurringEntity.Type ↔ Recurring.Type`
+- [x] 2.4 Replace `CategoryLazyIcon` field with `iconKey: String` in `Category` model
+- [x] 2.5 Replace `CategoryLazyIcon` field with `iconKey: String` in `Budget` model
+- [x] 2.6 Update all UI usages of `Category.icon` / `Budget.icon` to construct `CategoryLazyIcon(iconKey)` locally
+- [x] 2.7 Run `./gradlew :composeApp:testDebugUnitTest` — all tests pass
 
 ## 3. :core:utils
 

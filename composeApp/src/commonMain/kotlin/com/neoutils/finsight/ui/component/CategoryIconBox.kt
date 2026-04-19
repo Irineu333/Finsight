@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.icons.LazyIcon
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -28,7 +29,7 @@ fun CategoryIconBox(
     }
 
     CategoryIconBox(
-        icon = category.icon,
+        icon = CategoryLazyIcon(category.iconKey),
         tint = resolvedColor,
         modifier = modifier,
         shape = shape,

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.theme.budgetProgressColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.budget_progress_card_title
@@ -74,7 +75,7 @@ private fun BudgetProgressRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CategoryIconBox(
-            icon = progress.budget.icon,
+            icon = CategoryLazyIcon(progress.budget.iconKey),
             tint = accentColor,
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(8.dp),

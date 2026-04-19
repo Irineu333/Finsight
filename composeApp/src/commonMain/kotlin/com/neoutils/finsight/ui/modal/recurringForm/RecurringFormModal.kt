@@ -62,7 +62,7 @@ class RecurringFormModal(
         }
 
     private val initialType
-        get() = recurring?.type ?: Transaction.Type.EXPENSE
+        get() = recurring?.type ?: Recurring.Type.EXPENSE
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -75,7 +75,7 @@ class RecurringFormModal(
 
         val currencyFormatter = LocalCurrencyFormatter.current
 
-        var type by remember { mutableStateOf(initialType) }
+        var type by remember { mutableStateOf<Recurring.Type>(initialType) }
 
         val title = rememberTextFieldState(recurring?.title.orEmpty())
 
@@ -188,9 +188,8 @@ class RecurringFormModal(
             CategorySelector(
                 selectedCategory = selectedCategory,
                 categories = when (type) {
-                    Transaction.Type.INCOME -> uiState.incomeCategories
-                    Transaction.Type.EXPENSE -> uiState.expenseCategories
-                    else -> emptyList()
+                    Recurring.Type.INCOME -> uiState.incomeCategories
+                    Recurring.Type.EXPENSE -> uiState.expenseCategories
                 },
                 onCategorySelected = { selectedCategory = it },
                 onEmpty = { manager.show(CategoryFormModal()) },
@@ -246,17 +245,17 @@ class RecurringFormModal(
 
     @Composable
     private fun TypeToggle(
-        selectedType: Transaction.Type,
-        onTypeSelected: (Transaction.Type) -> Unit,
+        selectedType: Recurring.Type,
+        onTypeSelected: (Recurring.Type) -> Unit,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Button(
-            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
+            onClick = { onTypeSelected(Recurring.Type.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.EXPENSE -> ButtonDefaults.buttonColors(
+                Recurring.Type.EXPENSE -> ButtonDefaults.buttonColors(
                     containerColor = Expense,
                     contentColor = Color.White,
                 )
@@ -276,10 +275,10 @@ class RecurringFormModal(
         }
 
         Button(
-            onClick = { onTypeSelected(Transaction.Type.INCOME) },
+            onClick = { onTypeSelected(Recurring.Type.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.INCOME -> ButtonDefaults.buttonColors(
+                Recurring.Type.INCOME -> ButtonDefaults.buttonColors(
                     containerColor = Income,
                     contentColor = Color.White,
                 )

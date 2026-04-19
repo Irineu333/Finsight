@@ -2,7 +2,6 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
@@ -103,7 +102,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 1,
                                 name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
+                                iconKey = "shopping",
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
@@ -114,7 +113,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 3,
                                 name = getString(Res.string.preview_category_transport),
-                                icon = CategoryLazyIcon("directions_car"),
+                                iconKey = "directions_car",
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
@@ -134,7 +133,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 2,
                                 name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
+                                iconKey = "payments",
                                 type = Category.Type.INCOME,
                                 createdAt = 0,
                             ),
@@ -145,7 +144,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 4,
                                 name = getString(Res.string.preview_category_freelance),
-                                icon = CategoryLazyIcon("laptop"),
+                                iconKey = "laptop",
                                 type = Category.Type.INCOME,
                                 createdAt = 0,
                             ),
@@ -169,7 +168,7 @@ class DashboardPreviewFactory {
                                     Category(
                                         id = 1,
                                         name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
+                                        iconKey = "shopping",
                                         type = Category.Type.EXPENSE,
                                         createdAt = 0,
                                     )
@@ -191,7 +190,7 @@ class DashboardPreviewFactory {
                     recurringList = listOf(
                         Recurring(
                             id = 1,
-                            type = Transaction.Type.EXPENSE,
+                            type = Recurring.Type.EXPENSE,
                             amount = 49.90,
                             title = getString(Res.string.preview_transaction_netflix),
                             dayOfMonth = 15,
@@ -208,14 +207,14 @@ class DashboardPreviewFactory {
                         ),
                         Recurring(
                             id = 2,
-                            type = Transaction.Type.INCOME,
+                            type = Recurring.Type.INCOME,
                             amount = 3500.0,
                             title = getString(Res.string.preview_category_salary),
                             dayOfMonth = 5,
                             category = Category(
                                 id = 2,
                                 name = getString(Res.string.preview_category_salary),
-                                icon = CategoryLazyIcon("payments"),
+                                iconKey = "payments",
                                 type = Category.Type.INCOME,
                                 createdAt = 0,
                             ),
@@ -247,7 +246,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 1,
                                 name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
+                                iconKey = "shopping",
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
@@ -268,7 +267,7 @@ class DashboardPreviewFactory {
                                     category = Category(
                                         id = 1,
                                         name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
+                                        iconKey = "shopping",
                                         type = Category.Type.EXPENSE,
                                         createdAt = 0,
                                     ),
@@ -319,7 +318,7 @@ class DashboardPreviewFactory {
                             category = Category(
                                 id = 1,
                                 name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
+                                iconKey = "shopping",
                                 type = Category.Type.EXPENSE,
                                 createdAt = 0,
                             ),
@@ -340,7 +339,7 @@ class DashboardPreviewFactory {
                                     category = Category(
                                         id = 1,
                                         name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
+                                        iconKey = "shopping",
                                         type = Category.Type.EXPENSE,
                                         createdAt = 0,
                                     ),

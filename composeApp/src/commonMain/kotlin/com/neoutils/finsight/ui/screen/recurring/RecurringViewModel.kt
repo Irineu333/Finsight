@@ -3,7 +3,6 @@ package com.neoutils.finsight.ui.screen.recurring
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,8 +24,8 @@ class RecurringViewModel(
             .filter { r ->
                 when (filter) {
                     RecurringFilter.ALL -> true
-                    RecurringFilter.INCOME -> r.type == Transaction.Type.INCOME
-                    RecurringFilter.EXPENSE -> r.type == Transaction.Type.EXPENSE
+                    RecurringFilter.INCOME -> r.type == Recurring.Type.INCOME
+                    RecurringFilter.EXPENSE -> r.type == Recurring.Type.EXPENSE
                 }
             }
             .filter { r ->

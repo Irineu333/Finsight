@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
@@ -94,7 +95,7 @@ class ViewOperationModal(
                     ) {
                         uiState.transaction.category?.let { category ->
                             Icon(
-                                painter = category.icon(),
+                                painter = CategoryLazyIcon(category.iconKey)(),
                                 contentDescription = null,
                                 tint = uiState.operationColor(),
                                 modifier = Modifier

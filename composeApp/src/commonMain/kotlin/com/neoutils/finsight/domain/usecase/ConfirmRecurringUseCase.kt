@@ -73,7 +73,10 @@ class ConfirmRecurringUseCase(
                     recurringCycle = cycleNumber,
                     transactions = listOf(
                         Transaction(
-                            type = recurring.type,
+                            type = when (recurring.type) {
+                                Recurring.Type.INCOME -> Transaction.Type.INCOME
+                                Recurring.Type.EXPENSE -> Transaction.Type.EXPENSE
+                            },
                             amount = amount,
                             title = recurring.title,
                             date = date,
@@ -98,7 +101,10 @@ class ConfirmRecurringUseCase(
                     recurringCycle = cycleNumber,
                     transactions = listOf(
                         Transaction(
-                            type = recurring.type,
+                            type = when (recurring.type) {
+                                Recurring.Type.INCOME -> Transaction.Type.INCOME
+                                Recurring.Type.EXPENSE -> Transaction.Type.EXPENSE
+                            },
                             amount = amount,
                             title = recurring.title,
                             date = date,

@@ -2,7 +2,6 @@ package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 
 class CategoryMapper {
     fun toDomain(
@@ -11,7 +10,7 @@ class CategoryMapper {
         return Category(
             id = entity.id,
             name = entity.name,
-            icon = CategoryLazyIcon(entity.iconKey),
+            iconKey = entity.iconKey,
             type = toDomain(entity.type),
             createdAt = entity.createdAt
         )
@@ -32,7 +31,7 @@ class CategoryMapper {
         return CategoryEntity(
             id = domain.id,
             name = domain.name,
-            iconKey = domain.icon.key,
+            iconKey = domain.iconKey,
             type = toEntity(domain.type),
             createdAt = domain.createdAt
         )

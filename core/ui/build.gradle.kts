@@ -1,5 +1,5 @@
 plugins {
-    id("kmp-feature")
+    id("kmp-compose")
     alias(libs.plugins.composeCompiler)
 }
 
@@ -11,6 +11,13 @@ kotlin {
             implementation(projects.core.platform)
             implementation(projects.core.utils)
             implementation(libs.findLibrary("kotlinx-datetime").get())
+            implementation(libs.findLibrary("koin-core").get())
+            implementation(libs.findLibrary("koin-compose").get())
+            implementation(libs.findLibrary("androidx-lifecycle-viewmodelCompose").get())
+            implementation(libs.findLibrary("androidx-lifecycle-runtimeCompose").get())
+        }
+        androidMain.dependencies {
+            implementation(libs.findLibrary("koin-android").get())
         }
     }
 }

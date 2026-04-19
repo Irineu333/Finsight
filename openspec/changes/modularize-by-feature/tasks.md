@@ -159,3 +159,12 @@
 - [ ] 17.7 Run `./gradlew allTests` — all tests pass
 - [ ] 17.8 Run `./gradlew check` — all verifications pass
 - [ ] 17.9 Build and run on Android, iOS, and Desktop; verify golden paths for all features
+
+## 18. Documentation
+
+- [ ] 18.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
+- [ ] 18.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
+- [ ] 18.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
+- [ ] 18.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
+- [ ] 18.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
+- [ ] 18.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`

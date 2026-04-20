@@ -5,7 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
@@ -14,7 +13,6 @@ import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
-import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
@@ -303,19 +301,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        AccountFormViewModel(
-            account = it.getOrNull(),
-            validateAccountName = get(),
-            createAccountUseCase = get(),
-            updateAccountUseCase = get(),
-            modalManager = get(),
-            debounceManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
         CreditCardFormViewModel(
             formatter = get(),
             creditCard = it.getOrNull(),
@@ -347,16 +332,6 @@ val viewModelModule = module {
             repository = get(),
             modalManager = get(),
             analytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteAccountViewModel(
-            account = it.get(),
-            deleteAccountUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
         )
     }
 

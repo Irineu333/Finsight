@@ -18,11 +18,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.feature.accounts.impl.resources.Res
+import com.neoutils.finsight.feature.accounts.impl.resources.delete_account_confirm
+import com.neoutils.finsight.feature.accounts.impl.resources.delete_account_message
+import com.neoutils.finsight.feature.accounts.impl.resources.delete_account_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.delete_account_confirm
-import com.neoutils.finsight.resources.delete_account_message
-import com.neoutils.finsight.resources.delete_account_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

@@ -6,11 +6,6 @@
     <string name="invoice_due_on">vence em %1$s</string>
     <string name="invoice_paid_on">paga em %1$s</string>
 
-    <!-- Account errors -->
-    <string name="account_error_empty_name">O nome da conta não pode ser vazio.</string>
-    <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
-    <string name="account_error_not_found">Conta não encontrada.</string>
-
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
@@ -247,19 +242,6 @@
     <string name="invoice_transactions_filter_type_adjustment">Ajuste</string>
     <string name="invoice_transactions_filter_type_payment">Pagamento</string>
 
-    <!-- Account Form Modal -->
-    <string name="account_form_edit_title">Editar Conta</string>
-    <string name="account_form_new_title">Nova Conta</string>
-    <string name="account_form_name_label">Nome</string>
-    <string name="account_form_icon_label">Ícone da conta</string>
-    <string name="account_form_icon_helper">Toque para abrir a lista de ícones</string>
-    <string name="account_form_icon_modal_title">Escolha um ícone para a conta</string>
-    <string name="account_form_default_label">Conta Padrão</string>
-    <string name="account_form_default_state_on">Usada por padrão</string>
-    <string name="account_form_default_state_off">Definir como padrão</string>
-    <string name="account_form_default_state_disabled">Já é a conta padrão</string>
-    <string name="account_form_save">Salvar</string>
-
     <!-- Credit Card Form Modal -->
     <string name="credit_card_form_edit_title">Editar Cartão</string>
     <string name="credit_card_form_new_title">Novo Cartão</string>
@@ -318,10 +300,6 @@
     <string name="delete_transaction_title">Excluir Transação</string>
     <string name="delete_transaction_message">Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.</string>
     <string name="delete_transaction_confirm">Excluir</string>
-
-    <string name="delete_account_title">Excluir Conta</string>
-    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.</string>
-    <string name="delete_account_confirm">Excluir</string>
 
     <string name="delete_credit_card_title">Excluir Cartão</string>
     <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? As faturas e transações associadas também serão excluídas.</string>
@@ -531,9 +509,6 @@
     <string name="category_default_entertainment">Lazer</string>
     <string name="category_default_subscriptions">Assinaturas</string>
     <string name="category_default_travel">Viagem</string>
-
-    <!-- Default account name -->
-    <string name="account_default_name">Carteira</string>
 
     <!-- Invoice selector -->
     <string name="invoice_selector_label">Fatura</string>

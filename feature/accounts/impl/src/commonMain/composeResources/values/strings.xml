@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account_error_empty_name">O nome da conta não pode ser vazio.</string>
+    <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
+    <string name="account_error_not_found">Conta não encontrada.</string>
+    <string name="account_default_name">Carteira</string>
+    <string name="account_form_edit_title">Editar Conta</string>
+    <string name="account_form_new_title">Nova Conta</string>
+    <string name="account_form_name_label">Nome</string>
+    <string name="account_form_icon_label">Ícone da conta</string>
+    <string name="account_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="account_form_icon_modal_title">Escolha um ícone para a conta</string>
+    <string name="account_form_default_label">Conta Padrão</string>
+    <string name="account_form_default_state_on">Usada por padrão</string>
+    <string name="account_form_default_state_off">Definir como padrão</string>
+    <string name="account_form_default_state_disabled">Já é a conta padrão</string>
+    <string name="account_form_save">Salvar</string>
+    <string name="delete_account_title">Excluir Conta</string>
+    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.</string>
+    <string name="delete_account_confirm">Excluir</string>
+</resources>

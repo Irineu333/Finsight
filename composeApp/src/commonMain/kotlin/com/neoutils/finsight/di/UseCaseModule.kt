@@ -1,19 +1,14 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
-import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
 import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
-import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
-import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
@@ -40,7 +35,6 @@ import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateRetroactiveInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
-import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
@@ -195,41 +189,7 @@ val useCaseModules = module {
     }
 
     factory {
-        ValidateAccountNameUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
         ValidateBudgetTitleUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
-        SetDefaultAccountUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
-        CreateAccountUseCase(
-            repository = get(),
-            validateAccountName = get(),
-            setDefaultAccount = get(),
-        )
-    }
-
-    factory {
-        UpdateAccountUseCase(
-            repository = get(),
-            validateAccountName = get(),
-            setDefaultAccount = get(),
-        )
-    }
-
-    factory {
-        DeleteAccountUseCase(
             repository = get(),
         )
     }
@@ -281,12 +241,6 @@ val useCaseModules = module {
     factory {
         CreateDefaultCategoriesUseCase(
             categoryRepository = get(),
-        )
-    }
-
-    factory {
-        EnsureDefaultAccountUseCase(
-            repository = get(),
         )
     }
 

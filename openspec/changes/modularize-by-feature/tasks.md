@@ -69,14 +69,21 @@
 
 ## 8. Feature level 0: accounts
 
-- [ ] 8.1 Create `feature/accounts/api/` with `build.gradle.kts` using `kmp-library` plugin
-- [ ] 8.2 Register `:feature:accounts:api` in `settings.gradle.kts`
-- [ ] 8.3 Move `Account`, `IAccountRepository`, `AccountError`, `AccountException`, `IEnsureDefaultAccountUseCase` to `:feature:accounts:api`
-- [ ] 8.4 Create `feature/accounts/impl/` with `build.gradle.kts` using `kmp-feature` plugin; deps on own `:api` + `:core:*`
-- [ ] 8.5 Register `:feature:accounts:impl` in `settings.gradle.kts`
-- [ ] 8.6 Move all accounts use cases, screen, ViewModel, modals, Koin module, analytics events to `:feature:accounts:impl`
-- [ ] 8.7 Update `:composeApp` to depend on `:feature:accounts:impl`; remove moved sources
-- [ ] 8.8 Verify `:composeApp` compiles
+> **Nota de implementação — split wave 1/wave 2:** `AccountsViewModel` e `TransferBetweenAccountsUseCase` dependem de `IOperationRepository` (de `transactions:api`, seção 11) e `ICategoryRepository` (de `categories:api`, seção 9), que ainda não existem. Por isso a migração de accounts é feita em duas ondas:
+>
+> - **Wave 1 (esta seção):** `accounts:api` + use cases puros (`Create`, `Validate`, `SetDefault`, `Update`, `Delete`, `EnsureDefault`) + `AccountMapper` + `AccountRepository` + modais `AccountForm`/`DeleteAccount` + analytics events + Koin module
+> - **Wave 2 (após seção 11):** `AccountsScreen/ViewModel`, `TransferBetweenAccountsUseCase/Modal/ViewModel`, `AdjustBalance*`, `EditAccountBalance*`
+>
+> `IconPickerModal` foi movido para `:core:ui` (sem deps de domínio) para desbloquear o `AccountFormModal`.
+
+- [x] 8.1 Create `feature/accounts/api/` with `build.gradle.kts` using `kmp-library` plugin
+- [x] 8.2 Register `:feature:accounts:api` in `settings.gradle.kts`
+- [x] 8.3 Move `Account`, `IAccountRepository`, `AccountError` (enum only, sem `toUiText`), `AccountException`, `IEnsureDefaultAccountUseCase` to `:feature:accounts:api`
+- [x] 8.4 Create `feature/accounts/impl/` with `build.gradle.kts` using `kmp-feature` plugin; deps on own `:api` + `:core:*` (wave 1 — sem `AccountsScreen/ViewModel` e cross-feature use cases)
+- [x] 8.5 Register `:feature:accounts:impl` in `settings.gradle.kts`
+- [x] 8.6 Move wave-1 items: `AccountMapper`, `AccountRepository`, use cases puros, analytics events, `AccountFormModal/ViewModel`, `DeleteAccountModal/ViewModel`, `toUiText()` extension, Koin module, strings. Deferred: `AccountsScreen/ViewModel`, `TransferBetweenAccounts*`, `AdjustBalance*`, `EditAccountBalance*`
+- [x] 8.7 Update `:composeApp` to depend on `:feature:accounts:impl`; remove moved sources
+- [x] 8.8 Verify `:composeApp` compiles
 
 ## 9. Feature level 0: categories
 

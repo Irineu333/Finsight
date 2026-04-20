@@ -48,7 +48,7 @@
 
 ## 6. :core:ui
 
-- [x] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-feature` plugin (has Compose)
+- [x] 6.1 Create `core/ui/` module with `build.gradle.kts` using `kmp-compose` plugin (has Compose, sem Koin/Arrow/Navigation que são desnecessários para um módulo core)
 - [x] 6.2 Register `:core:ui` in `settings.gradle.kts`; add deps on `:core:platform` + `:core:utils`
 - [x] 6.3 Move theme, `UiText`, `AppIcon`, `CurrencyFormatter`, `LocalCurrencyFormatter`, `DateFormats`
 - [x] 6.4 Move `PlatformContext` + `LocalPlatformContext` (deferred from 4.3 — JVM actual depends on Compose Desktop), input transformations, `ModalManager`, `NavigationDispatcher`, `NavigationDestination`; also move `Validation` (depends on `UiText`, deferred from 3.3)

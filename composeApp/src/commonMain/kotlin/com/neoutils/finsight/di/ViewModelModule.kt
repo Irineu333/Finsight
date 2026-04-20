@@ -9,12 +9,10 @@ import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
-import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
@@ -34,7 +32,6 @@ import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
-import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
@@ -161,14 +158,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        CategoriesViewModel(
-            categoryRepository = get(),
-            createDefaultCategories = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
         AccountsViewModel(
             accountRepository = get(),
             operationRepository = get(),
@@ -289,18 +278,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        CategoryFormViewModel(
-            category = it.getOrNull(),
-            initialType = it.getOrNull(),
-            repository = get(),
-            validateCategoryName = get(),
-            modalManager = get(),
-            debounceManager = get(),
-            analytics = get(),
-        )
-    }
-
-    viewModel {
         CreditCardFormViewModel(
             formatter = get(),
             creditCard = it.getOrNull(),
@@ -325,15 +302,6 @@ val viewModelModule = module {
         )
     }
 
-
-    viewModel {
-        DeleteCategoryViewModel(
-            category = it.get(),
-            repository = get(),
-            modalManager = get(),
-            analytics = get(),
-        )
-    }
 
     viewModel {
         EditAccountBalanceViewModel(

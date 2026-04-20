@@ -6,11 +6,9 @@ import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
-import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
-import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
@@ -177,12 +175,6 @@ val useCaseModules = module {
     }
 
     factory {
-        ValidateCategoryNameUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
         ValidateCreditCardNameUseCase(
             repository = get(),
         )
@@ -235,12 +227,6 @@ val useCaseModules = module {
     factory {
         BuildTransactionUseCase(
             getOrCreateInvoiceForMonthUseCase = get(),
-        )
-    }
-
-    factory {
-        CreateDefaultCategoriesUseCase(
-            categoryRepository = get(),
         )
     }
 

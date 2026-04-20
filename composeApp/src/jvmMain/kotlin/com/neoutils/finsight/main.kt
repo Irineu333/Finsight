@@ -5,6 +5,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.neoutils.finsight.database.di.databaseModule
 import com.neoutils.finsight.di.accountsModule
+import com.neoutils.finsight.di.categoriesModule
 import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
@@ -30,6 +31,7 @@ fun main() = application {
             supportPlatformModule,
             mapperModule,
             accountsModule,
+            categoriesModule,
             repositoryModule,
             useCaseModules,
             reportModule,

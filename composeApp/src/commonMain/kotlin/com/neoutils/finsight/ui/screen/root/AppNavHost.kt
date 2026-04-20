@@ -10,6 +10,7 @@ import androidx.navigation.toRoute
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
+import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.home.AppRoute
@@ -48,9 +49,13 @@ fun AppNavHost() = Surface {
                         }
 
                         composable<AppRoute.Categories> {
+                            val modalManager = LocalModalManager.current
                             CategoriesScreen(
                                 onNavigateBack = {
                                     navController.navigateUp()
+                                },
+                                onCategoryClick = { category ->
+                                    modalManager.show(ViewCategoryModal(category))
                                 }
                             )
                         }

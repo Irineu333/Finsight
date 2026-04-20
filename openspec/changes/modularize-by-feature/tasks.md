@@ -87,11 +87,11 @@
 
 ## 9. Feature level 0: categories
 
-- [ ] 9.1 Create `feature/categories/api/` module; move `Category { iconKey: String }`, `ICategoryRepository`
-- [ ] 9.2 Register `:feature:categories:api` in `settings.gradle.kts`
-- [ ] 9.3 Create `feature/categories/impl/` module; move use cases, screen, ViewModel, modals, Koin module
-- [ ] 9.4 Register `:feature:categories:impl` in `settings.gradle.kts`
-- [ ] 9.5 Update `:composeApp`; verify compile
+- [x] 9.1 Create `feature/categories/api/` module; move `Category { iconKey: String }`, `ICategoryRepository`
+- [x] 9.2 Register `:feature:categories:api` in `settings.gradle.kts`
+- [x] 9.3 Create `feature/categories/impl/` module; move use cases, screen, ViewModel, modals, Koin module
+- [x] 9.4 Register `:feature:categories:impl` in `settings.gradle.kts`
+- [x] 9.5 Update `:composeApp`; verify compile
 
 ## 10. Feature level 0: creditCards
 

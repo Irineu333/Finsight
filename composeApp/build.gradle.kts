@@ -76,6 +76,7 @@ kotlin {
             implementation(projects.core.ui)
             implementation(projects.core.database)
             implementation(projects.feature.accounts.impl)
+            implementation(projects.feature.categories.impl)
 
             // Arrow
             implementation(libs.arrow.core)

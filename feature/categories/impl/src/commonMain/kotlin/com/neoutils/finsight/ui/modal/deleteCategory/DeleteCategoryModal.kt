@@ -14,10 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.delete_category_confirm
-import com.neoutils.finsight.resources.delete_category_message
-import com.neoutils.finsight.resources.delete_category_title
+import com.neoutils.finsight.feature.categories.impl.resources.Res
+import com.neoutils.finsight.feature.categories.impl.resources.delete_category_confirm
+import com.neoutils.finsight.feature.categories.impl.resources.delete_category_message
+import com.neoutils.finsight.feature.categories.impl.resources.delete_category_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

@@ -37,14 +37,13 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.categories_create_default
-import com.neoutils.finsight.resources.categories_create_manual
-import com.neoutils.finsight.resources.categories_empty
-import com.neoutils.finsight.resources.categories_expense
-import com.neoutils.finsight.resources.categories_income
-import com.neoutils.finsight.resources.categories_title
+import com.neoutils.finsight.feature.categories.impl.resources.Res
+import com.neoutils.finsight.feature.categories.impl.resources.categories_create_default
+import com.neoutils.finsight.feature.categories.impl.resources.categories_create_manual
+import com.neoutils.finsight.feature.categories.impl.resources.categories_empty
+import com.neoutils.finsight.feature.categories.impl.resources.categories_expense
+import com.neoutils.finsight.feature.categories.impl.resources.categories_income
+import com.neoutils.finsight.feature.categories.impl.resources.categories_title
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,6 +51,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun CategoriesScreen(
     onNavigateBack: () -> Unit = {},
+    onCategoryClick: (Category) -> Unit = {},
     viewModel: CategoriesViewModel = koinViewModel()
 ) {
     val analytics = koinInject<Analytics>()
@@ -64,6 +64,7 @@ fun CategoriesScreen(
     CategoriesContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
+        onCategoryClick = onCategoryClick,
         onAction = viewModel::onAction,
     )
 }
@@ -72,6 +73,7 @@ fun CategoriesScreen(
 private fun CategoriesContent(
     uiState: CategoriesUiState,
     onNavigateBack: () -> Unit,
+    onCategoryClick: (Category) -> Unit,
     onAction: (CategoriesAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
@@ -197,9 +199,7 @@ private fun CategoriesContent(
                             ) { category ->
                                 CategoryCard(
                                     category = category,
-                                    onClick = {
-                                        modalManager.show(ViewCategoryModal(category))
-                                    },
+                                    onClick = { onCategoryClick(category) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .animateItem()

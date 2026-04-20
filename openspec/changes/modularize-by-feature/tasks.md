@@ -62,8 +62,8 @@
 - [x] 7.2 Register `:core:database` in `settings.gradle.kts`; add dep on `:core:utils`
 - [x] 7.3 Move `AppDatabase` and all `@Entity` classes
 - [x] 7.4 Move all DAOs and Room `@Database` configuration
-- [x] 7.5 Move all mappers (including updated `RecurringMapper` with `Recurring.Type` conversion)
-- [x] 7.6 Move all repository implementations (`*RepositoryImpl`)
+- [x] 7.5 ~~Move all mappers to `:core:database`~~ — Revisão arquitetural: mappers pertencem à feature (`feature:X:impl`), migram nas seções 8–16 junto com o domínio de cada feature
+- [x] 7.6 ~~Move all repository implementations to `:core:database`~~ — Revisão arquitetural: repositórios implementam interfaces de domínio, pertencem à feature (`feature:X:impl`), migram nas seções 8–16
 - [x] 7.7 Add `:core:database` dependency in `:composeApp`; remove moved sources
 - [x] 7.8 Verify `:composeApp` compiles and Room KSP generates correctly
 

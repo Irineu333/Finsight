@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.domain.model
 
-import androidx.compose.ui.graphics.Color
 import com.neoutils.finsight.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -39,13 +38,13 @@ data class Invoice(
     }
 
     enum class Status(
-        val color: Color,
+        val colorValue: Long,
     ) {
-        FUTURE(color = Color(0xFF42A5F5)),
-        OPEN(color = Color(0xFFFFA726)),
-        CLOSED(color = Color(0xFFEF5350)),
-        PAID(color = Color(0xFF66BB6A)),
-        RETROACTIVE(color = Color(0xFF5C6BC0));
+        FUTURE(colorValue = 0xFF42A5F5L),
+        OPEN(colorValue = 0xFFFFA726L),
+        CLOSED(colorValue = 0xFFEF5350L),
+        PAID(colorValue = 0xFF66BB6AL),
+        RETROACTIVE(colorValue = 0xFF5C6BC0L);
 
         val isFuture: Boolean
             get() = this == FUTURE

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
+    <string name="credit_card_error_already_exist_name">Já existe um cartão com esse nome.</string>
+    <string name="credit_card_error_negative_limit">O limite não pode ser negativo.</string>
+    <string name="credit_card_error_missing_closing_day">O dia de fechamento é obrigatório.</string>
+    <string name="credit_card_error_invalid_closing_day">O dia de fechamento deve ser entre 1 e 31.</string>
+    <string name="credit_card_error_missing_due_day">O dia de vencimento é obrigatório.</string>
+    <string name="credit_card_error_invalid_due_day">O dia de vencimento deve ser entre 1 e 31.</string>
+    <string name="credit_card_error_not_found">Cartão de crédito não encontrado.</string>
+    <string name="credit_card_form_edit_title">Editar Cartão</string>
+    <string name="credit_card_form_new_title">Novo Cartão</string>
+    <string name="credit_card_form_name_label">Nome do Cartão</string>
+    <string name="credit_card_form_icon_label">Ícone do cartão</string>
+    <string name="credit_card_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="credit_card_form_icon_modal_title">Escolha um ícone para o cartão</string>
+    <string name="credit_card_form_limit_label">Limite</string>
+    <string name="credit_card_form_closing_day_label">Dia de Fechamento</string>
+    <string name="credit_card_form_due_day_label">Dia de Vencimento</string>
+    <string name="credit_card_form_save">Salvar</string>
+    <string name="invoice_status_future">Futura</string>
+    <string name="invoice_status_open">Aberta</string>
+    <string name="invoice_status_closed">Fechada</string>
+    <string name="invoice_status_paid">Paga</string>
+    <string name="invoice_status_retroactive">Retroativa</string>
+    <string name="invoice_status_new">Nova</string>
+</resources>

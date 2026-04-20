@@ -88,4 +88,3 @@ class OpenInvoiceUseCase(
         invoice.copy(id = invoiceRepository.insert(invoice))
     }
 }
-

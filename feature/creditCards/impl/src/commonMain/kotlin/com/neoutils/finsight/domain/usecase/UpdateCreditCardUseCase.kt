@@ -2,7 +2,6 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.CreditCardError

@@ -52,7 +52,7 @@ fun InvoiceSelector(
                     Icon(
                         imageVector = Icons.Default.Receipt,
                         contentDescription = null,
-                        tint = it.status.color,
+                        tint = androidx.compose.ui.graphics.Color(it.status.colorValue),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -83,7 +83,7 @@ fun InvoiceSelector(
                             Icon(
                                 imageVector = Icons.Default.Receipt,
                                 contentDescription = null,
-                                tint = invoice.status.color,
+                                tint = androidx.compose.ui.graphics.Color(invoice.status.colorValue),
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(

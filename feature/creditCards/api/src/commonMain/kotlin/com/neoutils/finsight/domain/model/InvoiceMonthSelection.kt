@@ -10,5 +10,5 @@ data class InvoiceMonthSelection(
 
     val isBlocked = existingInvoice?.status?.isBlocked == true
 
-    val statusColor get() = existingInvoice?.status?.color
+    val statusColorValue: Long? get() = existingInvoice?.status?.colorValue
 }

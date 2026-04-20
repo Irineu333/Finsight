@@ -11,7 +11,6 @@ import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
@@ -44,15 +43,12 @@ import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
 import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
 import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
-import com.neoutils.finsight.util.CreditCardPeriod
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 val viewModelModule = module {
-
-    factory { CreditCardPeriod(defaultDaysDifference = 8) }
 
     viewModel {
         ViewCategoryViewModel(
@@ -272,21 +268,6 @@ val viewModelModule = module {
             invoice = it.get(),
             deleteFutureInvoiceUseCase = get(),
             modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        CreditCardFormViewModel(
-            formatter = get(),
-            creditCard = it.getOrNull(),
-            addCreditCardUseCase = get(),
-            updateCreditCardUseCase = get(),
-            validateCreditCardName = get(),
-            modalManager = get(),
-            debounceManager = get(),
-            creditCardPeriod = get(),
             analytics = get(),
             crashlytics = get(),
         )

@@ -4,6 +4,7 @@ import android.app.Application
 import com.neoutils.finsight.database.di.databaseModule
 import com.neoutils.finsight.di.accountsModule
 import com.neoutils.finsight.di.categoriesModule
+import com.neoutils.finsight.di.creditCardsModule
 import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
@@ -35,6 +36,7 @@ class AndroidApp : Application() {
                 mapperModule,
                 accountsModule,
                 categoriesModule,
+                creditCardsModule,
                 repositoryModule,
                 useCaseModules,
                 reportModule,

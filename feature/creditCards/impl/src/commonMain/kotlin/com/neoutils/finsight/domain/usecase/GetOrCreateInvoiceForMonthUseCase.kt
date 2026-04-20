@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.usecase.IGetOrCreateInvoiceForMonthUseCase
 import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
 
@@ -17,8 +18,8 @@ class GetOrCreateInvoiceForMonthUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
     private val createRetroactiveInvoiceUseCase: CreateRetroactiveInvoiceUseCase
-) {
-    suspend operator fun invoke(
+) : IGetOrCreateInvoiceForMonthUseCase {
+    override suspend operator fun invoke(
         creditCard: CreditCard,
         targetDueMonth: YearMonth
     ): Either<Throwable, Invoice> = either {

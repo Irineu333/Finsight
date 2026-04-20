@@ -1,19 +1,14 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.repository.BudgetRepository
-import com.neoutils.finsight.database.repository.CreditCardRepository
 import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
-import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.database.repository.InstallmentRepository
 import com.neoutils.finsight.database.repository.OperationRepository
 import com.neoutils.finsight.database.repository.RecurringRepository
 import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
@@ -25,21 +20,6 @@ import org.koin.dsl.module
 val repositoryModule = module {
 
     single<Settings> { Settings() }
-
-    single<ICreditCardRepository> {
-        CreditCardRepository(
-            dao = get(),
-            mapper = get()
-        )
-    }
-
-    single<IInvoiceRepository> {
-        InvoiceRepository(
-            dao = get(),
-            mapper = get(),
-            creditCardRepository = get(),
-        )
-    }
 
     single<IInstallmentRepository> {
         InstallmentRepository(

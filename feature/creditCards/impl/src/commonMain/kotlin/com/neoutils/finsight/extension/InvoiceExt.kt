@@ -3,7 +3,13 @@ package com.neoutils.finsight.extension
 import androidx.compose.runtime.Composable
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.creditCards.impl.resources.Res
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_closed
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_future
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_new
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_open
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_paid
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_status_retroactive
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource

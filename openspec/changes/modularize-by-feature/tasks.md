@@ -95,11 +95,16 @@
 
 ## 10. Feature level 0: creditCards
 
-- [ ] 10.1 Create `feature/creditCards/api/` module; move `CreditCard`, `Invoice`, `ICreditCardRepository`, `IInvoiceRepository`, `IGetOrCreateInvoiceForMonthUseCase`, `InvoiceExt`, errors
-- [ ] 10.2 Register `:feature:creditCards:api` in `settings.gradle.kts`
-- [ ] 10.3 Create `feature/creditCards/impl/` module; move all use cases, screens, ViewModels, modals, Koin module
-- [ ] 10.4 Register `:feature:creditCards:impl` in `settings.gradle.kts`
-- [ ] 10.5 Update `:composeApp`; verify compile
+> **Nota de implementação — split wave 1/wave 2:** `CreditCardsScreen/ViewModel`, `DeleteCreditCardUseCase`, `CloseInvoiceUseCase`, `CalculateInvoiceUseCase`, `CalculateAvailableLimitUseCase`, `CalculateInvoiceOverviewsUseCase`, `AdjustInvoiceUseCase`, `DeleteFutureInvoiceUseCase`, `PayInvoicePaymentUseCase`, `AdvanceInvoicePaymentUseCase`, `DeleteCreditCardModal/ViewModel`, `InvoiceTransactionsScreen`, `InvoiceUiMapper` dependem de `ITransactionRepository`/`IOperationRepository`/`Transaction`/`Operation` (de `transactions:api`, seção 11) que ainda não existem. Por isso:
+>
+> - **Wave 1 (esta seção):** `CreditCardMapper`, `InvoiceMapper`, `CreditCardRepository`, `InvoiceRepository`, use cases puros (`ValidateCreditCardName`, `Add`, `Update`, `Open`, `Pay`, `Reopen`, `CreateInvoice`, `CreateFuture`, `CreateRetroactive`, `GetOrCreate`), `CreditCardForm`, `CreditCardPeriod`, `InvoiceUi`, `CreditCardUi`, `InvoiceExt`, analytics events, `CreditCardFormModal/ViewModel`, `CreditCardError.toUiText()`, Koin module
+> - **Wave 2 (após seção 11):** `CreditCardsScreen/ViewModel`, `DeleteCreditCard*`, `CloseInvoice*`, `PayInvoicePayment*`, `AdvanceInvoicePayment*`, `AdjustInvoice*`, `DeleteFutureInvoice*`, `CalculateInvoice*`, `InvoiceTransactionsScreen`, `InvoiceUiMapper`
+
+- [x] 10.1 Create `feature/creditCards/api/` module; move `CreditCard`, `Invoice`, `ICreditCardRepository`, `IInvoiceRepository`, `IGetOrCreateInvoiceForMonthUseCase`, `InvoiceExt`, errors
+- [x] 10.2 Register `:feature:creditCards:api` in `settings.gradle.kts`
+- [x] 10.3 Create `feature/creditCards/impl/` module; move wave-1 items; wave-2 items remain in `:composeApp` until seção 11
+- [x] 10.4 Register `:feature:creditCards:impl` in `settings.gradle.kts`
+- [x] 10.5 Update `:composeApp`; verify compile
 
 ## 11. Feature level 1: transactions
 

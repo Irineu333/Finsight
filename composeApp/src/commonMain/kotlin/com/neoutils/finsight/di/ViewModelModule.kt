@@ -5,7 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
@@ -51,17 +50,12 @@ import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
 import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
-import com.neoutils.finsight.util.DebounceManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 val viewModelModule = module {
-
-    single { ModalManager() }
-
-    factory { DebounceManager(delayMillis = 500L) }
 
     factory { CreditCardPeriod(defaultDaysDifference = 8) }
 

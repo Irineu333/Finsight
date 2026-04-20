@@ -11,6 +11,8 @@ import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.supportPlatformModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
+import com.neoutils.finsight.ui.di.uiModule
+import com.neoutils.finsight.util.di.utilsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -25,6 +27,8 @@ class AndroidApp : Application() {
 
             modules(
                 databaseModule,
+                utilsModule,
+                uiModule,
                 supportPlatformModule,
                 mapperModule,
                 repositoryModule,

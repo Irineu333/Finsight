@@ -12,6 +12,8 @@ import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.supportPlatformModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
+import com.neoutils.finsight.ui.di.uiModule
+import com.neoutils.finsight.util.di.utilsModule
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.root.App
@@ -25,6 +27,8 @@ fun MainViewController(): UIViewController {
             startKoin {
                 modules(
                     databaseModule,
+                    utilsModule,
+                    uiModule,
                     supportPlatformModule,
                     mapperModule,
                     repositoryModule,

@@ -23,15 +23,12 @@ import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.extension.CurrencyFormatter
 import com.russhwolf.settings.Settings
 import org.koin.dsl.module
 
 val repositoryModule = module {
 
     single<Settings> { Settings() }
-
-    single { CurrencyFormatter() }
 
     single<IAccountRepository> {
         AccountRepository(

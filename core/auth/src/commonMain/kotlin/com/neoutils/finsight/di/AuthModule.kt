@@ -7,4 +7,4 @@ val authModule = module {
     includes(authPlatformModule)
 }
 
-expect val authPlatformModule: Module
+internal expect val authPlatformModule: Module

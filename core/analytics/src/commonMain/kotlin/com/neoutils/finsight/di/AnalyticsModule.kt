@@ -7,4 +7,4 @@ val analyticsModule = module {
     includes(analyticsPlatformModule)
 }
 
-expect val analyticsPlatformModule: Module
+internal expect val analyticsPlatformModule: Module

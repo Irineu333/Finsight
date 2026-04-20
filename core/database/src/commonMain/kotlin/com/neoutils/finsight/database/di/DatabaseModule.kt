@@ -29,4 +29,4 @@ val databaseModule = module {
     single<RecurringOccurrenceDao> { get<AppDatabase>().recurringOccurrenceDao() }
 }
 
-expect val databasePlatformModule: Module
+internal expect val databasePlatformModule: Module

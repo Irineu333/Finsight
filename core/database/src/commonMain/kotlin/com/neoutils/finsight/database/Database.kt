@@ -8,7 +8,7 @@ import androidx.sqlite.execSQL
 import kotlinx.coroutines.Dispatchers
 
 // 1.2.0
-val MIGRATION_1_2 = object : Migration(1, 2) {
+internal val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `budgets` (" +
@@ -43,7 +43,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 // 1.4.0-rc01
-val MIGRATION_2_3 = object : Migration(2, 3) {
+internal val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `recurring` (" +
@@ -75,7 +75,7 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
 }
 
 // 1.4.0-rc02
-val MIGRATION_3_4 = object : Migration(3, 4) {
+internal val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("PRAGMA foreign_keys=OFF")
 
@@ -187,7 +187,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 // 1.4.0
-val MIGRATION_4_5 = object : Migration(4, 5) {
+internal val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `budgets` ADD COLUMN `iconKey` TEXT NOT NULL DEFAULT 'default'"
@@ -206,7 +206,7 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 }
 
 // 1.5.0-rc01
-val MIGRATION_5_6 = object : Migration(5, 6) {
+internal val MIGRATION_5_6 = object : Migration(5, 6) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `credit_cards` ADD COLUMN `iconKey` TEXT NOT NULL DEFAULT 'card'"
@@ -215,7 +215,7 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
 }
 
 // 1.5.0-rc04
-val MIGRATION_6_7 = object : Migration(6, 7) {
+internal val MIGRATION_6_7 = object : Migration(6, 7) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `budgets` ADD COLUMN `limitType` TEXT NOT NULL DEFAULT 'FIXED'"
@@ -229,7 +229,7 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
-fun getRoomDatabase(
+internal fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder

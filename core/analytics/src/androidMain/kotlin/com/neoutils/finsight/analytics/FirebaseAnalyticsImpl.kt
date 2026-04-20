@@ -8,7 +8,7 @@ import dev.gitlive.firebase.analytics.FirebaseAnalyticsParam
 import dev.gitlive.firebase.analytics.analytics
 import dev.gitlive.firebase.analytics.logEvent
 
-class FirebaseAnalyticsImpl : Analytics {
+internal class FirebaseAnalyticsImpl : Analytics {
 
     override fun logScreenView(screenName: String) {
         Firebase.analytics.logEvent(FirebaseAnalyticsEvents.SCREEN_VIEW) {

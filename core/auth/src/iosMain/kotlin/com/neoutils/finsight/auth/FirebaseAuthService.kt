@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.auth.AuthService
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 
-class FirebaseAuthService : AuthService {
+internal class FirebaseAuthService : AuthService {
     override suspend fun getUserId(): String? {
         val auth = Firebase.auth
 

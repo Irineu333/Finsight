@@ -7,4 +7,4 @@ val crashlyticsModule = module {
     includes(crashlyticsPlatformModule)
 }
 
-expect val crashlyticsPlatformModule: Module
+internal expect val crashlyticsPlatformModule: Module

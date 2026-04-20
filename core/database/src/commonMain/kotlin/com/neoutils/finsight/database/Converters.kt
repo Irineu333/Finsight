@@ -8,7 +8,7 @@ import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-class Converters {
+internal class Converters {
 
     @TypeConverter
     fun fromInstant(instant: Instant): Long {

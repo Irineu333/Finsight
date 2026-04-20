@@ -1,5 +1,6 @@
-package com.neoutils.finsight.domain.error
+package com.neoutils.finsight.extension
 
+import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.feature.accounts.impl.resources.Res
 import com.neoutils.finsight.feature.accounts.impl.resources.account_error_already_exist
 import com.neoutils.finsight.feature.accounts.impl.resources.account_error_empty_name

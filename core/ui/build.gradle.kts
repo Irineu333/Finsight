@@ -3,21 +3,19 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.platform)
             implementation(projects.core.utils)
-            implementation(libs.findLibrary("kotlinx-datetime").get())
-            implementation(libs.findLibrary("koin-core").get())
-            implementation(libs.findLibrary("koin-compose").get())
-            implementation(libs.findLibrary("androidx-lifecycle-viewmodelCompose").get())
-            implementation(libs.findLibrary("androidx-lifecycle-runtimeCompose").get())
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.androidx.lifecycle.viewmodelCompose)
+            implementation(libs.androidx.lifecycle.runtimeCompose)
         }
         androidMain.dependencies {
-            implementation(libs.findLibrary("koin-android").get())
+            implementation(libs.koin.android)
         }
     }
 }

@@ -3,8 +3,6 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
@@ -21,7 +19,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(libs.findLibrary("kotlinx-coroutinesSwing").get())
+            implementation(libs.kotlinx.coroutinesSwing)
         }
     }
 }

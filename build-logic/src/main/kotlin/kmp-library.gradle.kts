@@ -3,8 +3,6 @@ plugins {
     id("com.android.library")
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     androidTarget {
         compilerOptions {
@@ -37,9 +35,9 @@ kotlin {
 }
 
 android {
-    compileSdk = libs.findVersion("android-compileSdk").get().requiredVersion.toInt()
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
-        minSdk = libs.findVersion("android-minSdk").get().requiredVersion.toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

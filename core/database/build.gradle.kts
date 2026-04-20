@@ -4,19 +4,17 @@ plugins {
     alias(libs.plugins.room)
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            api(libs.findLibrary("androidx-room-runtime").get())
-            implementation(libs.findLibrary("androidx-sqlite-bundled").get())
-            implementation(libs.findLibrary("kotlinx-datetime").get())
-            implementation(libs.findLibrary("koin-core").get())
+            api(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.koin.core)
             implementation(projects.core.utils)
         }
         androidMain.dependencies {
-            implementation(libs.findLibrary("koin-android").get())
+            implementation(libs.koin.android)
         }
     }
 }
@@ -26,12 +24,12 @@ room {
 }
 
 dependencies {
-    add("kspCommonMainMetadata", libs.findLibrary("androidx-room-compiler").get())
-    add("kspAndroid", libs.findLibrary("androidx-room-compiler").get())
-    add("kspJvm", libs.findLibrary("androidx-room-compiler").get())
-    add("kspIosSimulatorArm64", libs.findLibrary("androidx-room-compiler").get())
-    add("kspIosX64", libs.findLibrary("androidx-room-compiler").get())
-    add("kspIosArm64", libs.findLibrary("androidx-room-compiler").get())
+    add("kspCommonMainMetadata", libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
 }
 
 android {

@@ -2,13 +2,11 @@ plugins {
     id("kmp-library")
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.findLibrary("kotlinx-datetime").get())
-            implementation(libs.findLibrary("kotlinx-coroutinesCore").get())
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.coroutinesCore)
         }
     }
 }

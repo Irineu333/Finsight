@@ -2,20 +2,18 @@ plugins {
     id("kmp-library")
 }
 
-val libs = the<VersionCatalogsExtension>().named("libs")
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.findLibrary("koin-core").get())
+            implementation(libs.koin.core)
         }
         androidMain.dependencies {
-            implementation(libs.findLibrary("gitlive-firebase-analytics").get())
-            implementation(libs.findLibrary("gitlive-firebase-crashlytics").get())
+            implementation(libs.gitlive.firebase.analytics)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
         iosMain.dependencies {
-            implementation(libs.findLibrary("gitlive-firebase-analytics").get())
-            implementation(libs.findLibrary("gitlive-firebase-crashlytics").get())
+            implementation(libs.gitlive.firebase.analytics)
+            implementation(libs.gitlive.firebase.crashlytics)
         }
     }
 }

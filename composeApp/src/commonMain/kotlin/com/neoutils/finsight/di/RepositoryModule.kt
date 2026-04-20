@@ -49,7 +49,7 @@ val repositoryModule = module {
 
     single<ICreditCardRepository> {
         CreditCardRepository(
-            dao = get<AppDatabase>().creditCardDao(),
+            dao = get(),
             mapper = get()
         )
     }

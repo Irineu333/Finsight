@@ -19,7 +19,7 @@ O projeto SHALL ter os seguintes módulos core, cada um com responsabilidade ún
 
 #### Scenario: core:database não contém regras de negócio
 - **WHEN** um desenvolvedor adiciona código ao módulo `:core:database`
-- **THEN** o código MUST ser exclusivamente infraestrutura Room (entities, DAOs, mappers, AppDatabase) sem use cases ou validações de domínio
+- **THEN** o código MUST ser exclusivamente infraestrutura Room (entities, DAOs, AppDatabase) sem mappers, use cases ou validações de domínio — mappers pertencem a cada `feature:X:impl`
 
 ---
 

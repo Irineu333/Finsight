@@ -74,13 +74,16 @@ Restrições relevantes:
 
 ### D6: Convention plugins em `build-logic/`
 
-**Decisão:** Criar 4 convention plugins Kotlin DSL:
-- `kmp-core.gradle.kts` — módulo KMP library sem Android Application (para `:core:*`)
-- `kmp-feature-api.gradle.kts` — módulo KMP leve, sem Room, sem Firebase (para `:feature:X:api`)
-- `kmp-feature-impl.gradle.kts` — módulo KMP com Compose, Koin, Arrow (para `:feature:X:impl`)
-- `kmp-database.gradle.kts` — módulo KMP com Room + KSP 6x (para `:core:database`)
+**Decisão:** Três convention plugins Kotlin DSL cobrem todos os módulos:
+- `kmp-library.gradle.kts` — targets KMP + Android library (para `:core:*` e `:feature:X:api`)
+- `kmp-compose.gradle.kts` — aplica `kmp-library` + Compose (intermediário, usado por `kmp-feature`)
+- `kmp-feature.gradle.kts` — aplica `kmp-compose` + Koin + Arrow + Navigation (para `:feature:X:impl`)
 
-**Rationale:** Com ~25 módulos, repetir a configuração KMP (targets, source sets, KSP) em cada `build.gradle.kts` é impraticável. Convention plugins eliminam a repetição.
+`:core:database` aplica `kmp-library` e configura Room/KSP manualmente no próprio `build.gradle.kts` — um plugin dedicado adicionaria complexidade desnecessária para um único módulo.
+
+Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP puros sem Compose ou Koin. Não há `kmp-feature-api` dedicado: `kmp-library` já atende sem sobrecarga.
+
+**Rationale:** Com ~25 módulos, repetir a configuração KMP (targets, source sets) em cada `build.gradle.kts` é impraticável. Convention plugins eliminam a repetição.
 
 ---
 

@@ -373,14 +373,14 @@ private fun InvoiceSummaryItem(
                 }
 
                 Surface(
-                    color = summary.status.color.copy(alpha = 0.2f),
+                    color = Color(summary.status.colorValue).copy(alpha = 0.2f),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = stringResource(summary.status.toUiText()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = summary.status.color,
+                        color = Color(summary.status.colorValue),
                         modifier = Modifier.padding(
                             horizontal = 8.dp,
                             vertical = 4.dp

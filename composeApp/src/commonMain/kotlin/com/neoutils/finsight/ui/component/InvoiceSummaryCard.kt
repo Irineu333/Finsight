@@ -67,14 +67,14 @@ fun InvoiceSummaryCard(
                 )
 
                 Surface(
-                    color = overview.invoiceStatus.color.copy(alpha = 0.2f),
+                    color = Color(overview.invoiceStatus.colorValue).copy(alpha = 0.2f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         text = stringResource(overview.invoiceStatus.toUiText()),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = overview.invoiceStatus.color,
+                        color = Color(overview.invoiceStatus.colorValue),
                         modifier = Modifier.padding(
                             horizontal = 8.dp,
                             vertical = 4.dp

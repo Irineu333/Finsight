@@ -112,8 +112,8 @@ fun CreditCardCard(
                     invoiceUi?.let {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = it.status.color.copy(alpha = 0.15f),
-                                contentColor = it.status.color,
+                                containerColor = Color(it.status.colorValue).copy(alpha = 0.15f),
+                                contentColor = Color(it.status.colorValue),
                             ),
                             shape = RoundedCornerShape(4.dp),
                         ) {

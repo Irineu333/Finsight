@@ -269,7 +269,7 @@ class ViewOperationModal(
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
                     value = invoice.toLabel(),
-                    valueColor = invoice.status.color,
+                    valueColor = Color(invoice.status.colorValue),
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = creditCardId?.let {
                         {

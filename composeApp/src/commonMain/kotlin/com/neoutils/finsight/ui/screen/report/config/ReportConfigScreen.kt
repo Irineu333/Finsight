@@ -421,12 +421,12 @@ private fun InvoiceSelectionCard(
                 Icon(
                     imageVector = Icons.Default.Receipt,
                     contentDescription = null,
-                    tint = invoice.status.color,
+                    tint = Color(invoice.status.colorValue),
                     modifier = Modifier.size(20.dp),
                 )
                 Surface(
-                    color = invoice.status.color.copy(alpha = 0.15f),
-                    contentColor = invoice.status.color,
+                    color = Color(invoice.status.colorValue).copy(alpha = 0.15f),
+                    contentColor = Color(invoice.status.colorValue),
                     shape = RoundedCornerShape(999.dp),
                 ) {
                     Text(

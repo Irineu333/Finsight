@@ -43,7 +43,7 @@ fun InvoiceMonthNavigator(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Receipt,
-                tint = selection.statusColor ?: colorScheme.primary,
+                tint = selection.statusColorValue?.let { androidx.compose.ui.graphics.Color(it) } ?: colorScheme.primary,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )

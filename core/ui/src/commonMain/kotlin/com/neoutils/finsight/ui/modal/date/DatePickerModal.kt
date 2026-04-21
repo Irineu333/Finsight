@@ -11,9 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.date_picker_cancel
-import com.neoutils.finsight.resources.date_picker_confirm
+import com.neoutils.finsight.core.ui.resources.Res
+import com.neoutils.finsight.core.ui.resources.date_picker_cancel
+import com.neoutils.finsight.core.ui.resources.date_picker_confirm
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import kotlinx.datetime.LocalDate

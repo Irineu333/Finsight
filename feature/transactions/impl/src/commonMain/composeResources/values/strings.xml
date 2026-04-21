@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="invoice_opens_on">abre em %1$s</string>
+    <string name="invoice_closes_on">fecha em %1$s</string>
+    <string name="invoice_due_on">vence em %1$s</string>
+    <string name="invoice_paid_on">paga em %1$s</string>
+
+    <string name="transactions_filter_category">Categoria</string>
+    <string name="transactions_filter_category_all">Todas</string>
+    <string name="transactions_filter_type">Tipo</string>
+    <string name="transactions_filter_type_all">Todos</string>
+    <string name="transactions_filter_type_income">Entrada</string>
+    <string name="transactions_filter_type_expense">Despesa</string>
+    <string name="transactions_filter_type_adjustment">Ajuste</string>
+    <string name="transactions_filter_account">Conta</string>
+    <string name="transactions_filter_credit_card">Cartão</string>
+    <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>
+    <string name="transactions_filter_recurring">Recorrência</string>
+    <string name="transactions_filter_installment">Parcelas</string>
+
+    <string name="invoice_transactions_edit_card">Editar Cartão</string>
+    <string name="invoice_transactions_delete_card">Excluir Cartão</string>
+    <string name="invoice_transactions_expenses">Gastos</string>
+    <string name="invoice_transactions_advance_payments">Adiantamentos</string>
+    <string name="invoice_transactions_adjustments">Ajustes</string>
+    <string name="invoice_transactions_total">Total</string>
+    <string name="invoice_transactions_advance_payment">Antecipar Pagamento</string>
+    <string name="invoice_transactions_close_invoice">Fechar Fatura</string>
+    <string name="invoice_transactions_delete_invoice">Excluir Fatura</string>
+    <string name="invoice_transactions_reopen_invoice">Reabrir Fatura</string>
+    <string name="invoice_transactions_pay_invoice">Pagar Fatura</string>
+    <string name="invoice_transactions_filter_category">Categoria</string>
+    <string name="invoice_transactions_filter_category_all">Todas</string>
+    <string name="invoice_transactions_filter_type">Tipo</string>
+    <string name="invoice_transactions_filter_type_all">Todos</string>
+    <string name="invoice_transactions_filter_type_expense">Despesa</string>
+    <string name="invoice_transactions_filter_type_adjustment">Ajuste</string>
+    <string name="invoice_transactions_filter_type_payment">Pagamento</string>
+
+    <string name="delete_transaction_title">Excluir Transação</string>
+    <string name="delete_transaction_message">Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.</string>
+    <string name="delete_transaction_confirm">Excluir</string>
+
+    <string name="view_operation_type_income">Receita</string>
+    <string name="view_operation_type_expense">Despesa</string>
+    <string name="view_operation_type_adjustment">Ajuste</string>
+    <string name="view_operation_amount_label">Valor</string>
+    <string name="view_operation_date_label">Data</string>
+    <string name="view_operation_origin_label">Origem</string>
+    <string name="view_operation_origin_account">Conta</string>
+    <string name="view_operation_origin_credit_card">Cartão de Crédito</string>
+    <string name="view_operation_source_account_label">Conta origem</string>
+    <string name="view_operation_destination_account_label">Conta destino</string>
+    <string name="view_operation_account_label">Conta</string>
+    <string name="view_operation_card_label">Cartão</string>
+    <string name="view_operation_invoice_label">Fatura</string>
+    <string name="view_operation_installment_label">Parcela</string>
+    <string name="view_operation_recurring_label">Recorrência</string>
+    <string name="view_operation_deleted">Excluído</string>
+    <string name="view_operation_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
+    <string name="view_operation_delete">Excluir</string>
+    <string name="view_operation_edit">Editar</string>
+
+    <string name="operation_card_transfer">Transferência</string>
+    <string name="operation_card_payment">Pagamento de Fatura</string>
+</resources>

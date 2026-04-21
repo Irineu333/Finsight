@@ -16,10 +16,8 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
-import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
@@ -70,6 +68,7 @@ val viewModelModule = module {
             operation = it.get(),
             perspective = it.getOrNull(),
             operationRepository = get(),
+            recurringRepository = get(),
         )
     }
 
@@ -224,31 +223,6 @@ val viewModelModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        EditTransactionViewModel(
-            transaction = it.get(),
-            transactionRepository = get(),
-            operationRepository = get(),
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            accountRepository = get(),
-            buildTransactionUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteTransactionViewModel(
-            transaction = it.get(),
-            operationRepository = get(),
-            modalManager = get(),
-            analytics = get(),
         )
     }
 

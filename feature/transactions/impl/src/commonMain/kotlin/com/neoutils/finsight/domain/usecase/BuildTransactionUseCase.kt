@@ -12,7 +12,6 @@ import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.util.DateFormats
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -23,7 +22,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class BuildTransactionUseCase(
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
+    private val getOrCreateInvoiceForMonth: IGetOrCreateInvoiceForMonthUseCase
 ) {
 
     suspend operator fun invoke(
@@ -86,7 +85,7 @@ class BuildTransactionUseCase(
             BuildTransactionException(BuildTransactionError.InvoiceRequired)
         }
 
-        val invoice = getOrCreateInvoiceForMonthUseCase(form.creditCard, form.invoiceDueMonth).bind()
+        val invoice = getOrCreateInvoiceForMonth(form.creditCard, form.invoiceDueMonth).bind()
 
         ensure(!invoice.status.isClosed) {
             BuildTransactionException(BuildTransactionError.ClosedInvoice)

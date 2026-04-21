@@ -34,4 +34,6 @@
     <string name="balance_card_current_invoice">Fatura Atual</string>
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
+    <string name="date_picker_confirm">OK</string>
+    <string name="date_picker_cancel">Cancelar</string>
 </resources>

@@ -3,22 +3,20 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.extension.toYearMonth
-import kotlinx.coroutines.flow.first
+import com.neoutils.finsight.extension.signedImpact
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class CalculateBalanceUseCase(
     private val repository: ITransactionRepository
-) {
-    operator fun invoke(
+) : ICalculateBalanceUseCase {
+
+    override operator fun invoke(
         target: YearMonth,
         transactions: List<Transaction>,
-        accountId: Long? = null
+        accountId: Long?,
     ): Double {
         return transactions
             .filter { it.date.yearMonth <= target }
@@ -27,9 +25,9 @@ class CalculateBalanceUseCase(
             .sumOf { it.signedImpact() }
     }
 
-    suspend operator fun invoke(
+    override suspend operator fun invoke(
         target: YearMonth,
-        accountId: Long? = null,
+        accountId: Long?,
     ): Double {
         return invoke(
             transactions = repository.getAllTransactions(),

@@ -285,7 +285,7 @@ class ViewOperationModal(
             uiState.operation.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_installment_label),
-                    value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
+                    value = "${installment.label} de ${formatter.format(installment.totalAmount)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()
@@ -302,7 +302,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             viewModel.onAction(
-                                ViewOperationAction.OpenRecurring(recurring.instance)
+                                ViewOperationAction.OpenRecurring(recurring.id)
                             )
                         }
                     )

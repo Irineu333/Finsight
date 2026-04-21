@@ -108,12 +108,12 @@
 
 ## 11. Feature level 1: transactions
 
-- [ ] 11.1 Create `feature/transactions/api/` module; move `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, repositories interfaces, `IBuildTransactionUseCase`, `ICalculateBalanceUseCase`, nav types, extensions
-- [ ] 11.2 Register `:feature:transactions:api` in `settings.gradle.kts`
-- [ ] 11.3 Create `feature/transactions/impl/` module; deps on own `:api` + `:core:*` + `accounts:api` + `creditCards:api`
-- [ ] 11.4 Move use cases (`BuildTransactionUseCase`, `CalculateBalanceUseCase`, etc.), screen, ViewModel, modals, Koin module
-- [ ] 11.5 Register `:feature:transactions:impl` in `settings.gradle.kts`
-- [ ] 11.6 Update `:composeApp`; verify compile
+- [x] 11.1 Create `feature/transactions/api/` module; move `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, repositories interfaces, `IBuildTransactionUseCase`, `ICalculateBalanceUseCase`, nav types, extensions
+- [x] 11.2 Register `:feature:transactions:api` in `settings.gradle.kts`
+- [x] 11.3 Create `feature/transactions/impl/` module; deps on own `:api` + `:core:*` + `accounts:api` + `creditCards:api`
+- [x] 11.4 Move use cases (`BuildTransactionUseCase`, `CalculateBalanceUseCase`, etc.), screen, ViewModel, modals, Koin module
+- [x] 11.5 Register `:feature:transactions:impl` in `settings.gradle.kts`
+- [x] 11.6 Update `:composeApp`; verify compile
 
 ## 12. Feature level 1: recurring
 

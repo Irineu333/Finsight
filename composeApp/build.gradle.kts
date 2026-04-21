@@ -78,6 +78,7 @@ kotlin {
             implementation(projects.feature.accounts.impl)
             implementation(projects.feature.categories.impl)
             implementation(projects.feature.creditCards.impl)
+            implementation(projects.feature.transactions.impl)
 
             // Arrow
             implementation(libs.arrow.core)

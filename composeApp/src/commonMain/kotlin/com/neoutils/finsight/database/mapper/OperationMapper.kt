@@ -39,7 +39,8 @@ class OperationMapper {
                 entity.recurringCycle?.let { cycleNumber ->
                     recurring[recurringId]?.let { instance ->
                         OperationRecurring(
-                            instance = instance,
+                            id = instance.id,
+                            recurringLabel = instance.label,
                             cycleNumber = cycleNumber,
                         )
                     }
@@ -53,8 +54,10 @@ class OperationMapper {
                 entity.installmentId?.let { installmentId ->
                     installments[installmentId]?.let { instance ->
                         OperationInstallment(
-                            instance = instance,
+                            id = instance.id,
+                            count = instance.count,
                             number = number,
+                            totalAmount = instance.totalAmount,
                         )
                     }
                 }

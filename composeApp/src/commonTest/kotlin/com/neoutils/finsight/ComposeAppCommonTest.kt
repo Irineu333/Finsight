@@ -56,7 +56,7 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Food • 1", OperationRecurring(instance = recurring, cycleNumber = 1).label)
+        assertEquals("Food • 1", OperationRecurring(id = recurring.id, recurringLabel = recurring.label, cycleNumber = 1).label)
     }
 
     @Test
@@ -72,6 +72,6 @@ class ComposeAppCommonTest {
             createdAt = 0L,
         )
 
-        assertEquals("Untitled • 1", OperationRecurring(instance = recurring, cycleNumber = 1).label)
+        assertEquals("Untitled • 1", OperationRecurring(id = recurring.id, recurringLabel = recurring.label, cycleNumber = 1).label)
     }
 }

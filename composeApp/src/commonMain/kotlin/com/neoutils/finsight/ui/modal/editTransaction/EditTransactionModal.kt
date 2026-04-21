@@ -28,7 +28,14 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.edit_transaction_amount_label
+import com.neoutils.finsight.resources.edit_transaction_date_label
+import com.neoutils.finsight.resources.edit_transaction_expense
+import com.neoutils.finsight.resources.edit_transaction_income
+import com.neoutils.finsight.resources.edit_transaction_save
+import com.neoutils.finsight.resources.edit_transaction_title
+import com.neoutils.finsight.resources.edit_transaction_title_label
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal

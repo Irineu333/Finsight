@@ -1,9 +1,10 @@
 package com.neoutils.finsight.domain.model
 
 data class OperationInstallment(
-    val instance: Installment,
+    val id: Long,
+    val count: Int,
     val number: Int,
+    val totalAmount: Double,
 ) {
-    val id = instance.id
-    val label = "$number/${instance.count}"
+    val label = "$number/$count"
 }

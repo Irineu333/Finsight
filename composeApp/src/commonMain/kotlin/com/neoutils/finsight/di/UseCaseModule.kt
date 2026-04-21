@@ -14,9 +14,7 @@ import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
@@ -24,7 +22,6 @@ import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
@@ -62,15 +59,7 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        CalculateBalanceUseCase(
-            repository = get(),
-        )
-    }
-
     factory { CalculateInvoiceUseCase(repository = get()) }
-
-    factory { CalculateTransactionStatsUseCase() }
 
     factory { CalculateCategorySpendingUseCase() }
 
@@ -143,12 +132,6 @@ val useCaseModules = module {
             installmentRepository = get(),
             invoiceRepository = get(),
             buildTransactionUseCase = get(),
-            getOrCreateInvoiceForMonthUseCase = get(),
-        )
-    }
-
-    factory {
-        BuildTransactionUseCase(
             getOrCreateInvoiceForMonthUseCase = get(),
         )
     }

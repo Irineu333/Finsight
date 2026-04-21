@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.ui.model.OperationPerspective
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -17,6 +19,7 @@ class ViewOperationViewModel(
     operation: Operation,
     private val perspective: OperationPerspective? = null,
     operationRepository: IOperationRepository,
+    private val recurringRepository: IRecurringRepository,
 ) : ViewModel() {
 
     private val operationFlow = flow {
@@ -45,9 +48,10 @@ class ViewOperationViewModel(
     fun onAction(action: ViewOperationAction) = viewModelScope.launch {
         when (action) {
             is ViewOperationAction.OpenRecurring -> {
-                _events.send(
-                    ViewOperationEvent.OpenRecurring(action.recurring)
-                )
+                val recurring = recurringRepository.observeAllRecurring().first()
+                    .firstOrNull { it.id == action.recurringId }
+                    ?: return@launch
+                _events.send(ViewOperationEvent.OpenRecurring(recurring))
             }
         }
     }

@@ -32,13 +32,19 @@ Restrições relevantes:
 
 ---
 
-### D2: Cada feature é seu próprio domínio
+### D2: Cada feature é seu próprio domínio — com exceção dos modelos compartilhados em `:core:domain`
 
-**Decisão:** Modelos de domínio, interfaces de repositório e interfaces de use cases cross-feature vivem no `:api` da feature dona, não num `:core:domain` centralizado.
+**Decisão:** Modelos de domínio, interfaces de repositório e interfaces de use cases ficam no `:api` da feature dona. Modelos referenciados por múltiplas features (que causariam dependência `api → api`) ficam em `:core:domain`.
 
-**Rationale:** Evita um "deus módulo" que cresce sem controle. Cada feature define e expõe o que precisa.
+**Regra fundamental — api não depende de api:** `feature:X:api` **jamais** depende de `feature:Y:api`. Dois motivos críticos: (1) dependências cíclicas entre `:api` são detectadas pelo Gradle apenas em runtime de configuração, bloqueiam o build inteiro e são difíceis de rastrear à medida que a base de código cresce; (2) qualquer mudança em `Y:api` força recompilação de `X:api` e de todos os seus dependentes, colapsando o isolamento incremental que justifica a modularização. Ver D10 para detalhes e tabela de dependências permitidas.
 
-**Alternativa considerada:** `:core:domain` centralizado. Mais simples inicialmente, mas se torna um gargalo de compilação e dilui boundaries.
+**Modelos em `:core:domain`:** `Account`, `Category`, `CreditCard`, `Invoice` — referenciados diretamente por `Transaction` e `Operation` em `transactions:api`. Mover para `:core:domain` elimina a dependência cruzada `transactions:api → accounts:api / categories:api / creditCards:api`.
+
+**O que NÃO vai para `:core:domain`:** erros, exceções, interfaces de repositório, use cases — esses permanecem em cada `:feature:X:api`. `:core:domain` contém apenas modelos de dados puros cujo domínio é genuinamente compartilhado.
+
+**Caminho de melhoria (task futura):** Substituir objetos completos (`Account?`, `Category?`, etc.) por IDs nas relações de `Transaction`/`Operation`. Isso eliminará a necessidade de `:core:domain` e desacoplará completamente os tipos de domínio por feature.
+
+**Alternativa rejeitada:** `:core:domain` centralizado com todos os modelos. Se torna um "deus módulo" sem boundary real.
 
 ---
 
@@ -113,6 +119,27 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 **Decisão:** As subclasses de `Event` específicas de cada feature (ex: `CreateTransaction`, `EnterDashboardEditMode`) ficam em `:feature:X:impl`. Apenas `Analytics`, `Crashlytics` e a base `Event` ficam em `:core:analytics`.
 
 **Rationale:** Nenhuma outra feature precisa conhecer os eventos de outra. São detalhes de implementação.
+
+---
+
+### D10: Regra estrutural — `feature:X:api` não depende de `feature:Y:api`
+
+**Regra:** Nenhum módulo `:api` pode ter outro módulo `:api` de feature como dependência — nem `implementation`, nem `api`.
+
+**Por quê é uma regra, não uma diretriz:**
+- **Dependência cíclica:** se `A:api` depende de `B:api` e `B:api` depende de `A:api` (direta ou indiretamente), o Gradle falha com "circular dependency" em tempo de configuração — o build não funciona. Com muitas features dependendo umas das outras via `:api`, ciclos surgem naturalmente à medida que o produto evolui, e detectar a causa torna-se difícil. Proibir `api → api` elimina a classe inteira de problemas.
+- **Recompilação em cascata:** um `:api` que depende de outro `:api` força a recompilação de todos os módulos dependentes quando `Y:api` muda — colapsando o isolamento incremental que é a razão de ser da modularização.
+- **Acoplamento de contrato:** se `transactions:api` depende de `accounts:api`, qualquer mudança na interface de `accounts` quebra o contrato de `transactions` em compile time — mesmo que `transactions` não tenha mudado nada.
+
+**Consequência:** Modelos compartilhados entre features vivem em `:core:domain` (ver D2). Interfaces de repositório e use cases permanecem em cada `:feature:X:api`. O `:impl` pode depender de outros `:api` quando precisar de contratos (ex: `transactions:impl` usa `IAccountRepository` de `accounts:api`).
+
+**Tabela de dependências permitidas:**
+| De \ Para           | `:core:*` | `:feature:X:api` | `:feature:X:impl` |
+|---------------------|-----------|------------------|-------------------|
+| `:core:*`           | ✅ (acíclico) | ❌           | ❌                |
+| `:feature:X:api`    | ✅         | ❌               | ❌                |
+| `:feature:X:impl`   | ✅         | ✅               | ❌                |
+| `:app`              | ✅         | ✅               | ✅                |
 
 ## Risks / Trade-offs
 

@@ -106,7 +106,24 @@
 - [x] 10.4 Register `:feature:creditCards:impl` in `settings.gradle.kts`
 - [x] 10.5 Update `:composeApp`; verify compile
 
+## 10.5 (retrofit). :core:domain — modelos compartilhados entre features
+
+> **Regra: `feature:X:api` JAMAIS depende de `feature:Y:api`.** (ver D10 no design.md)
+> Modelos referenciados por múltiplas features vivem em `:core:domain`, não em nenhuma feature:api específica.
+> `transactions:api` violava essa regra ao depender de `accounts:api`, `categories:api` e `creditCards:api`.
+
+- [x] 10.5.1 Create `core/domain/` module with `build.gradle.kts` using `kmp-library` plugin; deps on `:core:utils`
+- [x] 10.5.2 Register `:core:domain` in `settings.gradle.kts`
+- [x] 10.5.3 Move `Account` from `accounts:api` to `core:domain` (sem `init` block — validação fica nos use cases)
+- [x] 10.5.4 Move `Category` from `categories:api` to `core:domain`
+- [x] 10.5.5 Move `CreditCard` from `creditCards:api` to `core:domain` (sem `init` block)
+- [x] 10.5.6 Move `Invoice` from `creditCards:api` to `core:domain`
+- [x] 10.5.7 Update `accounts:api`, `categories:api`, `creditCards:api` to add `api(projects.core.domain)` and remove moved model files
+- [x] 10.5.8 Update `transactions:api`: replace `api(accounts:api)` + `api(categories:api)` + `api(creditCards:api)` with `api(projects.core.domain)`
+
 ## 11. Feature level 1: transactions
+
+> **Nota:** `transactions:api` usa `api(projects.core.domain)` — NÃO depende de nenhum `feature:X:api`. A regra "api não depende de api" é satisfeita.
 
 - [x] 11.1 Create `feature/transactions/api/` module; move `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, repositories interfaces, `IBuildTransactionUseCase`, `ICalculateBalanceUseCase`, nav types, extensions
 - [x] 11.2 Register `:feature:transactions:api` in `settings.gradle.kts`
@@ -117,7 +134,9 @@
 
 ## 12. Feature level 1: recurring
 
-- [ ] 12.1 Create `feature/recurring/api/` module; move `Recurring { type: Recurring.Type }`, `RecurringOccurrence`, `RecurringForm`, repository interfaces (NO dep on `transactions:api`)
+> **Regra:** `recurring:api` NÃO depende de nenhum `feature:X:api`. `Recurring` usa `Account`, `Category`, `CreditCard` de `:core:domain`.
+
+- [ ] 12.1 Create `feature/recurring/api/` module; move `Recurring { type: Recurring.Type }`, `RecurringOccurrence`, `RecurringForm`, repository interfaces; dep on `:core:domain` (NO dep on `transactions:api`, `accounts:api`, `categories:api`, `creditCards:api`)
 - [ ] 12.2 Register `:feature:recurring:api` in `settings.gradle.kts`
 - [ ] 12.3 Create `feature/recurring/impl/` module; deps on own `:api` + `transactions:api` + `:core:*`
 - [ ] 12.4 Move use cases, screen, ViewModel, modals, Koin module
@@ -135,9 +154,11 @@
 
 ## 14. Feature level 1: budgets
 
-- [ ] 14.1 Create `feature/budgets/api/` module; move `Budget { iconKey: String }`, `IBudgetRepository`; dep on `categories:api`
+> **Regra:** `budgets:api` NÃO depende de `categories:api`. `Budget.categories: List<Category>` usa `Category` de `:core:domain`.
+
+- [ ] 14.1 Create `feature/budgets/api/` module; move `Budget { iconKey: String, categories: List<Category> }`, `IBudgetRepository`; dep on `:core:domain` (NOT `categories:api`)
 - [ ] 14.2 Register `:feature:budgets:api` in `settings.gradle.kts`
-- [ ] 14.3 Create `feature/budgets/impl/` module; move use cases, screen, modals, Koin module
+- [ ] 14.3 Create `feature/budgets/impl/` module; move use cases, screen, modals, Koin module; dep on `categories:api` se precisar de `ICategoryRepository`
 - [ ] 14.4 Register `:feature:budgets:impl` in `settings.gradle.kts`
 - [ ] 14.5 Update `:composeApp`; verify compile
 
@@ -172,11 +193,24 @@
 - [ ] 17.8 Run `./gradlew check` — all verifications pass
 - [ ] 17.9 Build and run on Android, iOS, and Desktop; verify golden paths for all features
 
-## 18. Documentation
+## 18. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
 
-- [ ] 18.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
-- [ ] 18.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
-- [ ] 18.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
-- [ ] 18.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
-- [ ] 18.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
-- [ ] 18.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`
+> **Contexto:** `Transaction` e `Operation` atualmente carregam objetos completos (`Account?`, `Category?`, `CreditCard?`, `Invoice?`) em vez de IDs. Isso forçou a criação de `:core:domain` como módulo de tipos compartilhados. O verdadeiro isolamento por feature só é atingido quando cada feature define seus próprios tipos sem compartilhamento.
+>
+> **Objetivo:** Eliminar `:core:domain` e tornar cada `feature:X:api` completamente autônomo.
+
+- [ ] 18.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
+- [ ] 18.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
+- [ ] 18.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
+- [ ] 18.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
+- [ ] 18.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
+- [ ] 18.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
+
+## 19. Documentation
+
+- [ ] 19.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
+- [ ] 19.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
+- [ ] 19.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
+- [ ] 19.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
+- [ ] 19.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
+- [ ] 19.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`

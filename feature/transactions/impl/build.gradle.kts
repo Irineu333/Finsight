@@ -7,6 +7,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.feature.transactions.api)
+            implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.impl)
             implementation(projects.feature.creditCards.impl)
             implementation(projects.core.database)

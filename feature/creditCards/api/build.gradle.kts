@@ -8,7 +8,7 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
-            implementation(projects.core.utils)
+            api(projects.core.domain)
         }
     }
 }

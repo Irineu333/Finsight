@@ -1,22 +1,13 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.domain.error.AccountError
-import com.neoutils.finsight.domain.exception.AccountException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 data class Account(
     val id: Long = 0,
     val name: String,
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
-) {
-    init {
-        if (name.isEmpty()) {
-            throw AccountException(AccountError.EMPTY_NAME)
-        }
-    }
-}
+)

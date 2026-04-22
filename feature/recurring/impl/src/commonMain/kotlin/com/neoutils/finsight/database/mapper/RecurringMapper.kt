@@ -5,6 +5,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
+
 class RecurringMapper {
 
     fun toDomain(

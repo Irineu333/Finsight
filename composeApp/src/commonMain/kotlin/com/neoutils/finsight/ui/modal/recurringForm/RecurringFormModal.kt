@@ -105,15 +105,15 @@ class RecurringFormModal(
 
         val form by remember {
             derivedStateOf {
-                RecurringForm.from(
+                val effectiveTarget = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
+                RecurringForm(
                     type = type,
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     dayOfMonth = dayOfMonth.text.toString(),
-                    category = selectedCategory,
-                    target = target,
-                    account = uiState.selectedAccount,
-                    creditCard = uiState.selectedCreditCard,
+                    category = selectedCategory?.takeIf { it.type.isAccept(type) },
+                    account = uiState.selectedAccount?.takeIf { effectiveTarget.isAccount },
+                    creditCard = uiState.selectedCreditCard?.takeIf { effectiveTarget.isCreditCard },
                 )
             }
         }

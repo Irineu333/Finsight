@@ -4,8 +4,6 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 
 data class RecurringForm(
@@ -25,31 +23,5 @@ data class RecurringForm(
         if (type.isIncome && account == null) return false
         if (type.isExpense && account == null && creditCard == null) return false
         return true
-    }
-
-    companion object {
-        fun from(
-            type: Recurring.Type,
-            amount: String,
-            title: String,
-            dayOfMonth: String,
-            category: Category?,
-            target: Transaction.Target,
-            account: Account?,
-            creditCard: CreditCard?,
-        ): RecurringForm {
-            
-            val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
-
-            return RecurringForm(
-                type = type,
-                amount = amount,
-                title = title,
-                dayOfMonth = dayOfMonth,
-                account = account?.takeIf { target.isAccount },
-                creditCard = creditCard?.takeIf { target.isCreditCard },
-                category = category?.takeIf { it.type.isAccept(type) },
-            )
-        }
     }
 }

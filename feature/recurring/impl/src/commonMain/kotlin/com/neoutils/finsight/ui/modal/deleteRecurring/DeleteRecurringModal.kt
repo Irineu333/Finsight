@@ -1,40 +1,31 @@
-package com.neoutils.finsight.ui.modal.reactivateRecurring
+package com.neoutils.finsight.ui.modal.deleteRecurring
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.reactivate_recurring_confirm
-import com.neoutils.finsight.resources.reactivate_recurring_message
-import com.neoutils.finsight.resources.reactivate_recurring_title
+import com.neoutils.finsight.feature.recurring.impl.resources.Res
+import com.neoutils.finsight.feature.recurring.impl.resources.delete_recurring_confirm
+import com.neoutils.finsight.feature.recurring.impl.resources.delete_recurring_message
+import com.neoutils.finsight.feature.recurring.impl.resources.delete_recurring_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.theme.Income
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class ReactivateRecurringModal(
+class DeleteRecurringModal(
     private val recurring: Recurring,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<ReactivateRecurringViewModel> { parametersOf(recurring) }
+        val viewModel = koinViewModel<DeleteRecurringViewModel> { parametersOf(recurring) }
         val label = recurring.label
 
         Column(
@@ -44,7 +35,7 @@ class ReactivateRecurringModal(
                 .padding(bottom = 32.dp),
         ) {
             Text(
-                text = stringResource(Res.string.reactivate_recurring_title),
+                text = stringResource(Res.string.delete_recurring_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
             )
@@ -52,7 +43,7 @@ class ReactivateRecurringModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.reactivate_recurring_message, label),
+                text = stringResource(Res.string.delete_recurring_message, label),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
@@ -60,15 +51,15 @@ class ReactivateRecurringModal(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.reactivate() },
+                onClick = { viewModel.delete() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Income,
+                    containerColor = colorScheme.error,
                 ),
             ) {
                 Text(
-                    text = stringResource(Res.string.reactivate_recurring_confirm),
+                    text = stringResource(Res.string.delete_recurring_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )

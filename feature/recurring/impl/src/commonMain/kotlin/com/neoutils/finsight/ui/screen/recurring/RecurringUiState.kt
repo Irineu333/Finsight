@@ -1,7 +1,6 @@
 package com.neoutils.finsight.ui.screen.recurring
 
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
 
 enum class RecurringFilter {
     ALL, INCOME, EXPENSE

@@ -1,11 +1,5 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
-import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
-import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
-import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
-import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
-import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
@@ -142,18 +136,6 @@ val useCaseModules = module {
             accountRepository = get(),
         )
     }
-
-    factory { SaveRecurringUseCase(repository = get()) }
-
-    factory { ReactivateRecurringUseCase(repository = get()) }
-
-    factory { StopRecurringUseCase(repository = get()) }
-
-    factory { GetPendingRecurringUseCase() }
-
-    factory { ConfirmRecurringUseCase(operationRepository = get(), recurringOccurrenceRepository = get(), getOrCreateInvoiceForMonthUseCase = get()) }
-
-    factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
 
     factory { CreateSupportIssueUseCase(supportRepository = get()) }
 

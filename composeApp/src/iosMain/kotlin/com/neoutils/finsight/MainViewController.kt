@@ -7,6 +7,7 @@ import com.neoutils.finsight.di.accountsModule
 import com.neoutils.finsight.di.categoriesModule
 import com.neoutils.finsight.di.creditCardsModule
 import com.neoutils.finsight.di.transactionsModule
+import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
@@ -39,6 +40,7 @@ fun MainViewController(): UIViewController {
                     categoriesModule,
                     creditCardsModule,
                     transactionsModule,
+                    recurringModule,
                     repositoryModule,
                     useCaseModules,
                     reportModule,

@@ -10,19 +10,14 @@ import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
-import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
-import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
-import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
-import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
-import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
@@ -34,7 +29,6 @@ import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
-import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import com.neoutils.finsight.ui.screen.report.config.BuildReportViewerParamsUseCase
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
@@ -352,54 +346,6 @@ val viewModelModule = module {
         )
     }
 
-    viewModel {
-        RecurringViewModel(
-            recurringRepository = get(),
-        )
-    }
-
-    viewModel {
-        RecurringFormViewModel(
-            recurring = it.getOrNull(),
-            categoryRepository = get(),
-            accountRepository = get(),
-            creditCardRepository = get(),
-            saveRecurringUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteRecurringViewModel(
-            recurring = it.get(),
-            recurringRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-        )
-    }
-
-    viewModel {
-        StopRecurringViewModel(
-            recurring = it.get(),
-            stopRecurringUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        ReactivateRecurringViewModel(
-            recurring = it.get(),
-            reactivateRecurringUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
     factory { BuildReportViewerParamsUseCase(get()) }
 
     viewModel {
@@ -426,18 +372,4 @@ val viewModelModule = module {
         )
     }
 
-    viewModel {
-        ConfirmRecurringViewModel(
-            recurring = it.get(),
-            targetDate = it.get(),
-            accountRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            confirmRecurringUseCase = get(),
-            skipRecurringUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
 }

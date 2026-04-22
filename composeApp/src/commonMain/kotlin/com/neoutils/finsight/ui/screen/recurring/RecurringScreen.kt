@@ -368,9 +368,10 @@ private fun RecurringCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
                 ) {
-                    if (recurring.category != null) {
+                    val category = recurring.category
+                    if (category != null) {
                         CategoryIconBox(
-                            category = recurring.category,
+                            category = category,
                             contentPadding = PaddingValues(8.dp),
                         )
                     } else {
@@ -402,9 +403,9 @@ private fun RecurringCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (!recurring.title.isNullOrBlank() && recurring.category != null) {
+                        if (!recurring.title.isNullOrBlank() && category != null) {
                             Text(
-                                text = recurring.category.name,
+                                text = category.name,
                                 fontSize = 12.sp,
                                 color = colorScheme.onSurfaceVariant,
                             )
@@ -465,8 +466,10 @@ private fun RecurringCard(
                     )
                 }
 
+                val creditCard = recurring.creditCard
+                val account = recurring.account
                 when {
-                    recurring.creditCard != null -> Row(
+                    creditCard != null -> Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -477,7 +480,7 @@ private fun RecurringCard(
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
-                            text = recurring.creditCard.name,
+                            text = creditCard.name,
                             fontSize = 14.sp,
                             color = colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -485,7 +488,7 @@ private fun RecurringCard(
                         )
                     }
 
-                    recurring.account != null -> Row(
+                    account != null -> Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -496,7 +499,7 @@ private fun RecurringCard(
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
-                            text = recurring.account.name,
+                            text = account.name,
                             fontSize = 14.sp,
                             color = colorScheme.onSurfaceVariant,
                             maxLines = 1,

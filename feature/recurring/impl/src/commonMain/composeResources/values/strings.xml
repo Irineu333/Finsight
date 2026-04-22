@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stop_recurring_title">Parar recorrente</string>
+    <string name="stop_recurring_message">Deseja parar "%1$s"? Os lançamentos já gerados continuarão vinculados, mas novas pendências não serão criadas.</string>
+    <string name="stop_recurring_confirm">Parar</string>
+
+    <string name="delete_recurring_title">Excluir recorrente</string>
+    <string name="delete_recurring_message">Deseja excluir "%1$s"? Esta ação não pode ser desfeita.</string>
+    <string name="delete_recurring_confirm">Excluir</string>
+
+    <string name="reactivate_recurring_title">Reativar recorrente</string>
+    <string name="reactivate_recurring_message">Deseja reativar "%1$s"? Novas pendências voltarão a ser geradas a partir deste recorrente.</string>
+    <string name="reactivate_recurring_confirm">Reativar</string>
+
+    <string name="recurring_error_amount_required">O valor é obrigatório.</string>
+    <string name="recurring_error_amount_zero">O valor não pode ser zero.</string>
+    <string name="recurring_error_title_or_category_required">Informe um título ou categoria.</string>
+    <string name="recurring_error_invalid_day">O dia deve ser entre 1 e 31.</string>
+    <string name="recurring_error_account_required">A conta é obrigatória.</string>
+</resources>

@@ -2,15 +2,15 @@ package com.neoutils.finsight.ui.modal.recurringForm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateRecurring
+import com.neoutils.finsight.domain.analytics.event.EditRecurring
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.form.RecurringForm
-import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.CreateRecurring
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.analytics.event.EditRecurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository

@@ -136,12 +136,12 @@
 
 > **Regra:** `recurring:api` NÃO depende de nenhum `feature:X:api`. `Recurring` usa `Account`, `Category`, `CreditCard` de `:core:domain`.
 
-- [ ] 12.1 Create `feature/recurring/api/` module; move `Recurring { type: Recurring.Type }`, `RecurringOccurrence`, `RecurringForm`, repository interfaces; dep on `:core:domain` (NO dep on `transactions:api`, `accounts:api`, `categories:api`, `creditCards:api`)
-- [ ] 12.2 Register `:feature:recurring:api` in `settings.gradle.kts`
-- [ ] 12.3 Create `feature/recurring/impl/` module; deps on own `:api` + `transactions:api` + `:core:*`
-- [ ] 12.4 Move use cases, screen, ViewModel, modals, Koin module
-- [ ] 12.5 Register `:feature:recurring:impl` in `settings.gradle.kts`
-- [ ] 12.6 Update `:composeApp`; verify compile
+- [x] 12.1 Create `feature/recurring/api/` module; move `Recurring { type: Recurring.Type }`, `RecurringOccurrence`, `RecurringForm`, repository interfaces; dep on `:core:domain` (NO dep on `transactions:api`, `accounts:api`, `categories:api`, `creditCards:api`)
+- [x] 12.2 Register `:feature:recurring:api` in `settings.gradle.kts`
+- [x] 12.3 Create `feature/recurring/impl/` module; deps on own `:api` + `transactions:api` + `:core:*`
+- [x] 12.4 Move use cases, screen, ViewModel, modals, Koin module
+- [x] 12.5 Register `:feature:recurring:impl` in `settings.gradle.kts`
+- [x] 12.6 Update `:composeApp`; verify compile
 
 ## 13. Feature level 1: installments
 

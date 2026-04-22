@@ -82,9 +82,10 @@ class ViewRecurringModal(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (recurring.category != null) {
+                val category = recurring.category
+                if (category != null) {
                     CategoryIconBox(
-                        category = recurring.category,
+                        category = category,
                         modifier = Modifier.size(64.dp),
                         contentPadding = PaddingValues(16.dp),
                         shape = RoundedCornerShape(16.dp),

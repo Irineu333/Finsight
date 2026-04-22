@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.domain.usecase.IGetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
@@ -26,7 +27,7 @@ import kotlin.time.Instant
 class ConfirmRecurringUseCase(
     private val operationRepository: IOperationRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
+    private val getOrCreateInvoiceForMonthUseCase: IGetOrCreateInvoiceForMonthUseCase,
 ) {
     suspend operator fun invoke(
         recurring: Recurring,

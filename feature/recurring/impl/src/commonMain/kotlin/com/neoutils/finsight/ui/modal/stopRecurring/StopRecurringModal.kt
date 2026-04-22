@@ -18,10 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.stop_recurring_confirm
-import com.neoutils.finsight.resources.stop_recurring_message
-import com.neoutils.finsight.resources.stop_recurring_title
+import com.neoutils.finsight.feature.recurring.impl.resources.Res
+import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_confirm
+import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_message
+import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource

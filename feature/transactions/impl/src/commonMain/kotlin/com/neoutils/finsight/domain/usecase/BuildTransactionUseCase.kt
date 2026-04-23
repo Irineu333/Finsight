@@ -23,12 +23,12 @@ private val currentDate
 
 class BuildTransactionUseCase(
     private val getOrCreateInvoiceForMonth: IGetOrCreateInvoiceForMonthUseCase
-) {
+) : IBuildTransactionUseCase {
 
-    suspend operator fun invoke(
+    override suspend operator fun invoke(
         form: TransactionForm,
-        id: Long = 0,
-        operationId: Long? = null,
+        id: Long,
+        operationId: Long?,
     ): Either<Throwable, Transaction> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)
@@ -77,15 +77,17 @@ class BuildTransactionUseCase(
             BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
         }
 
-        ensureNotNull(form.creditCard) {
+        val creditCard = form.creditCard
+        ensureNotNull(creditCard) {
             BuildTransactionException(BuildTransactionError.CreditCardRequired)
         }
 
-        ensureNotNull(form.invoiceDueMonth) {
+        val invoiceDueMonth = form.invoiceDueMonth
+        ensureNotNull(invoiceDueMonth) {
             BuildTransactionException(BuildTransactionError.InvoiceRequired)
         }
 
-        val invoice = getOrCreateInvoiceForMonth(form.creditCard, form.invoiceDueMonth).bind()
+        val invoice = getOrCreateInvoiceForMonth(creditCard, invoiceDueMonth).bind()
 
         ensure(!invoice.status.isClosed) {
             BuildTransactionException(BuildTransactionError.ClosedInvoice)

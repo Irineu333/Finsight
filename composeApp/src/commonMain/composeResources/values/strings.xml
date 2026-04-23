@@ -32,12 +32,6 @@
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
 
-    <!-- Installment errors -->
-    <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>
-    <string name="installment_error_blocked_invoice">Uma das parcelas coincide com uma fatura bloqueada.</string>
-    <string name="installment_error_missing_credit_card">Selecione um cartão para registrar o parcelamento.</string>
-    <string name="installment_error_missing_invoice">Selecione uma fatura para registrar o parcelamento.</string>
-
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_transactions">Transações</string>
@@ -294,7 +288,6 @@
     <string name="add_installment_date_label">Data</string>
     <string name="add_installment_save">Salvar</string>
     <string name="add_installment_initial_invoice">Fatura Inicial</string>
-    <string name="add_installment_error_generic">Erro ao registrar parcelamento.</string>
 
     <!-- Delete Modals -->
     <string name="delete_transaction_title">Excluir Transação</string>
@@ -312,10 +305,6 @@
     <string name="delete_budget_title">Excluir Orçamento</string>
     <string name="delete_budget_message">Tem certeza que deseja excluir o orçamento \"%1$s\"? Esta ação não pode ser desfeita.</string>
     <string name="delete_budget_confirm">Excluir</string>
-
-    <string name="delete_installment_title">Excluir Parcelamento</string>
-    <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
-    <string name="delete_installment_confirm">Excluir</string>
 
     <string name="delete_future_invoice_title">Excluir Fatura</string>
     <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>

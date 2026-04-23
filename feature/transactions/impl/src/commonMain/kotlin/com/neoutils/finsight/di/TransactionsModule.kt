@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
@@ -27,7 +28,7 @@ val transactionsModule = module {
         )
     }
 
-    factory {
+    factory<IBuildTransactionUseCase> {
         BuildTransactionUseCase(
             getOrCreateInvoiceForMonth = get(),
         )

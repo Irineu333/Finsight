@@ -18,7 +18,6 @@ import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCa
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
@@ -117,16 +116,6 @@ val useCaseModules = module {
         DeleteFutureInvoiceUseCase(
             invoiceRepository = get(),
             operationRepository = get(),
-        )
-    }
-
-    factory {
-        AddInstallmentUseCase(
-            operationRepository = get(),
-            installmentRepository = get(),
-            invoiceRepository = get(),
-            buildTransactionUseCase = get(),
-            getOrCreateInvoiceForMonthUseCase = get(),
         )
     }
 

@@ -19,11 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.feature.installments.impl.resources.Res
+import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_confirm
+import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_message
+import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_title
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.delete_installment_confirm
-import com.neoutils.finsight.resources.delete_installment_message
-import com.neoutils.finsight.resources.delete_installment_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

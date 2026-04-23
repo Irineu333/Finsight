@@ -16,7 +16,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EditTransaction
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.*
-import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +32,7 @@ class EditTransactionViewModel(
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
-    private val buildTransactionUseCase: BuildTransactionUseCase,
+    private val buildTransactionUseCase: IBuildTransactionUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,

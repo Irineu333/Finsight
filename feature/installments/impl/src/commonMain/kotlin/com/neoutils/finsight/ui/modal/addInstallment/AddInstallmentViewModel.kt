@@ -1,25 +1,28 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.ui.modal.addInstallment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.domain.analytics.event.CreateInstallments
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.CreateInstallments
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.add_installment_error_generic
+import com.neoutils.finsight.feature.installments.impl.resources.Res
+import com.neoutils.finsight.feature.installments.impl.resources.add_installment_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

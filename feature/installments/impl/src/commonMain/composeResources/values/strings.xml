@@ -1,0 +1,15 @@
+<resources>
+    <!-- Installment errors -->
+    <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>
+    <string name="installment_error_blocked_invoice">Uma das parcelas coincide com uma fatura bloqueada.</string>
+    <string name="installment_error_missing_credit_card">Selecione um cartão para registrar o parcelamento.</string>
+    <string name="installment_error_missing_invoice">Selecione uma fatura para registrar o parcelamento.</string>
+
+    <!-- Add Installment Modal -->
+    <string name="add_installment_error_generic">Erro ao registrar parcelamento.</string>
+
+    <!-- Delete Installment Modal -->
+    <string name="delete_installment_title">Excluir Parcelamento</string>
+    <string name="delete_installment_message">Tem certeza que deseja excluir este parcelamento? Todas as %1$d parcelas serão removidas. Esta ação não pode ser desfeita.</string>
+    <string name="delete_installment_confirm">Excluir</string>
+</resources>

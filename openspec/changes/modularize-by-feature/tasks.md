@@ -145,12 +145,12 @@
 
 ## 13. Feature level 1: installments
 
-- [ ] 13.1 Create `feature/installments/api/` module; move `Installment`, `IInstallmentRepository`
-- [ ] 13.2 Register `:feature:installments:api` in `settings.gradle.kts`
-- [ ] 13.3 Create `feature/installments/impl/` module; deps on own `:api` + `transactions:api` + `creditCards:api`
-- [ ] 13.4 Move use cases, screen, ViewModel, modals, Koin module
-- [ ] 13.5 Register `:feature:installments:impl` in `settings.gradle.kts`
-- [ ] 13.6 Update `:composeApp`; verify compile
+- [x] 13.1 Create `feature/installments/api/` module; move `Installment`, `IInstallmentRepository`
+- [x] 13.2 Register `:feature:installments:api` in `settings.gradle.kts`
+- [x] 13.3 Create `feature/installments/impl/` module; deps on own `:api` + `transactions:api` + `creditCards:api`
+- [x] 13.4 Move use cases, screen, ViewModel, modals, Koin module
+- [x] 13.5 Register `:feature:installments:impl` in `settings.gradle.kts`
+- [x] 13.6 Update `:composeApp`; verify compile
 
 ## 14. Feature level 1: budgets
 

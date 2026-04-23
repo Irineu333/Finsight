@@ -25,8 +25,8 @@ class AddInstallmentUseCase(
     private val operationRepository: IOperationRepository,
     private val installmentRepository: IInstallmentRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val buildTransactionUseCase: BuildTransactionUseCase,
-    private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
+    private val buildTransactionUseCase: IBuildTransactionUseCase,
+    private val getOrCreateInvoiceForMonthUseCase: IGetOrCreateInvoiceForMonthUseCase,
 ) {
 
     suspend operator fun invoke(

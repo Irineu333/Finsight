@@ -12,19 +12,10 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.format.DayOfWeekNames
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-
-val dayMonthYear = LocalDate.Format {
-    byUnicodePattern("dd/MM/yyyy")
-}
-
-val dayMonth = LocalDate.Format {
-    byUnicodePattern("dd/MM")
-}
 
 class DateFormats(
     private val monthNames: MonthNames,

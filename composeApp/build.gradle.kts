@@ -80,6 +80,7 @@ kotlin {
             implementation(projects.feature.creditCards.impl)
             implementation(projects.feature.transactions.impl)
             implementation(projects.feature.recurring.impl)
+            implementation(projects.feature.installments.impl)
 
             // Arrow
             implementation(libs.arrow.core)

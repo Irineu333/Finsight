@@ -11,6 +11,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             api(projects.core.domain)
+            api(projects.core.utils)
         }
     }
 }

@@ -7,6 +7,7 @@ import com.neoutils.finsight.di.categoriesModule
 import com.neoutils.finsight.di.creditCardsModule
 import com.neoutils.finsight.di.transactionsModule
 import com.neoutils.finsight.di.recurringModule
+import com.neoutils.finsight.di.installmentsModule
 import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
@@ -41,6 +42,7 @@ class AndroidApp : Application() {
                 creditCardsModule,
                 transactionsModule,
                 recurringModule,
+                installmentsModule,
                 repositoryModule,
                 useCaseModules,
                 reportModule,

@@ -5,7 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
@@ -13,7 +12,6 @@ import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
-import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
@@ -28,7 +26,6 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.report.config.BuildReportViewerParamsUseCase
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
@@ -167,14 +164,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        InstallmentsViewModel(
-            installmentRepository = get(),
-            operationRepository = get(),
-            installmentUiMapper = get(),
-        )
-    }
-
-    viewModel {
         SupportViewModel(
             supportRepository = get(),
             createSupportIssueUseCase = get(),
@@ -194,18 +183,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        AddInstallmentViewModel(
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            addInstallmentUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
         AddTransactionViewModel(
             categoryRepository = get(),
             creditCardRepository = get(),
@@ -217,17 +194,6 @@ val viewModelModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteInstallmentViewModel(
-            installment = it.get(),
-            operations = it.get(),
-            operationRepository = get(),
-            installmentRepository = get(),
-            modalManager = get(),
-            analytics = get(),
         )
     }
 

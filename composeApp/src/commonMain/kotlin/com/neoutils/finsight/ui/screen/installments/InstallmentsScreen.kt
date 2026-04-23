@@ -469,9 +469,10 @@ private fun InstallmentSummaryCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (ui.category != null) {
+                    val category = ui.category
+                    if (category != null) {
                         CategoryIconBox(
-                            category = ui.category,
+                            category = category,
                             contentPadding = PaddingValues(8.dp),
                         )
                     } else {
@@ -490,9 +491,10 @@ private fun InstallmentSummaryCard(
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,
                         )
-                        if (ui.categoryName != null) {
+                        val categoryName = ui.categoryName
+                        if (categoryName != null) {
                             Text(
-                                text = ui.categoryName,
+                                text = categoryName,
                                 fontSize = 12.sp,
                                 color = colorScheme.onSurfaceVariant,
                             )

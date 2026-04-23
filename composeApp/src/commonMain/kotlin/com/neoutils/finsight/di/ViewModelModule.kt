@@ -23,9 +23,6 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.ui.screen.report.config.BuildReportViewerParamsUseCase
-import com.neoutils.finsight.ui.screen.report.config.ReportConfigViewModel
-import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerViewModel
 import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
 import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
@@ -274,32 +271,6 @@ val viewModelModule = module {
             invoiceRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
-        )
-    }
-
-    factory { BuildReportViewerParamsUseCase(get()) }
-
-    viewModel {
-        ReportConfigViewModel(
-            accountRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            buildReportViewerParams = get(),
-            analytics = get(),
-        )
-    }
-
-    viewModel { params ->
-        ReportViewerViewModel(
-            params = params.get(),
-            operationRepository = get(),
-            accountRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            calculateReportStatsUseCase = get(),
-            calculateReportCategorySpendingUseCase = get(),
-            renderer = get(),
-            analytics = get(),
         )
     }
 

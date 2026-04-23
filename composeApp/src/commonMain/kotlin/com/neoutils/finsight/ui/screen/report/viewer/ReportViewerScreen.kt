@@ -215,6 +215,9 @@ private fun ReportViewerContent(
                 }
 
                 is ReportViewerUiState.Content -> {
+                    val categorySpending = state.categorySpending
+                    val categoryIncome = state.categoryIncome
+                    val transactions = state.transactions
                     LazyColumn(
                         contentPadding = PaddingValues(
                             top = paddingValues.calculateTopPadding() + 16.dp,
@@ -235,10 +238,10 @@ private fun ReportViewerContent(
                             )
                         }
 
-                        if (!state.categorySpending.isNullOrEmpty()) {
+                        if (!categorySpending.isNullOrEmpty()) {
                             item {
                                 CategorySpendingCard(
-                                    categorySpending = state.categorySpending,
+                                    categorySpending = categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
                                     onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
                                     modifier = Modifier
@@ -248,10 +251,10 @@ private fun ReportViewerContent(
                             }
                         }
 
-                        if (!state.categoryIncome.isNullOrEmpty()) {
+                        if (!categoryIncome.isNullOrEmpty()) {
                             item {
                                 CategorySpendingCard(
-                                    categorySpending = state.categoryIncome,
+                                    categorySpending = categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
                                     onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
                                     modifier = Modifier
@@ -261,7 +264,7 @@ private fun ReportViewerContent(
                             }
                         }
 
-                        if (!state.transactions.isNullOrEmpty()) {
+                        if (!transactions.isNullOrEmpty()) {
                             item {
                                 Text(
                                     text = stringResource(Res.string.report_viewer_transactions),
@@ -271,7 +274,7 @@ private fun ReportViewerContent(
                                 )
                             }
 
-                            state.transactions.forEach { (date, operations) ->
+                            transactions.forEach { (date, operations) ->
                                 item(key = "date_$date") {
                                     Text(
                                         text = dateFormats.formatRelativeDate(date),

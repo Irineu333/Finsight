@@ -18,8 +18,8 @@ import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
+import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.ReportRoute
-import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
 import com.neoutils.finsight.ui.screen.report.toRoute
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen

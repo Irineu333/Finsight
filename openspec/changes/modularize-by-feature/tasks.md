@@ -164,11 +164,11 @@
 
 ## 15. Feature terminal: report
 
-- [ ] 15.1 Create `feature/report/api/` module; move `ReportDocument`, `ReportLayout`, `ReportPerspective`, `PerspectiveTabNavType`
-- [ ] 15.2 Register `:feature:report:api` in `settings.gradle.kts`
-- [ ] 15.3 Create `feature/report/impl/` module; move screens, ViewModels, services, use cases, Koin module
-- [ ] 15.4 Register `:feature:report:impl` in `settings.gradle.kts`
-- [ ] 15.5 Update `:composeApp`; verify compile
+- [x] 15.1 Create `feature/report/api/` module; move `ReportDocument`, `ReportLayout`, `ReportPerspective`, `PerspectiveTabNavType`
+- [x] 15.2 Register `:feature:report:api` in `settings.gradle.kts`
+- [x] 15.3 Create `feature/report/impl/` module; move screens, ViewModels, services, use cases, Koin module
+- [x] 15.4 Register `:feature:report:impl` in `settings.gradle.kts`
+- [x] 15.5 Update `:composeApp`; verify compile
 
 ## 16. Feature terminals: dashboard, home, support
 

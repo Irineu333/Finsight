@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AccountCard

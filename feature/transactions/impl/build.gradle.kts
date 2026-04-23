@@ -8,8 +8,8 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.transactions.api)
             implementation(projects.feature.accounts.api)
-            implementation(projects.feature.categories.impl)
-            implementation(projects.feature.creditCards.impl)
+            implementation(projects.feature.categories.api)
+            implementation(projects.feature.creditCards.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
             implementation(projects.core.analytics)

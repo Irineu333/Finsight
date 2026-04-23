@@ -81,6 +81,7 @@ kotlin {
             implementation(projects.feature.transactions.impl)
             implementation(projects.feature.recurring.impl)
             implementation(projects.feature.installments.impl)
+            implementation(projects.feature.budgets.impl)
 
             // Arrow
             implementation(libs.arrow.core)

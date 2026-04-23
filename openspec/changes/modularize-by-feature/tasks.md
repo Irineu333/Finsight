@@ -156,11 +156,11 @@
 
 > **Regra:** `budgets:api` NÃO depende de `categories:api`. `Budget.categories: List<Category>` usa `Category` de `:core:domain`.
 
-- [ ] 14.1 Create `feature/budgets/api/` module; move `Budget { iconKey: String, categories: List<Category> }`, `IBudgetRepository`; dep on `:core:domain` (NOT `categories:api`)
-- [ ] 14.2 Register `:feature:budgets:api` in `settings.gradle.kts`
-- [ ] 14.3 Create `feature/budgets/impl/` module; move use cases, screen, modals, Koin module; dep on `categories:api` se precisar de `ICategoryRepository`
-- [ ] 14.4 Register `:feature:budgets:impl` in `settings.gradle.kts`
-- [ ] 14.5 Update `:composeApp`; verify compile
+- [x] 14.1 Create `feature/budgets/api/` module; move `Budget { iconKey: String, categories: List<Category> }`, `IBudgetRepository`; dep on `:core:domain` (NOT `categories:api`)
+- [x] 14.2 Register `:feature:budgets:api` in `settings.gradle.kts`
+- [x] 14.3 Create `feature/budgets/impl/` module; move use cases, screen, modals, Koin module; dep on `categories:api` se precisar de `ICategoryRepository`
+- [x] 14.4 Register `:feature:budgets:impl` in `settings.gradle.kts`
+- [x] 14.5 Update `:composeApp`; verify compile
 
 ## 15. Feature terminal: report
 

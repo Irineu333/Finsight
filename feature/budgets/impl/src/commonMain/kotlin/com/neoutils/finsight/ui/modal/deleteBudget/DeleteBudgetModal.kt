@@ -14,10 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.delete_budget_confirm
-import com.neoutils.finsight.resources.delete_budget_message
-import com.neoutils.finsight.resources.delete_budget_title
+import com.neoutils.finsight.feature.budgets.impl.resources.Res
+import com.neoutils.finsight.feature.budgets.impl.resources.delete_budget_confirm
+import com.neoutils.finsight.feature.budgets.impl.resources.delete_budget_message
+import com.neoutils.finsight.feature.budgets.impl.resources.delete_budget_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

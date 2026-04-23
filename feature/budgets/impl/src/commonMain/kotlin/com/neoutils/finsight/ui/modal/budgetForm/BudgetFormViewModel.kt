@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.modal.budgetForm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
-import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType

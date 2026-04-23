@@ -2,14 +2,12 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
-import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
@@ -62,8 +60,6 @@ val useCaseModules = module {
 
     factory { CalculateReportCategorySpendingUseCase() }
 
-    factory { CalculateBudgetProgressUseCase() }
-
     factory { CalculateInvoiceOverviewsUseCase() }
 
     factory {
@@ -96,12 +92,6 @@ val useCaseModules = module {
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
             openInvoiceUseCase = get(),
-        )
-    }
-
-    factory {
-        ValidateBudgetTitleUseCase(
-            repository = get(),
         )
     }
 

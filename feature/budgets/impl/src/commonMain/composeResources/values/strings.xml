@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Budget errors -->
+    <string name="budget_error_empty_title">O título do orçamento não pode ser vazio.</string>
+    <string name="budget_error_already_exist">Já existe um orçamento com esse título.</string>
+
+    <!-- Delete Budget Modal -->
+    <string name="delete_budget_title">Excluir Orçamento</string>
+    <string name="delete_budget_message">Tem certeza que deseja excluir o orçamento \"%1$s\"? Esta ação não pode ser desfeita.</string>
+    <string name="delete_budget_confirm">Excluir</string>
+</resources>

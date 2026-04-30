@@ -12,7 +12,7 @@
 - [x] 1.10 Escrever `helpers/reset-app.yaml` com `clearState`, `clearKeychain` e `launchApp` apontando para o appId do flavor `e2e`
 - [x] 1.11 Escrever `.maestro/README.md` cobrindo: instalação Maestro, build do flavor `e2e` (`./gradlew :composeApp:assembleE2e`), instalação no device, comandos para rodar flow individual e suíte completa, convenção de testTag e ritual "tela mudou ⇒ revisar"
 - [x] 1.12 Criar workflow `.github/workflows/e2e-android.yml` com `workflow_dispatch`: builda APK `e2e`, sobe emulador via `reactivecircus/android-emulator-runner`, instala Maestro, roda `maestro test .maestro/flows/`
-- [ ] 1.13 Disparar o workflow manualmente uma vez para validar que o pipeline chega até "0 flows executed" sem erro de infra — _depende de push da branch e clique manual do usuário em GitHub Actions_
+- [x] 1.13 Disparar o workflow manualmente uma vez para validar que o pipeline chega até "0 flows executed" sem erro de infra — _validado pelo usuário via `workflow_dispatch` no GitHub Actions_
 - [x] 1.14 Adicionar se/ção curta no `CLAUDE.md` apontando para `.maestro/README.md` e regra "tela mudou ⇒ revisar testTag e flow"
 
 ## 2. Fase 2 — Smoke (P1)

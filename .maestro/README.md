@@ -123,12 +123,12 @@ Workflow GitHub Actions: `.github/workflows/e2e-android.yml`. Rodar via aba **Ac
 
 ## Lista de flows cobertos
 
-> Atualizada conforme novas fases entram. Hoje (Fase 1 — Fundação): apenas a infraestrutura está pronta; nenhum flow de feature roda ainda.
+> Atualizada conforme novas fases entram. Fase 2 — Smoke entrega os dois primeiros flows.
 
 | Área         | Flow                              | Status |
 |--------------|-----------------------------------|--------|
-| smoke        | 01-app-launch.yaml                | TODO (Fase 2) |
-| smoke        | 02-bottom-nav.yaml                | TODO (Fase 2) |
+| smoke        | 01-app-launch.yaml                | Fase 2 |
+| smoke        | 02-bottom-nav.yaml                | Fase 2 |
 | transactions | 01-create-expense.yaml            | TODO (Fase 3) |
 | transactions | 02-create-income.yaml             | TODO (Fase 3) |
 | transactions | 03-edit-transaction.yaml          | TODO (Fase 3) |

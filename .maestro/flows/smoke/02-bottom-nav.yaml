@@ -1,0 +1,28 @@
+appId: com.neoutils.finsight.e2e
+name: smoke / bottom navigation
+tags:
+  - smoke
+---
+# Percorre todas as abas reais do BottomNavigationBar (hoje: Dashboard e
+# Transactions) e confirma que cada destino renderiza seu root via testTag.
+# Quando novas abas forem adicionadas ao BottomNavigationBar, aplique o
+# testTag correspondente em BottomNavTestTags e estenda este flow.
+- runFlow: ../../helpers/reset-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 20000
+
+- tapOn:
+    id: "bottom-nav-transactions"
+- extendedWaitUntil:
+    visible:
+      id: "transactions-root"
+    timeout: 10000
+
+- tapOn:
+    id: "bottom-nav-dashboard"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000

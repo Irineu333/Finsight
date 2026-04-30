@@ -17,11 +17,11 @@
 
 ## 2. Fase 2 — Smoke (P1)
 
-- [ ] 2.1 Criar `object DashboardTestTags` com tag `dashboard-root` e aplicar em `DashboardScreen`
-- [ ] 2.2 Criar `object BottomNavTestTags` com tags para cada aba (`bottom-nav-dashboard`, `bottom-nav-transactions`, `bottom-nav-accounts`, `bottom-nav-credit-cards`, `bottom-nav-categories`, `bottom-nav-budgets` — ajustar conforme abas reais do `BottomNavigationBar`) e aplicar
-- [ ] 2.3 Criar `object TransactionsTestTags`, `AccountsTestTags`, `CreditCardsTestTags`, `CategoriesTestTags`, `BudgetsTestTags` com tag de root para cada screen e aplicar
-- [ ] 2.4 Escrever `flows/smoke/01-app-launch.yaml`: chama `helpers/reset-app`, asserta `id: dashboard-root` visível
-- [ ] 2.5 Escrever `flows/smoke/02-bottom-nav.yaml`: percorre todas as abas via `tapOn: id:` e asserta o root da próxima screen visível em cada
+- [x] 2.1 Criar `object DashboardTestTags` com tag `dashboard-root` e aplicar em `DashboardScreen`
+- [x] 2.2 Criar `object BottomNavTestTags` com tags para cada aba (`bottom-nav-dashboard`, `bottom-nav-transactions`, `bottom-nav-accounts`, `bottom-nav-credit-cards`, `bottom-nav-categories`, `bottom-nav-budgets` — ajustar conforme abas reais do `BottomNavigationBar`) e aplicar — _hoje o BottomNavigationBar expõe apenas Dashboard e Transactions; as demais áreas ganharam testTag de root via task 2.3 e entrarão no helper de bottom nav quando forem promovidas a aba real_
+- [x] 2.3 Criar `object TransactionsTestTags`, `AccountsTestTags`, `CreditCardsTestTags`, `CategoriesTestTags`, `BudgetsTestTags` com tag de root para cada screen e aplicar
+- [x] 2.4 Escrever `flows/smoke/01-app-launch.yaml`: chama `helpers/reset-app`, asserta `id: dashboard-root` visível
+- [x] 2.5 Escrever `flows/smoke/02-bottom-nav.yaml`: percorre todas as abas via `tapOn: id:` e asserta o root da próxima screen visível em cada
 - [ ] 2.6 Rodar localmente em Android e iOS; ajustar testTags se algum elemento não for encontrado
 - [ ] 2.7 Disparar workflow Android no CI e confirmar suíte verde
 

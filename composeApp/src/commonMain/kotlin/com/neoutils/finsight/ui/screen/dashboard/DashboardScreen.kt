@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.Res
@@ -53,6 +54,7 @@ fun DashboardScreen(
     val transition = updateTransition(targetState = uiState)
 
     Scaffold(
+        modifier = Modifier.testTag(DashboardTestTags.ROOT),
         topBar = {
             transition.Crossfade(
                 contentKey = { it::class }

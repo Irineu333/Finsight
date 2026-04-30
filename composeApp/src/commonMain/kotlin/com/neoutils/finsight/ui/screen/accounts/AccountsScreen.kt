@@ -31,6 +31,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
@@ -112,6 +113,7 @@ private fun AccountsContent(
     val modalManager = LocalModalManager.current
 
     Scaffold(
+        modifier = Modifier.testTag(AccountsTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = {

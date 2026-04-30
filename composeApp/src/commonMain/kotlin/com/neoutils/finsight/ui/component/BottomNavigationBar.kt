@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.nav_dashboard
@@ -43,7 +44,9 @@ fun BottomNavigationBar(
                     selectedTextColor = Primary1,
                     indicatorColor = Primary1.copy(alpha = 0.1f)
                 ),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(BottomNavTestTags.item(item))
             )
         }
     }

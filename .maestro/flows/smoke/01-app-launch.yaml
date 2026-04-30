@@ -1,0 +1,13 @@
+appId: com.neoutils.finsight.e2e
+name: smoke / app launch
+tags:
+  - smoke
+---
+# Boot do app a partir de estado limpo: garante que o flavor `e2e` sobe sem
+# crash, conclui inicialização (Auth fake, módulos Koin, Room) e renderiza
+# o root do Dashboard.
+- runFlow: ../../helpers/reset-app.yaml
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 20000

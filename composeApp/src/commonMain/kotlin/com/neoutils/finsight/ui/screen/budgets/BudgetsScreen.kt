@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -68,6 +69,7 @@ fun BudgetsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.testTag(BudgetsTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(Res.string.budgets_title)) },

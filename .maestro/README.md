@@ -43,8 +43,8 @@ xcodebuild -project iosApp.xcodeproj \
 Após instalar o APK no emulador/device:
 
 ```bash
-# Suíte completa
-maestro test .maestro/flows/
+# Suíte completa (usa o workspace config em .maestro/config.yaml)
+maestro test .maestro/
 
 # Apenas um diretório (área)
 maestro test .maestro/flows/smoke/
@@ -52,6 +52,8 @@ maestro test .maestro/flows/smoke/
 # Um único flow
 maestro test .maestro/flows/smoke/01-app-launch.yaml
 ```
+
+> A glob `flows/**` declarada em `.maestro/config.yaml` é o que permite rodar a suíte completa apontando para a raiz do workspace; subdiretórios continuam funcionando como caminho direto.
 
 Maestro detecta o device alvo automaticamente. Para forçar um device específico, exporte `MAESTRO_DEVICE_ID`.
 
@@ -66,7 +68,7 @@ maestro hierarchy  # dump da árvore atual no terminal
 
 ```
 .maestro/
-├── config.yaml          # appId default
+├── config.yaml          # appId default + glob de flows (Test Suite)
 ├── flows/
 │   ├── smoke/           # boot, navegação
 │   ├── transactions/    # CRUD de transação
@@ -113,6 +115,14 @@ Tela nova adicionada a um flow existente? Acrescente o testTag de root e pelo me
 ## CI
 
 Workflow GitHub Actions: `.github/workflows/e2e-android.yml`. Rodar via aba **Actions → e2e-android → Run workflow** (`workflow_dispatch`). Ainda **não** é gate de PR — promoção depende de critério: ≥ 2 semanas sem flaky e suíte completa abaixo de 10 min.
+
+O workflow:
+
+- Pina o Maestro em `MAESTRO_VERSION` (atualmente `2.2.0`, alinhado a este README) e falha cedo se o instalador retornar versão diferente.
+- Cacheia o AVD via `actions/cache` (key inclui `api-level + profile + arch`); cold start cai de ~3 min para ~30 s a partir da segunda execução.
+- Valida o `gradle/wrapper` antes do build.
+- Aponta `maestro test .maestro/` por padrão (workspace consolidado); o input `flows_path` aceita override pontual (ex.: `.maestro/flows/transactions/`).
+- `concurrency` por `ref` evita dois dispatches concorrentes pisando no mesmo `maestro-report.xml`.
 
 ## Troubleshooting
 

@@ -22,6 +22,10 @@ env:
   # Pinned to the minimum supported version documented in `.maestro/README.md`.
   # Bump explicitly (and update README) when validating a newer Maestro release.
   MAESTRO_VERSION: "2.2.0"
+  # Disable Maestro CLI telemetry. Also drops the opt-out notice that Maestro
+  # otherwise prepends to every command, which corrupts plain stdout parsing
+  # (e.g. `maestro --version`).
+  MAESTRO_CLI_NO_ANALYTICS: "1"
 
 jobs:
   e2e:
@@ -70,7 +74,15 @@ jobs:
 
       - name: Verify Maestro version
         run: |
-          installed=$(maestro --version | tr -d '[:space:]')
+          # Extract the first semver-looking token from `maestro --version`
+          # output, so any future preamble lines from the CLI cannot break the
+          # parse on their own.
+          installed=$(maestro --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+          if [ -z "$installed" ]; then
+            echo "::error::Could not parse Maestro version from \`maestro --version\` output."
+            maestro --version
+            exit 1
+          fi
           if [ "$installed" != "$MAESTRO_VERSION" ]; then
             echo "::error::Maestro version mismatch (installed=$installed expected=$MAESTRO_VERSION). Update MAESTRO_VERSION in this workflow and .maestro/README.md."
             exit 1

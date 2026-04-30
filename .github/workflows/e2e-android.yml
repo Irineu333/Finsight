@@ -1,0 +1,133 @@
+name: e2e-android
+
+# Manual-only at this stage. Promotion to PR gate requires the criterion
+# documented in the OpenSpec change `add-e2e-tests-maestro` (≥ 2 weeks
+# without flaky runs and total suite < 10 min).
+#
+# Transitional state: the `e2e` build flavor and `.maestro/` scaffold live on
+# `chore/automation`. Until that branch lands on main, this workflow targets
+# the default `debug` build so the pipeline is dispatchable from main and
+# exercises infra (build → emulator → Maestro CLI) without flows.
+on:
+  workflow_dispatch:
+    inputs:
+      flows_path:
+        description: "Path passed to `maestro test` (default: full suite)"
+        required: false
+        default: ".maestro/flows/"
+
+jobs:
+  e2e:
+    name: Maestro Android e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [ 33 ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: ./gradlew :composeApp:assembleDebug --no-daemon
+
+      - name: Locate built APK
+        id: apk
+        run: |
+          APK=$(find composeApp/build/outputs/apk/debug -name "*.apk" -print -quit)
+          if [ -z "$APK" ]; then
+            echo "::error::No APK produced for debug"
+            exit 1
+          fi
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Install Maestro CLI
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Maestro
+        run: maestro --version
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # The emulator-runner action splits its `script:` input per line and runs
+      # each line in a fresh `sh -c`, which breaks multi-line shell constructs
+      # (if/then/fi, $(...) state) and forbids `pipefail`. We work around both
+      # limits by writing the real script to a file here and invoking it as a
+      # single line below.
+      - name: Prepare Maestro runner script
+        env:
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          FLOWS_PATH: ${{ github.event.inputs.flows_path }}
+        run: |
+          mkdir -p "$RUNNER_TEMP"
+          cat > "$RUNNER_TEMP/run-maestro.sh" <<'BASH_SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          set -x
+
+          : "${APK_PATH:?APK_PATH not set}"
+          : "${FLOWS_PATH:?FLOWS_PATH not set}"
+
+          adb install -r "$APK_PATH"
+
+          # No flows yet on main (scaffold lives on chore/automation). Treat
+          # missing/empty `.maestro/flows/` as a successful infra dry-run.
+          # Remove this guard once Phase 2 lands and flows exist on main.
+          if [ ! -d "$FLOWS_PATH" ]; then
+            echo "::warning::Flows path missing: $FLOWS_PATH — infra-only run."
+            exit 0
+          fi
+
+          flow_count=$(find "$FLOWS_PATH" -name "*.yaml" -not -path "*/helpers/*" | wc -l | tr -d ' ')
+          if [ "$flow_count" -eq 0 ]; then
+            echo "::warning::No flows under $FLOWS_PATH — infra-only run."
+            exit 0
+          fi
+
+          maestro test "$FLOWS_PATH" --format junit --output "$GITHUB_WORKSPACE/maestro-report.xml"
+          BASH_SCRIPT
+          chmod +x "$RUNNER_TEMP/run-maestro.sh"
+          echo "MAESTRO_RUNNER=$RUNNER_TEMP/run-maestro.sh" >> "$GITHUB_ENV"
+
+      - name: Run Maestro flows on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          FLOWS_PATH: ${{ github.event.inputs.flows_path }}
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          disk-size: 6000M
+          ram-size: 4096M
+          script: bash "$MAESTRO_RUNNER"
+
+      - name: Upload Maestro report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-report-${{ matrix.api-level }}
+          path: |
+            maestro-report.xml
+            /home/runner/.maestro/tests/**
+          if-no-files-found: ignore

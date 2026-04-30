@@ -4,10 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 
 data class HomeChromeConfig(
@@ -35,24 +32,6 @@ private object NoOpHomeChromeController : HomeChromeController {
 
 val LocalHomeChromeController = staticCompositionLocalOf<HomeChromeController> {
     NoOpHomeChromeController
-}
-
-class HomeChromeStateHolder : HomeChromeController {
-    var config by mutableStateOf(HomeChromeConfig.Default)
-        private set
-
-    override fun update(config: HomeChromeConfig) {
-        this.config = config
-    }
-
-    override fun reset() {
-        config = HomeChromeConfig.Default
-    }
-}
-
-@Composable
-fun rememberHomeChromeStateHolder(): HomeChromeStateHolder {
-    return remember { HomeChromeStateHolder() }
 }
 
 @Composable

@@ -1,5 +1,6 @@
 plugins {
-    id("kmp-library")
+    id("kmp-compose")
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
 }
 
@@ -12,6 +13,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             api(projects.core.domain)
             api(projects.core.utils)
+            api(libs.androidx.navigation.compose)
         }
     }
 }

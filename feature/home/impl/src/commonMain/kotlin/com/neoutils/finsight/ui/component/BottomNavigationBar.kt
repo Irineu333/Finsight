@@ -9,9 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.nav_dashboard
-import com.neoutils.finsight.resources.nav_transactions
+import com.neoutils.finsight.feature.home.impl.resources.Res
+import com.neoutils.finsight.feature.home.impl.resources.nav_dashboard
+import com.neoutils.finsight.feature.home.impl.resources.nav_transactions
 import com.neoutils.finsight.ui.theme.Primary1
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource

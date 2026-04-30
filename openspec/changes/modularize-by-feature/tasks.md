@@ -182,34 +182,40 @@
 - [x] 16.A.4 Update `:composeApp` to depend on `:feature:support:impl`; remove moved sources
 - [x] 16.A.5 Verify `:composeApp` compiles
 
-### 16.B dashboard (com :api expondo DashboardEntry)
+### 16.B dashboard (apenas :api com DashboardEntry — :impl deferred)
 
-- [ ] 16.B.1 Create `feature/dashboard/api/` with `kmp-feature` plugin (precisa Compose + Navigation para definir `NavGraphBuilder` extension)
-- [ ] 16.B.2 Register `:feature:dashboard:api` in `settings.gradle.kts`
-- [ ] 16.B.3 Define `abstract class DashboardEntry` em `:api` com `fun NavGraphBuilder.register(navController, openTransactions: (...) -> Unit)`
-- [ ] 16.B.4 Create `feature/dashboard/impl/` with `kmp-feature` plugin; deps on own `:api`, `accounts:api`, `creditCards:api`, `categories:api`, `budgets:api`, `recurring:api`, `transactions:api`
-- [ ] 16.B.5 Register `:feature:dashboard:impl` in `settings.gradle.kts`
-- [ ] 16.B.6 Move `DashboardScreen`, `DashboardViewModel`, components, modais, use cases, Koin module; implementar `DashboardEntryImpl` que registra a rota `HomeRoute.Dashboard`
-- [ ] 16.B.7 Update `:composeApp`; remove moved sources; verify compile
+> **Escopo reduzido:** mover `dashboard:impl` exigiria migrar dezenas de components/modals compartilhados (`AccountCard`, `CreditCardCard`, `OperationCard`, `BudgetProgressCard`, `ViewBudgetModal`, `AccountFormModal`, etc) que vivem em `:composeApp`. Para destravar `home:impl` sem essa migração massiva, criamos só o contrato em `:api`. A implementação de `DashboardEntry` fica registrada no `:composeApp` (que já tem `DashboardScreen` e tudo que ele usa). A migração completa do dashboard vira **seção 16.E (deferred)**.
+
+- [x] 16.B.1 Create `feature/dashboard/api/` with `kmp-compose` plugin + Navigation
+- [x] 16.B.2 Register `:feature:dashboard:api` in `settings.gradle.kts`
+- [x] 16.B.3 Define `abstract class DashboardEntry` em `:api` com `fun NavGraphBuilder.register(navController, onOpenTransactions: (...) -> Unit)`
+- [x] 16.B.4 Implementar `DashboardEntryImpl` no `:composeApp` registrando `HomeRoute.Dashboard` com a `DashboardScreen` atual
+- [x] 16.B.5 Registrar `single<DashboardEntry>` no Koin do `:composeApp` (via `appModule`)
 
 ### 16.C transactions entry point (D11)
 
-- [ ] 16.C.1 Definir `abstract class TransactionsEntry` em `:feature:transactions:api` (depende de Compose+Navigation — verificar se `:api` precisa subir de `kmp-library` para `kmp-feature` ou criar um plugin intermediário)
-- [ ] 16.C.2 Implementar `TransactionsEntryImpl` em `:feature:transactions:impl` que registra a rota `HomeRoute.Transactions` (com type map de `Transaction.Type?`/`Transaction.Target?`)
-- [ ] 16.C.3 Registrar `single<TransactionsEntry>` no Koin module de `:feature:transactions:impl`
-- [ ] 16.C.4 Verify compile
+> **Ajuste:** `TransactionsScreen` ainda vive no `:composeApp` (não foi migrado em 11.4). Por isso a impl do entry fica no `:composeApp` (mesma estratégia do dashboard), não em `:feature:transactions:impl`.
 
-### 16.D home (com :api mínimo: AppRoute + HomeRoute)
+- [x] 16.C.1 Definir `abstract class TransactionsEntry` em `:feature:transactions:api`; subir `:api` de `kmp-library` para `kmp-compose` (precisa Compose+Navigation)
+- [x] 16.C.2 Implementar `TransactionsEntryImpl` no `:composeApp` que registra a rota `HomeRoute.Transactions` (com type map de `Transaction.Type?`/`Transaction.Target?`)
+- [x] 16.C.3 Registrar `single<TransactionsEntry>` no Koin do `:composeApp` (via `appModule`)
+- [x] 16.C.4 Verify compile
 
-- [ ] 16.D.1 Create `feature/home/api/` with `kmp-feature` plugin; deps em `transactions:api` (porque `HomeRoute.Transactions` carrega `Transaction.Type?` e `Transaction.Target?`)
-- [ ] 16.D.2 Register `:feature:home:api` in `settings.gradle.kts`
-- [ ] 16.D.3 Move `AppRoute` e `HomeRoute` para `:feature:home:api`
-- [ ] 16.D.4 Create `feature/home/impl/` with `kmp-feature` plugin; deps on own `:api`, `dashboard:api`, `transactions:api`, `:core:ui`
-- [ ] 16.D.5 Register `:feature:home:impl` in `settings.gradle.kts`
-- [ ] 16.D.6 Move `HomeScreen`, `HomeChrome`, `BottomNavigationBar`, `NavigationItem` para `:feature:home:impl`. `HomeScreen` injeta `DashboardEntry` e `TransactionsEntry` via Koin e usa `with(entry) { register(navController) }` no `NavHost` interno
-- [ ] 16.D.7 Update `:composeApp` to depend on `:feature:home:impl`; remove moved sources
-- [ ] 16.D.8 Update `AppNavHost` no `:composeApp` para importar `AppRoute` de `:feature:home:api` e `HomeScreen` de `:feature:home:impl`
-- [ ] 16.D.9 Verify `:composeApp` compiles
+### 16.D home (com :api mínimo: AppRoute + HomeRoute + HomeChrome*)
+
+- [x] 16.D.1 Create `feature/home/api/` with `kmp-compose` plugin + Navigation; dep em `transactions:api` (porque `HomeRoute.Transactions` carrega `Transaction.Type?` e `Transaction.Target?`)
+- [x] 16.D.2 Register `:feature:home:api` in `settings.gradle.kts`
+- [x] 16.D.3 Move `AppRoute`, `HomeRoute` e parte pública de `HomeChrome` (Config, Controller, LocalHomeChromeController, HomeChromeEffect) para `:feature:home:api`
+- [x] 16.D.4 Create `feature/home/impl/` with `kmp-feature` plugin; deps on own `:api`, `dashboard:api`, `transactions:api`, `:core:ui`
+- [x] 16.D.5 Register `:feature:home:impl` in `settings.gradle.kts`
+- [x] 16.D.6 Move `HomeScreen`, `HomeChromeStateHolder`, `BottomNavigationBar`, `NavigationItem` para `:feature:home:impl`. `HomeScreen` injeta `DashboardEntry` e `TransactionsEntry` via Koin e usa `with(entry) { register(navController) }` no `NavHost` interno
+- [x] 16.D.7 Update `:composeApp` to depend on `:feature:home:impl`; remove moved sources
+- [x] 16.D.8 Update `AppNavHost` no `:composeApp` para importar `AppRoute` de `:feature:home:api` e `HomeScreen` de `:feature:home:impl`; passa `onAddTransaction` para abrir `AddTransactionModal`
+- [x] 16.D.9 Verify `:composeApp` compiles
+
+### 16.E (deferred) Migração completa de dashboard:impl
+
+> Mover `DashboardScreen`, ViewModel, components/, modal `DashboardComponentOptionsModal`, use cases (`BuildDashboardViewing`, `GetDashboardPreferences`), `IDashboardPreferencesRepository`, `DashboardComponentPreference`, analytics events, e todos os componentes/modais shared (`AccountCard`, `CreditCardCard`, `OperationCard`, `BudgetProgressCard`, `CategorySpendingCard`, `BalanceCard`, modais cross-feature) para os módulos apropriados (`:feature:X:impl` ou `:core:ui`). Tarefa grande — fica fora do escopo desta change.
 
 ## 17. :app (rename and wire-up)
 

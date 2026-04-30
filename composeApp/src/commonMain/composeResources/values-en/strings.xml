@@ -43,10 +43,6 @@
     <string name="installment_error_missing_credit_card">Select a card to register the installment.</string>
     <string name="installment_error_missing_invoice">Select an invoice to register the installment.</string>
 
-    <!-- Bottom Navigation -->
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_transactions">Transactions</string>
-
     <!-- Dashboard Screen -->
     <string name="dashboard_recents">Recent</string>
     <string name="dashboard_see_all">See All</string>

@@ -13,9 +13,9 @@ import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
-import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
+import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
 import com.neoutils.finsight.domain.model.PerspectiveTab
@@ -43,8 +43,13 @@ fun AppNavHost() = Surface {
                         startDestination = AppRoute.Home,
                     ) {
                         composable<AppRoute.Home> {
+                            val modalManager = LocalModalManager.current
                             AnimatedVisibilityScopeProvider {
-                                HomeScreen()
+                                HomeScreen(
+                                    onAddTransaction = {
+                                        modalManager.show(AddTransactionModal())
+                                    },
+                                )
                             }
                         }
 

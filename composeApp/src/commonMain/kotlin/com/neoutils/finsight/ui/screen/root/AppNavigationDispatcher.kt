@@ -5,7 +5,6 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
-import com.neoutils.finsight.ui.screen.home.AppRoute
 
 internal class AppNavigationDispatcher(
     private val navController: NavHostController,

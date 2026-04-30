@@ -29,8 +29,6 @@
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
 
     <!-- Bottom Navigation -->
-    <string name="nav_dashboard">Dashboard</string>
-    <string name="nav_transactions">Transações</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_recents">Recentes</string>

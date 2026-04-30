@@ -1,0 +1,15 @@
+package com.neoutils.finsight.ui.screen.home
+
+import com.neoutils.finsight.domain.model.Transaction
+import kotlinx.serialization.Serializable
+
+sealed class HomeRoute {
+    @Serializable
+    data object Dashboard : HomeRoute()
+
+    @Serializable
+    data class Transactions(
+        val filterType: Transaction.Type? = null,
+        val filterTarget: Transaction.Target? = null
+    ) : HomeRoute()
+}

@@ -11,6 +11,7 @@ import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.installmentsModule
 import com.neoutils.finsight.di.budgetsModule
 import com.neoutils.finsight.di.analyticsModule
+import com.neoutils.finsight.di.appModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.mapperModule
@@ -52,6 +53,7 @@ fun MainViewController(): UIViewController {
                     crashlyticsModule,
                     authModule,
                     viewModelModule,
+                    appModule,
                 )
             }
         }

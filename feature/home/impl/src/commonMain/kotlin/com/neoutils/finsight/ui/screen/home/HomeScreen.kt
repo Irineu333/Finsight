@@ -12,30 +12,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import com.neoutils.finsight.domain.analytics.Analytics
-import org.koin.compose.koinInject
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.component.*
-import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
-import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
-import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
-import com.neoutils.finsight.util.TransactionTargetNavType
-import com.neoutils.finsight.util.TransactionTypeNavType
+import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.ui.component.BottomNavigationBar
+import com.neoutils.finsight.ui.component.NavigationItem
+import com.neoutils.finsight.ui.screen.dashboard.DashboardEntry
+import com.neoutils.finsight.ui.screen.transactions.TransactionsEntry
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlin.reflect.typeOf
+import org.koin.compose.koinInject
 
 @Composable
-fun HomeScreen() {
-    val analytics = koinInject<Analytics>()
-    val modalManager = LocalModalManager.current
+fun HomeScreen(
+    onAddTransaction: () -> Unit = {},
+    analytics: Analytics = koinInject(),
+    dashboardEntry: DashboardEntry = koinInject(),
+    transactionsEntry: TransactionsEntry = koinInject(),
+) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val homeChromeController = rememberHomeChromeStateHolder()
@@ -107,9 +104,7 @@ fun HomeScreen() {
                         .size(56.dp)
                 ) {
                     FloatingActionButton(
-                        onClick = {
-                            modalManager.show(AddTransactionModal())
-                        },
+                        onClick = onAddTransaction,
                         contentColor = Color.White,
                     ) {
                         Icon(
@@ -127,9 +122,10 @@ fun HomeScreen() {
                 startDestination = HomeRoute.Dashboard,
                 modifier = Modifier.padding(paddingValues)
             ) {
-                composable<HomeRoute.Dashboard> {
-                    DashboardScreen(
-                        openTransactions = { filterType, filterTarget ->
+                with(dashboardEntry) {
+                    register(
+                        navController = navController,
+                        onOpenTransactions = { filterType, filterTarget ->
                             navController.navigate(
                                 HomeRoute.Transactions(
                                     filterType = filterType,
@@ -139,19 +135,8 @@ fun HomeScreen() {
                         },
                     )
                 }
-
-                composable<HomeRoute.Transactions>(
-                    typeMap = mapOf(
-                        typeOf<Transaction.Type?>() to TransactionTypeNavType(),
-                        typeOf<Transaction.Target?>() to TransactionTargetNavType()
-                    )
-                ) { backStackEntry ->
-                    val route = backStackEntry.toRoute<HomeRoute.Transactions>()
-
-                    TransactionsScreen(
-                        categoryType = route.filterType,
-                        target = route.filterTarget
-                    )
+                with(transactionsEntry) {
+                    register(navController = navController)
                 }
             }
         }

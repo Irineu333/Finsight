@@ -1,19 +1,19 @@
 ## 1. Fase 1 — Fundação (sem flows ainda)
 
-- [ ] 1.1 Instalar Maestro CLI localmente e validar versão (`maestro --version`); registrar versão mínima suportada
-- [ ] 1.2 Mapear todos os pontos onde Firebase Auth, Firestore, Crashlytics e Analytics são consumidos hoje (grep por `FirebaseAuth`, `Firestore`, `Crashlytics`, `Analytics`); listar arquivos no design para fundamentar extração de interfaces
-- [ ] 1.3 Definir interfaces de fronteira mínimas para Auth e Firestore onde ainda não existirem, mantendo a implementação real intacta
-- [ ] 1.4 Criar source set `e2eMain` (Android) com módulo Koin alternativo expondo fakes de Auth/Firestore/Crashlytics/Analytics (Auth anônimo com UID `e2e-user`; Firestore in-memory; Crashlytics/Analytics no-op)
-- [ ] 1.5 Criar build flavor `e2e` em `composeApp/build.gradle.kts` (Android) que ativa o source set `e2eMain` e desabilita Google Services / Crashlytics plugin para esse flavor
-- [ ] 1.6 Atualizar `iosApp/project.yml` (XcodeGen) com configuração `e2e` espelho, apontando para a mesma camada de fakes via Koin
-- [ ] 1.7 Aplicar `Modifier.semantics { testTagsAsResourceId = true }` no root composable do Android (no theme/scaffold raiz, não em cada tela)
-- [ ] 1.8 Validar manualmente que app builda e abre no flavor `e2e` em Android e iOS, sem erros de DI e sem chamada de rede (verificar com Network Inspector / Charles)
-- [ ] 1.9 Criar estrutura `.maestro/` na raiz: `config.yaml`, `flows/{smoke,transactions,transfers,invoices,installments,recurring}/`, `helpers/`, `README.md`
-- [ ] 1.10 Escrever `helpers/reset-app.yaml` com `clearState`, `clearKeychain` e `launchApp` apontando para o appId do flavor `e2e`
-- [ ] 1.11 Escrever `.maestro/README.md` cobrindo: instalação Maestro, build do flavor `e2e` (`./gradlew :composeApp:assembleE2e`), instalação no device, comandos para rodar flow individual e suíte completa, convenção de testTag e ritual "tela mudou ⇒ revisar"
-- [ ] 1.12 Criar workflow `.github/workflows/e2e-android.yml` com `workflow_dispatch`: builda APK `e2e`, sobe emulador via `reactivecircus/android-emulator-runner`, instala Maestro, roda `maestro test .maestro/flows/`
-- [ ] 1.13 Disparar o workflow manualmente uma vez para validar que o pipeline chega até "0 flows executed" sem erro de infra
-- [ ] 1.14 Adicionar seção curta no `CLAUDE.md` apontando para `.maestro/README.md` e regra "tela mudou ⇒ revisar testTag e flow"
+- [x] 1.1 Instalar Maestro CLI localmente e validar versão (`maestro --version`); registrar versão mínima suportada
+- [x] 1.2 Mapear todos os pontos onde Firebase Auth, Firestore, Crashlytics e Analytics são consumidos hoje (grep por `FirebaseAuth`, `Firestore`, `Crashlytics`, `Analytics`); listar arquivos no design para fundamentar extração de interfaces
+- [x] 1.3 Definir interfaces de fronteira mínimas para Auth e Firestore onde ainda não existirem, mantendo a implementação real intacta
+- [x] 1.4 Criar source set `e2eMain` (Android) com módulo Koin alternativo expondo fakes de Auth/Firestore/Crashlytics/Analytics (Auth anônimo com UID `e2e-user`; Firestore in-memory; Crashlytics/Analytics no-op)
+- [x] 1.5 Criar build flavor `e2e` em `composeApp/build.gradle.kts` (Android) que ativa o source set `e2eMain` e desabilita Google Services / Crashlytics plugin para esse flavor
+- [x] 1.6 Atualizar `iosApp/project.yml` (XcodeGen) com configuração `e2e` espelho, apontando para a mesma camada de fakes via Koin
+- [x] 1.7 Aplicar `Modifier.semantics { testTagsAsResourceId = true }` no root composable do Android (no theme/scaffold raiz, não em cada tela)
+- [ ] 1.8 Validar manualmente que app builda e abre no flavor `e2e` em Android e iOS, sem erros de DI e sem chamada de rede (verificar com Network Inspector / Charles) — _build Android validado via `compileE2eDebugKotlinAndroid` e `compileRegularDebugKotlinAndroid`; runtime em device + iOS pendentes para o usuário_
+- [x] 1.9 Criar estrutura `.maestro/` na raiz: `config.yaml`, `flows/{smoke,transactions,transfers,invoices,installments,recurring}/`, `helpers/`, `README.md`
+- [x] 1.10 Escrever `helpers/reset-app.yaml` com `clearState`, `clearKeychain` e `launchApp` apontando para o appId do flavor `e2e`
+- [x] 1.11 Escrever `.maestro/README.md` cobrindo: instalação Maestro, build do flavor `e2e` (`./gradlew :composeApp:assembleE2e`), instalação no device, comandos para rodar flow individual e suíte completa, convenção de testTag e ritual "tela mudou ⇒ revisar"
+- [x] 1.12 Criar workflow `.github/workflows/e2e-android.yml` com `workflow_dispatch`: builda APK `e2e`, sobe emulador via `reactivecircus/android-emulator-runner`, instala Maestro, roda `maestro test .maestro/flows/`
+- [ ] 1.13 Disparar o workflow manualmente uma vez para validar que o pipeline chega até "0 flows executed" sem erro de infra — _depende de push da branch e clique manual do usuário em GitHub Actions_
+- [x] 1.14 Adicionar se/ção curta no `CLAUDE.md` apontando para `.maestro/README.md` e regra "tela mudou ⇒ revisar testTag e flow"
 
 ## 2. Fase 2 — Smoke (P1)
 

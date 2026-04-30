@@ -10,10 +10,12 @@ options:
 configs:
   Debug: debug
   Release: release
+  E2E: debug
 
 configFiles:
   Debug: Configuration/Config.xcconfig
   Release: Configuration/Config.xcconfig
+  E2E: Configuration/Config.xcconfig
 
 settings:
   base:
@@ -103,6 +105,15 @@ targets:
 
       release:
         VALIDATE_PRODUCT: YES
+
+      e2e:
+        ONLY_ACTIVE_ARCH: YES
+        # Marker consumed by the Kotlin runtime to swap to fake DI bindings.
+        # Full iOS e2e wiring lands in a follow-up phase; this config is the
+        # foundation so XcodeGen already knows the flavor exists.
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "FINSIGHT_E2E=1"
 
     preBuildScripts:
       - name: "Compile Kotlin Framework"

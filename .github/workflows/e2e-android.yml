@@ -3,11 +3,6 @@ name: e2e-android
 # Manual-only at this stage. Promotion to PR gate requires the criterion
 # documented in the OpenSpec change `add-e2e-tests-maestro` (≥ 2 weeks
 # without flaky runs and total suite < 10 min).
-#
-# Transitional state: the `e2e` build flavor and `.maestro/` scaffold live on
-# `chore/automation`. Until that branch lands on main, this workflow targets
-# the default `debug` build so the pipeline is dispatchable from main and
-# exercises infra (build → emulator → Maestro CLI) without flows.
 on:
   workflow_dispatch:
     inputs:
@@ -40,15 +35,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: ./gradlew :composeApp:assembleDebug --no-daemon
+      - name: Build e2e debug APK
+        run: ./gradlew :composeApp:assembleE2eDebug --no-daemon
 
       - name: Locate built APK
         id: apk
         run: |
-          APK=$(find composeApp/build/outputs/apk/debug -name "*.apk" -print -quit)
+          APK=$(find composeApp/build/outputs/apk/e2e/debug -name "*.apk" -print -quit)
           if [ -z "$APK" ]; then
-            echo "::error::No APK produced for debug"
+            echo "::error::No APK produced for e2eDebug"
             exit 1
           fi
           echo "path=$APK" >> "$GITHUB_OUTPUT"
@@ -89,9 +84,9 @@ jobs:
 
           adb install -r "$APK_PATH"
 
-          # No flows yet on main (scaffold lives on chore/automation). Treat
-          # missing/empty `.maestro/flows/` as a successful infra dry-run.
-          # Remove this guard once Phase 2 lands and flows exist on main.
+          # Phase 1 ships the foundation without flows. Treat missing/empty
+          # `.maestro/flows/` as a successful infra dry-run. Remove this guard
+          # once Phase 2 lands actual flows.
           if [ ! -d "$FLOWS_PATH" ]; then
             echo "::warning::Flows path missing: $FLOWS_PATH — infra-only run."
             exit 0

@@ -1,0 +1,8 @@
+# Project-wide Maestro configuration.
+#
+# The Finsight e2e flavor installs as `com.neoutils.finsight.e2e` on Android
+# and as the default bundle id on iOS (Xcode `E2E` configuration). Maestro
+# does not need a global appId here because each flow declares its target
+# in its own `launchApp` step (or via `helpers/reset-app.yaml`), which keeps
+# flows portable across platforms.
+appId: com.neoutils.finsight.e2e

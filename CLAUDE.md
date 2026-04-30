@@ -65,6 +65,12 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - `toUiText()` extension — internationalized via `UiText.Res`, for UI display
 - `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
+## E2E Tests (Maestro)
+
+Testes black-box ponta-a-ponta para Android e iOS rodam via [Maestro](https://maestro.mobile.dev/) sobre o build flavor `e2e` (Auth/Firestore/Crashlytics/Analytics fakeados, sem rede). Detalhes, comandos e convenções em `.maestro/README.md`.
+
+> **Ritual obrigatório — tela mudou ⇒ revise testTag e flow.** Ao alterar uma tela ou modal coberto por flow, atualize o `*TestTags.kt` da área e rode `maestro test .maestro/flows/<área>/` antes de abrir PR. Quebra de flow não é aceita silenciosamente.
+
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:

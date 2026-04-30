@@ -195,6 +195,47 @@ Não há migração de dados nem mudança de comportamento de produção. Plano 
 
 **Rollback:** trivial — toda a infraestrutura é aditiva. Remover `.maestro/`, build flavor `e2e` e `testTagsAsResourceId` reverte tudo sem afetar produção.
 
+## Implementation Notes (Fase 1)
+
+### Versão do Maestro
+
+- Maestro CLI `2.2.0` é a versão mínima suportada. Documentada em `.maestro/README.md`.
+
+### Mapeamento de consumo Firebase no projeto
+
+**Auth:**
+- `composeApp/src/commonMain/.../domain/auth/AuthService.kt` — interface
+- `composeApp/src/androidMain/.../auth/FirebaseAuthService.kt` — impl Android
+- `composeApp/src/iosMain/.../auth/FirebaseAuthService.kt` — impl iOS
+- `composeApp/src/jvmMain/.../auth/NoOpAuthService.kt` — stub Desktop
+- Acoplamento direto remanescente: `composeApp/src/commonMain/.../database/repository/FirebaseSupportRepository.kt` chama `Firebase.auth.signInAnonymously()` direto. Aceitável: o consumo está encapsulado nessa única classe que já é a fronteira do Firestore (vide abaixo).
+
+**Firestore:**
+- Único consumidor: `FirebaseSupportRepository` (commonMain).
+- A fronteira natural para Firestore neste projeto é a interface `ISupportRepository` (`composeApp/src/commonMain/.../domain/repository/ISupportRepository.kt`). Já existe um stub Desktop (`UnsupportedSupportRepository`). Para o flavor `e2e`, basta prover uma implementação fake in-memory de `ISupportRepository` — não é necessário extrair um adapter mais granular sobre o SDK Firestore.
+
+**Crashlytics:**
+- Interface: `composeApp/src/commonMain/.../domain/crashlytics/Crashlytics.kt`
+- Impl Android/iOS: `crashlytics/FirebaseCrashlyticsImpl.kt`
+- Stub Desktop: `composeApp/src/jvmMain/.../crashlytics/NoOpCrashlytics.kt`
+
+**Analytics:**
+- Interface: `composeApp/src/commonMain/.../domain/analytics/Analytics.kt`
+- Impl Android/iOS: `analytics/FirebaseAnalyticsImpl.kt`
+- Stub Desktop: `composeApp/src/jvmMain/.../analytics/NoOpAnalytics.kt`
+
+**Conclusão:** Todas as interfaces de fronteira mínimas necessárias **já existem**. Tarefa 1.3 fica como "verificada — sem extração necessária". O flavor `e2e` apenas reaproveita os stubs Desktop existentes (Auth/Analytics/Crashlytics) e introduz um único `InMemorySupportRepository` novo para Firestore.
+
+### Decisão revisada sobre flavor Android
+
+A redação original de tasks.md menciona `./gradlew :composeApp:assembleE2e` (sintaxe de build type). Na implementação optamos por **productFlavor** com dimensão `mode` (`regular` + `e2e`), porque:
+
+- Permite que ambos os flavors compartilhem `debug`/`release` build types (testes geralmente rodam em variant `debug`-like).
+- Source sets `src/e2e/kotlin/` e `src/regular/kotlin/` evitam conflito de classes duplicadas para `e2eOverridesModule`.
+- Comando real: `./gradlew :composeApp:assembleE2eDebug` (documentado no `.maestro/README.md`).
+
+Disabling de plugins por flavor: como `googleServices` e `firebaseCrashlytics` são plugins de projeto (aplicados globalmente), a desativação real é feita via `tasks.matching { ... }.configureEach { enabled = false }` para os tasks do variant `e2e*`. Plugin permanece aplicado, mas processamento não roda no variant.
+
 ## Open Questions
 
 - **Autenticação real do app:** o app usa Firebase Auth. Os flows assumem usuário logado anônimo via fake. Confirmar se há fluxo de login interativo no app que algum flow futuro precise cobrir (ex.: vinculação de conta) — se sim, esse flow específico talvez precise de Auth real ou de uma versão "seedada" do fake.

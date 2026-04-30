@@ -7,7 +7,7 @@
 - [x] 1.5 Criar build flavor `e2e` em `composeApp/build.gradle.kts` (Android) que ativa o source set `e2eMain` e desabilita Google Services / Crashlytics plugin para esse flavor
 - [x] 1.6 Atualizar `iosApp/project.yml` (XcodeGen) com configuração `e2e` espelho, apontando para a mesma camada de fakes via Koin
 - [x] 1.7 Aplicar `Modifier.semantics { testTagsAsResourceId = true }` no root composable do Android (no theme/scaffold raiz, não em cada tela)
-- [ ] 1.8 Validar manualmente que app builda e abre no flavor `e2e` em Android e iOS, sem erros de DI e sem chamada de rede (verificar com Network Inspector / Charles) — _build Android validado via `compileE2eDebugKotlinAndroid` e `compileRegularDebugKotlinAndroid`; runtime em device + iOS pendentes para o usuário_
+- [x] 1.8 Validar manualmente que app builda e abre no flavor `e2e` em Android e iOS, sem erros de DI e sem chamada de rede (verificar com Network Inspector / Charles) — _Android validado em device pelo usuário; iOS adiado até a Fase 2+, quando o wiring Koin real do flavor `E2E` (XcodeGen) entrar (vide design.md, "Implementation Notes")_
 - [x] 1.9 Criar estrutura `.maestro/` na raiz: `config.yaml`, `flows/{smoke,transactions,transfers,invoices,installments,recurring}/`, `helpers/`, `README.md`
 - [x] 1.10 Escrever `helpers/reset-app.yaml` com `clearState`, `clearKeychain` e `launchApp` apontando para o appId do flavor `e2e`
 - [x] 1.11 Escrever `.maestro/README.md` cobrindo: instalação Maestro, build do flavor `e2e` (`./gradlew :composeApp:assembleE2e`), instalação no device, comandos para rodar flow individual e suíte completa, convenção de testTag e ritual "tela mudou ⇒ revisar"

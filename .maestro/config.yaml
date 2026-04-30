@@ -1,8 +1,13 @@
-# Project-wide Maestro configuration.
+# Maestro workspace config.
 #
-# The Finsight e2e flavor installs as `com.neoutils.finsight.e2e` on Android
-# and as the default bundle id on iOS (Xcode `E2E` configuration). Maestro
-# does not need a global appId here because each flow declares its target
-# in its own `launchApp` step (or via `helpers/reset-app.yaml`), which keeps
-# flows portable across platforms.
+# - `appId`: default usado por flows que não declaram um próprio (helpers e
+#   smoke confiam neste fallback).
+# - `flows`: glob recursiva que habilita Test Suite. Sem isso, `maestro test
+#   .maestro/` só enxerga arquivos no nível imediato. `flows/**` cobre toda a
+#   árvore por área (smoke, transactions, transfers, invoices, installments,
+#   recurring) sem precisar de config.yaml por subpasta.
+# - Helpers ficam em `.maestro/helpers/` (fora da glob), portanto não são
+#   tratados como flows próprios — apenas referenciados via `runFlow:`.
 appId: com.neoutils.finsight.e2e
+flows:
+  - "flows/**"

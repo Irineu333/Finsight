@@ -22,7 +22,7 @@
 - [x] 2.3 Criar `object TransactionsTestTags`, `AccountsTestTags`, `CreditCardsTestTags`, `CategoriesTestTags`, `BudgetsTestTags` com tag de root para cada screen e aplicar
 - [x] 2.4 Escrever `flows/smoke/01-app-launch.yaml`: chama `helpers/reset-app`, asserta `id: dashboard-root` visível
 - [x] 2.5 Escrever `flows/smoke/02-bottom-nav.yaml`: percorre todas as abas via `tapOn: id:` e asserta o root da próxima screen visível em cada
-- [ ] 2.6 Rodar localmente em Android e iOS; ajustar testTags se algum elemento não for encontrado
+- [x] 2.6 Rodar localmente em Android e iOS; ajustar testTags se algum elemento não for encontrado — _validado localmente pelo usuário; iOS segue a mesma exceção da 1.8 (wiring Koin do flavor E2E iOS adiado)_
 - [ ] 2.7 Disparar workflow Android no CI e confirmar suíte verde
 
 ## 3. Fase 3 — Transações (P2)

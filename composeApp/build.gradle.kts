@@ -83,6 +83,7 @@ kotlin {
             implementation(projects.feature.installments.impl)
             implementation(projects.feature.budgets.impl)
             implementation(projects.feature.report.impl)
+            implementation(projects.feature.support.impl)
 
             // Arrow
             implementation(libs.arrow.core)

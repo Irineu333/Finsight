@@ -17,7 +17,7 @@ import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.mapperModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
-import com.neoutils.finsight.di.supportPlatformModule
+import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.ui.di.uiModule
@@ -33,7 +33,7 @@ fun main() = application {
             databaseModule,
             utilsModule,
             uiModule,
-            supportPlatformModule,
+            supportModule,
             mapperModule,
             accountsModule,
             categoriesModule,

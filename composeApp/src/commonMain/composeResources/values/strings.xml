@@ -86,39 +86,6 @@
     <string name="report_output_column_amount">Valor</string>
     <string name="report_output_column_percentage">%</string>
 
-    <!-- Support Screen -->
-    <string name="support_empty_title">Abra um canal direto com você</string>
-    <string name="support_empty_body">Permita que o usuário relate bugs, peça melhorias e acompanhe seu retorno sem sair do app.</string>
-    <string name="support_empty_cta">Abrir primeira issue</string>
-    <string name="support_overview_waiting">%1$d aguardando resposta</string>
-    <string name="support_overview_total">%1$d issues no total</string>
-    <string name="support_filter_active">Ativas</string>
-    <string name="support_filter_inactive">Inativas</string>
-    <string name="support_type_bug">Bug</string>
-    <string name="support_type_feature">Feature</string>
-    <string name="support_type_question">Duvida</string>
-    <string name="support_status_open">Aberta</string>
-    <string name="support_status_planned">Planejada</string>
-    <string name="support_status_doing">Em andamento</string>
-    <string name="support_status_done">Concluída</string>
-    <string name="support_form_title">Nova issue</string>
-    <string name="support_form_type">Tipo</string>
-    <string name="support_form_title_label">Titulo</string>
-    <string name="support_form_description_label">Descrição</string>
-    <string name="support_form_submit">Enviar</string>
-    <string name="support_messages_empty_title">Ainda não há mensagens</string>
-    <string name="support_messages_empty_body">A primeira resposta da conversa aparecerá aqui.</string>
-    <string name="support_reply_message_label">Mensagem</string>
-    <string name="support_reply_send">Responder</string>
-    <string name="support_chat_divider_today">Hoje</string>
-    <string name="support_chat_divider_yesterday">Ontem</string>
-
-    <!-- Support errors -->
-    <string name="support_error_empty_title">O título é obrigatório.</string>
-    <string name="support_error_empty_description">A descrição é obrigatória.</string>
-    <string name="support_error_empty_message">A mensagem não pode ser vazia.</string>
-    <string name="support_error_unknown">Ocorreu um erro. Tente novamente.</string>
-
     <!-- Transactions Screen -->
     <string name="transactions_filter_category">Categoria</string>
     <string name="transactions_filter_category_all">Todas</string>

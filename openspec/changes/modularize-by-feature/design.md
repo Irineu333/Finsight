@@ -93,11 +93,14 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 
 ---
 
-### D7: Features terminais sem `:api`
+### D7: Features terminais — `:api` apenas quando há cross-impl
 
-**Decisão:** `dashboard`, `home` e `support` têm apenas `:impl`, sem módulo `:api`.
+**Decisão:**
+- `support` tem apenas `:impl` (nenhum outro módulo o consome).
+- `dashboard` tem `:api` mínimo expondo `DashboardEntry` (consumido por `home:impl`) — ver D11.
+- `home` tem `:api` mínimo expondo `AppRoute` e `HomeRoute` (consumidos por `:app` e por features que disparam navegação para rotas top-level).
 
-**Rationale:** Nenhum outro módulo depende deles. Criar `:api` vazio só adiciona indireção sem valor.
+**Rationale:** Manter `:api` vazio é desperdício, mas onde existe consumo cross-module (D11) o `:api` é a única forma de respeitar D10 sem expor implementação.
 
 ---
 
@@ -140,6 +143,42 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 | `:feature:X:api`    | ✅         | ❌               | ❌                |
 | `:feature:X:impl`   | ✅         | ✅               | ❌                |
 | `:app`              | ✅         | ✅               | ✅                |
+
+### D11: Entry points em `:api` para acesso cross-impl a telas
+
+**Problema:** A regra D10 proíbe `:impl → :impl`. Mas `home:impl` precisa registrar rotas que renderizam telas de `dashboard` e `transactions` no seu `NavHost` interno (bottom nav). Sem mecanismo de indireção, isso forçaria `home:impl → dashboard:impl` ou `home:impl → transactions:impl`.
+
+**Decisão:** Cada feature cuja tela precisa ser renderizada por outro `:impl` expõe um **entry point** em seu `:api`:
+
+```kotlin
+// feature/<x>/api
+abstract class XxxEntry {
+    abstract fun NavGraphBuilder.register(navController: NavController)
+}
+
+// feature/<x>/impl
+class XxxEntryImpl : XxxEntry() {
+    override fun NavGraphBuilder.register(navController: NavController) {
+        composable<HomeRoute.Xxx>(...) { XxxScreen(...) }
+    }
+}
+
+// Koin (dentro do impl module)
+single<XxxEntry> { XxxEntryImpl() }
+```
+
+O consumidor (`home:impl`) injeta a `XxxEntry` via Koin e chama `register` dentro do seu próprio `NavGraphBuilder` — nunca conhece a `XxxScreen` nem o `XxxViewModel`.
+
+**Onde aplicar:**
+- `dashboard:api` → `DashboardEntry` (consumido por `home:impl`)
+- `transactions:api` → `TransactionsEntry` (consumido por `home:impl`)
+
+**Onde NÃO aplicar:**
+- Telas chamadas só pelo `AppNavHost` no `:app`. `:app` pode depender de `:impl` (D10 permite), então acessa o composable da tela diretamente.
+
+**Rationale:** Centraliza a definição de rota + composable da feature dentro da própria feature. O consumidor só conhece a interface de registro.
+
+**Alternativa rejeitada:** Mover `AppNavHost` para `home:impl` e exigir entry point em todas as features. Aumentaria boilerplate sem benefício — `:app` é o único lugar onde "depender de tudo" é aceitável e natural.
 
 ## Risks / Trade-offs
 

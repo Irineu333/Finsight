@@ -28,7 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.support.impl.resources.*
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.domain.analytics.Analytics

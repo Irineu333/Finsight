@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.support.impl.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.supportIssueForm.CreateSupportIssueModal
 import org.jetbrains.compose.resources.stringResource
@@ -45,7 +45,7 @@ fun SupportScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = stringResource(Res.string.dashboard_support))
+                    Text(text = stringResource(Res.string.support_title))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,

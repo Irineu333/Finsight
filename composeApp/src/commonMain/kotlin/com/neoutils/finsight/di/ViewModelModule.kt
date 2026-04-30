@@ -23,8 +23,6 @@ import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.ui.screen.support.SupportIssueViewModel
-import com.neoutils.finsight.ui.screen.support.SupportViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -122,25 +120,6 @@ val viewModelModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
-        )
-    }
-
-    viewModel {
-        SupportViewModel(
-            supportRepository = get(),
-            createSupportIssueUseCase = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        SupportIssueViewModel(
-            issueId = it.get(),
-            supportRepository = get(),
-            addSupportReplyUseCase = get(),
-            analytics = get(),
-            crashlytics = get(),
         )
     }
 

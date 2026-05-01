@@ -2,7 +2,9 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.database.repository.OperationRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
+import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -27,6 +29,22 @@ val transactionsModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             mapper = get(),
+        )
+    }
+
+    single<IOperationRepository> {
+        OperationRepository(
+            operationDao = get(),
+            transactionDao = get(),
+            recurringDao = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            installmentRepository = get(),
+            accountRepository = get(),
+            operationMapper = get(),
+            recurringMapper = get(),
+            transactionMapper = get(),
         )
     }
 

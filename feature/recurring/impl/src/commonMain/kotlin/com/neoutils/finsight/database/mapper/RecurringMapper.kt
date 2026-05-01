@@ -6,9 +6,9 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 
-class RecurringMapper {
+class RecurringMapper : IRecurringMapper {
 
-    fun toDomain(
+    override fun toDomain(
         entity: RecurringEntity,
         category: Category?,
         account: Account?,
@@ -29,7 +29,7 @@ class RecurringMapper {
         isActive = entity.isActive,
     )
 
-    fun toEntity(recurring: Recurring): RecurringEntity = RecurringEntity(
+    override fun toEntity(recurring: Recurring): RecurringEntity = RecurringEntity(
         id = recurring.id,
         type = when (recurring.type) {
             Recurring.Type.EXPENSE -> RecurringEntity.Type.EXPENSE

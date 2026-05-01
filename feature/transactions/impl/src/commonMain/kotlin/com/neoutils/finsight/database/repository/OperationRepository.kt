@@ -7,7 +7,7 @@ import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.entity.OperationEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
-import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.database.mapper.IRecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
@@ -40,7 +40,7 @@ class OperationRepository(
     private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
     private val operationMapper: OperationMapper,
-    private val recurringMapper: RecurringMapper,
+    private val recurringMapper: IRecurringMapper,
     private val transactionMapper: TransactionMapper,
 ) : IOperationRepository {
 

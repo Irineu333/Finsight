@@ -9,6 +9,7 @@ kotlin {
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             api(projects.core.domain)
+            implementation(projects.core.database)
         }
     }
 }

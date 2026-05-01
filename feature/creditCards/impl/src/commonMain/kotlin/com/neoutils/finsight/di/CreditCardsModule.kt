@@ -29,6 +29,8 @@ import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntryImpl
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
@@ -38,6 +40,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val creditCardsModule = module {
+
+    single<CreditCardFormModalEntry> { CreditCardFormModalEntryImpl() }
 
     single { CreditCardMapper() }
     single { InvoiceMapper() }

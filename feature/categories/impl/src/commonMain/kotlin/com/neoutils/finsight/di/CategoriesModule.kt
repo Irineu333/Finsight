@@ -5,6 +5,8 @@ import com.neoutils.finsight.database.repository.CategoryRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntryImpl
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
@@ -13,6 +15,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val categoriesModule = module {
+
+    single<CategoryFormModalEntry> { CategoryFormModalEntryImpl() }
 
     single { CategoryMapper() }
 

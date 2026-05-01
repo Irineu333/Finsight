@@ -27,26 +27,27 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.isAccept
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.add_transaction_expense
-import com.neoutils.finsight.resources.add_transaction_income
-import com.neoutils.finsight.resources.recurring_form_amount_label
-import com.neoutils.finsight.resources.recurring_form_day_label
-import com.neoutils.finsight.resources.recurring_form_save
-import com.neoutils.finsight.resources.recurring_form_title_label
+import com.neoutils.finsight.feature.recurring.impl.resources.Res
+import com.neoutils.finsight.feature.recurring.impl.resources.add_transaction_expense
+import com.neoutils.finsight.feature.recurring.impl.resources.add_transaction_income
+import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_amount_label
+import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_day_label
+import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_save
+import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_title_label
 import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.CategorySelector
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.TargetSelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DayInputTransformation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -67,6 +68,8 @@ class RecurringFormModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
+        val categoryFormEntry = koinInject<CategoryFormModalEntry>()
+        val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
 
         val viewModel = koinViewModel<RecurringFormViewModel> {
             parametersOf(recurring)
@@ -176,7 +179,7 @@ class RecurringFormModal(
                     onCreditCardSelected = {
                         viewModel.onAction(RecurringFormAction.SelectCreditCard(it))
                     },
-                    onEmpty = { manager.show(CreditCardFormModal()) },
+                    onEmpty = { manager.show(creditCardFormEntry.create()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
@@ -192,7 +195,7 @@ class RecurringFormModal(
                     Recurring.Type.EXPENSE -> uiState.expenseCategories
                 },
                 onCategorySelected = { selectedCategory = it },
-                onEmpty = { manager.show(CategoryFormModal()) },
+                onEmpty = { manager.show(categoryFormEntry.create()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 

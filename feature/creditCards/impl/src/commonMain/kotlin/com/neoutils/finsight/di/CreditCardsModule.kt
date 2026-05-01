@@ -27,7 +27,11 @@ import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
+import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
+import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
+import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -205,6 +209,46 @@ val creditCardsModule = module {
             modalManager = get(),
             debounceManager = get(),
             creditCardPeriod = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        DeleteCreditCardViewModel(
+            creditCard = it.get(),
+            deleteCreditCardUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        DeleteFutureInvoiceViewModel(
+            invoice = it.get(),
+            deleteFutureInvoiceUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        CloseInvoiceViewModel(
+            invoiceId = it.get(),
+            closeInvoiceUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        ReopenInvoiceViewModel(
+            invoiceId = it.get(),
+            reopenInvoiceUseCase = get(),
+            modalManager = get(),
             analytics = get(),
             crashlytics = get(),
         )

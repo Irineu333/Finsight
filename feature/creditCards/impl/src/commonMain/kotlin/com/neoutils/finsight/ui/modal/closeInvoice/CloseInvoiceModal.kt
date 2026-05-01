@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.creditCards.impl.resources.*
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.util.dayMonthYear

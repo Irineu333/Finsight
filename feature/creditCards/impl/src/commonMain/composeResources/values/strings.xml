@@ -24,4 +24,27 @@
     <string name="invoice_status_paid">Paga</string>
     <string name="invoice_status_retroactive">Retroativa</string>
     <string name="invoice_status_new">Nova</string>
+
+    <!-- Delete Credit Card Modal -->
+    <string name="delete_credit_card_title">Excluir Cartão</string>
+    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? As faturas e transações associadas também serão excluídas.</string>
+    <string name="delete_credit_card_confirm">Excluir</string>
+
+    <!-- Delete Future Invoice Modal -->
+    <string name="delete_future_invoice_title">Excluir Fatura</string>
+    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>
+    <string name="delete_future_invoice_confirm">Excluir</string>
+
+    <!-- Close Invoice Modal -->
+    <string name="close_invoice_title">Fechar Fatura</string>
+    <string name="close_invoice_message">Após o fechamento, a fatura não poderá receber novos gastos.</string>
+    <string name="close_invoice_date_label">Data de Fechamento</string>
+    <string name="close_invoice_confirm">Fechar Fatura</string>
+
+    <!-- Reopen Invoice Modal -->
+    <string name="reopen_invoice_title">Reabrir Fatura</string>
+    <string name="reopen_invoice_confirm_message">Tem certeza que deseja reabrir esta fatura?</string>
+    <string name="reopen_invoice_description">A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.</string>
+    <string name="reopen_invoice_cancel">Cancelar</string>
+    <string name="reopen_invoice_confirm">Reabrir</string>
 </resources>

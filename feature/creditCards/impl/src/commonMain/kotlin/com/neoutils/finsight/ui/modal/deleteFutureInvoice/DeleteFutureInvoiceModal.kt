@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.deleteCreditCard
+package com.neoutils.finsight.ui.modal.deleteFutureInvoice
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,24 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.delete_credit_card_confirm
-import com.neoutils.finsight.resources.delete_credit_card_message
-import com.neoutils.finsight.resources.delete_credit_card_title
+import com.neoutils.finsight.feature.creditCards.impl.resources.Res
+import com.neoutils.finsight.feature.creditCards.impl.resources.delete_future_invoice_confirm
+import com.neoutils.finsight.feature.creditCards.impl.resources.delete_future_invoice_message
+import com.neoutils.finsight.feature.creditCards.impl.resources.delete_future_invoice_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class DeleteCreditCardModal(
-    private val creditCard: CreditCard
+class DeleteFutureInvoiceModal(
+    private val invoice: Invoice
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-
-        val viewModel = koinViewModel<DeleteCreditCardViewModel> { parametersOf(creditCard) }
+        val viewModel = koinViewModel<DeleteFutureInvoiceViewModel> { parametersOf(invoice) }
 
         Column(
             modifier = Modifier
@@ -38,7 +37,7 @@ class DeleteCreditCardModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = stringResource(Res.string.delete_credit_card_title),
+                text = stringResource(Res.string.delete_future_invoice_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface
             )
@@ -46,7 +45,7 @@ class DeleteCreditCardModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.delete_credit_card_message, creditCard.name),
+                text = stringResource(Res.string.delete_future_invoice_message),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -55,7 +54,7 @@ class DeleteCreditCardModal(
 
             Button(
                 onClick = {
-                    viewModel.deleteCreditCard()
+                    viewModel.deleteInvoice()
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -64,7 +63,7 @@ class DeleteCreditCardModal(
                 )
             ) {
                 Text(
-                    text = stringResource(Res.string.delete_credit_card_confirm),
+                    text = stringResource(Res.string.delete_future_invoice_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

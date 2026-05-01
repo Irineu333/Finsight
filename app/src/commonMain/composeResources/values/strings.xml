@@ -247,19 +247,9 @@
     <string name="delete_transaction_title">Excluir Transação</string>
     <string name="delete_transaction_message">Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.</string>
     <string name="delete_transaction_confirm">Excluir</string>
-
-    <string name="delete_credit_card_title">Excluir Cartão</string>
-    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? As faturas e transações associadas também serão excluídas.</string>
-    <string name="delete_credit_card_confirm">Excluir</string>
-
     <string name="delete_category_title">Excluir Categoria</string>
     <string name="delete_category_message">Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas.</string>
     <string name="delete_category_confirm">Excluir</string>
-
-    <string name="delete_future_invoice_title">Excluir Fatura</string>
-    <string name="delete_future_invoice_message">Tem certeza que deseja excluir esta fatura futura? Esta ação não pode ser desfeita.</string>
-    <string name="delete_future_invoice_confirm">Excluir</string>
-
     <!-- Pay Invoice Modal -->
     <string name="pay_invoice_title">Pagar Fatura</string>
     <string name="pay_invoice_message">O pagamento será do valor total da fatura.</string>
@@ -268,18 +258,7 @@
     <string name="pay_invoice_confirm">Pagar Fatura</string>
 
     <!-- Close Invoice Modal -->
-    <string name="close_invoice_title">Fechar Fatura</string>
-    <string name="close_invoice_message">Após o fechamento, a fatura não poderá receber novos gastos.</string>
-    <string name="close_invoice_date_label">Data de Fechamento</string>
-    <string name="close_invoice_confirm">Fechar Fatura</string>
-
     <!-- Reopen Invoice Modal -->
-    <string name="reopen_invoice_title">Reabrir Fatura</string>
-    <string name="reopen_invoice_confirm_message">Tem certeza que deseja reabrir esta fatura?</string>
-    <string name="reopen_invoice_description">A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.</string>
-    <string name="reopen_invoice_cancel">Cancelar</string>
-    <string name="reopen_invoice_confirm">Reabrir</string>
-
     <!-- Advance Payment Modal -->
     <string name="advance_payment_title">Antecipar Pagamento</string>
     <string name="advance_payment_description">Pague parte da fatura antes do fechamento.</string>

@@ -7,13 +7,9 @@ import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
-import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
-import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
-import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
-import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
@@ -139,27 +135,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        DeleteFutureInvoiceViewModel(
-            invoice = it.get(),
-            deleteFutureInvoiceUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteCreditCardViewModel(
-            creditCard = it.get(),
-            deleteCreditCardUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-
-    viewModel {
         EditAccountBalanceViewModel(
             type = it.get(),
             account = it.get(),
@@ -202,16 +177,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        CloseInvoiceViewModel(
-            invoiceId = it.get(),
-            closeInvoiceUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
         AdvancePaymentViewModel(
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
@@ -222,15 +187,6 @@ val viewModelModule = module {
         )
     }
 
-    viewModel {
-        ReopenInvoiceViewModel(
-            invoiceId = it.get(),
-            reopenInvoiceUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
 
     viewModel {
         TransferBetweenAccountsViewModel(

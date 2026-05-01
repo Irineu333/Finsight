@@ -26,6 +26,7 @@ import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import org.koin.core.module.dsl.viewModel
@@ -184,6 +185,13 @@ val creditCardsModule = module {
         DeleteFutureInvoiceUseCase(
             invoiceRepository = get(),
             operationRepository = get(),
+        )
+    }
+
+    factory {
+        InvoiceUiMapper(
+            calculateInvoiceUseCase = get(),
+            calculateAvailableLimitUseCase = get(),
         )
     }
 

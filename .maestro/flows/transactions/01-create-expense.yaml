@@ -21,7 +21,7 @@ tags:
     id: "transactions-fab"
 - extendedWaitUntil:
     visible:
-      id: "transaction-form-amount"
+      id: "transaction-form-title"
     timeout: 5000
 
 - tapOn:
@@ -29,11 +29,11 @@ tags:
 - inputText: "E2E Expense"
 - hideKeyboard
 
-- tapOn:
-    id: "transaction-form-amount"
-- inputText: "5000"
-- hideKeyboard
-
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-category"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
     id: "transaction-form-category"
 - extendedWaitUntil:
@@ -43,15 +43,31 @@ tags:
 - tapOn:
     text: "E2E Food"
 
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-amount"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "5000"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-submit"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
     id: "transaction-form-submit"
 - extendedWaitUntil:
     visible:
       id: "dashboard-root"
     timeout: 10000
-- assertVisible:
-    id: "dashboard-total-balance"
 
+# Dashboard fica scrollado até as Quick Actions depois dos seeds; vamos
+# direto à aba Transactions para confirmar a transação no formato estável
+# (texto do título), evitando depender da posição do TotalBalanceCard.
 - tapOn:
     id: "bottom-nav-transactions"
 - extendedWaitUntil:

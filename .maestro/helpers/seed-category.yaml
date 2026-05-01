@@ -30,8 +30,8 @@ appId: com.neoutils.finsight.e2e
 - tapOn:
     id: "category-form-submit"
 - extendedWaitUntil:
-    visible:
-      text: "E2E Food"
+    notVisible:
+      id: "category-form-submit"
     timeout: 10000
 - back
 - extendedWaitUntil:

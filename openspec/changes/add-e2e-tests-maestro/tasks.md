@@ -39,7 +39,7 @@
 - [x] 3.10 Escrever `flows/transactions/02-create-income.yaml`: reset → cria receita (sem categoria, basta título para `TransactionForm.isValid()`) → assert na lista
 - [x] 3.11 Escrever `flows/transactions/03-edit-transaction.yaml`: reset → seed category → cria despesa "E2E Expense" → abre via `ViewOperationModal` → edita título para "E2E Edited" → assert que o novo título aparece e o antigo some
 - [x] 3.12 Escrever `flows/transactions/04-delete-transaction.yaml`: reset → seed category → cria despesa → deleta via `ViewOperationModal` + `DeleteTransactionModal` → assert item ausente e Dashboard renderizando saldo total
-- [ ] 3.13 Rodar a suíte completa local (Android e iOS); investigar e corrigir qualquer flaky antes de merge
+- [x] 3.13 Rodar a suíte completa local (Android e iOS); investigar e corrigir qualquer flaky antes de merge — _Android validado em emulador (Galaxy_A54 API 17): 6/6 flows verdes em ~3min 21s. Necessário aplicar `Modifier.semantics { testTagsAsResourceId = true }` dentro do `ModalBottomSheet` (extensão `Modifier.testTagsAsResourceIdSemantics()`) porque a flag aplicada na MainActivity não propaga para popups. iOS continua adiado conforme exceção das tasks 1.8/2.6._
 - [ ] 3.14 Disparar workflow no CI e confirmar 6 flows verdes (2 smoke + 4 transactions)
 
 ## 4. Fase 4 — Movimentações compostas (P3)

@@ -17,7 +17,7 @@ tags:
     id: "transactions-fab"
 - extendedWaitUntil:
     visible:
-      id: "transaction-form-amount"
+      id: "transaction-form-title"
     timeout: 5000
 
 - tapOn:
@@ -28,19 +28,27 @@ tags:
 - inputText: "E2E Income"
 - hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-amount"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
     id: "transaction-form-amount"
 - inputText: "10000"
 - hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-submit"
+    direction: DOWN
+    timeout: 5000
 - tapOn:
     id: "transaction-form-submit"
 - extendedWaitUntil:
     visible:
       id: "dashboard-root"
     timeout: 10000
-- assertVisible:
-    id: "dashboard-total-balance"
 
 - tapOn:
     id: "bottom-nav-transactions"

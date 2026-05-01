@@ -12,6 +12,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
+import com.neoutils.finsight.extension.testTagsAsResourceIdSemantics
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -95,6 +96,7 @@ abstract class ModalBottomSheet : Modal(), ViewModelStoreOwner {
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true
             ),
+            modifier = Modifier.testTagsAsResourceIdSemantics(),
             content = {
 
                 CompositionLocalProvider(providedValue) {

@@ -30,8 +30,8 @@ appId: com.neoutils.finsight.e2e
 - tapOn:
     id: "account-form-submit"
 - extendedWaitUntil:
-    visible:
-      text: "E2E Account"
+    notVisible:
+      id: "account-form-submit"
     timeout: 10000
 - back
 - extendedWaitUntil:

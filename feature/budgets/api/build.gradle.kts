@@ -6,6 +6,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core.domain)
+            api(projects.feature.recurring.api)
             implementation(libs.kotlinx.coroutinesCore)
         }
     }

@@ -8,26 +8,23 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.category_spending_card_title
+import com.neoutils.finsight.ui.theme.budgetProgressColor
+import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.budget_progress_card_title
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun CategorySpendingCard(
-    categorySpending: List<CategorySpending>,
-    title: String? = null,
+fun BudgetProgressCard(
+    budgetProgress: List<BudgetProgress>,
     modifier: Modifier = Modifier,
-    onCategoryClick: (Category) -> Unit = {}
+    onBudgetClick: (BudgetProgress) -> Unit = {},
 ) {
     Card(
         modifier = modifier,
@@ -41,21 +38,21 @@ fun CategorySpendingCard(
             modifier = Modifier
                 .padding(vertical = 16.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = title ?: stringResource(Res.string.category_spending_card_title),
+                text = stringResource(Res.string.budget_progress_card_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
 
-            categorySpending.forEach { spending ->
-                CategorySpendingItem(
-                    spending = spending,
+            budgetProgress.take(3).forEach { progress ->
+                BudgetProgressRow(
+                    progress = progress,
                     modifier = Modifier
-                        .clickable { onCategoryClick(spending.category) }
                         .padding(horizontal = 16.dp)
+                        .clickable { onBudgetClick(progress) },
                 )
             }
         }
@@ -63,25 +60,26 @@ fun CategorySpendingCard(
 }
 
 @Composable
-private fun CategorySpendingItem(
-    spending: CategorySpending,
+private fun BudgetProgressRow(
+    progress: BudgetProgress,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current
+    val accentColor = budgetProgressColor(progress.progress)
 
     Row(
         modifier = modifier
             .height(IntrinsicSize.Min)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-
         CategoryIconBox(
-            category = spending.category,
+            imageVector = AppIcon.fromKey(progress.budget.iconKey).icon,
+            tint = accentColor,
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(8.dp),
-            modifier = Modifier.aspectRatio(1f),
+            modifier = Modifier.size(40.dp),
         )
 
         Column(
@@ -93,30 +91,27 @@ private fun CategorySpendingItem(
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
-                    text = spending.category.name,
+                    text = progress.budget.title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                 )
-
                 Text(
-                    text = formatter.format(spending.amount),
-                    fontSize = 14.sp,
+                    text = "${formatter.format(progress.spent)} / ${formatter.format(progress.budget.amount)}",
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface,
                 )
             }
 
             LinearProgressIndicator(
-                progress = { (spending.percentage / 100).toFloat() },
+                progress = { progress.progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = when (spending.category.type) {
-                    Category.Type.INCOME -> Income
-                    Category.Type.EXPENSE -> Expense
-                },
+                color = accentColor,
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},

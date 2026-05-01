@@ -40,4 +40,8 @@
     <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
     <string name="dashboard_credit_card_advance">Antecipar</string>
     <string name="invoice_selector_label">Fatura</string>
+    <string name="category_selector_label">Categoria</string>
+    <string name="category_selector_none">Nenhuma</string>
+    <string name="category_spending_card_title">Gastos por Categoria</string>
+    <string name="budget_progress_card_title">Orçamentos</string>
 </resources>

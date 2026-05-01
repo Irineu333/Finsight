@@ -600,8 +600,4 @@
     <string name="preview_transaction_netflix">Netflix</string>
     <string name="preview_transaction_spotify">Spotify</string>
     <string name="preview_budget_food">Food</string>
-    <string name="category_selector_label">Category</string>
-    <string name="category_selector_none">None</string>
-    <string name="category_spending_card_title">Spending by Category</string>
-    <string name="budget_progress_card_title">Budgets</string>
 </resources>

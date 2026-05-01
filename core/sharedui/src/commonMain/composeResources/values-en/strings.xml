@@ -41,4 +41,8 @@
     <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
     <string name="dashboard_credit_card_advance">Advance</string>
     <string name="invoice_selector_label">Invoice</string>
+    <string name="category_selector_label">Category</string>
+    <string name="category_selector_none">None</string>
+    <string name="category_spending_card_title">Spending by Category</string>
+    <string name="budget_progress_card_title">Budgets</string>
 </resources>

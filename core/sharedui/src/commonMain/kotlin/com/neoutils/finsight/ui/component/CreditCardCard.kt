@@ -25,7 +25,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toUiText
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.core.sharedui.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.util.dayMonth

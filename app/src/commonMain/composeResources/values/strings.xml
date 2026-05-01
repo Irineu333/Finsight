@@ -510,18 +510,6 @@
     <string name="preview_budget_food">Alimentação</string>
     <string name="category_selector_label">Categoria</string>
     <string name="category_selector_none">Nenhuma</string>
-    <string name="invoice_navigator_label">Fatura</string>
-    <string name="credit_card_ui_current_invoice">Fatura Atual</string>
-    <string name="credit_card_ui_available_limit">Limite Disponível</string>
-    <string name="credit_card_ui_opens_on">Abre em</string>
-    <string name="credit_card_ui_closes_on">Fecha em</string>
-    <string name="credit_card_ui_due_on">Vence em</string>
-    <string name="credit_card_ui_day">Dia %1$d</string>
-    <string name="credit_card_ui_edit_invoice">Editar fatura</string>
-    <string name="dashboard_credit_card_close_invoice">Fechar Fatura</string>
-    <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
-    <string name="dashboard_credit_card_advance">Antecipar</string>
     <string name="category_spending_card_title">Gastos por Categoria</string>
     <string name="budget_progress_card_title">Orçamentos</string>
-    <string name="invoice_selector_label">Fatura</string>
 </resources>

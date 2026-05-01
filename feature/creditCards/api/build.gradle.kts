@@ -1,5 +1,6 @@
 plugins {
-    id("kmp-library")
+    id("kmp-compose")
+    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -9,8 +10,15 @@ kotlin {
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             api(projects.core.domain)
+            implementation(projects.core.ui)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.neoutils.finsight.feature.creditCards.api.resources"
+    generateResClass = auto
 }
 
 android {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="credit_card_error_empty_name">Card name is required.</string>
+    <string name="credit_card_error_already_exist_name">A card with this name already exists.</string>
+    <string name="credit_card_error_negative_limit">Limit cannot be negative.</string>
+    <string name="credit_card_error_missing_closing_day">Closing day is required.</string>
+    <string name="credit_card_error_invalid_closing_day">Closing day must be between 1 and 31.</string>
+    <string name="credit_card_error_missing_due_day">Due day is required.</string>
+    <string name="credit_card_error_invalid_due_day">Due day must be between 1 and 31.</string>
+    <string name="credit_card_error_not_found">Credit card not found.</string>
+    <string name="invoice_status_future">Future</string>
+    <string name="invoice_status_open">Open</string>
+    <string name="invoice_status_closed">Closed</string>
+    <string name="invoice_status_paid">Paid</string>
+    <string name="invoice_status_retroactive">Retroactive</string>
+    <string name="invoice_status_new">New</string>
+</resources>

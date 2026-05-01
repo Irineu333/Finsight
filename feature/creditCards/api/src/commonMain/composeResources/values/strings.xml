@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="credit_card_error_empty_name">O nome do cartão é obrigatório.</string>
+    <string name="credit_card_error_already_exist_name">Já existe um cartão com esse nome.</string>
+    <string name="credit_card_error_negative_limit">O limite não pode ser negativo.</string>
+    <string name="credit_card_error_missing_closing_day">O dia de fechamento é obrigatório.</string>
+    <string name="credit_card_error_invalid_closing_day">O dia de fechamento deve ser entre 1 e 31.</string>
+    <string name="credit_card_error_missing_due_day">O dia de vencimento é obrigatório.</string>
+    <string name="credit_card_error_invalid_due_day">O dia de vencimento deve ser entre 1 e 31.</string>
+    <string name="credit_card_error_not_found">Cartão de crédito não encontrado.</string>
+    <string name="invoice_status_future">Futura</string>
+    <string name="invoice_status_open">Aberta</string>
+    <string name="invoice_status_closed">Fechada</string>
+    <string name="invoice_status_paid">Paga</string>
+    <string name="invoice_status_retroactive">Retroativa</string>
+    <string name="invoice_status_new">Nova</string>
+</resources>

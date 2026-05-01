@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.invoice_navigator_label
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.invoice_navigator_label
 import com.neoutils.finsight.extension.toLabel
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth

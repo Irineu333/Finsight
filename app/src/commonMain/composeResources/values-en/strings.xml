@@ -20,15 +20,6 @@
     <string name="budget_error_already_exist">A budget with this title already exists.</string>
 
     <!-- Credit card errors -->
-    <string name="credit_card_error_empty_name">Card name is required.</string>
-    <string name="credit_card_error_already_exist_name">A card with this name already exists.</string>
-    <string name="credit_card_error_negative_limit">Limit cannot be negative.</string>
-    <string name="credit_card_error_missing_closing_day">Closing day is required.</string>
-    <string name="credit_card_error_invalid_closing_day">Closing day must be between 1 and 31.</string>
-    <string name="credit_card_error_missing_due_day">Due day is required.</string>
-    <string name="credit_card_error_invalid_due_day">Due day must be between 1 and 31.</string>
-    <string name="credit_card_error_not_found">Credit card not found.</string>
-
     <!-- Transfer errors -->
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>
@@ -430,13 +421,6 @@
     <string name="invoice_summary_card_invoice">Invoice</string>
     <string name="invoice_summary_card_edit_invoice">Edit invoice</string>
     <!-- Invoice statuses -->
-    <string name="invoice_status_future">Future</string>
-    <string name="invoice_status_open">Open</string>
-    <string name="invoice_status_closed">Closed</string>
-    <string name="invoice_status_paid">Paid</string>
-    <string name="invoice_status_retroactive">Retroactive</string>
-    <string name="invoice_status_new">New</string>
-
     <!-- Default category names -->
     <string name="category_default_salary">Salary</string>
     <string name="category_default_freelance">Freelance</string>
@@ -618,18 +602,6 @@
     <string name="preview_budget_food">Food</string>
     <string name="category_selector_label">Category</string>
     <string name="category_selector_none">None</string>
-    <string name="invoice_navigator_label">Invoice</string>
-    <string name="credit_card_ui_current_invoice">Current Invoice</string>
-    <string name="credit_card_ui_available_limit">Available Limit</string>
-    <string name="credit_card_ui_opens_on">Opens on</string>
-    <string name="credit_card_ui_closes_on">Closes on</string>
-    <string name="credit_card_ui_due_on">Due on</string>
-    <string name="credit_card_ui_day">Day %1$d</string>
-    <string name="credit_card_ui_edit_invoice">Edit invoice</string>
-    <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
-    <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
-    <string name="dashboard_credit_card_advance">Advance</string>
     <string name="category_spending_card_title">Spending by Category</string>
     <string name="budget_progress_card_title">Budgets</string>
-    <string name="invoice_selector_label">Invoice</string>
 </resources>

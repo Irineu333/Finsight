@@ -28,14 +28,12 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.feature.transactions.impl.resources.Res as TransactionsImplRes
-import com.neoutils.finsight.feature.transactions.impl.resources.view_operation_invoice_label
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -45,7 +43,8 @@ import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
+import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -76,11 +75,12 @@ class ViewOperationModal(
 
         val manager = LocalModalManager.current
         val navigationDispatcher = LocalNavigationDispatcher.current
+        val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
 
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.OpenRecurring -> manager.show(ViewRecurringModal(event.recurring))
+                    is ViewOperationEvent.OpenRecurring -> manager.show(viewRecurringEntry.create(event.recurring))
                 }
             }
         }
@@ -274,7 +274,7 @@ class ViewOperationModal(
             uiState.transaction.invoice?.let { invoice ->
                 val creditCardId = uiState.transaction.creditCard?.id
                 DetailRow(
-                    label = stringResource(TransactionsImplRes.string.view_operation_invoice_label),
+                    label = stringResource(Res.string.view_operation_invoice_label),
                     value = invoice.toLabel(),
                     valueColor = Color(invoice.status.colorValue),
                     modifier = Modifier.padding(top = 8.dp),

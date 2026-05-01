@@ -2,6 +2,8 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.IRecurringMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntryImpl
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.RecurringRepository
@@ -23,6 +25,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val recurringModule = module {
+
+    single<ViewRecurringModalEntry> { ViewRecurringModalEntryImpl() }
 
     factory<IRecurringMapper> { RecurringMapper() }
     factory { RecurringMapper() }

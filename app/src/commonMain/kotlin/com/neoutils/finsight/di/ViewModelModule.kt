@@ -11,7 +11,6 @@ import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewM
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
@@ -24,15 +23,6 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 val viewModelModule = module {
-
-    viewModel {
-        ViewOperationViewModel(
-            operation = it.get(),
-            perspective = it.getOrNull(),
-            operationRepository = get(),
-            recurringRepository = get(),
-        )
-    }
 
     factory {
         DashboardComponentsBuilder(

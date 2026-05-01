@@ -10,4 +10,11 @@
     <string name="view_adjustment_credit_card_label">Credit Card</string>
     <string name="view_adjustment_deleted">Deleted</string>
     <string name="view_adjustment_delete_label">Delete Adjustment</string>
+    <string name="edit_transaction_title">Edit Transaction</string>
+    <string name="edit_transaction_title_label">Title</string>
+    <string name="edit_transaction_amount_label">Amount</string>
+    <string name="edit_transaction_date_label">Date</string>
+    <string name="edit_transaction_save">Save</string>
+    <string name="edit_transaction_expense">Expense</string>
+    <string name="edit_transaction_income">Income</string>
 </resources>

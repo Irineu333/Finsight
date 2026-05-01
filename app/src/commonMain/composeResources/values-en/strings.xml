@@ -344,14 +344,6 @@
     <!-- Edit Invoice Payment Modal -->
 
     <!-- Edit Transaction Modal -->
-    <string name="edit_transaction_title">Edit Transaction</string>
-    <string name="edit_transaction_title_label">Title</string>
-    <string name="edit_transaction_amount_label">Amount</string>
-    <string name="edit_transaction_date_label">Date</string>
-    <string name="edit_transaction_save">Save</string>
-    <string name="edit_transaction_expense">Expense</string>
-    <string name="edit_transaction_income">Income</string>
-
     <!-- View Operation Modal -->
     <string name="view_operation_type_income">Income</string>
     <string name="view_operation_type_expense">Expense</string>

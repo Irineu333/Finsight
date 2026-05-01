@@ -74,4 +74,11 @@
     <string name="view_adjustment_credit_card_label">Cartão de Crédito</string>
     <string name="view_adjustment_deleted">Excluído</string>
     <string name="view_adjustment_delete_label">Excluir Ajuste</string>
+    <string name="edit_transaction_title">Editar Transação</string>
+    <string name="edit_transaction_title_label">Título</string>
+    <string name="edit_transaction_amount_label">Valor</string>
+    <string name="edit_transaction_date_label">Data</string>
+    <string name="edit_transaction_save">Salvar</string>
+    <string name="edit_transaction_expense">Despesa</string>
+    <string name="edit_transaction_income">Receita</string>
 </resources>

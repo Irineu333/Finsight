@@ -12,6 +12,7 @@ kotlin {
             implementation(projects.feature.creditCards.api)
             implementation(projects.feature.installments.api)
             implementation(projects.feature.recurring.api)
+            implementation(projects.feature.home.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
             implementation(projects.core.sharedui)

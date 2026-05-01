@@ -12,6 +12,9 @@ import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
+import com.neoutils.finsight.ui.screen.transactions.TransactionsEntry
+import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
+import com.neoutils.finsight.ui.screen.transactions.entry.TransactionsEntryImpl
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
@@ -25,6 +28,7 @@ import org.koin.dsl.module
 
 val transactionsModule = module {
 
+    single<TransactionsEntry> { TransactionsEntryImpl() }
     single<ViewOperationModalEntry> { ViewOperationModalEntryImpl() }
     single<ViewAdjustmentModalEntry> { ViewAdjustmentModalEntryImpl() }
 
@@ -127,6 +131,18 @@ val transactionsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        TransactionsViewModel(
+            filterType = getOrNull(),
+            category = getOrNull(),
+            filterTarget = getOrNull(),
+            operationRepository = get(),
+            categoryRepository = get(),
+            calculateBalanceUseCase = get(),
+            calculateTransactionStatsUseCase = get(),
         )
     }
 }

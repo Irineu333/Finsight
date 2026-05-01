@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
@@ -29,11 +29,12 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.component.SummaryCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
@@ -64,6 +65,8 @@ private fun TransactionsContent(
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
 
     Scaffold(
         topBar = {
@@ -142,11 +145,11 @@ private fun TransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
+                                    modalManager.show(viewAdjustmentEntry.create(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    modalManager.show(viewOperationEntry.create(operation))
                                 }
                             }
                         }

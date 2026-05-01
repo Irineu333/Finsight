@@ -8,7 +8,6 @@ import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -49,18 +48,6 @@ val viewModelModule = module {
             dashboardPreviewFactory = get(),
             analytics = get(),
             crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        TransactionsViewModel(
-            filterType = getOrNull(),
-            category = getOrNull(),
-            filterTarget = getOrNull(),
-            operationRepository = get(),
-            categoryRepository = get(),
-            calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
         )
     }
 

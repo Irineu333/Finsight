@@ -7,4 +7,15 @@
     <string name="transfer_error_destination_account_not_found">Destination account not found.</string>
     <string name="transfer_error_future_date">Transfer date cannot be in the future.</string>
     <string name="transfer_error_unknown">Unable to complete the transfer.</string>
+    <string name="transfer_title">Transfer between accounts</string>
+    <string name="transfer_source_account_label">Source account</string>
+    <string name="transfer_destination_account_label">Destination account</string>
+    <string name="transfer_amount_label">Amount</string>
+    <string name="transfer_date_label">Date</string>
+    <string name="transfer_confirm">Transfer</string>
+    <string name="edit_account_balance_current_title">Edit Current Balance</string>
+    <string name="edit_account_balance_final_title">Edit Final Balance</string>
+    <string name="edit_account_balance_initial_title">Edit Initial Balance</string>
+    <string name="edit_account_balance_label">Balance</string>
+    <string name="edit_account_balance_save">Save</string>
 </resources>

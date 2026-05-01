@@ -26,4 +26,15 @@
     <string name="transfer_error_destination_account_not_found">Conta de destino não encontrada.</string>
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
+    <string name="transfer_title">Transferir entre contas</string>
+    <string name="transfer_source_account_label">Conta de origem</string>
+    <string name="transfer_destination_account_label">Conta de destino</string>
+    <string name="transfer_amount_label">Valor</string>
+    <string name="transfer_date_label">Data</string>
+    <string name="transfer_confirm">Transferir</string>
+    <string name="edit_account_balance_current_title">Editar Saldo Atual</string>
+    <string name="edit_account_balance_final_title">Editar Saldo Final</string>
+    <string name="edit_account_balance_initial_title">Editar Saldo Inicial</string>
+    <string name="edit_account_balance_label">Saldo</string>
+    <string name="edit_account_balance_save">Salvar</string>
 </resources>

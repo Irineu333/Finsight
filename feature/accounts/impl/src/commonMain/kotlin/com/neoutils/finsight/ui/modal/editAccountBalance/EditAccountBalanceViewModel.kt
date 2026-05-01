@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,7 +28,7 @@ class EditAccountBalanceViewModel(
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
     private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val calculateBalanceUseCase: ICalculateBalanceUseCase,
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,

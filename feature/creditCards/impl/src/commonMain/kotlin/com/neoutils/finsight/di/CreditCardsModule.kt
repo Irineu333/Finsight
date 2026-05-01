@@ -34,6 +34,9 @@ import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntryImp
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
+import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
+import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
+import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import org.koin.core.module.dsl.viewModel
@@ -253,6 +256,43 @@ val creditCardsModule = module {
         ReopenInvoiceViewModel(
             invoiceId = it.get(),
             reopenInvoiceUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        EditInvoiceBalanceViewModel(
+            initialInvoice = it.get(),
+            adjustInvoiceUseCase = get(),
+            calculateInvoiceUseCase = get(),
+            invoiceRepository = get(),
+            creditCardRepository = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        PayInvoiceViewModel(
+            invoiceId = it.get(),
+            payInvoicePaymentUseCase = get(),
+            payInvoiceUseCase = get(),
+            calculateInvoiceUseCase = get(),
+            accountRepository = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        AdvancePaymentViewModel(
+            invoiceId = it.get(),
+            advanceInvoicePaymentUseCase = get(),
+            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

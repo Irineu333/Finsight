@@ -280,41 +280,12 @@
     <string name="delete_installment_message">Are you sure you want to delete this installment? All %1$d installments will be removed. This action cannot be undone.</string>
     <string name="delete_installment_confirm">Delete</string>
     <!-- Pay Invoice Modal -->
-    <string name="pay_invoice_title">Pay Invoice</string>
-    <string name="pay_invoice_message">The payment will be the total amount of the invoice.</string>
-    <string name="pay_invoice_amount_label">Invoice Amount</string>
-    <string name="pay_invoice_date_label">Payment Date</string>
-    <string name="pay_invoice_confirm">Pay Invoice</string>
-
     <!-- Close Invoice Modal -->
     <!-- Reopen Invoice Modal -->
     <!-- Advance Payment Modal -->
-    <string name="advance_payment_title">Advance Payment</string>
-    <string name="advance_payment_description">Pay part of the invoice before closing.</string>
-    <string name="advance_payment_amount_label">Amount</string>
-    <string name="advance_payment_date_label">Date</string>
-    <string name="advance_payment_confirm">Advance Payment</string>
-
     <!-- Transfer Between Accounts Modal -->
-    <string name="transfer_title">Transfer between accounts</string>
-    <string name="transfer_source_account_label">Source account</string>
-    <string name="transfer_destination_account_label">Destination account</string>
-    <string name="transfer_amount_label">Amount</string>
-    <string name="transfer_date_label">Date</string>
-    <string name="transfer_confirm">Transfer</string>
-
     <!-- Edit Account Balance Modal -->
-    <string name="edit_account_balance_current_title">Edit Current Balance</string>
-    <string name="edit_account_balance_final_title">Edit Final Balance</string>
-    <string name="edit_account_balance_initial_title">Edit Initial Balance</string>
-    <string name="edit_account_balance_label">Balance</string>
-    <string name="edit_account_balance_save">Save</string>
-
     <!-- Edit Invoice Balance Modal -->
-    <string name="edit_invoice_balance_title">Edit Invoice</string>
-    <string name="edit_invoice_balance_label">Amount</string>
-    <string name="edit_invoice_balance_save">Save</string>
-
     <!-- Edit Invoice Payment Modal -->
 
     <!-- Edit Transaction Modal -->

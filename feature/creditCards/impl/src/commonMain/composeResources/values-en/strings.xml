@@ -22,4 +22,17 @@
     <string name="reopen_invoice_description">The invoice will return to \"Open\" status and you can add new transactions.</string>
     <string name="reopen_invoice_cancel">Cancel</string>
     <string name="reopen_invoice_confirm">Reopen</string>
+    <string name="pay_invoice_title">Pay Invoice</string>
+    <string name="pay_invoice_message">The payment will be the total amount of the invoice.</string>
+    <string name="pay_invoice_amount_label">Invoice Amount</string>
+    <string name="pay_invoice_date_label">Payment Date</string>
+    <string name="pay_invoice_confirm">Pay Invoice</string>
+    <string name="advance_payment_title">Advance Payment</string>
+    <string name="advance_payment_description">Pay part of the invoice before closing.</string>
+    <string name="advance_payment_amount_label">Amount</string>
+    <string name="advance_payment_date_label">Date</string>
+    <string name="advance_payment_confirm">Advance Payment</string>
+    <string name="edit_invoice_balance_title">Edit Invoice</string>
+    <string name="edit_invoice_balance_label">Amount</string>
+    <string name="edit_invoice_balance_save">Save</string>
 </resources>

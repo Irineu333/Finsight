@@ -32,4 +32,17 @@
     <string name="reopen_invoice_description">A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.</string>
     <string name="reopen_invoice_cancel">Cancelar</string>
     <string name="reopen_invoice_confirm">Reabrir</string>
+    <string name="pay_invoice_title">Pagar Fatura</string>
+    <string name="pay_invoice_message">O pagamento será do valor total da fatura.</string>
+    <string name="pay_invoice_amount_label">Valor da Fatura</string>
+    <string name="pay_invoice_date_label">Data do Pagamento</string>
+    <string name="pay_invoice_confirm">Pagar Fatura</string>
+    <string name="advance_payment_title">Antecipar Pagamento</string>
+    <string name="advance_payment_description">Pague parte da fatura antes do fechamento.</string>
+    <string name="advance_payment_amount_label">Valor</string>
+    <string name="advance_payment_date_label">Data</string>
+    <string name="advance_payment_confirm">Antecipar Pagamento</string>
+    <string name="edit_invoice_balance_title">Editar Fatura</string>
+    <string name="edit_invoice_balance_label">Valor</string>
+    <string name="edit_invoice_balance_save">Salvar</string>
 </resources>

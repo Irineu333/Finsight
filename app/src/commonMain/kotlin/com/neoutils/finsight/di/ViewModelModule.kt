@@ -5,11 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
-import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
-import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
-import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
@@ -88,71 +83,6 @@ val viewModelModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
-        )
-    }
-
-    viewModel {
-        EditAccountBalanceViewModel(
-            type = it.get(),
-            account = it.get(),
-            targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
-            adjustBalanceUseCase = get(),
-            adjustFinalBalanceUseCase = get(),
-            adjustInitialBalanceUseCase = get(),
-            calculateBalanceUseCase = get(),
-            accountRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        EditInvoiceBalanceViewModel(
-            initialInvoice = it.get(),
-            adjustInvoiceUseCase = get(),
-            calculateInvoiceUseCase = get(),
-            invoiceRepository = get(),
-            creditCardRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        PayInvoiceViewModel(
-            invoiceId = it.get(),
-            payInvoicePaymentUseCase = get(),
-            payInvoiceUseCase = get(),
-            calculateInvoiceUseCase = get(),
-            accountRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        AdvancePaymentViewModel(
-            invoiceId = it.get(),
-            advanceInvoicePaymentUseCase = get(),
-            accountRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-
-    viewModel {
-        TransferBetweenAccountsViewModel(
-            initialSourceAccount = it.get(),
-            transferBetweenAccountsUseCase = get(),
-            accountRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
         )
     }
 

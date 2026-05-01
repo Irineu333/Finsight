@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
+import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -60,6 +61,14 @@ val categoriesModule = module {
             repository = get(),
             modalManager = get(),
             analytics = get(),
+        )
+    }
+
+    viewModel {
+        ViewCategoryViewModel(
+            category = it.get(),
+            categoryRepository = get(),
+            transactionRepository = get(),
         )
     }
 }

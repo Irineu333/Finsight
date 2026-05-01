@@ -324,14 +324,6 @@
     <string name="view_adjustment_delete_label">Excluir Ajuste</string>
 
     <!-- View Category Modal -->
-    <string name="view_category_type_income">Receita</string>
-    <string name="view_category_type_expense">Despesa</string>
-    <string name="view_category_total_received">Total Recebido</string>
-    <string name="view_category_total_spent">Total Gasto</string>
-    <string name="view_category_transactions_month">Transações no Mês</string>
-    <string name="view_category_delete">Excluir</string>
-    <string name="view_category_edit">Editar</string>
-
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentual</string>
     <string name="view_budget_limit_label">Limite</string>

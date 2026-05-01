@@ -387,14 +387,6 @@
     <string name="view_adjustment_delete_label">Delete Adjustment</string>
 
     <!-- View Category Modal -->
-    <string name="view_category_type_income">Income</string>
-    <string name="view_category_type_expense">Expense</string>
-    <string name="view_category_total_received">Total Received</string>
-    <string name="view_category_total_spent">Total Spent</string>
-    <string name="view_category_transactions_month">Transactions this Month</string>
-    <string name="view_category_delete">Delete</string>
-    <string name="view_category_edit">Edit</string>
-
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentage</string>
     <string name="view_budget_limit_label">Limit</string>

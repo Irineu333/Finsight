@@ -5,7 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
@@ -62,27 +61,6 @@ val viewModelModule = module {
             categoryRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
-        )
-    }
-
-    viewModel {
-        CreditCardsViewModel(
-            initialCreditCardId = it.getOrNull(),
-            creditCardRepository = get(),
-            operationRepository = get(),
-            invoiceRepository = get(),
-            invoiceUiMapper = get(),
-            categoryRepository = get(),
-        )
-    }
-
-    viewModel {
-        com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsViewModel(
-            creditCardId = it.get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            operationRepository = get(),
-            categoryRepository = get(),
         )
     }
 

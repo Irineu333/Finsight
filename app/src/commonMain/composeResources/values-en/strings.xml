@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Invoice date labels -->
-    <string name="invoice_opens_on">opens on %1$s</string>
-    <string name="invoice_closes_on">closes on %1$s</string>
-    <string name="invoice_due_on">due on %1$s</string>
-    <string name="invoice_paid_on">paid on %1$s</string>
-
     <!-- Account errors -->
     <string name="account_error_empty_name">Account name cannot be empty.</string>
     <string name="account_error_already_exist">An account with this name already exists.</string>
@@ -125,27 +120,8 @@
     <string name="transactions_filter_account">Account</string>
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>
-    <string name="transactions_filter_installment">Installments</string>
-
     <!-- Installments Screen -->
     <!-- Credit Cards Screen -->
-    <string name="credit_cards_title">Credit Cards</string>
-    <string name="credit_cards_empty">No credit cards</string>
-    <string name="credit_cards_create">Create card</string>
-    <string name="credit_cards_delete">Delete</string>
-    <string name="credit_cards_edit">Edit</string>
-    <string name="credit_cards_advance_payment">Advance Payment</string>
-    <string name="credit_cards_close_invoice">Close Invoice</string>
-    <string name="credit_cards_reopen_invoice">Reopen Invoice</string>
-    <string name="credit_cards_pay_invoice">Pay Invoice</string>
-    <string name="credit_cards_filter_category">Category</string>
-    <string name="credit_cards_filter_category_all">All</string>
-    <string name="credit_cards_filter_type">Type</string>
-    <string name="credit_cards_filter_type_all">All</string>
-    <string name="credit_cards_filter_type_expense">Expense</string>
-    <string name="credit_cards_filter_type_adjustment">Adjustment</string>
-    <string name="credit_cards_filter_type_payment">Payment</string>
-
     <!-- Accounts Screen -->
     <!-- Categories Screen -->
     <string name="categories_title">Categories</string>
@@ -157,25 +133,6 @@
 
     <!-- Budgets Screen -->
     <!-- Invoice Transactions Screen -->
-    <string name="invoice_transactions_edit_card">Edit Card</string>
-    <string name="invoice_transactions_delete_card">Delete Card</string>
-    <string name="invoice_transactions_expenses">Expenses</string>
-    <string name="invoice_transactions_advance_payments">Advance Payments</string>
-    <string name="invoice_transactions_adjustments">Adjustments</string>
-    <string name="invoice_transactions_total">Total</string>
-    <string name="invoice_transactions_advance_payment">Advance Payment</string>
-    <string name="invoice_transactions_close_invoice">Close Invoice</string>
-    <string name="invoice_transactions_delete_invoice">Delete Invoice</string>
-    <string name="invoice_transactions_reopen_invoice">Reopen Invoice</string>
-    <string name="invoice_transactions_pay_invoice">Pay Invoice</string>
-    <string name="invoice_transactions_filter_category">Category</string>
-    <string name="invoice_transactions_filter_category_all">All</string>
-    <string name="invoice_transactions_filter_type">Type</string>
-    <string name="invoice_transactions_filter_type_all">All</string>
-    <string name="invoice_transactions_filter_type_expense">Expense</string>
-    <string name="invoice_transactions_filter_type_adjustment">Adjustment</string>
-    <string name="invoice_transactions_filter_type_payment">Payment</string>
-
     <!-- Account Form Modal -->
     <string name="account_form_edit_title">Edit Account</string>
     <string name="account_form_new_title">New Account</string>

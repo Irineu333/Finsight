@@ -44,6 +44,9 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.creditCards.impl.resources.Res as CreditCardsRes
+import com.neoutils.finsight.feature.creditCards.impl.resources.credit_cards_empty
+import com.neoutils.finsight.feature.creditCards.impl.resources.credit_cards_create
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
@@ -889,7 +892,7 @@ private fun DashboardCreditCardsEmptyCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.credit_cards_empty),
+                text = stringResource(CreditCardsRes.string.credit_cards_empty),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -911,7 +914,7 @@ private fun DashboardCreditCardsEmptyCard(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(Res.string.credit_cards_create))
+                Text(text = stringResource(CreditCardsRes.string.credit_cards_create))
             }
         }
     }

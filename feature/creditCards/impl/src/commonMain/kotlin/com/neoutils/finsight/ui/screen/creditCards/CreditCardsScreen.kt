@@ -32,9 +32,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.creditCards.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -44,8 +45,8 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
@@ -87,6 +88,8 @@ private fun CreditCardsContent(
 ) {
     val modalManager = LocalModalManager.current
     val navigationDispatcher = LocalNavigationDispatcher.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
 
     Scaffold(
         topBar = {
@@ -233,11 +236,11 @@ private fun CreditCardsContent(
                                 onClick = {
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            modalManager.show(ViewAdjustmentModal(operation))
+                                            modalManager.show(viewAdjustmentEntry.create(operation))
                                         }
 
                                         else -> {
-                                            modalManager.show(ViewOperationModal(operation))
+                                            modalManager.show(viewOperationEntry.create(operation))
                                         }
                                     }
                                 }
@@ -736,7 +739,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(CreditCardsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_installment))
+            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
         },
     )
 }

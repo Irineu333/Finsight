@@ -50,8 +50,8 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -62,28 +62,28 @@ import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.feature.creditCards.impl.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
-import com.neoutils.finsight.resources.invoice_transactions_advance_payment
-import com.neoutils.finsight.resources.invoice_transactions_advance_payments
-import com.neoutils.finsight.resources.invoice_transactions_adjustments
-import com.neoutils.finsight.resources.invoice_transactions_close_invoice
-import com.neoutils.finsight.resources.invoice_transactions_delete_card
-import com.neoutils.finsight.resources.invoice_transactions_delete_invoice
-import com.neoutils.finsight.resources.invoice_transactions_edit_card
-import com.neoutils.finsight.resources.invoice_transactions_expenses
-import com.neoutils.finsight.resources.invoice_transactions_filter_category
-import com.neoutils.finsight.resources.invoice_transactions_filter_category_all
-import com.neoutils.finsight.resources.invoice_transactions_filter_type
-import com.neoutils.finsight.resources.invoice_transactions_filter_type_adjustment
-import com.neoutils.finsight.resources.invoice_transactions_filter_type_all
-import com.neoutils.finsight.resources.invoice_transactions_filter_type_expense
-import com.neoutils.finsight.resources.invoice_transactions_filter_type_payment
-import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
-import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
-import com.neoutils.finsight.resources.invoice_transactions_total
-import com.neoutils.finsight.resources.transactions_filter_installment
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_advance_payment
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_advance_payments
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_adjustments
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_close_invoice
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_delete_card
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_delete_invoice
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_edit_card
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_expenses
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_category
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_category_all
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_type
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_type_adjustment
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_type_all
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_type_expense
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_filter_type_payment
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_pay_invoice
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_reopen_invoice
+import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_total
 import com.neoutils.finsight.util.stringUiText
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
@@ -120,6 +120,8 @@ private fun InvoiceTransactionsContent(
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
 
     Scaffold(
         topBar = {
@@ -274,11 +276,11 @@ private fun InvoiceTransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
+                                    modalManager.show(viewAdjustmentEntry.create(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    modalManager.show(viewOperationEntry.create(operation))
                                 }
                             }
                         }
@@ -859,7 +861,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(InvoiceTransactionsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_installment))
+            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
         },
     )
 }

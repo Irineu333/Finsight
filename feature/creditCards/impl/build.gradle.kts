@@ -9,6 +9,7 @@ kotlin {
             api(projects.feature.creditCards.api)
             implementation(projects.feature.transactions.api)
             implementation(projects.feature.accounts.api)
+            implementation(projects.feature.categories.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
             implementation(projects.core.sharedui)
@@ -20,7 +21,7 @@ kotlin {
 }
 
 compose.resources {
-    publicResClass = false
+    publicResClass = true
     packageOfResClass = "com.neoutils.finsight.feature.creditCards.impl.resources"
     generateResClass = auto
 }

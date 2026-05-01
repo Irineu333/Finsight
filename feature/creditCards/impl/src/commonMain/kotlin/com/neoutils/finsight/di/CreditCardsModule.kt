@@ -38,6 +38,8 @@ import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
+import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
+import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -296,6 +298,27 @@ val creditCardsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        CreditCardsViewModel(
+            initialCreditCardId = it.getOrNull(),
+            creditCardRepository = get(),
+            operationRepository = get(),
+            invoiceRepository = get(),
+            invoiceUiMapper = get(),
+            categoryRepository = get(),
+        )
+    }
+
+    viewModel {
+        InvoiceTransactionsViewModel(
+            creditCardId = it.get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            operationRepository = get(),
+            categoryRepository = get(),
         )
     }
 }

@@ -24,6 +24,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OperationCard
@@ -381,7 +382,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_installment))
+            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
         },
     )
 }

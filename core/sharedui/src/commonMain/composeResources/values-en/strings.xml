@@ -46,4 +46,5 @@
     <string name="category_spending_card_title">Spending by Category</string>
     <string name="budget_progress_card_title">Budgets</string>
     <string name="transactions_filter_recurring">Recurring</string>
+    <string name="transactions_filter_installment">Installments</string>
 </resources>

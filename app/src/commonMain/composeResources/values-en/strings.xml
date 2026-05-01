@@ -365,7 +365,6 @@
     <string name="view_operation_destination_account_label">Destination account</string>
     <string name="view_operation_account_label">Account</string>
     <string name="view_operation_card_label">Card</string>
-    <string name="view_operation_invoice_label">Invoice</string>
     <string name="view_operation_installment_label">Installment</string>
     <string name="view_operation_recurring_label">Recurring</string>
     <string name="view_operation_deleted">Deleted</string>
@@ -374,18 +373,6 @@
     <string name="view_operation_edit">Edit</string>
 
     <!-- View Adjustment Modal -->
-    <string name="view_adjustment_type_label">Adjustment</string>
-    <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
-    <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
-    <string name="view_adjustment_adjusted_value_label">Adjusted Value</string>
-    <string name="view_adjustment_date_label">Date</string>
-    <string name="view_adjustment_type_row_label">Type</string>
-    <string name="view_adjustment_account_label">Account</string>
-    <string name="view_adjustment_card_label">Card</string>
-    <string name="view_adjustment_credit_card_label">Credit Card</string>
-    <string name="view_adjustment_deleted">Deleted</string>
-    <string name="view_adjustment_delete_label">Delete Adjustment</string>
-
     <!-- View Category Modal -->
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentage</string>

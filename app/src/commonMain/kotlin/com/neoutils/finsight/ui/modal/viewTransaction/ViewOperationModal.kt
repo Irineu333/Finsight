@@ -34,6 +34,8 @@ import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
+import com.neoutils.finsight.feature.transactions.impl.resources.Res as TransactionsImplRes
+import com.neoutils.finsight.feature.transactions.impl.resources.view_operation_invoice_label
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -272,7 +274,7 @@ class ViewOperationModal(
             uiState.transaction.invoice?.let { invoice ->
                 val creditCardId = uiState.transaction.creditCard?.id
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_invoice_label),
+                    label = stringResource(TransactionsImplRes.string.view_operation_invoice_label),
                     value = invoice.toLabel(),
                     valueColor = Color(invoice.status.colorValue),
                     modifier = Modifier.padding(top = 8.dp),

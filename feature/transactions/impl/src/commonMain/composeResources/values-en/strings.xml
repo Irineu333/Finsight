@@ -1,0 +1,13 @@
+<resources>
+    <string name="view_adjustment_type_label">Adjustment</string>
+    <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
+    <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>
+    <string name="view_adjustment_adjusted_value_label">Adjusted Value</string>
+    <string name="view_adjustment_date_label">Date</string>
+    <string name="view_adjustment_type_row_label">Type</string>
+    <string name="view_adjustment_account_label">Account</string>
+    <string name="view_adjustment_card_label">Card</string>
+    <string name="view_adjustment_credit_card_label">Credit Card</string>
+    <string name="view_adjustment_deleted">Deleted</string>
+    <string name="view_adjustment_delete_label">Delete Adjustment</string>
+</resources>

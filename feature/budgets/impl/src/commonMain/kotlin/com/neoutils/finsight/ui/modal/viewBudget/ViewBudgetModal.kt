@@ -32,19 +32,20 @@ import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
+import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.budgetProgressColor
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.view_budget_delete
-import com.neoutils.finsight.resources.view_budget_edit
-import com.neoutils.finsight.resources.view_budget_exceeded_by_label
-import com.neoutils.finsight.resources.view_budget_limit_label
-import com.neoutils.finsight.resources.view_budget_percentage_label
-import com.neoutils.finsight.resources.view_budget_remaining_label
-import com.neoutils.finsight.resources.view_budget_spent_label
+import com.neoutils.finsight.feature.budgets.impl.resources.Res
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_delete
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_edit
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_exceeded_by_label
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_limit_label
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_percentage_label
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_remaining_label
+import com.neoutils.finsight.feature.budgets.impl.resources.view_budget_spent_label
 import org.jetbrains.compose.resources.stringResource
 
 class ViewBudgetModal(
@@ -55,6 +56,7 @@ class ViewBudgetModal(
     override fun ColumnScope.BottomSheetContent() {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
+        val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
         val budget = budgetProgress.budget
         val accentColor = budgetProgressColor(budgetProgress.progress)
 
@@ -131,7 +133,7 @@ class ViewBudgetModal(
                         label = stringResource(Res.string.view_budget_percentage_label),
                         value = pctLabel,
                         onClick = budgetProgress.recurring?.let { recurring ->
-                            { manager.show(ViewRecurringModal(recurring)) }
+                            { manager.show(viewRecurringEntry.create(recurring)) }
                         },
                     )
 

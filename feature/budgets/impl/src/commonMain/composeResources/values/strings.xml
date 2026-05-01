@@ -8,4 +8,23 @@
     <string name="delete_budget_title">Excluir Orçamento</string>
     <string name="delete_budget_message">Tem certeza que deseja excluir o orçamento \"%1$s\"? Esta ação não pode ser desfeita.</string>
     <string name="delete_budget_confirm">Excluir</string>
+    <string name="view_budget_percentage_label">Percentual</string>
+    <string name="view_budget_limit_label">Limite</string>
+    <string name="view_budget_spent_label">Gasto</string>
+    <string name="view_budget_exceeded_by_label">Excedido em</string>
+    <string name="view_budget_remaining_label">Restante</string>
+    <string name="view_budget_delete">Excluir</string>
+    <string name="view_budget_edit">Editar</string>
+    <string name="budget_form_edit_title">Editar Orçamento</string>
+    <string name="budget_form_new_title">Novo Orçamento</string>
+    <string name="budget_form_title_label">Título</string>
+    <string name="budget_form_icon_label">Ícone do orçamento</string>
+    <string name="budget_form_icon_helper">Toque para abrir a lista de ícones</string>
+    <string name="budget_form_icon_modal_title">Escolha um ícone para o orçamento</string>
+    <string name="budget_form_limit_label">Limite</string>
+    <string name="budget_form_limit_type_fixed">R$</string>
+    <string name="budget_form_limit_type_percentage">%</string>
+    <string name="budget_form_percentage_label">Percentual</string>
+    <string name="budget_form_recurring_income_label">Receita base</string>
+    <string name="budget_form_save">Salvar</string>
 </resources>

@@ -25,19 +25,20 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.budgets.impl.resources.*
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
-import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
+import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModalEntry
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -51,6 +52,8 @@ class BudgetFormModal(
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
+        val categoryFormEntry = koinInject<CategoryFormModalEntry>()
+        val recurringFormEntry = koinInject<RecurringFormModalEntry>()
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
@@ -119,7 +122,7 @@ class BudgetFormModal(
                 selectedCategories = uiState.selectedCategories,
                 categories = uiState.availableCategories,
                 onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
-                onEmpty = { modalManager.show(CategoryFormModal()) },
+                onEmpty = { modalManager.show(categoryFormEntry.create()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -168,7 +171,7 @@ class BudgetFormModal(
                     recurrings = uiState.incomeRecurrings,
                     selected = uiState.selectedRecurring,
                     onSelected = { viewModel.onAction(BudgetFormAction.RecurringSelected(it)) },
-                    onEmpty = { modalManager.show(RecurringFormModal()) },
+                    onEmpty = { modalManager.show(recurringFormEntry.create()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),

@@ -30,13 +30,6 @@
     <string name="credit_card_error_not_found">Credit card not found.</string>
 
     <!-- Transfer errors -->
-    <string name="transfer_error_invalid_amount">Transfer amount must be greater than zero.</string>
-    <string name="transfer_error_same_account">Source account must be different from destination account.</string>
-    <string name="transfer_error_source_account_not_found">Source account not found.</string>
-    <string name="transfer_error_destination_account_not_found">Destination account not found.</string>
-    <string name="transfer_error_future_date">Transfer date cannot be in the future.</string>
-    <string name="transfer_error_unknown">Unable to complete the transfer.</string>
-
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>
     <string name="installment_error_blocked_invoice">One of the installments coincides with a blocked invoice.</string>

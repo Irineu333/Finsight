@@ -3,11 +3,15 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.database.mapper.AccountMapper
 import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.IEnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
@@ -69,6 +73,33 @@ val accountsModule = module {
     factory {
         EnsureDefaultAccountUseCase(
             repository = get(),
+        )
+    }
+
+    factory {
+        AdjustBalanceUseCase(
+            repository = get(),
+            operationRepository = get(),
+            calculateBalanceUseCase = get(),
+        )
+    }
+
+    factory {
+        AdjustFinalBalanceUseCase(
+            adjustBalanceUseCase = get(),
+        )
+    }
+
+    factory {
+        AdjustInitialBalanceUseCase(
+            adjustBalanceUseCase = get(),
+        )
+    }
+
+    factory {
+        TransferBetweenAccountsUseCase(
+            operationRepository = get(),
+            accountRepository = get(),
         )
     }
 

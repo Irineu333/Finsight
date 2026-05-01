@@ -1,12 +1,12 @@
 package com.neoutils.finsight.domain.error
 
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.transfer_error_destination_account_not_found
-import com.neoutils.finsight.resources.transfer_error_future_date
-import com.neoutils.finsight.resources.transfer_error_invalid_amount
-import com.neoutils.finsight.resources.transfer_error_same_account
-import com.neoutils.finsight.resources.transfer_error_source_account_not_found
-import com.neoutils.finsight.resources.transfer_error_unknown
+import com.neoutils.finsight.feature.accounts.impl.resources.Res
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_destination_account_not_found
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_future_date
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_invalid_amount
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_same_account
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_source_account_not_found
+import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_unknown
 import com.neoutils.finsight.util.UiText
 
 sealed class TransferError(val message: String) {

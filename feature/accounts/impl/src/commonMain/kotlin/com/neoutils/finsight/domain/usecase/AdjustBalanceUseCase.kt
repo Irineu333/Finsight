@@ -16,7 +16,7 @@ import kotlinx.datetime.yearMonth
 class AdjustBalanceUseCase(
     private val repository: ITransactionRepository,
     private val operationRepository: IOperationRepository,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase,
+    private val calculateBalanceUseCase: ICalculateBalanceUseCase,
 ) {
     suspend operator fun invoke(
         targetBalance: Double,

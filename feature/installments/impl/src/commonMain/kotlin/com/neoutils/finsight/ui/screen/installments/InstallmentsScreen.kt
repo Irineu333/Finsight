@@ -81,34 +81,34 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.installments_create
-import com.neoutils.finsight.resources.installments_current_installment
-import com.neoutils.finsight.resources.installments_delete
-import com.neoutils.finsight.resources.installments_empty
-import com.neoutils.finsight.resources.installments_filter_category
-import com.neoutils.finsight.resources.installments_filter_category_all
-import com.neoutils.finsight.resources.installments_filter_type
-import com.neoutils.finsight.resources.installments_filter_type_adjustment
-import com.neoutils.finsight.resources.installments_filter_type_all
-import com.neoutils.finsight.resources.installments_filter_type_expense
-import com.neoutils.finsight.resources.installments_filter_type_income
-import com.neoutils.finsight.resources.installments_remaining
-import com.neoutils.finsight.resources.installments_status_active
-import com.neoutils.finsight.resources.installments_status_completed
-import com.neoutils.finsight.resources.installments_tab_active
-import com.neoutils.finsight.resources.installments_tab_all
-import com.neoutils.finsight.resources.installments_tab_completed
-import com.neoutils.finsight.resources.installments_title
-import com.neoutils.finsight.resources.installments_total_value
+import com.neoutils.finsight.feature.installments.impl.resources.Res
+import com.neoutils.finsight.feature.installments.impl.resources.installments_create
+import com.neoutils.finsight.feature.installments.impl.resources.installments_current_installment
+import com.neoutils.finsight.feature.installments.impl.resources.installments_delete
+import com.neoutils.finsight.feature.installments.impl.resources.installments_empty
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_category
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_category_all
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_type
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_type_adjustment
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_type_all
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_type_expense
+import com.neoutils.finsight.feature.installments.impl.resources.installments_filter_type_income
+import com.neoutils.finsight.feature.installments.impl.resources.installments_remaining
+import com.neoutils.finsight.feature.installments.impl.resources.installments_status_active
+import com.neoutils.finsight.feature.installments.impl.resources.installments_status_completed
+import com.neoutils.finsight.feature.installments.impl.resources.installments_tab_active
+import com.neoutils.finsight.feature.installments.impl.resources.installments_tab_all
+import com.neoutils.finsight.feature.installments.impl.resources.installments_tab_completed
+import com.neoutils.finsight.feature.installments.impl.resources.installments_title
+import com.neoutils.finsight.feature.installments.impl.resources.installments_total_value
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -139,6 +139,8 @@ private fun InstallmentsContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
 
     Scaffold(
         topBar = {
@@ -350,11 +352,11 @@ private fun InstallmentsContent(
                             onClick = {
                                 when (operation.type) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
+                                        modalManager.show(viewAdjustmentEntry.create(operation))
                                     }
 
                                     else -> {
-                                        modalManager.show(ViewOperationModal(operation))
+                                        modalManager.show(viewOperationEntry.create(operation))
                                     }
                                 }
                             },

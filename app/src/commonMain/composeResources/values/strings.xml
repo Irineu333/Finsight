@@ -91,26 +91,6 @@
     <string name="transactions_filter_installment">Parcelas</string>
 
     <!-- Installments Screen -->
-    <string name="installments_title">Parcelamentos</string>
-    <string name="installments_tab_active">Ativos</string>
-    <string name="installments_tab_completed">Concluídos</string>
-    <string name="installments_tab_all">Todos</string>
-    <string name="installments_delete">Excluir Parcelamento</string>
-    <string name="installments_empty">Sem parcelamentos</string>
-    <string name="installments_create">Criar parcelamento</string>
-    <string name="installments_total_value">Valor Total</string>
-    <string name="installments_current_installment">Parcela Atual</string>
-    <string name="installments_remaining">Restante</string>
-    <string name="installments_status_active">Ativo</string>
-    <string name="installments_status_completed">Concluído</string>
-    <string name="installments_filter_category">Categoria</string>
-    <string name="installments_filter_category_all">Todas</string>
-    <string name="installments_filter_type">Tipo</string>
-    <string name="installments_filter_type_all">Todos</string>
-    <string name="installments_filter_type_expense">Despesa</string>
-    <string name="installments_filter_type_adjustment">Ajuste</string>
-    <string name="installments_filter_type_income">Receita</string>
-
     <!-- Credit Cards Screen -->
     <string name="credit_cards_title">Cartões de Crédito</string>
     <string name="credit_cards_empty">Sem cartões de crédito</string>

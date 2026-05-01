@@ -6,4 +6,23 @@
     <string name="add_installment_date_label">Date</string>
     <string name="add_installment_save">Save</string>
     <string name="add_installment_initial_invoice">Initial Invoice</string>
+    <string name="installments_title">Installments</string>
+    <string name="installments_tab_active">Active</string>
+    <string name="installments_tab_completed">Completed</string>
+    <string name="installments_tab_all">All</string>
+    <string name="installments_delete">Delete Installment</string>
+    <string name="installments_empty">No installments</string>
+    <string name="installments_create">Create installment</string>
+    <string name="installments_total_value">Total Value</string>
+    <string name="installments_current_installment">Current Installment</string>
+    <string name="installments_remaining">Remaining</string>
+    <string name="installments_status_active">Active</string>
+    <string name="installments_status_completed">Completed</string>
+    <string name="installments_filter_category">Category</string>
+    <string name="installments_filter_category_all">All</string>
+    <string name="installments_filter_type">Type</string>
+    <string name="installments_filter_type_all">All</string>
+    <string name="installments_filter_type_expense">Expense</string>
+    <string name="installments_filter_type_adjustment">Adjustment</string>
+    <string name="installments_filter_type_income">Income</string>
 </resources>

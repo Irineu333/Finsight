@@ -55,25 +55,26 @@ import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.accounts_delete
-import com.neoutils.finsight.resources.accounts_edit
-import com.neoutils.finsight.resources.accounts_filter_category
-import com.neoutils.finsight.resources.accounts_filter_category_all
-import com.neoutils.finsight.resources.accounts_filter_type
-import com.neoutils.finsight.resources.accounts_filter_type_adjustment
-import com.neoutils.finsight.resources.accounts_filter_type_all
-import com.neoutils.finsight.resources.accounts_filter_type_expense
-import com.neoutils.finsight.resources.accounts_filter_type_income
-import com.neoutils.finsight.resources.accounts_title
-import com.neoutils.finsight.resources.accounts_transfer
-import com.neoutils.finsight.resources.transactions_filter_recurring
+import com.neoutils.finsight.feature.accounts.impl.resources.Res
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_delete
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_edit
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_category
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_category_all
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_type
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_type_adjustment
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_type_all
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_type_expense
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_filter_type_income
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_title
+import com.neoutils.finsight.feature.accounts.impl.resources.accounts_transfer
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -110,6 +111,8 @@ private fun AccountsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
 
     Scaffold(
         topBar = {
@@ -269,11 +272,11 @@ private fun AccountsContent(
                             onClick = {
                                 when (operationUi.displayType) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operationUi.operation))
+                                        modalManager.show(viewAdjustmentEntry.create(operationUi.operation))
                                     }
 
                                     else -> {
-                                        modalManager.show(ViewOperationModal(operationUi))
+                                        modalManager.show(viewOperationEntry.create(operationUi.operation, operationUi.perspective))
                                     }
                                 }
                             }
@@ -695,7 +698,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(AccountsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_recurring))
+            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
         },
     )
 }

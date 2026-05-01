@@ -125,7 +125,6 @@
     <string name="transactions_filter_account">Account</string>
     <string name="transactions_filter_credit_card">Card</string>
     <string name="transactions_filter_credit_card_label">Credit Card</string>
-    <string name="transactions_filter_recurring">Recurring</string>
     <string name="transactions_filter_installment">Installments</string>
 
     <!-- Installments Screen -->
@@ -168,18 +167,6 @@
     <string name="credit_cards_filter_type_payment">Payment</string>
 
     <!-- Accounts Screen -->
-    <string name="accounts_title">Accounts</string>
-    <string name="accounts_delete">Delete</string>
-    <string name="accounts_edit">Edit</string>
-    <string name="accounts_transfer">Transfer</string>
-    <string name="accounts_filter_category">Category</string>
-    <string name="accounts_filter_category_all">All</string>
-    <string name="accounts_filter_type">Type</string>
-    <string name="accounts_filter_type_all">All</string>
-    <string name="accounts_filter_type_income">Income</string>
-    <string name="accounts_filter_type_expense">Expense</string>
-    <string name="accounts_filter_type_adjustment">Adjustment</string>
-
     <!-- Categories Screen -->
     <string name="categories_title">Categories</string>
     <string name="categories_income">Income</string>

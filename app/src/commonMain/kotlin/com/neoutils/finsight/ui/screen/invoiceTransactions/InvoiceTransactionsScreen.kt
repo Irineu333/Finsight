@@ -63,6 +63,8 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.resources.invoice_transactions_adjustments
@@ -82,7 +84,6 @@ import com.neoutils.finsight.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.resources.invoice_transactions_total
 import com.neoutils.finsight.resources.transactions_filter_installment
-import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.util.stringUiText
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
@@ -844,7 +845,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(InvoiceTransactionsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_recurring))
+            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
         },
     )
 }

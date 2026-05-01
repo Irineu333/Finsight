@@ -88,7 +88,6 @@
     <string name="transactions_filter_account">Conta</string>
     <string name="transactions_filter_credit_card">Cartão</string>
     <string name="transactions_filter_credit_card_label">Cartão de Crédito</string>
-    <string name="transactions_filter_recurring">Recorrência</string>
     <string name="transactions_filter_installment">Parcelas</string>
 
     <!-- Installments Screen -->
@@ -131,18 +130,6 @@
     <string name="credit_cards_filter_type_payment">Pagamento</string>
 
     <!-- Accounts Screen -->
-    <string name="accounts_title">Contas</string>
-    <string name="accounts_delete">Excluir</string>
-    <string name="accounts_edit">Editar</string>
-    <string name="accounts_transfer">Transferir</string>
-    <string name="accounts_filter_category">Categoria</string>
-    <string name="accounts_filter_category_all">Todas</string>
-    <string name="accounts_filter_type">Tipo</string>
-    <string name="accounts_filter_type_all">Todos</string>
-    <string name="accounts_filter_type_income">Receita</string>
-    <string name="accounts_filter_type_expense">Despesa</string>
-    <string name="accounts_filter_type_adjustment">Ajuste</string>
-
     <!-- Categories Screen -->
     <string name="categories_title">Categorias</string>
     <string name="categories_income">Receitas</string>

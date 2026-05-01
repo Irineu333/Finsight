@@ -44,4 +44,5 @@
     <string name="category_selector_none">Nenhuma</string>
     <string name="category_spending_card_title">Gastos por Categoria</string>
     <string name="budget_progress_card_title">Orçamentos</string>
+    <string name="transactions_filter_recurring">Recorrência</string>
 </resources>

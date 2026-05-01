@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.accounts.api)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.categories.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
             implementation(projects.core.sharedui)

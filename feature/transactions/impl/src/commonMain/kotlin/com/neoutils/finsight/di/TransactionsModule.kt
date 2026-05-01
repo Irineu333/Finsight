@@ -14,12 +14,19 @@ import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntryImpl
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntryImpl
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionsModule = module {
+
+    single<ViewOperationModalEntry> { ViewOperationModalEntryImpl() }
+    single<ViewAdjustmentModalEntry> { ViewAdjustmentModalEntryImpl() }
 
     single { TransactionMapper() }
     single { OperationMapper() }

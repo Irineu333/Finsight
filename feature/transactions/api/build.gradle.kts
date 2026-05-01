@@ -13,6 +13,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             api(projects.core.domain)
             api(projects.core.utils)
+            implementation(projects.core.ui)
             api(libs.androidx.navigation.compose)
         }
     }

@@ -18,4 +18,15 @@
     <string name="edit_account_balance_initial_title">Edit Initial Balance</string>
     <string name="edit_account_balance_label">Balance</string>
     <string name="edit_account_balance_save">Save</string>
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_delete">Delete</string>
+    <string name="accounts_edit">Edit</string>
+    <string name="accounts_transfer">Transfer</string>
+    <string name="accounts_filter_category">Category</string>
+    <string name="accounts_filter_category_all">All</string>
+    <string name="accounts_filter_type">Type</string>
+    <string name="accounts_filter_type_all">All</string>
+    <string name="accounts_filter_type_income">Income</string>
+    <string name="accounts_filter_type_expense">Expense</string>
+    <string name="accounts_filter_type_adjustment">Adjustment</string>
 </resources>

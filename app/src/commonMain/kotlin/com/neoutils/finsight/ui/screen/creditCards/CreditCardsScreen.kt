@@ -33,6 +33,8 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
+import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -720,7 +722,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(CreditCardsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(Res.string.transactions_filter_recurring))
+            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
         },
     )
 }

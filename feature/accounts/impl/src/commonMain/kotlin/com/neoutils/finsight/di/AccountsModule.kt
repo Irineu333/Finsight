@@ -18,6 +18,7 @@ import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
+import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.extension.toYearMonth
@@ -156,6 +157,15 @@ val accountsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        AccountsViewModel(
+            accountRepository = get(),
+            operationRepository = get(),
+            categoryRepository = get(),
+            initialAccountId = it.getOrNull(),
         )
     }
 }

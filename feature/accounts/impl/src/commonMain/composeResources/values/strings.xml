@@ -37,4 +37,15 @@
     <string name="edit_account_balance_initial_title">Editar Saldo Inicial</string>
     <string name="edit_account_balance_label">Saldo</string>
     <string name="edit_account_balance_save">Salvar</string>
+    <string name="accounts_title">Contas</string>
+    <string name="accounts_delete">Excluir</string>
+    <string name="accounts_edit">Editar</string>
+    <string name="accounts_transfer">Transferir</string>
+    <string name="accounts_filter_category">Categoria</string>
+    <string name="accounts_filter_category_all">Todas</string>
+    <string name="accounts_filter_type">Tipo</string>
+    <string name="accounts_filter_type_all">Todos</string>
+    <string name="accounts_filter_type_income">Receita</string>
+    <string name="accounts_filter_type_expense">Despesa</string>
+    <string name="accounts_filter_type_adjustment">Ajuste</string>
 </resources>

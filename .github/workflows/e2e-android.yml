@@ -140,6 +140,13 @@ jobs:
           : "${APK_PATH:?APK_PATH not set}"
           : "${FLOWS_PATH:?FLOWS_PATH not set}"
 
+          # The cached AVD may already have the e2e package installed from a
+          # previous run, signed with a different debug keystore (debug keys
+          # are not stable across Gradle caches). `adb install -r` rejects the
+          # mismatch with INSTALL_FAILED_UPDATE_INCOMPATIBLE, so we uninstall
+          # first and ignore the "package not found" exit when the AVD is
+          # fresh.
+          adb uninstall com.neoutils.finsight.e2e || true
           adb install -r "$APK_PATH"
 
           maestro test "$FLOWS_PATH" --format junit --output "$GITHUB_WORKSPACE/maestro-report.xml"

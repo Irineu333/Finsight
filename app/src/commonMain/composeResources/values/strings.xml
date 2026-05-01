@@ -119,16 +119,6 @@
     <string name="categories_create_manual">Criar manualmente</string>
 
     <!-- Budgets Screen -->
-    <string name="budgets_title">Orçamentos</string>
-    <string name="budgets_limit">Limite</string>
-    <string name="budgets_spent">Gasto</string>
-    <string name="budgets_remaining">Restante</string>
-    <string name="budgets_exceeded_by">Excedido em</string>
-    <string name="budgets_category_singular">1 categoria</string>
-    <string name="budgets_category_plural">%1$d categorias</string>
-    <string name="budgets_empty">Sem orçamentos</string>
-    <string name="budgets_create">Criar orçamento</string>
-
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
     <string name="invoice_transactions_delete_card">Excluir Cartão</string>

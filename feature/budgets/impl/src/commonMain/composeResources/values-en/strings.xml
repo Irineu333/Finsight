@@ -18,4 +18,13 @@
     <string name="budget_form_percentage_label">Percentage</string>
     <string name="budget_form_recurring_income_label">Base income</string>
     <string name="budget_form_save">Save</string>
+    <string name="budgets_title">Budgets</string>
+    <string name="budgets_limit">Limit</string>
+    <string name="budgets_spent">Spent</string>
+    <string name="budgets_remaining">Remaining</string>
+    <string name="budgets_exceeded_by">Exceeded by</string>
+    <string name="budgets_category_singular">1 category</string>
+    <string name="budgets_category_plural">%1$d categories</string>
+    <string name="budgets_empty">No budgets</string>
+    <string name="budgets_create">Create budget</string>
 </resources>

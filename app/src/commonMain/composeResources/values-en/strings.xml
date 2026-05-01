@@ -265,12 +265,6 @@
     <string name="add_transaction_income">Income</string>
 
     <!-- Add Installment Modal -->
-    <string name="add_installment_title">Register installment</string>
-    <string name="add_installment_title_label">Title</string>
-    <string name="add_installment_amount_label">Amount</string>
-    <string name="add_installment_date_label">Date</string>
-    <string name="add_installment_save">Save</string>
-    <string name="add_installment_initial_invoice">Initial Invoice</string>
     <string name="add_installment_error_generic">Error registering installment.</string>
 
     <!-- Delete Modals -->

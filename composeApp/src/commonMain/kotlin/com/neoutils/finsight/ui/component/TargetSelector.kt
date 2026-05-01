@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.testTagsAsResourceIdSemantics
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.target_selector_account
 import com.neoutils.finsight.resources.target_selector_credit_card
@@ -66,7 +67,8 @@ fun TargetSelector(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.testTagsAsResourceIdSemantics(),
         ) {
             availableTargets.forEach { target ->
                 DropdownMenuItem(

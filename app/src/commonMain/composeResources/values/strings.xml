@@ -432,9 +432,6 @@
     <string name="invoice_selector_label">Fatura</string>
 
     <!-- Date picker -->
-    <string name="date_picker_confirm">OK</string>
-    <string name="date_picker_cancel">Cancelar</string>
-
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recorrentes</string>
     <string name="dashboard_pending_recurring">Recorrências</string>

@@ -541,9 +541,6 @@
     <string name="invoice_selector_label">Invoice</string>
 
     <!-- Date picker -->
-    <string name="date_picker_confirm">OK</string>
-    <string name="date_picker_cancel">Cancel</string>
-
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recurring</string>
     <string name="dashboard_pending_recurring">Recurring</string>

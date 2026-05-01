@@ -28,11 +28,11 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
@@ -41,6 +41,7 @@ import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -54,6 +55,8 @@ class AddTransactionModal : ModalBottomSheet() {
     override fun ColumnScope.BottomSheetContent() {
 
         val manager = LocalModalManager.current
+        val categoryFormEntry = koinInject<CategoryFormModalEntry>()
+        val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
 
         val viewModel = koinViewModel<AddTransactionViewModel>()
         val uiState by viewModel.uiState.collectAsState()
@@ -153,7 +156,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     onCreditCardSelected = {
                         viewModel.onAction(AddTransactionAction.SelectCreditCard(it))
                     },
-                    onEmpty = { manager.show(CreditCardFormModal()) },
+                    onEmpty = { manager.show(creditCardFormEntry.create()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -201,7 +204,7 @@ class AddTransactionModal : ModalBottomSheet() {
                     else -> listOf()
                 },
                 onCategorySelected = { selectedCategory = it },
-                onEmpty = { manager.show(CategoryFormModal()) },
+                onEmpty = { manager.show(categoryFormEntry.create()) },
                 modifier = Modifier.fillMaxWidth()
             )
 

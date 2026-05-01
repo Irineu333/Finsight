@@ -27,9 +27,9 @@ class AddInstallmentUseCase(
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: IBuildTransactionUseCase,
     private val getOrCreateInvoiceForMonthUseCase: IGetOrCreateInvoiceForMonthUseCase,
-) {
+) : IAddInstallmentUseCase {
 
-    suspend operator fun invoke(
+    override suspend operator fun invoke(
         form: TransactionForm,
         installments: Int,
     ): Either<Throwable, List<Transaction>> {

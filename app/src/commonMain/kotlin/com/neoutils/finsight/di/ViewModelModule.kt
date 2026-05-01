@@ -5,7 +5,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
@@ -89,21 +88,6 @@ val viewModelModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
-        )
-    }
-
-    viewModel {
-        AddTransactionViewModel(
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            operationRepository = get(),
-            accountRepository = get(),
-            buildTransactionUseCase = get(),
-            addInstallmentUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
         )
     }
 

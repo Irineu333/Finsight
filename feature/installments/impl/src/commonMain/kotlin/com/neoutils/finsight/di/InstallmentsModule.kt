@@ -3,6 +3,7 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.database.repository.InstallmentRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.IAddInstallmentUseCase
 import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
@@ -20,6 +21,15 @@ val installmentsModule = module {
         )
     }
 
+    factory<IAddInstallmentUseCase> {
+        AddInstallmentUseCase(
+            operationRepository = get(),
+            installmentRepository = get(),
+            invoiceRepository = get(),
+            buildTransactionUseCase = get(),
+            getOrCreateInvoiceForMonthUseCase = get(),
+        )
+    }
     factory {
         AddInstallmentUseCase(
             operationRepository = get(),

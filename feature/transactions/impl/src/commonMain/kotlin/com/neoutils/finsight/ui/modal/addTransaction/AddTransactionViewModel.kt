@@ -16,7 +16,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.CreateTransaction
 import com.neoutils.finsight.domain.repository.*
-import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.IAddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.component.ModalManager
@@ -32,7 +32,7 @@ class AddTransactionViewModel(
     private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: IBuildTransactionUseCase,
-    private val addInstallmentUseCase: AddInstallmentUseCase,
+    private val addInstallmentUseCase: IAddInstallmentUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,

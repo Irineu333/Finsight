@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
+import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
@@ -104,6 +105,21 @@ val transactionsModule = module {
             perspective = it.getOrNull(),
             operationRepository = get(),
             recurringRepository = get(),
+        )
+    }
+
+    viewModel {
+        AddTransactionViewModel(
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            operationRepository = get(),
+            accountRepository = get(),
+            buildTransactionUseCase = get(),
+            addInstallmentUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
         )
     }
 }

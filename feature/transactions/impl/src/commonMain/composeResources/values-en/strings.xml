@@ -17,4 +17,10 @@
     <string name="edit_transaction_save">Save</string>
     <string name="edit_transaction_expense">Expense</string>
     <string name="edit_transaction_income">Income</string>
+    <string name="add_transaction_title_label">Title</string>
+    <string name="add_transaction_amount_label">Amount</string>
+    <string name="add_transaction_date_label">Date</string>
+    <string name="add_transaction_save">Save</string>
+    <string name="add_transaction_expense">Expense</string>
+    <string name="add_transaction_income">Income</string>
 </resources>

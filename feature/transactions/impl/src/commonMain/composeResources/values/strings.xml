@@ -81,4 +81,10 @@
     <string name="edit_transaction_save">Salvar</string>
     <string name="edit_transaction_expense">Despesa</string>
     <string name="edit_transaction_income">Receita</string>
+    <string name="add_transaction_title_label">Título</string>
+    <string name="add_transaction_amount_label">Valor</string>
+    <string name="add_transaction_date_label">Data</string>
+    <string name="add_transaction_save">Salvar</string>
+    <string name="add_transaction_expense">Despesa</string>
+    <string name="add_transaction_income">Receita</string>
 </resources>

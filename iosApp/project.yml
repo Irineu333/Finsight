@@ -112,7 +112,7 @@ targets:
             exit 0
           fi
           cd "$SRCROOT/.."
-          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
+          ./gradlew :app:embedAndSignAppleFrameworkForXcode
         showEnvVarsInLog: false
 
 packages:

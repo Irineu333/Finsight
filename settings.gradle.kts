@@ -33,7 +33,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-include(":composeApp")
+include(":app")
 include(":core:utils")
 include(":core:platform")
 include(":core:analytics")

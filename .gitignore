@@ -22,5 +22,5 @@ iosApp/iosApp.xcodeproj/
 !iosApp/generate-project.sh
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
-/composeApp/schemas/*
+/app/schemas/*
 .claude/agent-memory/

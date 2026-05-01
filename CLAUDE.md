@@ -7,8 +7,8 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ```bash
 ./gradlew allTests                                          # All tests
 ./gradlew check                                            # Verification
-./gradlew :composeApp:testDebugUnitTest --tests "*.XxxTest" # Single test class
-./gradlew :composeApp:testDebugUnitTest                    # Unit tests only
+./gradlew :app:testDebugUnitTest --tests "*.XxxTest" # Single test class
+./gradlew :app:testDebugUnitTest                    # Unit tests only
 ```
 
 ## Features
@@ -55,7 +55,7 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - `UiText.asString()` — suspend, for non-Composable contexts
 - `stringUiText(error: UiText): String` — `@Composable`, for UI display
 
-**String resources:** `composeApp/src/commonMain/composeResources/values/strings.xml`
+**String resources:** `app/src/commonMain/composeResources/values/strings.xml`
 
 > Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
 

@@ -7,12 +7,21 @@ import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
+import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.CloseInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateRetroactiveInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.IGetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
@@ -118,6 +127,65 @@ val creditCardsModule = module {
     }
 
     single { CreditCardPeriod(defaultDaysDifference = 8) }
+
+    factory { CalculateInvoiceUseCase(repository = get()) }
+
+    factory { CalculateInvoiceOverviewsUseCase() }
+
+    factory {
+        CalculateAvailableLimitUseCase(
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        CloseInvoiceUseCase(
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+            payInvoiceUseCase = get(),
+            openInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        PayInvoicePaymentUseCase(
+            operationRepository = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+            payInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        AdvanceInvoicePaymentUseCase(
+            operationRepository = get(),
+            invoiceRepository = get(),
+            calculateInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        AdjustInvoiceUseCase(
+            repository = get(),
+            operationRepository = get(),
+            calculateInvoiceUseCase = get(),
+        )
+    }
+
+    factory {
+        DeleteCreditCardUseCase(
+            creditCardRepository = get(),
+            operationRepository = get(),
+        )
+    }
+
+    factory {
+        DeleteFutureInvoiceUseCase(
+            invoiceRepository = get(),
+            operationRepository = get(),
+        )
+    }
 
     viewModel {
         CreditCardFormViewModel(

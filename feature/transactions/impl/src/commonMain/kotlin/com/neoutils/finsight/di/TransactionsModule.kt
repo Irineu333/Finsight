@@ -1,5 +1,6 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
@@ -16,6 +17,7 @@ import org.koin.dsl.module
 val transactionsModule = module {
 
     single { TransactionMapper() }
+    single { OperationMapper() }
 
     single<ITransactionRepository> {
         TransactionRepository(

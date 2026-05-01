@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -145,7 +146,8 @@ class CreditCardFormModal(
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
                     .animateContentSize()
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(CreditCardFormTestTags.NAME),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -160,7 +162,9 @@ class CreditCardFormModal(
                 inputTransformation = rememberMoneyInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardFormTestTags.LIMIT),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -185,7 +189,9 @@ class CreditCardFormModal(
                 inputTransformation = DayInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardFormTestTags.CLOSING_DAY),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -210,7 +216,9 @@ class CreditCardFormModal(
                 inputTransformation = DayInputTransformation(),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardFormTestTags.DUE_DAY),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -247,7 +255,9 @@ class CreditCardFormModal(
                     viewModel.onAction(CreditCardFormAction.Submit)
                 },
                 enabled = uiState.canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardFormTestTags.SUBMIT),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(

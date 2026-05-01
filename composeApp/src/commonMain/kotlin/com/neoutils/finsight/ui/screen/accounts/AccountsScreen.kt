@@ -420,7 +420,9 @@ private fun AccountActions(
                 onClick = {
                     modalManager.show(TransferBetweenAccountsModal(account))
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(AccountsTestTags.TRANSFER_ACTION),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.primary

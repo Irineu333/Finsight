@@ -144,7 +144,14 @@ class AddTransactionModal : ModalBottomSheet() {
                     availableTargets = uiState.targets,
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    testTag = TransactionFormTestTags.TARGET,
+                    optionTestTag = { option ->
+                        when (option) {
+                            Transaction.Target.ACCOUNT -> TransactionFormTestTags.TARGET_ACCOUNT
+                            Transaction.Target.CREDIT_CARD -> TransactionFormTestTags.TARGET_CREDIT_CARD
+                        }
+                    },
                 )
             }
 
@@ -160,7 +167,8 @@ class AddTransactionModal : ModalBottomSheet() {
                     onEmpty = { manager.show(CreditCardFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    testTag = TransactionFormTestTags.CREDIT_CARD,
                 )
             }
 

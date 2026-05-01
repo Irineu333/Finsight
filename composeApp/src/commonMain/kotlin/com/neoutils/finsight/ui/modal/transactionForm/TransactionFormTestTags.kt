@@ -9,4 +9,8 @@ object TransactionFormTestTags {
     const val AMOUNT = "transaction-form-amount"
     const val DATE = "transaction-form-date"
     const val SUBMIT = "transaction-form-submit"
+    const val TARGET = "transaction-form-target"
+    const val TARGET_ACCOUNT = "transaction-form-target-account"
+    const val TARGET_CREDIT_CARD = "transaction-form-target-credit-card"
+    const val CREDIT_CARD = "transaction-form-credit-card"
 }

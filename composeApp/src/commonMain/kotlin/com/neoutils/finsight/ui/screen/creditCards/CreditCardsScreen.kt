@@ -115,6 +115,7 @@ private fun CreditCardsContent(
                     onClick = {
                         modalManager.show(CreditCardFormModal())
                     },
+                    modifier = Modifier.testTag(CreditCardsTestTags.FAB),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -275,7 +276,9 @@ private fun EmptyCreditCardsState(
 
             Button(
                 onClick = onCreateCreditCard,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardsTestTags.CREATE_EMPTY),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
@@ -324,7 +327,9 @@ private fun CreditCardPager(
         CreditCardCard(
             creditCard = creditCards[page].creditCard,
             invoiceUi = creditCards[page].invoiceUi,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CreditCardsTestTags.item(creditCards[page].creditCard.id)),
             variant = CreditCardCardVariant.Listing(
                 onClick = { onCardClick(creditCards[page]) },
                 onEditInvoice = onEditInvoice,

@@ -31,6 +31,7 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -121,6 +122,7 @@ private fun InvoiceTransactionsContent(
     val dateFormats = LocalDateFormats.current
 
     Scaffold(
+        modifier = Modifier.testTag(InvoiceTransactionsTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = {
@@ -374,7 +376,8 @@ private fun InvoiceSummaryItem(
 
                 Surface(
                     color = summary.status.color.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(6.dp)
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.testTag(InvoiceTransactionsTestTags.STATUS),
                 ) {
                     Text(
                         text = stringResource(summary.status.toUiText()),
@@ -419,6 +422,7 @@ private fun InvoiceSummaryItem(
                 amount = summary.total,
                 color = colorScheme.onSurface,
                 isTotal = true,
+                modifier = Modifier.testTag(InvoiceTransactionsTestTags.TOTAL),
                 onEditClick = if (summary.canEdit && onEditClick != null) {
                     {
                         onEditClick(summary.invoice)

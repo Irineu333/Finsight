@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
@@ -31,7 +32,9 @@ fun TargetSelector(
     selectedTarget: Transaction.Target,
     onTargetSelected: (Transaction.Target) -> Unit,
     availableTargets: List<Transaction.Target>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    testTag: String? = null,
+    optionTestTag: ((Transaction.Target) -> String)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -58,6 +61,7 @@ fun TargetSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .let { if (testTag != null) it.testTag(testTag) else it }
         )
 
         ExposedDropdownMenu(
@@ -78,7 +82,8 @@ fun TargetSelector(
                     onClick = {
                         onTargetSelected(target)
                         expanded = false
-                    }
+                    },
+                    modifier = optionTestTag?.invoke(target)?.let { Modifier.testTag(it) } ?: Modifier
                 )
             }
         }

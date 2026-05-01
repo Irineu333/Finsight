@@ -15,6 +15,7 @@ import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.appModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
+import com.neoutils.finsight.di.dashboardModule
 import com.neoutils.finsight.di.mapperModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
@@ -43,6 +44,7 @@ fun main() = application {
             recurringModule,
             installmentsModule,
             budgetsModule,
+            dashboardModule,
             repositoryModule,
             useCaseModules,
             reportModule,

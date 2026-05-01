@@ -1,8 +1,6 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
 import com.neoutils.finsight.database.repository.OperationRepository
-import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.russhwolf.settings.Settings
 import org.koin.dsl.module
@@ -24,12 +22,6 @@ val repositoryModule = module {
             operationMapper = get(),
             recurringMapper = get(),
             transactionMapper = get(),
-        )
-    }
-
-    single<IDashboardPreferencesRepository> {
-        DashboardPreferencesRepository(
-            settings = get(),
         )
     }
 }

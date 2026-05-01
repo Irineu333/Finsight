@@ -148,6 +148,7 @@ private fun AccountsContent(
                 onClick = {
                     modalManager.show(AccountFormModal())
                 },
+                modifier = Modifier.testTag(AccountsTestTags.FAB),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -326,7 +327,9 @@ private fun AccountPager(
                 onEditBalance = { onEditBalance(accounts[page].account) },
                 onEditInitialBalance = { onEditInitialBalance(accounts[page].account) },
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .testTag(AccountsTestTags.item(accounts[page].account.id))
+                .fillMaxWidth(),
         )
     }
 }

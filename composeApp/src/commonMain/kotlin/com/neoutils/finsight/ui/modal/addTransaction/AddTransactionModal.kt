@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -33,6 +34,7 @@ import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.modal.transactionForm.TransactionFormTestTags
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
@@ -130,7 +132,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 ),
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(TransactionFormTestTags.TITLE)
+                    .fillMaxWidth(),
             )
 
             AnimatedVisibility(type.isExpense) {
@@ -185,6 +189,7 @@ class AddTransactionModal : ModalBottomSheet() {
                         onAccountSelected = {
                             viewModel.onAction(AddTransactionAction.SelectAccount(it))
                         },
+                        testTag = TransactionFormTestTags.ACCOUNT,
                         modifier = Modifier
                             .padding(top = 8.dp)
                         .fillMaxWidth()
@@ -202,6 +207,7 @@ class AddTransactionModal : ModalBottomSheet() {
                 },
                 onCategorySelected = { selectedCategory = it },
                 onEmpty = { manager.show(CategoryFormModal()) },
+                testTag = TransactionFormTestTags.CATEGORY,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -230,7 +236,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 } else null,
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(TransactionFormTestTags.AMOUNT)
+                    .fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -271,7 +279,9 @@ class AddTransactionModal : ModalBottomSheet() {
                 },
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .testTag(TransactionFormTestTags.DATE)
+                    .fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -281,7 +291,9 @@ class AddTransactionModal : ModalBottomSheet() {
                     viewModel.onAction(AddTransactionAction.Submit(form))
                 },
                 enabled = form.isValid() && !uiState.isInvoiceBlocked,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(TransactionFormTestTags.SUBMIT)
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
@@ -303,7 +315,9 @@ class AddTransactionModal : ModalBottomSheet() {
     ) {
         Button(
             onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .testTag(TransactionFormTestTags.TYPE_EXPENSE)
+                .weight(1f),
             colors = when (selectedType) {
                 Transaction.Type.EXPENSE -> {
                     ButtonDefaults.buttonColors(
@@ -331,7 +345,9 @@ class AddTransactionModal : ModalBottomSheet() {
 
         Button(
             onClick = { onTypeSelected(Transaction.Type.INCOME) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .testTag(TransactionFormTestTags.TYPE_INCOME)
+                .weight(1f),
             colors = when (selectedType) {
                 Transaction.Type.INCOME -> {
                     ButtonDefaults.buttonColors(

@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
@@ -25,6 +26,7 @@ fun CategorySelector(
     onCategorySelected: (Category?) -> Unit,
     modifier: Modifier = Modifier,
     onEmpty: (() -> Unit)? = null,
+    testTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -74,6 +76,7 @@ fun CategorySelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .let { if (testTag != null) it.testTag(testTag) else it }
         )
 
         ExposedDropdownMenu(

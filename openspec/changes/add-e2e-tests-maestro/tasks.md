@@ -27,18 +27,18 @@
 
 ## 3. Fase 3 — Transações (P2)
 
-- [ ] 3.1 Adicionar testTags em `AccountFormModal` (`account-form-name`, `account-form-balance`, `account-form-submit`) e em `AccountsScreen` (botão criar conta, item de conta)
-- [ ] 3.2 Adicionar testTags em `CategoryFormModal` (`category-form-name`, `category-form-icon`, `category-form-submit`) e em `CategoriesScreen` (botão criar, item)
-- [ ] 3.3 Adicionar testTags em `EditTransactionModal`/formulário de transação (`transaction-form-amount`, `transaction-form-account`, `transaction-form-category`, `transaction-form-date`, `transaction-form-type`, `transaction-form-submit`)
-- [ ] 3.4 Adicionar testTags em `TransactionsScreen`: FAB de adicionar (`transactions-fab`), item de lista (`transactions-item-{id}`), filtros se acessados pelo flow
-- [ ] 3.5 Adicionar testTags em `DashboardScreen` para asserts: saldo total (`dashboard-total-balance`), saldo por conta (`dashboard-account-balance-{accountId}`)
-- [ ] 3.6 Adicionar testTags em `ViewOperationModal`/`DeleteTransactionModal` (`view-transaction-edit`, `view-transaction-delete`, `delete-transaction-confirm`)
-- [ ] 3.7 Escrever `helpers/seed-account.yaml`: navega para Accounts, abre modal, preenche e submete
-- [ ] 3.8 Escrever `helpers/seed-category.yaml`: idem para categorias
-- [ ] 3.9 Escrever `flows/transactions/01-create-expense.yaml`: reset → seed account → seed category → criar despesa → asserta item na lista e saldo da conta atualizado no dashboard
-- [ ] 3.10 Escrever `flows/transactions/02-create-income.yaml`: análogo, com tipo receita
-- [ ] 3.11 Escrever `flows/transactions/03-edit-transaction.yaml`: reset → seed account → seed category → criar despesa → editar valor → asserta novo valor refletido
-- [ ] 3.12 Escrever `flows/transactions/04-delete-transaction.yaml`: reset → seed account → seed category → criar despesa → deletar → asserta item ausente e saldo restaurado
+- [x] 3.1 Adicionar testTags em `AccountFormModal` (`account-form-name`, `account-form-submit`) e em `AccountsScreen` (`accounts-fab`, `accounts-item-{id}`) — _o campo de saldo (`account-form-balance` mencionado no plano original) não existe nesse formulário; o saldo é editado em `EditAccountBalanceModal`, fora do escopo da fase 3_
+- [x] 3.2 Adicionar testTags em `CategoryFormModal` (`category-form-name`, `category-form-icon`, `category-form-submit`, `category-form-type-expense`, `category-form-type-income`) e em `CategoriesScreen` (`categories-fab`, `categories-item-{id}`, `categories-create-manual` no estado vazio)
+- [x] 3.3 Adicionar testTags em `AddTransactionModal` e `EditTransactionModal` via `TransactionFormTestTags` (`transaction-form-title`, `transaction-form-amount`, `transaction-form-date`, `transaction-form-type-expense`, `transaction-form-type-income`, `transaction-form-account`, `transaction-form-category`, `transaction-form-submit`); `AccountSelector` e `CategorySelector` ganharam parâmetro opcional `testTag`
+- [x] 3.4 Adicionar testTags em `TransactionsScreen` (item `transactions-item-{operationId}`); o FAB foi taggeado em `HomeScreen` como `transactions-fab` (única instância no chrome do Home, válida em Dashboard e Transactions); filtros não foram cobertos porque os flows da fase 3 não os usam
+- [x] 3.5 Adicionar testTags em `DashboardScreen`/`DashboardComponentContent` (`dashboard-total-balance`, `dashboard-account-balance-{accountId}`); aproveitamos para taggear também `dashboard-add-account` e `dashboard-quick-action-{type}` porque os helpers de seed precisam navegar a partir do Dashboard
+- [x] 3.6 Adicionar testTags em `ViewOperationModal` (`view-transaction-edit`, `view-transaction-delete`) e `DeleteTransactionModal` (`delete-transaction-confirm`)
+- [x] 3.7 Escrever `helpers/seed-account.yaml`: rola o Dashboard até a quick action de Contas, abre `AccountFormModal`, cria conta "E2E Account" e volta ao Dashboard
+- [x] 3.8 Escrever `helpers/seed-category.yaml`: rola o Dashboard até a quick action de Categorias, usa o estado vazio (`categories-create-manual`), cria categoria "E2E Food" (despesa) e volta ao Dashboard
+- [x] 3.9 Escrever `flows/transactions/01-create-expense.yaml`: reset → seed account → seed category → cria despesa pelo FAB do Home → assert texto na lista de Transactions e card de saldo total no Dashboard
+- [x] 3.10 Escrever `flows/transactions/02-create-income.yaml`: reset → cria receita (sem categoria, basta título para `TransactionForm.isValid()`) → assert na lista
+- [x] 3.11 Escrever `flows/transactions/03-edit-transaction.yaml`: reset → seed category → cria despesa "E2E Expense" → abre via `ViewOperationModal` → edita título para "E2E Edited" → assert que o novo título aparece e o antigo some
+- [x] 3.12 Escrever `flows/transactions/04-delete-transaction.yaml`: reset → seed category → cria despesa → deleta via `ViewOperationModal` + `DeleteTransactionModal` → assert item ausente e Dashboard renderizando saldo total
 - [ ] 3.13 Rodar a suíte completa local (Android e iOS); investigar e corrigir qualquer flaky antes de merge
 - [ ] 3.14 Disparar workflow no CI e confirmar 6 flows verdes (2 smoke + 4 transactions)
 

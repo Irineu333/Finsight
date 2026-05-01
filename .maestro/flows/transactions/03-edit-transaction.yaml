@@ -1,0 +1,80 @@
+appId: com.neoutils.finsight.e2e
+name: transactions / edit transaction
+tags:
+  - transactions
+---
+# Reset → cria despesa "E2E Expense" → edita o título para "E2E Edited" →
+# valida que a lista reflete o novo título e não exibe mais o antigo.
+#
+# Editamos só o título porque o valor formatado é locale-dependente, então
+# título estável é a forma mais robusta de afirmar a mudança no item.
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-category.yaml
+
+# Cria a despesa base (mesmos passos de 01-create-expense, sem seed-account).
+- tapOn:
+    id: "transactions-fab"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-amount"
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-title"
+- inputText: "E2E Expense"
+- hideKeyboard
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "5000"
+- hideKeyboard
+- tapOn:
+    id: "transaction-form-category"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Food"
+    timeout: 5000
+- tapOn:
+    text: "E2E Food"
+- tapOn:
+    id: "transaction-form-submit"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000
+
+# Abre a aba Transactions, abre o modal de visualização e entra em edição.
+- tapOn:
+    id: "bottom-nav-transactions"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Expense"
+    timeout: 10000
+- tapOn:
+    text: "E2E Expense"
+- extendedWaitUntil:
+    visible:
+      id: "view-transaction-edit"
+    timeout: 5000
+- tapOn:
+    id: "view-transaction-edit"
+
+# Substitui o título e submete.
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-title"
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-title"
+- eraseText: 50
+- inputText: "E2E Edited"
+- hideKeyboard
+- tapOn:
+    id: "transaction-form-submit"
+
+- extendedWaitUntil:
+    visible:
+      id: "transactions-root"
+    timeout: 10000
+- assertVisible:
+    text: "E2E Edited"
+- assertNotVisible:
+    text: "E2E Expense"

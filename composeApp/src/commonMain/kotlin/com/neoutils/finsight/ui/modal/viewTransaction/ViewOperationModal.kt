@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -344,13 +345,13 @@ class ViewOperationModal(
             onClick = {
                 manager.show(DeleteTransactionModal(uiState.transaction))
             },
-            modifier = when {
+            modifier = (when {
                 uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
                 !uiState.operation.isEditable -> Modifier.fillMaxWidth()
                 uiState.operation.installment != null -> Modifier.fillMaxWidth()
                 uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
-            },
+            }).testTag(ViewOperationTestTags.DELETE),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = colorScheme.error,
@@ -384,7 +385,9 @@ class ViewOperationModal(
                     onClick = {
                         manager.show(EditTransactionModal(uiState.transaction))
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .testTag(ViewOperationTestTags.EDIT)
+                        .weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = Info,

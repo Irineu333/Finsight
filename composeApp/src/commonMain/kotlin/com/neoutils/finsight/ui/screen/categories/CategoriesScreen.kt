@@ -100,6 +100,7 @@ private fun CategoriesContent(
                     onClick = {
                         modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
                     },
+                    modifier = Modifier.testTag(CategoriesTestTags.FAB),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -203,6 +204,7 @@ private fun CategoriesContent(
                                         modalManager.show(ViewCategoryModal(category))
                                     },
                                     modifier = Modifier
+                                        .testTag(CategoriesTestTags.item(category.id))
                                         .fillMaxWidth()
                                         .animateItem()
                                 )
@@ -257,7 +259,9 @@ private fun EmptyCategoriesState(
 
             OutlinedButton(
                 onClick = onCreateManualCategory,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(CategoriesTestTags.CREATE_MANUAL)
+                    .fillMaxWidth(),
             ) {
                 Text(text = stringResource(Res.string.categories_create_manual))
             }

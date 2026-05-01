@@ -135,6 +135,7 @@ private fun TransactionsContent(
                     OperationCard(
                         operation = operation,
                         modifier = Modifier
+                            .testTag(TransactionsTestTags.item(operation.id))
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),

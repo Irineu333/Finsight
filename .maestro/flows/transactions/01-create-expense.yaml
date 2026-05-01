@@ -1,0 +1,62 @@
+appId: com.neoutils.finsight.e2e
+name: transactions / create expense
+tags:
+  - transactions
+---
+# Reset → seed conta + categoria → cria uma despesa pelo FAB do Home →
+# valida que ela aparece na aba Transactions com o título usado e que o
+# Dashboard renderiza o card de saldo total novamente.
+#
+# Observações:
+# - Há uma conta default ("Carteira"/"Wallet") criada por
+#   EnsureDefaultAccountUseCase. A despesa é lançada nela (pré-selecionada
+#   automaticamente como conta padrão); a "E2E Account" criada pelo seed
+#   só prova o caminho de criação manual.
+# - Não fazemos asserts sobre o valor formatado (locale-dependente).
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-account.yaml
+- runFlow: ../../helpers/seed-category.yaml
+
+- tapOn:
+    id: "transactions-fab"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-amount"
+    timeout: 5000
+
+- tapOn:
+    id: "transaction-form-title"
+- inputText: "E2E Expense"
+- hideKeyboard
+
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "5000"
+- hideKeyboard
+
+- tapOn:
+    id: "transaction-form-category"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Food"
+    timeout: 5000
+- tapOn:
+    text: "E2E Food"
+
+- tapOn:
+    id: "transaction-form-submit"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000
+- assertVisible:
+    id: "dashboard-total-balance"
+
+- tapOn:
+    id: "bottom-nav-transactions"
+- extendedWaitUntil:
+    visible:
+      id: "transactions-root"
+    timeout: 10000
+- assertVisible:
+    text: "E2E Expense"

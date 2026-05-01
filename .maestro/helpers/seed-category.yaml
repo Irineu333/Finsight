@@ -1,0 +1,40 @@
+appId: com.neoutils.finsight.e2e
+---
+# Cria uma categoria determinística "E2E Food" (tipo despesa) partindo do
+# Dashboard. Pré-condição: dashboard-root visível e nenhuma categoria ainda
+# (CategoriesScreen renderiza estado vazio).
+#
+# Caminho: Dashboard → Categories quick action → estado vazio →
+# "Criar manualmente" → preencher → submeter → voltar ao Dashboard.
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-categories"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-categories"
+- extendedWaitUntil:
+    visible:
+      id: "categories-root"
+    timeout: 10000
+- tapOn:
+    id: "categories-create-manual"
+- extendedWaitUntil:
+    visible:
+      id: "category-form-name"
+    timeout: 5000
+- tapOn:
+    id: "category-form-name"
+- inputText: "E2E Food"
+- hideKeyboard
+- tapOn:
+    id: "category-form-submit"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Food"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000

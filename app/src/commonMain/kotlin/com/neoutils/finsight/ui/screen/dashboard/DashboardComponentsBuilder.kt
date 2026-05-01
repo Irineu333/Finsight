@@ -17,7 +17,7 @@ import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.currentPlatform
-import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -47,7 +47,7 @@ class DashboardComponentsBuilder(
     private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
-    private val invoiceUiMapper: InvoiceUiMapper,
+    private val invoiceUiMapper: IInvoiceUiMapper,
 ) {
 
     suspend fun build(

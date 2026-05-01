@@ -26,6 +26,7 @@ import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
+import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
@@ -192,7 +193,7 @@ val creditCardsModule = module {
         )
     }
 
-    factory {
+    factory<IInvoiceUiMapper> {
         InvoiceUiMapper(
             calculateInvoiceUseCase = get(),
             calculateAvailableLimitUseCase = get(),

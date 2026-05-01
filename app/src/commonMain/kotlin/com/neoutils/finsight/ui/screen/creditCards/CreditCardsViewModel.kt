@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
-import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
+import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -24,7 +24,7 @@ class CreditCardsViewModel(
     private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
-    private val invoiceUiMapper: InvoiceUiMapper,
+    private val invoiceUiMapper: IInvoiceUiMapper,
     private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
 

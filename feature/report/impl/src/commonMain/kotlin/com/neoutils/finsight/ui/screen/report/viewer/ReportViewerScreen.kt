@@ -31,7 +31,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.report.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
@@ -40,9 +40,9 @@ import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
@@ -126,6 +126,9 @@ private fun ReportViewerContent(
 ) {
     val modalManager = LocalModalManager.current
     val dateFormats = LocalDateFormats.current
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
 
     val exportStrings = ReportExportStrings(
         title = stringResource(Res.string.report_viewer_title),
@@ -248,7 +251,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
-                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -261,7 +264,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
-                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -300,12 +303,10 @@ private fun ReportViewerContent(
                                         onClick = {
                                             when {
                                                 operation.type.isAdjustment -> modalManager.show(
-                                                    ViewAdjustmentModal(
-                                                        operation
-                                                    )
+                                                    viewAdjustmentEntry.create(operation)
                                                 )
 
-                                                else -> modalManager.show(ViewOperationModal(operation))
+                                                else -> modalManager.show(viewOperationEntry.create(operation))
                                             }
                                         },
                                     )

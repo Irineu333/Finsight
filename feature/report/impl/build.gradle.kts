@@ -9,6 +9,7 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.report.api)
             implementation(projects.core.ui)
+            implementation(projects.core.sharedui)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)
             implementation(projects.core.database)
@@ -24,7 +25,7 @@ kotlin {
 }
 
 compose.resources {
-    publicResClass = false
+    publicResClass = true
     packageOfResClass = "com.neoutils.finsight.feature.report.impl.resources"
     generateResClass = auto
 }

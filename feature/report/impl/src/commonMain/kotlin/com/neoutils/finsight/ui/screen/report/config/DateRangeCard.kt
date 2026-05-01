@@ -15,7 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.report.impl.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.date.DateRangePickerModal
 import kotlinx.datetime.*

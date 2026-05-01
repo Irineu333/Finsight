@@ -27,11 +27,11 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.operation_card_balance_adjustment
-import com.neoutils.finsight.resources.operation_card_invoice_adjustment
-import com.neoutils.finsight.resources.operation_card_payment
-import com.neoutils.finsight.resources.operation_card_transfer
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats

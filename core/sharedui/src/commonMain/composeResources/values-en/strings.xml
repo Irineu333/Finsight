@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_default">Default</string>
+    <string name="accounts_initial_balance">Initial Balance</string>
+    <string name="accounts_income">Income</string>
+    <string name="accounts_expenses">Expenses</string>
+    <string name="accounts_adjustments">Adjustments</string>
+    <string name="accounts_invoices">Invoices</string>
+    <string name="accounts_advance_payments">Advance Payments</string>
+    <string name="accounts_balance">Balance</string>
+
+    <string name="summary_card_initial_balance">Initial Balance</string>
+    <string name="summary_card_income">Income</string>
+    <string name="summary_card_outgoing">Outgoing</string>
+    <string name="summary_card_invoices">Invoices</string>
+    <string name="summary_card_adjustments">Adjustments</string>
+    <string name="summary_card_current_balance">Current Balance</string>
+    <string name="summary_card_final_balance">Final Balance</string>
+    <string name="summary_card_see_invoices">See invoices</string>
+    <string name="operation_card_transfer">Transfer</string>
+    <string name="operation_card_payment">Invoice Payment</string>
+    <string name="operation_card_balance_adjustment">Balance Adjustment</string>
+    <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="target_selector_account">Account</string>
+    <string name="target_selector_credit_card">Credit Card</string>
+    <string name="target_selector_label">Type</string>
+    <string name="account_selector_label">Account</string>
+    <string name="credit_card_selector_label">Card</string>
+    <string name="multi_category_selector_none">None</string>
+    <string name="multi_category_selector_and">and</string>
+    <string name="multi_category_selector_label">Categories</string>
+</resources>

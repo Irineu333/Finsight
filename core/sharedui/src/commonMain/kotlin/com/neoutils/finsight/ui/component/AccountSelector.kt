@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.account_selector_label
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.account_selector_label
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

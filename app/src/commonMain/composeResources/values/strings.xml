@@ -132,14 +132,6 @@
 
     <!-- Accounts Screen -->
     <string name="accounts_title">Contas</string>
-    <string name="accounts_default">Padrão</string>
-    <string name="accounts_initial_balance">Saldo Inicial</string>
-    <string name="accounts_income">Receitas</string>
-    <string name="accounts_expenses">Despesas</string>
-    <string name="accounts_adjustments">Ajustes</string>
-    <string name="accounts_invoices">Faturas</string>
-    <string name="accounts_advance_payments">Adiantamentos</string>
-    <string name="accounts_balance">Saldo</string>
     <string name="accounts_delete">Excluir</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
@@ -350,60 +342,11 @@
     <string name="view_budget_edit">Editar</string>
 
     <!-- Components -->
-    <string name="summary_card_initial_balance">Saldo Inicial</string>
-    <string name="summary_card_income">Entradas</string>
-    <string name="summary_card_outgoing">Saídas</string>
-    <string name="summary_card_invoices">Faturas</string>
-    <string name="summary_card_adjustments">Ajustes</string>
-    <string name="summary_card_current_balance">Saldo Atual</string>
-    <string name="summary_card_final_balance">Saldo Final</string>
-    <string name="summary_card_see_invoices">Ver faturas</string>
-
-    <string name="operation_card_transfer">Transferência</string>
-    <string name="operation_card_payment">Pagamento de Fatura</string>
-    <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
-    <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
-
-    <string name="target_selector_account">Conta</string>
-    <string name="target_selector_credit_card">Cartão de Crédito</string>
-    <string name="target_selector_label">Tipo</string>
-
-    <string name="category_selector_label">Categoria</string>
-    <string name="category_selector_none">Nenhuma</string>
-
-    <string name="account_selector_label">Conta</string>
-
-    <string name="credit_card_selector_label">Cartão</string>
-
-    <string name="invoice_navigator_label">Fatura</string>
-
-    <string name="multi_category_selector_none">Nenhuma</string>
-    <string name="multi_category_selector_and">e</string>
-    <string name="multi_category_selector_label">Categorias</string>
-
-    <string name="credit_card_ui_current_invoice">Fatura Atual</string>
-    <string name="credit_card_ui_available_limit">Limite Disponível</string>
-    <string name="credit_card_ui_opens_on">Abre em</string>
-    <string name="credit_card_ui_closes_on">Fecha em</string>
-    <string name="credit_card_ui_due_on">Vence em</string>
-    <string name="credit_card_ui_day">Dia %1$d</string>
-    <string name="credit_card_ui_edit_invoice">Editar fatura</string>
-
-    <string name="dashboard_credit_card_close_invoice">Fechar Fatura</string>
-    <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
-    <string name="dashboard_credit_card_advance">Antecipar</string>
-
     <string name="invoice_summary_card_expenses">Gastos</string>
     <string name="invoice_summary_card_advance_payments">Adiantamentos</string>
     <string name="invoice_summary_card_adjustments">Ajustes</string>
     <string name="invoice_summary_card_invoice">Fatura</string>
     <string name="invoice_summary_card_edit_invoice">Editar fatura</string>
-
-
-    <string name="category_spending_card_title">Gastos por Categoria</string>
-
-    <string name="budget_progress_card_title">Orçamentos</string>
-
     <!-- Invoice statuses -->
     <string name="invoice_status_future">Futura</string>
     <string name="invoice_status_open">Aberta</string>
@@ -429,8 +372,6 @@
     <string name="category_default_travel">Viagem</string>
 
     <!-- Invoice selector -->
-    <string name="invoice_selector_label">Fatura</string>
-
     <!-- Date picker -->
     <!-- Dashboard - Recurring -->
     <string name="dashboard_recurring">Recorrentes</string>
@@ -567,4 +508,20 @@
     <string name="preview_transaction_netflix">Netflix</string>
     <string name="preview_transaction_spotify">Spotify</string>
     <string name="preview_budget_food">Alimentação</string>
+    <string name="category_selector_label">Categoria</string>
+    <string name="category_selector_none">Nenhuma</string>
+    <string name="invoice_navigator_label">Fatura</string>
+    <string name="credit_card_ui_current_invoice">Fatura Atual</string>
+    <string name="credit_card_ui_available_limit">Limite Disponível</string>
+    <string name="credit_card_ui_opens_on">Abre em</string>
+    <string name="credit_card_ui_closes_on">Fecha em</string>
+    <string name="credit_card_ui_due_on">Vence em</string>
+    <string name="credit_card_ui_day">Dia %1$d</string>
+    <string name="credit_card_ui_edit_invoice">Editar fatura</string>
+    <string name="dashboard_credit_card_close_invoice">Fechar Fatura</string>
+    <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
+    <string name="dashboard_credit_card_advance">Antecipar</string>
+    <string name="category_spending_card_title">Gastos por Categoria</string>
+    <string name="budget_progress_card_title">Orçamentos</string>
+    <string name="invoice_selector_label">Fatura</string>
 </resources>

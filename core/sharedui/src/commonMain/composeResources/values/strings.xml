@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_default">Padrão</string>
+    <string name="accounts_initial_balance">Saldo Inicial</string>
+    <string name="accounts_income">Receitas</string>
+    <string name="accounts_expenses">Despesas</string>
+    <string name="accounts_adjustments">Ajustes</string>
+    <string name="accounts_invoices">Faturas</string>
+    <string name="accounts_advance_payments">Adiantamentos</string>
+    <string name="accounts_balance">Saldo</string>
+    <string name="summary_card_initial_balance">Saldo Inicial</string>
+    <string name="summary_card_income">Entradas</string>
+    <string name="summary_card_outgoing">Saídas</string>
+    <string name="summary_card_invoices">Faturas</string>
+    <string name="summary_card_adjustments">Ajustes</string>
+    <string name="summary_card_current_balance">Saldo Atual</string>
+    <string name="summary_card_final_balance">Saldo Final</string>
+    <string name="summary_card_see_invoices">Ver faturas</string>
+    <string name="operation_card_transfer">Transferência</string>
+    <string name="operation_card_payment">Pagamento de Fatura</string>
+    <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
+    <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
+    <string name="target_selector_account">Conta</string>
+    <string name="target_selector_credit_card">Cartão de Crédito</string>
+    <string name="target_selector_label">Tipo</string>
+    <string name="account_selector_label">Conta</string>
+    <string name="credit_card_selector_label">Cartão</string>
+    <string name="multi_category_selector_none">Nenhuma</string>
+    <string name="multi_category_selector_and">e</string>
+    <string name="multi_category_selector_label">Categorias</string>
+</resources>

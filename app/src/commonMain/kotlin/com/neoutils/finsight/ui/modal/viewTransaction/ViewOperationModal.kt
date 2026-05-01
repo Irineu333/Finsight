@@ -29,6 +29,11 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.AppIcon
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
+import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.ModalBottomSheet
@@ -155,8 +160,8 @@ class ViewOperationModal(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = when (uiState.operation.kind) {
-                            Operation.Kind.PAYMENT -> stringResource(Res.string.operation_card_payment)
-                            Operation.Kind.TRANSFER -> stringResource(Res.string.operation_card_transfer)
+                            Operation.Kind.PAYMENT -> stringResource(SharedUiRes.string.operation_card_payment)
+                            Operation.Kind.TRANSFER -> stringResource(SharedUiRes.string.operation_card_transfer)
                             else -> uiState.operation.label
                         },
                         style = MaterialTheme.typography.headlineSmall,

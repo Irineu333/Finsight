@@ -28,15 +28,15 @@ import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.InvoicePayment
 import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.summary_card_adjustments
-import com.neoutils.finsight.resources.summary_card_current_balance
-import com.neoutils.finsight.resources.summary_card_final_balance
-import com.neoutils.finsight.resources.summary_card_income
-import com.neoutils.finsight.resources.summary_card_initial_balance
-import com.neoutils.finsight.resources.summary_card_invoices
-import com.neoutils.finsight.resources.summary_card_outgoing
-import com.neoutils.finsight.resources.summary_card_see_invoices
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.summary_card_adjustments
+import com.neoutils.finsight.core.sharedui.resources.summary_card_current_balance
+import com.neoutils.finsight.core.sharedui.resources.summary_card_final_balance
+import com.neoutils.finsight.core.sharedui.resources.summary_card_income
+import com.neoutils.finsight.core.sharedui.resources.summary_card_initial_balance
+import com.neoutils.finsight.core.sharedui.resources.summary_card_invoices
+import com.neoutils.finsight.core.sharedui.resources.summary_card_outgoing
+import com.neoutils.finsight.core.sharedui.resources.summary_card_see_invoices
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

@@ -32,6 +32,11 @@ import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
+import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
@@ -135,10 +140,10 @@ private fun ReportViewerContent(
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
         sectionIncomeByCategory = stringResource(Res.string.report_viewer_income_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
-        operationTransfer = stringResource(Res.string.operation_card_transfer),
-        operationPayment = stringResource(Res.string.operation_card_payment),
-        operationBalanceAdjustment = stringResource(Res.string.operation_card_balance_adjustment),
-        operationInvoiceAdjustment = stringResource(Res.string.operation_card_invoice_adjustment),
+        operationTransfer = stringResource(SharedUiRes.string.operation_card_transfer),
+        operationPayment = stringResource(SharedUiRes.string.operation_card_payment),
+        operationBalanceAdjustment = stringResource(SharedUiRes.string.operation_card_balance_adjustment),
+        operationInvoiceAdjustment = stringResource(SharedUiRes.string.operation_card_invoice_adjustment),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),

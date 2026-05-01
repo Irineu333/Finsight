@@ -20,10 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.target_selector_account
-import com.neoutils.finsight.resources.target_selector_credit_card
-import com.neoutils.finsight.resources.target_selector_label
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.target_selector_account
+import com.neoutils.finsight.core.sharedui.resources.target_selector_credit_card
+import com.neoutils.finsight.core.sharedui.resources.target_selector_label
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

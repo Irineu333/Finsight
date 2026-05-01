@@ -14,10 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.multi_category_selector_and
-import com.neoutils.finsight.resources.multi_category_selector_label
-import com.neoutils.finsight.resources.multi_category_selector_none
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.multi_category_selector_and
+import com.neoutils.finsight.core.sharedui.resources.multi_category_selector_label
+import com.neoutils.finsight.core.sharedui.resources.multi_category_selector_none
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

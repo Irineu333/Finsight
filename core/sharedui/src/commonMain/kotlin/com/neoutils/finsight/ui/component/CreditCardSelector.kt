@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.credit_card_selector_label
+import com.neoutils.finsight.core.sharedui.resources.Res
+import com.neoutils.finsight.core.sharedui.resources.credit_card_selector_label
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 

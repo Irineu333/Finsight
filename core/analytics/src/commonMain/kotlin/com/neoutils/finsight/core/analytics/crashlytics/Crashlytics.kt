@@ -1,4 +1,4 @@
-package com.neoutils.finsight.domain.crashlytics
+package com.neoutils.finsight.core.analytics.crashlytics
 
 interface Crashlytics {
     fun setUserId(id: String?)

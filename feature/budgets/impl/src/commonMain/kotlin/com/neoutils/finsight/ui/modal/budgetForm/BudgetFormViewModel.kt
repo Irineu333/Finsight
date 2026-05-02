@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
 import com.neoutils.finsight.domain.repository.IBudgetRepository

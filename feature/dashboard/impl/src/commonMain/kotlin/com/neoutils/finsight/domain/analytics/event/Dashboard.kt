@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.analytics.event
 
-import com.neoutils.finsight.domain.analytics.Event
+import com.neoutils.finsight.core.analytics.Event
 
 object EnterDashboardEditMode : Event("enter_dashboard_edit_mode")
 

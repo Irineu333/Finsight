@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.flatMap
 import arrow.core.getOrElse
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCreditCard
 import com.neoutils.finsight.domain.analytics.event.EditCreditCard
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase

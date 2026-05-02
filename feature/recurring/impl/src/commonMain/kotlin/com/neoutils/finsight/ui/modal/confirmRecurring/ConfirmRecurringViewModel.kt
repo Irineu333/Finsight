@@ -2,10 +2,10 @@ package com.neoutils.finsight.ui.modal.confirmRecurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ConfirmRecurring
 import com.neoutils.finsight.domain.analytics.event.SkipRecurring
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction

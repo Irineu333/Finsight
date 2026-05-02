@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.extension.toUiText
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCategory
 import com.neoutils.finsight.domain.analytics.event.EditCategory
 import com.neoutils.finsight.domain.model.Category

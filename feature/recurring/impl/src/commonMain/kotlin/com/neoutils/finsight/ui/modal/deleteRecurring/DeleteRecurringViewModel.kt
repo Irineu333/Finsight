@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.modal.deleteRecurring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IRecurringRepository

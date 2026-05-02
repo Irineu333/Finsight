@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.modal.deleteCategory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteCategory
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository

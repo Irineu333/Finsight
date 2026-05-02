@@ -6,9 +6,9 @@ import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager

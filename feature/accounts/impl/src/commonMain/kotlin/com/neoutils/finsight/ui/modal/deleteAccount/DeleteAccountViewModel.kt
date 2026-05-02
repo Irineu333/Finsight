@@ -2,9 +2,9 @@ package com.neoutils.finsight.ui.modal.deleteAccount
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteAccount
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.ui.component.ModalManager

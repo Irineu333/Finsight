@@ -1,7 +1,7 @@
-package com.neoutils.finsight.analytics
+package com.neoutils.finsight.core.analytics
 
-import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.Event
+import com.neoutils.finsight.core.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Event
 
 internal class NoOpAnalytics : Analytics {
     override fun logScreenView(screenName: String) = Unit

@@ -4,9 +4,9 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EnterDashboardEditMode
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.analytics.event.SaveDashboardLayout
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard

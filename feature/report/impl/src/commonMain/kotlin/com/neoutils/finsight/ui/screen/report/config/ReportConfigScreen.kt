@@ -39,7 +39,7 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 

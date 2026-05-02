@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.modal.deleteBudget
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteBudget
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.repository.IBudgetRepository

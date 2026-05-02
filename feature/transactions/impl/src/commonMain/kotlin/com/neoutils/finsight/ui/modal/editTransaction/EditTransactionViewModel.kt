@@ -12,9 +12,9 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.EditTransaction
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.core.utils.extension.combine

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.analytics.event
 
-import com.neoutils.finsight.domain.analytics.Event
+import com.neoutils.finsight.core.analytics.Event
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.form.TransactionForm

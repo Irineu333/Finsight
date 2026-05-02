@@ -1,7 +1,7 @@
-package com.neoutils.finsight.analytics
+package com.neoutils.finsight.core.analytics
 
-import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.Event
+import com.neoutils.finsight.core.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Event
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.analytics.FirebaseAnalyticsEvents
 import dev.gitlive.firebase.analytics.FirebaseAnalyticsParam

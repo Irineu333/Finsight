@@ -11,9 +11,9 @@ import com.neoutils.finsight.di.transactionsModule
 import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.installmentsModule
 import com.neoutils.finsight.di.budgetsModule
-import com.neoutils.finsight.di.analyticsModule
+import com.neoutils.finsight.core.analytics.di.analyticsModule
 import com.neoutils.finsight.di.authModule
-import com.neoutils.finsight.di.crashlyticsModule
+import com.neoutils.finsight.core.analytics.di.crashlyticsModule
 import com.neoutils.finsight.di.dashboardModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.supportModule

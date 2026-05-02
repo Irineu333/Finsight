@@ -4,7 +4,7 @@ package com.neoutils.finsight.ui.screen.report.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.GenerateReport
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.PerspectiveTab

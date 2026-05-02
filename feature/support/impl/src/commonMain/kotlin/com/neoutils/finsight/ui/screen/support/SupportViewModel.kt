@@ -2,9 +2,9 @@ package com.neoutils.finsight.ui.screen.support
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateSupportIssue
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
 import com.neoutils.finsight.domain.repository.ISupportRepository
 import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase

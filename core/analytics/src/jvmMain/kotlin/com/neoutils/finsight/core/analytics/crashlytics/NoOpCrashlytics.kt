@@ -1,6 +1,6 @@
-package com.neoutils.finsight.crashlytics
+package com.neoutils.finsight.core.analytics.crashlytics
 
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 
 internal class NoOpCrashlytics : Crashlytics {
     override fun setUserId(id: String?) = Unit

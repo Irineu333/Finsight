@@ -2,8 +2,8 @@
 
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.Analytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft

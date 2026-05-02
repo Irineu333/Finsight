@@ -2,9 +2,9 @@ package com.neoutils.finsight.ui.modal.reopenInvoice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ReopenInvoice
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch

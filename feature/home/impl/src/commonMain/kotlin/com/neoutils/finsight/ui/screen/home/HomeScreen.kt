@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.NavigationItem
 import com.neoutils.finsight.ui.screen.dashboard.DashboardEntry

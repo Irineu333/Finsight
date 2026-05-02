@@ -31,7 +31,7 @@ import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.feature.support.impl.resources.*
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

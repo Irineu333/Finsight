@@ -1,4 +1,4 @@
-package com.neoutils.finsight.domain.analytics
+package com.neoutils.finsight.core.analytics
 
 interface Analytics {
     fun logScreenView(screenName: String)

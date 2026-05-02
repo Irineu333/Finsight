@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.modal.deleteTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.analytics.Analytics
+import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteTransaction
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository

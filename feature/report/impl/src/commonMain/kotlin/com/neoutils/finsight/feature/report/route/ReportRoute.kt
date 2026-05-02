@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.report.screen
+package com.neoutils.finsight.feature.report.route
 
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import kotlinx.serialization.Serializable

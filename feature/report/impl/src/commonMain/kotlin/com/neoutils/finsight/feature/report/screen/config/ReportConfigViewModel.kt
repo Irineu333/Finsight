@@ -11,6 +11,8 @@ import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.report.model.ReportConfig
+import com.neoutils.finsight.feature.report.usecase.BuildReportViewerParamsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.receiveAsFlow

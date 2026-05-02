@@ -1,10 +1,11 @@
-package com.neoutils.finsight.feature.report.util
+package com.neoutils.finsight.feature.report.route
 
 import androidx.navigation.NavType
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import androidx.savedstate.write
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
+
 class PerspectiveTabNavType : NavType<PerspectiveTab>(isNullableAllowed = false) {
     override fun put(
         bundle: SavedState,

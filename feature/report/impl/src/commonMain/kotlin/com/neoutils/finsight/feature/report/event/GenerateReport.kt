@@ -7,7 +7,3 @@ class GenerateReport(params: Map<String, String>) : Event("generate_report", par
         mapOf("target" to target, "sections" to sections)
     )
 }
-
-object ShareReport : Event("share_report")
-
-object PrintReport : Event("print_report")

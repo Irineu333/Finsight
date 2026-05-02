@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.report.screen.config
+package com.neoutils.finsight.feature.report.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

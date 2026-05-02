@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.report.screen.viewer
+package com.neoutils.finsight.feature.report.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +28,7 @@ import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.core.ui.util.stringUiText
+import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerUiState
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

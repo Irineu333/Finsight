@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finsight.feature.report.screen.config
+package com.neoutils.finsight.feature.report.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow

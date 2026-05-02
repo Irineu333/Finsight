@@ -1,8 +1,10 @@
-package com.neoutils.finsight.feature.report.screen.config
+package com.neoutils.finsight.feature.report.usecase
 
-import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.feature.report.screen.ReportViewerParams
+import com.neoutils.finsight.feature.report.model.PerspectiveTab
+import com.neoutils.finsight.feature.report.model.ReportViewerParams
+import com.neoutils.finsight.feature.report.model.ReportConfig
+
 class BuildReportViewerParamsUseCase(
     private val invoiceRepository: IInvoiceRepository,
 ) {

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.report.screen.service
+package com.neoutils.finsight.feature.report.service
 
 import arrow.core.Either
 import com.neoutils.finsight.feature.report.error.ReportOutputError

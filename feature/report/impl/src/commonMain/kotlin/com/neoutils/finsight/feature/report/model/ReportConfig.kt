@@ -1,6 +1,5 @@
-package com.neoutils.finsight.feature.report.screen.config
+package com.neoutils.finsight.feature.report.model
 
-import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -22,11 +21,11 @@ data class ReportConfig(
 ) {
     companion object {
         fun initial(): ReportConfig {
-            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val today = Clock.System.now().toLocalDateTime(TimeZone.Companion.currentSystemDefault()).date
             val firstThisMonth = LocalDate(today.year, today.month, 1)
             val lastThisMonth = firstThisMonth
-                .plus(1, DateTimeUnit.MONTH)
-                .minus(1, DateTimeUnit.DAY)
+                .plus(1, DateTimeUnit.Companion.MONTH)
+                .minus(1, DateTimeUnit.Companion.DAY)
 
             return ReportConfig(
                 startDate = firstThisMonth,

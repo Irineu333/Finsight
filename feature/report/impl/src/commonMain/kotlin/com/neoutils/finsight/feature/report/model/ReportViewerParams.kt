@@ -1,6 +1,6 @@
-package com.neoutils.finsight.feature.report.screen
+package com.neoutils.finsight.feature.report.model
 
-import com.neoutils.finsight.feature.report.model.PerspectiveTab
+import com.neoutils.finsight.feature.report.route.ReportRoute
 import kotlinx.datetime.LocalDate
 
 data class ReportViewerParams(

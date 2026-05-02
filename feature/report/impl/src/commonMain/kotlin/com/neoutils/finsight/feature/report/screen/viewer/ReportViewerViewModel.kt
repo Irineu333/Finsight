@@ -16,11 +16,11 @@ import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.report.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.feature.report.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.feature.report.screen.render.ReportDocumentRenderer
+import com.neoutils.finsight.feature.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.feature.report.resources.Res
 import com.neoutils.finsight.feature.report.resources.report_viewer_badge_account
 import com.neoutils.finsight.feature.report.resources.report_viewer_badge_credit_card
-import com.neoutils.finsight.feature.report.screen.ReportViewerParams
+import com.neoutils.finsight.feature.report.model.ReportViewerParams
 import com.neoutils.finsight.core.ui.util.UiText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted

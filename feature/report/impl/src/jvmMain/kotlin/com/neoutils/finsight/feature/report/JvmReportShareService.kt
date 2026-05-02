@@ -6,7 +6,7 @@ import arrow.core.right
 import com.neoutils.finsight.feature.report.error.ReportOutputError
 import com.neoutils.finsight.feature.report.model.ReportDocument
 import com.neoutils.finsight.core.ui.extension.PlatformContext
-import com.neoutils.finsight.feature.report.screen.service.ReportShareService
+import com.neoutils.finsight.feature.report.service.ReportShareService
 import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.SwingUtilities

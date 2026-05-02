@@ -34,12 +34,14 @@ import com.neoutils.finsight.core.sharedui.component.AccountCard
 import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
 import com.neoutils.finsight.core.sharedui.component.CreditCardCard
 import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
-import com.neoutils.finsight.feature.report.screen.ReportViewerParams
+import com.neoutils.finsight.feature.report.model.ReportViewerParams
 import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.core.analytics.Analytics
+import com.neoutils.finsight.feature.report.component.DateRangeCard
+import com.neoutils.finsight.feature.report.component.SectionsCard
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 

@@ -5,7 +5,7 @@ import arrow.core.left
 import com.neoutils.finsight.feature.report.error.ReportOutputError
 import com.neoutils.finsight.feature.report.model.ReportDocument
 import com.neoutils.finsight.core.ui.extension.PlatformContext
-import com.neoutils.finsight.feature.report.screen.service.ReportPrintService
+import com.neoutils.finsight.feature.report.service.ReportPrintService
 import java.awt.Desktop
 import java.io.File
 import kotlinx.coroutines.Dispatchers

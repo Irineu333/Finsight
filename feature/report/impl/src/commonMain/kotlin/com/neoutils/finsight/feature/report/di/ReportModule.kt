@@ -2,10 +2,10 @@ package com.neoutils.finsight.feature.report.di
 
 import com.neoutils.finsight.feature.report.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.feature.report.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.feature.report.screen.config.BuildReportViewerParamsUseCase
+import com.neoutils.finsight.feature.report.usecase.BuildReportViewerParamsUseCase
 import com.neoutils.finsight.feature.report.screen.config.ReportConfigViewModel
-import com.neoutils.finsight.feature.report.screen.render.HtmlReportDocumentRenderer
-import com.neoutils.finsight.feature.report.screen.render.ReportDocumentRenderer
+import com.neoutils.finsight.feature.report.render.HtmlReportDocumentRenderer
+import com.neoutils.finsight.feature.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel

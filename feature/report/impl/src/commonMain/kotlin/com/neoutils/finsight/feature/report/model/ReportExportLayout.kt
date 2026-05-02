@@ -1,18 +1,10 @@
-package com.neoutils.finsight.feature.report.screen.viewer
+package com.neoutils.finsight.feature.report.model
 
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
-import com.neoutils.finsight.feature.report.model.CategoryItem
-import com.neoutils.finsight.feature.report.model.ReportContext
-import com.neoutils.finsight.feature.report.model.ReportLayout
-import com.neoutils.finsight.feature.report.model.ReportLayoutSection
-import com.neoutils.finsight.feature.report.model.ReportSummaryItem
-import com.neoutils.finsight.feature.report.model.ReportTableLabels
-import com.neoutils.finsight.feature.report.model.ReportTone
-import com.neoutils.finsight.feature.report.model.TransactionGroup
-import com.neoutils.finsight.feature.report.model.TransactionItem
 import com.neoutils.finsight.core.ui.util.DateFormats
+import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerUiState
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt

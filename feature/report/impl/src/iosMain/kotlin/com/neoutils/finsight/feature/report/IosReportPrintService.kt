@@ -8,7 +8,7 @@ import com.neoutils.finsight.feature.report.model.ReportDocument
 import com.neoutils.finsight.core.ui.extension.PlatformContext
 import com.neoutils.finsight.feature.report.extension.popoverCenterRect
 import com.neoutils.finsight.feature.report.extension.resolvePresenter
-import com.neoutils.finsight.feature.report.screen.service.ReportPrintService
+import com.neoutils.finsight.feature.report.service.ReportPrintService
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.UIKit.UIDevice

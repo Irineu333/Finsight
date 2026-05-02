@@ -10,16 +10,12 @@ import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.installmentsModule
 import com.neoutils.finsight.di.budgetsModule
 import com.neoutils.finsight.di.analyticsModule
-import com.neoutils.finsight.di.appModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.dashboardModule
-import com.neoutils.finsight.di.mapperModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.supportModule
-import com.neoutils.finsight.di.useCaseModules
-import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.ui.di.uiModule
 import com.neoutils.finsight.util.di.utilsModule
 import org.koin.android.ext.koin.androidContext
@@ -39,7 +35,6 @@ class AndroidApp : Application() {
                 utilsModule,
                 uiModule,
                 supportModule,
-                mapperModule,
                 accountsModule,
                 categoriesModule,
                 creditCardsModule,
@@ -49,13 +44,10 @@ class AndroidApp : Application() {
                 budgetsModule,
                 dashboardModule,
                 repositoryModule,
-                useCaseModules,
                 reportModule,
                 analyticsModule,
                 crashlyticsModule,
                 authModule,
-                viewModelModule,
-                appModule,
             )
         }
     }

@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.sharedui.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.target_selector_account
 import com.neoutils.finsight.core.sharedui.resources.target_selector_credit_card

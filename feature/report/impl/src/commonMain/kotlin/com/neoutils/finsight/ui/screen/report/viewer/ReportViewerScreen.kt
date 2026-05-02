@@ -40,9 +40,9 @@ import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.sharedui.component.OperationCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.core.ui.util.LocalDateFormats

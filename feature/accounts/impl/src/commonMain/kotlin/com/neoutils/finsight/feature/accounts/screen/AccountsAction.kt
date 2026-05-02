@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.accounts.screen
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.YearMonth
 
 sealed class AccountsAction {

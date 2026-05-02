@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.mapper
 
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.ui.screen.installments.InstallmentWithOperationsUi
 
 class InstallmentUiMapper {

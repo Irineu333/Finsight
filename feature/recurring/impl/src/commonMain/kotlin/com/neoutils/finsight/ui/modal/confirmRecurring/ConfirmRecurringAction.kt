@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.confirmRecurring
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.LocalDate
 
 sealed class ConfirmRecurringAction {

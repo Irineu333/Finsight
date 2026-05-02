@@ -7,7 +7,7 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.creditCards.error.InvoiceError
 import com.neoutils.finsight.feature.creditCards.error.InvoiceException
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.coroutines.flow.first
 
 class DeleteFutureInvoiceUseCase(

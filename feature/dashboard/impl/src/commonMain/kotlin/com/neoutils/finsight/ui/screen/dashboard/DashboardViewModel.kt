@@ -27,6 +27,7 @@ import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 
 class DashboardViewModel(
     private val operationRepository: IOperationRepository,

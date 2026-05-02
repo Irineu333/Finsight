@@ -41,7 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.dashboard.impl.resources.*
@@ -69,9 +69,9 @@ import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCard
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.EditInvoiceBalanceModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.PayInvoiceModalEntry
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.util.stringUiText

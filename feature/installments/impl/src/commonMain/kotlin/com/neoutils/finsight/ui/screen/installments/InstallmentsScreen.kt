@@ -73,16 +73,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor

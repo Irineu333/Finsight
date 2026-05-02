@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.analytics.event
 
 import com.neoutils.finsight.core.analytics.Event
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.domain.model.form.RecurringForm
 
 class CreateRecurring(params: Map<String, String>) : Event("create_recurring", params) {

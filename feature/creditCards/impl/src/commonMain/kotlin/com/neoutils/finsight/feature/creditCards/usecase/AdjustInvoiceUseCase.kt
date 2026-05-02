@@ -6,10 +6,10 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.creditCards.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 
 class AdjustInvoiceUseCase(

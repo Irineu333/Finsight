@@ -1,8 +1,7 @@
 package com.neoutils.finsight.feature.creditCards.screen
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
-
+import com.neoutils.finsight.feature.transactions.model.Transaction
 sealed class CreditCardsAction {
     data class SelectCard(val index: Int) : CreditCardsAction()
     data class SelectCategory(val category: Category?) : CreditCardsAction()

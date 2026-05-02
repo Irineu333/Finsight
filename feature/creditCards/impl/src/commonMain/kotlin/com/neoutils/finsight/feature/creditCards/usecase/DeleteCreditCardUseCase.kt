@@ -4,8 +4,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
-
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 class DeleteCreditCardUseCase(
     private val creditCardRepository: ICreditCardRepository,
     private val operationRepository: IOperationRepository,

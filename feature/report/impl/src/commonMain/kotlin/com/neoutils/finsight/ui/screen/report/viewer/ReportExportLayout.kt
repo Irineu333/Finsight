@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext

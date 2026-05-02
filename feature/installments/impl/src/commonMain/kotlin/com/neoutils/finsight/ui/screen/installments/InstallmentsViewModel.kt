@@ -3,9 +3,9 @@ package com.neoutils.finsight.ui.screen.installments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

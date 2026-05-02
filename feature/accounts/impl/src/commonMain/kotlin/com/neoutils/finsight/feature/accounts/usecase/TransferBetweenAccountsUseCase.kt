@@ -9,10 +9,10 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.accounts.error.TransferError
 import com.neoutils.finsight.feature.accounts.error.TransferException
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

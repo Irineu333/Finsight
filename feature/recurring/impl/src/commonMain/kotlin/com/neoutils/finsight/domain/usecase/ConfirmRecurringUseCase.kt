@@ -9,11 +9,11 @@ import arrow.core.getOrElse
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.core.utils.extension.monthsUntil

@@ -4,13 +4,12 @@ package com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.feature.creditCards.resources.*
 import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.core.utils.util.dayMonth
@@ -25,6 +24,8 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

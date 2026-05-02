@@ -11,16 +11,17 @@ import com.neoutils.finsight.domain.error.InstallmentError
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
 import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finsight.feature.transactions.usecase.IBuildTransactionUseCase
 
 class AddInstallmentUseCase(
     private val operationRepository: IOperationRepository,

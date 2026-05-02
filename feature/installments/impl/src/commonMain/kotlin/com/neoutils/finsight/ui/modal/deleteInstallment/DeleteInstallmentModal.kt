@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.installments.impl.resources.Res
 import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_confirm
 import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_message

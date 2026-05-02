@@ -1,8 +1,7 @@
 package com.neoutils.finsight.ui.screen.installments
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
-
+import com.neoutils.finsight.feature.transactions.model.Transaction
 sealed class InstallmentsAction {
     data class SelectInstallment(val index: Int) : InstallmentsAction()
     data class SelectCategory(val category: Category?) : InstallmentsAction()

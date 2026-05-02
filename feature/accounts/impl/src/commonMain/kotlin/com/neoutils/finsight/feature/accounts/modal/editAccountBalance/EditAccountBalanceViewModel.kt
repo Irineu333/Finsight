@@ -10,7 +10,7 @@ import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.feature.accounts.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.feature.accounts.usecase.AdjustInitialBalanceUseCase
-import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
+import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

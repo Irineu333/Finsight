@@ -265,7 +265,7 @@
 - [x] 18.10 `:feature:accounts:api/impl` → `com.neoutils.finsight.feature.accounts.*`
 - [x] 18.11 `:feature:categories:api/impl` → `com.neoutils.finsight.feature.categories.*`
 - [x] 18.12 `:feature:creditCards:api/impl` → `com.neoutils.finsight.feature.creditCards.*`
-- [ ] 18.13 `:feature:transactions:api/impl` → `com.neoutils.finsight.feature.transactions.*`
+- [x] 18.13 `:feature:transactions:api/impl` → `com.neoutils.finsight.feature.transactions.*`
 - [ ] 18.14 `:feature:recurring:api/impl` → `com.neoutils.finsight.feature.recurring.*`
 - [ ] 18.15 `:feature:installments:api/impl` → `com.neoutils.finsight.feature.installments.*`
 - [ ] 18.16 `:feature:budgets:api/impl` → `com.neoutils.finsight.feature.budgets.*`

@@ -2,8 +2,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import com.neoutils.finsight.domain.model.Transaction
-
+import com.neoutils.finsight.feature.transactions.model.Transaction
 abstract class DashboardEntry {
 
     abstract fun NavGraphBuilder.register(

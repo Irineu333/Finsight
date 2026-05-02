@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.creditCards.extension.toUiText
@@ -50,8 +50,8 @@ import com.neoutils.finsight.feature.creditCards.modal.deleteCreditCard.DeleteCr
 import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.feature.creditCards.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.feature.creditCards.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.feature.creditCards.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finsight.core.ui.theme.Adjustment

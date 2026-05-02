@@ -23,8 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.installments.impl.resources.*
 import com.neoutils.finsight.core.ui.component.*

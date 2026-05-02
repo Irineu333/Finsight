@@ -6,10 +6,6 @@ import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.LocalDate
 
-enum class InstallmentFilter {
-    ACTIVE, COMPLETED, ALL
-}
-
 sealed class InstallmentsUiState {
 
     abstract val selectedFilter: InstallmentFilter

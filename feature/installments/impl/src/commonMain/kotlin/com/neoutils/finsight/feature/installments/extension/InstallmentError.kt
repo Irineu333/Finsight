@@ -7,6 +7,7 @@ import com.neoutils.finsight.feature.installments.resources.installment_error_mi
 import com.neoutils.finsight.feature.installments.resources.installment_error_missing_credit_card
 import com.neoutils.finsight.feature.installments.resources.installment_error_missing_invoice
 import com.neoutils.finsight.core.ui.util.UiText
+
 fun InstallmentError.toUiText() = when (this) {
     InstallmentError.MinInstallment -> UiText.Res(Res.string.installment_error_min_installments)
     is InstallmentError.BlockedInvoice -> UiText.Res(Res.string.installment_error_blocked_invoice)

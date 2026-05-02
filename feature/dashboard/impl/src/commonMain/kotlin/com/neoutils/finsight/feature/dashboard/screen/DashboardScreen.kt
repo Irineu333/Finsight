@@ -1,0 +1,152 @@
+@file:OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3Api::class)
+
+package com.neoutils.finsight.feature.dashboard.screen
+
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.dashboard.resources.Res
+import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_cancel
+import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_confirm
+import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_title
+import com.neoutils.finsight.feature.dashboard.resources.dashboard_support
+import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
+import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
+import com.neoutils.finsight.ui.screen.home.HomeChromeEffect
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+
+@Composable
+fun DashboardScreen(
+    openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
+    viewModel: DashboardViewModel = koinViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    HomeChromeEffect(
+        config = when (uiState) {
+            is DashboardUiState.Loading,
+            is DashboardUiState.Empty,
+            is DashboardUiState.Viewing -> {
+                HomeChromeConfig.Default
+            }
+
+            is DashboardUiState.Editing -> {
+                HomeChromeConfig.ContentOnly
+            }
+        }
+    )
+
+    val transition = updateTransition(targetState = uiState)
+
+    Scaffold(
+        topBar = {
+            transition.Crossfade(
+                contentKey = { it::class }
+            ) { state ->
+                when (state) {
+                    is DashboardUiState.Editing -> {
+                        CenterAlignedTopAppBar(
+                            navigationIcon = {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.onAction(DashboardAction.CancelEdit)
+                                    }
+                                ) {
+                                    Text(text = stringResource(Res.string.dashboard_edit_cancel))
+                                }
+                            },
+                            title = {
+                                Text(
+                                    text = stringResource(Res.string.dashboard_edit_title),
+                                )
+                            },
+                            actions = {
+                                TextButton(
+                                    onClick = {
+                                        viewModel.onAction(DashboardAction.ConfirmEdit)
+                                    }
+                                ) {
+                                    Text(text = stringResource(Res.string.dashboard_edit_confirm))
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = colorScheme.background,
+                            ),
+                        )
+                    }
+
+                    else -> {
+                        val navigationDispatcher = LocalNavigationDispatcher.current
+
+                        TopAppBar(
+                            title = {
+                                Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
+                            },
+                            actions = {
+                                IconButton(
+                                    onClick = {
+                                        navigationDispatcher.dispatch(NavigationDestination.Support)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.SupportAgent,
+                                        contentDescription = stringResource(Res.string.dashboard_support),
+                                    )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = colorScheme.background,
+                            ),
+                        )
+                    }
+                }
+            }
+        },
+        contentWindowInsets = WindowInsets(),
+    ) { paddingValues ->
+        transition.Crossfade(
+            contentKey = { it::class },
+            modifier = Modifier.padding(paddingValues),
+        ) { state ->
+            when (state) {
+                is DashboardUiState.Loading -> {
+                    DashboardLoadingContent()
+                }
+                is DashboardUiState.Empty -> {
+                    DashboardEmptyContent(
+                        onAction = viewModel::onAction
+                    )
+                }
+
+                is DashboardUiState.Viewing -> {
+                    DashboardViewingContent(
+                        state = state,
+                        openTransactions = openTransactions,
+                        onAction = viewModel::onAction,
+                    )
+                }
+
+                is DashboardUiState.Editing -> {
+                    DashboardEditingContent(
+                        state = state,
+                        onAction = viewModel::onAction,
+                    )
+                }
+            }
+        }
+    }
+}

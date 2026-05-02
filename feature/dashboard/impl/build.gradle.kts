@@ -31,7 +31,7 @@ kotlin {
 
 compose.resources {
     publicResClass = true
-    packageOfResClass = "com.neoutils.finsight.feature.dashboard.impl.resources"
+    packageOfResClass = "com.neoutils.finsight.feature.dashboard.resources"
     generateResClass = auto
 }
 

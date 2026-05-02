@@ -21,7 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.NavigationItem
-import com.neoutils.finsight.ui.screen.dashboard.DashboardEntry
+import com.neoutils.finsight.feature.dashboard.screen.DashboardEntry
 import com.neoutils.finsight.feature.transactions.screen.TransactionsEntry
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.compose.koinInject

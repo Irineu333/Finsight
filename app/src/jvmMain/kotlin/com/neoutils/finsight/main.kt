@@ -14,7 +14,7 @@ import com.neoutils.finsight.feature.budgets.di.budgetsModule
 import com.neoutils.finsight.core.analytics.di.analyticsModule
 import com.neoutils.finsight.core.auth.di.authModule
 import com.neoutils.finsight.core.analytics.di.crashlyticsModule
-import com.neoutils.finsight.di.dashboardModule
+import com.neoutils.finsight.feature.dashboard.di.dashboardModule
 import com.neoutils.finsight.feature.report.di.reportModule
 import com.neoutils.finsight.feature.support.di.supportModule
 import com.neoutils.finsight.core.ui.di.uiModule

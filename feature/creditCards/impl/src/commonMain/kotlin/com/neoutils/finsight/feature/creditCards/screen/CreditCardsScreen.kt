@@ -48,8 +48,8 @@ import com.neoutils.finsight.feature.creditCards.modal.deleteCreditCard.DeleteCr
 import com.neoutils.finsight.feature.creditCards.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.feature.creditCards.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.feature.creditCards.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
-import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.ViewOperationModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Info
 import com.neoutils.finsight.core.ui.util.LocalDateFormats

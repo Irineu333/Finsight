@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.feature.transactions.model.form
+package com.neoutils.finsight.feature.transactions.form
 
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
@@ -14,7 +14,6 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

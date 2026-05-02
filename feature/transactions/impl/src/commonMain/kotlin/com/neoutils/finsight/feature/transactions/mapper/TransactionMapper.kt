@@ -6,6 +6,7 @@ import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Transaction
+
 class TransactionMapper {
     fun toDomain(
         entity: TransactionEntity,

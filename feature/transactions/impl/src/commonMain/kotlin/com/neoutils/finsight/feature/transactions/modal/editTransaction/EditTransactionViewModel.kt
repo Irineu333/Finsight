@@ -6,12 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
-import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.exception.BuildTransactionException
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.transactions.event.EditTransaction
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
@@ -21,7 +19,6 @@ import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository

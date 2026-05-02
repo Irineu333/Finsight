@@ -2,6 +2,7 @@ package com.neoutils.finsight.feature.transactions.screen
 
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.transactions.model.Transaction
+
 data class TransactionsFilters(
     val category: Category? = null,
     val type: Transaction.Type? = null,

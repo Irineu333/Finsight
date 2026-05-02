@@ -13,7 +13,7 @@ import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository

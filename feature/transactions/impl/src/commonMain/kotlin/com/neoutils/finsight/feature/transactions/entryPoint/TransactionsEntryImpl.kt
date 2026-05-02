@@ -1,15 +1,15 @@
-package com.neoutils.finsight.feature.transactions.screen.entry
+package com.neoutils.finsight.feature.transactions.entryPoint
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.home.route.HomeRoute
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.screen.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.screen.TransactionsScreen
-import com.neoutils.finsight.feature.transactions.util.TransactionTargetNavType
-import com.neoutils.finsight.feature.transactions.util.TransactionTypeNavType
+import com.neoutils.finsight.feature.transactions.navigation.TransactionTargetNavType
+import com.neoutils.finsight.feature.transactions.navigation.TransactionTypeNavType
 import kotlin.reflect.typeOf
 
 class TransactionsEntryImpl : TransactionsEntry() {

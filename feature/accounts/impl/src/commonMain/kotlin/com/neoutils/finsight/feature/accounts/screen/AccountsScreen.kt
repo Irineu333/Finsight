@@ -55,8 +55,8 @@ import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.feature.accounts.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.feature.accounts.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.feature.accounts.modal.transferBetweenAccounts.TransferBetweenAccountsModal
-import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
-import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry
+import com.neoutils.finsight.feature.transactions.modal.ViewAdjustmentModalEntry
+import com.neoutils.finsight.feature.transactions.modal.ViewOperationModalEntry
 import com.neoutils.finsight.core.ui.theme.Info
 import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.datetime.YearMonth

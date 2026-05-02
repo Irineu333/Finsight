@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.installments.modal.addInstallment
 
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import kotlinx.datetime.YearMonth
 
 sealed class AddInstallmentAction {

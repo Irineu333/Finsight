@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.installments.event
 
 import com.neoutils.finsight.core.analytics.Event
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 
 class CreateInstallments(params: Map<String, String>) : Event("create_installments", params) {
     constructor(form: TransactionForm, count: Int) : this(

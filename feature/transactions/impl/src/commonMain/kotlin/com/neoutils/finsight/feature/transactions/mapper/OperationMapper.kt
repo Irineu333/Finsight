@@ -11,6 +11,7 @@ import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.OperationRecurring
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
+
 class OperationMapper {
 
     fun toDomain(

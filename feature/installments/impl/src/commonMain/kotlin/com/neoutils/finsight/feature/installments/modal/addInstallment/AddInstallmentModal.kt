@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.installments.resources.*
 import com.neoutils.finsight.core.ui.component.*

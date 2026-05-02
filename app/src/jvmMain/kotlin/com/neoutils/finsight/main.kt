@@ -15,7 +15,7 @@ import com.neoutils.finsight.core.analytics.di.analyticsModule
 import com.neoutils.finsight.core.auth.di.authModule
 import com.neoutils.finsight.core.analytics.di.crashlyticsModule
 import com.neoutils.finsight.di.dashboardModule
-import com.neoutils.finsight.di.reportModule
+import com.neoutils.finsight.feature.report.di.reportModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.core.ui.di.uiModule
 import com.neoutils.finsight.core.utils.util.di.utilsModule

@@ -1,0 +1,50 @@
+package com.neoutils.finsight.feature.report.di
+
+import com.neoutils.finsight.feature.report.usecase.CalculateReportCategorySpendingUseCase
+import com.neoutils.finsight.feature.report.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.feature.report.screen.config.BuildReportViewerParamsUseCase
+import com.neoutils.finsight.feature.report.screen.config.ReportConfigViewModel
+import com.neoutils.finsight.feature.report.screen.render.HtmlReportDocumentRenderer
+import com.neoutils.finsight.feature.report.screen.render.ReportDocumentRenderer
+import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerViewModel
+import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+
+val reportModule = module {
+    includes(reportPlatformModule)
+
+    factory<ReportDocumentRenderer> { HtmlReportDocumentRenderer() }
+
+    factory { CalculateReportStatsUseCase() }
+
+    factory { CalculateReportCategorySpendingUseCase() }
+
+    factory { BuildReportViewerParamsUseCase(get()) }
+
+    viewModel {
+        ReportConfigViewModel(
+            accountRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            buildReportViewerParams = get(),
+            analytics = get(),
+        )
+    }
+
+    viewModel { params ->
+        ReportViewerViewModel(
+            params = params.get(),
+            operationRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            calculateReportStatsUseCase = get(),
+            calculateReportCategorySpendingUseCase = get(),
+            renderer = get(),
+            analytics = get(),
+        )
+    }
+}
+
+expect val reportPlatformModule: Module

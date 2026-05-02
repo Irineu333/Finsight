@@ -20,14 +20,14 @@ import com.neoutils.finsight.feature.installments.screen.InstallmentsScreen
 import com.neoutils.finsight.feature.transactions.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.feature.recurring.screen.RecurringScreen
-import com.neoutils.finsight.domain.model.PerspectiveTab
-import com.neoutils.finsight.ui.screen.report.ReportRoute
-import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
-import com.neoutils.finsight.ui.screen.report.toRoute
-import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
+import com.neoutils.finsight.feature.report.model.PerspectiveTab
+import com.neoutils.finsight.feature.report.screen.ReportRoute
+import com.neoutils.finsight.feature.report.screen.config.ReportConfigScreen
+import com.neoutils.finsight.feature.report.screen.toRoute
+import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerScreen
 import com.neoutils.finsight.ui.screen.support.SupportIssueScreen
 import com.neoutils.finsight.ui.screen.support.SupportScreen
-import com.neoutils.finsight.util.PerspectiveTabNavType
+import com.neoutils.finsight.feature.report.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
 import com.neoutils.finsight.feature.recurring.model.Recurring
 

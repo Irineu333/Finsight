@@ -269,7 +269,7 @@
 - [x] 18.14 `:feature:recurring:api/impl` → `com.neoutils.finsight.feature.recurring.*`
 - [x] 18.15 `:feature:installments:api/impl` → `com.neoutils.finsight.feature.installments.*`
 - [x] 18.16 `:feature:budgets:api/impl` → `com.neoutils.finsight.feature.budgets.*`
-- [ ] 18.17 `:feature:report:api/impl` → `com.neoutils.finsight.feature.report.*`
+- [x] 18.17 `:feature:report:api/impl` → `com.neoutils.finsight.feature.report.*`
 - [ ] 18.18 `:feature:support:impl` → `com.neoutils.finsight.feature.support.*`
 - [ ] 18.19 `:feature:dashboard:api` → `com.neoutils.finsight.feature.dashboard.*`
 - [ ] 18.20 `:feature:home:api/impl` → `com.neoutils.finsight.feature.home.*`

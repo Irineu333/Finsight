@@ -43,7 +43,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.extension.toUiText
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal

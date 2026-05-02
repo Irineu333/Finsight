@@ -34,12 +34,12 @@ import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_amo
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_day_label
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_save
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_form_title_label
-import com.neoutils.finsight.ui.component.AccountSelector
-import com.neoutils.finsight.ui.component.CategorySelector
-import com.neoutils.finsight.ui.component.CreditCardSelector
+import com.neoutils.finsight.core.sharedui.component.AccountSelector
+import com.neoutils.finsight.core.sharedui.component.CategorySelector
+import com.neoutils.finsight.core.sharedui.component.CreditCardSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.TargetSelector
+import com.neoutils.finsight.core.sharedui.component.TargetSelector
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense

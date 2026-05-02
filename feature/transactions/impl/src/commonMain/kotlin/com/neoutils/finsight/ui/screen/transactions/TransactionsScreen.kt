@@ -27,7 +27,7 @@ import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurri
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthSelector
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry

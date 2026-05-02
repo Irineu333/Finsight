@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.core.sharedui.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Row

@@ -261,7 +261,7 @@
 - [x] 18.6 `:core:domain` → `com.neoutils.finsight.core.domain.*` (subpkg: `model`)
 - [x] 18.7 `:core:database` → `com.neoutils.finsight.core.database.*` (subpkgs: `entity`, `dao`, `di`)
 - [x] 18.8 `:core:ui` → `com.neoutils.finsight.core.ui.*` (subpkgs: `theme`, `component`, `modal`, `extension`, `util`, `di`)
-- [ ] 18.9 `:core:sharedui` → `com.neoutils.finsight.core.sharedui.*` (subpkgs: `component`, `model`)
+- [x] 18.9 `:core:sharedui` → `com.neoutils.finsight.core.sharedui.*` (subpkgs: `component`, `model`)
 - [ ] 18.10 `:feature:accounts:api/impl` → `com.neoutils.finsight.feature.accounts.*`
 - [ ] 18.11 `:feature:categories:api/impl` → `com.neoutils.finsight.feature.categories.*`
 - [ ] 18.12 `:feature:creditCards:api/impl` → `com.neoutils.finsight.feature.creditCards.*`

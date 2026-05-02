@@ -11,9 +11,9 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth
-import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.core.sharedui.model.AccountUi
 import com.neoutils.finsight.ui.model.OperationPerspective
-import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.core.sharedui.model.OperationUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

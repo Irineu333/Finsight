@@ -30,6 +30,7 @@ import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.recurring.impl.resources.*
 import com.neoutils.finsight.core.ui.component.*
+import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.core.utils.util.dayMonthYear

@@ -30,10 +30,10 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.feature.report.impl.resources.*
-import com.neoutils.finsight.ui.component.AccountCard
-import com.neoutils.finsight.ui.component.AccountCardVariant
-import com.neoutils.finsight.ui.component.CreditCardCard
-import com.neoutils.finsight.ui.component.CreditCardCardVariant
+import com.neoutils.finsight.core.sharedui.component.AccountCard
+import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
+import com.neoutils.finsight.core.sharedui.component.CreditCardCard
+import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest

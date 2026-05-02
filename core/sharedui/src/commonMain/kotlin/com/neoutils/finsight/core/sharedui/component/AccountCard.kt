@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.core.sharedui.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.core.sharedui.model.AccountUi
 import com.neoutils.finsight.core.ui.theme.Adjustment
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

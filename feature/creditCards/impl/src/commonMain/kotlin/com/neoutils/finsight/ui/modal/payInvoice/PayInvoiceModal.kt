@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.impl.resources.*
-import com.neoutils.finsight.ui.component.AccountSelector
+import com.neoutils.finsight.core.sharedui.component.AccountSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal

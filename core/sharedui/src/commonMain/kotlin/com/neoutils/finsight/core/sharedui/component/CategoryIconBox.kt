@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.core.sharedui.component
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding

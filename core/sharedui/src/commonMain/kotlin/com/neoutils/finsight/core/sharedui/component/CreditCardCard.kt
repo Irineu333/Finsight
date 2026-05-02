@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSharedTransitionApi::class)
 
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.core.sharedui.component
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.BorderStroke

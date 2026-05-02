@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.util.AppIcon
-import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal

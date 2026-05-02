@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.component.MonthSelector

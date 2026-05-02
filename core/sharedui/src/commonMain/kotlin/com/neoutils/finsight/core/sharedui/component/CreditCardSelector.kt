@@ -1,8 +1,12 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.core.sharedui.component
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -12,17 +16,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.sharedui.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.category_selector_label
-import com.neoutils.finsight.core.sharedui.resources.category_selector_none
+import com.neoutils.finsight.core.sharedui.resources.credit_card_selector_label
+import com.neoutils.finsight.core.ui.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun CategorySelector(
-    selectedCategory: Category?,
-    categories: List<Category>,
-    onCategorySelected: (Category?) -> Unit,
+fun CreditCardSelector(
+    creditCards: List<CreditCard>,
+    creditCard: CreditCard?,
+    onCreditCardSelected: (CreditCard) -> Unit,
     modifier: Modifier = Modifier,
     onEmpty: (() -> Unit)? = null,
 ) {
@@ -30,32 +34,31 @@ fun CategorySelector(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { 
-            if (categories.isNotEmpty()) {
+        onExpandedChange = {
+            if (creditCards.isNotEmpty()) {
                 expanded = it
             }
         },
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = selectedCategory?.name ?: "",
+            value = creditCard?.name.orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = stringResource(Res.string.category_selector_label))
+                Text(text = stringResource(Res.string.credit_card_selector_label))
             },
-            leadingIcon = selectedCategory?.let {
+            leadingIcon = creditCard?.let {
                 {
-                    CategoryIconBox(
-                        category = it,
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(4.dp),
-                        modifier = Modifier.size(28.dp),
+                    Icon(
+                        imageVector = AppIcon.fromKey(it.iconKey).icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             },
             trailingIcon = {
-                if (categories.isEmpty() && onEmpty != null) {
+                if (creditCards.isEmpty() && onEmpty != null) {
                     IconButton(onClick = onEmpty) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -68,52 +71,39 @@ fun CategorySelector(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             },
-            enabled = categories.isNotEmpty() || onEmpty != null,
+            enabled = creditCards.isNotEmpty() || onEmpty != null,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .animateContentSize()
         )
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = stringResource(Res.string.category_selector_none),
-                        fontSize = 14.sp
-                    )
-                },
-                onClick = {
-                    onCategorySelected(null)
-                    expanded = false
-                }
-            )
-
-            categories.forEach { category ->
+            creditCards.forEach { creditCard ->
                 DropdownMenuItem(
                     text = {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CategoryIconBox(
-                                category = category,
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(4.dp),
-                                modifier = Modifier.size(28.dp),
+                            Icon(
+                                imageVector = AppIcon.fromKey(creditCard.iconKey).icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = category.name,
+                                text = creditCard.name,
                                 fontSize = 14.sp
                             )
                         }
                     },
                     onClick = {
-                        onCategorySelected(category)
+                        onCreditCardSelected(creditCard)
                         expanded = false
                     }
                 )

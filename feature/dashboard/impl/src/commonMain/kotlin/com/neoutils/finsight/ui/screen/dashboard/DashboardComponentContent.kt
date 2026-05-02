@@ -48,19 +48,19 @@ import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
-import com.neoutils.finsight.ui.component.AccountCard
-import com.neoutils.finsight.ui.component.AccountCardVariant
+import com.neoutils.finsight.core.sharedui.component.AccountCard
+import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
 import com.neoutils.finsight.core.ui.component.BalanceCard
 import com.neoutils.finsight.core.ui.component.BalanceCardConfig
-import com.neoutils.finsight.ui.component.BudgetProgressCard
-import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.CategorySpendingCard
-import com.neoutils.finsight.ui.component.CreditCardCard
-import com.neoutils.finsight.ui.component.CreditCardCardVariant
+import com.neoutils.finsight.core.sharedui.component.BudgetProgressCard
+import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
+import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
+import com.neoutils.finsight.core.sharedui.component.CreditCardCard
+import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntry
 import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntry

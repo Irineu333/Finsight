@@ -45,12 +45,12 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.component.AccountCard
-import com.neoutils.finsight.ui.component.AccountCardVariant
-import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.core.sharedui.component.AccountCard
+import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
+import com.neoutils.finsight.core.sharedui.model.AccountUi
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthPickerDropdownMenu
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal

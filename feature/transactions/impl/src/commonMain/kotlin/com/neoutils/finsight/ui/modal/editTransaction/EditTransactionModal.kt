@@ -37,6 +37,7 @@ import com.neoutils.finsight.feature.transactions.impl.resources.edit_transactio
 import com.neoutils.finsight.feature.transactions.impl.resources.edit_transaction_title
 import com.neoutils.finsight.feature.transactions.impl.resources.edit_transaction_title_label
 import com.neoutils.finsight.core.ui.component.*
+import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry

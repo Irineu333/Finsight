@@ -23,7 +23,7 @@ import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAcc
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

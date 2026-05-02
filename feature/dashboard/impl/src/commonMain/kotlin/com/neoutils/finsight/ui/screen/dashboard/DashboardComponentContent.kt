@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty

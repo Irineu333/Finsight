@@ -1,4 +1,4 @@
-package com.neoutils.finsight.extension
+package com.neoutils.finsight.core.utils.extension
 
 fun String.moneyToDouble(): Double {
     val isNegative = startsWith("-")

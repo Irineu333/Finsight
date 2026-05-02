@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.IGetPendingRecurringUseCase
-import com.neoutils.finsight.extension.effectiveDay
+import com.neoutils.finsight.core.utils.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.currentPlatform
 import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper

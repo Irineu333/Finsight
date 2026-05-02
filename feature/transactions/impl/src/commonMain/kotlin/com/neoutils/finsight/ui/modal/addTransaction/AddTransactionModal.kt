@@ -27,7 +27,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.isAccept
-import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
@@ -36,7 +36,7 @@ import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
-import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -6,7 +6,7 @@ import arrow.core.Either
 import arrow.core.left
 import com.neoutils.finsight.domain.exception.FutureMonthAdjustmentException
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth
 import kotlin.time.Clock

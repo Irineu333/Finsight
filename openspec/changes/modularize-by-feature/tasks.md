@@ -254,7 +254,7 @@
 > - iOS framework continua `baseName = "ComposeApp"`; nomes Obj-C derivam de file name + class name, não do pacote — Swift segue intacto.
 
 - [x] 18.1 Adicionar **D12** em `design.md` documentando a convenção de pacote por módulo
-- [ ] 18.2 `:core:utils` → `com.neoutils.finsight.core.utils.*` (subpkgs: `extension`, `util`, `util.di`)
+- [x] 18.2 `:core:utils` → `com.neoutils.finsight.core.utils.*` (subpkgs: `extension`, `util`, `util.di`)
 - [ ] 18.3 `:core:platform` → `com.neoutils.finsight.core.platform.*`
 - [ ] 18.4 `:core:analytics` → `com.neoutils.finsight.core.analytics.*` (subpkgs: `analytics`, `crashlytics`, `event`, `di`)
 - [ ] 18.5 `:core:auth` → `com.neoutils.finsight.core.auth.*` (subpkgs: `service`, `di`)

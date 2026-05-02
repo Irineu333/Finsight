@@ -9,8 +9,8 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.extension.combine
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.combine
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.ui.model.OperationUi

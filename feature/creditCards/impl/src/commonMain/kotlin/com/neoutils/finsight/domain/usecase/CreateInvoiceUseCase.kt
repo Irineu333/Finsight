@@ -10,7 +10,7 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

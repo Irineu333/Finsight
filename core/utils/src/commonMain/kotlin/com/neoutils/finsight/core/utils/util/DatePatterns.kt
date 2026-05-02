@@ -1,6 +1,6 @@
 @file:OptIn(FormatStringsInDatetimeFormats::class)
 
-package com.neoutils.finsight.util
+package com.neoutils.finsight.core.utils.util
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats

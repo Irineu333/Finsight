@@ -33,7 +33,7 @@ import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adju
 import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.ui.theme.*
-import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 

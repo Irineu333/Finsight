@@ -17,7 +17,7 @@ import com.neoutils.finsight.domain.analytics.event.EditTransaction
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
-import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*

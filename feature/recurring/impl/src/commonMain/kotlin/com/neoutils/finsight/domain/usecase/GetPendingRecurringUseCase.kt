@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.extension.effectiveDay
+import com.neoutils.finsight.core.utils.extension.effectiveDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 

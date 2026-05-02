@@ -1,6 +1,6 @@
-package com.neoutils.finsight.util.di
+package com.neoutils.finsight.core.utils.util.di
 
-import com.neoutils.finsight.util.DebounceManager
+import com.neoutils.finsight.core.utils.util.DebounceManager
 import org.koin.dsl.module
 
 val utilsModule = module {

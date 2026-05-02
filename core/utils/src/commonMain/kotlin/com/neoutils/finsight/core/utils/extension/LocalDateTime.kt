@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.extension
+package com.neoutils.finsight.core.utils.extension
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.YearMonth

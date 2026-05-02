@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.extension.safeOnDay
+import com.neoutils.finsight.core.utils.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock

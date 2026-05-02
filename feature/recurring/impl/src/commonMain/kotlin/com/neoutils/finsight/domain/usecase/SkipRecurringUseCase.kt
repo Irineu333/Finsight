@@ -7,8 +7,8 @@ import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.extension.monthsUntil
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.monthsUntil
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock

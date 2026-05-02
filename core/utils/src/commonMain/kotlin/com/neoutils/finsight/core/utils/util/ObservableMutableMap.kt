@@ -1,4 +1,4 @@
-package com.neoutils.finsight.util
+package com.neoutils.finsight.core.utils.util
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector

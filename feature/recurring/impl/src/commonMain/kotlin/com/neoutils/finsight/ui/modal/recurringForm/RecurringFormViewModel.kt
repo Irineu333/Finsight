@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
-import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

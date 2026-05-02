@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.IEnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
-import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.core.utils.extension.combine
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone

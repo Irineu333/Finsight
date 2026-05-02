@@ -28,7 +28,7 @@ import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.core.sharedui.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.dayMonth
+import com.neoutils.finsight.core.utils.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
 
 sealed class CreditCardCardVariant {

@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.recurring.impl.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

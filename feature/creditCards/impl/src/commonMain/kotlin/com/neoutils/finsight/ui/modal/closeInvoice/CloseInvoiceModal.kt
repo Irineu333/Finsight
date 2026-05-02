@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.feature.creditCards.impl.resources.*
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

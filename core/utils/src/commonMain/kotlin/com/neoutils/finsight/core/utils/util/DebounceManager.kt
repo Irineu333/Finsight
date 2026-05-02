@@ -1,4 +1,4 @@
-package com.neoutils.finsight.util
+package com.neoutils.finsight.core.utils.util
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

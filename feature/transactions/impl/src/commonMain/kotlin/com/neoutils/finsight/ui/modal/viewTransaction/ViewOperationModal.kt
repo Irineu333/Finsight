@@ -46,7 +46,7 @@ import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
 import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.theme.*
-import com.neoutils.finsight.util.dayMonthYear
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

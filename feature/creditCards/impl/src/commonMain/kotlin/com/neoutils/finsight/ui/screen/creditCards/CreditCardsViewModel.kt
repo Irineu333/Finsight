@@ -11,7 +11,7 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.ui.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi

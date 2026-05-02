@@ -9,8 +9,8 @@ import com.neoutils.finsight.domain.exception.CreditCardException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.extension.effectiveDay
-import com.neoutils.finsight.extension.yearMonth
+import com.neoutils.finsight.core.utils.extension.effectiveDay
+import com.neoutils.finsight.core.utils.extension.yearMonth
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.toLocalDateTime

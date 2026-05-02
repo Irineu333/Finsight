@@ -18,7 +18,7 @@ import com.neoutils.finsight.di.dashboardModule
 import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.ui.di.uiModule
-import com.neoutils.finsight.util.di.utilsModule
+import com.neoutils.finsight.core.utils.util.di.utilsModule
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.root.App

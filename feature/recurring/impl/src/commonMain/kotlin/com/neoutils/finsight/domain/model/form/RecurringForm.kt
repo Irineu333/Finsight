@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.extension.moneyToDouble
+import com.neoutils.finsight.core.utils.extension.moneyToDouble
 
 data class RecurringForm(
     val type: Recurring.Type,

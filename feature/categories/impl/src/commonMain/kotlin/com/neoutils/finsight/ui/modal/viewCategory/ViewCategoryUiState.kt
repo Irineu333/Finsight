@@ -3,7 +3,7 @@
 package com.neoutils.finsight.ui.modal.viewCategory
 
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

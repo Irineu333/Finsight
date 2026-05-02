@@ -30,7 +30,7 @@ import com.neoutils.finsight.core.ui.component.IconPickerSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.sharedui.component.MultiCategorySelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.core.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModalEntry
 import com.neoutils.finsight.core.ui.util.FeatureIconCatalog

@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth

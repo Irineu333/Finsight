@@ -12,8 +12,8 @@ import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
+import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
+import com.neoutils.finsight.feature.categories.screen.CategoriesScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen

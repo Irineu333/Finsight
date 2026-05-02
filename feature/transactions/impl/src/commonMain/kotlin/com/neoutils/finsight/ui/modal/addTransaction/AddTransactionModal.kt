@@ -33,7 +33,7 @@ import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

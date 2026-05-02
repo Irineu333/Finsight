@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

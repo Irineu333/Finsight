@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction

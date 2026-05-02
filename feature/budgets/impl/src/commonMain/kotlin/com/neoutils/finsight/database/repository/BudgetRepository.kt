@@ -5,7 +5,7 @@ import com.neoutils.finsight.core.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first

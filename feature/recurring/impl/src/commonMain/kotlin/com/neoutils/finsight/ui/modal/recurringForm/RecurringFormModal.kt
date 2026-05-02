@@ -40,7 +40,7 @@ import com.neoutils.finsight.core.sharedui.component.CreditCardSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.sharedui.component.TargetSelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModalEntry
+import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

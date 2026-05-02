@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
-import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction

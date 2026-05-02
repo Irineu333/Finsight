@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 
 class EditTransactionViewModel(
     private val transaction: Transaction,

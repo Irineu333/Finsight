@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository

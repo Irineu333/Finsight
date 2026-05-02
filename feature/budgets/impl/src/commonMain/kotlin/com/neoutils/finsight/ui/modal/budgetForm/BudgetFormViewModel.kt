@@ -14,7 +14,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.core.ui.extension.CurrencyFormatter

@@ -70,7 +70,7 @@ import com.neoutils.finsight.ui.modal.creditCardOps.EditInvoiceBalanceModalEntry
 import com.neoutils.finsight.ui.modal.creditCardOps.PayInvoiceModalEntry
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModalEntry
+import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

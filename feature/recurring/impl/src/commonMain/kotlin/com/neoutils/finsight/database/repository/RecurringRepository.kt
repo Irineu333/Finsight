@@ -4,7 +4,7 @@ import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.Flow

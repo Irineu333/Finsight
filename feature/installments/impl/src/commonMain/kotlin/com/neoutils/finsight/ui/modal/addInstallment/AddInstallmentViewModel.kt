@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase

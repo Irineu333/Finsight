@@ -8,6 +8,7 @@ import org.jetbrains.compose.resources.getString
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.categories.model.CategorySpending
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

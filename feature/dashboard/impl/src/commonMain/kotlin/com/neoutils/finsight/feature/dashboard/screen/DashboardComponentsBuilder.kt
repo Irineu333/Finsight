@@ -19,6 +19,15 @@ import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.core.platform.currentPlatform
 import com.neoutils.finsight.feature.creditCards.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
+import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
+import com.neoutils.finsight.feature.dashboard.constant.CreditCardsPagerConfig
+import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
+import com.neoutils.finsight.feature.dashboard.constant.IncomeByCategoryConfig
+import com.neoutils.finsight.feature.dashboard.constant.PendingRecurringConfig
+import com.neoutils.finsight.feature.dashboard.constant.QuickActionsConfig
+import com.neoutils.finsight.feature.dashboard.constant.RecentsConfig
+import com.neoutils.finsight.feature.dashboard.constant.SpendingByCategoryConfig
+import com.neoutils.finsight.feature.dashboard.constant.hideWhenEmpty
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth

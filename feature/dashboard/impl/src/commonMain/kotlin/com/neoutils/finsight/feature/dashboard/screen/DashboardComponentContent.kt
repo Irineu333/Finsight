@@ -57,6 +57,7 @@ import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
 import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
 import com.neoutils.finsight.core.sharedui.component.CreditCardCard
 import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
+import com.neoutils.finsight.feature.dashboard.constant.showHeader
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
 import com.neoutils.finsight.feature.home.component.NavigationDestination

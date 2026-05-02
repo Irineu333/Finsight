@@ -4,7 +4,8 @@ import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreferenc
 import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentVariant
 import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentsBuilder
 import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentsInput
-import com.neoutils.finsight.feature.dashboard.screen.toViewingVariant
+import com.neoutils.finsight.feature.dashboard.extension.toViewingVariant
+
 class BuildDashboardViewingUseCase(
     private val builder: DashboardComponentsBuilder,
 ) {

@@ -1,5 +1,14 @@
 package com.neoutils.finsight.feature.dashboard.screen
 
+import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
+import com.neoutils.finsight.feature.dashboard.constant.CreditCardsPagerConfig
+import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
+import com.neoutils.finsight.feature.dashboard.constant.IncomeByCategoryConfig
+import com.neoutils.finsight.feature.dashboard.constant.PendingRecurringConfig
+import com.neoutils.finsight.feature.dashboard.constant.QuickActionsConfig
+import com.neoutils.finsight.feature.dashboard.constant.RecentsConfig
+import com.neoutils.finsight.feature.dashboard.constant.SpendingByCategoryConfig
+
 enum class DashboardComponentType(
     val key: String,
     val defaultConfig: Map<String, String> = emptyMap(),

@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.feature.dashboard.resources.*
 import com.neoutils.finsight.core.ui.component.LocalModalManager
-import com.neoutils.finsight.feature.dashboard.modal.dashboardComponentOptions.DashboardComponentOptionsModal
+import com.neoutils.finsight.feature.dashboard.modal.DashboardComponentOptionsModal
 import com.neoutils.finsight.core.ui.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope

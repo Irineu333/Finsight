@@ -2,11 +2,11 @@ package com.neoutils.finsight.feature.dashboard.usecase
 
 import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreference
 import com.neoutils.finsight.feature.dashboard.repository.IDashboardPreferencesRepository
-import com.neoutils.finsight.feature.dashboard.screen.AccountsOverviewConfig
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentConfig
+import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
+import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
 import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentType
 import com.neoutils.finsight.feature.dashboard.screen.QuickActionType
-import com.neoutils.finsight.feature.dashboard.screen.QuickActionsConfig
+import com.neoutils.finsight.feature.dashboard.constant.QuickActionsConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

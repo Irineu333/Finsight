@@ -13,6 +13,7 @@ import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
+import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

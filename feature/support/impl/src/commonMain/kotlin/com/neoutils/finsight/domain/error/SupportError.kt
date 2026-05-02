@@ -5,8 +5,7 @@ import com.neoutils.finsight.feature.support.impl.resources.support_error_empty_
 import com.neoutils.finsight.feature.support.impl.resources.support_error_empty_message
 import com.neoutils.finsight.feature.support.impl.resources.support_error_empty_title
 import com.neoutils.finsight.feature.support.impl.resources.support_error_unknown
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 enum class SupportError(val message: String) {
     EMPTY_TITLE(message = "Title cannot be empty."),
     EMPTY_DESCRIPTION(message = "Description cannot be empty."),

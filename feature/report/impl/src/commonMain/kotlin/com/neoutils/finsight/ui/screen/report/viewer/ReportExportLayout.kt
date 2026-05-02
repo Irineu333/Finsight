@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
 import com.neoutils.finsight.domain.model.ReportLayout
@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.model.ReportTableLabels
 import com.neoutils.finsight.domain.model.ReportTone
 import com.neoutils.finsight.domain.model.TransactionGroup
 import com.neoutils.finsight.domain.model.TransactionItem
-import com.neoutils.finsight.util.DateFormats
+import com.neoutils.finsight.core.ui.util.DateFormats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt

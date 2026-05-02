@@ -13,9 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.theme.budgetProgressColor
-import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.theme.budgetProgressColor
+import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.sharedui.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.budget_progress_card_title
 import org.jetbrains.compose.resources.stringResource

@@ -1,8 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.feature.dashboard.impl.resources.*
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 sealed interface DashboardComponentVariant {
     val component: DashboardComponent
     val config: Map<String, String>

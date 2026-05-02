@@ -7,8 +7,7 @@ import com.neoutils.finsight.feature.recurring.impl.resources.recurring_error_am
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_error_amount_zero
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_error_invalid_day
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_error_title_or_category_required
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 fun RecurringError.toUiText() = when (this) {
     RecurringError.AMOUNT_REQUIRED -> UiText.Res(Res.string.recurring_error_amount_required)
     RecurringError.AMOUNT_ZERO -> UiText.Res(Res.string.recurring_error_amount_zero)

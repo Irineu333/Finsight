@@ -23,11 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.component.LocalAnimatedVisibilityScope
+import com.neoutils.finsight.core.ui.component.LocalSharedTransitionScope
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.core.sharedui.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
-import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.utils.util.dayMonth
 import org.jetbrains.compose.resources.stringResource
 

@@ -7,8 +7,7 @@ import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_inva
 import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_same_account
 import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_source_account_not_found
 import com.neoutils.finsight.feature.accounts.impl.resources.transfer_error_unknown
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 sealed class TransferError(val message: String) {
     data object InvalidAmount : TransferError("Transfer amount must be greater than zero.")
     data object SameAccount : TransferError("Source account must be different from destination account.")

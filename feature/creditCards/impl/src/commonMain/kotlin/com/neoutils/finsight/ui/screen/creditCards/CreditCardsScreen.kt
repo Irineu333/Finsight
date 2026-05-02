@@ -38,6 +38,7 @@ import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurri
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
+import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -49,17 +50,16 @@ import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Info
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
-
+import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
 @Composable
 fun CreditCardsScreen(
     initialCreditCardId: Long? = null,

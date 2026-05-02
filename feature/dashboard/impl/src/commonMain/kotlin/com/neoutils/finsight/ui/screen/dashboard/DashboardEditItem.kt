@@ -1,7 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 data class DashboardEditItem(
     val preview: DashboardComponentVariant,
     val config: Map<String, String> = emptyMap(),

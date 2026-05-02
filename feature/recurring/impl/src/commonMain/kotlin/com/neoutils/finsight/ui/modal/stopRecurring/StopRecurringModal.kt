@@ -22,8 +22,8 @@ import com.neoutils.finsight.feature.recurring.impl.resources.Res
 import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_confirm
 import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_message
 import com.neoutils.finsight.feature.recurring.impl.resources.stop_recurring_title
-import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

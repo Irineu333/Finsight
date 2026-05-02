@@ -10,7 +10,7 @@ import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_ne
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_open
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_paid
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_retroactive
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 

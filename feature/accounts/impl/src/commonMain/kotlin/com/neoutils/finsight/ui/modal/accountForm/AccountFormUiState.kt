@@ -1,8 +1,7 @@
 package com.neoutils.finsight.ui.modal.accountForm
 
-import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.Validation
-
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.core.ui.util.Validation
 data class AccountFormUiState(
     val name: String = "",
     val selectedIcon: AppIcon = AppIcon.WALLET,

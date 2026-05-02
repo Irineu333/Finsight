@@ -11,7 +11,7 @@ import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone

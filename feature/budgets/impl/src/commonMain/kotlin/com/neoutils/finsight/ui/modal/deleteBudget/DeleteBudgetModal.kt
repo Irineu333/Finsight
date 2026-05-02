@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Budget
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.budgets.impl.resources.Res
 import com.neoutils.finsight.feature.budgets.impl.resources.delete_budget_confirm
 import com.neoutils.finsight.feature.budgets.impl.resources.delete_budget_message

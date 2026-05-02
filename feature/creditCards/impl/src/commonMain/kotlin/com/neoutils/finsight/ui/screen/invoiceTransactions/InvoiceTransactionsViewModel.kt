@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.feature.creditCards.impl.resources.*
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.core.utils.util.dayMonth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

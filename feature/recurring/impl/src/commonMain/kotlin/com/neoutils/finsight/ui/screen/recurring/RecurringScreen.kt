@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.recurring.impl.resources.Res
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_card_monthly_amount
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_expense
@@ -51,12 +51,12 @@ import com.neoutils.finsight.feature.recurring.impl.resources.recurring_screen_d
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_screen_empty
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_screen_title
 import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

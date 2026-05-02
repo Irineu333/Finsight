@@ -25,7 +25,7 @@ import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
 import com.neoutils.finsight.ui.screen.home.HomeChromeEffect
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

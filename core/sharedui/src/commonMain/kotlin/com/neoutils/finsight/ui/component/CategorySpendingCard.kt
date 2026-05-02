@@ -15,9 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.sharedui.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.category_spending_card_title
 import org.jetbrains.compose.resources.stringResource

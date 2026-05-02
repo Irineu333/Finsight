@@ -6,7 +6,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.ReopenInvoice
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class ReopenInvoiceViewModel(

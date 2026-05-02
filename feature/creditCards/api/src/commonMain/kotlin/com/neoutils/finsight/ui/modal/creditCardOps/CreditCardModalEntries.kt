@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.modal.creditCardOps
 
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import kotlinx.datetime.LocalDate
 
 interface CloseInvoiceModalEntry {

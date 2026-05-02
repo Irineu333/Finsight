@@ -20,15 +20,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountSelector
-import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.TextLight1
-import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.rememberMoneyInputTransformation
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.theme.Adjustment
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.theme.TextLight1
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.feature.accounts.impl.resources.Res
 import com.neoutils.finsight.feature.accounts.impl.resources.edit_account_balance_current_title
 import com.neoutils.finsight.feature.accounts.impl.resources.edit_account_balance_final_title
@@ -226,7 +226,7 @@ class EditAccountBalanceModal(
         }
     }
 
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.extension.CurrencyFormatter): String {
+    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.core.ui.extension.CurrencyFormatter): String {
         val isNegative = cents < 0
         val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted

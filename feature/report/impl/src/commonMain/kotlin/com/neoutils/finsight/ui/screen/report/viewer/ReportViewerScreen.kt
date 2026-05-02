@@ -27,8 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.LocalPlatformContext
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalPlatformContext
 import com.neoutils.finsight.ui.screen.report.service.ReportPrintService
 import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.feature.report.impl.resources.*
@@ -38,15 +38,15 @@ import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adju
 import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.ui.component.CategorySpendingCard
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
-import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.stringUiText
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.core.analytics.Analytics
 import org.koin.compose.koinInject

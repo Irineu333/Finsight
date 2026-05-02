@@ -40,8 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -54,14 +54,14 @@ import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
-import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.InvoicePayment
-import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
-import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.theme.Adjustment
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.core.ui.theme.InvoicePayment
+import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import com.neoutils.finsight.feature.creditCards.impl.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
@@ -84,7 +84,7 @@ import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transact
 import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_pay_invoice
 import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_reopen_invoice
 import com.neoutils.finsight.feature.creditCards.impl.resources.invoice_transactions_total
-import com.neoutils.finsight.util.stringUiText
+import com.neoutils.finsight.core.ui.util.stringUiText
 import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

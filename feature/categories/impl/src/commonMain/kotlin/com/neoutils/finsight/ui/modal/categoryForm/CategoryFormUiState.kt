@@ -1,9 +1,8 @@
 package com.neoutils.finsight.ui.modal.categoryForm
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.Validation
-
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.core.ui.util.Validation
 data class CategoryFormUiState(
     val name: String = "",
     val validation: Map<CategoryField, Validation> = mapOf(),

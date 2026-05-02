@@ -6,7 +6,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteTransaction
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class DeleteTransactionViewModel(

@@ -11,10 +11,9 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.AppIcon
-
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.util.AppIcon
 @Composable
 fun CategoryIconBox(
     category: Category,

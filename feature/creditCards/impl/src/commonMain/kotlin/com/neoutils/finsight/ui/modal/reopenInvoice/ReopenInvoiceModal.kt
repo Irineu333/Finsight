@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.creditCards.impl.resources.Res
 import com.neoutils.finsight.feature.creditCards.impl.resources.reopen_invoice_cancel
 import com.neoutils.finsight.feature.creditCards.impl.resources.reopen_invoice_confirm

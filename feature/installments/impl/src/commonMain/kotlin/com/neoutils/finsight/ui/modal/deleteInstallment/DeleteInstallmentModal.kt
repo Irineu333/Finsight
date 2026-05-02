@@ -23,7 +23,7 @@ import com.neoutils.finsight.feature.installments.impl.resources.Res
 import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_confirm
 import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_message
 import com.neoutils.finsight.feature.installments.impl.resources.delete_installment_title
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

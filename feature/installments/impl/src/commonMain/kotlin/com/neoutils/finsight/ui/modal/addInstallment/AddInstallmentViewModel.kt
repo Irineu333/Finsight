@@ -19,8 +19,8 @@ import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.feature.installments.impl.resources.Res
 import com.neoutils.finsight.feature.installments.impl.resources.add_installment_error_generic
-import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.core.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.util.UiText
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.channels.Channel

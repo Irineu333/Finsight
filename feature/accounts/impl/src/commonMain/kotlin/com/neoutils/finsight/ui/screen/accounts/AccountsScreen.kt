@@ -44,12 +44,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
@@ -57,8 +57,8 @@ import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.theme.Info
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.feature.accounts.impl.resources.Res
@@ -75,13 +75,12 @@ import com.neoutils.finsight.feature.accounts.impl.resources.accounts_title
 import com.neoutils.finsight.feature.accounts.impl.resources.accounts_transfer
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
-import com.neoutils.finsight.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-
+import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 @Composable
 fun AccountsScreen(
     initialAccountId: Long? = null,

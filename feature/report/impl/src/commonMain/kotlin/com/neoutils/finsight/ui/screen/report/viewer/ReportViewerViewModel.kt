@@ -21,7 +21,7 @@ import com.neoutils.finsight.feature.report.impl.resources.Res
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_badge_account
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_badge_credit_card
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.core.ui.util.UiText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine

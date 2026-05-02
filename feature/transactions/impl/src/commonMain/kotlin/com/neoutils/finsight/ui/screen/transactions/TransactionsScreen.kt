@@ -25,23 +25,22 @@ import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.MonthSelector
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
-import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-
+import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 @Composable
 fun TransactionsScreen(
     categoryType: Transaction.Type? = null,

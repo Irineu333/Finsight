@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
@@ -50,14 +50,14 @@ import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
-import com.neoutils.finsight.ui.component.BalanceCard
-import com.neoutils.finsight.ui.component.BalanceCardConfig
+import com.neoutils.finsight.core.ui.component.BalanceCard
+import com.neoutils.finsight.core.ui.component.BalanceCardConfig
 import com.neoutils.finsight.ui.component.BudgetProgressCard
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.OperationCard
@@ -72,9 +72,9 @@ import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.stringUiText
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.util.stringUiText
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth

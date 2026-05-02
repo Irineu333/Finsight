@@ -23,8 +23,8 @@ import com.neoutils.finsight.feature.categories.impl.resources.category_default_
 import com.neoutils.finsight.feature.categories.impl.resources.category_default_subscriptions
 import com.neoutils.finsight.feature.categories.impl.resources.category_default_transport
 import com.neoutils.finsight.feature.categories.impl.resources.category_default_travel
-import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.core.ui.util.UiText
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

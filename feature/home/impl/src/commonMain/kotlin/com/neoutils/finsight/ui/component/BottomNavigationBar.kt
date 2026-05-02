@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.feature.home.impl.resources.Res
 import com.neoutils.finsight.feature.home.impl.resources.nav_dashboard
 import com.neoutils.finsight.feature.home.impl.resources.nav_transactions
-import com.neoutils.finsight.ui.theme.Primary1
+import com.neoutils.finsight.core.ui.theme.Primary1
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 

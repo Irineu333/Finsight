@@ -41,8 +41,8 @@ import com.neoutils.finsight.feature.support.impl.resources.support_form_type
 import com.neoutils.finsight.feature.support.impl.resources.support_type_bug
 import com.neoutils.finsight.feature.support.impl.resources.support_type_feature
 import com.neoutils.finsight.feature.support.impl.resources.support_type_question
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import org.jetbrains.compose.resources.stringResource
 
 class CreateSupportIssueModal(

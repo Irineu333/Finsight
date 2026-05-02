@@ -35,7 +35,7 @@ import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
-import com.neoutils.finsight.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource

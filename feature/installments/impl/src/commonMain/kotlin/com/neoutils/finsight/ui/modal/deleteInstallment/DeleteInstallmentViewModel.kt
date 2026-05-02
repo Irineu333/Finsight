@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class DeleteInstallmentViewModel(

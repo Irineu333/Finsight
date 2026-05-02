@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.core.auth.AuthService
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.ui.theme.FinsightTheme
+import com.neoutils.finsight.core.ui.theme.FinsightTheme
 import org.koin.compose.koinInject
 
 @Composable

@@ -19,12 +19,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.theme.Adjustment
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.InvoicePayment
+import com.neoutils.finsight.core.ui.theme.Adjustment
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.theme.InvoicePayment
 import com.neoutils.finsight.core.sharedui.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.accounts_advance_payments
 import com.neoutils.finsight.core.sharedui.resources.accounts_adjustments
@@ -34,7 +34,7 @@ import com.neoutils.finsight.core.sharedui.resources.accounts_expenses
 import com.neoutils.finsight.core.sharedui.resources.accounts_income
 import com.neoutils.finsight.core.sharedui.resources.accounts_initial_balance
 import com.neoutils.finsight.core.sharedui.resources.accounts_invoices
-import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.core.ui.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 

@@ -75,20 +75,20 @@ import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
-import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
-import com.neoutils.finsight.ui.theme.Income as IncomeColor
-import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
+import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.theme.Info
+import com.neoutils.finsight.core.ui.theme.Warning
 import com.neoutils.finsight.feature.installments.impl.resources.Res
 import com.neoutils.finsight.feature.installments.impl.resources.installments_create
 import com.neoutils.finsight.feature.installments.impl.resources.installments_current_installment

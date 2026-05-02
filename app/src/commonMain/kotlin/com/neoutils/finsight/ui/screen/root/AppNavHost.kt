@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen

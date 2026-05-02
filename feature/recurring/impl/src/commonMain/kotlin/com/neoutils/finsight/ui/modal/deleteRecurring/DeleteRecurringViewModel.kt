@@ -6,7 +6,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class DeleteRecurringViewModel(

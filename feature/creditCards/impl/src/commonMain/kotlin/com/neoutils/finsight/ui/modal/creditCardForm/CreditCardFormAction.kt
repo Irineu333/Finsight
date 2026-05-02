@@ -1,7 +1,6 @@
 package com.neoutils.finsight.ui.modal.creditCardForm
 
-import com.neoutils.finsight.util.AppIcon
-
+import com.neoutils.finsight.core.ui.util.AppIcon
 sealed class CreditCardFormAction {
 
     data class NameChanged(

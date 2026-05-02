@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.transactions.impl.resources.Res
 import com.neoutils.finsight.feature.transactions.impl.resources.delete_transaction_confirm
 import com.neoutils.finsight.feature.transactions.impl.resources.delete_transaction_message

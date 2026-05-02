@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.recurring.impl.resources.Res
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_expense
 import com.neoutils.finsight.feature.recurring.impl.resources.recurring_income
@@ -41,17 +41,17 @@ import com.neoutils.finsight.feature.recurring.impl.resources.view_recurring_sto
 import com.neoutils.finsight.feature.recurring.impl.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringModal
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.theme.Info
+import com.neoutils.finsight.core.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 
 class ViewRecurringModal(

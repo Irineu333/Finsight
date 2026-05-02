@@ -43,10 +43,10 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.dashboard.impl.resources.*
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.dashboard.*
-import com.neoutils.finsight.util.stringUiText
+import com.neoutils.finsight.core.ui.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 
 class DashboardComponentOptionsModal(

@@ -8,7 +8,7 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.impl.resources.Res
 import com.neoutils.finsight.feature.accounts.impl.resources.account_default_name
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.core.ui.util.UiText
 import kotlin.time.ExperimentalTime
 
 class EnsureDefaultAccountUseCase(

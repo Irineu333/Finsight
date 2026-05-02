@@ -49,12 +49,12 @@ import com.neoutils.finsight.feature.support.impl.resources.support_status_plann
 import com.neoutils.finsight.feature.support.impl.resources.support_type_bug
 import com.neoutils.finsight.feature.support.impl.resources.support_type_feature
 import com.neoutils.finsight.feature.support.impl.resources.support_type_question
-import com.neoutils.finsight.ui.component.LocalAnimatedVisibilityScope
-import com.neoutils.finsight.ui.component.LocalSharedTransitionScope
-import com.neoutils.finsight.ui.theme.Info
-import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.ui.theme.Success
-import com.neoutils.finsight.ui.theme.Warning
+import com.neoutils.finsight.core.ui.component.LocalAnimatedVisibilityScope
+import com.neoutils.finsight.core.ui.component.LocalSharedTransitionScope
+import com.neoutils.finsight.core.ui.theme.Info
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.theme.Success
+import com.neoutils.finsight.core.ui.theme.Warning
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 

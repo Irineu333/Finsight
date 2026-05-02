@@ -3,8 +3,7 @@ package com.neoutils.finsight.ui.modal.budgetForm
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.util.AppIcon
-
+import com.neoutils.finsight.core.ui.util.AppIcon
 sealed class BudgetFormAction {
     data class TitleChanged(val title: String) : BudgetFormAction()
     data class CategoryToggled(val category: Category) : BudgetFormAction()

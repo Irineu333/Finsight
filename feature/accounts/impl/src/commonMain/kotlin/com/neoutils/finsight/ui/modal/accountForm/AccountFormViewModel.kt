@@ -12,11 +12,11 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
-import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.util.AppIcon
+import com.neoutils.finsight.core.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.utils.util.DebounceManager
 import com.neoutils.finsight.core.utils.util.ObservableMutableMap
-import com.neoutils.finsight.util.Validation
+import com.neoutils.finsight.core.ui.util.Validation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine

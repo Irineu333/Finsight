@@ -26,17 +26,17 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
 import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.ui.model.OperationPerspective
@@ -45,7 +45,7 @@ import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
 import org.koin.compose.koinInject
-import com.neoutils.finsight.ui.theme.*
+import com.neoutils.finsight.core.ui.theme.*
 import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource

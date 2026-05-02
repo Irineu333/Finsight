@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.report.impl.resources.Res
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary_advance_payment
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary_balance
@@ -22,12 +22,12 @@ import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary_initial_balance
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary_invoice_expense
 import com.neoutils.finsight.feature.report.impl.resources.report_viewer_summary_invoice_total
-import com.neoutils.finsight.ui.theme.Expense
-import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.AppIcon
-import com.neoutils.finsight.util.LocalDateFormats
-import com.neoutils.finsight.util.UiText
-import com.neoutils.finsight.util.stringUiText
+import com.neoutils.finsight.core.ui.theme.Expense
+import com.neoutils.finsight.core.ui.theme.Income
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.core.ui.util.UiText
+import com.neoutils.finsight.core.ui.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

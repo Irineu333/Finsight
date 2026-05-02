@@ -11,7 +11,7 @@ import com.neoutils.finsight.domain.analytics.event.AdjustInvoiceBalance
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone

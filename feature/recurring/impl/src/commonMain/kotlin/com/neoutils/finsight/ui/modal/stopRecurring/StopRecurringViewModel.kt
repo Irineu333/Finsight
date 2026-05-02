@@ -7,7 +7,7 @@ import com.neoutils.finsight.domain.analytics.event.StopRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
-import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class StopRecurringViewModel(

@@ -10,8 +10,7 @@ import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_recurrin
 import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_reports
 import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_support
 import com.neoutils.finsight.ui.component.NavigationDestination
-import com.neoutils.finsight.util.UiText
-
+import com.neoutils.finsight.core.ui.util.UiText
 enum class QuickActionType(
     val title: UiText,
     val destination: NavigationDestination,

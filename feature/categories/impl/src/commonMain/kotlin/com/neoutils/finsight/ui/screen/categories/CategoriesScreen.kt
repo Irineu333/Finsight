@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.feature.categories.impl.resources.Res
 import com.neoutils.finsight.feature.categories.impl.resources.categories_create_default

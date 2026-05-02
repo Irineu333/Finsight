@@ -2,6 +2,7 @@ package com.neoutils.finsight.feature.recurring.mapper
 
 import com.neoutils.finsight.core.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
+
 class RecurringOccurrenceMapper {
 
     fun toDomain(entity: RecurringOccurrenceEntity): RecurringOccurrence =

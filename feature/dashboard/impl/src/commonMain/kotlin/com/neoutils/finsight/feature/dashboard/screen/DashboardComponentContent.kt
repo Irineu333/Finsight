@@ -65,7 +65,7 @@ import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.AdvancePaymentModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.CloseInvoiceModalEntry
-import com.neoutils.finsight.feature.recurring.modal.confirmRecurring.ConfirmRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.modal.ConfirmRecurringModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.CreditCardFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.EditInvoiceBalanceModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.PayInvoiceModalEntry

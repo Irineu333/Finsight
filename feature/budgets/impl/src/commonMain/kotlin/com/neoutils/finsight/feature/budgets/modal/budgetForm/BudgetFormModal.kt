@@ -32,7 +32,7 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.sharedui.component.MultiCategorySelector
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.core.ui.modal.iconPicker.IconPickerModal
-import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModalEntry
+import com.neoutils.finsight.feature.recurring.modal.RecurringFormModalEntry
 import com.neoutils.finsight.core.ui.util.FeatureIconCatalog
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation

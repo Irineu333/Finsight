@@ -5,7 +5,7 @@ import com.neoutils.finsight.core.domain.model.CreditCard
 
 data class Recurring(
     val id: Long = 0,
-    val type: Recurring.Type,
+    val type: Type,
     val amount: Double,
     val title: String?,
     val dayOfMonth: Int,

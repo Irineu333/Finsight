@@ -41,7 +41,7 @@ import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.core.sharedui.model.OperationUi
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.feature.transactions.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
 import org.koin.compose.koinInject
 import com.neoutils.finsight.core.ui.theme.*
 import com.neoutils.finsight.core.utils.util.dayMonthYear

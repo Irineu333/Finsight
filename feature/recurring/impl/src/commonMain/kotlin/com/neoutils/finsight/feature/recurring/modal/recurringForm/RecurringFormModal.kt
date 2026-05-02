@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.recurring.model.form.RecurringForm
+import com.neoutils.finsight.feature.recurring.state.RecurringForm
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.extension.isAccept
 import com.neoutils.finsight.feature.recurring.extension.isAccept

@@ -1,10 +1,10 @@
-package com.neoutils.finsight.feature.recurring.model.form
+package com.neoutils.finsight.feature.recurring.state
 
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
+import com.neoutils.finsight.feature.recurring.model.Recurring
 
 data class RecurringForm(
     val type: Recurring.Type,

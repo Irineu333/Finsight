@@ -2,12 +2,12 @@ package com.neoutils.finsight.feature.recurring.di
 
 import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
 import com.neoutils.finsight.feature.recurring.mapper.RecurringMapper
-import com.neoutils.finsight.feature.recurring.modal.confirmRecurring.ConfirmRecurringModalEntry
-import com.neoutils.finsight.feature.recurring.modal.confirmRecurring.ConfirmRecurringModalEntryImpl
-import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModalEntry
-import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModalEntryImpl
-import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModalEntry
-import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModalEntryImpl
+import com.neoutils.finsight.feature.recurring.modal.ConfirmRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.entryPoint.ConfirmRecurringModalEntryImpl
+import com.neoutils.finsight.feature.recurring.modal.RecurringFormModalEntry
+import com.neoutils.finsight.feature.recurring.entryPoint.RecurringFormModalEntryImpl
+import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.entryPoint.ViewRecurringModalEntryImpl
 import com.neoutils.finsight.feature.recurring.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.feature.recurring.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.feature.recurring.repository.RecurringRepository

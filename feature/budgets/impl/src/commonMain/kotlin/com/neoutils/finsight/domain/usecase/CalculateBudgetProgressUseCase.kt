@@ -12,13 +12,13 @@ import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 
-class CalculateBudgetProgressUseCase {
-    operator fun invoke(
+class CalculateBudgetProgressUseCase : ICalculateBudgetProgressUseCase {
+    override operator fun invoke(
         budgets: List<Budget>,
         transactions: List<Transaction>,
-        recurringList: List<Recurring> = emptyList(),
-        operations: List<Operation> = emptyList(),
-        today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+        recurringList: List<Recurring>,
+        operations: List<Operation>,
+        today: LocalDate,
     ): List<BudgetProgress> {
         return budgets.map { budget ->
             val limit = when (budget.limitType) {

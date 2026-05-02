@@ -4,14 +4,19 @@ import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.database.repository.BudgetRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
+import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
+import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntryImpl
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val budgetsModule = module {
+
+    single<ViewBudgetModalEntry> { ViewBudgetModalEntryImpl() }
 
     factory { BudgetMapper() }
 
@@ -23,6 +28,7 @@ val budgetsModule = module {
         )
     }
 
+    factory<ICalculateBudgetProgressUseCase> { CalculateBudgetProgressUseCase() }
     factory { CalculateBudgetProgressUseCase() }
 
     factory {

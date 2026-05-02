@@ -1,14 +1,14 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.dashboard_accounts
-import com.neoutils.finsight.resources.dashboard_budgets
-import com.neoutils.finsight.resources.dashboard_categories
-import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_installments
-import com.neoutils.finsight.resources.dashboard_recurring
-import com.neoutils.finsight.resources.dashboard_reports
-import com.neoutils.finsight.resources.dashboard_support
+import com.neoutils.finsight.feature.dashboard.impl.resources.Res
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_accounts
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_budgets
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_categories
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_credit_cards
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_installments
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_recurring
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_reports
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_support
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.util.UiText
 

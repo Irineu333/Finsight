@@ -23,18 +23,6 @@
     <string name="installment_error_missing_invoice">Select an invoice to register the installment.</string>
 
     <!-- Dashboard Screen -->
-    <string name="dashboard_recents">Recent</string>
-    <string name="dashboard_see_all">See All</string>
-    <string name="dashboard_budgets">Budgets</string>
-    <string name="dashboard_categories">Categories</string>
-    <string name="dashboard_credit_cards">Credit Cards</string>
-    <string name="dashboard_accounts">Accounts</string>
-    <string name="dashboard_installments">Installments</string>
-    <string name="dashboard_support">Support</string>
-    <string name="dashboard_total_balance">Total Balance</string>
-    <string name="dashboard_add_account">Add account</string>
-    <string name="dashboard_reports">Reports</string>
-
     <!-- Report Config Screen -->
     <string name="report_config_title">New Report</string>
     <string name="report_config_sections">Sections</string>
@@ -288,9 +276,6 @@
     <!-- Invoice selector -->
     <!-- Date picker -->
     <!-- Dashboard - Recurring -->
-    <string name="dashboard_recurring">Recurring</string>
-    <string name="dashboard_pending_recurring">Recurring</string>
-
     <!-- Recurring Screen -->
     <!-- Recurring Form Modal -->
     <!-- Confirm Recurring Modal -->
@@ -324,65 +309,7 @@
     <string name="recurring_error_account_required">Account is required.</string>
 
     <!-- Dashboard Component Names -->
-    <string name="component_total_balance">Total Balance</string>
-    <string name="component_balance_stats">Balance</string>
-    <string name="component_pending_balance">Pending Balance</string>
-    <string name="component_credit_card_balance_stats">Card Balance</string>
-    <string name="component_accounts_overview">Accounts</string>
-    <string name="component_credit_cards">Credit Cards</string>
-    <string name="component_spending_by_category">Spending by Category</string>
-    <string name="component_income_by_category">Income by Category</string>
-    <string name="component_budgets">Budgets</string>
-    <string name="component_pending_recurring">Recurring</string>
-    <string name="component_recents">Recent</string>
-    <string name="component_quick_actions">Shortcuts</string>
-
     <!-- Dashboard Edit Mode -->
-    <string name="dashboard_edit_title">Edit</string>
-    <string name="dashboard_edit_confirm">Confirm</string>
-    <string name="dashboard_edit_cancel">Cancel</string>
-    <string name="dashboard_edit_active_placeholder">Drag here to add a component</string>
-    <string name="dashboard_edit_available_section">Available to add</string>
-    <string name="dashboard_edit_remove_all">Remove all</string>
-    <string name="dashboard_edit_add_all">Add all</string>
-    <string name="dashboard_edit_available_placeholder">Drag here to hide a component</string>
-    <string name="dashboard_edit_tip_title">Customize your dashboard</string>
-    <string name="dashboard_edit_tip_description">Long press any component to enter edit mode.</string>
-    <string name="dashboard_empty_title">Your dashboard is empty</string>
-    <string name="dashboard_empty_description">Add components to customize this view again.</string>
-    <string name="dashboard_empty_action">Edit dashboard</string>
-    <string name="dashboard_credit_cards_empty_state">Add credit cards or adjust this component selection.</string>
-
     <!-- Dashboard Component Config -->
-    <string name="component_config_layout_section">Layout</string>
-    <string name="component_config_content_section">Content</string>
-    <string name="component_config_show_header">Show header</string>
-    <string name="component_config_top_spacing">Top spacing</string>
-    <string name="component_config_hide_single_account">Hide single account</string>
-    <string name="component_config_hide_when_empty">Hide when empty</string>
-    <string name="component_config_show_empty_state">Show empty state</string>
-    <string name="component_config_max_categories">Max categories</string>
-    <string name="component_config_days_ahead">Days ahead</string>
-    <string name="component_config_today">Today</string>
-    <string name="component_config_7_days">7 days</string>
-    <string name="component_config_15_days">15 days</string>
-    <string name="component_config_this_month">This month</string>
-    <string name="component_config_count">Item count</string>
-    <string name="component_config_all">All</string>
-    <string name="component_config_min_visible_action">Keep at least one action visible</string>
-    <string name="component_config_confirm">Confirm</string>
-    <string name="component_config_cancel">Cancel</string>
-
     <!-- Dashboard Preview Mock Data -->
-    <string name="preview_account_main">Wallet</string>
-    <string name="preview_account_savings">Savings</string>
-    <string name="preview_card_nubank">Nubank</string>
-    <string name="preview_category_food">Food</string>
-    <string name="preview_category_transport">Transport</string>
-    <string name="preview_category_salary">Salary</string>
-    <string name="preview_category_freelance">Freelance</string>
-    <string name="preview_transaction_supermarket">Supermarket</string>
-    <string name="preview_transaction_netflix">Netflix</string>
-    <string name="preview_transaction_spotify">Spotify</string>
-    <string name="preview_budget_food">Food</string>
 </resources>

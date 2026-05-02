@@ -47,4 +47,6 @@
     <string name="budget_progress_card_title">Budgets</string>
     <string name="transactions_filter_recurring">Recurring</string>
     <string name="transactions_filter_installment">Installments</string>
+    <string name="credit_cards_empty">No credit cards</string>
+    <string name="credit_cards_create">Create card</string>
 </resources>

@@ -14,6 +14,8 @@ import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
+import com.neoutils.finsight.ui.modal.accountForm.AccountFormModalEntry
+import com.neoutils.finsight.ui.modal.accountForm.AccountFormModalEntryImpl
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
@@ -26,6 +28,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val accountsModule = module {
+
+    single<AccountFormModalEntry> { AccountFormModalEntryImpl() }
 
     single { AccountMapper() }
 

@@ -42,7 +42,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.dashboardComponentOptions.DashboardComponentOptionsModal
 import com.neoutils.finsight.util.stringUiText

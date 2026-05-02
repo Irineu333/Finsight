@@ -31,6 +31,14 @@ import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntryImpl
+import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntryImpl
+import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntryImpl
+import com.neoutils.finsight.ui.modal.creditCardOps.EditInvoiceBalanceModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.EditInvoiceBalanceModalEntryImpl
+import com.neoutils.finsight.ui.modal.creditCardOps.PayInvoiceModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.PayInvoiceModalEntryImpl
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
@@ -47,6 +55,10 @@ import org.koin.dsl.module
 val creditCardsModule = module {
 
     single<CreditCardFormModalEntry> { CreditCardFormModalEntryImpl() }
+    single<CloseInvoiceModalEntry> { CloseInvoiceModalEntryImpl() }
+    single<PayInvoiceModalEntry> { PayInvoiceModalEntryImpl() }
+    single<AdvancePaymentModalEntry> { AdvancePaymentModalEntryImpl() }
+    single<EditInvoiceBalanceModalEntry> { EditInvoiceBalanceModalEntryImpl() }
 
     single { CreditCardMapper() }
     single { InvoiceMapper() }

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.util.UiText
 
 sealed interface DashboardComponentVariant {

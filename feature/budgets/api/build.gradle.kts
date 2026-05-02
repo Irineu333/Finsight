@@ -1,5 +1,6 @@
 plugins {
-    id("kmp-library")
+    id("kmp-compose")
+    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -7,7 +8,10 @@ kotlin {
         commonMain.dependencies {
             api(projects.core.domain)
             api(projects.feature.recurring.api)
+            api(projects.feature.transactions.api)
             implementation(libs.kotlinx.coroutinesCore)
+            implementation(libs.kotlinx.datetime)
+            implementation(projects.core.ui)
         }
     }
 }

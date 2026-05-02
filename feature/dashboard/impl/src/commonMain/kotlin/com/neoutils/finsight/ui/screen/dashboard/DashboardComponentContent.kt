@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -43,10 +44,10 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.safeOnDay
-import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.feature.creditCards.impl.resources.Res as CreditCardsRes
-import com.neoutils.finsight.feature.creditCards.impl.resources.credit_cards_empty
-import com.neoutils.finsight.feature.creditCards.impl.resources.credit_cards_create
+import com.neoutils.finsight.feature.dashboard.impl.resources.*
+import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
+import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
+import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.component.BalanceCard
@@ -60,17 +61,17 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
-import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
-import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
-import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModal
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
-import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
-import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModal
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.accountForm.AccountFormModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntry
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntry
+import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.EditInvoiceBalanceModalEntry
+import com.neoutils.finsight.ui.modal.creditCardOps.PayInvoiceModalEntry
+import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
+import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModalEntry
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModalEntry
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.stringUiText
@@ -189,6 +190,17 @@ private fun DashboardPendingRecurringSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -221,7 +233,7 @@ private fun DashboardPendingRecurringSection(
                             .safeOnDay(recurring.dayOfMonth)
                             .takeIf { it <= currentDate }
                             ?: currentDate
-                        modalManager.show(ConfirmRecurringModal(recurring, targetDate))
+                        modalManager.show(confirmRecurringEntry.create(recurring, targetDate))
                     }
                 },
                 modifier = Modifier
@@ -239,6 +251,17 @@ private fun DashboardRecentsSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -287,8 +310,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operation.type.isAdjustment -> modalManager.show(ViewAdjustmentModal(operation))
-                            else -> modalManager.show(ViewOperationModal(operation))
+                            operation.type.isAdjustment -> modalManager.show(viewAdjustmentEntry.create(operation))
+                            else -> modalManager.show(viewOperationEntry.create(operation))
                         }
                     }
                 },
@@ -445,6 +468,17 @@ private fun DashboardCreditCardsSection(
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -471,7 +505,7 @@ private fun DashboardCreditCardsSection(
                 DashboardCreditCardsEmptyCard(
                     onCreateCard = {
                         if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                            modalManager.show(CreditCardFormModal())
+                            modalManager.show(creditCardFormEntry.create())
                         }
                     },
                     modifier = Modifier
@@ -509,7 +543,7 @@ private fun DashboardCreditCardsSection(
                             onCloseInvoice = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
-                                        modalManager.show(CloseInvoiceModal(it.id, it.closingDate))
+                                        modalManager.show(closeInvoiceEntry.create(it.id, it.closingDate))
                                     }
                                 }
                             },
@@ -517,7 +551,7 @@ private fun DashboardCreditCardsSection(
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
                                         modalManager.show(
-                                            PayInvoiceModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            payInvoiceEntry.create(invoice = it.invoice, currentBillAmount = it.amount)
                                         )
                                     }
                                 }
@@ -526,7 +560,7 @@ private fun DashboardCreditCardsSection(
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
                                         modalManager.show(
-                                            AdvancePaymentModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            advancePaymentEntry.create(invoice = it.invoice, currentBillAmount = it.amount)
                                         )
                                     }
                                 }
@@ -534,7 +568,7 @@ private fun DashboardCreditCardsSection(
                             onEditAmount = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
-                                        modalManager.show(EditInvoiceBalanceModal(initialInvoice = it.invoice))
+                                        modalManager.show(editInvoiceBalanceEntry.create(initialInvoice = it.invoice))
                                     }
                                 }
                             },
@@ -560,6 +594,17 @@ private fun DashboardSpendingByCategorySection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
 
     CategorySpendingCard(
@@ -569,7 +614,7 @@ private fun DashboardSpendingByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
-                modalManager.show(ViewCategoryModal(category))
+                modalManager.show(viewCategoryEntry.create(category))
             }
         }
     )
@@ -581,6 +626,17 @@ private fun DashboardIncomeByCategorySection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
 
     CategorySpendingCard(
@@ -591,7 +647,7 @@ private fun DashboardIncomeByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
-                modalManager.show(ViewCategoryModal(category))
+                modalManager.show(viewCategoryEntry.create(category))
             }
         }
     )
@@ -603,6 +659,17 @@ private fun DashboardBudgetsSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
 
     BudgetProgressCard(
@@ -612,7 +679,7 @@ private fun DashboardBudgetsSection(
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                modalManager.show(ViewBudgetModal(budget))
+                modalManager.show(viewBudgetEntry.create(budget))
             }
         },
     )
@@ -801,6 +868,17 @@ private fun DashboardAccountsRow(
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
+    val accountFormEntry = koinInject<AccountFormModalEntry>()
+    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
+    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
+    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
+    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
+    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
+    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
+    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
+    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -849,7 +927,7 @@ private fun DashboardAccountsRow(
                 DashboardAddAccountCard(
                     onClick = {
                         if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
-                            modalManager.show(AccountFormModal())
+                            modalManager.show(accountFormEntry.create())
                         }
                     },
                 )
@@ -892,7 +970,7 @@ private fun DashboardCreditCardsEmptyCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(CreditCardsRes.string.credit_cards_empty),
+                text = stringResource(SharedUiRes.string.credit_cards_empty),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -914,7 +992,7 @@ private fun DashboardCreditCardsEmptyCard(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(CreditCardsRes.string.credit_cards_create))
+                Text(text = stringResource(SharedUiRes.string.credit_cards_create))
             }
         }
     }

@@ -36,6 +36,8 @@ import com.neoutils.finsight.feature.creditCards.impl.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
+import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
+import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -269,7 +271,7 @@ private fun EmptyCreditCardsState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = stringResource(Res.string.credit_cards_empty),
+                text = stringResource(SharedUiRes.string.credit_cards_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -282,7 +284,7 @@ private fun EmptyCreditCardsState(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(Res.string.credit_cards_create))
+                Text(text = stringResource(SharedUiRes.string.credit_cards_create))
             }
         }
     }

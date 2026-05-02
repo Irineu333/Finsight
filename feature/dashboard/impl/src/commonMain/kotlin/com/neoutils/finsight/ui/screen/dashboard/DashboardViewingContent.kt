@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.interceptLongPress
-import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

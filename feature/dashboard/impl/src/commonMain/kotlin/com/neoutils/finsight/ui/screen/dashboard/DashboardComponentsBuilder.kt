@@ -8,12 +8,12 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
-import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateTransactionStatsUseCase
+import com.neoutils.finsight.domain.usecase.IGetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.currentPlatform
@@ -41,12 +41,12 @@ data class DashboardBuilderContext(
 )
 
 class DashboardComponentsBuilder(
-    private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
+    private val calculateBalanceUseCase: ICalculateBalanceUseCase,
+    private val calculateTransactionStatsUseCase: ICalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
-    private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
-    private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
+    private val calculateBudgetProgressUseCase: ICalculateBudgetProgressUseCase,
+    private val getPendingRecurringUseCase: IGetPendingRecurringUseCase,
     private val invoiceUiMapper: IInvoiceUiMapper,
 ) {
 

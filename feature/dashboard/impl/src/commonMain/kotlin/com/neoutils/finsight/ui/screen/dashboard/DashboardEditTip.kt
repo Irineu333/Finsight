@@ -16,9 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.dashboard_edit_tip_description
-import com.neoutils.finsight.resources.dashboard_edit_tip_title
+import com.neoutils.finsight.feature.dashboard.impl.resources.Res
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_edit_tip_description
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_edit_tip_title
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

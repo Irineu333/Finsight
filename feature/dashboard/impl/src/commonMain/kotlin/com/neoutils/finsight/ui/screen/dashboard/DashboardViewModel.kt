@@ -13,7 +13,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
-import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
+import com.neoutils.finsight.domain.usecase.IEnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.flow.*
@@ -33,7 +33,7 @@ class DashboardViewModel(
     private val budgetRepository: IBudgetRepository,
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
-    private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
+    private val ensureDefaultAccountUseCase: IEnsureDefaultAccountUseCase,
     private val getDashboardPreferences: GetDashboardPreferencesUseCase,
     private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
     private val dashboardPreferencesRepository: IDashboardPreferencesRepository,

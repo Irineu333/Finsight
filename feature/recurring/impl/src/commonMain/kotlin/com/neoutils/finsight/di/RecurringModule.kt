@@ -2,6 +2,8 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.IRecurringMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntry
+import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntryImpl
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModalEntry
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModalEntryImpl
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
@@ -13,6 +15,7 @@ import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
+import com.neoutils.finsight.domain.usecase.IGetPendingRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
@@ -30,6 +33,7 @@ val recurringModule = module {
 
     single<ViewRecurringModalEntry> { ViewRecurringModalEntryImpl() }
     single<RecurringFormModalEntry> { RecurringFormModalEntryImpl() }
+    single<ConfirmRecurringModalEntry> { ConfirmRecurringModalEntryImpl() }
 
     factory<IRecurringMapper> { RecurringMapper() }
     factory { RecurringMapper() }
@@ -59,6 +63,7 @@ val recurringModule = module {
 
     factory { StopRecurringUseCase(repository = get()) }
 
+    factory<IGetPendingRecurringUseCase> { GetPendingRecurringUseCase() }
     factory { GetPendingRecurringUseCase() }
 
     factory {

@@ -19,18 +19,6 @@
     <!-- Bottom Navigation -->
 
     <!-- Dashboard Screen -->
-    <string name="dashboard_recents">Recentes</string>
-    <string name="dashboard_see_all">Ver Tudo</string>
-    <string name="dashboard_budgets">Orçamentos</string>
-    <string name="dashboard_categories">Categorias</string>
-    <string name="dashboard_credit_cards">Cartões de Crédito</string>
-    <string name="dashboard_accounts">Contas</string>
-    <string name="dashboard_installments">Parcelamentos</string>
-    <string name="dashboard_support">Suporte</string>
-    <string name="dashboard_total_balance">Saldo Total</string>
-    <string name="dashboard_add_account">Adicionar conta</string>
-    <string name="dashboard_reports">Relatórios</string>
-
     <!-- Report Config Screen -->
     <string name="report_config_title">Novo Relatório</string>
     <string name="report_config_sections">Seções</string>
@@ -195,9 +183,6 @@
     <!-- Invoice selector -->
     <!-- Date picker -->
     <!-- Dashboard - Recurring -->
-    <string name="dashboard_recurring">Recorrentes</string>
-    <string name="dashboard_pending_recurring">Recorrências</string>
-
     <!-- Recurring Screen -->
     <!-- Recurring Form Modal -->
     <!-- Confirm Recurring Modal -->
@@ -231,65 +216,7 @@
     <string name="recurring_error_account_required">A conta é obrigatória.</string>
 
     <!-- Dashboard Component Names -->
-    <string name="component_total_balance">Saldo Total</string>
-    <string name="component_balance_stats">Balanço</string>
-    <string name="component_pending_balance">Balanço Pendente</string>
-    <string name="component_credit_card_balance_stats">Balanço do Cartão</string>
-    <string name="component_accounts_overview">Contas</string>
-    <string name="component_credit_cards">Cartões de Crédito</string>
-    <string name="component_spending_by_category">Gastos por Categoria</string>
-    <string name="component_income_by_category">Receitas por Categoria</string>
-    <string name="component_budgets">Orçamentos</string>
-    <string name="component_pending_recurring">Recorrências</string>
-    <string name="component_recents">Recentes</string>
-    <string name="component_quick_actions">Atalhos</string>
-
     <!-- Dashboard Edit Mode -->
-    <string name="dashboard_edit_title">Editar</string>
-    <string name="dashboard_edit_confirm">Confirmar</string>
-    <string name="dashboard_edit_cancel">Cancelar</string>
-    <string name="dashboard_edit_active_placeholder">Arraste aqui para adicionar um componente</string>
-    <string name="dashboard_edit_available_section">Disponíveis para adicionar</string>
-    <string name="dashboard_edit_remove_all">Remover tudo</string>
-    <string name="dashboard_edit_add_all">Adicionar tudo</string>
-    <string name="dashboard_edit_available_placeholder">Arraste aqui para ocultar um componente</string>
-    <string name="dashboard_edit_tip_title">Personalize sua dashboard</string>
-    <string name="dashboard_edit_tip_description">Pressione e segure qualquer componente para entrar no modo edição.</string>
-    <string name="dashboard_empty_title">Sua dashboard está vazia</string>
-    <string name="dashboard_empty_description">Adicione componentes para voltar a personalizar a visualização.</string>
-    <string name="dashboard_empty_action">Editar dashboard</string>
-    <string name="dashboard_credit_cards_empty_state">Adicione cartões ou ajuste a seleção deste componente.</string>
-
     <!-- Dashboard Component Config -->
-    <string name="component_config_layout_section">Layout</string>
-    <string name="component_config_content_section">Conteúdo</string>
-    <string name="component_config_show_header">Exibir cabeçalho</string>
-    <string name="component_config_top_spacing">Espaçamento superior</string>
-    <string name="component_config_hide_single_account">Ocultar conta única</string>
-    <string name="component_config_hide_when_empty">Ocultar sem dados</string>
-    <string name="component_config_show_empty_state">Exibir empty state</string>
-    <string name="component_config_max_categories">Máximo de categorias</string>
-    <string name="component_config_days_ahead">Dias à frente</string>
-    <string name="component_config_today">Hoje</string>
-    <string name="component_config_7_days">7 dias</string>
-    <string name="component_config_15_days">15 dias</string>
-    <string name="component_config_this_month">Este mês</string>
-    <string name="component_config_count">Quantidade de itens</string>
-    <string name="component_config_all">Todas</string>
-    <string name="component_config_min_visible_action">Mantenha pelo menos uma ação visível</string>
-    <string name="component_config_confirm">Confirmar</string>
-    <string name="component_config_cancel">Cancelar</string>
-
     <!-- Dashboard Preview Mock Data -->
-    <string name="preview_account_main">Carteira</string>
-    <string name="preview_account_savings">Poupança</string>
-    <string name="preview_card_nubank">Nubank</string>
-    <string name="preview_category_food">Alimentação</string>
-    <string name="preview_category_transport">Transporte</string>
-    <string name="preview_category_salary">Salário</string>
-    <string name="preview_category_freelance">Freelance</string>
-    <string name="preview_transaction_supermarket">Supermercado</string>
-    <string name="preview_transaction_netflix">Netflix</string>
-    <string name="preview_transaction_spotify">Spotify</string>
-    <string name="preview_budget_food">Alimentação</string>
 </resources>

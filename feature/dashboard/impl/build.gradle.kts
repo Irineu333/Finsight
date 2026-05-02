@@ -9,20 +9,27 @@ kotlin {
             api(projects.feature.dashboard.api)
             implementation(projects.feature.transactions.api)
             implementation(projects.feature.categories.api)
+            implementation(projects.feature.creditCards.api)
+            implementation(projects.feature.accounts.api)
+            implementation(projects.feature.recurring.api)
+            implementation(projects.feature.budgets.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
+            implementation(projects.core.sharedui)
+            implementation(projects.core.platform)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.no.arg)
+            implementation("sh.calvin.reorderable:reorderable:3.0.0")
         }
     }
 }
 
 compose.resources {
-    publicResClass = false
+    publicResClass = true
     packageOfResClass = "com.neoutils.finsight.feature.dashboard.impl.resources"
     generateResClass = auto
 }

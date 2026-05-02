@@ -16,11 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.dashboard_edit_cancel
-import com.neoutils.finsight.resources.dashboard_edit_confirm
-import com.neoutils.finsight.resources.dashboard_edit_title
-import com.neoutils.finsight.resources.dashboard_support
+import com.neoutils.finsight.feature.dashboard.impl.resources.Res
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_edit_cancel
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_edit_confirm
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_edit_title
+import com.neoutils.finsight.feature.dashboard.impl.resources.dashboard_support
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig

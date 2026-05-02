@@ -46,4 +46,6 @@
     <string name="budget_progress_card_title">Orçamentos</string>
     <string name="transactions_filter_recurring">Recorrência</string>
     <string name="transactions_filter_installment">Parcelas</string>
+    <string name="credit_cards_empty">Sem cartões de crédito</string>
+    <string name="credit_cards_create">Criar cartão</string>
 </resources>

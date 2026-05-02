@@ -50,8 +50,6 @@
     <string name="invoice_due_on">vence em %1$s</string>
     <string name="invoice_paid_on">paga em %1$s</string>
     <string name="credit_cards_title">Cartões de Crédito</string>
-    <string name="credit_cards_empty">Sem cartões de crédito</string>
-    <string name="credit_cards_create">Criar cartão</string>
     <string name="credit_cards_delete">Excluir</string>
     <string name="credit_cards_edit">Editar</string>
     <string name="credit_cards_advance_payment">Antecipar Pagamento</string>

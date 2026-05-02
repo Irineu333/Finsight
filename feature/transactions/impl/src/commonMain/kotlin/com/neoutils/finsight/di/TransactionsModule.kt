@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
+import com.neoutils.finsight.domain.usecase.ICalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
@@ -76,6 +77,7 @@ val transactionsModule = module {
         CalculateBalanceUseCase(repository = get())
     }
 
+    factory<ICalculateTransactionStatsUseCase> { CalculateTransactionStatsUseCase() }
     factory { CalculateTransactionStatsUseCase() }
 
     viewModel {

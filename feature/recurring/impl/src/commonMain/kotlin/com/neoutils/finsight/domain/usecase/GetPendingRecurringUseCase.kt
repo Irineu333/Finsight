@@ -6,8 +6,8 @@ import com.neoutils.finsight.extension.effectiveDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 
-class GetPendingRecurringUseCase {
-    operator fun invoke(
+class GetPendingRecurringUseCase : IGetPendingRecurringUseCase {
+    override operator fun invoke(
         recurringList: List<Recurring>,
         occurrences: List<RecurringOccurrence>,
         today: LocalDate,

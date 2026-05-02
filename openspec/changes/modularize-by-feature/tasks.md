@@ -274,8 +274,8 @@
 - [x] 18.19 `:feature:dashboard:api/impl` → `com.neoutils.finsight.feature.dashboard.*`
 - [x] 18.20 `:feature:home:api/impl` → `com.neoutils.finsight.feature.home.*`
 - [x] 18.21 `:app` → `com.neoutils.finsight.app.*`; atualizar `namespace` em `app/build.gradle.kts` (sem alterar `applicationId`)
-- [ ] 18.22 Apagar diretórios vazios deixados pelos `git mv` (ex.: `…/com/neoutils/finsight/extension/`, `…/util/`, `…/domain/`, `…/database/`, `…/ui/`). `find core feature app -type d -empty -delete` resolve a maioria; revisar manualmente o que sobrar.
-- [ ] 18.23 Rodar `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64 allTests`
+- [x] 18.22 Apagar diretórios vazios deixados pelos `git mv`. `move_module.py` agora poda automaticamente cada módulo migrado; um `find core feature app -path "*/src/*" -type d -empty -delete` final confirma 0 sobras.
+- [x] 18.23 Rodar `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — passa. `:app:testDebugUnitTest`, `:app:jvmTest`, `:feature:report:impl:jvmTest`, `:feature:transactions:impl:jvmTest` passam. Falhas em `:core:database:testDebugUnitTest` (Migration tests) são pré-existentes — `UnsatisfiedLinkError: no sqliteJni` no JVM Android unit test, mesmo problema de ambiente registrado em §17.7.
 
 ## 19. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
 

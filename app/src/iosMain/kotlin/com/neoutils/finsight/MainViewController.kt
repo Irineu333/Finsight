@@ -5,7 +5,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.neoutils.finsight.core.database.di.databaseModule
 import com.neoutils.finsight.feature.accounts.di.accountsModule
 import com.neoutils.finsight.feature.categories.di.categoriesModule
-import com.neoutils.finsight.di.creditCardsModule
+import com.neoutils.finsight.feature.creditCards.di.creditCardsModule
 import com.neoutils.finsight.di.transactionsModule
 import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.installmentsModule

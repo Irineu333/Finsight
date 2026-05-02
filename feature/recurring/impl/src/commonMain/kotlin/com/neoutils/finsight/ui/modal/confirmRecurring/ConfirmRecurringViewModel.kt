@@ -10,8 +10,8 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.core.utils.extension.combine

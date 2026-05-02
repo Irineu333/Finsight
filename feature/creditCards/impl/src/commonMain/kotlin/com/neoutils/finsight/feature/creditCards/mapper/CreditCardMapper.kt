@@ -1,0 +1,30 @@
+package com.neoutils.finsight.feature.creditCards.mapper
+
+import com.neoutils.finsight.core.database.entity.CreditCardEntity
+import com.neoutils.finsight.core.domain.model.CreditCard
+
+class CreditCardMapper {
+    fun toDomain(entity: CreditCardEntity): CreditCard {
+        return CreditCard(
+            id = entity.id,
+            name = entity.name,
+            limit = entity.limit,
+            closingDay = entity.closingDay,
+            dueDay = entity.dueDay,
+            iconKey = entity.iconKey,
+            createdAt = entity.createdAt
+        )
+    }
+
+    fun toEntity(domain: CreditCard): CreditCardEntity {
+        return CreditCardEntity(
+            id = domain.id,
+            name = domain.name,
+            limit = domain.limit,
+            closingDay = domain.closingDay,
+            dueDay = domain.dueDay,
+            iconKey = domain.iconKey,
+            createdAt = domain.createdAt
+        )
+    }
+}

@@ -10,11 +10,11 @@ import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.feature.installments.impl.resources.Res

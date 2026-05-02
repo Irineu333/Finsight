@@ -8,7 +8,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
@@ -25,6 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 
 class EditTransactionViewModel(
     private val transaction: Transaction,

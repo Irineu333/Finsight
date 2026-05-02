@@ -38,7 +38,7 @@ import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.NavigationDestination
-import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.core.sharedui.model.OperationUi
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal

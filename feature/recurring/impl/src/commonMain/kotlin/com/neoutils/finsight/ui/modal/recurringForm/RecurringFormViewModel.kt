@@ -13,7 +13,7 @@ import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.ui.component.ModalManager

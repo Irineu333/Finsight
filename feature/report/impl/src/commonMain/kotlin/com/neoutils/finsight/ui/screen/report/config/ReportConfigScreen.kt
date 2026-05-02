@@ -28,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.PerspectiveTab
-import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.feature.creditCards.extension.toUiText
 import com.neoutils.finsight.feature.report.impl.resources.*
 import com.neoutils.finsight.core.sharedui.component.AccountCard
 import com.neoutils.finsight.core.sharedui.component.AccountCardVariant

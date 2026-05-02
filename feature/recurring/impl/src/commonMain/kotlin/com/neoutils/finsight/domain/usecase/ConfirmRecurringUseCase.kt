@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.domain.usecase.IGetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.core.utils.extension.monthsUntil
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.LocalDate

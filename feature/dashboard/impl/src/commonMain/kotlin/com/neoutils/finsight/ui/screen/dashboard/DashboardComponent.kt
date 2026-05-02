@@ -4,8 +4,7 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.ui.model.CreditCardUi
-
+import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 sealed interface DashboardComponent {
     val key: String
 

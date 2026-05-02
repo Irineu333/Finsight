@@ -14,11 +14,11 @@ import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.feature.categories.screen.CategoriesScreen
-import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
+import com.neoutils.finsight.feature.creditCards.screen.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
-import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
+import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
 import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.ReportRoute

@@ -26,7 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.transactions.impl.resources.*
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.LocalModalManager

@@ -62,12 +62,12 @@ import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
-import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntry
-import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.AdvancePaymentModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.CloseInvoiceModalEntry
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntry
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModalEntry
-import com.neoutils.finsight.ui.modal.creditCardOps.EditInvoiceBalanceModalEntry
-import com.neoutils.finsight.ui.modal.creditCardOps.PayInvoiceModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCardFormModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.EditInvoiceBalanceModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.PayInvoiceModalEntry
 import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry

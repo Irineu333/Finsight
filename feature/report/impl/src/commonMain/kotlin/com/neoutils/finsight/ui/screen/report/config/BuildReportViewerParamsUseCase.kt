@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.report.config
 
 import com.neoutils.finsight.domain.model.PerspectiveTab
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.ui.screen.report.ReportViewerParams
 
 class BuildReportViewerParamsUseCase(

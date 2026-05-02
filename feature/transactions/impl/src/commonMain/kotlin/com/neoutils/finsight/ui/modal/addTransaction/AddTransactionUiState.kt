@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.addTransaction
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
 
 data class AddTransactionUiState(

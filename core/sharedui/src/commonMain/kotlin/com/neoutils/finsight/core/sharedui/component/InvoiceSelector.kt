@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.sharedui.resources.Res
 import com.neoutils.finsight.core.sharedui.resources.invoice_selector_label
-import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

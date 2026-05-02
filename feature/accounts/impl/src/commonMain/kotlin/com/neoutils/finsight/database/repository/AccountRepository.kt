@@ -2,7 +2,7 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.mapper.AccountMapper
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.transactions
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 
 data class TransactionsFilters(

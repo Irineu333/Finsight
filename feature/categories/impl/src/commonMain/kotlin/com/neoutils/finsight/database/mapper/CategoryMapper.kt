@@ -1,7 +1,7 @@
 package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.CategoryEntity
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 
 class CategoryMapper {
     fun toDomain(

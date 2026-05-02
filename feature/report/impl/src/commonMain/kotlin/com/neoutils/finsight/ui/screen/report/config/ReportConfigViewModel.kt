@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.GenerateReport
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository

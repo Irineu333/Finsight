@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.editInvoiceBalance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.core.analytics.Analytics

@@ -4,7 +4,7 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.impl.resources.Res
 import com.neoutils.finsight.feature.accounts.impl.resources.account_default_name

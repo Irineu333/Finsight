@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.domain.model
+package com.neoutils.finsight.core.domain.model
 
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import kotlinx.datetime.LocalDate

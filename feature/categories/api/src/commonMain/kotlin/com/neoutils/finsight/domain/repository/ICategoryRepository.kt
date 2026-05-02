@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.repository
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import kotlinx.coroutines.flow.Flow
 
 interface ICategoryRepository {

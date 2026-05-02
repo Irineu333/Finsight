@@ -6,7 +6,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 
 class UpdateAccountUseCase(

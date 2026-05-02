@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 

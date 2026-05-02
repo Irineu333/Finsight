@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.ui.model
 
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate

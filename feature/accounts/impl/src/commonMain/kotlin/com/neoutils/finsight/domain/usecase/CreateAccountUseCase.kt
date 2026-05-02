@@ -6,7 +6,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import com.neoutils.finsight.domain.exception.AccountException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

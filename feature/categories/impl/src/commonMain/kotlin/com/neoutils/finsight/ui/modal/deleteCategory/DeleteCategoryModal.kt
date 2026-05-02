@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.categories.impl.resources.Res
 import com.neoutils.finsight.feature.categories.impl.resources.delete_category_confirm

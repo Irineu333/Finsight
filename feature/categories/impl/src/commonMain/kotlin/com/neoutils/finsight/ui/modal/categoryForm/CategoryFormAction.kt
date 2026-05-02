@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.categoryForm
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.util.AppIcon
 
 sealed class CategoryFormAction {

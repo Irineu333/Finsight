@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.budgetForm
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.core.utils.extension.moneyToDouble

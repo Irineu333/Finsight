@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.analytics.event.CreateInstallments
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.domain.exception.InstallmentException
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.ICategoryRepository

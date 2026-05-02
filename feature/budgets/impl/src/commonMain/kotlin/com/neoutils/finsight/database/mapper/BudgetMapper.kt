@@ -2,7 +2,7 @@ package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.domain.model.Budget
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 
 class BudgetMapper {

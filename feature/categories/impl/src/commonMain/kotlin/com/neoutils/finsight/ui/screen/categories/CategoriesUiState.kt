@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.categories
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 
 sealed class CategoriesUiState {
 

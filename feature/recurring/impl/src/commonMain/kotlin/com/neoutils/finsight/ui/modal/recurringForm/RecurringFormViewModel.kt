@@ -6,9 +6,9 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateRecurring
 import com.neoutils.finsight.domain.analytics.event.EditRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.domain.repository.IAccountRepository

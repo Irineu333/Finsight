@@ -1,8 +1,8 @@
 package com.neoutils.finsight.domain.model.form
 
-import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 

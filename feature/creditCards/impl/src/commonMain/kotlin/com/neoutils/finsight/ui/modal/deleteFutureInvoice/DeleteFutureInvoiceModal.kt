@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.creditCards.impl.resources.Res
 import com.neoutils.finsight.feature.creditCards.impl.resources.delete_future_invoice_confirm

@@ -5,6 +5,9 @@ import com.neoutils.finsight.feature.dashboard.impl.resources.*
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

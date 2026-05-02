@@ -1,4 +1,5 @@
 package com.neoutils.finsight.domain.model
+import com.neoutils.finsight.core.domain.model.Category
 
 data class Budget(
     val id: Long = 0,

@@ -5,7 +5,7 @@ package com.neoutils.finsight.domain.usecase
 import arrow.core.Either
 import arrow.core.left
 import com.neoutils.finsight.domain.exception.FutureMonthAdjustmentException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.minusMonth

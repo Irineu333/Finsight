@@ -2,8 +2,8 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.util.UiText

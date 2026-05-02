@@ -1,7 +1,7 @@
 package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.AccountEntity
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 
 class AccountMapper {
     fun toDomain(entity: AccountEntity): Account {

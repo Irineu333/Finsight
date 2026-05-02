@@ -1,10 +1,10 @@
 package com.neoutils.finsight.database.mapper
 
 import com.neoutils.finsight.database.entity.TransactionEntity
-import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 
 class TransactionMapper {

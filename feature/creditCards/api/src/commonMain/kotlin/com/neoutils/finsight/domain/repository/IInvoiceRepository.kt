@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.repository
 
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import kotlinx.coroutines.flow.Flow
 
 interface IInvoiceRepository {

@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.model
 
 import kotlinx.datetime.YearMonth
+import com.neoutils.finsight.core.domain.model.Invoice
 
 data class InvoiceMonthSelection(
     val dueMonth: YearMonth,

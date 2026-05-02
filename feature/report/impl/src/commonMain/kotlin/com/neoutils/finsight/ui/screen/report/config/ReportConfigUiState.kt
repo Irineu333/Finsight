@@ -1,8 +1,8 @@
 package com.neoutils.finsight.ui.screen.report.config
 
-import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.PerspectiveTab
 
 sealed class ReportConfigUiState {

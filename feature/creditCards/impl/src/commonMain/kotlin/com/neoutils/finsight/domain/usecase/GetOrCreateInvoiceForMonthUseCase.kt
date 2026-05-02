@@ -7,8 +7,8 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.IGetOrCreateInvoiceForMonthUseCase
 import kotlinx.datetime.YearMonth

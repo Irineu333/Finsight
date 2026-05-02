@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 
 sealed class InvoiceTransactionsAction {

@@ -5,7 +5,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository

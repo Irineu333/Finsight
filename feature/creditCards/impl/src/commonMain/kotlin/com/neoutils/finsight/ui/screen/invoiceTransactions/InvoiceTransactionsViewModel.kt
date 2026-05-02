@@ -23,6 +23,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Invoice
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.domain.analytics.event
 
 import com.neoutils.finsight.core.analytics.Event
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
 
 class CreateBudget(params: Map<String, String>) : Event("create_budget", params) {

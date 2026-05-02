@@ -1,4 +1,7 @@
 package com.neoutils.finsight.domain.model
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 
 data class Recurring(
     val id: Long = 0,

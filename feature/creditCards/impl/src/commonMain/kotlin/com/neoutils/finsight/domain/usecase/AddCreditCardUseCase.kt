@@ -6,7 +6,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import com.neoutils.finsight.domain.exception.CreditCardException
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.form.CreditCardForm
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.core.utils.extension.effectiveDay

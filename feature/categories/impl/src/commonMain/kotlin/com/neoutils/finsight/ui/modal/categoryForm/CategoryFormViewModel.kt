@@ -9,7 +9,7 @@ import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateCategory
 import com.neoutils.finsight.domain.analytics.event.EditCategory
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.ui.component.ModalManager

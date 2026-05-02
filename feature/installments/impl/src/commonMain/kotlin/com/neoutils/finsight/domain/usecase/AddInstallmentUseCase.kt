@@ -9,8 +9,8 @@ import arrow.core.raise.ensureNotNull
 import arrow.core.right
 import com.neoutils.finsight.domain.error.InstallmentError
 import com.neoutils.finsight.domain.exception.InstallmentException
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm

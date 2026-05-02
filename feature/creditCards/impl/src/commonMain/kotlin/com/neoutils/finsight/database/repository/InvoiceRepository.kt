@@ -4,7 +4,7 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.mapper.InvoiceMapper
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.modal.editInvoiceBalance
 
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 
 sealed class EditInvoiceBalanceAction {
     data class SelectCreditCard(val creditCard: CreditCard) : EditInvoiceBalanceAction()

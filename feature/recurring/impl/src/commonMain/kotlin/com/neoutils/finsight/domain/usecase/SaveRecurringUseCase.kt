@@ -9,9 +9,9 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.RecurringError
 import com.neoutils.finsight.domain.exception.RecurringException
-import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.core.utils.extension.moneyToDouble

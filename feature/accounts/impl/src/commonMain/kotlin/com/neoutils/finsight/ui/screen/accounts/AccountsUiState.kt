@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.accounts
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.OperationUi

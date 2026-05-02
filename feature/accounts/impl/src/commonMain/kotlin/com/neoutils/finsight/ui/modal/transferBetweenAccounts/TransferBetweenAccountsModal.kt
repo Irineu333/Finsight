@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.accounts.impl.resources.*
 import com.neoutils.finsight.ui.component.AccountSelector

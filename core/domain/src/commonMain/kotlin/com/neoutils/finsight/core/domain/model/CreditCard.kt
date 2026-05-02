@@ -1,13 +1,15 @@
-package com.neoutils.finsight.domain.model
+package com.neoutils.finsight.core.domain.model
 
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-data class Account(
+data class CreditCard(
     val id: Long = 0,
     val name: String,
-    val iconKey: String = "wallet",
-    val isDefault: Boolean = false,
+    val limit: Double,
+    val closingDay: Int,
+    val dueDay: Int,
+    val iconKey: String = "card",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()
 )

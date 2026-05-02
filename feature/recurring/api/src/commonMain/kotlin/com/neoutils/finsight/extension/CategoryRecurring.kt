@@ -1,6 +1,6 @@
 package com.neoutils.finsight.extension
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
 
 fun Category.Type.isAccept(type: Recurring.Type): Boolean {

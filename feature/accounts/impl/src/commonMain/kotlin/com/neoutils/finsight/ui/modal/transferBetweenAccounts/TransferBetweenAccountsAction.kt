@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.modal.transferBetweenAccounts
 
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Account
 import kotlinx.datetime.LocalDate
 
 sealed class TransferBetweenAccountsAction {

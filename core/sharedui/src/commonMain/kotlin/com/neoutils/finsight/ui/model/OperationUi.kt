@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.model
 
-import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate

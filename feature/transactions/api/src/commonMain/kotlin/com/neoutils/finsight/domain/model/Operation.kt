@@ -1,6 +1,10 @@
 package com.neoutils.finsight.domain.model
 
 import kotlinx.datetime.LocalDate
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 
 data class Operation(
     val id: Long = 0,

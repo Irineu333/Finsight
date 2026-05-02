@@ -2,6 +2,10 @@ package com.neoutils.finsight.domain.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Invoice
 
 data class Transaction(
     val id: Long = 0,

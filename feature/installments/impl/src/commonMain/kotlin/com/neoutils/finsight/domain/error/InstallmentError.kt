@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.error
 
-import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.core.domain.model.Invoice
 
 sealed class InstallmentError(val message: String) {
 

@@ -1,6 +1,6 @@
-package com.neoutils.finsight.auth
+package com.neoutils.finsight.core.auth
 
-import com.neoutils.finsight.domain.auth.AuthService
+import com.neoutils.finsight.core.auth.AuthService
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.domain.auth
+package com.neoutils.finsight.core.auth
 
 interface AuthService {
     suspend fun getUserId(): String?

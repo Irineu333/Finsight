@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.screen.root
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.domain.auth.AuthService
+import com.neoutils.finsight.core.auth.AuthService
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.ui.theme.FinsightTheme
 import org.koin.compose.koinInject

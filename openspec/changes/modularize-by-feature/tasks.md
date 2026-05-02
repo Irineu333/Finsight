@@ -257,7 +257,7 @@
 - [x] 18.2 `:core:utils` → `com.neoutils.finsight.core.utils.*` (subpkgs: `extension`, `util`, `util.di`)
 - [x] 18.3 `:core:platform` → `com.neoutils.finsight.core.platform.*`
 - [x] 18.4 `:core:analytics` → `com.neoutils.finsight.core.analytics.*` (subpkgs: `crashlytics`, `di`)
-- [ ] 18.5 `:core:auth` → `com.neoutils.finsight.core.auth.*` (subpkgs: `service`, `di`)
+- [x] 18.5 `:core:auth` → `com.neoutils.finsight.core.auth.*` (subpkgs: `di`)
 - [ ] 18.6 `:core:domain` → `com.neoutils.finsight.core.domain.*` (subpkg: `model`)
 - [ ] 18.7 `:core:database` → `com.neoutils.finsight.core.database.*` (subpkgs: `entity`, `dao`, `di`)
 - [ ] 18.8 `:core:ui` → `com.neoutils.finsight.core.ui.*` (subpkgs: `theme`, `component`, `modal`, `extension`, `util`, `di`)

@@ -7,8 +7,9 @@ import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.support.error.SupportError
 import com.neoutils.finsight.feature.support.exception.SupportException
 import com.neoutils.finsight.feature.support.model.SupportIssue
-import com.neoutils.finsight.feature.support.model.form.SupportIssueDraft
+import com.neoutils.finsight.feature.support.form.SupportIssueDraft
 import com.neoutils.finsight.feature.support.repository.ISupportRepository
+
 class CreateSupportIssueUseCase(
     private val supportRepository: ISupportRepository,
 ) {

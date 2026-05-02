@@ -6,8 +6,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.support.model.SupportIssue
 import com.neoutils.finsight.feature.support.model.SupportMessage
-import com.neoutils.finsight.feature.support.model.form.SupportIssueDraft
-import com.neoutils.finsight.feature.support.repository.ISupportRepository
+import com.neoutils.finsight.feature.support.form.SupportIssueDraft
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore

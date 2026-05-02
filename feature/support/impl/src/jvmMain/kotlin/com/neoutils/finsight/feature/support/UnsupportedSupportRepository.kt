@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.support
 
 import com.neoutils.finsight.feature.support.model.SupportIssue
 import com.neoutils.finsight.feature.support.model.SupportMessage
-import com.neoutils.finsight.feature.support.model.form.SupportIssueDraft
+import com.neoutils.finsight.feature.support.form.SupportIssueDraft
 import com.neoutils.finsight.feature.support.repository.ISupportRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf

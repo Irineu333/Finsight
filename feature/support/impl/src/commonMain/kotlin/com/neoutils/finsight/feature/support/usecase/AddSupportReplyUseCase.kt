@@ -7,6 +7,7 @@ import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.support.error.SupportError
 import com.neoutils.finsight.feature.support.exception.SupportException
 import com.neoutils.finsight.feature.support.repository.ISupportRepository
+
 class AddSupportReplyUseCase(
     private val supportRepository: ISupportRepository,
 ) {

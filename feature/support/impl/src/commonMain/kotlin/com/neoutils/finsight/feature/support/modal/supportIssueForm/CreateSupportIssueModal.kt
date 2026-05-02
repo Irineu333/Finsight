@@ -31,7 +31,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.feature.support.model.SupportIssue
-import com.neoutils.finsight.feature.support.model.form.SupportIssueDraft
+import com.neoutils.finsight.feature.support.form.SupportIssueDraft
 import com.neoutils.finsight.feature.support.resources.Res
 import com.neoutils.finsight.feature.support.resources.support_form_description_label
 import com.neoutils.finsight.feature.support.resources.support_form_submit

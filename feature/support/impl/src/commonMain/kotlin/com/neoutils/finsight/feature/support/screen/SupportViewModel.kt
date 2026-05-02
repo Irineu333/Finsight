@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.support.event.CreateSupportIssue
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.feature.support.model.form.SupportIssueDraft
+import com.neoutils.finsight.feature.support.form.SupportIssueDraft
 import com.neoutils.finsight.feature.support.repository.ISupportRepository
 import com.neoutils.finsight.feature.support.usecase.CreateSupportIssueUseCase
 import kotlinx.coroutines.flow.MutableStateFlow

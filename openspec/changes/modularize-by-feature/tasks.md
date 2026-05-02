@@ -273,7 +273,7 @@
 - [x] 18.18 `:feature:support:impl` → `com.neoutils.finsight.feature.support.*`
 - [x] 18.19 `:feature:dashboard:api/impl` → `com.neoutils.finsight.feature.dashboard.*`
 - [x] 18.20 `:feature:home:api/impl` → `com.neoutils.finsight.feature.home.*`
-- [ ] 18.21 `:app` → `com.neoutils.finsight.app.*`; atualizar `namespace` em `app/build.gradle.kts` (sem alterar `applicationId`)
+- [x] 18.21 `:app` → `com.neoutils.finsight.app.*`; atualizar `namespace` em `app/build.gradle.kts` (sem alterar `applicationId`)
 - [ ] 18.22 Apagar diretórios vazios deixados pelos `git mv` (ex.: `…/com/neoutils/finsight/extension/`, `…/util/`, `…/domain/`, `…/database/`, `…/ui/`). `find core feature app -type d -empty -delete` resolve a maioria; revisar manualmente o que sobrar.
 - [ ] 18.23 Rodar `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64 allTests`
 

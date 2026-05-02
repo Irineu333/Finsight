@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.root
+package com.neoutils.finsight.app.screen.root
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable

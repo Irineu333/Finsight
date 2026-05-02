@@ -1,8 +1,7 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.app
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
+import androidx.compose.ui.window.ComposeUIViewController
 import com.neoutils.finsight.core.database.di.databaseModule
 import com.neoutils.finsight.feature.accounts.di.accountsModule
 import com.neoutils.finsight.feature.categories.di.categoriesModule
@@ -21,37 +20,39 @@ import com.neoutils.finsight.core.ui.di.uiModule
 import com.neoutils.finsight.core.utils.util.di.utilsModule
 import com.neoutils.finsight.core.ui.extension.LocalPlatformContext
 import com.neoutils.finsight.core.ui.extension.PlatformContext
-import com.neoutils.finsight.ui.screen.root.App
+import com.neoutils.finsight.app.screen.root.App
 import org.koin.core.context.startKoin
+import platform.UIKit.UIViewController
 
-fun main() = application {
-    startKoin {
-        modules(
-            databaseModule,
-            utilsModule,
-            uiModule,
-            supportModule,
-            accountsModule,
-            categoriesModule,
-            creditCardsModule,
-            transactionsModule,
-            recurringModule,
-            installmentsModule,
-            budgetsModule,
-            dashboardModule,
-            reportModule,
-            analyticsModule,
-            crashlyticsModule,
-            authModule,
-        )
-    }
-
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "Finsight",
+fun MainViewController(): UIViewController {
+    lateinit var vc: UIViewController
+    vc = ComposeUIViewController(
+        configure = {
+            startKoin {
+                modules(
+                    databaseModule,
+                    utilsModule,
+                    uiModule,
+                    supportModule,
+                    accountsModule,
+                    categoriesModule,
+                    creditCardsModule,
+                    transactionsModule,
+                    recurringModule,
+                    installmentsModule,
+                    budgetsModule,
+                    dashboardModule,
+                    reportModule,
+                    analyticsModule,
+                    crashlyticsModule,
+                    authModule,
+                )
+            }
+        }
     ) {
-        CompositionLocalProvider(LocalPlatformContext provides PlatformContext(this)) {
+        CompositionLocalProvider(LocalPlatformContext provides PlatformContext(vc)) {
             App()
         }
     }
+    return vc
 }

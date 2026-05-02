@@ -1,4 +1,4 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.app
 
 import android.app.Application
 import com.neoutils.finsight.core.database.di.databaseModule

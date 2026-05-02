@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
 
-internal class AppNavigationDispatcher(
+class AppNavigationDispatcher(
     private val navController: NavHostController,
 ) : NavigationDispatcher {
     override fun dispatch(destination: NavigationDestination) {
@@ -51,7 +51,7 @@ internal class AppNavigationDispatcher(
 }
 
 @Composable
-internal fun rememberAppNavigationDispatcher(
+fun rememberAppNavigationDispatcher(
     navController: NavHostController,
 ): NavigationDispatcher = remember(navController) {
     AppNavigationDispatcher(navController)

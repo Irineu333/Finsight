@@ -180,6 +180,38 @@ O consumidor (`home:impl`) injeta a `XxxEntry` via Koin e chama `register` dentr
 
 **Alternativa rejeitada:** Mover `AppNavHost` para `home:impl` e exigir entry point em todas as features. Aumentaria boilerplate sem benefício — `:app` é o único lugar onde "depender de tudo" é aceitável e natural.
 
+### D12: Pacote reflete o módulo (convenção híbrida feature + camadas)
+
+**Decisão:** O pacote raiz de cada módulo Kotlin reflete seu caminho Gradle. Subpacotes organizam por papel (camada). `api` e `impl` da mesma feature compartilham o pacote raiz, separando apenas por subpacote.
+
+**Mapeamento:**
+
+| Módulo Gradle | Pacote raiz | Subpacotes típicos |
+|---------------|-------------|--------------------|
+| `:core:utils` | `com.neoutils.finsight.core.utils` | `extension`, `util`, `util.di` |
+| `:core:platform` | `com.neoutils.finsight.core.platform` | — |
+| `:core:analytics` | `com.neoutils.finsight.core.analytics` | `analytics`, `crashlytics`, `event`, `di` |
+| `:core:auth` | `com.neoutils.finsight.core.auth` | `service`, `di` |
+| `:core:domain` | `com.neoutils.finsight.core.domain` | `model` |
+| `:core:database` | `com.neoutils.finsight.core.database` | `entity`, `dao`, `di` |
+| `:core:ui` | `com.neoutils.finsight.core.ui` | `theme`, `component`, `modal`, `extension`, `util`, `di` |
+| `:core:sharedui` | `com.neoutils.finsight.core.sharedui` | `component`, `model` |
+| `:feature:<x>:api` | `com.neoutils.finsight.feature.<x>` | `model`, `repository`, `usecase`, `error`, `exception`, `nav`, `entry` |
+| `:feature:<x>:impl` | `com.neoutils.finsight.feature.<x>` | `screen`, `modal`, `mapper`, `di`, `event`, `usecase`, `repository` |
+| `:app` | `com.neoutils.finsight.app` | — |
+
+**Por que api/impl compartilham raiz:** D10 já é garantida pelo Gradle (api ↮ api). Duplicar `.api` / `.impl` no nome do pacote seria ruído sem ganho — a fronteira já existe no nível de módulo. Subpacotes diferentes (api: `model`/`repository`/`usecase`; impl: `screen`/`modal`/`mapper`) evitam colisão e tornam o papel de cada arquivo legível pelo path.
+
+**Por que não `<feature>.api` / `<feature>.impl`:** Forçaria `Account` a viver em `feature.accounts.api.model.Account` e o `AccountRepository` (impl) em `feature.accounts.impl.repository.AccountRepository` — verboso e redundante com a estrutura de diretórios Gradle.
+
+**`:app` (`namespace` Android):** O `applicationId` permanece `com.neoutils.finsight` (ID público da Play Store). Apenas o `namespace` do módulo Android e os pacotes Kotlin migram para `com.neoutils.finsight.app`. A referência `<application android:name=".AndroidApp">` resolve relativa ao namespace, então segue intacta.
+
+**iOS:** Pacotes Kotlin não afetam nomes Obj-C do framework — esses derivam de file name + class name. Swift continua importando `ComposeApp` e usando `MainViewControllerKt.MainViewController()` sem mudança.
+
+**Rationale:** O caminho do arquivo passa a ser previsível a partir do nome do módulo. `git grep "package com.neoutils.finsight.feature.accounts"` lista exclusivamente arquivos da feature `accounts`. Antes da convenção, o mesmo grep retornava arquivos espalhados em qualquer módulo que usasse `domain.repository`/`ui.modal`/etc.
+
+---
+
 ## Risks / Trade-offs
 
 **[Build complexity]** → 25+ módulos aumentam o tempo de configuração do Gradle e a complexidade do `settings.gradle.kts`. Mitigação: convention plugins reduzem a superfície de erro. O ganho em build incremental compensa após a migração.

@@ -231,24 +231,69 @@
 - [x] 17.8 Run `./gradlew check` — `:app:assembleDebug`, `compileKotlinJvm`, `compileKotlinIosArm64` passam. Falha pré-existente em `:app:generateDebugAndroidTestLintModel` (Firebase BOM não resolve versões para `androidTestCompileClasspath`), não relacionado ao rename.
 - [x] 17.9 Build and run on Android, iOS, and Desktop; verify golden paths — Android e iOS validados manualmente pelo dev (apps rodando após o rename). Desktop verificado via `:app:compileKotlinJvm` OK.
 
-## 18. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
+## 18. Padronizar pacotes para refletirem o módulo
+
+> **Contexto:** O estado atual mistura todos os módulos no mesmo prefixo (`com.neoutils.finsight.{domain,ui,database,...}`), independente do `:core:*` ou `:feature:X` em que o arquivo vive. Isso esconde fronteiras de módulo e dificulta navegação.
+>
+> **Convenção (D12 — ver design.md):** O pacote raiz de cada módulo reflete seu caminho Gradle. Subpacotes organizam por camada:
+> - `:core:<x>` → `com.neoutils.finsight.core.<x>.*` (subpacotes: `model`, `repository`, `di`, `theme`, `component`, `entity`, `dao`, ...)
+> - `:feature:<x>:api` → `com.neoutils.finsight.feature.<x>.{model,repository,usecase,error,exception,nav,...}`
+> - `:feature:<x>:impl` → `com.neoutils.finsight.feature.<x>.{screen,modal,mapper,di,event,usecase,...}`
+> - `:app` → `com.neoutils.finsight.app.*`
+>
+> `api` e `impl` da mesma feature compartilham o pacote raiz, mas separam por subpacote (api fica com camadas de contrato; impl fica com camadas de implementação/UI). Isso preserva D10 (Gradle ainda valida `api ↮ api`) e elimina a redundância de duplicar `.api`/`.impl` no nome do pacote.
+>
+> **Estratégia por módulo:**
+> 1. mover `.kt` para o novo diretório
+> 2. atualizar `package` declaration
+> 3. atualizar `import`s em todos os consumidores
+> 4. compilar (`:<module>:compileKotlinMetadata` ou módulo dependente)
+>
+> **Notas:**
+> - `applicationId` do `:app` permanece `com.neoutils.finsight` (ID público da Play Store / App Store). Apenas `namespace` e os pacotes Kotlin mudam para `com.neoutils.finsight.app`.
+> - iOS framework continua `baseName = "ComposeApp"`; nomes Obj-C derivam de file name + class name, não do pacote — Swift segue intacto.
+
+- [x] 18.1 Adicionar **D12** em `design.md` documentando a convenção de pacote por módulo
+- [ ] 18.2 `:core:utils` → `com.neoutils.finsight.core.utils.*` (subpkgs: `extension`, `util`, `util.di`)
+- [ ] 18.3 `:core:platform` → `com.neoutils.finsight.core.platform.*`
+- [ ] 18.4 `:core:analytics` → `com.neoutils.finsight.core.analytics.*` (subpkgs: `analytics`, `crashlytics`, `event`, `di`)
+- [ ] 18.5 `:core:auth` → `com.neoutils.finsight.core.auth.*` (subpkgs: `service`, `di`)
+- [ ] 18.6 `:core:domain` → `com.neoutils.finsight.core.domain.*` (subpkg: `model`)
+- [ ] 18.7 `:core:database` → `com.neoutils.finsight.core.database.*` (subpkgs: `entity`, `dao`, `di`)
+- [ ] 18.8 `:core:ui` → `com.neoutils.finsight.core.ui.*` (subpkgs: `theme`, `component`, `modal`, `extension`, `util`, `di`)
+- [ ] 18.9 `:core:sharedui` → `com.neoutils.finsight.core.sharedui.*` (subpkgs: `component`, `model`)
+- [ ] 18.10 `:feature:accounts:api/impl` → `com.neoutils.finsight.feature.accounts.*`
+- [ ] 18.11 `:feature:categories:api/impl` → `com.neoutils.finsight.feature.categories.*`
+- [ ] 18.12 `:feature:creditCards:api/impl` → `com.neoutils.finsight.feature.creditCards.*`
+- [ ] 18.13 `:feature:transactions:api/impl` → `com.neoutils.finsight.feature.transactions.*`
+- [ ] 18.14 `:feature:recurring:api/impl` → `com.neoutils.finsight.feature.recurring.*`
+- [ ] 18.15 `:feature:installments:api/impl` → `com.neoutils.finsight.feature.installments.*`
+- [ ] 18.16 `:feature:budgets:api/impl` → `com.neoutils.finsight.feature.budgets.*`
+- [ ] 18.17 `:feature:report:api/impl` → `com.neoutils.finsight.feature.report.*`
+- [ ] 18.18 `:feature:support:impl` → `com.neoutils.finsight.feature.support.*`
+- [ ] 18.19 `:feature:dashboard:api` → `com.neoutils.finsight.feature.dashboard.*`
+- [ ] 18.20 `:feature:home:api/impl` → `com.neoutils.finsight.feature.home.*`
+- [ ] 18.21 `:app` → `com.neoutils.finsight.app.*`; atualizar `namespace` em `app/build.gradle.kts` (sem alterar `applicationId`)
+- [ ] 18.22 Rodar `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64 allTests`
+
+## 19. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
 
 > **Contexto:** `Transaction` e `Operation` atualmente carregam objetos completos (`Account?`, `Category?`, `CreditCard?`, `Invoice?`) em vez de IDs. Isso forçou a criação de `:core:domain` como módulo de tipos compartilhados. O verdadeiro isolamento por feature só é atingido quando cada feature define seus próprios tipos sem compartilhamento.
 >
 > **Objetivo:** Eliminar `:core:domain` e tornar cada `feature:X:api` completamente autônomo.
 
-- [ ] 18.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
-- [ ] 18.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
-- [ ] 18.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
-- [ ] 18.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
-- [ ] 18.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
-- [ ] 18.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
+- [ ] 19.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
+- [ ] 19.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
+- [ ] 19.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
+- [ ] 19.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
+- [ ] 19.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
+- [ ] 19.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
 
-## 19. Documentation
+## 20. Documentation
 
-- [ ] 19.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
-- [ ] 19.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
-- [ ] 19.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
-- [ ] 19.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
-- [ ] 19.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
-- [ ] 19.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`
+- [ ] 20.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
+- [ ] 20.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
+- [ ] 20.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
+- [ ] 20.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
+- [ ] 20.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
+- [ ] 20.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`

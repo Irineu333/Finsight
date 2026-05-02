@@ -15,7 +15,7 @@ import com.neoutils.finsight.feature.accounts.usecase.TransferBetweenAccountsUse
 import com.neoutils.finsight.feature.accounts.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.feature.accounts.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
-import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntryImpl
+import com.neoutils.finsight.feature.accounts.entryPoint.AccountFormModalEntryImpl
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.feature.accounts.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.feature.accounts.modal.editAccountBalance.EditAccountBalanceViewModel

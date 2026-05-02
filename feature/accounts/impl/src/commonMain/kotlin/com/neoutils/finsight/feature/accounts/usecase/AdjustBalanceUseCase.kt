@@ -13,6 +13,7 @@ import com.neoutils.finsight.feature.transactions.repository.ITransactionReposit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
+
 class AdjustBalanceUseCase(
     private val repository: ITransactionRepository,
     private val operationRepository: IOperationRepository,

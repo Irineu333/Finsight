@@ -1,6 +1,7 @@
 package com.neoutils.finsight.feature.accounts.modal.accountForm
 
 import com.neoutils.finsight.core.ui.util.AppIcon
+
 sealed class AccountFormAction {
 
     data class NameChanged(

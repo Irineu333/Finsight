@@ -8,7 +8,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.accounts.error.TransferError
-import com.neoutils.finsight.feature.accounts.error.TransferException
+import com.neoutils.finsight.feature.accounts.exception.TransferException
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository

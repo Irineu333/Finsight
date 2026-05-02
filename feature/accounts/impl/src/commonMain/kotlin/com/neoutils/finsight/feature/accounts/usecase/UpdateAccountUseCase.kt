@@ -8,6 +8,7 @@ import com.neoutils.finsight.feature.accounts.error.AccountError
 import com.neoutils.finsight.feature.accounts.exception.AccountException
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+
 class UpdateAccountUseCase(
     private val repository: IAccountRepository,
     private val validateAccountName: ValidateAccountNameUseCase,

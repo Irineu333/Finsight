@@ -6,6 +6,7 @@ import com.neoutils.finsight.feature.accounts.resources.account_error_already_ex
 import com.neoutils.finsight.feature.accounts.resources.account_error_empty_name
 import com.neoutils.finsight.feature.accounts.resources.account_error_not_found
 import com.neoutils.finsight.core.ui.util.UiText
+
 fun AccountError.toUiText() = when (this) {
     AccountError.EMPTY_NAME -> UiText.Res(Res.string.account_error_empty_name)
     AccountError.ALREADY_EXIST -> UiText.Res(Res.string.account_error_already_exist)

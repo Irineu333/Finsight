@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.feature.accounts.error.AccountError
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+
 class ValidateAccountNameUseCase(
     private val repository: IAccountRepository
 ) {

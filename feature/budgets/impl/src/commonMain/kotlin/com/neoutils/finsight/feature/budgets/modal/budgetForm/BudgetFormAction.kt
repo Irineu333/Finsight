@@ -4,6 +4,7 @@ import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.budgets.model.LimitType
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.ui.util.AppIcon
+
 sealed class BudgetFormAction {
     data class TitleChanged(val title: String) : BudgetFormAction()
     data class CategoryToggled(val category: Category) : BudgetFormAction()

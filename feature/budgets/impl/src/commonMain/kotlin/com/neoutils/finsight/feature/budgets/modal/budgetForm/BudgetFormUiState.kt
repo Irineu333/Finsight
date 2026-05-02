@@ -6,6 +6,7 @@ import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
+
 data class BudgetFormUiState(
     val availableCategories: List<Category> = emptyList(),
     val selectedCategories: List<Category> = emptyList(),

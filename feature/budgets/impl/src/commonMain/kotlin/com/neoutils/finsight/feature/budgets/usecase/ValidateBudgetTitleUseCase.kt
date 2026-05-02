@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.feature.budgets.error.BudgetError
 import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
+
 class ValidateBudgetTitleUseCase(
     private val repository: IBudgetRepository,
 ) {

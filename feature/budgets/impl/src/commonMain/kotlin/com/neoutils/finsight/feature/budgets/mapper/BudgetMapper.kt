@@ -4,6 +4,7 @@ import com.neoutils.finsight.core.database.entity.BudgetEntity
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.budgets.model.LimitType
+
 class BudgetMapper {
     fun toDomain(entity: BudgetEntity, categories: List<Category>): Budget {
         return Budget(

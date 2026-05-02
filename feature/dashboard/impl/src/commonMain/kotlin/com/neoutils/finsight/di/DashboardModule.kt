@@ -13,6 +13,7 @@ import com.neoutils.finsight.ui.screen.dashboard.DashboardEntry
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.screen.dashboard.entry.DashboardEntryImpl
+import com.russhwolf.settings.Settings
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.ExperimentalTime
@@ -20,6 +21,8 @@ import kotlin.time.ExperimentalTime
 val dashboardModule = module {
 
     single<DashboardEntry> { DashboardEntryImpl() }
+
+    single<Settings> { Settings() }
 
     single<IDashboardPreferencesRepository> {
         DashboardPreferencesRepository(

@@ -16,7 +16,6 @@ import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.dashboardModule
 import com.neoutils.finsight.di.reportModule
-import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.ui.di.uiModule
 import com.neoutils.finsight.util.di.utilsModule
@@ -40,7 +39,6 @@ fun main() = application {
             installmentsModule,
             budgetsModule,
             dashboardModule,
-            repositoryModule,
             reportModule,
             analyticsModule,
             crashlyticsModule,

@@ -13,7 +13,7 @@ import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
-import com.neoutils.finsight.domain.usecase.IEnsureDefaultAccountUseCase
+import com.neoutils.finsight.feature.accounts.usecase.IEnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.core.utils.extension.combine
 import kotlinx.coroutines.flow.*
@@ -24,6 +24,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 
 class DashboardViewModel(
     private val operationRepository: IOperationRepository,

@@ -9,7 +9,7 @@ import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase

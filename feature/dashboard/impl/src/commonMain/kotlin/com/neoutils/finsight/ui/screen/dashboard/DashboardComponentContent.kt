@@ -61,7 +61,7 @@ import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.core.sharedui.component.OperationCard
-import com.neoutils.finsight.ui.modal.accountForm.AccountFormModalEntry
+import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.ui.modal.creditCardOps.AdvancePaymentModalEntry
 import com.neoutils.finsight.ui.modal.creditCardOps.CloseInvoiceModalEntry
 import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntry

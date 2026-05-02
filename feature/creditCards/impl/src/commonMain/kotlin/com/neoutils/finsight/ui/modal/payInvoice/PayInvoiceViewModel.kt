@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.payInvoice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PayInvoice

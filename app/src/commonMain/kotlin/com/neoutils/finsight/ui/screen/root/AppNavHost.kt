@@ -10,7 +10,7 @@ import androidx.navigation.toRoute
 import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.ui.component.*
-import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
+import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.ui.screen.budgets.BudgetsScreen
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen

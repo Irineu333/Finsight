@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.home.route
+package com.neoutils.finsight.app.route
 
 import kotlinx.serialization.Serializable
 

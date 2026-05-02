@@ -98,7 +98,7 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 **Decisão:**
 - `support` tem apenas `:impl` (nenhum outro módulo o consome).
 - `dashboard` tem `:api` mínimo expondo `DashboardEntry` (consumido por `home:impl`) — ver D11.
-- `home` tem `:api` mínimo expondo `AppRoute` e `HomeRoute` (consumidos por `:app` e por features que disparam navegação para rotas top-level).
+- `home` tem `:api` mínimo expondo `HomeRoute`, `HomeChrome*` e o `NavigationDispatcher` (consumido por features que disparam navegação para rotas top-level — ver D13). `AppRoute` vive em `:app` (D13).
 
 **Rationale:** Manter `:api` vazio é desperdício, mas onde existe consumo cross-module (D11) o `:api` é a única forma de respeitar D10 sem expor implementação.
 
@@ -209,6 +209,52 @@ O consumidor (`home:impl`) injeta a `XxxEntry` via Koin e chama `register` dentr
 **iOS:** Pacotes Kotlin não afetam nomes Obj-C do framework — esses derivam de file name + class name. Swift continua importando `ComposeApp` e usando `MainViewControllerKt.MainViewController()` sem mudança.
 
 **Rationale:** O caminho do arquivo passa a ser previsível a partir do nome do módulo. `git grep "package com.neoutils.finsight.feature.accounts"` lista exclusivamente arquivos da feature `accounts`. Antes da convenção, o mesmo grep retornava arquivos espalhados em qualquer módulo que usasse `domain.repository`/`ui.modal`/etc.
+
+### D13: `AppRoute` em `:app`; navegação cross-feature por eventos
+
+**Problema:** Originalmente `AppRoute` (sealed class das rotas top-level do `AppNavHost`) vivia em `:feature:home:api` porque `:feature:home:impl` precisava conhecê-lo para fazer `navController.navigate(AppRoute.X)` a partir de `AppNavigationDispatcher` (que recebia o `NavHostController` por injeção). Como `:app` depende de `:feature:home:impl`, mover `AppRoute` para `:app` criaria ciclo via `home:impl → app`.
+
+A consequência era ruim em duas dimensões:
+1. **Ownership invertido:** `AppRoute` é um contrato do shell (`:app`), não da feature `home`. Vivia no lugar errado por restrição estrutural.
+2. **Acoplamento ao framework de navegação:** `:feature:home:impl` (e qualquer impl que quisesse disparar navegação top-level) acabava precisando importar `androidx.navigation.NavHostController` para construir/usar o dispatcher.
+
+**Decisão:** O `NavigationDispatcher` vira **canal de eventos** desacoplado do `NavHostController`:
+
+```kotlin
+// :feature:home:api
+class NavigationDispatcher {
+    private val _events = Channel<NavigationDestination>(Channel.BUFFERED)
+    val events: Flow<NavigationDestination> = _events.receiveAsFlow()
+    fun dispatch(destination: NavigationDestination) { _events.trySend(destination) }
+}
+```
+
+`:app` cria o dispatcher, fornece via `LocalNavigationDispatcher`, e **consome** os eventos no próprio `AppNavHost` traduzindo `NavigationDestination → AppRoute`:
+
+```kotlin
+// :app
+val navigationDispatcher = rememberNavigationDispatcher()
+LaunchedEffect(navigationDispatcher, navController) {
+    navigationDispatcher.events.collect { dest ->
+        when (dest) {
+            NavigationDestination.Categories -> navController.navigate(AppRoute.Categories)
+            // ...
+        }
+    }
+}
+```
+
+**Efeitos:**
+- `AppRoute` migra para `:app` (`com.neoutils.finsight.app.route.AppRoute`) — consumido apenas por `AppNavHost`.
+- `AppNavigationDispatcher` (impl que recebia `NavHostController`) deixa de existir.
+- `:feature:home:impl` (e demais `:impl` consumidores) não conhecem mais `NavHostController` nem `AppRoute` — só emitem `NavigationDestination`.
+- `:feature:home:api` perde a dependência `androidx.navigation.compose` (não usa mais nada do pacote).
+
+**Por que `Channel.BUFFERED` + `receiveAsFlow()`** (e não `SharedFlow`): eventos de navegação devem ser consumidos exatamente uma vez. `SharedFlow` com replay/cache poderia re-disparar a navegação após uma recomposição/coleta tardia. `Channel` garante consumo único e drena na ordem.
+
+**Por que isso respeita D10/D11:** D11 continua sendo o padrão para *renderizar* telas cross-impl (entry points). D13 é especificamente sobre *disparar* navegação para rotas top-level do shell — a inversão acontece no consumidor (`:app`), não no produtor (`:impl`).
+
+**Alternativa rejeitada:** Interface `HomeNavigator` em `:feature:home:api` com um método por destino implementada em `:app`. Funcionaria mas adicionaria ~10 métodos de boilerplate sem ganho — `NavigationDestination` já é o sealed type estável que carrega o intent.
 
 ---
 

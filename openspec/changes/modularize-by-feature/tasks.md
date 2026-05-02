@@ -277,24 +277,36 @@
 - [x] 18.22 Apagar diretórios vazios deixados pelos `git mv`. `move_module.py` agora poda automaticamente cada módulo migrado; um `find core feature app -path "*/src/*" -type d -empty -delete` final confirma 0 sobras.
 - [x] 18.23 Rodar `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — passa. `:app:testDebugUnitTest`, `:app:jvmTest`, `:feature:report:impl:jvmTest`, `:feature:transactions:impl:jvmTest` passam. Falhas em `:core:database:testDebugUnitTest` (Migration tests) são pré-existentes — `UnsatisfiedLinkError: no sqliteJni` no JVM Android unit test, mesmo problema de ambiente registrado em §17.7.
 
-## 19. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
+## 19. Pós-modularização: navegação por eventos + `AppRoute` em `:app` (D13)
+
+> **Contexto:** Após §17/§18, `AppRoute` ainda residia em `:feature:home:api` por restrição estrutural (era usado por `AppNavigationDispatcher` em `:home:impl` que recebia `NavHostController`). Para alinhar ownership (`AppRoute` é contrato do shell `:app`) e desacoplar `:impl`s do framework de navegação, o `NavigationDispatcher` foi convertido em canal de eventos consumido pelo `AppNavHost`. Decisão registrada em **D13** (`design.md`).
+
+- [x] 19.1 Refatorar `:feature:home:api/.../component/NavigationDispatcher.kt`: substituir `interface NavigationDispatcher` por `class NavigationDispatcher` com `Channel<NavigationDestination>(Channel.BUFFERED)` + `events: Flow<NavigationDestination>` (`receiveAsFlow()`); adicionar `rememberNavigationDispatcher()`. Mantém `NavigationDestination`, `LocalNavigationDispatcher`, `NavigationDispatcherProvider` e a assinatura `dispatch(destination)` (zero impacto nos consumidores).
+- [x] 19.2 Deletar `:feature:home:impl/.../navigation/AppNavigationDispatcher.kt` (e diretório vazio resultante). `:feature:home:impl` deixa de conhecer `NavHostController` e `AppRoute`.
+- [x] 19.3 Mover `AppRoute.kt` de `:feature:home:api/.../route/AppRoute.kt` para `:app/.../app/route/AppRoute.kt`; atualizar `package` para `com.neoutils.finsight.app.route`.
+- [x] 19.4 Atualizar `:app/.../screen/root/AppNavHost.kt`: trocar `rememberAppNavigationDispatcher(navController)` por `rememberNavigationDispatcher()`; adicionar `LaunchedEffect` que coleta `dispatcher.events` e traduz `NavigationDestination → navController.navigate(AppRoute.X)`; ajustar import de `AppRoute` para `com.neoutils.finsight.app.route.AppRoute`.
+- [x] 19.5 Remover `api(libs.androidx.navigation.compose)` de `:feature:home:api/build.gradle.kts` (api não usa mais nada de `androidx.navigation`; `:feature:home:impl` continua recebendo a dep via `kmp-feature` plugin; `:app` já tem a sua própria).
+- [x] 19.6 Verificar build: `./gradlew :feature:home:api:compileKotlinMetadata :feature:home:impl:compileKotlinMetadata :app:compileKotlinJvm :app:assembleDebug :app:compileKotlinIosArm64` — todos passam.
+- [x] 19.7 Atualizar `design.md`: adicionar **D13** ("`AppRoute` em `:app`; navegação cross-feature por eventos") e ajustar D7 para refletir o novo conteúdo de `feature:home:api` (sai `AppRoute`, fica `NavigationDispatcher`).
+
+## 20. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
 
 > **Contexto:** `Transaction` e `Operation` atualmente carregam objetos completos (`Account?`, `Category?`, `CreditCard?`, `Invoice?`) em vez de IDs. Isso forçou a criação de `:core:domain` como módulo de tipos compartilhados. O verdadeiro isolamento por feature só é atingido quando cada feature define seus próprios tipos sem compartilhamento.
 >
 > **Objetivo:** Eliminar `:core:domain` e tornar cada `feature:X:api` completamente autônomo.
 
-- [ ] 19.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
-- [ ] 19.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
-- [ ] 19.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
-- [ ] 19.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
-- [ ] 19.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
-- [ ] 19.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
+- [ ] 20.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
+- [ ] 20.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
+- [ ] 20.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
+- [ ] 20.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
+- [ ] 20.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
+- [ ] 20.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
 
-## 20. Documentation
+## 21. Documentation
 
-- [ ] 20.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
-- [ ] 20.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
-- [ ] 20.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
-- [ ] 20.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
-- [ ] 20.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
-- [ ] 20.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`
+- [ ] 21.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
+- [ ] 21.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
+- [ ] 21.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
+- [ ] 21.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
+- [ ] 21.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
+- [ ] 21.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`

@@ -8,7 +8,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.feature.transactions.api)
-            api(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.serialization.json)
         }
     }

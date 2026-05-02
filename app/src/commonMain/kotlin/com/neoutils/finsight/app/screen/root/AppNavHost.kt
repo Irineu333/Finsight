@@ -2,15 +2,17 @@ package com.neoutils.finsight.app.screen.root
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.neoutils.finsight.app.route.AppRoute
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.feature.home.route.AppRoute
-import com.neoutils.finsight.feature.home.navigation.rememberAppNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 import com.neoutils.finsight.feature.home.component.NavigationDispatcherProvider
+import com.neoutils.finsight.feature.home.component.rememberNavigationDispatcher
 import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.feature.budgets.screen.BudgetsScreen
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
@@ -35,10 +37,52 @@ import kotlin.reflect.typeOf
 fun AppNavHost() = Surface {
 
     val navController = rememberNavController()
-    val navigationDispatcher = rememberAppNavigationDispatcher(navController)
+    val navigationDispatcher = rememberNavigationDispatcher()
+
+    LaunchedEffect(navigationDispatcher, navController) {
+        navigationDispatcher.events.collect { destination ->
+            when (destination) {
+                NavigationDestination.Categories -> {
+                    navController.navigate(AppRoute.Categories)
+                }
+
+                is NavigationDestination.InvoiceTransactions -> {
+                    navController.navigate(AppRoute.InvoiceTransactions(destination.creditCardId))
+                }
+
+                is NavigationDestination.CreditCards -> {
+                    navController.navigate(AppRoute.CreditCards(destination.creditCardId))
+                }
+
+                is NavigationDestination.Accounts -> {
+                    navController.navigate(AppRoute.Accounts(destination.accountId))
+                }
+
+                NavigationDestination.Installments -> {
+                    navController.navigate(AppRoute.Installments)
+                }
+
+                NavigationDestination.Budgets -> {
+                    navController.navigate(AppRoute.Budgets)
+                }
+
+                NavigationDestination.Recurring -> {
+                    navController.navigate(AppRoute.Recurring)
+                }
+
+                NavigationDestination.ReportConfig -> {
+                    navController.navigate(AppRoute.Reports)
+                }
+
+                NavigationDestination.Support -> {
+                    navController.navigate(AppRoute.Support)
+                }
+            }
+        }
+    }
 
     FormattingLocalsHost {
-        NavigationDispatcherProvider(dispatcher = navigationDispatcher) {
+        NavigationDispatcherProvider {
             ModalManagerHost {
                 SharedTransitionProvider {
                     NavHost(

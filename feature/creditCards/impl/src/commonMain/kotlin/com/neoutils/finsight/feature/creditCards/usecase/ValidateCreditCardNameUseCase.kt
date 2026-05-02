@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.feature.creditCards.error.CreditCardError
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+
 class ValidateCreditCardNameUseCase(
     private val repository: ICreditCardRepository
 ) {

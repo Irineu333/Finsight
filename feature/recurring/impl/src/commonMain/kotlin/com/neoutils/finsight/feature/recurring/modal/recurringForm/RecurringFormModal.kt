@@ -42,7 +42,7 @@ import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.sharedui.component.TargetSelector
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
-import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCardFormModalEntry
+import com.neoutils.finsight.feature.creditCards.modal.CreditCardFormModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.util.DayInputTransformation

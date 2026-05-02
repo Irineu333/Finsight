@@ -4,6 +4,7 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.creditCards.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.feature.creditCards.model.InvoiceUi
+
 class InvoiceUiMapper(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val calculateAvailableLimitUseCase: CalculateAvailableLimitUseCase,

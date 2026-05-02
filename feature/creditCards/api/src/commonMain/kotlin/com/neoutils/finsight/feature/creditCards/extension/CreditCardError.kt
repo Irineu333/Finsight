@@ -11,6 +11,7 @@ import com.neoutils.finsight.feature.creditCards.api.resources.credit_card_error
 import com.neoutils.finsight.feature.creditCards.api.resources.credit_card_error_negative_limit
 import com.neoutils.finsight.feature.creditCards.api.resources.credit_card_error_not_found
 import com.neoutils.finsight.core.ui.util.UiText
+
 fun CreditCardError.toUiText() = when (this) {
     CreditCardError.EMPTY_NAME -> UiText.Res(Res.string.credit_card_error_empty_name)
     CreditCardError.ALREADY_EXIST_NAME -> UiText.Res(Res.string.credit_card_error_already_exist_name)

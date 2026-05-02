@@ -7,7 +7,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.creditCards.error.InvoiceError
-import com.neoutils.finsight.feature.creditCards.error.InvoiceException
+import com.neoutils.finsight.feature.creditCards.exception.InvoiceException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository

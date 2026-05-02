@@ -41,5 +41,3 @@ sealed class InvoiceError(val message: String) {
     // Delete
     data object CannotDeleteInvoice : InvoiceError("Only future or retroactive invoices can be deleted")
 }
-
-class InvoiceException(val error: InvoiceError) : Exception(error.message)

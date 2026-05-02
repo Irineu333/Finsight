@@ -6,11 +6,10 @@ import arrow.core.Either
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.creditCards.error.InvoiceError
-import com.neoutils.finsight.feature.creditCards.error.InvoiceException
+import com.neoutils.finsight.feature.creditCards.exception.InvoiceException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
 import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
 

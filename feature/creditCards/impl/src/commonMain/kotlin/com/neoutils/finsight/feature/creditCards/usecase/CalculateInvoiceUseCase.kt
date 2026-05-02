@@ -3,6 +3,7 @@ package com.neoutils.finsight.feature.creditCards.usecase
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
+
 class CalculateInvoiceUseCase(
     private val repository: ITransactionRepository
 ) {

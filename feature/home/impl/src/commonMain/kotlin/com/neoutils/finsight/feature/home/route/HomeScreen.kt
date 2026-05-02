@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class, ExperimentalSharedTransitionApi::class)
 
-package com.neoutils.finsight.feature.home.screen
+package com.neoutils.finsight.feature.home.route
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.updateTransition

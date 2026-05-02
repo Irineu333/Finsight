@@ -10,15 +10,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.neoutils.finsight.app.route.AppRoute
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.feature.home.component.NavigationDestination
-import com.neoutils.finsight.feature.home.component.NavigationDispatcherProvider
-import com.neoutils.finsight.feature.home.component.rememberNavigationDispatcher
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDispatcherProvider
+import com.neoutils.finsight.feature.home.dispatcher.rememberNavigationDispatcher
 import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.feature.budgets.screen.BudgetsScreen
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.feature.categories.screen.CategoriesScreen
 import com.neoutils.finsight.feature.creditCards.screen.CreditCardsScreen
-import com.neoutils.finsight.feature.home.screen.HomeScreen
+import com.neoutils.finsight.feature.home.route.HomeScreen
 import com.neoutils.finsight.feature.installments.screen.InstallmentsScreen
 import com.neoutils.finsight.feature.transactions.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
@@ -82,7 +82,7 @@ fun AppNavHost() = Surface {
     }
 
     FormattingLocalsHost {
-        NavigationDispatcherProvider {
+        NavigationDispatcherProvider(navigationDispatcher) {
             ModalManagerHost {
                 SharedTransitionProvider {
                     NavHost(

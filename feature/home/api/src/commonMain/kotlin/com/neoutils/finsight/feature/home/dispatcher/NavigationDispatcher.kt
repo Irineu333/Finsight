@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.home.component
+package com.neoutils.finsight.feature.home.dispatcher
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -10,6 +10,20 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 val LocalNavigationDispatcher = compositionLocalOf<NavigationDispatcher> {
     error("No NavigationDispatcher provided")
+}
+
+@Composable
+fun rememberNavigationDispatcher(): NavigationDispatcher = remember { NavigationDispatcher() }
+
+@Composable
+fun NavigationDispatcherProvider(
+    dispatcher: NavigationDispatcher,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(
+        LocalNavigationDispatcher provides dispatcher,
+        content = content,
+    )
 }
 
 class NavigationDispatcher {
@@ -33,18 +47,4 @@ sealed interface NavigationDestination {
     data object Recurring : NavigationDestination
     data object ReportConfig : NavigationDestination
     data object Support : NavigationDestination
-}
-
-@Composable
-fun rememberNavigationDispatcher(): NavigationDispatcher = remember { NavigationDispatcher() }
-
-@Composable
-fun NavigationDispatcherProvider(
-    dispatcher: NavigationDispatcher = rememberNavigationDispatcher(),
-    content: @Composable () -> Unit,
-) {
-    CompositionLocalProvider(
-        LocalNavigationDispatcher provides dispatcher,
-        content = content,
-    )
 }

@@ -7,31 +7,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 
-data class HomeChromeConfig(
-    val isBottomBarVisible: Boolean = true,
-    val isFloatingActionButtonVisible: Boolean = true,
-) {
-    companion object {
-        val Default = HomeChromeConfig()
-        val ContentOnly = HomeChromeConfig(
-            isBottomBarVisible = false,
-            isFloatingActionButtonVisible = false,
-        )
-    }
-}
-
-interface HomeChromeController {
-    fun update(config: HomeChromeConfig)
-    fun reset()
-}
-
-private object NoOpHomeChromeController : HomeChromeController {
-    override fun update(config: HomeChromeConfig) = Unit
-    override fun reset() = Unit
-}
-
 val LocalHomeChromeController = staticCompositionLocalOf<HomeChromeController> {
-    NoOpHomeChromeController
+    object : HomeChromeController {
+        override fun update(config: HomeChromeConfig) = Unit
+        override fun reset() = Unit
+    }
 }
 
 @Composable
@@ -48,4 +28,23 @@ fun HomeChromeEffect(config: HomeChromeConfig) {
             controller.reset()
         }
     }
+}
+
+data class HomeChromeConfig(
+    val isBottomBarVisible: Boolean = true,
+    val isFloatingActionButtonVisible: Boolean = true,
+) {
+
+    companion object {
+        val Default = HomeChromeConfig()
+        val ContentOnly = HomeChromeConfig(
+            isBottomBarVisible = false,
+            isFloatingActionButtonVisible = false,
+        )
+    }
+}
+
+interface HomeChromeController {
+    fun update(config: HomeChromeConfig)
+    fun reset()
 }

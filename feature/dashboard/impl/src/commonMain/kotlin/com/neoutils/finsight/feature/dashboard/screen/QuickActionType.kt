@@ -9,9 +9,9 @@ import com.neoutils.finsight.feature.dashboard.resources.dashboard_installments
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_recurring
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_reports
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_support
-import com.neoutils.finsight.feature.home.component.NavigationDestination
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.core.ui.util.UiText
-import com.neoutils.finsight.feature.recurring.model.Recurring
+
 enum class QuickActionType(
     val title: UiText,
     val destination: NavigationDestination,

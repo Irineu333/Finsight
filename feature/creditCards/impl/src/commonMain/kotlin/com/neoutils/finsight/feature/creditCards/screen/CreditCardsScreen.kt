@@ -60,8 +60,8 @@ import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
-import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
-import com.neoutils.finsight.feature.home.component.NavigationDestination
+import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 @Composable
 fun CreditCardsScreen(
     initialCreditCardId: Long? = null,

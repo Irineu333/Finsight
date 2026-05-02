@@ -40,10 +40,10 @@ import com.neoutils.finsight.feature.recurring.resources.view_recurring_status_l
 import com.neoutils.finsight.feature.recurring.resources.view_recurring_stop
 import com.neoutils.finsight.feature.recurring.resources.view_recurring_type_label
 import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
-import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.feature.home.component.NavigationDestination
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.recurring.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.feature.recurring.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModal

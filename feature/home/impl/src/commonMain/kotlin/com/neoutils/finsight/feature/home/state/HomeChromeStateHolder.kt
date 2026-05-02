@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 class HomeChromeStateHolder : HomeChromeController {
-    var config by mutableStateOf(HomeChromeConfig.Default)
+    var config by mutableStateOf(HomeChromeConfig.Companion.Default)
         private set
 
     override fun update(config: HomeChromeConfig) {
@@ -15,7 +15,7 @@ class HomeChromeStateHolder : HomeChromeController {
     }
 
     override fun reset() {
-        config = HomeChromeConfig.Default
+        config = HomeChromeConfig.Companion.Default
     }
 }
 

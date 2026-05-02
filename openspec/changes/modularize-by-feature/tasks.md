@@ -219,14 +219,14 @@
 
 ## 17. :app (rename and wire-up)
 
-> **Escopo aplicado (lite):** rename + wire-up. 17.6 fica fora do escopo desta change (depende da wave-2 das features 8/10/11 e da seção 16.E). 17.2 mantido como está pois `kmp-compose` aplica `kmp-library` (`com.android.library`), incompatível com `com.android.application` do `:app`.
+> **Escopo aplicado:** rename + wire-up + drenagem completa. 17.2 mantido como está pois `kmp-compose` aplica `kmp-library` (`com.android.library`), incompatível com `com.android.application` do `:app`.
 
 - [x] 17.1 Rename `:composeApp` to `:app` in `settings.gradle.kts` and directory (também atualizado `iosApp/project.yml`, `iosApp/iosApp.xcodeproj/project.pbxproj`, `.gitignore`, `README.md`, `CLAUDE.md`). Framework iOS mantém `baseName = "ComposeApp"` para não quebrar `import ComposeApp` no Swift.
 - [x] 17.2 ~~Update `:app/build.gradle.kts` to use `kmp-compose`~~ — `kmp-compose` aplica `com.android.library`, incompatível com `com.android.application`. Build atual mantido; uma futura `kmp-application` convention pode reaproveitar o setup.
 - [x] 17.3 Ensure `:app` depends on all `:feature:X:impl` modules — verificado em `app/build.gradle.kts`.
 - [x] 17.4 Move `AppNavHost` to `:app` — já estava lá, mantido pelo rename.
 - [x] 17.5 Ensure `startKoin` in `:app` aggregates all Koin modules — já agregado em `AndroidApp.kt`, `MainViewController.kt`, `main.kt` (jvm).
-- [ ] 17.6 Remove any remaining domain/database/ui code from `:app` — pendente. Depende da wave-2 das features 8/10/11 (e.g. `AccountsScreen/ViewModel`, `TransferBetweenAccountsUseCase`, `CreditCardsScreen/ViewModel`, `CloseInvoiceUseCase`, etc.) e da seção 16.E (dashboard:impl). 153 arquivos `.kt` permanecem em `app/src/commonMain`.
+- [x] 17.6 Remove any remaining domain/database/ui code from `:app` — concluído. `:app/src/commonMain` saiu de 153 → 2 arquivos (`App.kt` + `AppNavHost.kt`). Wave-2 de §8/§10/§11 e §16.E inteira migradas para seus `:feature:X:impl`. Padrão entry-point estendido (D11) para form modais (Category/CreditCard/Account/RecurringForm), view modais (Operation/Adjustment/Category/Budget/Recurring/ConfirmRecurring) e modais de operação (CloseInvoice/PayInvoice/AdvancePayment/EditInvoiceBalance). Use cases compartilhados via `I*UseCase` (CalculateBalance/TransactionStats/BudgetProgress/GetPendingRecurring/AddInstallment). `:core:sharedui` (transitório, débito §18) hospeda 13 widgets cross-feature. `NavigationDispatcher`+`AppNavigationDispatcher` consolidados em `:feature:home:api/impl`. Tests também migrados para os respectivos `:feature:X:impl/commonTest`.
 - [x] 17.7 Run `./gradlew allTests` — `:app:testDebugUnitTest` e `:app:jvmTest` passam. Falhas em `:core:database:testDebugUnitTest` são pré-existentes (`UnsatisfiedLinkError: no sqliteJni` no JVM Android unit test, problema de ambiente, não relacionado ao rename).
 - [x] 17.8 Run `./gradlew check` — `:app:assembleDebug`, `compileKotlinJvm`, `compileKotlinIosArm64` passam. Falha pré-existente em `:app:generateDebugAndroidTestLintModel` (Firebase BOM não resolve versões para `androidTestCompileClasspath`), não relacionado ao rename.
 - [x] 17.9 Build and run on Android, iOS, and Desktop; verify golden paths — Android e iOS validados manualmente pelo dev (apps rodando após o rename). Desktop verificado via `:app:compileKotlinJvm` OK.

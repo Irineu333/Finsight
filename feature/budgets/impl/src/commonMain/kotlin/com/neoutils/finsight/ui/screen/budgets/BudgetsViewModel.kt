@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow

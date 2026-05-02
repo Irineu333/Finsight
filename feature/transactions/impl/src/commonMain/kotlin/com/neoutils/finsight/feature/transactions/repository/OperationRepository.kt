@@ -7,7 +7,7 @@ import com.neoutils.finsight.core.database.dao.OperationDao
 import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.core.database.entity.OperationEntity
 import com.neoutils.finsight.feature.transactions.mapper.OperationMapper
-import com.neoutils.finsight.database.mapper.IRecurringMapper
+import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
 import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
@@ -15,7 +15,7 @@ import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository

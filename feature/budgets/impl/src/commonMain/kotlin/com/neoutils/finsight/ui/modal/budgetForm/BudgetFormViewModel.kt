@@ -9,13 +9,13 @@ import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateBudget
 import com.neoutils.finsight.domain.analytics.event.EditBudget
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.moneyToDouble

@@ -24,7 +24,7 @@ kotlin {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.neoutils.finsight.feature.recurring.impl.resources"
+    packageOfResClass = "com.neoutils.finsight.feature.recurring.resources"
     generateResClass = auto
 }
 

@@ -19,7 +19,7 @@ import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.feature.transactions.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
-import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
+import com.neoutils.finsight.feature.recurring.screen.RecurringScreen
 import com.neoutils.finsight.domain.model.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
@@ -29,6 +29,7 @@ import com.neoutils.finsight.ui.screen.support.SupportIssueScreen
 import com.neoutils.finsight.ui.screen.support.SupportScreen
 import com.neoutils.finsight.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
+import com.neoutils.finsight.feature.recurring.model.Recurring
 
 @Composable
 fun AppNavHost() = Surface {

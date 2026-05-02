@@ -3,7 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

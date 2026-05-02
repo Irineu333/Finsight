@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.budgets.impl.resources.*
 import com.neoutils.finsight.core.ui.component.IconPickerSelector
@@ -32,7 +32,7 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.sharedui.component.MultiCategorySelector
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.core.ui.modal.iconPicker.IconPickerModal
-import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModalEntry
+import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModalEntry
 import com.neoutils.finsight.core.ui.util.FeatureIconCatalog
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation

@@ -11,6 +11,7 @@ import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.recurring.model.Recurring
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

@@ -32,7 +32,7 @@ import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModalEntry
 import org.koin.compose.koinInject
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income

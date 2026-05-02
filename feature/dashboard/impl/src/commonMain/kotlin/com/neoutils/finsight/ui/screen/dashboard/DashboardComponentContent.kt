@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.safeOnDay
@@ -64,7 +64,7 @@ import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.AdvancePaymentModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.CloseInvoiceModalEntry
-import com.neoutils.finsight.ui.modal.confirmRecurring.ConfirmRecurringModalEntry
+import com.neoutils.finsight.feature.recurring.modal.confirmRecurring.ConfirmRecurringModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.EditInvoiceBalanceModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.PayInvoiceModalEntry

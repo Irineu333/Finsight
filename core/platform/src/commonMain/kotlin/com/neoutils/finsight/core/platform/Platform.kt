@@ -1,4 +1,4 @@
-package com.neoutils.finsight
+package com.neoutils.finsight.core.platform
 
 enum class Platform {
     Android,

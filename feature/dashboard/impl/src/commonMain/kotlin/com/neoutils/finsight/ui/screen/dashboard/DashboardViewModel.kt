@@ -30,6 +30,7 @@ import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
 
 class DashboardViewModel(
     private val operationRepository: IOperationRepository,

@@ -68,7 +68,7 @@ import com.neoutils.finsight.feature.recurring.modal.confirmRecurring.ConfirmRec
 import com.neoutils.finsight.feature.creditCards.modal.creditCardForm.CreditCardFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.EditInvoiceBalanceModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.PayInvoiceModalEntry
-import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetModalEntry
+import com.neoutils.finsight.feature.budgets.modal.viewBudget.ViewBudgetModalEntry
 import com.neoutils.finsight.feature.transactions.modal.viewAdjustment.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
 import com.neoutils.finsight.feature.transactions.modal.viewTransaction.ViewOperationModalEntry

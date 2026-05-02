@@ -12,6 +12,8 @@ import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.budgets.model.Budget
+import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

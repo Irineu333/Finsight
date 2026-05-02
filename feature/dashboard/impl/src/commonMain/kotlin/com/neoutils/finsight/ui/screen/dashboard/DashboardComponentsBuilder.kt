@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
@@ -9,7 +9,7 @@ import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.ICalculateBudgetProgressUseCase
+import com.neoutils.finsight.feature.budgets.usecase.ICalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateTransactionStatsUseCase

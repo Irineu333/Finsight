@@ -8,6 +8,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.neoutils.finsight.feature.budgets.model.Budget
 
 class Migration2To3Test {
 

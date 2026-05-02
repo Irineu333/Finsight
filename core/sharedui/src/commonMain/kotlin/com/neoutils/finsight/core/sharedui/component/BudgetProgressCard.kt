@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.BudgetProgress
+import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.theme.budgetProgressColor
 import com.neoutils.finsight.core.ui.util.AppIcon

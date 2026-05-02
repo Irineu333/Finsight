@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
-import com.neoutils.finsight.domain.model.BudgetProgress
+import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.recurring.model.Recurring

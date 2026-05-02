@@ -2,6 +2,7 @@ package com.neoutils.finsight.feature.categories.modal.categoryForm
 
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.ui.util.AppIcon
+
 sealed class CategoryFormAction {
 
     data class NameChanged(

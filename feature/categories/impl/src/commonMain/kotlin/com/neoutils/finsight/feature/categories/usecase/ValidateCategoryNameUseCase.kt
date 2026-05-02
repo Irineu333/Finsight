@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.feature.categories.error.CategoryError
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+
 class ValidateCategoryNameUseCase(
     private val repository: ICategoryRepository
 ) {

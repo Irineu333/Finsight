@@ -6,9 +6,9 @@ import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.categories.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.feature.categories.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
-import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntryImpl
+import com.neoutils.finsight.feature.categories.entryPoint.CategoryFormModalEntryImpl
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
-import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntryImpl
+import com.neoutils.finsight.feature.categories.entryPoint.ViewCategoryModalEntryImpl
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.feature.categories.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryViewModel

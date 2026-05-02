@@ -8,14 +8,15 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.core.sharedui.component.*
-import com.neoutils.finsight.ui.component.*
+import com.neoutils.finsight.feature.home.route.AppRoute
+import com.neoutils.finsight.feature.home.navigation.rememberAppNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.NavigationDispatcherProvider
 import com.neoutils.finsight.feature.accounts.screen.AccountsScreen
 import com.neoutils.finsight.feature.budgets.screen.BudgetsScreen
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.feature.categories.screen.CategoriesScreen
 import com.neoutils.finsight.feature.creditCards.screen.CreditCardsScreen
-import com.neoutils.finsight.ui.screen.home.HomeScreen
+import com.neoutils.finsight.feature.home.screen.HomeScreen
 import com.neoutils.finsight.feature.installments.screen.InstallmentsScreen
 import com.neoutils.finsight.feature.transactions.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
@@ -29,7 +30,6 @@ import com.neoutils.finsight.feature.support.screen.SupportIssueScreen
 import com.neoutils.finsight.feature.support.screen.SupportScreen
 import com.neoutils.finsight.feature.report.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
-import com.neoutils.finsight.feature.recurring.model.Recurring
 
 @Composable
 fun AppNavHost() = Surface {

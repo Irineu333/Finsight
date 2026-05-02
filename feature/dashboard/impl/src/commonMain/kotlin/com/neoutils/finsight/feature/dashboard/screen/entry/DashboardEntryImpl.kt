@@ -6,8 +6,7 @@ import androidx.navigation.compose.composable
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.dashboard.screen.DashboardEntry
 import com.neoutils.finsight.feature.dashboard.screen.DashboardScreen
-import com.neoutils.finsight.ui.screen.home.HomeRoute
-
+import com.neoutils.finsight.feature.home.screen.HomeRoute
 class DashboardEntryImpl : DashboardEntry() {
 
     override fun NavGraphBuilder.register(

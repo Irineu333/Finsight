@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class, ExperimentalSharedTransitionApi::class)
 
-package com.neoutils.finsight.ui.screen.home
+package com.neoutils.finsight.feature.home.screen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.updateTransition
@@ -19,9 +19,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.ui.component.BottomNavigationBar
-import com.neoutils.finsight.ui.component.NavigationItem
+import com.neoutils.finsight.feature.home.component.BottomNavigationBar
+import com.neoutils.finsight.feature.home.component.NavigationItem
 import com.neoutils.finsight.feature.dashboard.screen.DashboardEntry
+import com.neoutils.finsight.feature.home.state.HomeChromeConfig
+import com.neoutils.finsight.feature.home.state.LocalHomeChromeController
+import com.neoutils.finsight.feature.home.state.rememberHomeChromeStateHolder
 import com.neoutils.finsight.feature.transactions.screen.TransactionsEntry
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.koin.compose.koinInject

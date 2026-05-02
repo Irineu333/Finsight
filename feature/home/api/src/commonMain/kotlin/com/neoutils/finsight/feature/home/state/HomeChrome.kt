@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.home
+package com.neoutils.finsight.feature.home.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

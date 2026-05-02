@@ -9,7 +9,7 @@ import com.neoutils.finsight.feature.dashboard.resources.dashboard_installments
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_recurring
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_reports
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_support
-import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.feature.recurring.model.Recurring
 enum class QuickActionType(

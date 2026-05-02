@@ -40,7 +40,6 @@ import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.core.sharedui.component.*
-import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 import com.neoutils.finsight.feature.creditCards.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.feature.creditCards.modal.closeInvoice.CloseInvoiceModal
@@ -61,6 +60,8 @@ import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
+import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 @Composable
 fun CreditCardsScreen(
     initialCreditCardId: Long? = null,

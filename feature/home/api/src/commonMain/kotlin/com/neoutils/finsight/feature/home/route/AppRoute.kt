@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.root
+package com.neoutils.finsight.feature.home.route
 
 import kotlinx.serialization.Serializable
 

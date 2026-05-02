@@ -28,10 +28,10 @@ import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.transactions.resources.*
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.core.ui.theme.Adjustment
 import com.neoutils.finsight.core.utils.util.dayMonthYear

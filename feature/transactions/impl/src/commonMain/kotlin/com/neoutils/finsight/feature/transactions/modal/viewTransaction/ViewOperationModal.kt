@@ -35,9 +35,9 @@ import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adju
 import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.core.sharedui.model.OperationUi

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.component
+package com.neoutils.finsight.feature.home.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

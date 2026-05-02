@@ -5,7 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.ui.screen.home.HomeRoute
+import com.neoutils.finsight.feature.home.screen.HomeRoute
 import com.neoutils.finsight.feature.transactions.screen.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.screen.TransactionsScreen
 import com.neoutils.finsight.feature.transactions.util.TransactionTargetNavType

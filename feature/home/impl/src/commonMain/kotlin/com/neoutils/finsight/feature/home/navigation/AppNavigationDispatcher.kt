@@ -1,10 +1,11 @@
-package com.neoutils.finsight.ui.screen.root
+package com.neoutils.finsight.feature.home.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
-import com.neoutils.finsight.ui.component.NavigationDestination
-import com.neoutils.finsight.ui.component.NavigationDispatcher
+import com.neoutils.finsight.feature.home.component.NavigationDestination
+import com.neoutils.finsight.feature.home.component.NavigationDispatcher
+import com.neoutils.finsight.feature.home.route.AppRoute
 
 class AppNavigationDispatcher(
     private val navController: NavHostController,

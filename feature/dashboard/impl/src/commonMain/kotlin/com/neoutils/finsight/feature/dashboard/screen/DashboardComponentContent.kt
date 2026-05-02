@@ -58,8 +58,8 @@ import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
 import com.neoutils.finsight.core.sharedui.component.CreditCardCard
 import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
 import com.neoutils.finsight.core.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
-import com.neoutils.finsight.ui.component.NavigationDestination
+import com.neoutils.finsight.feature.home.component.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.component.NavigationDestination
 import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.creditCardOps.AdvancePaymentModalEntry

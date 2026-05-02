@@ -4,7 +4,7 @@ import com.neoutils.finsight.core.database.entity.OperationEntity
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.feature.installments.model.Installment
 import com.neoutils.finsight.feature.transactions.model.OperationInstallment
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation

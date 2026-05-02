@@ -12,7 +12,7 @@ import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.feature.installments.model.Installment
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.recurring.model.Recurring
@@ -21,7 +21,7 @@ import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IInstallmentRepository
+import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -12,11 +12,10 @@ import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.domain.analytics.event.CreateInstallments
+import com.neoutils.finsight.feature.installments.event.CreateInstallments
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.transactions.event.CreateTransaction
-import com.neoutils.finsight.domain.repository.*
-import com.neoutils.finsight.domain.usecase.IAddInstallmentUseCase
+import com.neoutils.finsight.feature.installments.usecase.IAddInstallmentUseCase
 import com.neoutils.finsight.feature.transactions.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.ui.component.ModalManager

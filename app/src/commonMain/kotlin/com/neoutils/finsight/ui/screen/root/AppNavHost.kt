@@ -16,7 +16,7 @@ import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryM
 import com.neoutils.finsight.feature.categories.screen.CategoriesScreen
 import com.neoutils.finsight.feature.creditCards.screen.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.home.HomeScreen
-import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
+import com.neoutils.finsight.feature.installments.screen.InstallmentsScreen
 import com.neoutils.finsight.feature.transactions.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions.InvoiceTransactionsScreen
 import com.neoutils.finsight.feature.recurring.screen.RecurringScreen

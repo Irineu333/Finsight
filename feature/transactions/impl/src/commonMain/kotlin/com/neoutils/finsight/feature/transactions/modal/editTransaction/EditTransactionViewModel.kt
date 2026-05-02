@@ -15,7 +15,6 @@ import com.neoutils.finsight.feature.transactions.model.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.transactions.event.EditTransaction
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.repository.*
 import com.neoutils.finsight.feature.transactions.usecase.IBuildTransactionUseCase
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.ui.component.ModalManager

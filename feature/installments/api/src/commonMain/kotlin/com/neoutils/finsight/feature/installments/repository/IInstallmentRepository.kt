@@ -1,0 +1,16 @@
+package com.neoutils.finsight.feature.installments.repository
+
+import com.neoutils.finsight.feature.installments.model.Installment
+import kotlinx.coroutines.flow.Flow
+
+interface IInstallmentRepository {
+    fun observeAllInstallments(): Flow<List<Installment>>
+    suspend fun getAllInstallments(): List<Installment>
+    suspend fun getInstallmentById(id: Long): Installment?
+    suspend fun createInstallment(
+        count: Int,
+        totalAmount: Double,
+    ): Long
+    suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double)
+    suspend fun deleteInstallmentById(id: Long)
+}

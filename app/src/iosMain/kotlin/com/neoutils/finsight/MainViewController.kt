@@ -8,7 +8,7 @@ import com.neoutils.finsight.feature.categories.di.categoriesModule
 import com.neoutils.finsight.feature.creditCards.di.creditCardsModule
 import com.neoutils.finsight.feature.transactions.di.transactionsModule
 import com.neoutils.finsight.feature.recurring.di.recurringModule
-import com.neoutils.finsight.di.installmentsModule
+import com.neoutils.finsight.feature.installments.di.installmentsModule
 import com.neoutils.finsight.di.budgetsModule
 import com.neoutils.finsight.core.analytics.di.analyticsModule
 import com.neoutils.finsight.core.auth.di.authModule

@@ -270,7 +270,7 @@
 - [x] 18.15 `:feature:installments:api/impl` → `com.neoutils.finsight.feature.installments.*`
 - [x] 18.16 `:feature:budgets:api/impl` → `com.neoutils.finsight.feature.budgets.*`
 - [x] 18.17 `:feature:report:api/impl` → `com.neoutils.finsight.feature.report.*`
-- [ ] 18.18 `:feature:support:impl` → `com.neoutils.finsight.feature.support.*`
+- [x] 18.18 `:feature:support:impl` → `com.neoutils.finsight.feature.support.*`
 - [ ] 18.19 `:feature:dashboard:api` → `com.neoutils.finsight.feature.dashboard.*`
 - [ ] 18.20 `:feature:home:api/impl` → `com.neoutils.finsight.feature.home.*`
 - [ ] 18.21 `:app` → `com.neoutils.finsight.app.*`; atualizar `namespace` em `app/build.gradle.kts` (sem alterar `applicationId`)

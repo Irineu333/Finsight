@@ -22,7 +22,7 @@ kotlin {
 
 compose.resources {
     publicResClass = false
-    packageOfResClass = "com.neoutils.finsight.feature.support.impl.resources"
+    packageOfResClass = "com.neoutils.finsight.feature.support.resources"
     generateResClass = auto
 }
 

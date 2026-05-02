@@ -25,8 +25,8 @@ import com.neoutils.finsight.feature.report.screen.ReportRoute
 import com.neoutils.finsight.feature.report.screen.config.ReportConfigScreen
 import com.neoutils.finsight.feature.report.screen.toRoute
 import com.neoutils.finsight.feature.report.screen.viewer.ReportViewerScreen
-import com.neoutils.finsight.ui.screen.support.SupportIssueScreen
-import com.neoutils.finsight.ui.screen.support.SupportScreen
+import com.neoutils.finsight.feature.support.screen.SupportIssueScreen
+import com.neoutils.finsight.feature.support.screen.SupportScreen
 import com.neoutils.finsight.feature.report.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
 import com.neoutils.finsight.feature.recurring.model.Recurring

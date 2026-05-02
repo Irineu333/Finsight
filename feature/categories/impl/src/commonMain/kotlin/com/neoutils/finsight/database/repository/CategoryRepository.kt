@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.CategoryDao
+import com.neoutils.finsight.core.database.dao.CategoryDao
 import com.neoutils.finsight.database.mapper.CategoryMapper
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository

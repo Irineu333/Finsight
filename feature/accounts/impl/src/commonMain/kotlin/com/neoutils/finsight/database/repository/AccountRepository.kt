@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.AccountDao
+import com.neoutils.finsight.core.database.dao.AccountDao
 import com.neoutils.finsight.database.mapper.AccountMapper
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository

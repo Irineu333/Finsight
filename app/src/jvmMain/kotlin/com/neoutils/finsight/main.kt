@@ -3,7 +3,7 @@ package com.neoutils.finsight
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.neoutils.finsight.database.di.databaseModule
+import com.neoutils.finsight.core.database.di.databaseModule
 import com.neoutils.finsight.di.accountsModule
 import com.neoutils.finsight.di.categoriesModule
 import com.neoutils.finsight.di.creditCardsModule

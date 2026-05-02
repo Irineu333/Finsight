@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.TransactionDao
+import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository

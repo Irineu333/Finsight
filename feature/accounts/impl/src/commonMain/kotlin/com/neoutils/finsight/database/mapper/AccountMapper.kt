@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.mapper
 
-import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.core.database.entity.AccountEntity
 import com.neoutils.finsight.core.domain.model.Account
 
 class AccountMapper {

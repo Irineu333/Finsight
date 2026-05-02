@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.core.database.dao.CreditCardDao
 import com.neoutils.finsight.database.mapper.CreditCardMapper
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository

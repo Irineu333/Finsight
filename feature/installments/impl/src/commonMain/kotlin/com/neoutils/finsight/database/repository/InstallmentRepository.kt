@@ -1,7 +1,7 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.InstallmentDao
-import com.neoutils.finsight.database.entity.InstallmentEntity
+import com.neoutils.finsight.core.database.dao.InstallmentDao
+import com.neoutils.finsight.core.database.entity.InstallmentEntity
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import kotlinx.coroutines.flow.Flow

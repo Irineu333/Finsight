@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.InvoiceDao
+import com.neoutils.finsight.core.database.dao.InvoiceDao
 import com.neoutils.finsight.database.mapper.InvoiceMapper
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository

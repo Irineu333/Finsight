@@ -1,7 +1,7 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.BudgetDao
-import com.neoutils.finsight.database.entity.BudgetCategoryEntity
+import com.neoutils.finsight.core.database.dao.BudgetDao
+import com.neoutils.finsight.core.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.repository.IBudgetRepository

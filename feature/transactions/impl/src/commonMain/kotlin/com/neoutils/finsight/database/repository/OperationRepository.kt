@@ -2,10 +2,10 @@
 
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.RecurringDao
-import com.neoutils.finsight.database.dao.OperationDao
-import com.neoutils.finsight.database.dao.TransactionDao
-import com.neoutils.finsight.database.entity.OperationEntity
+import com.neoutils.finsight.core.database.dao.RecurringDao
+import com.neoutils.finsight.core.database.dao.OperationDao
+import com.neoutils.finsight.core.database.dao.TransactionDao
+import com.neoutils.finsight.core.database.entity.OperationEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.IRecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper

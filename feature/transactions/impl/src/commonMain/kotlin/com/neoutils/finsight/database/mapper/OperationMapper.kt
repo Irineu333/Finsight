@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.mapper
 
-import com.neoutils.finsight.database.entity.OperationEntity
+import com.neoutils.finsight.core.database.entity.OperationEntity
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard

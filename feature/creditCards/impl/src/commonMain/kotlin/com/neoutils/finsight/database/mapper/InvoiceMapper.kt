@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.mapper
 
-import com.neoutils.finsight.database.entity.InvoiceEntity
+import com.neoutils.finsight.core.database.entity.InvoiceEntity
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 

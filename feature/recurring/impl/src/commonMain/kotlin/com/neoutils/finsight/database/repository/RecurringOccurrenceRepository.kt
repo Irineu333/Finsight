@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.repository
 
-import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
+import com.neoutils.finsight.core.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository

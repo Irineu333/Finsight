@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database.mapper
 
-import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
+import com.neoutils.finsight.core.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 
 class RecurringOccurrenceMapper {

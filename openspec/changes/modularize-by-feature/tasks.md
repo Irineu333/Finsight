@@ -377,8 +377,8 @@
 
 ### 21.B Convention plugin para `:ui`
 
-- [ ] 21.B.1 Avaliar se `kmp-compose` (já existe — Compose sem Koin/Arrow/Navigation) atende `:ui`, ou se precisamos criar `kmp-feature-ui` (Compose + Koin para cards que injetam mappers). Decisão default: usar `kmp-compose` e adicionar Koin por módulo onde necessário.
-- [ ] 21.B.2 Se necessário, criar `build-logic/src/main/kotlin/kmp-feature-ui.gradle.kts` aplicando `kmp-compose` + Koin (sem Navigation, sem Arrow).
+- [x] 21.B.1 Avaliação: `kmp-compose` atende `:ui` direto. Cards recebem `XxUi` por parâmetro (sem Koin no componente); `IXxUiMapper` é só interface (sem Koin no `:ui`); entry points D11 adicionam Navigation só onde necessário (transactions:ui, dashboard:ui). Decisão: usar `kmp-compose` + adicionar Navigation por módulo conforme uso.
+- [x] 21.B.2 Não criado — `kmp-compose` atende. (Caso futuros componentes em `:ui` precisem injetar via `koinInject()`, adicionar `libs.koin.compose` no módulo específico.)
 
 ### 21.C Esqueleto: criar `:feature:X:ui` (módulos vazios + registro)
 

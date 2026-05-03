@@ -7,7 +7,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            api(projects.feature.transactions.api)
+            api(projects.core.domain)
             implementation(libs.kotlinx.serialization.json)
         }
     }

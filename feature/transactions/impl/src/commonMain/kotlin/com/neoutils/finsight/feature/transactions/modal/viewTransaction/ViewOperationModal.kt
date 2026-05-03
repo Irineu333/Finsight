@@ -24,8 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.resources.*
@@ -37,7 +37,7 @@ import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
-import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.core.domain.model.OperationPerspective
 import com.neoutils.finsight.core.sharedui.model.OperationUi
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.feature.transactions.modal.editTransaction.EditTransactionModal

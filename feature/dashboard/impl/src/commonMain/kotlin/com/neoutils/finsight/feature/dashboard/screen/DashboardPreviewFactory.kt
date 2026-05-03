@@ -8,9 +8,9 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.categories.model.CategorySpending
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig

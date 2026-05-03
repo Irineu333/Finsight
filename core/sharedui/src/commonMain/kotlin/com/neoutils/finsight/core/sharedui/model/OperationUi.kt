@@ -1,9 +1,9 @@
 package com.neoutils.finsight.core.sharedui.model
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.model.OperationPerspective
 import kotlinx.datetime.LocalDate
 
 data class OperationUi(

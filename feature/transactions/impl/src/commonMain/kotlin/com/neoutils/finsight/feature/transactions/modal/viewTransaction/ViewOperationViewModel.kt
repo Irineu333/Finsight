@@ -2,10 +2,10 @@ package com.neoutils.finsight.feature.transactions.modal.viewTransaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
-import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.core.domain.model.OperationPerspective
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first

@@ -9,8 +9,8 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.transactions.error.BuildTransactionError
 import com.neoutils.finsight.feature.transactions.exception.BuildTransactionException
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.TimeZone

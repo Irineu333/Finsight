@@ -7,7 +7,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
-            api(projects.feature.transactions.api)
+            api(projects.core.domain)
             implementation(projects.core.analytics)
         }
     }

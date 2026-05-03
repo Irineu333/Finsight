@@ -11,7 +11,7 @@ import com.neoutils.finsight.feature.installments.extension.toUiText
 import com.neoutils.finsight.feature.installments.exception.InstallmentException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository

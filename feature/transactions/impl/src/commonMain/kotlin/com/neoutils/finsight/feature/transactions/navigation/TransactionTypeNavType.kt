@@ -4,7 +4,7 @@ import androidx.navigation.NavType
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import androidx.savedstate.write
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Transaction
 
 class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = true) {
     override fun put(

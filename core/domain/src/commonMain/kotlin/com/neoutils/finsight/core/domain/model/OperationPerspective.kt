@@ -1,8 +1,5 @@
-package com.neoutils.finsight.feature.transactions.model
+package com.neoutils.finsight.core.domain.model
 
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 sealed class OperationPerspective {
     data class Account(
         val accountId: Long,

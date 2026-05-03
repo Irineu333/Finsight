@@ -25,8 +25,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.resources.Res
 import com.neoutils.finsight.feature.transactions.resources.edit_transaction_amount_label

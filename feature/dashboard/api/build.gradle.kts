@@ -6,7 +6,7 @@ plugins {
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            api(projects.feature.home.api)
+            api(projects.core.domain)
             api(libs.androidx.navigation.compose)
         }
     }

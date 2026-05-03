@@ -11,9 +11,9 @@ import com.neoutils.finsight.feature.installments.error.InstallmentError
 import com.neoutils.finsight.feature.installments.exception.InstallmentException
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository

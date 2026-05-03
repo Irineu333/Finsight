@@ -4,7 +4,7 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Transaction
 
 data class AddTransactionUiState(
     val incomeCategories: List<Category> = emptyList(),

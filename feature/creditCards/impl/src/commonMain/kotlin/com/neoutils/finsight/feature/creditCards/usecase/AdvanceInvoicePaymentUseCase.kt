@@ -10,8 +10,8 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.creditCards.error.InvoiceError
 import com.neoutils.finsight.feature.creditCards.exception.InvoiceException
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.datetime.LocalDate

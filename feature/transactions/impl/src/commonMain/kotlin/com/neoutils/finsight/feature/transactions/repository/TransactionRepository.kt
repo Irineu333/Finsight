@@ -4,7 +4,7 @@ package com.neoutils.finsight.feature.transactions.repository
 
 import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository

@@ -1,11 +1,13 @@
 plugins {
     id("kmp-library")
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation(libs.kotlinx.datetime)
+            api(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
             implementation(projects.core.utils)
         }
     }

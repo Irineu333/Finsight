@@ -6,8 +6,8 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.accounts.exception.AccountNotAdjustedException
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate

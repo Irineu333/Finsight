@@ -1,5 +1,4 @@
-package com.neoutils.finsight.feature.transactions.model
-import com.neoutils.finsight.feature.transactions.model.OperationInstallment
+package com.neoutils.finsight.core.domain.model
 
 data class OperationInstallment(
     val id: Long,

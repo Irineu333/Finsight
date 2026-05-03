@@ -7,7 +7,7 @@ import com.neoutils.finsight.feature.recurring.event.CreateRecurring
 import com.neoutils.finsight.feature.recurring.event.EditRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.feature.recurring.state.RecurringForm
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository

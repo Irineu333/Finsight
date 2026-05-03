@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.recurring.event
 
 import com.neoutils.finsight.core.analytics.Event
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Recurring
 
 class ReactivateRecurring(params: Map<String, String>) : Event("reactivate_recurring", params) {
     constructor(recurring: Recurring) : this(

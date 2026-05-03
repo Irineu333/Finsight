@@ -8,8 +8,8 @@ import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.transactions.event.EditTransaction
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics

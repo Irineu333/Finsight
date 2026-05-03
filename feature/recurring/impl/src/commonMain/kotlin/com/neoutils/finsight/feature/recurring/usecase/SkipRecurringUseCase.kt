@@ -4,8 +4,8 @@ package com.neoutils.finsight.feature.recurring.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import com.neoutils.finsight.feature.recurring.model.Recurring
-import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
+import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.core.domain.model.RecurringOccurrence
 import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.core.utils.extension.monthsUntil
 import com.neoutils.finsight.core.utils.extension.toYearMonth

@@ -38,7 +38,7 @@ Restrições relevantes:
 
 **Regra fundamental — api não depende de api:** `feature:X:api` **jamais** depende de `feature:Y:api`. Dois motivos críticos: (1) dependências cíclicas entre `:api` são detectadas pelo Gradle apenas em runtime de configuração, bloqueiam o build inteiro e são difíceis de rastrear à medida que a base de código cresce; (2) qualquer mudança em `Y:api` força recompilação de `X:api` e de todos os seus dependentes, colapsando o isolamento incremental que justifica a modularização. Ver D10 para detalhes e tabela de dependências permitidas.
 
-**Modelos em `:core:domain`:** `Account`, `Category`, `CreditCard`, `Invoice` — referenciados diretamente por `Transaction` e `Operation` em `transactions:api`. Mover para `:core:domain` elimina a dependência cruzada `transactions:api → accounts:api / categories:api / creditCards:api`.
+**Modelos em `:core:domain`:** `Account`, `Category`, `CreditCard`, `Invoice`, `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective`, `TransactionForm`, `Recurring`, `RecurringOccurrence` — modelos cujo domínio é referenciado por mais de uma feature. Mover para `:core:domain` elimina dependências cruzadas como `transactions:api → accounts:api / categories:api / creditCards:api` (resolvido em §10.5) e `budgets:api / home:api / dashboard:api / installments:api → transactions:api / recurring:api` (resolvido em §20).
 
 **O que NÃO vai para `:core:domain`:** erros, exceções, interfaces de repositório, use cases — esses permanecem em cada `:feature:X:api`. `:core:domain` contém apenas modelos de dados puros cujo domínio é genuinamente compartilhado.
 

@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.recurring.repository
 
 import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.feature.recurring.mapper.RecurringMapper
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository

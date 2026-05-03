@@ -3,8 +3,8 @@ package com.neoutils.finsight.feature.recurring.modal.confirmRecurring
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.recurring.model.Recurring
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.core.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 
 data class ConfirmRecurringUiState(

@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.recurring.resources.Res
 import com.neoutils.finsight.feature.recurring.resources.recurring_expense

@@ -4,7 +4,7 @@ import com.neoutils.finsight.core.database.entity.RecurringEntity
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Recurring
 
 class RecurringMapper : IRecurringMapper {
 

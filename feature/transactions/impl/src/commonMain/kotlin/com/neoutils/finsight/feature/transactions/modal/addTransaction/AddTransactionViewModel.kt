@@ -9,8 +9,8 @@ import arrow.core.flatMap
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.installments.event.CreateInstallments
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics

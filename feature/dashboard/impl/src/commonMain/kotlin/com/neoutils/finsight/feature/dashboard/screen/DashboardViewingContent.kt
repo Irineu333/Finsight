@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.feature.dashboard.extension.interceptLongPress
 import com.neoutils.finsight.feature.dashboard.resources.*
 import org.jetbrains.compose.resources.stringResource

@@ -1,7 +1,7 @@
-package com.neoutils.finsight.feature.transactions.extension
+package com.neoutils.finsight.core.domain.extension
 
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Transaction
 
 fun Category.Type.isAccept(type: Transaction.Type): Boolean {
     return when (this) {

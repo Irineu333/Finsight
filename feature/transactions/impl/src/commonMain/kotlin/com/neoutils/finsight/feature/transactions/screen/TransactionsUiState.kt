@@ -4,8 +4,8 @@ package com.neoutils.finsight.feature.transactions.screen
 
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

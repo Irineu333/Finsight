@@ -1,14 +1,6 @@
-package com.neoutils.finsight.feature.transactions.model
+package com.neoutils.finsight.core.domain.model
 
 import kotlinx.datetime.LocalDate
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.OperationInstallment
-import com.neoutils.finsight.feature.transactions.model.OperationRecurring
 
 data class Operation(
     val id: Long = 0,

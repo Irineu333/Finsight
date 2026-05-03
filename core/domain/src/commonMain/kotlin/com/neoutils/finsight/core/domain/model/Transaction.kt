@@ -1,12 +1,7 @@
-package com.neoutils.finsight.feature.transactions.model
+package com.neoutils.finsight.core.domain.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Transaction
 
 data class Transaction(
     val id: Long = 0,

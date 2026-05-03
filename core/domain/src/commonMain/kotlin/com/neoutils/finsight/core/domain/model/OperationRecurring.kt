@@ -1,5 +1,4 @@
-package com.neoutils.finsight.feature.transactions.model
-import com.neoutils.finsight.feature.transactions.model.OperationRecurring
+package com.neoutils.finsight.core.domain.model
 
 data class OperationRecurring(
     val id: Long,

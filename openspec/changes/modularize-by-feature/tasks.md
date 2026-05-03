@@ -289,24 +289,49 @@
 - [x] 19.6 Verificar build: `./gradlew :feature:home:api:compileKotlinMetadata :feature:home:impl:compileKotlinMetadata :app:compileKotlinJvm :app:assembleDebug :app:compileKotlinIosArm64` — todos passam.
 - [x] 19.7 Atualizar `design.md`: adicionar **D13** ("`AppRoute` em `:app`; navegação cross-feature por eventos") e ajustar D7 para refletir o novo conteúdo de `feature:home:api` (sai `AppRoute`, fica `NavigationDispatcher`).
 
-## 20. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
+## 20. Resolver violações D10 herdadas (`feature:X:api → feature:Y:api`)
+
+> **Contexto:** Mesmo após §10.5 (que moveu `Account`, `Category`, `CreditCard`, `Invoice` para `:core:domain`), 5 dependências `api → api` haviam sobrado por modelos compartilhados que ficaram nas features de origem (`Transaction`, `Operation`, `Recurring`, `TransactionForm`). Aplicando o mesmo padrão D2/§10.5, todos os modelos referenciados por outra feature migraram para `:core:domain`.
+>
+> **Violações resolvidas:**
+> - `budgets:api → recurring:api` + `budgets:api → transactions:api` (`BudgetProgress.recurring`, `ICalculateBudgetProgressUseCase` usando `Transaction`/`Operation`/`Recurring`)
+> - `dashboard:api → home:api` + `transactions:api` (`DashboardEntry.register(... onOpenTransactions: (Transaction.Type?, Transaction.Target?))`)
+> - `home:api → transactions:api` (`HomeRoute.Transactions(Transaction.Type?, Transaction.Target?)`)
+> - `installments:api → transactions:api` (`IAddInstallmentUseCase`, `CreateInstallments`, `DeleteInstallments` usando `Transaction`/`Operation`/`TransactionForm`)
+
+- [x] 20.1 Mover `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective` de `feature:transactions:api/.../model/` para `core:domain/.../model/`
+- [x] 20.2 Mover `TransactionForm` de `feature:transactions:api/.../form/` para `core:domain/.../form/`
+- [x] 20.3 Mover extensions `signedImpact`, `Category.Type.isAccept(Transaction.Type)` de `feature:transactions:api/.../extension/` para `core:domain/.../extension/`
+- [x] 20.4 Mover `Recurring`, `RecurringOccurrence` de `feature:recurring:api/.../model/` para `core:domain/.../model/`
+- [x] 20.5 Mover extension `Category.Type.isAccept(Recurring.Type)` de `feature:recurring:api/.../extension/` para `core:domain/.../extension/`
+- [x] 20.6 Adicionar plugin `kotlinSerialization` + dep `kotlinx.serialization.json` em `:core:domain` (necessário para `@Serializable` em `Transaction.Type`/`Target`); promover `kotlinx.datetime` para `api`
+- [x] 20.7 Find/replace global de imports: `feature.transactions.{model,form,extension}.*` → `core.domain.{model,form,extension}.*`; `feature.recurring.{model,extension}.*` → `core.domain.{model,extension}.*` (149 arquivos)
+- [x] 20.8 Atualizar `feature/budgets/api/build.gradle.kts`: remover `api(projects.feature.recurring.api)` e `api(projects.feature.transactions.api)`
+- [x] 20.9 Atualizar `feature/dashboard/api/build.gradle.kts`: substituir `api(projects.feature.home.api)` por `api(projects.core.domain)`
+- [x] 20.10 Atualizar `feature/home/api/build.gradle.kts`: substituir `api(projects.feature.transactions.api)` por `api(projects.core.domain)`
+- [x] 20.11 Atualizar `feature/installments/api/build.gradle.kts`: substituir `api(projects.feature.transactions.api)` por `api(projects.core.domain)`
+- [x] 20.12 Atualizar `feature/transactions/api/build.gradle.kts`: remover plugin `kotlinSerialization` e deps `kotlinx.serialization.json`/`kotlinx.datetime` (não há mais `@Serializable` no módulo; `kotlinx.datetime` herdado via `core:domain`)
+- [x] 20.13 Verificar `./gradlew :app:compileKotlinJvm :app:assembleDebug :app:compileKotlinIosArm64` — todos passam
+- [x] 20.14 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio — D10 satisfeita estruturalmente
+
+## 21. (Backlog) Desacoplar `Transaction`/`Operation` de `:core:domain`
 
 > **Contexto:** `Transaction` e `Operation` atualmente carregam objetos completos (`Account?`, `Category?`, `CreditCard?`, `Invoice?`) em vez de IDs. Isso forçou a criação de `:core:domain` como módulo de tipos compartilhados. O verdadeiro isolamento por feature só é atingido quando cada feature define seus próprios tipos sem compartilhamento.
 >
 > **Objetivo:** Eliminar `:core:domain` e tornar cada `feature:X:api` completamente autônomo.
 
-- [ ] 20.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
-- [ ] 20.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
-- [ ] 20.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
-- [ ] 20.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
-- [ ] 20.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
-- [ ] 20.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
+- [ ] 21.1 Substituir `account: Account?` por `accountId: Long?` em `Transaction` e atualizar todos os mapeamentos, use cases e UI afetados
+- [ ] 21.2 Substituir `category: Category?` por `categoryId: Long?` em `Transaction` e `Operation`
+- [ ] 21.3 Substituir `creditCard: CreditCard?` / `invoice: Invoice?` por `creditCardId: Long?` / `invoiceId: Long?` em `Transaction` e `Operation`
+- [ ] 21.4 Atualizar `Budget.categories: List<Category>` para `Budget.categoryIds: List<Long>` se aplicável
+- [ ] 21.5 Remover `:core:domain`; mover `Account`, `Category`, `CreditCard`, `Invoice` de volta para seus respectivos `feature:X:api`
+- [ ] 21.6 Verificar que nenhum `feature:X:api` depende de `feature:Y:api`; rodar `./gradlew check`
 
-## 21. Documentation
+## 22. Documentation
 
-- [ ] 21.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
-- [ ] 21.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
-- [ ] 21.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
-- [ ] 21.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
-- [ ] 21.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
-- [ ] 21.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`
+- [ ] 22.1 Create `README.md` for each core module: `core/utils/`, `core/platform/`, `core/analytics/`, `core/auth/`, `core/ui/`, `core/database/`
+- [ ] 22.2 Create `README.md` for each feature with api/impl: `feature/accounts/`, `feature/categories/`, `feature/creditCards/`, `feature/installments/`, `feature/recurring/`, `feature/transactions/`, `feature/budgets/`, `feature/report/`
+- [ ] 22.3 Create `README.md` for terminal features: `feature/dashboard/`, `feature/home/`, `feature/support/`
+- [ ] 22.4 Each feature README covers: responsabilidade, contratos públicos do `:api`, dependências e responsabilidades internas do `:impl`
+- [ ] 22.5 Update root `CLAUDE.md`: replace `Layers` section with module convention (api/impl pattern, dependency rules, pointer to `settings.gradle.kts`)
+- [ ] 22.6 Add `## Modules` section to root `CLAUDE.md` with one entry per feature/core module linking to its `README.md`

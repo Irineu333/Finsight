@@ -8,8 +8,8 @@ import com.neoutils.finsight.feature.report.event.ShareReport
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportPerspective
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.extension.signedImpact
+import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.extension.signedImpact
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository

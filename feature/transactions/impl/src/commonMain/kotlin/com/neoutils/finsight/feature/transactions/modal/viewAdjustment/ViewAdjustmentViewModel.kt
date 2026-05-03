@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.transactions.modal.viewAdjustment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow

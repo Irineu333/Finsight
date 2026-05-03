@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.report.screen.viewer
 
 import com.neoutils.finsight.feature.categories.model.CategorySpending
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.ui.util.UiText
 import kotlinx.datetime.LocalDate
 

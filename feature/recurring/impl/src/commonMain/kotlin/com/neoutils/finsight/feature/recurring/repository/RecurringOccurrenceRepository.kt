@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.recurring.repository
 
 import com.neoutils.finsight.core.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.feature.recurring.mapper.RecurringOccurrenceMapper
-import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
+import com.neoutils.finsight.core.domain.model.RecurringOccurrence
 import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

@@ -2,8 +2,8 @@ package com.neoutils.finsight.feature.dashboard.screen
 
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.categories.model.CategorySpending
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 
 sealed interface DashboardComponent {

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.recurring.model
+package com.neoutils.finsight.core.domain.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth

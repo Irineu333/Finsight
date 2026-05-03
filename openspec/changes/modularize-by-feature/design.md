@@ -32,19 +32,25 @@ Restrições relevantes:
 
 ---
 
-### D2: Cada feature é seu próprio domínio — com exceção dos modelos compartilhados em `:core:domain`
+### D2: Cada feature é seu próprio domínio — modelos puros em `:feature:X:api`
 
-**Decisão:** Modelos de domínio, interfaces de repositório e interfaces de use cases ficam no `:api` da feature dona. Modelos referenciados por múltiplas features (que causariam dependência `api → api`) ficam em `:core:domain`.
+**Decisão:** Modelos de domínio, interfaces de repositório e interfaces de use cases ficam no `:api` da feature dona. Modelos cujo domínio é genuinamente cross-feature passam a guardar **apenas IDs** das outras features (não objetos resolvidos), permitindo que cada model viva no `:api` da sua feature dona sem violar D10 (ver D14).
 
 **Regra fundamental — api não depende de api:** `feature:X:api` **jamais** depende de `feature:Y:api`. Dois motivos críticos: (1) dependências cíclicas entre `:api` são detectadas pelo Gradle apenas em runtime de configuração, bloqueiam o build inteiro e são difíceis de rastrear à medida que a base de código cresce; (2) qualquer mudança em `Y:api` força recompilação de `X:api` e de todos os seus dependentes, colapsando o isolamento incremental que justifica a modularização. Ver D10 para detalhes e tabela de dependências permitidas.
 
-**Modelos em `:core:domain`:** `Account`, `Category`, `CreditCard`, `Invoice`, `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective`, `TransactionForm`, `Recurring`, `RecurringOccurrence` — modelos cujo domínio é referenciado por mais de uma feature. Mover para `:core:domain` elimina dependências cruzadas como `transactions:api → accounts:api / categories:api / creditCards:api` (resolvido em §10.5) e `budgets:api / home:api / dashboard:api / installments:api → transactions:api / recurring:api` (resolvido em §20).
+**Modelos por feature (após D14):**
+- `:feature:accounts:api` → `Account`
+- `:feature:categories:api` → `Category`
+- `:feature:creditCards:api` → `CreditCard`, `Invoice` (com `creditCardId: Long` em vez de `creditCard: CreditCard`)
+- `:feature:transactions:api` → `Transaction` (IDs only), `Operation` (IDs only), `OperationPerspective`, `OperationInstallment`, `OperationRecurring`, `TransactionForm`
+- `:feature:recurring:api` → `Recurring` (IDs only), `RecurringOccurrence`
+- `:feature:budgets:api` → `Budget` (com `categoryIds: List<Long>`)
 
-**O que NÃO vai para `:core:domain`:** erros, exceções, interfaces de repositório, use cases — esses permanecem em cada `:feature:X:api`. `:core:domain` contém apenas modelos de dados puros cujo domínio é genuinamente compartilhado.
+**O que NÃO vai para `:api`:** erros, exceções, interfaces de repositório, use cases — esses permanecem em cada `:feature:X:api` (e não em `:core`); UI models (`OperationUi`, `InvoiceUi`, etc.) ficam em `:feature:X:ui` (D14).
 
-**Caminho de melhoria (task futura):** Substituir objetos completos (`Account?`, `Category?`, etc.) por IDs nas relações de `Transaction`/`Operation`. Isso eliminará a necessidade de `:core:domain` e desacoplará completamente os tipos de domínio por feature.
+**Por que IDs only:** quando `Transaction.account: Account?` referencia `Account` de `accounts:api`, `transactions:api → accounts:api` viola D10. Substituir por `accountId: Long?` quebra a dependência. A hidratação (resolver IDs em objetos para display) acontece no tier `:ui` via `XxUi` + `IXxUiMapper` (D14). Use cases puros que precisam de objetos resolvidos consultam o repositório.
 
-**Alternativa rejeitada:** `:core:domain` centralizado com todos os modelos. Se torna um "deus módulo" sem boundary real.
+**Alternativa rejeitada:** `:core:domain` centralizado com todos os modelos. Se torna um "deus módulo" sem boundary real, com ownership diluído e recompilação em cascata. Eliminado em §21 (ver D14).
 
 ---
 
@@ -93,14 +99,15 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 
 ---
 
-### D7: Features terminais — `:api` apenas quando há cross-impl
+### D7: Features terminais — `:api` puro, entry points em `:ui`
 
 **Decisão:**
 - `support` tem apenas `:impl` (nenhum outro módulo o consome).
-- `dashboard` tem `:api` mínimo expondo `DashboardEntry` (consumido por `home:impl`) — ver D11.
-- `home` tem `:api` mínimo expondo `HomeRoute`, `HomeChrome*` e o `NavigationDispatcher` (consumido por features que disparam navegação para rotas top-level — ver D13). `AppRoute` vive em `:app` (D13).
+- `dashboard` tem `:api` apenas para tipos puros consumidos cross-feature (ex: `DashboardSection` se houver). `DashboardEntry` mora em `:feature:dashboard:ui` (D11/D14) — `:dashboard:api` continua sem Compose nem Navigation.
+- `transactions:api` mantém models e contratos puros; `TransactionsEntry` mora em `:feature:transactions:ui` (D11/D14) — `:transactions:api` é puro Kotlin (`kmp-library`).
+- `home` tem `:api` mínimo expondo `HomeRoute`, `HomeChrome*` (data) e o `NavigationDispatcher` (consumido por features que disparam navegação para rotas top-level — ver D13). `AppRoute` vive em `:app` (D13).
 
-**Rationale:** Manter `:api` vazio é desperdício, mas onde existe consumo cross-module (D11) o `:api` é a única forma de respeitar D10 sem expor implementação.
+**Rationale:** Após D14, `:api` perde Compose/Navigation completamente — entry points (que são Composable) descem para `:ui`. Isso restaura `:api` ao papel de "contrato puro de domínio" e elimina o último motivo para módulos `:api` arrastarem dependências de UI.
 
 ---
 
@@ -134,24 +141,30 @@ Módulos `:feature:X:api` usam `kmp-library` diretamente — são módulos KMP p
 - **Recompilação em cascata:** um `:api` que depende de outro `:api` força a recompilação de todos os módulos dependentes quando `Y:api` muda — colapsando o isolamento incremental que é a razão de ser da modularização.
 - **Acoplamento de contrato:** se `transactions:api` depende de `accounts:api`, qualquer mudança na interface de `accounts` quebra o contrato de `transactions` em compile time — mesmo que `transactions` não tenha mudado nada.
 
-**Consequência:** Modelos compartilhados entre features vivem em `:core:domain` (ver D2). Interfaces de repositório e use cases permanecem em cada `:feature:X:api`. O `:impl` pode depender de outros `:api` quando precisar de contratos (ex: `transactions:impl` usa `IAccountRepository` de `accounts:api`).
+**Consequência:** Modelos cross-feature carregam IDs (não objetos) e vivem cada um no `:api` da sua feature dona (ver D2 e D14). Hidratação para display acontece em `:feature:X:ui` via `XxUi` + `IXxUiMapper`. Interfaces de repositório e use cases permanecem em cada `:feature:X:api`. O `:impl` pode depender de outros `:api` quando precisar de contratos (ex: `transactions:impl` usa `IAccountRepository` de `accounts:api`).
 
-**Tabela de dependências permitidas:**
-| De \ Para           | `:core:*` | `:feature:X:api` | `:feature:X:impl` |
-|---------------------|-----------|------------------|-------------------|
-| `:core:*`           | ✅ (acíclico) | ❌           | ❌                |
-| `:feature:X:api`    | ✅         | ❌               | ❌                |
-| `:feature:X:impl`   | ✅         | ✅               | ❌                |
-| `:app`              | ✅         | ✅               | ✅                |
+**Tabela de dependências permitidas (após D14):**
+| De \ Para           | `:core:*` | `:feature:X:api` | `:feature:X:ui` | `:feature:X:impl` |
+|---------------------|-----------|------------------|-----------------|-------------------|
+| `:core:*`           | ✅ acíclico | ❌             | ❌              | ❌                |
+| `:feature:X:api`    | ✅         | ❌               | ❌              | ❌                |
+| `:feature:X:ui`     | ✅         | ✅ (qualquer feature) | ❌         | ❌                |
+| `:feature:X:impl`   | ✅         | ✅               | ✅ (qualquer feature) | ❌          |
+| `:app`              | ✅         | ✅               | ✅              | ✅                |
 
-### D11: Entry points em `:api` para acesso cross-impl a telas
+**Regras adicionais introduzidas em D14:**
+- `:ui ↮ :ui` proibido — mesma razão de `api ↮ api` (evita ciclos no grafo de UI cross-feature).
+- `:ui` pode ler `:api` de qualquer feature → `OperationUi` em `transactions:ui` compõe `Account` direto de `accounts:api`.
+- `:impl` pode ler `:ui` de qualquer feature → `dashboard:impl` renderiza `OperationCard` de `transactions:ui` direto, sem entry point para cards.
+
+### D11: Entry points em `:ui` para acesso cross-impl a telas
 
 **Problema:** A regra D10 proíbe `:impl → :impl`. Mas `home:impl` precisa registrar rotas que renderizam telas de `dashboard` e `transactions` no seu `NavHost` interno (bottom nav). Sem mecanismo de indireção, isso forçaria `home:impl → dashboard:impl` ou `home:impl → transactions:impl`.
 
-**Decisão:** Cada feature cuja tela precisa ser renderizada por outro `:impl` expõe um **entry point** em seu `:api`:
+**Decisão:** Cada feature cuja tela precisa ser renderizada por outro `:impl` expõe um **entry point** em seu `:feature:X:ui` (não em `:api` — D14 desce o entry para o tier de UI, libertando `:api` de Compose/Navigation):
 
 ```kotlin
-// feature/<x>/api
+// feature/<x>/ui
 abstract class XxxEntry {
     abstract fun NavGraphBuilder.register(navController: NavController)
 }
@@ -167,16 +180,17 @@ class XxxEntryImpl : XxxEntry() {
 single<XxxEntry> { XxxEntryImpl() }
 ```
 
-O consumidor (`home:impl`) injeta a `XxxEntry` via Koin e chama `register` dentro do seu próprio `NavGraphBuilder` — nunca conhece a `XxxScreen` nem o `XxxViewModel`.
+O consumidor (`home:impl` ou `:app`) injeta a `XxxEntry` via Koin e chama `register` dentro do seu próprio `NavGraphBuilder` — nunca conhece a `XxxScreen` nem o `XxxViewModel`.
 
-**Onde aplicar:**
-- `dashboard:api` → `DashboardEntry` (consumido por `home:impl`)
-- `transactions:api` → `TransactionsEntry` (consumido por `home:impl`)
+**Onde aplicar (entry points para telas cross-impl):**
+- `dashboard:ui` → `DashboardEntry` (consumido por `home:impl`)
+- `transactions:ui` → `TransactionsEntry` (consumido por `home:impl`)
 
 **Onde NÃO aplicar:**
 - Telas chamadas só pelo `AppNavHost` no `:app`. `:app` pode depender de `:impl` (D10 permite), então acessa o composable da tela diretamente.
+- Cards/components cross-impl. Após D14, `:impl` pode importar `:ui` de qualquer feature direto — `dashboard:impl` chama `OperationCard` de `transactions:ui` sem entry point.
 
-**Rationale:** Centraliza a definição de rota + composable da feature dentro da própria feature. O consumidor só conhece a interface de registro.
+**Rationale:** Centraliza a definição de rota + composable da feature dentro da própria feature, e o entry vive no tier que naturalmente já tem Compose/Navigation. O consumidor só conhece a interface de registro.
 
 **Alternativa rejeitada:** Mover `AppNavHost` para `home:impl` e exigir entry point em todas as features. Aumentaria boilerplate sem benefício — `:app` é o único lugar onde "depender de tudo" é aceitável e natural.
 
@@ -192,15 +206,14 @@ O consumidor (`home:impl`) injeta a `XxxEntry` via Koin e chama `register` dentr
 | `:core:platform` | `com.neoutils.finsight.core.platform` | — |
 | `:core:analytics` | `com.neoutils.finsight.core.analytics` | `analytics`, `crashlytics`, `event`, `di` |
 | `:core:auth` | `com.neoutils.finsight.core.auth` | `service`, `di` |
-| `:core:domain` | `com.neoutils.finsight.core.domain` | `model` |
 | `:core:database` | `com.neoutils.finsight.core.database` | `entity`, `dao`, `di` |
 | `:core:ui` | `com.neoutils.finsight.core.ui` | `theme`, `component`, `modal`, `extension`, `util`, `di` |
-| `:core:sharedui` | `com.neoutils.finsight.core.sharedui` | `component`, `model` |
-| `:feature:<x>:api` | `com.neoutils.finsight.feature.<x>` | `model`, `repository`, `usecase`, `error`, `exception`, `nav`, `entry` |
+| `:feature:<x>:api` | `com.neoutils.finsight.feature.<x>` | `model`, `repository`, `usecase`, `error`, `exception`, `nav`, `form`, `extension` |
+| `:feature:<x>:ui` | `com.neoutils.finsight.feature.<x>` | `model`, `mapper`, `component`, `entry`, `extension` |
 | `:feature:<x>:impl` | `com.neoutils.finsight.feature.<x>` | `screen`, `modal`, `mapper`, `di`, `event`, `usecase`, `repository` |
 | `:app` | `com.neoutils.finsight.app` | — |
 
-**Por que api/impl compartilham raiz:** D10 já é garantida pelo Gradle (api ↮ api). Duplicar `.api` / `.impl` no nome do pacote seria ruído sem ganho — a fronteira já existe no nível de módulo. Subpacotes diferentes (api: `model`/`repository`/`usecase`; impl: `screen`/`modal`/`mapper`) evitam colisão e tornam o papel de cada arquivo legível pelo path.
+**Por que api/ui/impl compartilham raiz:** D10/D14 já são garantidas pelo Gradle (api ↮ api, ui ↮ ui, impl ↮ impl). Duplicar `.api` / `.ui` / `.impl` no nome do pacote seria ruído sem ganho — a fronteira já existe no nível de módulo. Subpacotes diferentes (api: `model`/`repository`/`usecase`; ui: `model`/`mapper`/`component`/`entry`; impl: `screen`/`modal`/`mapper`) evitam colisão e tornam o papel de cada arquivo legível pelo path.
 
 **Por que não `<feature>.api` / `<feature>.impl`:** Forçaria `Account` a viver em `feature.accounts.api.model.Account` e o `AccountRepository` (impl) em `feature.accounts.impl.repository.AccountRepository` — verboso e redundante com a estrutura de diretórios Gradle.
 
@@ -255,6 +268,60 @@ LaunchedEffect(navigationDispatcher, navController) {
 **Por que isso respeita D10/D11:** D11 continua sendo o padrão para *renderizar* telas cross-impl (entry points). D13 é especificamente sobre *disparar* navegação para rotas top-level do shell — a inversão acontece no consumidor (`:app`), não no produtor (`:impl`).
 
 **Alternativa rejeitada:** Interface `HomeNavigator` em `:feature:home:api` com um método por destino implementada em `:app`. Funcionaria mas adicionaria ~10 métodos de boilerplate sem ganho — `NavigationDestination` já é o sealed type estável que carrega o intent.
+
+---
+
+### D14: Tier `:feature:X:ui` para UI models e components cross-impl
+
+**Problema:** A modularização inicial criou dois "god modules":
+- **`:core:domain`** (§10.5/§20) — hospeda models cross-feature (`Account`, `Category`, `CreditCard`, `Invoice`, `Transaction`, `Operation`, `Recurring`, `Budget`) porque D10 proíbe `feature:X:api → feature:Y:api`. Os models são "ricos" (`Transaction.account: Account?`, `Operation.category: Category?`, `Invoice.creditCard: CreditCard`, `Budget.categories: List<Category>`), misturando domínio puro com conveniência de apresentação.
+- **`:core:sharedui`** — hospeda Compose components renderizados por múltiplos `:impl` (`OperationCard`, `CreditCardCard`, `BudgetProgressCard`, `AccountSelector`, etc.) e seus UI models (`OperationUi`, `AccountUi`).
+
+Ambos são consequência de D10 e partilham o mesmo problema: ownership diluído + recompilação em cascata.
+
+**Decisão:** Introduzir tier `:feature:X:ui` por feature, com três regras:
+
+1. **Domínio puro = só IDs.** `Transaction`, `Operation`, `Recurring`, `Budget`, `Invoice`, `TransactionForm` deixam de carregar objetos de outras features e passam a guardar apenas IDs (`accountId: Long?`, `categoryId: Long?`, `creditCardId: Long?`, `invoiceId: Long?`). Cada model volta para o `:api` da sua feature dona.
+
+2. **Novo módulo `:feature:X:ui` por feature** (quando há derivação de display ou composição cross-feature) hospeda:
+   - `XxUi` — UI model (POJO) que compõe o domínio puro com objetos resolvidos cross-feature e/ou campos derivados (datas calculadas, strings formatadas).
+   - `IXxUiMapper` — interface de mapeamento `Domain → UI`. Implementação concreta mora em `:impl`, onde tem acesso aos repositórios. ViewModels consomem `IXxUiMapper` via Koin para montar listas/itens em batch antes de emitir `UiState`.
+   - Compose components renderizados por outras features (`OperationCard`, `CreditCardCard`, `BudgetProgressCard`, etc.).
+   - Entry points D11 (`DashboardEntry`, `TransactionsEntry`) — saem de `:api` (que volta a ser puro) e descem para `:ui`.
+
+3. **Regras de dependência expandidas (D10):**
+
+   | De \ Para | `:core:*` | `:feature:X:api` | `:feature:X:ui` | `:feature:X:impl` |
+   |-----------|-----------|------------------|-----------------|-------------------|
+   | `:core:*` | ✅ acíclico | ❌ | ❌ | ❌ |
+   | `:api` | ✅ | ❌ | ❌ | ❌ |
+   | `:ui` | ✅ | ✅ (qualquer feature) | ❌ | ❌ |
+   | `:impl` | ✅ | ✅ | ✅ (qualquer feature) | ❌ |
+   | `:app` | ✅ | ✅ | ✅ | ✅ |
+
+   - `:api ↮ :api` proibido (D10 preservado)
+   - `:ui ↮ :ui` proibido — mesma razão de D10 (evita ciclos no grafo de UI)
+   - `:impl ↮ :impl` proibido (D10 preservado)
+   - `:ui` pode importar `:api` de qualquer feature → `OperationUi` em `transactions:ui` compõe `Account`/`Category`/`CreditCard` direto. Para compor outros `XxUi`s, o `XxUi` rico re-implementa os campos primitivos ou aceita injeção (no caso de mappers).
+   - `:impl` pode importar `:ui` de qualquer feature → `dashboard:impl` chama `OperationCard` de `transactions:ui` direto, sem entry point para cards.
+
+**Critério para criar `XxUi`:** somente quando há (a) derivação de display (datas calculadas, strings formatadas) ou (b) composição cross-feature (ex: `OperationUi` agrega `Account`/`Category`/`CreditCard`). Tipos de domínio que já são display-friendly e não cruzam features (`Account`, `Category`, `CreditCard`) são consumidos direto pela UI sem intermediário.
+
+**Mortes:**
+- `:core:domain` — apagado (todos os models voltam para suas `:feature:X:api`).
+- `:core:sharedui` — apagado (componentes migram para `:feature:X:ui` da feature dona).
+
+**Ganhos:**
+- Compose deixa o `:api` (`transactions:api` e `dashboard:api` voltam para `kmp-library`, sem Compose/Navigation).
+- Entry points D11 descem para `:ui` (sai do `:api` o último uso de Compose lá).
+- Ownership claro: `OperationCard` mora com `Operation`; `BudgetProgressCard` mora com `Budget`.
+- Build incremental melhora: mudança em `transactions:ui` recompila só consumidores de UI, não consumidores de domínio.
+
+**Custo:** ~9 novos módulos `:ui` (um por feature com componente cross-impl). Features sem componente cross-impl (`support`) não ganham `:ui`.
+
+**Alternativa rejeitada (Opção 1):** Manter `:core:domain` e `:core:sharedui`. Funciona mas perpetua "god modules" que crescem indefinidamente — qualquer model novo cross-feature vira mais um item lá.
+
+**Alternativa rejeitada (Opção 2):** Mover UI models e components para `:feature:X:impl` e expor cards via entry point. Forçaria todo card cross-impl a ter entry point + injection — boilerplate inviável para ~14 components.
 
 ---
 

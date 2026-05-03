@@ -368,12 +368,12 @@
 
 ### 21.A Decisões de design
 
-- [ ] 21.A.1 Adicionar **D14** em `design.md`: "Tier `:feature:X:ui` para UI models e components cross-impl". Documentar (a) a tabela de dependências expandida, (b) o que vive em cada tier (`:api` = domínio puro + contratos; `:ui` = UI models + components + IXxUiMapper + entry points; `:impl` = ViewModels + telas + use cases + repos + XxUiMapper impl), (c) por que `:ui ↮ :ui` é proibido, (d) extinção de `:core:domain` e `:core:sharedui`, (e) **critério para criar `XxUi`**: somente quando houver derivação de display (ex: datas calculadas, strings formatadas) ou composição cross-feature (ex: `OperationUi` agrega `Account`/`Category`/`CreditCard`); tipos de domínio que já são display-friendly (`Account`, `Category`, `CreditCard`) são consumidos direto pela UI sem intermediário.
-- [ ] 21.A.2 Atualizar **D2** para refletir que models de domínio voltam todos para `:feature:X:api` (sem `:core:domain`); rich models passam a guardar IDs only.
-- [ ] 21.A.3 Atualizar **D7** para refletir que entry points migram de `:api` para `:ui`; `:api` perde Compose e Navigation.
-- [ ] 21.A.4 Atualizar **D10** com a nova tabela; manter regra `api ↮ api` e adicionar `:ui ↮ :ui`.
-- [ ] 21.A.5 Atualizar **D11** (entry points): mudam de `:api` para `:ui`. Para cards cross-impl, entry point deixa de ser necessário (`:impl → :ui` cross-feature já renderiza direto).
-- [ ] 21.A.6 Atualizar **D12** (convenção de pacote): adicionar `:feature:<x>:ui` → `com.neoutils.finsight.feature.<x>` (mesmo pacote raiz que `:api`/`:impl`; subpacotes típicos: `model`, `mapper`, `component`, `entry`).
+- [x] 21.A.1 Adicionar **D14** em `design.md`: "Tier `:feature:X:ui` para UI models e components cross-impl". Documentar (a) a tabela de dependências expandida, (b) o que vive em cada tier (`:api` = domínio puro + contratos; `:ui` = UI models + components + IXxUiMapper + entry points; `:impl` = ViewModels + telas + use cases + repos + XxUiMapper impl), (c) por que `:ui ↮ :ui` é proibido, (d) extinção de `:core:domain` e `:core:sharedui`, (e) **critério para criar `XxUi`**: somente quando houver derivação de display (ex: datas calculadas, strings formatadas) ou composição cross-feature (ex: `OperationUi` agrega `Account`/`Category`/`CreditCard`); tipos de domínio que já são display-friendly (`Account`, `Category`, `CreditCard`) são consumidos direto pela UI sem intermediário.
+- [x] 21.A.2 Atualizar **D2** para refletir que models de domínio voltam todos para `:feature:X:api` (sem `:core:domain`); rich models passam a guardar IDs only.
+- [x] 21.A.3 Atualizar **D7** para refletir que entry points migram de `:api` para `:ui`; `:api` perde Compose e Navigation.
+- [x] 21.A.4 Atualizar **D10** com a nova tabela; manter regra `api ↮ api` e adicionar `:ui ↮ :ui`.
+- [x] 21.A.5 Atualizar **D11** (entry points): mudam de `:api` para `:ui`. Para cards cross-impl, entry point deixa de ser necessário (`:impl → :ui` cross-feature já renderiza direto).
+- [x] 21.A.6 Atualizar **D12** (convenção de pacote): adicionar `:feature:<x>:ui` → `com.neoutils.finsight.feature.<x>` (mesmo pacote raiz que `:api`/`:impl`; subpacotes típicos: `model`, `mapper`, `component`, `entry`).
 
 ### 21.B Convention plugin para `:ui`
 

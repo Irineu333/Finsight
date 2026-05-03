@@ -15,6 +15,12 @@ kotlin {
     }
 }
 
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.neoutils.finsight.feature.creditCards.ui.resources"
+    generateResClass = auto
+}
+
 android {
     namespace = "com.neoutils.finsight.feature.creditCards.ui"
 }

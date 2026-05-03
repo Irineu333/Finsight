@@ -40,6 +40,8 @@ import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.core.sharedui.component.*
+import com.neoutils.finsight.feature.creditCards.component.CreditCardCard
+import com.neoutils.finsight.feature.creditCards.component.CreditCardCardVariant
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 import com.neoutils.finsight.feature.creditCards.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.feature.creditCards.modal.closeInvoice.CloseInvoiceModal

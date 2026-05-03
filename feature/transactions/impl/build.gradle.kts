@@ -10,6 +10,7 @@ kotlin {
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.creditCards.api)
+            implementation(projects.feature.creditCards.ui)
             implementation(projects.feature.installments.api)
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.home.api)

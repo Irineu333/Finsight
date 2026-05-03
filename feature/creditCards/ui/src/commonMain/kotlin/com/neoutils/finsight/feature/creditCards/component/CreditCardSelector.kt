@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.creditCards.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
@@ -9,58 +9,69 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.sharedui.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.invoice_selector_label
-import com.neoutils.finsight.feature.creditCards.extension.toLabel
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.feature.creditCards.ui.resources.Res
+import com.neoutils.finsight.feature.creditCards.ui.resources.credit_card_selector_label
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun InvoiceSelector(
-    invoices: List<Invoice>,
-    invoice: Invoice?,
-    onInvoiceSelected: (Invoice) -> Unit,
-    modifier: Modifier = Modifier
+fun CreditCardSelector(
+    creditCards: List<CreditCard>,
+    creditCard: CreditCard?,
+    onCreditCardSelected: (CreditCard) -> Unit,
+    modifier: Modifier = Modifier,
+    onEmpty: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = {
-            if (invoices.isNotEmpty()) {
+            if (creditCards.isNotEmpty()) {
                 expanded = it
             }
         },
         modifier = modifier
     ) {
         OutlinedTextField(
-            value = invoice?.toLabel().orEmpty(),
+            value = creditCard?.name.orEmpty(),
             onValueChange = {},
             readOnly = true,
             label = {
-                Text(text = stringResource(Res.string.invoice_selector_label))
+                Text(text = stringResource(Res.string.credit_card_selector_label))
             },
-            leadingIcon = invoice?.let {
+            leadingIcon = creditCard?.let {
                 {
                     Icon(
-                        imageVector = Icons.Default.Receipt,
+                        imageVector = AppIcon.fromKey(it.iconKey).icon,
                         contentDescription = null,
-                        tint = androidx.compose.ui.graphics.Color(it.status.colorValue),
                         modifier = Modifier.size(24.dp)
                     )
                 }
             },
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                if (creditCards.isEmpty() && onEmpty != null) {
+                    IconButton(onClick = onEmpty) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
             },
-            enabled = invoices.isNotEmpty(),
+            enabled = creditCards.isNotEmpty() || onEmpty != null,
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -73,7 +84,7 @@ fun InvoiceSelector(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            invoices.forEach { invoice ->
+            creditCards.forEach { creditCard ->
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -81,19 +92,18 @@ fun InvoiceSelector(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Receipt,
+                                imageVector = AppIcon.fromKey(creditCard.iconKey).icon,
                                 contentDescription = null,
-                                tint = androidx.compose.ui.graphics.Color(invoice.status.colorValue),
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = invoice.toLabel(),
+                                text = creditCard.name,
                                 fontSize = 14.sp
                             )
                         }
                     },
                     onClick = {
-                        onInvoiceSelected(invoice)
+                        onCreditCardSelected(creditCard)
                         expanded = false
                     }
                 )

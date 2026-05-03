@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="credit_card_selector_label">Card</string>
+    <string name="invoice_navigator_label">Invoice</string>
+    <string name="invoice_selector_label">Invoice</string>
+    <string name="credit_card_ui_current_invoice">Current Invoice</string>
+    <string name="credit_card_ui_available_limit">Available Limit</string>
+    <string name="credit_card_ui_opens_on">Opens on</string>
+    <string name="credit_card_ui_closes_on">Closes on</string>
+    <string name="credit_card_ui_due_on">Due on</string>
+    <string name="credit_card_ui_day">Day %1$d</string>
+    <string name="credit_card_ui_edit_invoice">Edit invoice</string>
+    <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
+    <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
+    <string name="dashboard_credit_card_advance">Advance</string>
+</resources>

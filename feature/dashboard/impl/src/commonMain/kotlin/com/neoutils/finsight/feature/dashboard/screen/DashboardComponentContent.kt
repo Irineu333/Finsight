@@ -55,8 +55,8 @@ import com.neoutils.finsight.core.ui.component.BalanceCardConfig
 import com.neoutils.finsight.core.sharedui.component.BudgetProgressCard
 import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
 import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
-import com.neoutils.finsight.core.sharedui.component.CreditCardCard
-import com.neoutils.finsight.core.sharedui.component.CreditCardCardVariant
+import com.neoutils.finsight.feature.creditCards.component.CreditCardCard
+import com.neoutils.finsight.feature.creditCards.component.CreditCardCardVariant
 import com.neoutils.finsight.feature.dashboard.constant.showHeader
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher

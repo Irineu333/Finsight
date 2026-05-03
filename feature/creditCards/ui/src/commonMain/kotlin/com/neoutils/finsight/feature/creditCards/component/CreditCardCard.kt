@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSharedTransitionApi::class)
 
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.creditCards.component
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.BorderStroke
@@ -26,11 +26,11 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finsight.core.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.feature.creditCards.extension.toUiText
-import com.neoutils.finsight.core.sharedui.resources.*
-import com.neoutils.finsight.feature.creditCards.model.InvoiceUi
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.utils.util.dayMonth
+import com.neoutils.finsight.feature.creditCards.extension.toUiText
+import com.neoutils.finsight.feature.creditCards.model.InvoiceUi
+import com.neoutils.finsight.feature.creditCards.ui.resources.*
 import org.jetbrains.compose.resources.stringResource
 
 sealed class CreditCardCardVariant {

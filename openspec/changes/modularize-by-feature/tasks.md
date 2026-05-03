@@ -386,16 +386,16 @@
 >
 > Cada módulo: diretório `feature/<x>/ui/` + `build.gradle.kts` (`kmp-compose` + dependências mínimas) + `src/commonMain/kotlin/com/neoutils/finsight/feature/<x>/` vazio + entrada em `settings.gradle.kts`. Build do `:app` continua passando porque ninguém ainda depende dos novos módulos.
 
-- [ ] 21.C.1 Criar `feature/accounts/ui/`; registrar em `settings.gradle.kts`; deps: `accounts:api` + `:core:ui`
-- [ ] 21.C.2 Criar `feature/categories/ui/`; deps: `categories:api` + `:core:ui`
-- [ ] 21.C.3 Criar `feature/creditCards/ui/`; deps: `creditCards:api` + `:core:domain` (transitório p/ `Invoice`) + `:core:ui`
-- [ ] 21.C.4 Criar `feature/transactions/ui/`; deps: `transactions:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:domain` (transitório) + `:core:ui` + Navigation (vai receber `TransactionsEntry` em 21.M)
-- [ ] 21.C.5 Criar `feature/recurring/ui/`; deps: `recurring:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:ui`
-- [ ] 21.C.6 Criar `feature/budgets/ui/`; deps: `budgets:api` + `categories:api` + `:core:ui`
-- [ ] 21.C.7 Criar `feature/installments/ui/`; deps: `installments:api` + `transactions:api` + `creditCards:api` + `:core:ui`
-- [ ] 21.C.8 Criar `feature/dashboard/ui/`; deps: `dashboard:api` + `transactions:api` + `:core:ui` + Navigation (vai receber `DashboardEntry` em 21.M)
+- [x] 21.C.1 Criar `feature/accounts/ui/`; registrar em `settings.gradle.kts`; deps: `accounts:api` + `:core:ui`
+- [x] 21.C.2 Criar `feature/categories/ui/`; deps: `categories:api` + `:core:ui`
+- [x] 21.C.3 Criar `feature/creditCards/ui/`; deps: `creditCards:api` + `:core:domain` (transitório p/ `Invoice`) + `:core:ui`
+- [x] 21.C.4 Criar `feature/transactions/ui/`; deps: `transactions:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:domain` (transitório) + `:core:ui` + Navigation (vai receber `TransactionsEntry` em 21.M)
+- [x] 21.C.5 Criar `feature/recurring/ui/`; deps: `recurring:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:ui`
+- [x] 21.C.6 Criar `feature/budgets/ui/`; deps: `budgets:api` + `categories:api` + `:core:ui`
+- [x] 21.C.7 Criar `feature/installments/ui/`; deps: `installments:api` + `transactions:api` + `creditCards:api` + `:core:ui`
+- [x] 21.C.8 Criar `feature/dashboard/ui/`; deps: `dashboard:api` + `transactions:api` + `:core:ui` + Navigation (vai receber `DashboardEntry` em 21.M)
 - [ ] 21.C.9 (Opcional) Criar `feature/home/ui/` se em 21.M decidirmos mover `HomeChrome*`/`HomeRoute` componentes para lá. Pode ficar pendente até 21.M.
-- [ ] 21.C.10 `./gradlew :app:assembleDebug` — build passa com 8 módulos `:ui` vazios
+- [x] 21.C.10 `./gradlew :app:assembleDebug` — build passa com 8 módulos `:ui` vazios
 
 ### 21.D `creditCards:ui` — `Invoice` → `creditCardId` + `InvoiceUi` + componentes + ViewModels
 

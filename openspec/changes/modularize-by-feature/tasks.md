@@ -314,118 +314,275 @@
 - [x] 20.13 Verificar `./gradlew :app:compileKotlinJvm :app:assembleDebug :app:compileKotlinIosArm64` — todos passam
 - [x] 20.14 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio — D10 satisfeita estruturalmente
 
-## 21. Eliminar `:core:domain` — desacoplar models cross-feature via `XxUi` em `:impl`
+## 21. Eliminar `:core:domain` e `:core:sharedui` — introduzir tier `:feature:X:ui` (D14)
 
-> **Contexto:** `:core:domain` foi criado em §10.5/§20 como solução estrutural para satisfazer D10 (`api ↮ api`). Ele hospeda os 4 models "compartilhados" (`Account`, `Category`, `CreditCard`, `Invoice`) e os 4 models "ricos" (`Transaction`, `Operation`, `Recurring`, `Budget` — este via `Budget.categories: List<Category>`) cuja referência cruzada inviabilizava manter cada um em sua feature. Estado atual: 279 arquivos importam de `core.domain`, ~85 acessos a campos aninhados (`transaction.account`, `operation.category`, `recurring.creditCard`, `invoice.creditCard`).
+> **Contexto:** Hoje convivem dois "god modules" remanescentes:
+> - **`:core:domain`** — criado em §10.5/§20 para hospedar models compartilhados entre features (`Account`, `Category`, `CreditCard`, `Invoice`, `Transaction`, `Operation`, `Recurring`, `Budget` via `categories: List<Category>`). Existe porque D10 proíbe `feature:X:api → feature:Y:api`.
+> - **`:core:sharedui`** — criado para hospedar Compose components renderizados por múltiplos `:impl` (`OperationCard`, `CreditCardCard`, `BudgetProgressCard`, `AccountSelector`, etc.) e seus UI models (`OperationUi`, `AccountUi`). Existe porque D10 proíbe `feature:X:impl → feature:Y:impl`.
 >
-> **Diagnóstico:** os models ricos não são puros — eles pré-carregam objetos de outras features para conveniência de UI/use cases. Esse acoplamento é uma preocupação de **apresentação**, não de domínio. Em domínio puro, basta o ID; em UI, monta-se a versão hidratada.
+> Ambos são consequência da mesma decisão estrutural (D10) e partilham o mesmo problema: ownership diluído + recompilação em cascata. Estado atual: 279 arquivos importam de `core.domain`; 14 components + 2 UI models em `:core:sharedui`; ~85 acessos a campos aninhados (`transaction.account`, `operation.category`, `recurring.creditCard`, `invoice.creditCard`).
 >
-> **Estratégia:**
-> 1. **Domain puro = só IDs.** `Transaction`, `Operation`, `Recurring`, `Budget`, `Invoice`, `TransactionForm` deixam de carregar objetos de outras features e passam a guardar apenas `accountId`, `categoryId`, `creditCardId`, `invoiceId`. Cada model volta para o `:api` da sua feature dona.
-> 2. **Hidratação via `XxUi` em `:impl`.** Onde a UI/render precisar do objeto resolvido (nome da conta, ícone da categoria, datas calculadas da fatura), define-se um `XxUi` no `:impl` da feature consumidora. `:impl` pode depender de múltiplos `:api`s (D10 permite), portanto pode resolver as referências.
-> 3. **Mappers/builders carregam o `XxUi`.** A montagem fica em `XxUiMapper` ou `XxUiBuilder` (`:impl`), recebendo repositórios via Koin. ViewModels só compõem flows e despacham; não duplicam lookup de entidades.
-> 4. **`:core:sharedui` continua válido como hospedeiro de UIs cross-feature** (`OperationCard`, `TargetSelector`, `CreditCardCard`, etc.), agora consumindo os `XxUi` em vez dos models ricos. Estruturalmente já está em compliance (`:core:*` pode depender de `:feature:X:api` per tabela D10) — apenas o conteúdo dos data classes que ele renderiza muda.
+> **Diagnóstico arquitetural:** os models ricos (`Transaction.account: Account?`, etc.) misturam **domínio puro** (IDs, valores) com **conveniência de apresentação** (objetos resolvidos para display). Separando essas duas preocupações em camadas distintas (domínio puro vs hidratação de UI), e dando a cada uma seu próprio lugar de ownership, eliminamos a necessidade de ambos os módulos compartilhados.
 >
-> **Objetivo:** Apagar `:core:domain` por completo, tornando cada `feature:X:api` autônomo.
+> **Estratégia (Opção 3 — tier `:ui`):**
+>
+> 1. **Domínio puro = só IDs.** `Transaction`, `Operation`, `Recurring`, `Budget`, `Invoice`, `TransactionForm` deixam de carregar objetos de outras features e passam a guardar apenas IDs (`accountId`, `categoryId`, `creditCardId`, `invoiceId`). Cada model volta para o `:api` da sua feature dona.
+>
+> 2. **Novo módulo `:feature:X:ui` por feature.** Cada feature ganha um terceiro módulo (`api`, `ui`, `impl`) que hospeda:
+>    - `XxUi` (UI model — POJO que compõe display fields ou outros `XxUi`s)
+>    - `IXxUiMapper` (interface de mapeamento `Domain → UI`)
+>    - Compose components que outras features renderizam (`OperationCard`, `CreditCardCard`, `BudgetProgressCard`, etc.)
+>    - Entry points D11 (`DashboardEntry`, `TransactionsEntry`) — saem de `:api` e descem para `:ui`, libertando `:api` da dependência de Compose
+>
+> 3. **Regras de dependência (extensão de D10):**
+>
+>    | De \ Para | `:core:*` | `:feature:X:api` | `:feature:X:ui` | `:feature:X:impl` |
+>    |-----------|-----------|------------------|-----------------|-------------------|
+>    | `:core:*` | ✅ acíclico | ❌ | ❌ | ❌ |
+>    | `:api` | ✅ | ❌ | ❌ | ❌ |
+>    | `:ui` | ✅ | ✅ (qualquer feature) | ❌ | ❌ |
+>    | `:impl` | ✅ | ✅ | ✅ (qualquer feature) | ❌ |
+>    | `:app` | ✅ | ✅ | ✅ | ✅ |
+>
+>    - `:api ↮ :api` proibido (D10 preservado)
+>    - `:ui ↮ :ui` proibido — mesma razão de D10 (evita ciclos no grafo de UI)
+>    - `:impl ↮ :impl` proibido (D10 preservado)
+>    - `:ui` pode importar `:api` de qualquer feature → `OperationUi` em `transactions:ui` pode compor `Account`/`AccountUi` de `accounts:api`/`accounts:ui` (este último não — só `:api` cross-feature). Para compor outros `XxUi`s, o `XxUi` rico re-implementa os campos primitivos.
+>    - `:impl` pode importar `:ui` de qualquer feature → `dashboard:impl` chama `OperationCard` de `transactions:ui` direto, sem boilerplate de entry point para cards
+>
+> 4. **Mappers split entre `:api` (interface) e `:impl` (implementação).** O `IXxUiMapper` mora em `:ui` (não em `:api`, porque mapper é UI-concern). A implementação concreta mora em `:impl`, onde tem acesso aos repositórios. ViewModels no `:impl` consomem `IXxUiMapper` via Koin para montar listas/itens em batch antes de emitir `UiState`.
+>
+> 5. **Mortes:**
+>    - `:core:domain` — apagado (todos os models voltam para suas `:feature:X:api`)
+>    - `:core:sharedui` — apagado (componentes migram para `:feature:X:ui` da feature dona)
+>
+> **Ganhos:**
+> - Compose deixa o `:api` (`transactions:api` volta para `kmp-library`, sem Compose/Navigation)
+> - Entry points D11 descem para `:ui` (sai do `:api` o último uso de Compose lá)
+> - Ownership claro: `OperationCard` mora com `Operation`; `BudgetProgressCard` mora com `Budget`
+> - Build incremental melhora: mudança em `transactions:ui` recompila só consumidores de UI, não consumidores de domínio
+>
+> **Custo:** ~9 novos módulos `:ui` (um por feature com componente cross-impl). Features sem componente cross-impl (`support`) não ganham `:ui`.
+
+> **Ordem de execução (importante):** as letras seguem a ordem em que cada bloco compila. Refatorar models de domínio para IDs only **só funciona** se ao mesmo tempo existir o `:feature:X:ui` correspondente com `XxUi` + mapper para os ViewModels consumirem. Por isso: docs (A) → convention plugin (B) → esqueleto dos `:ui` (C) → uma feature por vez, refatorando model + criando UI tier + migrando componentes + atualizando consumidores em commits atômicos (D–L) → entry points D11 descem para `:ui` (M) → mover models residuais para `:feature:X:api` (N) → apagar `:core:domain` (O) → apagar `:core:sharedui` (P) → verificação (Q).
 
 ### 21.A Decisões de design
 
-- [ ] 21.A.1 Adicionar **D14** em `design.md`: "Domain puro guarda IDs; hidratação cross-feature em `XxUi` (`:impl`)". Documentar (a) a regra "rich model → IDs only", (b) o padrão `XxUi`/`XxUiMapper`, (c) onde cada `XxUi` mora (na feature consumidora ou em `:core:sharedui` quando renderizado por múltiplos `:impl`s), (d) revogação parcial de D2 (não há mais `:core:domain`).
-- [ ] 21.A.2 Atualizar D2/D7/D10 em `design.md` para refletir o novo estado: D2 deixa de listar models compartilhados em `:core:domain`; D10 mantém a regra inalterada mas perde o "exception via `:core:domain`".
+- [ ] 21.A.1 Adicionar **D14** em `design.md`: "Tier `:feature:X:ui` para UI models e components cross-impl". Documentar (a) a tabela de dependências expandida, (b) o que vive em cada tier (`:api` = domínio puro + contratos; `:ui` = UI models + components + IXxUiMapper + entry points; `:impl` = ViewModels + telas + use cases + repos + XxUiMapper impl), (c) por que `:ui ↮ :ui` é proibido, (d) extinção de `:core:domain` e `:core:sharedui`, (e) **critério para criar `XxUi`**: somente quando houver derivação de display (ex: datas calculadas, strings formatadas) ou composição cross-feature (ex: `OperationUi` agrega `Account`/`Category`/`CreditCard`); tipos de domínio que já são display-friendly (`Account`, `Category`, `CreditCard`) são consumidos direto pela UI sem intermediário.
+- [ ] 21.A.2 Atualizar **D2** para refletir que models de domínio voltam todos para `:feature:X:api` (sem `:core:domain`); rich models passam a guardar IDs only.
+- [ ] 21.A.3 Atualizar **D7** para refletir que entry points migram de `:api` para `:ui`; `:api` perde Compose e Navigation.
+- [ ] 21.A.4 Atualizar **D10** com a nova tabela; manter regra `api ↮ api` e adicionar `:ui ↮ :ui`.
+- [ ] 21.A.5 Atualizar **D11** (entry points): mudam de `:api` para `:ui`. Para cards cross-impl, entry point deixa de ser necessário (`:impl → :ui` cross-feature já renderiza direto).
+- [ ] 21.A.6 Atualizar **D12** (convenção de pacote): adicionar `:feature:<x>:ui` → `com.neoutils.finsight.feature.<x>` (mesmo pacote raiz que `:api`/`:impl`; subpacotes típicos: `model`, `mapper`, `component`, `entry`).
 
-### 21.B Refatorar `Invoice` para `creditCardId: Long`
+### 21.B Convention plugin para `:ui`
 
-> Bloqueia 21.D porque `Invoice` é referenciado por `Transaction.invoice`, `Operation.targetInvoice` e por mappers/use cases em transactions/installments/dashboard. Resolver primeiro reduz fan-out.
+- [ ] 21.B.1 Avaliar se `kmp-compose` (já existe — Compose sem Koin/Arrow/Navigation) atende `:ui`, ou se precisamos criar `kmp-feature-ui` (Compose + Koin para cards que injetam mappers). Decisão default: usar `kmp-compose` e adicionar Koin por módulo onde necessário.
+- [ ] 21.B.2 Se necessário, criar `build-logic/src/main/kotlin/kmp-feature-ui.gradle.kts` aplicando `kmp-compose` + Koin (sem Navigation, sem Arrow).
 
-- [ ] 21.B.1 Substituir `Invoice.creditCard: CreditCard` por `creditCardId: Long` (`:core:domain/model/Invoice.kt`)
-- [ ] 21.B.2 Mover propriedades derivadas (`openingDate`, `closingDate`, `dueDate`) para `InvoiceUi` em `feature:creditCards:impl/model/InvoiceUi.kt` (já existe — estender)
-- [ ] 21.B.3 Atualizar `InvoiceUiMapper` em `feature:creditCards:impl/mapper/InvoiceUiMapper.kt` para receber `Invoice` + resolver `CreditCard` via `ICreditCardRepository` e calcular as datas derivadas
-- [ ] 21.B.4 Atualizar `InvoiceMapper` (`@Entity → Invoice`) em `:core:database` ou `feature:creditCards:impl` para devolver apenas `creditCardId`
-- [ ] 21.B.5 Atualizar todos os call sites que liam `invoice.creditCard.*`, `invoice.openingDate/closingDate/dueDate` para (a) usar `InvoiceUi` quando há contexto de UI, ou (b) buscar `CreditCard` via repo quando estritamente necessário em use cases puros
-- [ ] 21.B.6 Verificar build de `:feature:creditCards:impl`, `:feature:transactions:impl`, `:feature:installments:impl`, `:app`
+### 21.C Esqueleto: criar `:feature:X:ui` (módulos vazios + registro)
 
-### 21.C Refatorar `Transaction`/`Operation`/`OperationPerspective`/`TransactionForm` para IDs only
+> Cria os 8 módulos `:ui` antes de qualquer migração de código, para que os blocos D–L tenham onde colocar componentes e mappers feature por feature.
+>
+> Cada módulo: diretório `feature/<x>/ui/` + `build.gradle.kts` (`kmp-compose` + dependências mínimas) + `src/commonMain/kotlin/com/neoutils/finsight/feature/<x>/` vazio + entrada em `settings.gradle.kts`. Build do `:app` continua passando porque ninguém ainda depende dos novos módulos.
 
-- [ ] 21.C.1 Substituir em `Transaction`: `account: Account?` → `accountId: Long?`; `category: Category?` → `categoryId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`; `invoice: Invoice?` → `invoiceId: Long?`. Manter `target`, `type`, `amount`, `title`, `date`, `id`, `operationId` puros.
-- [ ] 21.C.2 Substituir em `Operation`: `category: Category?` → `categoryId: Long?`; `sourceAccount: Account?` → `sourceAccountId: Long?`; `targetCreditCard: CreditCard?` → `targetCreditCardId: Long?`; `targetInvoice: Invoice?` → `targetInvoiceId: Long?`. `transactions: List<Transaction>` mantém-se (já é mesma feature).
-- [ ] 21.C.3 Atualizar `Operation.label` (que usa `category.name`) para virar uma derivação no `OperationUi` (que terá acesso ao `Category` resolvido). Manter em `Operation` apenas um `defaultLabel` que devolve `title` ou `"Untitled"`.
-- [ ] 21.C.4 Refatorar `OperationPerspective.resolve()` para comparar `transaction.accountId == accountId` / `transaction.creditCardId == creditCardId` / `transaction.invoiceId == invoiceId` (já era ID-based via `?.id` — basta reapontar)
-- [ ] 21.C.5 Atualizar `TransactionForm`: substituir `account: Account?`, `category: Category?`, `creditCard: CreditCard?` por IDs. As validações `target.isAccount → account != null` viram `target.isAccount → accountId != null`. O `TransactionForm.from()` que filtra por `category.type.isAccept(type)` precisa do `Category` resolvido — opções: (a) mover a validação de "tipo da categoria" para o ViewModel/Mapper que monta o form (recebe o objeto), ou (b) o form passa a aceitar `Category?` mas a versão final persistida usa só ID — preferência (a).
-- [ ] 21.C.6 Atualizar `TransactionMapper` (`@Entity ↔ Transaction`) e `OperationMapper` em `feature:transactions:impl` para devolver IDs. Hoje os mappers já recebem refs externos (`account`, `category`) só para hidratar — passam a popular IDs diretamente do `@Entity`.
-- [ ] 21.C.7 Atualizar `BuildTransactionUseCase`/`OperationRepository`/`TransactionRepository` para parar de pré-resolver `Account`/`Category`/`CreditCard`/`Invoice` ao montar `Transaction`/`Operation`. Devolver `Transaction`/`Operation` puros.
+- [ ] 21.C.1 Criar `feature/accounts/ui/`; registrar em `settings.gradle.kts`; deps: `accounts:api` + `:core:ui`
+- [ ] 21.C.2 Criar `feature/categories/ui/`; deps: `categories:api` + `:core:ui`
+- [ ] 21.C.3 Criar `feature/creditCards/ui/`; deps: `creditCards:api` + `:core:domain` (transitório p/ `Invoice`) + `:core:ui`
+- [ ] 21.C.4 Criar `feature/transactions/ui/`; deps: `transactions:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:domain` (transitório) + `:core:ui` + Navigation (vai receber `TransactionsEntry` em 21.M)
+- [ ] 21.C.5 Criar `feature/recurring/ui/`; deps: `recurring:api` + `accounts:api` + `categories:api` + `creditCards:api` + `:core:ui`
+- [ ] 21.C.6 Criar `feature/budgets/ui/`; deps: `budgets:api` + `categories:api` + `:core:ui`
+- [ ] 21.C.7 Criar `feature/installments/ui/`; deps: `installments:api` + `transactions:api` + `creditCards:api` + `:core:ui`
+- [ ] 21.C.8 Criar `feature/dashboard/ui/`; deps: `dashboard:api` + `transactions:api` + `:core:ui` + Navigation (vai receber `DashboardEntry` em 21.M)
+- [ ] 21.C.9 (Opcional) Criar `feature/home/ui/` se em 21.M decidirmos mover `HomeChrome*`/`HomeRoute` componentes para lá. Pode ficar pendente até 21.M.
+- [ ] 21.C.10 `./gradlew :app:assembleDebug` — build passa com 8 módulos `:ui` vazios
 
-### 21.D Criar `XxUi` + mappers em `:impl`
+### 21.D `creditCards:ui` — `Invoice` → `creditCardId` + `InvoiceUi` + componentes + ViewModels
 
-- [ ] 21.D.1 Criar `TransactionUi` em `feature:transactions:impl/model/TransactionUi.kt`: encapsula `Transaction` + `Account?`, `Category?`, `CreditCard?`, `Invoice?` resolvidos. Expor mesmas conveniências hoje usadas pela UI (`account?.name`, `category?.iconKey`, etc.) como propriedades derivadas.
-- [ ] 21.D.2 Criar `OperationUi` em `feature:transactions:impl/model/OperationUi.kt` (hoje vive em `:core:sharedui`, vai migrar): encapsula `Operation` + refs resolvidos + `List<TransactionUi>`. Manter `displayCategory`, `displayAmount`, etc.
-- [ ] 21.D.3 Criar `TransactionUiMapper`/`OperationUiMapper` em `feature:transactions:impl/mapper/`: recebe `IAccountRepository`, `ICategoryRepository`, `ICreditCardRepository`, `IInvoiceRepository` via Koin; resolve por ID; devolve `XxUi`. Suportar batch (lista de IDs distintos → query única).
-- [ ] 21.D.4 Atualizar `:core:sharedui/model/OperationUi.kt`: remover (vai virar referência ao `feature:transactions:impl`). Como `:core:sharedui` não pode depender de `:impl`, o `OperationCard` em `:core:sharedui` aceita um tipo "neutro" — refatorar `OperationCard` para receber primitives (label, amount, date, categoryIconKey, displayType) em vez do `OperationUi` inteiro. **Alternativa:** definir `OperationCardModel` em `:core:sharedui/model/` (um POJO de UI puro) e o mapper de cada feature converte `OperationUi → OperationCardModel`.
-- [ ] 21.D.5 Criar `RecurringUi` em `feature:recurring:impl/model/RecurringUi.kt` + `RecurringUiMapper` (resolve `Account`, `Category`, `CreditCard` via repos)
-- [ ] 21.D.6 Criar `BudgetUi` em `feature:budgets:impl/model/BudgetUi.kt` + `BudgetUiMapper` (resolve `List<Category>` por `categoryIds`)
+> Feature isolada: `Invoice` é consumido por outras features mas hoje está em `:core:domain`. Refatoramos para `creditCardId: Long`, criamos `InvoiceUi` (datas derivadas) em `creditCards:ui`, e migramos componentes CC do `:core:sharedui`. Outras features que liam `invoice.creditCard.*` ou `invoice.openingDate/closingDate/dueDate` precisam ser ajustadas — feito aqui mesmo via call-site update.
 
-### 21.E Refatorar `Recurring` e `Budget` para IDs only
+**Domínio:**
+- [ ] 21.D.1 Substituir `Invoice.creditCard: CreditCard` por `creditCardId: Long` (em `:core:domain/model/Invoice.kt`, ainda no lugar atual)
+- [ ] 21.D.2 Atualizar `InvoiceMapper` (`@Entity → Invoice`) em `creditCards:impl` para popular `creditCardId` direto do `@Entity` (parar de fazer JOIN com CreditCard)
+- [ ] 21.D.3 `Invoice` perde `openingDate`/`closingDate`/`dueDate` derivadas (datas migram para `InvoiceUi`)
 
-- [ ] 21.E.1 Substituir em `Recurring`: `category: Category?` → `categoryId: Long?`; `account: Account?` → `accountId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`. Mover `label` (que usa `category?.name`) para `RecurringUi`.
-- [ ] 21.E.2 Atualizar `RecurringMapper` e `RecurringRepository` para devolver `Recurring` puro.
-- [ ] 21.E.3 Substituir em `Budget`: `categories: List<Category>` → `categoryIds: List<Long>`. Mover `iconKey` lookup, etc., conforme aplicável.
-- [ ] 21.E.4 Atualizar `BudgetMapper` (`:impl`) e use cases (`CalculateBudgetProgress`, etc.) para trabalhar com IDs e resolver `Category` quando precisar.
+**UI tier:**
+- [ ] 21.D.4 `creditCards:ui/model/InvoiceUi.kt`: `data class InvoiceUi(invoice, creditCard, openingDate, closingDate, dueDate, amount, ...)`; `IInvoiceUiMapper.toUi(Invoice): InvoiceUi` interface
+- [ ] 21.D.5 `creditCards:impl/mapper/InvoiceUiMapper.kt` (impl da interface) injeta `ICreditCardRepository` para resolver `CreditCard` e calcula datas a partir de `closingDay`/`dueDay`. Suporte a batch (lista de invoices → query única CreditCard).
+- [ ] 21.D.6 `creditCards:impl/di`: registrar `single<IInvoiceUiMapper> { InvoiceUiMapper(...) }`
+- [ ] 21.D.7 `CreditCardCard` → `creditCards:ui/component/`
+- [ ] 21.D.8 `CreditCardSelector` → `creditCards:ui/component/`
+- [ ] 21.D.9 `InvoiceMonthNavigator` → `creditCards:ui/component/`
+- [ ] 21.D.10 `InvoiceSelector` → `creditCards:ui/component/`
 
-### 21.F Atualizar consumidores (ViewModels, Screens, modais, components)
+**Build wiring:**
+- [ ] 21.D.11 `creditCards:impl/build.gradle.kts`: adicionar `implementation(projects.feature.creditCards.ui)`
 
-- [ ] 21.F.1 `feature:transactions:impl` ViewModels (`TransactionsViewModel`, `EditTransactionViewModel`, `AddTransactionViewModel`, `ViewOperationViewModel`, `ViewTransactionViewModel`, `ViewAdjustmentViewModel`): consumir `OperationUi`/`TransactionUi` via mapper; remover lookup inline de account/category/creditCard.
-- [ ] 21.F.2 `feature:recurring:impl` ViewModels: consumir `RecurringUi`.
-- [ ] 21.F.3 `feature:budgets:impl` ViewModels e use cases: consumir `BudgetUi` em telas; use cases puros operam com IDs.
-- [ ] 21.F.4 `feature:dashboard:impl` (`DashboardViewModel`, builders, content): trabalhar com `OperationUi`/`AccountUi`/`InvoiceUi`; mover lookup para mappers.
-- [ ] 21.F.5 `feature:installments:impl`: ajustar `InstallmentUiMapper` para usar `OperationUi` em vez de `Operation` cru; idem `InstallmentsViewModel`.
-- [ ] 21.F.6 `feature:report:impl`: ajustar geração de relatório para consumir `XxUi` em vez dos rich models antigos.
-- [ ] 21.F.7 `feature:creditCards:impl` (`CreditCardsViewModel`, `InvoiceTransactionsViewModel`): usar `InvoiceUi` (com datas derivadas) e `OperationUi`.
-- [ ] 21.F.8 `feature:accounts:impl` (`AccountsViewModel`, `TransferBetweenAccountsViewModel`): operações que liam `transaction.account` migram para `TransactionUi`.
-- [ ] 21.F.9 `feature:categories:impl`: revisar use cases que iteram `Transaction.category`.
-- [ ] 21.F.10 Ajustar componentes em `:core:sharedui` (`OperationCard`, `TargetSelector`, `BudgetProgressCard`, etc.) para receber tipos primitivos ou `XxCardModel` em vez de domain types.
+**Consumidores:**
+- [ ] 21.D.12 `creditCards:impl` ViewModels (`CreditCardsViewModel`, `InvoiceTransactionsViewModel`): usar `InvoiceUi` (com datas derivadas)
+- [ ] 21.D.13 Atualizar todos os call sites cross-feature que liam `invoice.creditCard.*` ou `invoice.openingDate/closingDate/dueDate` para usar `InvoiceUi` (em UI) ou buscar `CreditCard` via repo (em use cases puros). Locais conhecidos: `transactions:impl`, `installments:impl`, `dashboard:impl`, `report:impl`.
+- [ ] 21.D.14 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
-### 21.G Mover models de volta para suas features
+### 21.E `accounts:ui` + `categories:ui` — migrar componentes (sem refatoração de domínio)
 
-> Só após 21.B–21.F: nesse ponto os models não têm mais cross-references e podem voltar para casa sem reintroduzir `api → api`.
+> `Account` e `Category` já são display-friendly (sem refs cruzadas) — não precisam virar IDs nem ganhar `XxUi` agora. Apenas movemos os componentes que outras features renderizam.
 
-- [ ] 21.G.1 Mover `Account` de `:core:domain/model/` para `:feature:accounts:api/model/`
-- [ ] 21.G.2 Mover `Category` de `:core:domain/model/` para `:feature:categories:api/model/`
-- [ ] 21.G.3 Mover `CreditCard`, `Invoice` de `:core:domain/model/` para `:feature:creditCards:api/model/`
-- [ ] 21.G.4 Mover `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective` de `:core:domain/model/` para `:feature:transactions:api/model/`
-- [ ] 21.G.5 Mover `TransactionForm` de `:core:domain/form/` para `:feature:transactions:api/form/`
-- [ ] 21.G.6 Mover `Recurring`, `RecurringOccurrence` de `:core:domain/model/` para `:feature:recurring:api/model/`
-- [ ] 21.G.7 Mover extensão `Transaction.signedImpact()` para `:feature:transactions:api/extension/`
-- [ ] 21.G.8 Mover extensão `Category.Type.isAccept(Transaction.Type)` para `:feature:transactions:impl/extension/` (vive em impl pois precisa cruzar `categories:api` com `transactions:api` — ambos só podem coexistir em `:impl`)
-- [ ] 21.G.9 Mover extensão `Category.Type.isAccept(Recurring.Type)` para `:feature:recurring:impl/extension/`
+**accounts:ui:**
+- [ ] 21.E.1 `AccountCard` → `accounts:ui/component/`
+- [ ] 21.E.2 `AccountSelector` → `accounts:ui/component/`
+- [ ] 21.E.3 `accounts:impl/build.gradle.kts`: adicionar `implementation(projects.feature.accounts.ui)`
 
-### 21.H Atualizar `build.gradle.kts` dos módulos
+**categories:ui:**
+- [ ] 21.E.4 `CategorySelector` → `categories:ui/component/`
+- [ ] 21.E.5 `MultiCategorySelector` → `categories:ui/component/`
+- [ ] 21.E.6 `CategoryIconBox` → `categories:ui/component/`
+- [ ] 21.E.7 `CategorySpendingCard` → `categories:ui/component/` (renderiza `CategorySpending` de `categories:api`; consumido por `dashboard:impl` e `report:impl`)
+- [ ] 21.E.8 `categories:impl/build.gradle.kts`: adicionar `implementation(projects.feature.categories.ui)`
 
-- [ ] 21.H.1 `feature/accounts/api/build.gradle.kts`: remover `api(projects.core.domain)`; manter deps só de `:core:utils`
-- [ ] 21.H.2 `feature/categories/api/build.gradle.kts`: remover `api(projects.core.domain)`
-- [ ] 21.H.3 `feature/creditCards/api/build.gradle.kts`: remover `api(projects.core.domain)`; readicionar `kotlinx.datetime` se `Invoice` ainda usar
-- [ ] 21.H.4 `feature/transactions/api/build.gradle.kts`: remover `api(projects.core.domain)`; readicionar `kotlinSerialization` + `kotlinx.serialization.json` (necessário para `@Serializable` em `Transaction.Type`/`Target` por causa de `HomeRoute.Transactions`); promover `kotlinx.datetime` para `api`
-- [ ] 21.H.5 `feature/recurring/api/build.gradle.kts`: remover `api(projects.core.domain)`
-- [ ] 21.H.6 `feature/budgets/api/build.gradle.kts`: remover `api(projects.core.domain)`; sem nova dep cross-feature (Budget guarda só `categoryIds: List<Long>`)
-- [ ] 21.H.7 `feature/installments/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` se ainda referenciar `Transaction`/`Operation` no contrato — caso contrário remover dep
-- [ ] 21.H.8 `feature/home/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` (porque `HomeRoute.Transactions` carrega `Transaction.Type?`/`Target?`)
-- [ ] 21.H.9 `feature/dashboard/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` (entry point passa `Transaction.Type?`/`Target?` para `onOpenTransactions`)
-- [ ] 21.H.10 `core/sharedui/build.gradle.kts`: remover `implementation(projects.core.domain)`; manter deps de `:feature:transactions:api`, `:feature:creditCards:api`, etc.
-- [ ] 21.H.11 `feature/report/impl/build.gradle.kts`: remover `implementation(projects.core.domain)`
-- [ ] 21.H.12 Verificar via grep que nenhum `build.gradle.kts` ainda referencia `projects.core.domain`
+**Cross-impl wiring:**
+- [ ] 21.E.9 Cada `:impl` que renderizava esses componentes via `:core:sharedui` adiciona `implementation(projects.feature.accounts.ui)` / `projects.feature.categories.ui` conforme uso. Atualizar imports de `core.sharedui.component.*` para `feature.<x>.component.*`.
+- [ ] 21.E.10 `./gradlew :app:assembleDebug` — build passa
 
-### 21.I Apagar `:core:domain`
+### 21.F `transactions:ui` — `Transaction`/`Operation` → IDs + `TransactionUi`/`OperationUi` + componentes + ViewModels
 
-- [ ] 21.I.1 `git rm -r core/domain/`
-- [ ] 21.I.2 Remover `include(":core:domain")` de `settings.gradle.kts`
-- [ ] 21.I.3 Verificar que `./gradlew help` resolve sem erros
+> Bloco mais pesado da §21. Refatora `Transaction`, `Operation`, `OperationPerspective`, `TransactionForm` para IDs only **e ao mesmo tempo** cria `TransactionUi`/`OperationUi` + mappers + migra `OperationCard`/`TargetSelector` + atualiza todos os ViewModels de `transactions:impl`. Também atualiza qualquer call site externo que lia `transaction.account/category/creditCard/invoice` ou `operation.category/sourceAccount/...`.
 
-### 21.J Verificação final
+**Domínio (em `:core:domain` ainda):**
+- [ ] 21.F.1 `Transaction`: `account: Account?` → `accountId: Long?`; `category: Category?` → `categoryId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`; `invoice: Invoice?` → `invoiceId: Long?`. Manter `target`, `type`, `amount`, `title`, `date`, `id`, `operationId` puros.
+- [ ] 21.F.2 `Operation`: `category: Category?` → `categoryId: Long?`; `sourceAccount: Account?` → `sourceAccountId: Long?`; `targetCreditCard: CreditCard?` → `targetCreditCardId: Long?`; `targetInvoice: Invoice?` → `targetInvoiceId: Long?`. `transactions: List<Transaction>` mantém-se (mesma feature).
+- [ ] 21.F.3 Mover `Operation.label` (que usa `category.name`) para `OperationUi`; em `Operation` resta um `defaultLabel` que devolve `title` ou `"Untitled"`.
+- [ ] 21.F.4 Refatorar `OperationPerspective.resolve()` para comparar `transaction.accountId == accountId` / `transaction.creditCardId == creditCardId` / `transaction.invoiceId == invoiceId`.
+- [ ] 21.F.5 `TransactionForm`: substituir refs por IDs. Validação `category.type.isAccept(type)` migra para o ViewModel/builder que monta o form (que tem o `Category` resolvido em mãos).
+- [ ] 21.F.6 Atualizar `TransactionMapper`/`OperationMapper` em `transactions:impl` para popular IDs direto do `@Entity` (remover hidratação cruzada).
+- [ ] 21.F.7 Atualizar `BuildTransactionUseCase`/`OperationRepository`/`TransactionRepository` para devolver `Transaction`/`Operation` puros.
 
-- [ ] 21.J.1 `grep -r "projects.core.domain" --include="*.kts"` retorna vazio
-- [ ] 21.J.2 `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` retorna vazio
-- [ ] 21.J.3 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio (D10 inalterada)
-- [ ] 21.J.4 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
-- [ ] 21.J.5 `./gradlew allTests` — testes passam (exceto pré-existentes documentados em §17.7/§18.23)
-- [ ] 21.J.6 Build manual em Android, iOS e Desktop; validar golden paths (criar transação, ver dashboard, fechar fatura, confirmar recurring) — UX inalterada
+**UI tier:**
+- [ ] 21.F.8 `transactions:ui/model/TransactionUi.kt`: `data class TransactionUi(transaction, account?, category?, creditCard?, invoice?: InvoiceUi?)` + propriedades derivadas (`displayLabel`, `displayCategoryName`, `displayCategoryIconKey`, etc.)
+- [ ] 21.F.9 `transactions:ui/model/OperationUi.kt`: `data class OperationUi(operation, category?, sourceAccount?, targetCreditCard?, targetInvoice?: InvoiceUi?, transactions: List<TransactionUi>, perspective: OperationPerspective)` + derivadas (`displayLabel`, `displayAmount`, `displayCategory`, etc.) — substituindo o `OperationUi` atual de `:core:sharedui`
+- [ ] 21.F.10 `transactions:ui/mapper/IOperationUiMapper.kt` interface; impl em `transactions:impl/mapper/OperationUiMapper.kt` injetando `IAccountRepository`, `ICategoryRepository`, `ICreditCardRepository`, `IInvoiceRepository` (e `IInvoiceUiMapper` para subcomponentes `InvoiceUi`). Suporte a batch (IDs distintos → query única para evitar N+1).
+- [ ] 21.F.11 `transactions:ui/extension/`: extensão `Category.Type.isAccept(Transaction.Type)` (cruza 2 features — viável em `:ui`).
+- [ ] 21.F.12 `OperationCard` → `transactions:ui/component/`; recebe `OperationUi` rico
+- [ ] 21.F.13 `TargetSelector` → `transactions:ui/component/`
+
+**Build wiring:**
+- [ ] 21.F.14 `transactions:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` (para `IInvoiceUiMapper`)
+- [ ] 21.F.15 `transactions:impl/di`: registrar `single<IOperationUiMapper> { OperationUiMapper(...) }`
+
+**Consumidores:**
+- [ ] 21.F.16 `transactions:impl` ViewModels (`TransactionsViewModel`, `EditTransactionViewModel`, `AddTransactionViewModel`, `ViewOperationViewModel`, `ViewTransactionViewModel`, `ViewAdjustmentViewModel`): consumir `OperationUi`/`TransactionUi` via `IOperationUiMapper`; remover lookup inline de account/category/creditCard.
+- [ ] 21.F.17 Atualizar call sites cross-feature que liam `transaction.account/category/...` para usar `TransactionUi` (em UI) ou resolver via repo (em use cases puros). Locais conhecidos: `accounts:impl` (`AccountsViewModel`, `TransferBetweenAccountsViewModel`), `categories:impl` (use cases que iteram), `installments:impl`, `dashboard:impl`, `report:impl`.
+- [ ] 21.F.18 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.G `recurring:ui` — `Recurring` → IDs + `RecurringUi` + ViewModels
+
+- [ ] 21.G.1 `Recurring`: `category: Category?` → `categoryId: Long?`; `account: Account?` → `accountId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`. `label` migra para `RecurringUi`.
+- [ ] 21.G.2 Atualizar `RecurringMapper` e `RecurringRepository` para devolver `Recurring` puro.
+- [ ] 21.G.3 `recurring:ui/model/RecurringUi.kt`: compõe `Recurring` + `Account?`, `Category?`, `CreditCard?` direto; `IRecurringUiMapper` interface
+- [ ] 21.G.4 `recurring:impl/mapper/RecurringUiMapper.kt` (impl) injeta os repositórios necessários; suporte a batch.
+- [ ] 21.G.5 `recurring:ui/extension/`: extensão `Category.Type.isAccept(Recurring.Type)` (cruza 2 features).
+- [ ] 21.G.6 `recurring:impl/build.gradle.kts`: adicionar `implementation(projects.feature.recurring.ui)`
+- [ ] 21.G.7 `recurring:impl/di`: registrar `single<IRecurringUiMapper> { RecurringUiMapper(...) }`
+- [ ] 21.G.8 `recurring:impl` ViewModels: consumir `RecurringUi` via `IRecurringUiMapper`.
+- [ ] 21.G.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.H `budgets:ui` — `Budget` → IDs + `BudgetUi` + componente + ViewModels
+
+- [ ] 21.H.1 `Budget`: `categories: List<Category>` → `categoryIds: List<Long>`.
+- [ ] 21.H.2 Atualizar `BudgetMapper` e use cases (`CalculateBudgetProgress`, etc.) para trabalhar com IDs e resolver `Category` quando necessário.
+- [ ] 21.H.3 `budgets:ui/model/BudgetUi.kt`: compõe `Budget` + `List<Category>` direto; `IBudgetUiMapper` interface
+- [ ] 21.H.4 `budgets:impl/mapper/BudgetUiMapper.kt` (impl) injeta `ICategoryRepository`; suporte a batch.
+- [ ] 21.H.5 `BudgetProgressCard` → `budgets:ui/component/`
+- [ ] 21.H.6 `budgets:impl/build.gradle.kts`: adicionar `implementation(projects.feature.budgets.ui)`
+- [ ] 21.H.7 `budgets:impl/di`: registrar `single<IBudgetUiMapper> { BudgetUiMapper(...) }`
+- [ ] 21.H.8 `budgets:impl` ViewModels: consumir `BudgetUi`; use cases puros operam com IDs.
+- [ ] 21.H.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.I `installments:ui` — `InstallmentWithOperationsUi` + ViewModels
+
+- [ ] 21.I.1 `installments:ui/model/InstallmentWithOperationsUi.kt` (move de `installments:impl/screen/`) compondo `Installment` + `List<OperationUi>`; mapper interface `IInstallmentWithOperationsUiMapper`
+- [ ] 21.I.2 `installments:impl/mapper/InstallmentWithOperationsUiMapper.kt` (impl) injeta `IOperationUiMapper`
+- [ ] 21.I.3 `installments:impl/build.gradle.kts`: adicionar `implementation(projects.feature.installments.ui)` + `implementation(projects.feature.transactions.ui)` (para `OperationUi`)
+- [ ] 21.I.4 `installments:impl/di`: registrar mapper
+- [ ] 21.I.5 `installments:impl` (`InstallmentUiMapper`, `InstallmentsViewModel`): usar `OperationUi` em vez de `Operation` cru.
+- [ ] 21.I.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.J `dashboard:ui` — consumir `XxUi` via mappers
+
+- [ ] 21.J.1 `dashboard:impl/build.gradle.kts`: adicionar `implementation(projects.feature.dashboard.ui)` + `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` + `implementation(projects.feature.accounts.ui)` + `implementation(projects.feature.budgets.ui)` + `implementation(projects.feature.categories.ui)` (componentes cross-feature renderizados pelo dashboard)
+- [ ] 21.J.2 `dashboard:impl` (`DashboardViewModel`, builders, content): trabalhar com `OperationUi`/`InvoiceUi`/`BudgetUi` via mappers; consumir `Account` direto (sem `AccountUi`).
+- [ ] 21.J.3 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.K `report:impl` + cleanup cross-cutting residual
+
+> Itens que sobram fora dos blocos por-feature: report consome `XxUi` mas não tem `:ui` próprio; outros call sites residuais que escaparam dos blocos D–J.
+
+- [ ] 21.K.1 `report:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + outros `:ui` necessários
+- [ ] 21.K.2 `report:impl`: ajustar geração de relatório para consumir `XxUi` em vez dos rich models antigos.
+- [ ] 21.K.3 Sweep: `grep -r "transaction\.account\|transaction\.category\|transaction\.creditCard\|transaction\.invoice\|operation\.category\|operation\.sourceAccount\|operation\.targetCreditCard\|operation\.targetInvoice\|recurring\.category\|recurring\.account\|recurring\.creditCard\|invoice\.creditCard\|budget\.categories" --include="*.kt"` — todos os hits restantes resolvidos (devem retornar zero ou só usos legítimos de `XxUi.account/category/etc`).
+- [ ] 21.K.4 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.L Mover entry points D11 de `:api` para `:ui`
+
+- [ ] 21.L.1 `DashboardEntry` move de `dashboard:api` para `dashboard:ui`; impl atual no `:app` continua válida (passa a importar de `dashboard:ui`)
+- [ ] 21.L.2 `TransactionsEntry` move de `transactions:api` para `transactions:ui`; impl atual no `:app` passa a importar de `transactions:ui`
+- [ ] 21.L.3 `transactions:api` perde Compose/Navigation; volta para `kmp-library`
+- [ ] 21.L.4 `dashboard:api` perde Compose/Navigation; volta para `kmp-library`
+- [ ] 21.L.5 `home:api` reavaliar — se tem só `HomeRoute`/`HomeChrome`/`NavigationDispatcher` (que são pure data), pode ficar; senão move parte para `home:ui`
+- [ ] 21.L.6 `:app/AppNavHost`: ajustar imports de entry points (`DashboardEntry`/`TransactionsEntry`) que mudaram de `:api` para `:ui`
+- [ ] 21.L.7 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.M Mover models residuais de `:core:domain` para `:feature:X:api`
+
+> Após D–K, os models não têm mais cross-references — podem voltar para casa.
+
+- [ ] 21.M.1 Mover `Account` de `:core:domain/model/` para `:feature:accounts:api/model/`
+- [ ] 21.M.2 Mover `Category` de `:core:domain/model/` para `:feature:categories:api/model/`
+- [ ] 21.M.3 Mover `CreditCard`, `Invoice` para `:feature:creditCards:api/model/`
+- [ ] 21.M.4 Mover `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective` para `:feature:transactions:api/model/`
+- [ ] 21.M.5 Mover `TransactionForm` para `:feature:transactions:api/form/`
+- [ ] 21.M.6 Mover `Recurring`, `RecurringOccurrence` para `:feature:recurring:api/model/`
+- [ ] 21.M.7 Mover extensão `Transaction.signedImpact()` para `:feature:transactions:api/extension/`
+- [ ] 21.M.8 Atualizar imports em todo o codebase via find/replace (`com.neoutils.finsight.core.domain.*` → pacote da feature dona)
+- [ ] 21.M.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.N Apagar `:core:domain`
+
+- [ ] 21.N.1 `git rm -r core/domain/`
+- [ ] 21.N.2 Remover `include(":core:domain")` de `settings.gradle.kts`
+- [ ] 21.N.3 Atualizar `build.gradle.kts` consumidores: remover `api(projects.core.domain)` / `implementation(projects.core.domain)` de `feature/*/api`, `feature/*/impl`, `feature/*/ui` (incluindo as deps transitórias adicionadas em 21.C.3 e 21.C.4), `core/sharedui` (transitório), `feature/report/impl`
+- [ ] 21.N.4 `feature/transactions/api/build.gradle.kts`: readicionar `kotlinSerialization` + `kotlinx.serialization.json` (necessário para `@Serializable Transaction.Type/Target` por causa de `HomeRoute.Transactions`); promover `kotlinx.datetime` para `api`
+- [ ] 21.N.5 `feature/home/api/build.gradle.kts`, `feature/dashboard/api/build.gradle.kts`, `feature/installments/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` onde precisarem dos types de transactions
+- [ ] 21.N.6 `feature/creditCards/api/build.gradle.kts`: readicionar `kotlinx.datetime` (Invoice continua usando `LocalDate`/`Instant`/`YearMonth`)
+- [ ] 21.N.7 Verificar via `grep -r "projects.core.domain" --include="*.kts"` que retorna vazio
+- [ ] 21.N.8 Verificar via `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` que retorna vazio
+- [ ] 21.N.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.O Apagar `:core:sharedui`
+
+- [ ] 21.O.1 Confirmar que `core/sharedui/src/commonMain/kotlin/.../component/` está vazio (todos os 13 componentes migrados em D, E, F, H)
+- [ ] 21.O.2 Confirmar que `core/sharedui/src/commonMain/kotlin/.../model/` está vazio (`OperationUi`, `AccountUi` substituídos pelos novos `XxUi` em F)
+- [ ] 21.O.3 `git rm -r core/sharedui/`
+- [ ] 21.O.4 Remover `include(":core:sharedui")` de `settings.gradle.kts`
+- [ ] 21.O.5 Remover `implementation(projects.core.sharedui)` dos `build.gradle.kts` consumidores
+- [ ] 21.O.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+
+### 21.P Aplicar D12 nos novos pacotes `:ui`
+
+- [ ] 21.P.1 Confirmar que cada `feature/<x>/ui/src/commonMain/kotlin/com/neoutils/finsight/feature/<x>/` segue o pacote raiz da feature, com subpacotes `model`, `mapper`, `component`, `entry`, `extension` conforme aplicável
+- [ ] 21.P.2 Atualizar D12 em `design.md` com a entrada `:feature:<x>:ui`
+
+### 21.Q Verificação final
+
+- [ ] 21.Q.1 `grep -r "projects.core.domain" --include="*.kts"` retorna vazio
+- [ ] 21.Q.2 `grep -r "projects.core.sharedui" --include="*.kts"` retorna vazio
+- [ ] 21.Q.3 `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` retorna vazio
+- [ ] 21.Q.4 `grep -r "import com.neoutils.finsight.core.sharedui" --include="*.kt"` retorna vazio
+- [ ] 21.Q.5 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio (D10 inalterada)
+- [ ] 21.Q.6 `grep -r "projects.feature.*\.ui" feature/*/ui/build.gradle.kts` retorna vazio (nova regra `:ui ↮ :ui`)
+- [ ] 21.Q.7 `grep -r "projects.feature.*\.impl" feature/*/impl/build.gradle.kts` retorna vazio (D10 inalterada para `:impl`)
+- [ ] 21.Q.8 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [ ] 21.Q.9 `./gradlew allTests` — testes passam (exceto pré-existentes documentados em §17.7/§18.23)
+- [ ] 21.Q.10 Build manual em Android, iOS e Desktop; validar golden paths (criar transação, ver dashboard, fechar fatura, confirmar recurring, ajustar saldo, transferência entre contas) — UX inalterada
 
 ## 22. Documentation
 

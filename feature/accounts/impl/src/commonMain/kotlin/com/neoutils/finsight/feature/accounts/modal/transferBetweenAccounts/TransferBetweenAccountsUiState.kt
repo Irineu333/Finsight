@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.accounts.modal.transferBetweenAccounts
 
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 
 data class TransferBetweenAccountsUiState(
     val accounts: List<Account> = emptyList(),

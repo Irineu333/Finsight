@@ -8,7 +8,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.creditCards.event.CreateCreditCard
 import com.neoutils.finsight.feature.creditCards.event.EditCreditCard
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.form.CreditCardForm
 import com.neoutils.finsight.feature.creditCards.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.UpdateCreditCardUseCase

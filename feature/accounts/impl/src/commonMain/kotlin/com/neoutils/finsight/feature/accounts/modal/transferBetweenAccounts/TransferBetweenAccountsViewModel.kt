@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.accounts.event.TransferBetweenAccounts
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.feature.accounts.extension.toUiText

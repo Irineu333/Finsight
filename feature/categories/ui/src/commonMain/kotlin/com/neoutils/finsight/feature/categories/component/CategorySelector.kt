@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.ui.resources.Res
 import com.neoutils.finsight.feature.categories.ui.resources.category_selector_label
 import com.neoutils.finsight.feature.categories.ui.resources.category_selector_none

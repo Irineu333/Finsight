@@ -1,5 +1,5 @@
 package com.neoutils.finsight.feature.budgets.model
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 
 data class BudgetProgress(
     val budget: Budget,

@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.creditCards.modal.deleteFutureInvoice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.creditCards.event.DeleteFutureInvoice
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics

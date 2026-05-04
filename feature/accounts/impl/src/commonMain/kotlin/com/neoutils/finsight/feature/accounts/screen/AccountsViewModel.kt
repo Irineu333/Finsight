@@ -4,15 +4,15 @@ package com.neoutils.finsight.feature.accounts.screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.model.AccountUi
-import com.neoutils.finsight.core.domain.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.model.OperationUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -8,7 +8,7 @@ import com.neoutils.finsight.feature.accounts.event.CreateAccount
 import com.neoutils.finsight.feature.accounts.event.EditAccount
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.accounts.extension.toUiText
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.usecase.CreateAccountUseCase
 import com.neoutils.finsight.feature.accounts.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.feature.accounts.usecase.ValidateAccountNameUseCase

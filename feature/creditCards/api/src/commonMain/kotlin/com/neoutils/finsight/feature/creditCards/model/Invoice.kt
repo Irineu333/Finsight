@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.core.domain.model
+package com.neoutils.finsight.feature.creditCards.model
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth

@@ -37,7 +37,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.resources.Res
 import com.neoutils.finsight.feature.categories.resources.category_form_edit_title
 import com.neoutils.finsight.feature.categories.resources.category_form_expense

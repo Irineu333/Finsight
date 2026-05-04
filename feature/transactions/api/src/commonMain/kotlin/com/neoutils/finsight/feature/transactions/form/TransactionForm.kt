@@ -1,12 +1,12 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.neoutils.finsight.core.domain.form
+package com.neoutils.finsight.feature.transactions.form
 
-import com.neoutils.finsight.core.domain.extension.isAccept
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.extension.isAccept
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.core.utils.util.dayMonthYear
 import kotlinx.datetime.TimeZone

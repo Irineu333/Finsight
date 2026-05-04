@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.resources.Res
 import com.neoutils.finsight.feature.accounts.resources.account_form_default_label
 import com.neoutils.finsight.feature.accounts.resources.account_form_default_state_disabled

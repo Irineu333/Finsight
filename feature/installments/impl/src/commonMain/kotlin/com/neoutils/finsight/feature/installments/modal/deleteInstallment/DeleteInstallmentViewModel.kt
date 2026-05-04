@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.installments.event.DeleteInstallments
 import com.neoutils.finsight.feature.installments.model.Installment
-import com.neoutils.finsight.core.domain.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.ui.component.ModalManager

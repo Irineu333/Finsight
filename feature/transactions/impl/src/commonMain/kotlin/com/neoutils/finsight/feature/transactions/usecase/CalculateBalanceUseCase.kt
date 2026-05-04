@@ -2,9 +2,9 @@
 
 package com.neoutils.finsight.feature.transactions.usecase
 
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
-import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 import kotlin.time.ExperimentalTime

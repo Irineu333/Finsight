@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.accounts.event.AdjustAccountBalance
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.feature.accounts.usecase.AdjustFinalBalanceUseCase

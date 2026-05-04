@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.recurring.usecase
 
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.RecurringOccurrence
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
 import kotlinx.datetime.LocalDate
 
 interface IGetPendingRecurringUseCase {

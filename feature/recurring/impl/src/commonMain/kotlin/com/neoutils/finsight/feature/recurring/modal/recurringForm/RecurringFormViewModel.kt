@@ -6,8 +6,8 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.recurring.event.CreateRecurring
 import com.neoutils.finsight.feature.recurring.event.EditRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.state.RecurringForm
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
@@ -28,8 +28,8 @@ class RecurringFormViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.core.domain.model.Account?>(null)
-    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.core.domain.model.CreditCard?>(null)
+    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.feature.accounts.model.Account?>(null)
+    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.feature.creditCards.model.CreditCard?>(null)
 
     init {
         viewModelScope.launch {

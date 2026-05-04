@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import arrow.core.getOrElse
 import com.neoutils.finsight.feature.budgets.extension.toUiText
 import com.neoutils.finsight.feature.budgets.model.Budget
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.budgets.model.LimitType
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.budgets.event.CreateBudget
 import com.neoutils.finsight.feature.budgets.event.EditBudget

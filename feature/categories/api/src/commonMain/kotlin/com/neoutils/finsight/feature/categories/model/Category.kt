@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.domain.model
+package com.neoutils.finsight.feature.categories.model
 
 data class Category(
     val id: Long = 0,

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.categories.event
 
 import com.neoutils.finsight.core.analytics.Event
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 
 class DeleteCategory(params: Map<String, String>) : Event("delete_category", params) {
     constructor(category: Category) : this(

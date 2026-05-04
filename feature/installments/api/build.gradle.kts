@@ -8,6 +8,8 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
             api(projects.core.domain)
+
+            api(projects.feature.transactions.api)
             implementation(projects.core.analytics)
         }
     }

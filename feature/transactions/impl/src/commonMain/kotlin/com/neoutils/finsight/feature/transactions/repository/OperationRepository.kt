@@ -6,9 +6,9 @@ import com.neoutils.finsight.core.database.dao.OperationDao
 import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.core.database.entity.OperationEntity
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
 import com.neoutils.finsight.feature.transactions.mapper.OperationMapper

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.categories.entryPoint
 
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModal
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry

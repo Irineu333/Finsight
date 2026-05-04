@@ -3,7 +3,7 @@ package com.neoutils.finsight.feature.categories.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.categories.usecase.CreateDefaultCategoriesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.creditCards.repository
 
 import com.neoutils.finsight.core.database.dao.InvoiceDao
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.creditCards.mapper.InvoiceMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first

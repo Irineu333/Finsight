@@ -2,11 +2,11 @@ package com.neoutils.finsight.feature.transactions.mapper
 
 import com.neoutils.finsight.core.database.entity.OperationEntity
 import com.neoutils.finsight.feature.installments.model.Installment
-import com.neoutils.finsight.core.domain.model.OperationInstallment
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.OperationRecurring
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.OperationInstallment
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationRecurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Transaction
 
 class OperationMapper {
 

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.transactions.event
 
 import com.neoutils.finsight.core.analytics.Event
-import com.neoutils.finsight.core.domain.form.TransactionForm
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 
 class CreateTransaction(params: Map<String, String>) : Event("create_transaction", params) {
     constructor(form: TransactionForm) : this(

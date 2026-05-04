@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.feature.creditCards.event.AdjustInvoiceBalance
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository

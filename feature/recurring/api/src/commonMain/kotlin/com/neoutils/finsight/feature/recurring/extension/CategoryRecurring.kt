@@ -1,7 +1,7 @@
-package com.neoutils.finsight.core.domain.extension
+package com.neoutils.finsight.feature.recurring.extension
 
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.recurring.model.Recurring
 
 fun Category.Type.isAccept(type: Recurring.Type): Boolean {
     return when (this) {

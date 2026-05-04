@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.categories.repository
 
 import com.neoutils.finsight.core.database.dao.CategoryDao
 import com.neoutils.finsight.feature.categories.mapper.CategoryMapper
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

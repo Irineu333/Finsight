@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.creditCards.extension.toUiText
 import com.neoutils.finsight.feature.report.resources.*

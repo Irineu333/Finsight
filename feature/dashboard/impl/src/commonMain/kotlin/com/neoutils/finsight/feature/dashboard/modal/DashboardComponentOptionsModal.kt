@@ -21,8 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.util.stringUiText

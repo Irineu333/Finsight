@@ -1,8 +1,8 @@
 package com.neoutils.finsight.feature.transactions.modal.editTransaction
 
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.form.TransactionForm
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import kotlinx.datetime.YearMonth
 
 sealed class EditTransactionAction {

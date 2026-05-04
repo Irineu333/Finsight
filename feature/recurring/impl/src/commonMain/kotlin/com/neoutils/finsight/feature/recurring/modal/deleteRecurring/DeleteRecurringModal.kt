@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.resources.Res
 import com.neoutils.finsight.feature.recurring.resources.delete_recurring_confirm
 import com.neoutils.finsight.feature.recurring.resources.delete_recurring_message

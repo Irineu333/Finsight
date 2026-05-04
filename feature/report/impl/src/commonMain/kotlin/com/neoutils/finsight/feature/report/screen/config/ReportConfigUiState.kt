@@ -1,8 +1,8 @@
 package com.neoutils.finsight.feature.report.screen.config
 
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportConfig
 

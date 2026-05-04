@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.creditCards.model
 
 import kotlinx.datetime.YearMonth
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 
 data class InvoiceMonthSelection(
     val dueMonth: YearMonth,

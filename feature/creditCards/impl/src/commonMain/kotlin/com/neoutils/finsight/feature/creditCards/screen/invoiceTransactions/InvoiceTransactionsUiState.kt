@@ -2,11 +2,11 @@
 
 package com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions
 
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate

@@ -5,7 +5,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.accounts.error.AccountError
 import com.neoutils.finsight.feature.accounts.exception.AccountException
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 
 class DeleteAccountUseCase(

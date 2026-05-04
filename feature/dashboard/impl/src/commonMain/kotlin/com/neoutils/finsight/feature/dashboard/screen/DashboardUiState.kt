@@ -2,8 +2,8 @@
 
 package com.neoutils.finsight.feature.dashboard.screen
 
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock

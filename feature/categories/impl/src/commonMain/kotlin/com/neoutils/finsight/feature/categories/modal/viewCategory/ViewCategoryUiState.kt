@@ -2,7 +2,7 @@
 
 package com.neoutils.finsight.feature.categories.modal.viewCategory
 
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock

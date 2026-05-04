@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.creditCards.mapper
 
 import com.neoutils.finsight.core.database.entity.CreditCardEntity
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 
 class CreditCardMapper {
     fun toDomain(entity: CreditCardEntity): CreditCard {

@@ -7,6 +7,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core.domain)
+
+            api(projects.feature.transactions.api)
             api(libs.androidx.navigation.compose)
         }
     }

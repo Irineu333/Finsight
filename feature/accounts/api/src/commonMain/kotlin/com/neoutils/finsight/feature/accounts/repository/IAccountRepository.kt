@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.accounts.repository
 
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import kotlinx.coroutines.flow.Flow
 
 interface IAccountRepository {

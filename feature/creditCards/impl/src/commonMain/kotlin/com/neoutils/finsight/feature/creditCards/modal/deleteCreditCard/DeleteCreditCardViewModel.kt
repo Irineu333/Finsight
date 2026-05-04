@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.creditCards.event.DeleteCreditCard
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.core.ui.component.ModalManager
 import kotlinx.coroutines.launch

@@ -9,6 +9,12 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
             api(projects.core.domain)
+
+            api(projects.feature.creditCards.api)
+
+            api(projects.feature.categories.api)
+
+            api(projects.feature.accounts.api)
             api(projects.core.utils)
             implementation(projects.core.ui)
             api(libs.androidx.navigation.compose)

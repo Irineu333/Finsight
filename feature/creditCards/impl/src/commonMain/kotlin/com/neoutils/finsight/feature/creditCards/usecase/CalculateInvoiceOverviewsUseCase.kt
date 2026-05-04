@@ -1,8 +1,8 @@
 package com.neoutils.finsight.feature.creditCards.usecase
 
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import kotlinx.datetime.YearMonth
 
 class CalculateInvoiceOverviewsUseCase {

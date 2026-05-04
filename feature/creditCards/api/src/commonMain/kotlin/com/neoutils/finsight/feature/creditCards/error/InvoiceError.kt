@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.creditCards.error
 
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 
 sealed class InvoiceError(val message: String) {
 

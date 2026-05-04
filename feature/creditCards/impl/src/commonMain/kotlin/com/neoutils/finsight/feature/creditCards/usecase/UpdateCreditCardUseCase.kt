@@ -6,7 +6,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.creditCards.error.CreditCardError
 import com.neoutils.finsight.feature.creditCards.exception.CreditCardException
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 
 class UpdateCreditCardUseCase(

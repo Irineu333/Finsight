@@ -22,7 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.resources.Res
 import com.neoutils.finsight.feature.creditCards.resources.credit_card_form_closing_day_label
 import com.neoutils.finsight.feature.creditCards.resources.credit_card_form_due_day_label

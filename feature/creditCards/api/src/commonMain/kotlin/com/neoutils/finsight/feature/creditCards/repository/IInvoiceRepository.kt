@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.creditCards.repository
 
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import kotlinx.coroutines.flow.Flow
 
 interface IInvoiceRepository {

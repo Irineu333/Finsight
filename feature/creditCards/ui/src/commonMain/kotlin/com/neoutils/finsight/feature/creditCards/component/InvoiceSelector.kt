@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.creditCards.ui.resources.Res
 import com.neoutils.finsight.feature.creditCards.ui.resources.invoice_selector_label

@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.core.ui.component.LocalAnimatedVisibilityScope
 import com.neoutils.finsight.core.ui.component.LocalSharedTransitionScope
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter

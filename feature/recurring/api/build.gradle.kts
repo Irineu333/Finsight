@@ -10,6 +10,8 @@ kotlin {
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
             api(projects.core.domain)
+
+            api(projects.feature.categories.api)
             implementation(projects.core.database)
             implementation(projects.core.ui)
         }

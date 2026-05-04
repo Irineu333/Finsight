@@ -1,8 +1,8 @@
 package com.neoutils.finsight.feature.accounts.model
 
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 

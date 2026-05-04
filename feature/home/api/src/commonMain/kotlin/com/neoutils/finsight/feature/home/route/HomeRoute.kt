@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.home.route
 
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.serialization.Serializable
 
 sealed class HomeRoute {

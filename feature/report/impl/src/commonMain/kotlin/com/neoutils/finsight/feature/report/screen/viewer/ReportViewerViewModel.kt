@@ -8,8 +8,8 @@ import com.neoutils.finsight.feature.report.event.ShareReport
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportPerspective
-import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
@@ -243,7 +243,7 @@ class ReportViewerViewModel(
 
 private fun List<Transaction>.toCategoryBreakdown(
     transactionType: Transaction.Type,
-    categoriesById: Map<Long, com.neoutils.finsight.core.domain.model.Category>,
+    categoriesById: Map<Long, com.neoutils.finsight.feature.categories.model.Category>,
 ): List<CategorySpending> {
     val typedTransactions = filter { it.type == transactionType && it.categoryId != null }
     val totalAmount = typedTransactions.sumOf { it.amount }

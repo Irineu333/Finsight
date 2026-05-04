@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.recurring.repository
 
-import com.neoutils.finsight.core.domain.model.RecurringOccurrence
+import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.YearMonth
 

@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.transactions.usecase
 
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
 

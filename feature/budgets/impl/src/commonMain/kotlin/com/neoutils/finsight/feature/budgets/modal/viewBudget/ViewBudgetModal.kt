@@ -30,7 +30,7 @@ import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.feature.budgets.modal.deleteBudget.DeleteBudgetModal
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState

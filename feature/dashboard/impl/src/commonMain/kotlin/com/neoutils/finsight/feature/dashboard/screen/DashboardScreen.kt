@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.dashboard.resources.Res
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_cancel
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_confirm

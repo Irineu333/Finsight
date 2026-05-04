@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.model.OperationUi
 import org.koin.compose.koinInject

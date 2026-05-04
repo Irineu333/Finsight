@@ -1,8 +1,8 @@
 package com.neoutils.finsight.feature.budgets.modal.budgetForm
 
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.budgets.model.LimitType
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation

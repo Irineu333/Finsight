@@ -7,7 +7,7 @@ import arrow.core.left
 import arrow.core.right
 import com.neoutils.finsight.feature.creditCards.error.CreditCardError
 import com.neoutils.finsight.feature.creditCards.exception.CreditCardException
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

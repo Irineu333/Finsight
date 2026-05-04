@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.accounts.modal.editAccountBalance
 
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 
 sealed interface EditAccountBalanceUiState {
     data object Loading : EditAccountBalanceUiState

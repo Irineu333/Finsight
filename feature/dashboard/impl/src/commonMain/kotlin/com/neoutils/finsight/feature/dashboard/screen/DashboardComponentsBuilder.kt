@@ -1,13 +1,13 @@
 package com.neoutils.finsight.feature.dashboard.screen
 
-import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.budgets.model.Budget
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.RecurringOccurrence
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
 import com.neoutils.finsight.feature.budgets.usecase.ICalculateBudgetProgressUseCase
 import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategoryIncomeUseCase
@@ -15,7 +15,7 @@ import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategorySpending
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateTransactionStatsUseCase
 import com.neoutils.finsight.feature.recurring.usecase.IGetPendingRecurringUseCase
 import com.neoutils.finsight.core.utils.extension.effectiveDay
-import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.core.platform.currentPlatform
 import com.neoutils.finsight.feature.creditCards.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
@@ -42,7 +42,7 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
-    val categories: List<com.neoutils.finsight.core.domain.model.Category> = emptyList(),
+    val categories: List<com.neoutils.finsight.feature.categories.model.Category> = emptyList(),
 )
 
 data class DashboardBuilderContext(

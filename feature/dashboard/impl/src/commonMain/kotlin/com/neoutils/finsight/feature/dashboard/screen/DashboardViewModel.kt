@@ -8,8 +8,8 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.dashboard.event.EnterDashboardEditMode
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.dashboard.event.SaveDashboardLayout
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreference
 import com.neoutils.finsight.feature.dashboard.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.feature.accounts.usecase.IEnsureDefaultAccountUseCase

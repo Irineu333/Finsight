@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.domain.model
+package com.neoutils.finsight.feature.transactions.model
 
 sealed class OperationPerspective {
     data class Account(

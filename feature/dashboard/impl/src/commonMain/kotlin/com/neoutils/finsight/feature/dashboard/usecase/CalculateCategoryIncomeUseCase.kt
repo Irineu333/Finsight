@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.dashboard.usecase
 
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth

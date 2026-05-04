@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.creditCards.extension
 
 import androidx.compose.runtime.Composable
-import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.feature.creditCards.api.resources.Res
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_closed

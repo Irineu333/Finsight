@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.transactions.repository
 
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository

@@ -3,9 +3,9 @@ package com.neoutils.finsight.feature.budgets.usecase
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.budgets.model.LimitType
-import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn

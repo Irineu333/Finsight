@@ -6,9 +6,9 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.recurring.event.ConfirmRecurring
 import com.neoutils.finsight.feature.recurring.event.SkipRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
@@ -49,8 +49,8 @@ class ConfirmRecurringViewModel(
     }
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)
-    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.core.domain.model.Account?>(null)
-    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.core.domain.model.CreditCard?>(null)
+    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.feature.accounts.model.Account?>(null)
+    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.feature.creditCards.model.CreditCard?>(null)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
     private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
 

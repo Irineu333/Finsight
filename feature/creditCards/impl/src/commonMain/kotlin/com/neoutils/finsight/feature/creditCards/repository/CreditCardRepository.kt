@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.creditCards.repository
 
 import com.neoutils.finsight.core.database.dao.CreditCardDao
 import com.neoutils.finsight.feature.creditCards.mapper.CreditCardMapper
-import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

@@ -21,13 +21,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.recurring.state.RecurringForm
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.domain.extension.isAccept
-import com.neoutils.finsight.core.domain.extension.isAccept
+import com.neoutils.finsight.feature.recurring.extension.isAccept
 import com.neoutils.finsight.feature.recurring.resources.Res
 import com.neoutils.finsight.feature.recurring.resources.add_transaction_expense
 import com.neoutils.finsight.feature.recurring.resources.add_transaction_income
@@ -94,14 +93,14 @@ class RecurringFormModal(
         var target by remember { mutableStateOf(initialCreditCard) }
 
         val categoryRepo = koinInject<com.neoutils.finsight.feature.categories.repository.ICategoryRepository>()
-        val initialCategory by produceState<com.neoutils.finsight.core.domain.model.Category?>(
+        val initialCategory by produceState<com.neoutils.finsight.feature.categories.model.Category?>(
             initialValue = null,
             recurring?.categoryId,
         ) {
             value = recurring?.categoryId?.let { categoryRepo.getCategoryById(it) }
         }
         var selectedCategory by remember(initialCategory) {
-            mutableStateOf<com.neoutils.finsight.core.domain.model.Category?>(initialCategory)
+            mutableStateOf<com.neoutils.finsight.feature.categories.model.Category?>(initialCategory)
         }
 
         LaunchedEffect(type) {

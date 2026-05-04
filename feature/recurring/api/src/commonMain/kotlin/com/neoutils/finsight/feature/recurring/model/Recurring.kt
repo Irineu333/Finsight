@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.domain.model
+package com.neoutils.finsight.feature.recurring.model
 
 data class Recurring(
     val id: Long = 0,

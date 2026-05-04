@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.recurring.resources.Res
 import com.neoutils.finsight.feature.recurring.resources.recurring_card_monthly_amount
@@ -336,9 +336,9 @@ private fun RecurringEmptyState(
 @Composable
 private fun RecurringCard(
     recurring: Recurring,
-    category: com.neoutils.finsight.core.domain.model.Category?,
-    account: com.neoutils.finsight.core.domain.model.Account?,
-    creditCard: com.neoutils.finsight.core.domain.model.CreditCard?,
+    category: com.neoutils.finsight.feature.categories.model.Category?,
+    account: com.neoutils.finsight.feature.accounts.model.Account?,
+    creditCard: com.neoutils.finsight.feature.creditCards.model.CreditCard?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

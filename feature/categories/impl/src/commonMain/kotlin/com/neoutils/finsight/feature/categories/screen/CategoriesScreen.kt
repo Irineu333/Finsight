@@ -33,7 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.component.CategoryCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModal

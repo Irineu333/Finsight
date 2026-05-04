@@ -9,10 +9,10 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.feature.recurring.error.RecurringError
 import com.neoutils.finsight.feature.recurring.exception.RecurringException
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import kotlin.time.Clock

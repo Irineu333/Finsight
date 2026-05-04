@@ -1,6 +1,6 @@
 package com.neoutils.finsight.feature.recurring.repository
 
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import kotlinx.coroutines.flow.Flow
 
 interface IRecurringRepository {

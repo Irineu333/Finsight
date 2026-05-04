@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.recurring.repository
 
 import com.neoutils.finsight.core.database.dao.RecurringDao
-import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.mapper.RecurringMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

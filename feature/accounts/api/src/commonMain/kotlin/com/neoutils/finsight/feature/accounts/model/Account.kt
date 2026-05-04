@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.domain.model
+package com.neoutils.finsight.feature.accounts.model
 
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

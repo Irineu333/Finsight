@@ -6,7 +6,7 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.raise.context.bind
 import arrow.core.raise.either
-import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.categories.resources.Res
 import com.neoutils.finsight.feature.categories.resources.category_default_benefits

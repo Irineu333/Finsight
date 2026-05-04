@@ -535,15 +535,15 @@
 
 > Após D–K, os models não têm mais cross-references — podem voltar para casa.
 
-- [ ] 21.M.1 Mover `Account` de `:core:domain/model/` para `:feature:accounts:api/model/`
-- [ ] 21.M.2 Mover `Category` de `:core:domain/model/` para `:feature:categories:api/model/`
-- [ ] 21.M.3 Mover `CreditCard`, `Invoice` para `:feature:creditCards:api/model/`
-- [ ] 21.M.4 Mover `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective` para `:feature:transactions:api/model/`
-- [ ] 21.M.5 Mover `TransactionForm` para `:feature:transactions:api/form/`
-- [ ] 21.M.6 Mover `Recurring`, `RecurringOccurrence` para `:feature:recurring:api/model/`
-- [ ] 21.M.7 Mover extensão `Transaction.signedImpact()` para `:feature:transactions:api/extension/`
-- [ ] 21.M.8 Atualizar imports em todo o codebase via find/replace (`com.neoutils.finsight.core.domain.*` → pacote da feature dona)
-- [ ] 21.M.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.M.1 Mover `Account` de `:core:domain/model/` para `:feature:accounts:api/model/`
+- [x] 21.M.2 Mover `Category` de `:core:domain/model/` para `:feature:categories:api/model/`
+- [x] 21.M.3 Mover `CreditCard`, `Invoice` para `:feature:creditCards:api/model/`
+- [x] 21.M.4 Mover `Transaction`, `Operation`, `OperationInstallment`, `OperationRecurring`, `OperationPerspective` para `:feature:transactions:api/model/`
+- [x] 21.M.5 Mover `TransactionForm` para `:feature:transactions:api/form/`
+- [x] 21.M.6 Mover `Recurring`, `RecurringOccurrence` para `:feature:recurring:api/model/`
+- [x] 21.M.7 Mover extensão `Transaction.signedImpact()` para `:feature:transactions:api/extension/`
+- [x] 21.M.8 Atualizar imports em todo o codebase via find/replace (`com.neoutils.finsight.core.domain.*` → pacote da feature dona)
+- [x] 21.M.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.N Apagar `:core:domain`
 

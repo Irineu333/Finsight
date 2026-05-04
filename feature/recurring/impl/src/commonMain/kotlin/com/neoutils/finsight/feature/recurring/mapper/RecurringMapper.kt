@@ -1,19 +1,11 @@
 package com.neoutils.finsight.feature.recurring.mapper
 
 import com.neoutils.finsight.core.database.entity.RecurringEntity
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Recurring
 
 class RecurringMapper : IRecurringMapper {
 
-    override fun toDomain(
-        entity: RecurringEntity,
-        category: Category?,
-        account: Account?,
-        creditCard: CreditCard?,
-    ): Recurring = Recurring(
+    override fun toDomain(entity: RecurringEntity): Recurring = Recurring(
         id = entity.id,
         type = when (entity.type) {
             RecurringEntity.Type.EXPENSE -> Recurring.Type.EXPENSE
@@ -22,9 +14,9 @@ class RecurringMapper : IRecurringMapper {
         amount = entity.amount,
         title = entity.title,
         dayOfMonth = entity.dayOfMonth,
-        category = category,
-        account = account,
-        creditCard = creditCard,
+        categoryId = entity.categoryId,
+        accountId = entity.accountId,
+        creditCardId = entity.creditCardId,
         createdAt = entity.createdAt,
         isActive = entity.isActive,
     )
@@ -38,9 +30,9 @@ class RecurringMapper : IRecurringMapper {
         amount = recurring.amount,
         title = recurring.title,
         dayOfMonth = recurring.dayOfMonth,
-        categoryId = recurring.category?.id,
-        accountId = recurring.account?.id,
-        creditCardId = recurring.creditCard?.id,
+        categoryId = recurring.categoryId,
+        accountId = recurring.accountId,
+        creditCardId = recurring.creditCardId,
         createdAt = recurring.createdAt,
         isActive = recurring.isActive,
     )

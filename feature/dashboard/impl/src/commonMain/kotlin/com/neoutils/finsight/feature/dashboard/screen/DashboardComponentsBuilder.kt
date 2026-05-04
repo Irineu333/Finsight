@@ -42,6 +42,7 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
+    val categories: List<com.neoutils.finsight.core.domain.model.Category> = emptyList(),
 )
 
 data class DashboardBuilderContext(
@@ -221,7 +222,7 @@ class DashboardComponentsBuilder(
         val accountsUi = input.accounts
             .filter { it.id !in excludedIds }
             .map { account ->
-                val accountTransactions = allTransactions.filter { it.account?.id == account.id }
+                val accountTransactions = allTransactions.filter { it.accountId == account.id }
                 val balance = accountTransactions.sumOf { it.signedImpact() }
                 DashboardAccountUi(account = account, balance = balance)
             }
@@ -276,6 +277,7 @@ class DashboardComponentsBuilder(
 
         val categorySpending = calculateCategorySpendingUseCase(
             transactions = allTransactions,
+            categoriesById = input.categories.associateBy { it.id },
             forYearMonth = input.targetMonth,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 
@@ -298,6 +300,7 @@ class DashboardComponentsBuilder(
 
         val categoryIncome = calculateCategoryIncomeUseCase(
             transactions = allTransactions,
+            categoriesById = input.categories.associateBy { it.id },
             forYearMonth = input.targetMonth,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 

@@ -10,11 +10,11 @@ data class Transaction(
     val amount: Double,
     val title: String?,
     val date: LocalDate,
-    val category: Category? = null,
+    val categoryId: Long? = null,
     val target: Target = Target.ACCOUNT,
-    val creditCard: CreditCard? = null,
-    val invoice: Invoice? = null,
-    val account: Account? = null,
+    val creditCardId: Long? = null,
+    val invoiceId: Long? = null,
+    val accountId: Long? = null,
 ) {
     @Serializable
     enum class Type {
@@ -38,5 +38,5 @@ data class Transaction(
             get() = this == CREDIT_CARD
     }
 
-    val isInvoicePayment: Boolean get() = invoice != null
+    val isInvoicePayment: Boolean get() = invoiceId != null
 }

@@ -2,15 +2,14 @@ package com.neoutils.finsight.feature.budgets.mapper
 
 import com.neoutils.finsight.core.database.entity.BudgetEntity
 import com.neoutils.finsight.feature.budgets.model.Budget
-import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.feature.budgets.model.LimitType
 
 class BudgetMapper {
-    fun toDomain(entity: BudgetEntity, categories: List<Category>): Budget {
+    fun toDomain(entity: BudgetEntity, categoryIds: List<Long>): Budget {
         return Budget(
             id = entity.id,
             title = entity.title,
-            categories = categories,
+            categoryIds = categoryIds,
             iconKey = entity.iconKey,
             amount = entity.amount,
             limitType = runCatching { LimitType.valueOf(entity.limitType) }.getOrDefault(LimitType.FIXED),
@@ -23,8 +22,8 @@ class BudgetMapper {
     fun toEntity(domain: Budget): BudgetEntity {
         return BudgetEntity(
             id = domain.id,
-            categoryId = domain.categories.firstOrNull()?.id ?: 0,
-            iconCategoryId = domain.categories.firstOrNull()?.id ?: 0,
+            categoryId = domain.categoryIds.firstOrNull() ?: 0,
+            iconCategoryId = domain.categoryIds.firstOrNull() ?: 0,
             iconKey = domain.iconKey,
             title = domain.title,
             amount = domain.amount,

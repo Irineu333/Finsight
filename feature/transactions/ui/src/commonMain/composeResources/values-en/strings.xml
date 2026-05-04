@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="operation_card_transfer">Transfer</string>
+    <string name="operation_card_payment">Invoice Payment</string>
+    <string name="operation_card_balance_adjustment">Balance Adjustment</string>
+    <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="target_selector_account">Account</string>
+    <string name="target_selector_credit_card">Credit Card</string>
+    <string name="target_selector_label">Type</string>
+</resources>

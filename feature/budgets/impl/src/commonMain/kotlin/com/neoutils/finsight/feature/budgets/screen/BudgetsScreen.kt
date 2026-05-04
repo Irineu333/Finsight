@@ -243,7 +243,7 @@ private fun BudgetProgressItem(
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
                     )
-                    val categoryCount = progress.budget.categories.size
+                    val categoryCount = progress.budget.categoryIds.size
                     val categoryLabel = if (categoryCount == 1) {
                         stringResource(Res.string.budgets_category_singular)
                     } else {

@@ -70,7 +70,7 @@ class TransferBetweenAccountsUseCase(
                         title = null,
                         date = date,
                         target = Transaction.Target.ACCOUNT,
-                        account = sourceAccount,
+                        accountId = sourceAccount.id,
                     ),
                     Transaction(
                         type = Transaction.Type.INCOME,
@@ -78,7 +78,7 @@ class TransferBetweenAccountsUseCase(
                         title = null,
                         date = date,
                         target = Transaction.Target.ACCOUNT,
-                        account = destinationAccount,
+                        accountId = destinationAccount.id,
                     ),
                 ),
             )

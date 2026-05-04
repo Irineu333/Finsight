@@ -44,9 +44,6 @@ val recurringModule = module {
         RecurringRepository(
             dao = get(),
             mapper = get(),
-            categoryRepository = get(),
-            accountRepository = get(),
-            creditCardRepository = get(),
         )
     }
 
@@ -77,7 +74,12 @@ val recurringModule = module {
     factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
 
     viewModel {
-        RecurringViewModel(recurringRepository = get())
+        RecurringViewModel(
+            recurringRepository = get(),
+            accountRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+        )
     }
 
     viewModel {

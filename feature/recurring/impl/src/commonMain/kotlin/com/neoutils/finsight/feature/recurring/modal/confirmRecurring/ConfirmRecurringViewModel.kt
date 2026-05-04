@@ -42,19 +42,23 @@ class ConfirmRecurringViewModel(
 ) : ViewModel() {
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    private val initialTarget = if (recurring.creditCard != null) {
+    private val initialTarget = if (recurring.creditCardId != null) {
         Transaction.Target.CREDIT_CARD
     } else {
         Transaction.Target.ACCOUNT
     }
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)
-    private val selectedAccount = MutableStateFlow(recurring.account)
-    private val selectedCreditCard = MutableStateFlow(recurring.creditCard)
+    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.core.domain.model.Account?>(null)
+    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.core.domain.model.CreditCard?>(null)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
     private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
 
     init {
+        viewModelScope.launch {
+            selectedAccount.value = recurring.accountId?.let { accountRepository.getAccountById(it) }
+            selectedCreditCard.value = recurring.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
+        }
         viewModelScope.launch {
             selectedCreditCard.collectLatest { creditCard ->
                 if (creditCard == null) {
@@ -100,8 +104,8 @@ class ConfirmRecurringViewModel(
             recurring = recurring,
             confirmDate = targetDate.takeIf { it <= currentDate } ?: currentDate,
             selectedTarget = initialTarget,
-            selectedAccount = recurring.account,
-            selectedCreditCard = recurring.creditCard,
+            selectedAccount = null,
+            selectedCreditCard = null,
         ),
     )
 

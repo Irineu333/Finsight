@@ -30,7 +30,7 @@ import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.recurring.resources.*
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.core.sharedui.component.*
+import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceSelector
@@ -109,20 +109,8 @@ class ConfirmRecurringModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            recurring.category?.let { category ->
-                OutlinedTextField(
-                    value = category.name,
-                    onValueChange = {},
-                    label = { Text(text = stringResource(Res.string.view_recurring_category_label)) },
-                    readOnly = true,
-                    enabled = false,
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
-            }
+            // category display removed in Recurring → IDs refactor (D14);
+            // can be restored by injecting a category lookup in the VM
 
             AnimatedVisibility(recurring.type.isExpense) {
                 TargetSelector(

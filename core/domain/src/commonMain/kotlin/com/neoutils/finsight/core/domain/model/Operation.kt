@@ -8,14 +8,14 @@ data class Operation(
     val title: String?,
     val date: LocalDate,
     val recurring: OperationRecurring? = null,
-    val category: Category? = null,
-    val sourceAccount: Account? = null,
-    val targetCreditCard: CreditCard? = null,
-    val targetInvoice: Invoice? = null,
+    val categoryId: Long? = null,
+    val sourceAccountId: Long? = null,
+    val targetCreditCardId: Long? = null,
+    val targetInvoiceId: Long? = null,
     val installment: OperationInstallment? = null,
     val transactions: List<Transaction>,
 ) {
-    val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
+    val defaultLabel get() = title?.takeIf { it.isNotBlank() } ?: "Untitled"
 
     val accountTransaction: Transaction?
         get() = transactions.firstOrNull { it.target == Transaction.Target.ACCOUNT }

@@ -34,7 +34,7 @@ sealed class InstallmentsUiState {
             get() {
                 val operations = selectedInstallment?.operations.orEmpty()
                 return operations.filter { operation ->
-                    (selectedCategory == null || operation.category?.id == selectedCategory.id) &&
+                    (selectedCategory == null || operation.categoryId == selectedCategory.id) &&
                             (selectedType == null || operation.type == selectedType)
                 }
             }

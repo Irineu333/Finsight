@@ -7,7 +7,7 @@ import com.neoutils.finsight.core.domain.model.Operation
 class DeleteInstallments(params: Map<String, String>) : Event("delete_installments", params) {
     constructor(installment: Installment, operations: List<Operation>) : this(
         buildMap {
-            operations.firstOrNull()?.category?.let { put("category", it.name) }
+            operations.firstOrNull()?.categoryId?.let { put("categoryId", it.toString()) }
             put("installments_count", installment.count.toString())
         }
     )

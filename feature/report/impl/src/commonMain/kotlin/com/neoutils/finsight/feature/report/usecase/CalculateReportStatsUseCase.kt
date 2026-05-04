@@ -62,13 +62,13 @@ private fun Operation.matchesPerspective(perspective: ReportPerspective): Boolea
             perspective.accountIds.isEmpty() ||
                 transactions.any {
                     it.target == Transaction.Target.ACCOUNT &&
-                        (it.account?.id in perspective.accountIds)
+                        (it.accountId in perspective.accountIds)
                 }
         }
         is ReportPerspective.CreditCardPerspective -> {
             transactions.any {
                 it.target == Transaction.Target.CREDIT_CARD &&
-                    it.creditCard?.id == perspective.creditCardId
+                    it.creditCardId == perspective.creditCardId
             }
         }
     }
@@ -78,11 +78,11 @@ private fun Transaction.matchesPerspective(perspective: ReportPerspective): Bool
     return when (perspective) {
         is ReportPerspective.AccountPerspective -> {
             target == Transaction.Target.ACCOUNT &&
-                (perspective.accountIds.isEmpty() || account?.id in perspective.accountIds)
+                (perspective.accountIds.isEmpty() || accountId in perspective.accountIds)
         }
         is ReportPerspective.CreditCardPerspective -> {
             target == Transaction.Target.CREDIT_CARD &&
-                creditCard?.id == perspective.creditCardId
+                creditCardId == perspective.creditCardId
         }
     }
 }
@@ -101,7 +101,7 @@ private fun Operation.isInternalTransferFor(
 
     val transferAccountIds = transactions
         .filter { it.target == Transaction.Target.ACCOUNT }
-        .mapNotNull { it.account?.id }
+        .mapNotNull { it.accountId }
         .toSet()
 
     if (transferAccountIds.size < 2) return false

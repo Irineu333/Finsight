@@ -1,12 +1,8 @@
 package com.neoutils.finsight.feature.transactions.mapper
 
 import com.neoutils.finsight.core.database.entity.OperationEntity
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.feature.installments.model.Installment
 import com.neoutils.finsight.core.domain.model.OperationInstallment
-import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.OperationRecurring
 import com.neoutils.finsight.core.domain.model.Recurring
@@ -17,11 +13,7 @@ class OperationMapper {
     fun toDomain(
         entity: OperationEntity,
         transactions: List<Transaction>,
-        categories: Map<Long, Category>,
-        creditCards: Map<Long, CreditCard>,
-        invoices: Map<Long, Invoice>,
         installments: Map<Long, Installment>,
-        accounts: Map<Long, Account>,
         recurring: Map<Long, Recurring>,
     ): Operation? {
         if (transactions.isEmpty()) return null
@@ -46,10 +38,10 @@ class OperationMapper {
                     }
                 }
             },
-            category = entity.categoryId?.let { categories[it] } ?: primaryTransaction.category,
-            sourceAccount = entity.sourceAccountId?.let { accounts[it] },
-            targetCreditCard = entity.targetCreditCardId?.let { creditCards[it] },
-            targetInvoice = entity.targetInvoiceId?.let { invoices[it] },
+            categoryId = entity.categoryId ?: primaryTransaction.categoryId,
+            sourceAccountId = entity.sourceAccountId,
+            targetCreditCardId = entity.targetCreditCardId,
+            targetInvoiceId = entity.targetInvoiceId,
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->
                     installments[installmentId]?.let { instance ->

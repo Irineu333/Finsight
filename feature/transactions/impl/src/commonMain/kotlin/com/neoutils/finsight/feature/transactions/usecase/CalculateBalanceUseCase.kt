@@ -22,7 +22,7 @@ class CalculateBalanceUseCase(
         return transactions
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isAccount }
-            .filter { accountId == null || it.account?.id == accountId }
+            .filter { accountId == null || it.accountId == accountId }
             .sumOf { it.signedImpact() }
     }
 

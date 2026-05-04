@@ -14,14 +14,23 @@ import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import org.koin.compose.koinInject
 import com.neoutils.finsight.feature.recurring.resources.Res
 import com.neoutils.finsight.feature.recurring.resources.recurring_expense
 import com.neoutils.finsight.feature.recurring.resources.recurring_income
@@ -65,6 +74,19 @@ class ViewRecurringModal(
         val formatter = LocalCurrencyFormatter.current
         val typeColor = if (recurring.type.isIncome) Income else Expense
 
+        val accountRepo = koinInject<IAccountRepository>()
+        val categoryRepo = koinInject<ICategoryRepository>()
+        val creditCardRepo = koinInject<ICreditCardRepository>()
+        val account by produceState<Account?>(initialValue = null, recurring.accountId) {
+            value = recurring.accountId?.let { accountRepo.getAccountById(it) }
+        }
+        val category by produceState<Category?>(initialValue = null, recurring.categoryId) {
+            value = recurring.categoryId?.let { categoryRepo.getCategoryById(it) }
+        }
+        val creditCard by produceState<CreditCard?>(initialValue = null, recurring.creditCardId) {
+            value = recurring.creditCardId?.let { creditCardRepo.getCreditCardById(it) }
+        }
+
         val typeLabel = if (recurring.type.isIncome) {
             stringResource(Res.string.recurring_income)
         } else {
@@ -82,10 +104,10 @@ class ViewRecurringModal(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                val category = recurring.category
-                if (category != null) {
+                val resolvedCategory = category
+                if (resolvedCategory != null) {
                     CategoryIconBox(
-                        category = category,
+                        category = resolvedCategory,
                         modifier = Modifier.size(64.dp),
                         contentPadding = PaddingValues(16.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -153,7 +175,7 @@ class ViewRecurringModal(
                     },
                     valueColor = if (recurring.isActive) Income else Warning,
                 )
-                recurring.account?.let { account ->
+                account?.let { account ->
                     Spacer(modifier = Modifier.height(8.dp))
 
                     DetailRow(
@@ -165,7 +187,7 @@ class ViewRecurringModal(
                         }
                     )
                 }
-                recurring.creditCard?.let { creditCard ->
+                creditCard?.let { creditCard ->
                     Spacer(modifier = Modifier.height(8.dp))
 
                     DetailRow(
@@ -179,7 +201,7 @@ class ViewRecurringModal(
                         }
                     )
                 }
-                recurring.category?.let {
+                category?.let {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     DetailRow(

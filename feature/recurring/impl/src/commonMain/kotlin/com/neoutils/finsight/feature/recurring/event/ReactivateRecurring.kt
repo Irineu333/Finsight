@@ -7,8 +7,8 @@ class ReactivateRecurring(params: Map<String, String>) : Event("reactivate_recur
     constructor(recurring: Recurring) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())
-            put("target", if (recurring.creditCard != null) "credit_card" else "account")
-            recurring.category?.let { put("category", it.name) }
+            put("target", if (recurring.creditCardId != null) "credit_card" else "account")
+            recurring.categoryId?.let { put("categoryId", it.toString()) }
         }
     )
 }

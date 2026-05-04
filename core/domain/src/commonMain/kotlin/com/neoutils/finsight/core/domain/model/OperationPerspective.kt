@@ -16,15 +16,15 @@ sealed class OperationPerspective {
         return when (this) {
             is Account -> {
                 operation.transactions.firstOrNull { transaction ->
-                    transaction.target.isAccount && transaction.account?.id == accountId
+                    transaction.target.isAccount && transaction.accountId == accountId
                 }
             }
 
             is Card -> {
                 operation.transactions.firstOrNull { transaction ->
                     transaction.target.isCreditCard &&
-                            transaction.creditCard?.id == creditCardId &&
-                            (invoiceId == null || transaction.invoice?.id == invoiceId)
+                            transaction.creditCardId == creditCardId &&
+                            (invoiceId == null || transaction.invoiceId == invoiceId)
                 }
             }
         }

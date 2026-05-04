@@ -28,8 +28,15 @@ class RecurringFormViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedAccount = MutableStateFlow(recurring?.account)
-    private val selectedCreditCard = MutableStateFlow(recurring?.creditCard)
+    private val selectedAccount = MutableStateFlow<com.neoutils.finsight.core.domain.model.Account?>(null)
+    private val selectedCreditCard = MutableStateFlow<com.neoutils.finsight.core.domain.model.CreditCard?>(null)
+
+    init {
+        viewModelScope.launch {
+            selectedAccount.value = recurring?.accountId?.let { accountRepository.getAccountById(it) }
+            selectedCreditCard.value = recurring?.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
+        }
+    }
 
     private val categories = categoryRepository.observeAllCategories()
     private val accounts = accountRepository.observeAllAccounts()
@@ -54,8 +61,8 @@ class RecurringFormViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = RecurringFormUiState(
-            selectedAccount = recurring?.account,
-            selectedCreditCard = recurring?.creditCard,
+            selectedAccount = null,
+            selectedCreditCard = null,
         ),
     )
 

@@ -47,7 +47,18 @@ class BudgetFormViewModel(
 
     private val isEditMode = budget != null
 
-    private val selectedCategories = MutableStateFlow<List<Category>>(budget?.categories ?: emptyList())
+    private val initialCategoryIds: Set<Long> = budget?.categoryIds?.toSet() ?: emptySet()
+    private val selectedCategories = MutableStateFlow<List<Category>>(emptyList())
+
+    init {
+        if (initialCategoryIds.isNotEmpty()) {
+            viewModelScope.launch {
+                selectedCategories.value = categoryRepository
+                    .getAllCategories()
+                    .filter { it.id in initialCategoryIds }
+            }
+        }
+    }
     private val selectedIcon = MutableStateFlow(AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key))
     private val title = MutableStateFlow(budget?.title ?: "")
     private val amount = MutableStateFlow(budget?.amount?.let { formatter.format(it) } ?: "")
@@ -95,8 +106,7 @@ class BudgetFormViewModel(
     ) { categories, budgets, (allRecurrings, fields, validation) ->
         val budgetedCategoryIds = budgets
             .filter { it.id != budget?.id }
-            .flatMap { it.categories }
-            .map { it.id }
+            .flatMap { it.categoryIds }
             .toSet()
 
         val incomeRecurrings = allRecurrings.filter { it.type == Recurring.Type.INCOME && it.isActive }
@@ -121,7 +131,7 @@ class BudgetFormViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = BudgetFormUiState(
-            selectedCategories = budget?.categories ?: emptyList(),
+            selectedCategories = emptyList(),
             selectedIcon = AppIcon.fromKey(budget?.iconKey ?: AppIcon.BUDGET.key),
             title = budget?.title ?: "",
             amount = budget?.amount?.let { formatter.format(it) } ?: "",
@@ -198,7 +208,7 @@ class BudgetFormViewModel(
                 budgetRepository.update(
                     budget.copy(
                         title = validatedTitle.trim(),
-                        categories = state.selectedCategories,
+                        categoryIds = state.selectedCategories.map { it.id },
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
                         limitType = state.limitType,
@@ -210,7 +220,7 @@ class BudgetFormViewModel(
                 budgetRepository.insert(
                     Budget(
                         title = validatedTitle.trim(),
-                        categories = state.selectedCategories,
+                        categoryIds = state.selectedCategories.map { it.id },
                         iconKey = state.selectedIcon.key,
                         amount = resolvedAmount,
                         limitType = state.limitType,

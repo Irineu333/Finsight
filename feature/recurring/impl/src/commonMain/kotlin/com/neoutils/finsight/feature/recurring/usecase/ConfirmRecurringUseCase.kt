@@ -33,13 +33,13 @@ class ConfirmRecurringUseCase(
         recurring: Recurring,
         date: LocalDate,
         amount: Double = recurring.amount,
-        target: Transaction.Target = if (recurring.creditCard != null) {
+        target: Transaction.Target = if (recurring.creditCardId != null) {
             Transaction.Target.CREDIT_CARD
         } else {
             Transaction.Target.ACCOUNT
         },
-        account: Account? = recurring.account,
-        creditCard: CreditCard? = recurring.creditCard,
+        account: Account? = null,
+        creditCard: CreditCard? = null,
         invoice: Invoice? = null,
     ): Either<Throwable, Operation> {
         val yearMonth = date.yearMonth
@@ -55,21 +55,23 @@ class ConfirmRecurringUseCase(
             }
 
             if (target.isCreditCard) {
-                val targetCreditCard = creditCard ?: recurring.creditCard
-                requireNotNull(targetCreditCard) { "Credit card is required for recurring confirmation" }
+                val targetCreditCardId = creditCard?.id ?: recurring.creditCardId
+                requireNotNull(targetCreditCardId) { "Credit card is required for recurring confirmation" }
 
-                val invoice = invoice
-                    ?: getOrCreateInvoiceForMonthUseCase(targetCreditCard, yearMonth)
-                        .getOrElse { throw it }
+                val invoiceId = invoice?.id
+                    ?: getOrCreateInvoiceForMonthUseCase(
+                        requireNotNull(creditCard) { "CreditCard required for invoice resolution" },
+                        yearMonth
+                    ).getOrElse { throw it }.id
 
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
                     title = recurring.title,
                     date = date,
-                    categoryId = recurring.category?.id,
+                    categoryId = recurring.categoryId,
                     sourceAccountId = null,
-                    targetCreditCardId = targetCreditCard.id,
-                    targetInvoiceId = invoice.id,
+                    targetCreditCardId = targetCreditCardId,
+                    targetInvoiceId = invoiceId,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
                     transactions = listOf(
@@ -81,21 +83,21 @@ class ConfirmRecurringUseCase(
                             amount = amount,
                             title = recurring.title,
                             date = date,
-                            category = recurring.category,
+                            categoryId = recurring.categoryId,
                             target = Transaction.Target.CREDIT_CARD,
-                            creditCard = targetCreditCard,
-                            invoice = invoice,
+                            creditCardId = targetCreditCardId,
+                            invoiceId = invoiceId,
                         )
                     ),
                 )
             } else {
-                val sourceAccount = account ?: recurring.account
+                val sourceAccountId = account?.id ?: recurring.accountId
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
                     title = recurring.title,
                     date = date,
-                    categoryId = recurring.category?.id,
-                    sourceAccountId = sourceAccount?.id,
+                    categoryId = recurring.categoryId,
+                    sourceAccountId = sourceAccountId,
                     targetCreditCardId = null,
                     targetInvoiceId = null,
                     recurringId = recurring.id,
@@ -109,9 +111,9 @@ class ConfirmRecurringUseCase(
                             amount = amount,
                             title = recurring.title,
                             date = date,
-                            category = recurring.category,
+                            categoryId = recurring.categoryId,
                             target = Transaction.Target.ACCOUNT,
-                            account = sourceAccount,
+                            accountId = sourceAccountId,
                         )
                     ),
                 )

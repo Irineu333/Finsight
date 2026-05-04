@@ -3,6 +3,9 @@ package com.neoutils.finsight.feature.recurring.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.domain.model.Recurring
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -10,16 +13,30 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 class RecurringViewModel(
-    private val recurringRepository: IRecurringRepository,
+    recurringRepository: IRecurringRepository,
+    accountRepository: IAccountRepository,
+    categoryRepository: ICategoryRepository,
+    creditCardRepository: ICreditCardRepository,
 ) : ViewModel() {
     private val selectedFilter = MutableStateFlow(RecurringFilter.ALL)
     private val selectedStatusFilter = MutableStateFlow(RecurringStatusFilter.ACTIVE)
 
     val uiState = combine(
         recurringRepository.observeAllRecurring(),
+        accountRepository.observeAllAccounts(),
+        categoryRepository.observeAllCategories(),
+        creditCardRepository.observeAllCreditCards(),
         selectedFilter,
         selectedStatusFilter,
-    ) { recurring, filter, statusFilter ->
+    ) { args ->
+        @Suppress("UNCHECKED_CAST")
+        val recurring = args[0] as List<Recurring>
+        val accounts = args[1] as List<com.neoutils.finsight.core.domain.model.Account>
+        val categories = args[2] as List<com.neoutils.finsight.core.domain.model.Category>
+        val creditCards = args[3] as List<com.neoutils.finsight.core.domain.model.CreditCard>
+        val filter = args[4] as RecurringFilter
+        val statusFilter = args[5] as RecurringStatusFilter
+
         val filteredRecurring = recurring
             .filter { r ->
                 when (filter) {
@@ -44,6 +61,9 @@ class RecurringViewModel(
                 filteredRecurring = filteredRecurring,
                 selectedFilter = filter,
                 selectedStatusFilter = statusFilter,
+                accountsById = accounts.associateBy { it.id },
+                categoriesById = categories.associateBy { it.id },
+                creditCardsById = creditCards.associateBy { it.id },
             )
         }
     }.stateIn(

@@ -118,7 +118,7 @@ class ViewAdjustmentModal(
                 }
             )
 
-            uiState.transaction.account?.let { account ->
+            uiState.account?.let { account ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_account_label),
                     value = account.name,
@@ -133,7 +133,7 @@ class ViewAdjustmentModal(
             }
 
             val deletedLabel = stringResource(Res.string.view_adjustment_deleted)
-            uiState.transaction.creditCard?.let { creditCard ->
+            uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_card_label),
                     value = creditCard.name,
@@ -160,8 +160,8 @@ class ViewAdjustmentModal(
                 }
             }
 
-            uiState.transaction.invoice?.let { invoice ->
-                val creditCardId = uiState.transaction.creditCard?.id
+            uiState.invoice?.let { invoice ->
+                val creditCardId = invoice.creditCardId
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
                     value = invoice.toLabel(),

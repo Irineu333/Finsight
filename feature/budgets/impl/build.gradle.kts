@@ -14,6 +14,7 @@ kotlin {
             implementation(projects.feature.accounts.ui)
             implementation(projects.feature.recurring.api)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.transactions.ui)
             implementation(projects.core.database)
             implementation(projects.core.ui)
             implementation(projects.core.sharedui)

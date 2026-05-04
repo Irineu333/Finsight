@@ -13,6 +13,7 @@ kotlin {
 
             implementation(projects.feature.accounts.ui)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.transactions.ui)
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
             implementation(projects.core.database)

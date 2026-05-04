@@ -448,63 +448,63 @@
 > Bloco mais pesado da §21. Refatora `Transaction`, `Operation`, `OperationPerspective`, `TransactionForm` para IDs only **e ao mesmo tempo** cria `TransactionUi`/`OperationUi` + mappers + migra `OperationCard`/`TargetSelector` + atualiza todos os ViewModels de `transactions:impl`. Também atualiza qualquer call site externo que lia `transaction.account/category/creditCard/invoice` ou `operation.category/sourceAccount/...`.
 
 **Domínio (em `:core:domain` ainda):**
-- [ ] 21.F.1 `Transaction`: `account: Account?` → `accountId: Long?`; `category: Category?` → `categoryId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`; `invoice: Invoice?` → `invoiceId: Long?`. Manter `target`, `type`, `amount`, `title`, `date`, `id`, `operationId` puros.
-- [ ] 21.F.2 `Operation`: `category: Category?` → `categoryId: Long?`; `sourceAccount: Account?` → `sourceAccountId: Long?`; `targetCreditCard: CreditCard?` → `targetCreditCardId: Long?`; `targetInvoice: Invoice?` → `targetInvoiceId: Long?`. `transactions: List<Transaction>` mantém-se (mesma feature).
-- [ ] 21.F.3 Mover `Operation.label` (que usa `category.name`) para `OperationUi`; em `Operation` resta um `defaultLabel` que devolve `title` ou `"Untitled"`.
-- [ ] 21.F.4 Refatorar `OperationPerspective.resolve()` para comparar `transaction.accountId == accountId` / `transaction.creditCardId == creditCardId` / `transaction.invoiceId == invoiceId`.
-- [ ] 21.F.5 `TransactionForm`: substituir refs por IDs. Validação `category.type.isAccept(type)` migra para o ViewModel/builder que monta o form (que tem o `Category` resolvido em mãos).
-- [ ] 21.F.6 Atualizar `TransactionMapper`/`OperationMapper` em `transactions:impl` para popular IDs direto do `@Entity` (remover hidratação cruzada).
-- [ ] 21.F.7 Atualizar `BuildTransactionUseCase`/`OperationRepository`/`TransactionRepository` para devolver `Transaction`/`Operation` puros.
+- [x] 21.F.1 `Transaction`: `account: Account?` → `accountId: Long?`; `category: Category?` → `categoryId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`; `invoice: Invoice?` → `invoiceId: Long?`. Manter `target`, `type`, `amount`, `title`, `date`, `id`, `operationId` puros.
+- [x] 21.F.2 `Operation`: `category: Category?` → `categoryId: Long?`; `sourceAccount: Account?` → `sourceAccountId: Long?`; `targetCreditCard: CreditCard?` → `targetCreditCardId: Long?`; `targetInvoice: Invoice?` → `targetInvoiceId: Long?`. `transactions: List<Transaction>` mantém-se (mesma feature).
+- [x] 21.F.3 Mover `Operation.label` (que usa `category.name`) para `OperationUi`; em `Operation` resta um `defaultLabel` que devolve `title` ou `"Untitled"`.
+- [x] 21.F.4 Refatorar `OperationPerspective.resolve()` para comparar `transaction.accountId == accountId` / `transaction.creditCardId == creditCardId` / `transaction.invoiceId == invoiceId`.
+- [x] 21.F.5 `TransactionForm`: substituir refs por IDs. Validação `category.type.isAccept(type)` migra para o ViewModel/builder que monta o form (que tem o `Category` resolvido em mãos).
+- [x] 21.F.6 Atualizar `TransactionMapper`/`OperationMapper` em `transactions:impl` para popular IDs direto do `@Entity` (remover hidratação cruzada).
+- [x] 21.F.7 Atualizar `BuildTransactionUseCase`/`OperationRepository`/`TransactionRepository` para devolver `Transaction`/`Operation` puros.
 
 **UI tier:**
-- [ ] 21.F.8 `transactions:ui/model/TransactionUi.kt`: `data class TransactionUi(transaction, account?, category?, creditCard?, invoice?: InvoiceUi?)` + propriedades derivadas (`displayLabel`, `displayCategoryName`, `displayCategoryIconKey`, etc.)
-- [ ] 21.F.9 `transactions:ui/model/OperationUi.kt`: `data class OperationUi(operation, category?, sourceAccount?, targetCreditCard?, targetInvoice?: InvoiceUi?, transactions: List<TransactionUi>, perspective: OperationPerspective)` + derivadas (`displayLabel`, `displayAmount`, `displayCategory`, etc.) — substituindo o `OperationUi` atual de `:core:sharedui`
-- [ ] 21.F.10 `transactions:ui/mapper/IOperationUiMapper.kt` interface; impl em `transactions:impl/mapper/OperationUiMapper.kt` injetando `IAccountRepository`, `ICategoryRepository`, `ICreditCardRepository`, `IInvoiceRepository` (e `IInvoiceUiMapper` para subcomponentes `InvoiceUi`). Suporte a batch (IDs distintos → query única para evitar N+1).
-- [ ] 21.F.11 `transactions:ui/extension/`: extensão `Category.Type.isAccept(Transaction.Type)` (cruza 2 features — viável em `:ui`).
-- [ ] 21.F.12 `OperationCard` → `transactions:ui/component/`; recebe `OperationUi` rico
-- [ ] 21.F.13 `TargetSelector` → `transactions:ui/component/`
+- [x] 21.F.8 `transactions:ui/model/TransactionUi.kt`: `data class TransactionUi(transaction, account?, category?, creditCard?, invoice?: InvoiceUi?)` + propriedades derivadas (`displayLabel`, `displayCategoryName`, `displayCategoryIconKey`, etc.)
+- [x] 21.F.9 `transactions:ui/model/OperationUi.kt`: `data class OperationUi(operation, category?, sourceAccount?, targetCreditCard?, targetInvoice?: InvoiceUi?, transactions: List<TransactionUi>, perspective: OperationPerspective)` + derivadas (`displayLabel`, `displayAmount`, `displayCategory`, etc.) — substituindo o `OperationUi` atual de `:core:sharedui`
+- [x] 21.F.10 `transactions:ui/mapper/IOperationUiMapper.kt` interface; impl em `transactions:impl/mapper/OperationUiMapper.kt` injetando `IAccountRepository`, `ICategoryRepository`, `ICreditCardRepository`, `IInvoiceRepository` (e `IInvoiceUiMapper` para subcomponentes `InvoiceUi`). Suporte a batch (IDs distintos → query única para evitar N+1).
+- [x] 21.F.11 `transactions:ui/extension/`: extensão `Category.Type.isAccept(Transaction.Type)` (cruza 2 features — viável em `:ui`).
+- [x] 21.F.12 `OperationCard` → `transactions:ui/component/`; recebe `OperationUi` rico
+- [x] 21.F.13 `TargetSelector` → `transactions:ui/component/`
 
 **Build wiring:**
-- [ ] 21.F.14 `transactions:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` (para `IInvoiceUiMapper`)
-- [ ] 21.F.15 `transactions:impl/di`: registrar `single<IOperationUiMapper> { OperationUiMapper(...) }`
+- [x] 21.F.14 `transactions:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` (para `IInvoiceUiMapper`)
+- [x] 21.F.15 `transactions:impl/di`: registrar `single<IOperationUiMapper> { OperationUiMapper(...) }`
 
 **Consumidores:**
-- [ ] 21.F.16 `transactions:impl` ViewModels (`TransactionsViewModel`, `EditTransactionViewModel`, `AddTransactionViewModel`, `ViewOperationViewModel`, `ViewTransactionViewModel`, `ViewAdjustmentViewModel`): consumir `OperationUi`/`TransactionUi` via `IOperationUiMapper`; remover lookup inline de account/category/creditCard.
-- [ ] 21.F.17 Atualizar call sites cross-feature que liam `transaction.account/category/...` para usar `TransactionUi` (em UI) ou resolver via repo (em use cases puros). Locais conhecidos: `accounts:impl` (`AccountsViewModel`, `TransferBetweenAccountsViewModel`), `categories:impl` (use cases que iteram), `installments:impl`, `dashboard:impl`, `report:impl`.
-- [ ] 21.F.18 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.F.16 `transactions:impl` ViewModels (`TransactionsViewModel`, `EditTransactionViewModel`, `AddTransactionViewModel`, `ViewOperationViewModel`, `ViewTransactionViewModel`, `ViewAdjustmentViewModel`): consumir `OperationUi`/`TransactionUi` via `IOperationUiMapper`; remover lookup inline de account/category/creditCard.
+- [x] 21.F.17 Atualizar call sites cross-feature que liam `transaction.account/category/...` para usar `TransactionUi` (em UI) ou resolver via repo (em use cases puros). Locais conhecidos: `accounts:impl` (`AccountsViewModel`, `TransferBetweenAccountsViewModel`), `categories:impl` (use cases que iteram), `installments:impl`, `dashboard:impl`, `report:impl`.
+- [x] 21.F.18 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.G `recurring:ui` — `Recurring` → IDs + `RecurringUi` + ViewModels
 
-- [ ] 21.G.1 `Recurring`: `category: Category?` → `categoryId: Long?`; `account: Account?` → `accountId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`. `label` migra para `RecurringUi`.
-- [ ] 21.G.2 Atualizar `RecurringMapper` e `RecurringRepository` para devolver `Recurring` puro.
-- [ ] 21.G.3 `recurring:ui/model/RecurringUi.kt`: compõe `Recurring` + `Account?`, `Category?`, `CreditCard?` direto; `IRecurringUiMapper` interface
-- [ ] 21.G.4 `recurring:impl/mapper/RecurringUiMapper.kt` (impl) injeta os repositórios necessários; suporte a batch.
-- [ ] 21.G.5 `recurring:ui/extension/`: extensão `Category.Type.isAccept(Recurring.Type)` (cruza 2 features).
-- [ ] 21.G.6 `recurring:impl/build.gradle.kts`: adicionar `implementation(projects.feature.recurring.ui)`
-- [ ] 21.G.7 `recurring:impl/di`: registrar `single<IRecurringUiMapper> { RecurringUiMapper(...) }`
-- [ ] 21.G.8 `recurring:impl` ViewModels: consumir `RecurringUi` via `IRecurringUiMapper`.
-- [ ] 21.G.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.G.1 `Recurring`: `category: Category?` → `categoryId: Long?`; `account: Account?` → `accountId: Long?`; `creditCard: CreditCard?` → `creditCardId: Long?`. `label` migra para `RecurringUi`.
+- [x] 21.G.2 Atualizar `RecurringMapper` e `RecurringRepository` para devolver `Recurring` puro.
+- [x] 21.G.3 `recurring:ui/model/RecurringUi.kt`: compõe `Recurring` + `Account?`, `Category?`, `CreditCard?` direto; `IRecurringUiMapper` interface
+- [x] 21.G.4 `recurring:impl/mapper/RecurringUiMapper.kt` (impl) injeta os repositórios necessários; suporte a batch.
+- [x] 21.G.5 `recurring:ui/extension/`: extensão `Category.Type.isAccept(Recurring.Type)` (cruza 2 features).
+- [x] 21.G.6 `recurring:impl/build.gradle.kts`: adicionar `implementation(projects.feature.recurring.ui)`
+- [x] 21.G.7 `recurring:impl/di`: registrar `single<IRecurringUiMapper> { RecurringUiMapper(...) }`
+- [x] 21.G.8 `recurring:impl` ViewModels: consumir `RecurringUi` via `IRecurringUiMapper`.
+- [x] 21.G.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.H `budgets:ui` — `Budget` → IDs + `BudgetUi` + componente + ViewModels
 
-- [ ] 21.H.1 `Budget`: `categories: List<Category>` → `categoryIds: List<Long>`.
-- [ ] 21.H.2 Atualizar `BudgetMapper` e use cases (`CalculateBudgetProgress`, etc.) para trabalhar com IDs e resolver `Category` quando necessário.
-- [ ] 21.H.3 `budgets:ui/model/BudgetUi.kt`: compõe `Budget` + `List<Category>` direto; `IBudgetUiMapper` interface
-- [ ] 21.H.4 `budgets:impl/mapper/BudgetUiMapper.kt` (impl) injeta `ICategoryRepository`; suporte a batch.
-- [ ] 21.H.5 `BudgetProgressCard` → `budgets:ui/component/`
-- [ ] 21.H.6 `budgets:impl/build.gradle.kts`: adicionar `implementation(projects.feature.budgets.ui)`
-- [ ] 21.H.7 `budgets:impl/di`: registrar `single<IBudgetUiMapper> { BudgetUiMapper(...) }`
-- [ ] 21.H.8 `budgets:impl` ViewModels: consumir `BudgetUi`; use cases puros operam com IDs.
-- [ ] 21.H.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.H.1 `Budget`: `categories: List<Category>` → `categoryIds: List<Long>`.
+- [x] 21.H.2 Atualizar `BudgetMapper` e use cases (`CalculateBudgetProgress`, etc.) para trabalhar com IDs e resolver `Category` quando necessário.
+- [x] 21.H.3 `budgets:ui/model/BudgetUi.kt`: compõe `Budget` + `List<Category>` direto; `IBudgetUiMapper` interface
+- [x] 21.H.4 `budgets:impl/mapper/BudgetUiMapper.kt` (impl) injeta `ICategoryRepository`; suporte a batch.
+- [x] 21.H.5 `BudgetProgressCard` → `budgets:ui/component/`
+- [x] 21.H.6 `budgets:impl/build.gradle.kts`: adicionar `implementation(projects.feature.budgets.ui)`
+- [x] 21.H.7 `budgets:impl/di`: registrar `single<IBudgetUiMapper> { BudgetUiMapper(...) }`
+- [x] 21.H.8 `budgets:impl` ViewModels: consumir `BudgetUi`; use cases puros operam com IDs.
+- [x] 21.H.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.I `installments:ui` — `InstallmentWithOperationsUi` + ViewModels
 
-- [ ] 21.I.1 `installments:ui/model/InstallmentWithOperationsUi.kt` (move de `installments:impl/screen/`) compondo `Installment` + `List<OperationUi>`; mapper interface `IInstallmentWithOperationsUiMapper`
-- [ ] 21.I.2 `installments:impl/mapper/InstallmentWithOperationsUiMapper.kt` (impl) injeta `IOperationUiMapper`
-- [ ] 21.I.3 `installments:impl/build.gradle.kts`: adicionar `implementation(projects.feature.installments.ui)` + `implementation(projects.feature.transactions.ui)` (para `OperationUi`)
-- [ ] 21.I.4 `installments:impl/di`: registrar mapper
-- [ ] 21.I.5 `installments:impl` (`InstallmentUiMapper`, `InstallmentsViewModel`): usar `OperationUi` em vez de `Operation` cru.
-- [ ] 21.I.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.I.1 `installments:ui/model/InstallmentWithOperationsUi.kt` (move de `installments:impl/screen/`) compondo `Installment` + `List<OperationUi>`; mapper interface `IInstallmentWithOperationsUiMapper`
+- [x] 21.I.2 `installments:impl/mapper/InstallmentWithOperationsUiMapper.kt` (impl) injeta `IOperationUiMapper`
+- [x] 21.I.3 `installments:impl/build.gradle.kts`: adicionar `implementation(projects.feature.installments.ui)` + `implementation(projects.feature.transactions.ui)` (para `OperationUi`)
+- [x] 21.I.4 `installments:impl/di`: registrar mapper
+- [x] 21.I.5 `installments:impl` (`InstallmentUiMapper`, `InstallmentsViewModel`): usar `OperationUi` em vez de `Operation` cru.
+- [x] 21.I.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.J `dashboard:ui` — consumir `XxUi` via mappers
 

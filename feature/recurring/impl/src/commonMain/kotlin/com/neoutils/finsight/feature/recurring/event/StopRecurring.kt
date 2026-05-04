@@ -7,8 +7,8 @@ class StopRecurring(params: Map<String, String>) : Event("stop_recurring", param
     constructor(recurring: Recurring) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())
-            put("target", if (recurring.creditCard != null) "credit_card" else "account")
-            recurring.category?.let { put("category", it.name) }
+            put("target", if (recurring.creditCardId != null) "credit_card" else "account")
+            recurring.categoryId?.let { put("categoryId", it.toString()) }
         }
     )
 }

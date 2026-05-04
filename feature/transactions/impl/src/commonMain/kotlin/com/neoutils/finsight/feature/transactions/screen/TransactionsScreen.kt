@@ -27,7 +27,7 @@ import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurri
 import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthSelector
-import com.neoutils.finsight.core.sharedui.component.OperationCard
+import com.neoutils.finsight.feature.transactions.component.OperationCard
 import com.neoutils.finsight.feature.transactions.component.SummaryCard
 import com.neoutils.finsight.feature.transactions.modal.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.transactions.modal.ViewOperationModalEntry
@@ -134,21 +134,21 @@ private fun TransactionsContent(
                 items(
                     items = operations,
                     key = { it.id }
-                ) { operation ->
+                ) { operationUi ->
                     OperationCard(
-                        operation = operation,
+                        operationUi = operationUi,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (operation.type) {
+                            when (operationUi.displayType) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(viewAdjustmentEntry.create(operation))
+                                    modalManager.show(viewAdjustmentEntry.create(operationUi.operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(viewOperationEntry.create(operation))
+                                    modalManager.show(viewOperationEntry.create(operationUi.operation))
                                 }
                             }
                         }

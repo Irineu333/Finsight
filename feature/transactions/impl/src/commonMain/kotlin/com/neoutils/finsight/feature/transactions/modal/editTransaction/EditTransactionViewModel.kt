@@ -6,25 +6,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
-import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.feature.transactions.event.EditTransaction
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.feature.transactions.usecase.IBuildTransactionUseCase
-import com.neoutils.finsight.core.utils.extension.combine
+import com.neoutils.finsight.core.domain.form.TransactionForm
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.CreditCard
+import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.ui.component.ModalManager
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.transactions.event.EditTransaction
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
+import com.neoutils.finsight.feature.transactions.usecase.IBuildTransactionUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.datetime.YearMonth
 
 class EditTransactionViewModel(
     private val transaction: Transaction,
@@ -40,9 +45,17 @@ class EditTransactionViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedCreditCard = MutableStateFlow(transaction.creditCard)
-    private val selectedDueMonth = MutableStateFlow(transaction.invoice?.dueMonth)
-    private val selectedAccount = MutableStateFlow(transaction.account)
+    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
+    private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
+    private val selectedAccount = MutableStateFlow<Account?>(null)
+
+    init {
+        viewModelScope.launch {
+            selectedCreditCard.value = transaction.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
+            selectedDueMonth.value = transaction.invoiceId?.let { invoiceRepository.getInvoiceById(it)?.dueMonth }
+            selectedAccount.value = transaction.accountId?.let { accountRepository.getAccountById(it) }
+        }
+    }
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -84,16 +97,7 @@ class EditTransactionViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditTransactionUiState(
-            selectedCreditCard = transaction.creditCard,
-            selectedAccount = transaction.account,
-            invoiceSelection = transaction.invoice?.let {
-                InvoiceMonthSelection(
-                    dueMonth = it.dueMonth,
-                    existingInvoice = it
-                )
-            }
-        )
+        initialValue = EditTransactionUiState(),
     )
 
     fun onAction(action: EditTransactionAction) {

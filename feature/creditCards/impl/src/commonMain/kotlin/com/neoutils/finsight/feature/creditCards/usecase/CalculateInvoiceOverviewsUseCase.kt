@@ -16,7 +16,7 @@ class CalculateInvoiceOverviewsUseCase {
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
                 val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
+                    it.invoiceId == invoice.id && it.target == Transaction.Target.CREDIT_CARD
                 }
                 val expense = invoiceTransactions
                     .filter { it.type.isExpense }

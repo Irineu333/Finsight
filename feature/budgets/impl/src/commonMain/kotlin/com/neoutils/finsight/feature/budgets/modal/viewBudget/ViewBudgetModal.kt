@@ -31,6 +31,9 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.feature.budgets.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import com.neoutils.finsight.feature.budgets.model.LimitType
 import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
 import org.koin.compose.koinInject
@@ -58,6 +61,11 @@ class ViewBudgetModal(
         val manager = LocalModalManager.current
         val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
         val budget = budgetProgress.budget
+
+        val categoryRepo = koinInject<ICategoryRepository>()
+        val categories by produceState<List<Category>>(initialValue = emptyList(), budget.categoryIds) {
+            value = categoryRepo.getAllCategories().filter { it.id in budget.categoryIds }
+        }
         val accentColor = budgetProgressColor(budgetProgress.progress)
 
         Column(
@@ -87,11 +95,11 @@ class ViewBudgetModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (budget.categories.isNotEmpty()) {
+            if (categories.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(budget.categories) { category ->
+                    items(items = categories, key = { it.id }) { category ->
                         val categoryColor = when (category.type) {
                             Category.Type.INCOME -> Income
                             Category.Type.EXPENSE -> Expense

@@ -135,7 +135,7 @@ class AddInstallmentUseCase(
                 base.copy(
                     amount = base.amount / invoices.size,
                     date = base.date.plus(index, DateTimeUnit.MONTH),
-                    invoice = invoice,
+                    invoiceId = invoice.id,
                 )
             }
 
@@ -145,10 +145,10 @@ class AddInstallmentUseCase(
                         kind = Operation.Kind.TRANSACTION,
                         title = transaction.title,
                         date = transaction.date,
-                        categoryId = transaction.category?.id,
-                        sourceAccountId = transaction.account?.id,
-                        targetCreditCardId = transaction.creditCard?.id,
-                        targetInvoiceId = transaction.invoice?.id,
+                        categoryId = transaction.categoryId,
+                        sourceAccountId = transaction.accountId,
+                        targetCreditCardId = transaction.creditCardId,
+                        targetInvoiceId = transaction.invoiceId,
                         installmentId = installmentId,
                         installmentNumber = index + 1,
                         transactions = listOf(transaction),

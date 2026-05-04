@@ -50,7 +50,7 @@ import com.neoutils.finsight.feature.accounts.component.AccountCardVariant
 import com.neoutils.finsight.feature.accounts.model.AccountUi
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthPickerDropdownMenu
-import com.neoutils.finsight.core.sharedui.component.OperationCard
+import com.neoutils.finsight.feature.transactions.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.feature.accounts.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.feature.accounts.modal.editAccountBalance.EditAccountBalanceModal
@@ -259,11 +259,7 @@ private fun AccountsContent(
                         key = { it.id }
                     ) { operationUi ->
                         OperationCard(
-                            operation = operationUi.operation,
-                            displayType = operationUi.displayType,
-                            displayAmount = operationUi.displayAmount,
-                            displayTarget = operationUi.displayTarget,
-                            displayCategory = operationUi.displayCategory,
+                            operationUi = operationUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()

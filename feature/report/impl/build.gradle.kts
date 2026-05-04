@@ -23,6 +23,7 @@ kotlin {
             implementation(projects.feature.creditCards.api)
             implementation(projects.feature.creditCards.ui)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.transactions.ui)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
         }

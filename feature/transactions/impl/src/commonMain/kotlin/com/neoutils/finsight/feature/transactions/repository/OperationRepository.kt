@@ -2,31 +2,20 @@
 
 package com.neoutils.finsight.feature.transactions.repository
 
-import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.core.database.dao.OperationDao
+import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.core.database.entity.OperationEntity
-import com.neoutils.finsight.feature.transactions.mapper.OperationMapper
-import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
-import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.feature.installments.model.Installment
-import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Recurring
 import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
-import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
-import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
-import com.neoutils.finsight.core.utils.extension.combine
+import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
+import com.neoutils.finsight.feature.transactions.mapper.OperationMapper
+import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine as flowCombine
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
@@ -34,34 +23,36 @@ class OperationRepository(
     private val operationDao: OperationDao,
     private val transactionDao: TransactionDao,
     private val recurringDao: RecurringDao,
-    private val categoryRepository: ICategoryRepository,
-    private val creditCardRepository: ICreditCardRepository,
-    private val invoiceRepository: IInvoiceRepository,
     private val installmentRepository: IInstallmentRepository,
-    private val accountRepository: IAccountRepository,
     private val operationMapper: OperationMapper,
     private val recurringMapper: IRecurringMapper,
     private val transactionMapper: TransactionMapper,
 ) : IOperationRepository {
 
-    private val categoriesFlow = categoryRepository.observeAllCategories().map { it.associateBy { category -> category.id } }
-    private val creditCardsFlow = creditCardRepository.observeAllCreditCards().map { it.associateBy { card -> card.id } }
-    private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
-    private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
-    private val accountsFlow = accountRepository.observeAllAccounts().map { it.associateBy { account -> account.id } }
+    private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { i -> i.id } }
 
-    private val recurringFlow = flowCombine(
-        recurringDao.observeAll(),
-        categoriesFlow,
-        accountsFlow,
-        creditCardsFlow,
-    ) { entities, categories, accounts, creditCards ->
+    private val recurringFlow = recurringDao.observeAll().map { entities ->
         entities.associate { entity ->
-            entity.id to recurringMapper.toDomain(
-                entity = entity,
-                category = entity.categoryId?.let { categories[it] },
-                account = entity.accountId?.let { accounts[it] },
-                creditCard = entity.creditCardId?.let { creditCards[it] },
+            entity.id to recurringMapper.toDomain(entity)
+        }
+    }
+
+    private fun assemble(
+        operations: List<OperationEntity>,
+        transactions: List<com.neoutils.finsight.core.database.entity.TransactionEntity>,
+        installments: Map<Long, com.neoutils.finsight.feature.installments.model.Installment>,
+        recurring: Map<Long, Recurring>,
+    ): List<Operation> {
+        val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
+        return operations.mapNotNull { operation ->
+            val operationTransactions = transactionsByOperationId[operation.id]
+                .orEmpty()
+                .map(transactionMapper::toDomain)
+            operationMapper.toDomain(
+                entity = operation,
+                transactions = operationTransactions,
+                installments = installments,
+                recurring = recurring,
             )
         }
     }
@@ -70,35 +61,10 @@ class OperationRepository(
         return combine(
             operationDao.observeAll(),
             transactionDao.observeAllTransactionsRaw(),
-            categoriesFlow,
-            creditCardsFlow,
-            invoicesFlow,
             installmentsFlow,
-            accountsFlow,
             recurringFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
-            val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
-            operations.mapNotNull { operation ->
-                val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
-                operationMapper.toDomain(
-                    entity = operation,
-                    transactions = operationTransactions.map { entity ->
-                        transactionMapper.toDomain(
-                            entity = entity,
-                            category = categories[entity.categoryId],
-                            creditCard = creditCards[entity.creditCardId],
-                            invoice = invoices[entity.invoiceId],
-                            account = accounts[entity.accountId],
-                        )
-                    },
-                    categories = categories,
-                    creditCards = creditCards,
-                    invoices = invoices,
-                    installments = installments,
-                    accounts = accounts,
-                    recurring = recurring,
-                )
-            }
+        ) { operations, transactions, installments, recurring ->
+            assemble(operations, transactions, installments, recurring)
         }
     }
 
@@ -116,74 +82,27 @@ class OperationRepository(
                 accountId = accountId,
             ),
             transactionDao.observeAllTransactionsRaw(),
-            categoriesFlow,
-            creditCardsFlow,
-            invoicesFlow,
             installmentsFlow,
-            accountsFlow,
             recurringFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
-            val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
-            operations.mapNotNull { operation ->
-                val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
-                operationMapper.toDomain(
-                    entity = operation,
-                    transactions = operationTransactions.map { entity ->
-                        transactionMapper.toDomain(
-                            entity = entity,
-                            category = categories[entity.categoryId],
-                            creditCard = creditCards[entity.creditCardId],
-                            invoice = invoices[entity.invoiceId],
-                            account = accounts[entity.accountId],
-                        )
-                    },
-                    categories = categories,
-                    creditCards = creditCards,
-                    invoices = invoices,
-                    installments = installments,
-                    accounts = accounts,
-                    recurring = recurring,
-                )
-            }
+        ) { operations, transactions, installments, recurring ->
+            assemble(operations, transactions, installments, recurring)
         }
     }
 
     override suspend fun getAllOperations(): List<Operation> {
         val operations = operationDao.getAll()
-        val categories = categoryRepository.getAllCategories().associateBy { it.id }
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
-        val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
         val installments = installmentRepository.getAllInstallments().associateBy { it.id }
-        val accounts = accountRepository.getAllAccounts().associateBy { it.id }
-        val recurring = recurringDao.getAll()
-            .associate { entity ->
-                entity.id to recurringMapper.toDomain(
-                    entity = entity,
-                    category = entity.categoryId?.let { categories[it] },
-                    account = entity.accountId?.let { accounts[it] },
-                    creditCard = entity.creditCardId?.let { creditCards[it] },
-                )
-            }
+        val recurring = recurringDao.getAll().associate { entity ->
+            entity.id to recurringMapper.toDomain(entity)
+        }
         return operations.mapNotNull { operation ->
             val transactions = transactionDao
                 .getTransactionsByOperationId(operation.id)
-                .map { entity ->
-                    transactionMapper.toDomain(
-                        entity = entity,
-                        category = categories[entity.categoryId],
-                        creditCard = creditCards[entity.creditCardId],
-                        invoice = invoices[entity.invoiceId],
-                        account = accounts[entity.accountId],
-                    )
-                }
+                .map(transactionMapper::toDomain)
             operationMapper.toDomain(
                 entity = operation,
                 transactions = transactions,
-                categories = categories,
-                creditCards = creditCards,
-                invoices = invoices,
                 installments = installments,
-                accounts = accounts,
                 recurring = recurring,
             )
         }
@@ -191,37 +110,15 @@ class OperationRepository(
 
     override suspend fun getOperationById(id: Long): Operation? {
         val operation = operationDao.getById(id) ?: return null
-        val categories = categoryRepository.getAllCategories().associateBy { it.id }
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
-        val invoices = invoiceRepository.getAllInvoices().associateBy { it.id }
         val installments = installmentRepository.getAllInstallments().associateBy { it.id }
-        val accounts = accountRepository.getAllAccounts().associateBy { it.id }
-        val recurring = recurringDao.getAll()
-            .associate { entity ->
-                entity.id to recurringMapper.toDomain(
-                    entity = entity,
-                    category = entity.categoryId?.let { categories[it] },
-                    account = entity.accountId?.let { accounts[it] },
-                    creditCard = entity.creditCardId?.let { creditCards[it] },
-                )
-            }
-        val transactions = transactionDao.getTransactionsByOperationId(id).map { entity ->
-            transactionMapper.toDomain(
-                entity = entity,
-                category = categories[entity.categoryId],
-                creditCard = creditCards[entity.creditCardId],
-                invoice = invoices[entity.invoiceId],
-                account = accounts[entity.accountId],
-            )
+        val recurring = recurringDao.getAll().associate { entity ->
+            entity.id to recurringMapper.toDomain(entity)
         }
+        val transactions = transactionDao.getTransactionsByOperationId(id).map(transactionMapper::toDomain)
         return operationMapper.toDomain(
             entity = operation,
             transactions = transactions,
-            categories = categories,
-            creditCards = creditCards,
-            invoices = invoices,
             installments = installments,
-            accounts = accounts,
             recurring = recurring,
         )
     }
@@ -272,10 +169,10 @@ class OperationRepository(
             id = id,
             title = transaction.title,
             date = transaction.date,
-            categoryId = transaction.category?.id,
-            sourceAccountId = transaction.account?.id,
-            targetCreditCardId = transaction.creditCard?.id,
-            targetInvoiceId = transaction.invoice?.id,
+            categoryId = transaction.categoryId,
+            sourceAccountId = transaction.accountId,
+            targetCreditCardId = transaction.creditCardId,
+            targetInvoiceId = transaction.invoiceId,
         )
     }
 

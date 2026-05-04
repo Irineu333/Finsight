@@ -42,7 +42,7 @@ class ViewCategoryViewModel(
         selectedYearMonth
     ) { category, transactions, yearMonth ->
         val transactionsForMonth = transactions.filter {
-            it.category?.id == category.id && it.date.yearMonth == yearMonth
+            it.categoryId == category.id && it.date.yearMonth == yearMonth
         }
 
         ViewCategoryUiState(

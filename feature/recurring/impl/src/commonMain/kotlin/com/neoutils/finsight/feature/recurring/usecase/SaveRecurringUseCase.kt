@@ -71,9 +71,9 @@ class SaveRecurringUseCase(
             amount = amount.moneyToDouble(),
             title = title,
             dayOfMonth = day,
-            category = category,
-            account = account,
-            creditCard = if (type.isIncome) null else creditCard,
+            categoryId = category?.id,
+            accountId = account?.id,
+            creditCardId = if (type.isIncome) null else creditCard?.id,
             createdAt = createdAt ?: Clock.System.now().toEpochMilliseconds(),
             isActive = isActive,
         )

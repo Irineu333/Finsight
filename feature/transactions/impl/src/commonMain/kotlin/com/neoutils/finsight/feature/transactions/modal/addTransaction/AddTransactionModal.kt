@@ -30,7 +30,7 @@ import com.neoutils.finsight.core.domain.extension.isAccept
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.transactions.resources.*
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.core.sharedui.component.*
+import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import com.neoutils.finsight.feature.categories.component.CategorySelector
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector

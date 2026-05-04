@@ -1,6 +1,10 @@
 package com.neoutils.finsight.feature.recurring.screen
 
+import com.neoutils.finsight.core.domain.model.Account
+import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Recurring
+
 enum class RecurringFilter {
     ALL, INCOME, EXPENSE
 }
@@ -28,5 +32,8 @@ sealed class RecurringUiState {
         val filteredRecurring: List<Recurring>,
         override val selectedFilter: RecurringFilter,
         override val selectedStatusFilter: RecurringStatusFilter,
+        val accountsById: Map<Long, Account> = emptyMap(),
+        val categoriesById: Map<Long, Category> = emptyMap(),
+        val creditCardsById: Map<Long, CreditCard> = emptyMap(),
     ) : RecurringUiState()
 }

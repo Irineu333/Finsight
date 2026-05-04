@@ -38,7 +38,7 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.core.domain.model.OperationPerspective
-import com.neoutils.finsight.core.sharedui.model.OperationUi
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.feature.transactions.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
@@ -98,7 +98,7 @@ class ViewOperationModal(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(64.dp),
                     ) {
-                        uiState.transaction.category?.let { category ->
+                        uiState.category?.let { category ->
                             Icon(
                                 imageVector = AppIcon.fromKey(category.iconKey).icon,
                                 contentDescription = null,
@@ -162,7 +162,7 @@ class ViewOperationModal(
                         text = when (uiState.operation.kind) {
                             Operation.Kind.PAYMENT -> stringResource(SharedUiRes.string.operation_card_payment)
                             Operation.Kind.TRANSFER -> stringResource(SharedUiRes.string.operation_card_transfer)
-                            else -> uiState.operation.label
+                            else -> uiState.operation.defaultLabel
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
@@ -199,12 +199,8 @@ class ViewOperationModal(
             }
 
             if (uiState.operation.kind == Operation.Kind.TRANSFER) {
-                val sourceAccount = uiState.operation.transactions
-                    .firstOrNull { it.type == Transaction.Type.EXPENSE && it.target == Transaction.Target.ACCOUNT }
-                    ?.account
-                val destinationAccount = uiState.operation.transactions
-                    .firstOrNull { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.ACCOUNT }
-                    ?.account
+                val sourceAccount = uiState.sourceAccount
+                val destinationAccount = uiState.destinationAccount
 
                 sourceAccount?.let { account ->
                     DetailRow(
@@ -232,7 +228,7 @@ class ViewOperationModal(
             }
 
             if (uiState.operation.kind != Operation.Kind.TRANSFER) {
-                uiState.transaction.account?.let { account ->
+                uiState.account?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_operation_account_label),
                         value = account.name,
@@ -246,7 +242,7 @@ class ViewOperationModal(
             }
 
             val deletedLabel = stringResource(Res.string.view_operation_deleted)
-            uiState.transaction.creditCard?.let { creditCard ->
+            uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_card_label),
                     value = creditCard.name,
@@ -269,8 +265,8 @@ class ViewOperationModal(
                 }
             }
 
-            uiState.transaction.invoice?.let { invoice ->
-                val creditCardId = uiState.transaction.creditCard?.id
+            uiState.invoice?.let { invoice ->
+                val creditCardId = invoice.creditCardId
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
                     value = invoice.toLabel(),
@@ -315,7 +311,7 @@ class ViewOperationModal(
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-            uiState.transaction.invoice?.let { invoice ->
+            uiState.invoice?.let { invoice ->
                 when (invoice.status) {
                     Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
                         EditAndDelete(uiState)
@@ -354,7 +350,7 @@ class ViewOperationModal(
                 uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
                 !uiState.operation.isEditable -> Modifier.fillMaxWidth()
                 uiState.operation.installment != null -> Modifier.fillMaxWidth()
-                uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Modifier.fillMaxWidth()
+                uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.creditCard == null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
             shape = RoundedCornerShape(12.dp),
@@ -383,7 +379,7 @@ class ViewOperationModal(
             uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
             !uiState.operation.isEditable -> Unit
             uiState.operation.installment != null -> Unit
-            uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Unit
+            uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.creditCard == null -> Unit
 
             else -> {
                 OutlinedButton(

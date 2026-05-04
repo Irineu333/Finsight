@@ -7,7 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.domain.model.OperationPerspective
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.feature.transactions.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.feature.transactions.usecase.CalculateTransactionStatsUseCase
@@ -29,6 +31,7 @@ class TransactionsViewModel(
     private val filterTarget: Transaction.Target?,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val operationUiMapper: IOperationUiMapper,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
 ) : ViewModel() {
@@ -86,15 +89,17 @@ class TransactionsViewModel(
             selectedTarget = filters.target,
             showRecurringOnly = filters.recurringOnly,
             showInstallmentOnly = filters.installmentOnly,
-            operations = operations
-                .filter(filters.recurringOnly)
-                .filterInstallment(filters.installmentOnly)
-                .filter(filters.category)
-                .filter(filters.type)
-                .filter(filters.target)
-                .filter { it.date.yearMonth == yearMonth }
-                .sortedByDescending { it.date }
-                .groupBy { it.date },
+            operations = operationUiMapper.toUi(
+                operations = operations
+                    .filter(filters.recurringOnly)
+                    .filterInstallment(filters.installmentOnly)
+                    .filter(filters.category)
+                    .filter(filters.type)
+                    .filter(filters.target)
+                    .filter { it.date.yearMonth == yearMonth }
+                    .sortedByDescending { it.date },
+                perspective = OperationPerspective.Account(accountId = 0L),
+            ).groupBy { it.operation.date },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -151,7 +156,7 @@ private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Op
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id || it.primaryTransaction.category?.id == category.id }
+    return filter { it.categoryId == category.id || it.primaryTransaction.categoryId == category.id }
 }
 
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {

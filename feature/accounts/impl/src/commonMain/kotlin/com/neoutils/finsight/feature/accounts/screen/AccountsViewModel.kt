@@ -13,7 +13,8 @@ import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.model.AccountUi
 import com.neoutils.finsight.core.domain.model.OperationPerspective
-import com.neoutils.finsight.core.sharedui.model.OperationUi
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,6 +29,7 @@ class AccountsViewModel(
     private val accountRepository: IAccountRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val operationUiMapper: IOperationUiMapper,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
@@ -58,16 +60,8 @@ class AccountsViewModel(
         operations,
     ) { account, operations ->
         val perspective = OperationPerspective.Account(accountId = account.id)
-        operations.mapNotNull { operation ->
-            perspective.resolve(
-                operation = operation,
-            )?.let {
-                OperationUi(
-                    operation = operation,
-                    perspective = perspective,
-                )
-            }
-        }
+        val matching = operations.filter { perspective.resolve(it) != null }
+        operationUiMapper.toUi(matching, perspective)
     }
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -83,7 +77,7 @@ class AccountsViewModel(
 
         accounts.map { account ->
             val transactions = allTransactions.filter { transaction ->
-                transaction.account?.id == account.id
+                transaction.accountId == account.id
             }
 
             AccountUi(

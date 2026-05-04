@@ -1,6 +1,6 @@
 @file:OptIn(FormatStringsInDatetimeFormats::class)
 
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.transactions.component
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -22,33 +22,34 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.sharedui.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
 import com.neoutils.finsight.core.ui.theme.*
+import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.utils.util.dayMonthYear
+import com.neoutils.finsight.feature.transactions.model.OperationUi
+import com.neoutils.finsight.feature.transactions.ui.resources.Res
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_invoice_adjustment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_payment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_transfer
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OperationCard(
-    operation: Operation,
+    operationUi: OperationUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     amountDecoration: TextDecoration = TextDecoration.None,
-    displayType: Transaction.Type = operation.type,
-    displayAmount: Double = operation.amount,
-    displayTarget: Transaction.Target = operation.target,
-    displayCategory: Category? = operation.category ?: operation.primaryTransaction.category,
 ) {
     val formatter = LocalCurrencyFormatter.current
+    val operation = operationUi.operation
+    val displayType = operationUi.displayType
+    val displayAmount = operationUi.displayAmount
+    val displayTarget = operationUi.displayTarget
+    val displayCategory = operationUi.displayCategory
 
     Card(
         onClick = onClick,
@@ -129,7 +130,7 @@ fun OperationCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = getTitle(operation, paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = getTitle(operationUi, paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -170,18 +171,21 @@ fun OperationCard(
 }
 
 private fun getTitle(
-    operation: Operation,
+    operationUi: OperationUi,
     paymentLabel: String,
     transferLabel: String,
     balanceAdjustLabel: String,
     invoiceAdjustLabel: String,
 ): String {
+    val operation = operationUi.operation
+    val displayType = operationUi.displayType
+    val displayTarget = operationUi.displayTarget
     val baseTitle = when {
         operation.kind == Operation.Kind.PAYMENT -> paymentLabel
         operation.kind == Operation.Kind.TRANSFER -> transferLabel
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> balanceAdjustLabel
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> invoiceAdjustLabel
-        else -> operation.label
+        displayType == Transaction.Type.ADJUSTMENT && displayTarget.isAccount -> balanceAdjustLabel
+        displayType == Transaction.Type.ADJUSTMENT && displayTarget.isCreditCard -> invoiceAdjustLabel
+        else -> operationUi.displayLabel
     }
 
     val installment = operation.installment

@@ -35,14 +35,19 @@ val transactionsModule = module {
 
     single { TransactionMapper() }
     single { OperationMapper() }
+    factory<com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper> {
+        com.neoutils.finsight.feature.transactions.mapper.OperationUiMapper(
+            accountRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            invoiceUiMapper = get(),
+        )
+    }
 
     single<ITransactionRepository> {
         TransactionRepository(
             dao = get(),
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            accountRepository = get(),
             mapper = get(),
         )
     }
@@ -52,11 +57,7 @@ val transactionsModule = module {
             operationDao = get(),
             transactionDao = get(),
             recurringDao = get(),
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
             installmentRepository = get(),
-            accountRepository = get(),
             operationMapper = get(),
             recurringMapper = get(),
             transactionMapper = get(),
@@ -109,6 +110,9 @@ val transactionsModule = module {
         ViewAdjustmentViewModel(
             operation = it.get(),
             operationRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
         )
     }
 
@@ -118,6 +122,10 @@ val transactionsModule = module {
             perspective = it.getOrNull(),
             operationRepository = get(),
             recurringRepository = get(),
+            accountRepository = get(),
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
         )
     }
 
@@ -143,6 +151,7 @@ val transactionsModule = module {
             filterTarget = getOrNull(),
             operationRepository = get(),
             categoryRepository = get(),
+            operationUiMapper = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
         )

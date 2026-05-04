@@ -1,14 +1,16 @@
 package com.neoutils.finsight.feature.report.usecase
 
-import com.neoutils.finsight.feature.categories.model.CategorySpending
+import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Operation
-import com.neoutils.finsight.feature.report.model.ReportPerspective
 import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.model.CategorySpending
+import com.neoutils.finsight.feature.report.model.ReportPerspective
 import kotlinx.datetime.LocalDate
 
 class CalculateReportCategorySpendingUseCase {
     operator fun invoke(
         operations: List<Operation>,
+        categoriesById: Map<Long, Category>,
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
@@ -17,14 +19,15 @@ class CalculateReportCategorySpendingUseCase {
         val matchingTransactions = operations
             .filter { it.date in startDate..endDate }
             .flatMap { it.transactions }
-            .filter { it.type == transactionType && it.category != null && it.matchesPerspective(perspective) }
+            .filter { it.type == transactionType && it.categoryId != null && it.matchesPerspective(perspective) }
 
         val totalAmount = matchingTransactions.sumOf { it.amount }
 
         return matchingTransactions
-            .groupBy { it.category!! }
-            .map { (category, transactions) ->
-                val amount = transactions.sumOf { it.amount }
+            .groupBy { it.categoryId!! }
+            .mapNotNull { (categoryId, txs) ->
+                val category = categoriesById[categoryId] ?: return@mapNotNull null
+                val amount = txs.sumOf { it.amount }
                 CategorySpending(
                     category = category,
                     amount = amount,
@@ -42,11 +45,11 @@ private fun Transaction.matchesPerspective(perspective: ReportPerspective): Bool
     return when (perspective) {
         is ReportPerspective.AccountPerspective -> {
             target == Transaction.Target.ACCOUNT &&
-                (perspective.accountIds.isEmpty() || account?.id in perspective.accountIds)
+                (perspective.accountIds.isEmpty() || accountId in perspective.accountIds)
         }
         is ReportPerspective.CreditCardPerspective -> {
             target == Transaction.Target.CREDIT_CARD &&
-                creditCard?.id == perspective.creditCardId
+                creditCardId == perspective.creditCardId
         }
     }
 }

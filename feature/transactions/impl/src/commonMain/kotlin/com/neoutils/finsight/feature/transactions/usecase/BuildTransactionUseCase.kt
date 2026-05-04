@@ -55,7 +55,7 @@ class BuildTransactionUseCase(
 
         if (form.target.isAccount) {
 
-            ensureNotNull(form.account) {
+            val account = ensureNotNull(form.account) {
                 BuildTransactionException(BuildTransactionError.AccountRequired)
             }
 
@@ -66,11 +66,11 @@ class BuildTransactionUseCase(
                 amount = form.amount.moneyToDouble(),
                 title = form.title,
                 date = date,
-                category = form.category,
+                categoryId = form.category?.id,
                 target = form.target,
-                account = form.account,
-                creditCard = null,
-                invoice = null,
+                accountId = account.id,
+                creditCardId = null,
+                invoiceId = null,
             )
         }
 
@@ -105,10 +105,10 @@ class BuildTransactionUseCase(
             amount = form.amount.moneyToDouble(),
             title = form.title,
             date = date,
-            category = form.category,
+            categoryId = form.category?.id,
             target = form.target,
-            creditCard = form.creditCard,
-            invoice = invoice,
+            creditCardId = creditCard.id,
+            invoiceId = invoice.id,
         )
     }
 }

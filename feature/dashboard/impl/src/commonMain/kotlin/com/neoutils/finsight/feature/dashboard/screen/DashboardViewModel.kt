@@ -30,6 +30,7 @@ import com.neoutils.finsight.feature.transactions.repository.IOperationRepositor
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.dashboard.repository.IDashboardPreferencesRepository
 
 class DashboardViewModel(
@@ -38,6 +39,7 @@ class DashboardViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
     private val budgetRepository: IBudgetRepository,
+    private val categoryRepository: ICategoryRepository,
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val ensureDefaultAccountUseCase: IEnsureDefaultAccountUseCase,
@@ -84,7 +86,8 @@ class DashboardViewModel(
         recurringOccurrenceRepository.observeAllOccurrences(),
         dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+        categoryRepository.observeAllCategories(),
+    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences, categories ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         val items = buildDashboardViewingUseCase(
@@ -98,6 +101,7 @@ class DashboardViewModel(
                 occurrences = occurrences,
                 today = today,
                 targetMonth = today.yearMonth,
+                categories = categories,
             ),
             preferences = preferences,
         )

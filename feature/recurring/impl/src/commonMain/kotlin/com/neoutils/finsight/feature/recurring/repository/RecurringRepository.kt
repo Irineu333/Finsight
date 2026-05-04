@@ -1,41 +1,19 @@
 package com.neoutils.finsight.feature.recurring.repository
 
 import com.neoutils.finsight.core.database.dao.RecurringDao
-import com.neoutils.finsight.feature.recurring.mapper.RecurringMapper
 import com.neoutils.finsight.core.domain.model.Recurring
-import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
-import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
+import com.neoutils.finsight.feature.recurring.mapper.RecurringMapper
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class RecurringRepository(
     private val dao: RecurringDao,
     private val mapper: RecurringMapper,
-    private val categoryRepository: ICategoryRepository,
-    private val accountRepository: IAccountRepository,
-    private val creditCardRepository: ICreditCardRepository,
 ) : IRecurringRepository {
 
     override fun observeAllRecurring(): Flow<List<Recurring>> {
-        return combine(
-            dao.observeAll(),
-            categoryRepository.observeAllCategories(),
-            accountRepository.observeAllAccounts(),
-            creditCardRepository.observeAllCreditCards(),
-        ) { entities, categories, accounts, creditCards ->
-            val categoryMap = categories.associateBy { it.id }
-            val accountMap = accounts.associateBy { it.id }
-            val creditCardMap = creditCards.associateBy { it.id }
-            entities.map { entity ->
-                mapper.toDomain(
-                    entity = entity,
-                    category = entity.categoryId?.let { categoryMap[it] },
-                    account = entity.accountId?.let { accountMap[it] },
-                    creditCard = entity.creditCardId?.let { creditCardMap[it] },
-                )
-            }
+        return dao.observeAll().map { entities ->
+            entities.map(mapper::toDomain)
         }
     }
 

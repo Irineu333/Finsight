@@ -28,7 +28,6 @@ import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.feature.installments.resources.*
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.core.sharedui.component.*
 import com.neoutils.finsight.feature.categories.component.CategorySelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceMonthNavigator

@@ -40,7 +40,7 @@ import com.neoutils.finsight.feature.categories.component.CategorySelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.core.sharedui.component.TargetSelector
+import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.CreditCardFormModalEntry
 import com.neoutils.finsight.core.ui.theme.Expense
@@ -57,7 +57,7 @@ class RecurringFormModal(
 ) : ModalBottomSheet() {
 
     private val initialCreditCard
-        get() = if (recurring?.creditCard != null) {
+        get() = if (recurring?.creditCardId != null) {
             Transaction.Target.CREDIT_CARD
         } else {
             Transaction.Target.ACCOUNT
@@ -93,7 +93,16 @@ class RecurringFormModal(
 
         var target by remember { mutableStateOf(initialCreditCard) }
 
-        var selectedCategory by remember { mutableStateOf(recurring?.category) }
+        val categoryRepo = koinInject<com.neoutils.finsight.feature.categories.repository.ICategoryRepository>()
+        val initialCategory by produceState<com.neoutils.finsight.core.domain.model.Category?>(
+            initialValue = null,
+            recurring?.categoryId,
+        ) {
+            value = recurring?.categoryId?.let { categoryRepo.getCategoryById(it) }
+        }
+        var selectedCategory by remember(initialCategory) {
+            mutableStateOf<com.neoutils.finsight.core.domain.model.Category?>(initialCategory)
+        }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf { it.type.isAccept(type) }

@@ -8,7 +8,7 @@ class DeleteTransaction(params: Map<String, String>) : Event("delete_transaction
         buildMap {
             put("type", transaction.type.name.lowercase())
             put("target", transaction.target.name.lowercase())
-            transaction.category?.let { put("category", it.name) }
+            transaction.categoryId?.let { put("categoryId", it.toString()) }
         }
     )
 }

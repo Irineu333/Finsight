@@ -39,6 +39,7 @@ val reportModule = module {
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            categoryRepository = get(),
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
             renderer = get(),

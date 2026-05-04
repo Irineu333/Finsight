@@ -169,6 +169,7 @@ val accountsModule = module {
             accountRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
+            operationUiMapper = get(),
             initialAccountId = it.getOrNull(),
         )
     }

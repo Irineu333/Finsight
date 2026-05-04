@@ -78,7 +78,7 @@ import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
-import com.neoutils.finsight.core.sharedui.component.OperationCard
+import com.neoutils.finsight.feature.transactions.component.OperationCard
 import com.neoutils.finsight.feature.installments.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.feature.installments.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.feature.transactions.modal.ViewAdjustmentModalEntry
@@ -342,13 +342,7 @@ private fun InstallmentsContent(
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
-                            amountDecoration = when (operation.targetInvoice?.status) {
-
-                                Invoice.Status.PAID,
-                                Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
-
-                                else -> TextDecoration.None
-                            },
+                            amountDecoration = TextDecoration.None,
                             onClick = {
                                 when (operation.type) {
                                     Transaction.Type.ADJUSTMENT -> {

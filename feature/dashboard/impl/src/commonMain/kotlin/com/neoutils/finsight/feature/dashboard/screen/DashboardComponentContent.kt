@@ -61,7 +61,7 @@ import com.neoutils.finsight.feature.dashboard.constant.showHeader
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
-import com.neoutils.finsight.core.sharedui.component.OperationCard
+import com.neoutils.finsight.feature.transactions.component.OperationCard
 import com.neoutils.finsight.feature.accounts.modal.accountForm.AccountFormModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.AdvancePaymentModalEntry
 import com.neoutils.finsight.feature.creditCards.modal.CloseInvoiceModalEntry
@@ -774,10 +774,17 @@ private fun PendingRecurringCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
-                val category = recurring.category
-                if (category != null) {
+                val categoryRepo = org.koin.compose.koinInject<com.neoutils.finsight.feature.categories.repository.ICategoryRepository>()
+                val categoryState = androidx.compose.runtime.produceState<com.neoutils.finsight.core.domain.model.Category?>(
+                    initialValue = null,
+                    recurring.categoryId,
+                ) {
+                    value = recurring.categoryId?.let { categoryRepo.getCategoryById(it) }
+                }
+                val resolvedCategory: com.neoutils.finsight.core.domain.model.Category? = categoryState.value
+                if (resolvedCategory != null) {
                     CategoryIconBox(
-                        category = category,
+                        category = resolvedCategory,
                         contentPadding = PaddingValues(12.dp),
                     )
                 } else {

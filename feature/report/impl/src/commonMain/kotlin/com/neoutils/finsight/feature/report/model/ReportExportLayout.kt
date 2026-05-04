@@ -166,7 +166,7 @@ private fun Operation.exportTitle(strings: ReportExportStrings): String {
         kind == Operation.Kind.TRANSFER -> strings.operationTransfer
         type == Transaction.Type.ADJUSTMENT && target.isAccount -> strings.operationBalanceAdjustment
         type == Transaction.Type.ADJUSTMENT && target.isCreditCard -> strings.operationInvoiceAdjustment
-        else -> label
+        else -> defaultLabel
     }
 }
 

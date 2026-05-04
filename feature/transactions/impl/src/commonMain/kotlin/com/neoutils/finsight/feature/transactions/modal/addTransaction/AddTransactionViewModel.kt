@@ -132,10 +132,10 @@ class AddTransactionViewModel(
                         kind = Operation.Kind.TRANSACTION,
                         title = it.title,
                         date = it.date,
-                        categoryId = it.category?.id,
-                        sourceAccountId = it.account?.id,
-                        targetCreditCardId = it.creditCard?.id,
-                        targetInvoiceId = it.invoice?.id,
+                        categoryId = it.categoryId,
+                        sourceAccountId = it.accountId,
+                        targetCreditCardId = it.creditCardId,
+                        targetInvoiceId = it.invoiceId,
                         transactions = listOf(it),
                     )
                 }

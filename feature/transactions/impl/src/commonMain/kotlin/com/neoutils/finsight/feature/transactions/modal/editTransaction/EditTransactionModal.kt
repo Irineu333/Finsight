@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.core.domain.extension.isAccept
 import com.neoutils.finsight.core.domain.form.TransactionForm
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.resources.Res
@@ -37,7 +39,7 @@ import com.neoutils.finsight.feature.transactions.resources.edit_transaction_sav
 import com.neoutils.finsight.feature.transactions.resources.edit_transaction_title
 import com.neoutils.finsight.feature.transactions.resources.edit_transaction_title_label
 import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.core.sharedui.component.*
+import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import com.neoutils.finsight.feature.categories.component.CategorySelector
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
@@ -84,7 +86,11 @@ class EditTransactionModal(
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember { mutableStateOf(transaction.category) }
+        val categoryRepo = koinInject<ICategoryRepository>()
+        val initialCategory by produceState<Category?>(initialValue = null, transaction.categoryId) {
+            value = transaction.categoryId?.let { categoryRepo.getCategoryById(it) }
+        }
+        var selectedCategory by remember(initialCategory) { mutableStateOf<Category?>(initialCategory) }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf {

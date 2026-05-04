@@ -58,6 +58,7 @@ val dashboardModule = module {
             invoiceRepository = get(),
             accountRepository = get(),
             budgetRepository = get(),
+            categoryRepository = get(),
             recurringRepository = get(),
             recurringOccurrenceRepository = get(),
             ensureDefaultAccountUseCase = get(),

@@ -1,19 +1,11 @@
 package com.neoutils.finsight.feature.transactions.mapper
 
 import com.neoutils.finsight.core.database.entity.TransactionEntity
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.domain.model.CreditCard
-import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Transaction
 
 class TransactionMapper {
     fun toDomain(
         entity: TransactionEntity,
-        category: Category?,
-        creditCard: CreditCard?,
-        invoice: Invoice?,
-        account: Account?
     ): Transaction {
         return Transaction(
             id = entity.id,
@@ -22,11 +14,11 @@ class TransactionMapper {
             amount = entity.amount,
             title = entity.title,
             date = entity.date,
-            category = category,
+            categoryId = entity.categoryId,
             target = toDomain(entity.target),
-            creditCard = creditCard,
-            invoice = invoice,
-            account = account,
+            creditCardId = entity.creditCardId,
+            invoiceId = entity.invoiceId,
+            accountId = entity.accountId,
         )
     }
 
@@ -40,11 +32,11 @@ class TransactionMapper {
             amount = domain.amount,
             title = domain.title,
             date = domain.date,
-            categoryId = domain.category?.id,
+            categoryId = domain.categoryId,
             target = toEntity(domain.target),
-            creditCardId = domain.creditCard?.id,
-            invoiceId = domain.invoice?.id,
-            accountId = domain.account?.id,
+            creditCardId = domain.creditCardId,
+            invoiceId = domain.invoiceId,
+            accountId = domain.accountId,
         )
     }
 

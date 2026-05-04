@@ -9,7 +9,7 @@ class SkipRecurring(params: Map<String, String>) : Event("skip_recurring", param
         buildMap {
             put("type", recurring.type.name.lowercase())
             put("target", target.name.lowercase())
-            recurring.category?.let { put("category", it.name) }
+            recurring.categoryId?.let { put("categoryId", it.toString()) }
         }
     )
 }

@@ -4,8 +4,6 @@ import com.neoutils.finsight.core.database.dao.BudgetDao
 import com.neoutils.finsight.core.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.feature.budgets.mapper.BudgetMapper
 import com.neoutils.finsight.feature.budgets.model.Budget
-import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -13,22 +11,17 @@ import kotlinx.coroutines.flow.first
 class BudgetRepository(
     private val dao: BudgetDao,
     private val mapper: BudgetMapper,
-    private val categoryRepository: ICategoryRepository,
 ) : IBudgetRepository {
 
     override fun observeAllBudgets(): Flow<List<Budget>> {
         return combine(
             dao.observeAll(),
             dao.observeAllBudgetCategories(),
-            categoryRepository.observeAllCategories(),
-        ) { entities, budgetCategories, categories ->
-            val categoryMap = categories.associateBy { it.id }
+        ) { entities, budgetCategories ->
             val budgetCategoryMap = budgetCategories.groupBy { it.budgetId }
             entities.map { entity ->
-                val entityCategories = budgetCategoryMap[entity.id]
-                    ?.mapNotNull { categoryMap[it.categoryId] }
-                    ?: emptyList()
-                mapper.toDomain(entity, entityCategories)
+                val ids = budgetCategoryMap[entity.id]?.map { it.categoryId } ?: emptyList()
+                mapper.toDomain(entity, ids)
             }
         }
     }
@@ -39,16 +32,16 @@ class BudgetRepository(
 
     override suspend fun insert(budget: Budget) {
         val id = dao.insert(mapper.toEntity(budget))
-        budget.categories.forEach { category ->
-            dao.insertBudgetCategory(BudgetCategoryEntity(budgetId = id, categoryId = category.id))
+        budget.categoryIds.forEach { categoryId ->
+            dao.insertBudgetCategory(BudgetCategoryEntity(budgetId = id, categoryId = categoryId))
         }
     }
 
     override suspend fun update(budget: Budget) {
         dao.update(mapper.toEntity(budget))
         dao.deleteBudgetCategories(budget.id)
-        budget.categories.forEach { category ->
-            dao.insertBudgetCategory(BudgetCategoryEntity(budgetId = budget.id, categoryId = category.id))
+        budget.categoryIds.forEach { categoryId ->
+            dao.insertBudgetCategory(BudgetCategoryEntity(budgetId = budget.id, categoryId = categoryId))
         }
     }
 

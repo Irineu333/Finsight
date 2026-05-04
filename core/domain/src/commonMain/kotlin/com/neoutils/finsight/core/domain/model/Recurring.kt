@@ -6,13 +6,13 @@ data class Recurring(
     val amount: Double,
     val title: String?,
     val dayOfMonth: Int,
-    val category: Category?,
-    val account: Account?,
-    val creditCard: CreditCard?,
+    val categoryId: Long? = null,
+    val accountId: Long? = null,
+    val creditCardId: Long? = null,
     val createdAt: Long,
     val isActive: Boolean = true,
 ) {
-    val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
+    val label get() = title?.takeIf { it.isNotBlank() } ?: "Untitled"
 
     enum class Type {
         INCOME,

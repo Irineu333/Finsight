@@ -73,7 +73,7 @@ class InvoiceTransactionsViewModel(
         val invoice = invoices.getOrNull(index)
 
         val invoiceOperations = operations
-            .filter { it.targetInvoice?.id == invoice?.id || it.transactions.any { tx -> tx.invoice?.id == invoice?.id } }
+            .filter { it.targetInvoiceId == invoice?.id || it.transactions.any { tx -> tx.invoiceId == invoice?.id } }
         val filteredOperations = invoiceOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
@@ -87,7 +87,7 @@ class InvoiceTransactionsViewModel(
             creditCard = creditCard,
             invoices = invoices.map { invoice ->
                 val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
+                    it.invoiceId == invoice.id && it.target == Transaction.Target.CREDIT_CARD
                 }
 
                 val expense = invoiceTransactions
@@ -211,7 +211,7 @@ private data class InvoiceTransactionsFilters(
 private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
     return filter { operation ->
-        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+        operation.categoryId == category.id || operation.primaryTransaction.categoryId == category.id
     }
 }
 

@@ -158,7 +158,7 @@ private data class CreditCardsFilters(
 private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
     return filter { operation ->
-        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+        operation.categoryId == category.id || operation.primaryTransaction.categoryId == category.id
     }
 }
 

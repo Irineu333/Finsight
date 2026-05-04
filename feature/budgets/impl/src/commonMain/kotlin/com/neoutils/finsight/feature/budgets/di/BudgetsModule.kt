@@ -24,7 +24,6 @@ val budgetsModule = module {
         BudgetRepository(
             dao = get(),
             mapper = get(),
-            categoryRepository = get(),
         )
     }
 

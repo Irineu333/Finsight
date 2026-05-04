@@ -151,6 +151,9 @@ fun RecurringScreen(
                     ) { recurring ->
                         RecurringCard(
                             recurring = recurring,
+                            category = recurring.categoryId?.let { uiState.categoriesById[it] },
+                            account = recurring.accountId?.let { uiState.accountsById[it] },
+                            creditCard = recurring.creditCardId?.let { uiState.creditCardsById[it] },
                             onClick = { modalManager.show(ViewRecurringModal(recurring)) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -333,6 +336,9 @@ private fun RecurringEmptyState(
 @Composable
 private fun RecurringCard(
     recurring: Recurring,
+    category: com.neoutils.finsight.core.domain.model.Category?,
+    account: com.neoutils.finsight.core.domain.model.Account?,
+    creditCard: com.neoutils.finsight.core.domain.model.CreditCard?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -368,7 +374,6 @@ private fun RecurringCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f),
                 ) {
-                    val category = recurring.category
                     if (category != null) {
                         CategoryIconBox(
                             category = category,
@@ -466,8 +471,6 @@ private fun RecurringCard(
                     )
                 }
 
-                val creditCard = recurring.creditCard
-                val account = recurring.account
                 when {
                     creditCard != null -> Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),

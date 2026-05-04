@@ -34,7 +34,7 @@ class CalculateBudgetProgressUseCase : ICalculateBudgetProgressUseCase {
                 }
             }
             val spent = transactions
-                .filter { tx -> tx.type.isExpense && budget.categories.any { it.id == tx.category?.id } }
+                .filter { tx -> tx.type.isExpense && tx.categoryId in budget.categoryIds }
                 .filter { it.date.yearMonth == today.yearMonth }
                 .sumOf { it.amount }
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {

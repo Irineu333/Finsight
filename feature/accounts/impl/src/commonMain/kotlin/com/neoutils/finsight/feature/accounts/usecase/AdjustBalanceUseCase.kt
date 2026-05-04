@@ -59,7 +59,7 @@ class AdjustBalanceUseCase(
                             type = Transaction.Type.ADJUSTMENT,
                             amount = difference,
                             date = adjustmentDate,
-                            account = account,
+                            accountId = account.id,
                         )
                     ),
                 )

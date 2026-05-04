@@ -4,8 +4,8 @@ package com.neoutils.finsight.feature.transactions.screen
 
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -16,7 +16,7 @@ private val currentMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
-    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
+    val operations: Map<LocalDate, List<OperationUi>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,

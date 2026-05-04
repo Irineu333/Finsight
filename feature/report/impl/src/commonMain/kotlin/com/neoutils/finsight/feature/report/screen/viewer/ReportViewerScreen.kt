@@ -39,7 +39,7 @@ import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adju
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.feature.categories.component.CategorySpendingCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
-import com.neoutils.finsight.core.sharedui.component.OperationCard
+import com.neoutils.finsight.feature.transactions.component.OperationCard
 import com.neoutils.finsight.feature.transactions.modal.ViewAdjustmentModalEntry
 import com.neoutils.finsight.feature.categories.modal.viewCategory.ViewCategoryModalEntry
 import com.neoutils.finsight.feature.transactions.modal.ViewOperationModalEntry

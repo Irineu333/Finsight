@@ -12,6 +12,7 @@ import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.domain.extension.signedImpact
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
@@ -38,6 +39,7 @@ class ReportViewerViewModel(
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val categoryRepository: ICategoryRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val renderer: ReportDocumentRenderer,
@@ -72,12 +74,13 @@ class ReportViewerViewModel(
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
-    ) { operations, accounts, creditCards, invoices ->
+        categoryRepository.observeAllCategories(),
+    ) { operations, accounts, creditCards, invoices, categories ->
         val invoiceIds = invoices.map { it.id }.toSet()
         val creditCardsById = creditCards.associateBy { it.id }
         val invoiceTransactions = operations
             .flatMap { it.transactions }
-            .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
+            .filter { it.invoiceId in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
 
         val stats = if (invoices.isNotEmpty()) {
             val expense = invoiceTransactions
@@ -137,9 +140,10 @@ class ReportViewerViewModel(
 
         val categorySpending = when {
             !params.includeSpendingByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
+            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE, categories.associateBy { it.id })
             else -> calculateReportCategorySpendingUseCase(
                 operations = operations,
+                categoriesById = categories.associateBy { it.id },
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
@@ -149,9 +153,10 @@ class ReportViewerViewModel(
 
         val categoryIncome = when {
             !params.includeIncomeByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
+            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME, categories.associateBy { it.id })
             else -> calculateReportCategorySpendingUseCase(
                 operations = operations,
+                categoriesById = categories.associateBy { it.id },
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
@@ -162,8 +167,8 @@ class ReportViewerViewModel(
         val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
                 operations.filter { op ->
-                    op.targetInvoice?.id in invoiceIds ||
-                            op.transactions.any { tx -> tx.invoice?.id in invoiceIds }
+                    op.targetInvoiceId in invoiceIds ||
+                            op.transactions.any { tx -> tx.invoiceId in invoiceIds }
                 }
             } else {
                 operations
@@ -173,14 +178,14 @@ class ReportViewerViewModel(
                             is ReportPerspective.AccountPerspective -> {
                                 op.transactions.any {
                                     it.target == Transaction.Target.ACCOUNT &&
-                                            (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+                                            (perspective.accountIds.isEmpty() || it.accountId in perspective.accountIds)
                                 }
                             }
 
                             is ReportPerspective.CreditCardPerspective -> {
                                 op.transactions.any {
                                     it.target == Transaction.Target.CREDIT_CARD &&
-                                            it.creditCard?.id == perspective.creditCardId
+                                            it.creditCardId == perspective.creditCardId
                                 }
                             }
                         }
@@ -238,14 +243,16 @@ class ReportViewerViewModel(
 
 private fun List<Transaction>.toCategoryBreakdown(
     transactionType: Transaction.Type,
+    categoriesById: Map<Long, com.neoutils.finsight.core.domain.model.Category>,
 ): List<CategorySpending> {
-    val typedTransactions = filter { it.type == transactionType && it.category != null }
+    val typedTransactions = filter { it.type == transactionType && it.categoryId != null }
     val totalAmount = typedTransactions.sumOf { it.amount }
     if (totalAmount <= 0) return emptyList()
 
     return typedTransactions
-        .groupBy { it.category!! }
-        .map { (category, transactions) ->
+        .groupBy { it.categoryId!! }
+        .mapNotNull { (categoryId, transactions) ->
+            val category = categoriesById[categoryId] ?: return@mapNotNull null
             val amount = transactions.sumOf { it.amount }
             CategorySpending(
                 category = category,

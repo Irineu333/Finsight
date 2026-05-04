@@ -63,9 +63,6 @@ import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.core.ui.util.LocalDateFormats
 import com.neoutils.finsight.feature.creditCards.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.feature.creditCards.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.feature.creditCards.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.feature.creditCards.resources.invoice_transactions_adjustments
@@ -89,6 +86,9 @@ import kotlin.math.absoluteValue
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_recurring
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_installment
 
 @Composable
 fun InvoiceTransactionsScreen(
@@ -847,7 +847,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(InvoiceTransactionsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
+            Text(stringResource(TxUiRes.string.transactions_filter_recurring))
         },
     )
 }
@@ -861,7 +861,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(InvoiceTransactionsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
+            Text(stringResource(TxUiRes.string.transactions_filter_installment))
         },
     )
 }

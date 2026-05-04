@@ -7,4 +7,6 @@
     <string name="target_selector_account">Account</string>
     <string name="target_selector_credit_card">Credit Card</string>
     <string name="target_selector_label">Type</string>
+    <string name="transactions_filter_recurring">Recurring</string>
+    <string name="transactions_filter_installment">Installments</string>
 </resources>

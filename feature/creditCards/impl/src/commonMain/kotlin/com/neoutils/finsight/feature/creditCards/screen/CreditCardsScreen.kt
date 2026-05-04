@@ -33,11 +33,6 @@ import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.creditCards.resources.*
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
-import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
-import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCard
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCardVariant
@@ -64,6 +59,12 @@ import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.core.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.creditCards.ui.resources.Res as CcUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_recurring
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_installment
+import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_empty
+import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_create
 @Composable
 fun CreditCardsScreen(
     initialCreditCardId: Long? = null,
@@ -275,7 +276,7 @@ private fun EmptyCreditCardsState(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = stringResource(SharedUiRes.string.credit_cards_empty),
+                text = stringResource(CcUiRes.string.credit_cards_empty),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -288,7 +289,7 @@ private fun EmptyCreditCardsState(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(SharedUiRes.string.credit_cards_create))
+                Text(text = stringResource(CcUiRes.string.credit_cards_create))
             }
         }
     }
@@ -731,7 +732,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(CreditCardsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
+            Text(stringResource(TxUiRes.string.transactions_filter_recurring))
         },
     )
 }
@@ -745,7 +746,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(CreditCardsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
+            Text(stringResource(TxUiRes.string.transactions_filter_installment))
         },
     )
 }

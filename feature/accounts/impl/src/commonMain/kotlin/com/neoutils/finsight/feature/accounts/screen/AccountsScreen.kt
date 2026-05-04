@@ -73,14 +73,14 @@ import com.neoutils.finsight.feature.accounts.resources.accounts_filter_type_exp
 import com.neoutils.finsight.feature.accounts.resources.accounts_filter_type_income
 import com.neoutils.finsight.feature.accounts.resources.accounts_title
 import com.neoutils.finsight.feature.accounts.resources.accounts_transfer
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
 import com.neoutils.finsight.core.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_recurring
 @Composable
 fun AccountsScreen(
     initialAccountId: Long? = null,
@@ -693,7 +693,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(AccountsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
+            Text(stringResource(TxUiRes.string.transactions_filter_recurring))
         },
     )
 }

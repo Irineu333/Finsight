@@ -13,7 +13,6 @@ kotlin {
             implementation(projects.feature.categories.ui)
 
             implementation(projects.feature.accounts.ui)
-            implementation(projects.core.sharedui)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)
             implementation(projects.core.database)

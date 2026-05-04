@@ -23,7 +23,6 @@ kotlin {
             implementation(projects.feature.budgets.ui)
             implementation(projects.core.database)
             implementation(projects.core.ui)
-            implementation(projects.core.sharedui)
             implementation(projects.feature.home.api)
             implementation(projects.core.platform)
             implementation(projects.core.analytics)

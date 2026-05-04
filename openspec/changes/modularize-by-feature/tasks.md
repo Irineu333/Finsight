@@ -559,12 +559,12 @@
 
 ### 21.O Apagar `:core:sharedui`
 
-- [ ] 21.O.1 Confirmar que `core/sharedui/src/commonMain/kotlin/.../component/` está vazio (todos os 13 componentes migrados em D, E, F, H)
-- [ ] 21.O.2 Confirmar que `core/sharedui/src/commonMain/kotlin/.../model/` está vazio (`OperationUi`, `AccountUi` substituídos pelos novos `XxUi` em F)
-- [ ] 21.O.3 `git rm -r core/sharedui/`
-- [ ] 21.O.4 Remover `include(":core:sharedui")` de `settings.gradle.kts`
-- [ ] 21.O.5 Remover `implementation(projects.core.sharedui)` dos `build.gradle.kts` consumidores
-- [ ] 21.O.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.O.1 Confirmar que `core/sharedui/src/commonMain/kotlin/.../component/` está vazio (todos os 13 componentes migrados em D, E, F, H)
+- [x] 21.O.2 Confirmar que `core/sharedui/src/commonMain/kotlin/.../model/` está vazio (`OperationUi`, `AccountUi` substituídos pelos novos `XxUi` em F)
+- [x] 21.O.3 `git rm -r core/sharedui/`
+- [x] 21.O.4 Remover `include(":core:sharedui")` de `settings.gradle.kts`
+- [x] 21.O.5 Remover `implementation(projects.core.sharedui)` dos `build.gradle.kts` consumidores
+- [x] 21.O.6 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.P Aplicar D12 nos novos pacotes `:ui`
 

@@ -22,9 +22,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.resources.*
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_recurring
-import com.neoutils.finsight.core.sharedui.resources.transactions_filter_installment
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthSelector
 import com.neoutils.finsight.feature.transactions.component.OperationCard
@@ -41,6 +38,9 @@ import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.core.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_recurring
+import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_installment
 @Composable
 fun TransactionsScreen(
     categoryType: Transaction.Type? = null,
@@ -370,7 +370,7 @@ private fun RecurringFilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleRecurring(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_recurring))
+            Text(stringResource(TxUiRes.string.transactions_filter_recurring))
         },
     )
 }
@@ -384,7 +384,7 @@ private fun InstallmentFilterChip(
         selected = enabled,
         onClick = { onAction(TransactionsAction.ToggleInstallment(!enabled)) },
         label = {
-            Text(stringResource(SharedUiRes.string.transactions_filter_installment))
+            Text(stringResource(TxUiRes.string.transactions_filter_installment))
         },
     )
 }

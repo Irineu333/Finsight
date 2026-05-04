@@ -12,7 +12,6 @@ kotlin {
             implementation(projects.feature.categories.ui)
             implementation(projects.core.database)
             implementation(projects.core.ui)
-            implementation(projects.core.sharedui)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)
             implementation(libs.kotlinx.datetime)

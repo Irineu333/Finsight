@@ -5,6 +5,17 @@
     <string name="invoice_due_on">vence em %1$s</string>
     <string name="invoice_paid_on">paga em %1$s</string>
 
+    <string name="summary_card_initial_balance">Saldo Inicial</string>
+    <string name="summary_card_income">Entradas</string>
+    <string name="summary_card_outgoing">Saídas</string>
+    <string name="summary_card_invoices">Faturas</string>
+    <string name="summary_card_adjustments">Ajustes</string>
+    <string name="summary_card_current_balance">Saldo Atual</string>
+    <string name="summary_card_final_balance">Saldo Final</string>
+    <string name="summary_card_see_invoices">Ver faturas</string>
+    <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
+    <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
+
     <string name="transactions_filter_category">Categoria</string>
     <string name="transactions_filter_category_all">Todas</string>
     <string name="transactions_filter_type">Tipo</string>

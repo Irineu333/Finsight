@@ -13,4 +13,6 @@
     <string name="dashboard_credit_card_close_invoice">Close Invoice</string>
     <string name="dashboard_credit_card_pay_invoice">Pay Invoice</string>
     <string name="dashboard_credit_card_advance">Advance</string>
+    <string name="credit_cards_empty">No credit cards</string>
+    <string name="credit_cards_create">Create card</string>
 </resources>

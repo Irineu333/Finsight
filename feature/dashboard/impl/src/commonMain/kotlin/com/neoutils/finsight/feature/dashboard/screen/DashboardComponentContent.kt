@@ -45,9 +45,6 @@ import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.dashboard.resources.*
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
-import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
-import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
 import com.neoutils.finsight.feature.accounts.component.AccountCard
 import com.neoutils.finsight.feature.accounts.component.AccountCardVariant
 import com.neoutils.finsight.core.ui.component.BalanceCard
@@ -82,6 +79,9 @@ import kotlinx.datetime.yearMonth
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import com.neoutils.finsight.feature.creditCards.ui.resources.Res as CcUiRes
+import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_empty
+import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_create
 
 @Composable
 internal fun DashboardComponentContent(
@@ -978,7 +978,7 @@ private fun DashboardCreditCardsEmptyCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(SharedUiRes.string.credit_cards_empty),
+                text = stringResource(CcUiRes.string.credit_cards_empty),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -1000,7 +1000,7 @@ private fun DashboardCreditCardsEmptyCard(
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(SharedUiRes.string.credit_cards_create))
+                Text(text = stringResource(CcUiRes.string.credit_cards_create))
             }
         }
     }

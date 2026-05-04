@@ -74,7 +74,6 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.auth)
             implementation(projects.core.ui)
-            implementation(projects.core.sharedui)
             implementation(projects.core.database)
             implementation(projects.feature.accounts.impl)
             implementation(projects.feature.categories.impl)

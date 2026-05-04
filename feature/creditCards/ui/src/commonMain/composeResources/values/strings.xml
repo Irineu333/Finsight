@@ -13,4 +13,6 @@
     <string name="dashboard_credit_card_close_invoice">Fechar Fatura</string>
     <string name="dashboard_credit_card_pay_invoice">Pagar Fatura</string>
     <string name="dashboard_credit_card_advance">Antecipar</string>
+    <string name="credit_cards_empty">Sem cartões de crédito</string>
+    <string name="credit_cards_create">Criar cartão</string>
 </resources>

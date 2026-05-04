@@ -19,7 +19,6 @@ kotlin {
             implementation(projects.feature.creditCards.ui)
             implementation(projects.core.database)
             implementation(projects.core.ui)
-            implementation(projects.core.sharedui)
             implementation(projects.feature.home.api)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)

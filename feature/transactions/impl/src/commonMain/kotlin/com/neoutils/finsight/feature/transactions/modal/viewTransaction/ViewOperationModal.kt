@@ -29,9 +29,6 @@ import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.resources.*
-import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
@@ -50,6 +47,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.uuid.ExperimentalUuidApi
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_payment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_transfer
 
 class ViewOperationModal(
     private val operation: Operation,
@@ -160,8 +160,8 @@ class ViewOperationModal(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = when (uiState.operation.kind) {
-                            Operation.Kind.PAYMENT -> stringResource(SharedUiRes.string.operation_card_payment)
-                            Operation.Kind.TRANSFER -> stringResource(SharedUiRes.string.operation_card_transfer)
+                            Operation.Kind.PAYMENT -> stringResource(TxUiRes.string.operation_card_payment)
+                            Operation.Kind.TRANSFER -> stringResource(TxUiRes.string.operation_card_transfer)
                             else -> uiState.operation.defaultLabel
                         },
                         style = MaterialTheme.typography.headlineSmall,

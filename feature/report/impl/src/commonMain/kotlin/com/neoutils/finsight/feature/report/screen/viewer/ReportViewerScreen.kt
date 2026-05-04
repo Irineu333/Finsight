@@ -32,11 +32,6 @@ import com.neoutils.finsight.core.ui.extension.LocalPlatformContext
 import com.neoutils.finsight.feature.report.service.ReportPrintService
 import com.neoutils.finsight.feature.report.service.ReportShareService
 import com.neoutils.finsight.feature.report.resources.*
-import com.neoutils.finsight.core.sharedui.resources.operation_card_payment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_transfer
-import com.neoutils.finsight.core.sharedui.resources.operation_card_balance_adjustment
-import com.neoutils.finsight.core.sharedui.resources.operation_card_invoice_adjustment
-import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.feature.categories.component.CategorySpendingCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.component.OperationCard
@@ -55,6 +50,11 @@ import com.neoutils.finsight.feature.report.model.toReportLayout
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_payment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_transfer
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_balance_adjustment
+import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_invoice_adjustment
 
 @Composable
 fun ReportViewerScreen(
@@ -146,10 +146,10 @@ private fun ReportViewerContent(
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
         sectionIncomeByCategory = stringResource(Res.string.report_viewer_income_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
-        operationTransfer = stringResource(SharedUiRes.string.operation_card_transfer),
-        operationPayment = stringResource(SharedUiRes.string.operation_card_payment),
-        operationBalanceAdjustment = stringResource(SharedUiRes.string.operation_card_balance_adjustment),
-        operationInvoiceAdjustment = stringResource(SharedUiRes.string.operation_card_invoice_adjustment),
+        operationTransfer = stringResource(TxUiRes.string.operation_card_transfer),
+        operationPayment = stringResource(TxUiRes.string.operation_card_payment),
+        operationBalanceAdjustment = stringResource(TxUiRes.string.operation_card_balance_adjustment),
+        operationInvoiceAdjustment = stringResource(TxUiRes.string.operation_card_invoice_adjustment),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),

@@ -1,4 +1,14 @@
 <resources>
+    <string name="summary_card_initial_balance">Initial Balance</string>
+    <string name="summary_card_income">Income</string>
+    <string name="summary_card_outgoing">Outgoing</string>
+    <string name="summary_card_invoices">Invoices</string>
+    <string name="summary_card_adjustments">Adjustments</string>
+    <string name="summary_card_current_balance">Current Balance</string>
+    <string name="summary_card_final_balance">Final Balance</string>
+    <string name="summary_card_see_invoices">See invoices</string>
+    <string name="operation_card_balance_adjustment">Balance Adjustment</string>
+    <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
     <string name="view_adjustment_type_label">Adjustment</string>
     <string name="view_adjustment_balance_adjust">Balance Adjustment</string>
     <string name="view_adjustment_invoice_adjust">Invoice Adjustment</string>

@@ -508,18 +508,18 @@
 
 ### 21.J `dashboard:ui` — consumir `XxUi` via mappers
 
-- [ ] 21.J.1 `dashboard:impl/build.gradle.kts`: adicionar `implementation(projects.feature.dashboard.ui)` + `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` + `implementation(projects.feature.accounts.ui)` + `implementation(projects.feature.budgets.ui)` + `implementation(projects.feature.categories.ui)` (componentes cross-feature renderizados pelo dashboard)
-- [ ] 21.J.2 `dashboard:impl` (`DashboardViewModel`, builders, content): trabalhar com `OperationUi`/`InvoiceUi`/`BudgetUi` via mappers; consumir `Account` direto (sem `AccountUi`).
-- [ ] 21.J.3 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.J.1 `dashboard:impl/build.gradle.kts`: adicionar `implementation(projects.feature.dashboard.ui)` + `implementation(projects.feature.transactions.ui)` + `implementation(projects.feature.creditCards.ui)` + `implementation(projects.feature.accounts.ui)` + `implementation(projects.feature.budgets.ui)` + `implementation(projects.feature.categories.ui)` (componentes cross-feature renderizados pelo dashboard)
+- [x] 21.J.2 `dashboard:impl` (`DashboardViewModel`, builders, content): trabalhar com `OperationUi`/`InvoiceUi`/`BudgetUi` via mappers; consumir `Account` direto (sem `AccountUi`).
+- [x] 21.J.3 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.K `report:impl` + cleanup cross-cutting residual
 
 > Itens que sobram fora dos blocos por-feature: report consome `XxUi` mas não tem `:ui` próprio; outros call sites residuais que escaparam dos blocos D–J.
 
-- [ ] 21.K.1 `report:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + outros `:ui` necessários
-- [ ] 21.K.2 `report:impl`: ajustar geração de relatório para consumir `XxUi` em vez dos rich models antigos.
-- [ ] 21.K.3 Sweep: `grep -r "transaction\.account\|transaction\.category\|transaction\.creditCard\|transaction\.invoice\|operation\.category\|operation\.sourceAccount\|operation\.targetCreditCard\|operation\.targetInvoice\|recurring\.category\|recurring\.account\|recurring\.creditCard\|invoice\.creditCard\|budget\.categories" --include="*.kt"` — todos os hits restantes resolvidos (devem retornar zero ou só usos legítimos de `XxUi.account/category/etc`).
-- [ ] 21.K.4 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.K.1 `report:impl/build.gradle.kts`: adicionar `implementation(projects.feature.transactions.ui)` + outros `:ui` necessários
+- [x] 21.K.2 `report:impl`: ajustar geração de relatório para consumir `XxUi` em vez dos rich models antigos.
+- [x] 21.K.3 Sweep: `grep -r "transaction\.account\|transaction\.category\|transaction\.creditCard\|transaction\.invoice\|operation\.category\|operation\.sourceAccount\|operation\.targetCreditCard\|operation\.targetInvoice\|recurring\.category\|recurring\.account\|recurring\.creditCard\|invoice\.creditCard\|budget\.categories" --include="*.kt"` — todos os hits restantes resolvidos (devem retornar zero ou só usos legítimos de `XxUi.account/category/etc`).
+- [x] 21.K.4 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.L Mover entry points D11 de `:api` para `:ui`
 

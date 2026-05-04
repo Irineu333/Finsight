@@ -30,7 +30,7 @@ class ReopenInvoiceUseCase(
             InvoiceException(InvoiceError.CannotReopenPaidInvoice)
         }
 
-        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
+        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(invoice.creditCardId)
 
         val nextOpenInvoice = existingInvoices.find { existing ->
             existing.status == Invoice.Status.OPEN &&

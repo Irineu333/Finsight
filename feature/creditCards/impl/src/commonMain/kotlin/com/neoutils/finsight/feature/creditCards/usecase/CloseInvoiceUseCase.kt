@@ -64,7 +64,7 @@ class CloseInvoiceUseCase(
         }
 
         openInvoiceUseCase(
-            creditCardId = invoice.creditCard.id,
+            creditCardId = invoice.creditCardId,
             openingMonth = invoice.closingMonth
         )
 

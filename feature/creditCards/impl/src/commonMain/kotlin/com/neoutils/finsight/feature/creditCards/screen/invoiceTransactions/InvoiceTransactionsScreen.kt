@@ -144,7 +144,7 @@ private fun InvoiceTransactionsContent(
                     }
                 },
                 actions = {
-                    val creditCard = uiState.invoices.firstOrNull()?.invoice?.creditCard
+                    val creditCard = uiState.creditCard
                     if (creditCard != null) {
                         var menuExpanded by remember { mutableStateOf(false) }
 

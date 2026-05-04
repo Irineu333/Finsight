@@ -74,7 +74,6 @@ val creditCardsModule = module {
         InvoiceRepository(
             dao = get(),
             mapper = get(),
-            creditCardRepository = get(),
         )
     }
 
@@ -109,6 +108,7 @@ val creditCardsModule = module {
     factory {
         PayInvoiceUseCase(
             invoiceRepository = get(),
+            creditCardRepository = get(),
         )
     }
 
@@ -179,6 +179,7 @@ val creditCardsModule = module {
         PayInvoicePaymentUseCase(
             operationRepository = get(),
             invoiceRepository = get(),
+            creditCardRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
         )
@@ -188,6 +189,7 @@ val creditCardsModule = module {
         AdvanceInvoicePaymentUseCase(
             operationRepository = get(),
             invoiceRepository = get(),
+            creditCardRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
@@ -197,6 +199,7 @@ val creditCardsModule = module {
             repository = get(),
             operationRepository = get(),
             calculateInvoiceUseCase = get(),
+            creditCardRepository = get(),
         )
     }
 
@@ -216,6 +219,7 @@ val creditCardsModule = module {
 
     factory<IInvoiceUiMapper> {
         InvoiceUiMapper(
+            creditCardRepository = get(),
             calculateInvoiceUseCase = get(),
             calculateAvailableLimitUseCase = get(),
         )
@@ -296,6 +300,8 @@ val creditCardsModule = module {
             payInvoiceUseCase = get(),
             calculateInvoiceUseCase = get(),
             accountRepository = get(),
+            invoiceRepository = get(),
+            creditCardRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
@@ -307,6 +313,8 @@ val creditCardsModule = module {
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
             accountRepository = get(),
+            invoiceRepository = get(),
+            creditCardRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

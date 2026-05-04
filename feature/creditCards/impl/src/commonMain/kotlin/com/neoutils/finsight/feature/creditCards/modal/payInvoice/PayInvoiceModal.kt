@@ -63,11 +63,13 @@ class PayInvoiceModal(
         }.coerceAtLeast(0.0)
         val amount = LocalCurrencyFormatter.current.format(outstandingDebt)
 
-        val maxDate = invoice.dueDate.coerceAtMost(currentDate)
+        val closingDate = uiState.closingDate ?: return
+        val dueDate = uiState.dueDate ?: return
+        val maxDate = dueDate.coerceAtMost(currentDate)
 
         val date = rememberTextFieldState(
              dayMonthYear.format(
-                currentDate.coerceIn(invoice.closingDate, maxDate)
+                currentDate.coerceIn(closingDate, maxDate)
             )
         )
 
@@ -135,7 +137,7 @@ class PayInvoiceModal(
                             manager.show(
                                 DatePickerModal(
                                     initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
-                                    minDate = invoice.closingDate,
+                                    minDate = closingDate,
                                     maxDate = maxDate,
                                     onDateSelected = { selectedDate ->
                                         date.edit {
@@ -171,7 +173,7 @@ class PayInvoiceModal(
                 },
                 enabled = isValidPayment(
                     date = date.text.toString(),
-                    minDate = invoice.closingDate,
+                    minDate = closingDate,
                     maxDate = maxDate,
                     outstandingDebt = outstandingDebt,
                 ) && uiState.selectedAccount != null,

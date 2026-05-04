@@ -2,24 +2,31 @@ package com.neoutils.finsight.feature.creditCards.modal.editInvoiceBalance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.creditCards.exception.InvoiceNotAdjustedException
+import com.neoutils.finsight.core.analytics.Analytics
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
+import com.neoutils.finsight.core.ui.component.ModalManager
+import com.neoutils.finsight.feature.creditCards.event.AdjustInvoiceBalance
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.feature.creditCards.event.AdjustInvoiceBalance
-import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.creditCards.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.CalculateInvoiceUseCase
-import com.neoutils.finsight.core.ui.component.ModalManager
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class EditInvoiceBalanceViewModel(
     private val initialInvoice: Invoice,
     private val adjustInvoiceUseCase: AdjustInvoiceUseCase,
@@ -34,13 +41,25 @@ class EditInvoiceBalanceViewModel(
     private val timeZone get() = TimeZone.currentSystemDefault()
     private val currentDate get() = Clock.System.now().toLocalDateTime(timeZone).date
 
-    private val selectedCreditCard = MutableStateFlow(initialInvoice.creditCard)
+    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
 
-    private val editableInvoices = selectedCreditCard.map { creditCard ->
-        invoiceRepository
-            .getInvoicesByCreditCard(creditCard.id)
-            .filter { it.status.isEditable }
+    init {
+        viewModelScope.launch {
+            selectedCreditCard.value = creditCardRepository.getCreditCardById(initialInvoice.creditCardId)
+        }
     }
+
+    private val editableInvoices = selectedCreditCard
+        .filterNotNull()
+        .flatMapLatest { creditCard ->
+            flow {
+                emit(
+                    invoiceRepository
+                        .getInvoicesByCreditCard(creditCard.id)
+                        .filter { it.status.isEditable }
+                )
+            }
+        }
 
     private val creditCards = flow {
         emit(creditCardRepository.getAllCreditCards())
@@ -58,10 +77,10 @@ class EditInvoiceBalanceViewModel(
 
     val uiState = combine(
         creditCards,
-        selectedCreditCard,
+        selectedCreditCard.filterNotNull(),
         editableInvoices,
         selectedInvoice,
-        currentBalance
+        currentBalance,
     ) { cards, selectedCard, invoices, selectedInvoice, balance ->
         if (balance == null) {
             EditInvoiceBalanceUiState.Loading

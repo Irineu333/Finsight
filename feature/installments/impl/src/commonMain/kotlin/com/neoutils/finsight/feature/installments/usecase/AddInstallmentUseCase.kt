@@ -54,11 +54,12 @@ class AddInstallmentUseCase(
             ).bind()
 
             val existingInvoices = invoiceRepository
-                .getInvoicesByCreditCard(firstInvoice.creditCard.id)
+                .getInvoicesByCreditCard(firstInvoice.creditCardId)
                 .sortedBy { it.openingMonth }
 
             val slots = getSlots(
                 firstInvoice = firstInvoice,
+                creditCard = creditCard,
                 installments = installments,
                 invoices = existingInvoices
             ).bind()
@@ -71,6 +72,7 @@ class AddInstallmentUseCase(
 
     private fun getSlots(
         firstInvoice: Invoice,
+        creditCard: CreditCard,
         installments: Int,
         invoices: List<Invoice>
     ): Either<InstallmentException, List<InvoiceSlot>> {
@@ -93,7 +95,7 @@ class AddInstallmentUseCase(
                 InvoiceSlot(
                     number = index + 1,
                     invoice = invoice,
-                    creditCard = firstInvoice.creditCard,
+                    creditCard = creditCard,
                     dueMonth = dueMonth,
                 )
             )

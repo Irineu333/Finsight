@@ -51,7 +51,7 @@ class CreateInvoiceUseCase(
         }
 
         val newInvoice = Invoice(
-            creditCard = creditCard,
+            creditCardId = creditCard.id,
             openingMonth = currentMonth,
             closingMonth = closingMonth,
             dueMonth = dueMonth,

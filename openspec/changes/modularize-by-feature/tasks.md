@@ -402,26 +402,26 @@
 > Feature isolada: `Invoice` é consumido por outras features mas hoje está em `:core:domain`. Refatoramos para `creditCardId: Long`, criamos `InvoiceUi` (datas derivadas) em `creditCards:ui`, e migramos componentes CC do `:core:sharedui`. Outras features que liam `invoice.creditCard.*` ou `invoice.openingDate/closingDate/dueDate` precisam ser ajustadas — feito aqui mesmo via call-site update.
 
 **Domínio:**
-- [ ] 21.D.1 Substituir `Invoice.creditCard: CreditCard` por `creditCardId: Long` (em `:core:domain/model/Invoice.kt`, ainda no lugar atual)
-- [ ] 21.D.2 Atualizar `InvoiceMapper` (`@Entity → Invoice`) em `creditCards:impl` para popular `creditCardId` direto do `@Entity` (parar de fazer JOIN com CreditCard)
-- [ ] 21.D.3 `Invoice` perde `openingDate`/`closingDate`/`dueDate` derivadas (datas migram para `InvoiceUi`)
+- [x] 21.D.1 Substituir `Invoice.creditCard: CreditCard` por `creditCardId: Long` (em `:core:domain/model/Invoice.kt`, ainda no lugar atual)
+- [x] 21.D.2 Atualizar `InvoiceMapper` (`@Entity → Invoice`) em `creditCards:impl` para popular `creditCardId` direto do `@Entity` (parar de fazer JOIN com CreditCard)
+- [x] 21.D.3 `Invoice` perde `openingDate`/`closingDate`/`dueDate` derivadas (datas migram para `InvoiceUi`)
 
 **UI tier:**
-- [ ] 21.D.4 `creditCards:ui/model/InvoiceUi.kt`: `data class InvoiceUi(invoice, creditCard, openingDate, closingDate, dueDate, amount, ...)`; `IInvoiceUiMapper.toUi(Invoice): InvoiceUi` interface
-- [ ] 21.D.5 `creditCards:impl/mapper/InvoiceUiMapper.kt` (impl da interface) injeta `ICreditCardRepository` para resolver `CreditCard` e calcula datas a partir de `closingDay`/`dueDay`. Suporte a batch (lista de invoices → query única CreditCard).
-- [ ] 21.D.6 `creditCards:impl/di`: registrar `single<IInvoiceUiMapper> { InvoiceUiMapper(...) }`
-- [ ] 21.D.7 `CreditCardCard` → `creditCards:ui/component/`
-- [ ] 21.D.8 `CreditCardSelector` → `creditCards:ui/component/`
-- [ ] 21.D.9 `InvoiceMonthNavigator` → `creditCards:ui/component/`
-- [ ] 21.D.10 `InvoiceSelector` → `creditCards:ui/component/`
+- [x] 21.D.4 `creditCards:ui/model/InvoiceUi.kt`: `data class InvoiceUi(invoice, creditCard, openingDate, closingDate, dueDate, amount, ...)`; `IInvoiceUiMapper.toUi(Invoice): InvoiceUi` interface
+- [x] 21.D.5 `creditCards:impl/mapper/InvoiceUiMapper.kt` (impl da interface) injeta `ICreditCardRepository` para resolver `CreditCard` e calcula datas a partir de `closingDay`/`dueDay`. Suporte a batch (lista de invoices → query única CreditCard).
+- [x] 21.D.6 `creditCards:impl/di`: registrar `single<IInvoiceUiMapper> { InvoiceUiMapper(...) }`
+- [x] 21.D.7 `CreditCardCard` → `creditCards:ui/component/`
+- [x] 21.D.8 `CreditCardSelector` → `creditCards:ui/component/`
+- [x] 21.D.9 `InvoiceMonthNavigator` → `creditCards:ui/component/`
+- [x] 21.D.10 `InvoiceSelector` → `creditCards:ui/component/`
 
 **Build wiring:**
-- [ ] 21.D.11 `creditCards:impl/build.gradle.kts`: adicionar `implementation(projects.feature.creditCards.ui)`
+- [x] 21.D.11 `creditCards:impl/build.gradle.kts`: adicionar `implementation(projects.feature.creditCards.ui)`
 
 **Consumidores:**
-- [ ] 21.D.12 `creditCards:impl` ViewModels (`CreditCardsViewModel`, `InvoiceTransactionsViewModel`): usar `InvoiceUi` (com datas derivadas)
-- [ ] 21.D.13 Atualizar todos os call sites cross-feature que liam `invoice.creditCard.*` ou `invoice.openingDate/closingDate/dueDate` para usar `InvoiceUi` (em UI) ou buscar `CreditCard` via repo (em use cases puros). Locais conhecidos: `transactions:impl`, `installments:impl`, `dashboard:impl`, `report:impl`.
-- [ ] 21.D.14 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.D.12 `creditCards:impl` ViewModels (`CreditCardsViewModel`, `InvoiceTransactionsViewModel`): usar `InvoiceUi` (com datas derivadas)
+- [x] 21.D.13 Atualizar todos os call sites cross-feature que liam `invoice.creditCard.*` ou `invoice.openingDate/closingDate/dueDate` para usar `InvoiceUi` (em UI) ou buscar `CreditCard` via repo (em use cases puros). Locais conhecidos: `transactions:impl`, `installments:impl`, `dashboard:impl`, `report:impl`.
+- [x] 21.D.14 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.E `accounts:ui` + `categories:ui` — migrar componentes (sem refatoração de domínio)
 

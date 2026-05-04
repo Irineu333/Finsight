@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.core.domain.model
 
-import com.neoutils.finsight.core.utils.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.time.Clock
@@ -11,7 +10,7 @@ import kotlin.time.Instant
 
 data class Invoice(
     val id: Long = 0,
-    val creditCard: CreditCard,
+    val creditCardId: Long,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val dueMonth: YearMonth,
@@ -21,10 +20,6 @@ data class Invoice(
     val closedAt: LocalDate? = null,
     val paidAt: LocalDate? = null
 ) {
-    val openingDate get() = openingMonth.safeOnDay(creditCard.closingDay)
-    val closingDate get() = closingMonth.safeOnDay(creditCard.closingDay)
-    val dueDate get() = dueMonth.safeOnDay(creditCard.dueDay)
-
     val isClosable get() = when(status) {
         Status.OPEN -> true
         Status.RETROACTIVE -> true

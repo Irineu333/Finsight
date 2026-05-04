@@ -1,188 +1,77 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.neoutils.finsight.feature.creditCards.repository
 
 import com.neoutils.finsight.core.database.dao.InvoiceDao
-import com.neoutils.finsight.feature.creditCards.mapper.InvoiceMapper
 import com.neoutils.finsight.core.domain.model.Invoice
-import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
-import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import com.neoutils.finsight.feature.creditCards.mapper.InvoiceMapper
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 class InvoiceRepository(
     private val dao: InvoiceDao,
-    private val creditCardRepository: ICreditCardRepository,
     private val mapper: InvoiceMapper
 ) : IInvoiceRepository {
 
-    private val creditCardsFlow = creditCardRepository
-        .observeAllCreditCards()
-        .map { creditCards ->
-            creditCards.associateBy { creditCard -> creditCard.id }
-        }
-
     override fun observeAllInvoices(): Flow<List<Invoice>> {
-        return combine(
-            dao.observeAllInvoices(),
-            creditCardsFlow,
-        ) { entities, creditCards ->
-            entities.mapNotNull { entity ->
-                creditCards[entity.creditCardId]?.let { creditCard ->
-                    mapper.toDomain(
-                        entity = entity,
-                        creditCard = creditCard,
-                    )
-                }
-            }
+        return dao.observeAllInvoices().map { entities ->
+            entities.map(mapper::toDomain)
         }
     }
 
     override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> {
-        return combine(
-            dao.observeInvoicesByCreditCard(creditCardId),
-            creditCardRepository.observeCreditCardById(creditCardId),
-        ) { entities, creditCard ->
-            entities.map { entity ->
-                mapper.toDomain(
-                    entity = entity,
-                    creditCard = creditCard!!
-                )
-            }
+        return dao.observeInvoicesByCreditCard(creditCardId).map { entities ->
+            entities.map(mapper::toDomain)
         }
     }
 
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
-
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId)!!
-
-        return dao.getAllInvoicesByCreditCard(
-            creditCardId = creditCardId,
-        ).map {
-            mapper.toDomain(
-                entity = it,
-                creditCard = creditCard,
-            )
-        }
+        return dao.getAllInvoicesByCreditCard(creditCardId).map(mapper::toDomain)
     }
 
     override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> {
-        return dao.observeInvoiceById(invoiceId).flatMapMerge { entity ->
-
-            if (entity == null) {
-                return@flatMapMerge emptyFlow()
-            }
-
-            creditCardRepository.observeCreditCardById(
-                creditCardId = entity.creditCardId,
-            ).map { creditCard ->
-                mapper.toDomain(
-                    entity = entity,
-                    creditCard = creditCard!!
-                )
-            }
+        return dao.observeInvoiceById(invoiceId).map { entity ->
+            entity?.let(mapper::toDomain)
         }
     }
 
     override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> {
-        return combine(
-            dao.observeOpenInvoice(creditCardId),
-            creditCardRepository.observeCreditCardById(creditCardId),
-        ) { entity, creditCard ->
-            entity?.let {
-                creditCard?.let {
-                    mapper.toDomain(
-                        entity = entity,
-                        creditCard = creditCard
-                    )
-                }
-            }
+        return dao.observeOpenInvoice(creditCardId).map { entity ->
+            entity?.let(mapper::toDomain)
         }
     }
 
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> {
-        return combine(
-            dao.observeAvailableInvoices(creditCardId),
-            creditCardRepository.observeCreditCardById(creditCardId),
-        ) { entities, creditCard ->
-            if (creditCard == null) return@combine emptyList()
-            entities.map { entity ->
-                mapper.toDomain(
-                    entity = entity,
-                    creditCard = creditCard
-                )
-            }
+        return dao.observeAvailableInvoices(creditCardId).map { entities ->
+            entities.map(mapper::toDomain)
         }
     }
 
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> {
-        return combine(
-            dao.observeUnpaidInvoice(creditCardId),
-            creditCardRepository.observeCreditCardById(creditCardId),
-        ) { entity, creditCard ->
-            entity?.let {
-                creditCard?.let {
-                    mapper.toDomain(
-                        entity = entity,
-                        creditCard = creditCard
-                    )
-                }
-            }
+        return dao.observeUnpaidInvoice(creditCardId).map { entity ->
+            entity?.let(mapper::toDomain)
         }
     }
 
     override fun observeUnpaidInvoices(): Flow<List<Invoice>> {
-        return combine(
-            dao.observeUnpaidInvoices(),
-            creditCardsFlow,
-        ) { entities, creditCards ->
-            entities.mapNotNull { entity ->
-                creditCards[entity.creditCardId]?.let { creditCard ->
-                    mapper.toDomain(
-                        entity = entity,
-                        creditCard = creditCard,
-                    )
-                }
-            }
+        return dao.observeUnpaidInvoices().map { entities ->
+            entities.map(mapper::toDomain)
         }
     }
 
     override suspend fun getAllInvoices(): List<Invoice> {
-
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
-
-        return dao.getAllInvoices().map { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCards[entity.creditCardId]!!
-            )
-        }
+        return dao.getAllInvoices().map(mapper::toDomain)
     }
 
     override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return emptyList()
-
-        return dao.getUnpaidInvoicesByCreditCard(creditCardId).map { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCard
-            )
-        }
+        return dao.getUnpaidInvoicesByCreditCard(creditCardId).map(mapper::toDomain)
     }
 
     override suspend fun getOpenInvoice(creditCardId: Long): Invoice? {
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return null
-
-        return dao.getOpenInvoice(creditCardId)?.let { entity ->
-            mapper.toDomain(
-                entity = entity,
-                creditCard = creditCard
-            )
-        }
+        return dao.getOpenInvoice(creditCardId)?.let(mapper::toDomain)
     }
 
     override suspend fun getInvoiceById(id: Long): Invoice? {
-        return observeInvoiceById(id).first()
+        return dao.observeInvoiceById(id).first()?.let(mapper::toDomain)
     }
 
     override suspend fun insert(invoice: Invoice): Long {

@@ -1,18 +1,16 @@
 package com.neoutils.finsight.feature.creditCards.mapper
 
 import com.neoutils.finsight.core.database.entity.InvoiceEntity
-import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 
 class InvoiceMapper {
 
     fun toDomain(
         entity: InvoiceEntity,
-        creditCard: CreditCard
     ): Invoice {
         return Invoice(
             id = entity.id,
-            creditCard = creditCard,
+            creditCardId = entity.creditCardId,
             openingMonth = entity.openingMonth,
             closingMonth = entity.closingMonth,
             dueMonth = entity.dueMonth,
@@ -27,7 +25,7 @@ class InvoiceMapper {
     fun toEntity(domain: Invoice): InvoiceEntity {
         return InvoiceEntity(
             id = domain.id,
-            creditCardId = domain.creditCard.id,
+            creditCardId = domain.creditCardId,
             openingMonth = domain.openingMonth,
             closingMonth = domain.closingMonth,
             dueMonth = domain.dueMonth,

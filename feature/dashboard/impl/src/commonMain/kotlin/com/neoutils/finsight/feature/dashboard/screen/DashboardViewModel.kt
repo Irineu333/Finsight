@@ -62,7 +62,7 @@ class DashboardViewModel(
     private val invoices = invoiceRepository
         .observeUnpaidInvoices()
         .map { invoices ->
-            invoices.associateBy { it.creditCard.id }
+            invoices.associateBy { it.creditCardId }
         }
 
     private val preferences = getDashboardPreferences()

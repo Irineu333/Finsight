@@ -1,5 +1,7 @@
 package com.neoutils.finsight.feature.report.usecase
 
+import com.neoutils.finsight.core.utils.extension.safeOnDay
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportViewerParams
@@ -7,6 +9,7 @@ import com.neoutils.finsight.feature.report.model.ReportConfig
 
 class BuildReportViewerParamsUseCase(
     private val invoiceRepository: IInvoiceRepository,
+    private val creditCardRepository: ICreditCardRepository,
 ) {
     suspend operator fun invoke(config: ReportConfig): ReportViewerParams? {
         if (!config.isValid) return null
@@ -26,12 +29,13 @@ class BuildReportViewerParamsUseCase(
                 val invoices = invoiceRepository.getInvoicesByCreditCard(creditCardId)
                 val selected = invoices.filter { it.id in config.selectedInvoiceIds }
                 if (selected.isEmpty()) return null
+                val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return null
                 ReportViewerParams(
                     perspectiveType = PerspectiveTab.CREDIT_CARD,
                     creditCardId = creditCardId,
                     invoiceIds = selected.map { it.id },
-                    startDate = selected.minOf { it.openingDate },
-                    endDate = selected.maxOf { it.closingDate },
+                    startDate = selected.minOf { it.openingMonth.safeOnDay(creditCard.closingDay) },
+                    endDate = selected.maxOf { it.closingMonth.safeOnDay(creditCard.closingDay) },
                     includeSpendingByCategory = config.includeSpendingByCategory,
                     includeIncomeByCategory = config.includeIncomeByCategory,
                     includeTransactionList = config.includeTransactionList,

@@ -2,13 +2,16 @@ package com.neoutils.finsight.feature.creditCards.modal.advancePayment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.feature.creditCards.event.AdvanceInvoicePayment
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.feature.creditCards.usecase.AdvanceInvoicePaymentUseCase
+import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.ui.component.ModalManager
+import com.neoutils.finsight.core.utils.extension.safeOnDay
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.creditCards.event.AdvanceInvoicePayment
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.creditCards.usecase.AdvanceInvoicePaymentUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -21,6 +24,8 @@ class AdvancePaymentViewModel(
     private val invoiceId: Long,
     private val advanceInvoicePaymentUseCase: AdvanceInvoicePaymentUseCase,
     private val accountRepository: IAccountRepository,
+    private val invoiceRepository: IInvoiceRepository,
+    private val creditCardRepository: ICreditCardRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -32,13 +37,27 @@ class AdvancePaymentViewModel(
         emit(accountRepository.getAllAccounts())
     }
 
+    private val datesFlow = flow {
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+        val creditCard = invoice?.let { creditCardRepository.getCreditCardById(it.creditCardId) }
+        emit(
+            if (invoice != null && creditCard != null) {
+                invoice.openingMonth.safeOnDay(creditCard.closingDay) to
+                        invoice.closingMonth.safeOnDay(creditCard.closingDay)
+            } else null
+        )
+    }
+
     val uiState = combine(
         accounts,
         selectedAccount,
-    ) { accounts, account ->
+        datesFlow,
+    ) { accounts, account, dates ->
         AdvancePaymentUiState(
             accounts = accounts,
             selectedAccount = account ?: accounts.firstOrNull { it.isDefault },
+            openingDate = dates?.first,
+            closingDate = dates?.second,
         )
     }.stateIn(
         scope = viewModelScope,

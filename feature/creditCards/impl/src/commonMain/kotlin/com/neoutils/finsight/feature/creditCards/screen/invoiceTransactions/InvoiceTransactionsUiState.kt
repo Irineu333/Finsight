@@ -3,6 +3,7 @@
 package com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions
 
 import com.neoutils.finsight.core.domain.model.Category
+import com.neoutils.finsight.core.domain.model.CreditCard
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
@@ -13,6 +14,7 @@ import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
+    val creditCard: CreditCard? = null,
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
     val operations: Map<LocalDate, List<Operation>> = emptyMap(),

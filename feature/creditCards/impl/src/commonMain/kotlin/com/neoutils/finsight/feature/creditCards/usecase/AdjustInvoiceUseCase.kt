@@ -5,6 +5,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.feature.creditCards.exception.InvoiceNotAdjustedException
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
@@ -16,6 +17,7 @@ class AdjustInvoiceUseCase(
     private val repository: ITransactionRepository,
     private val operationRepository: IOperationRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val creditCardRepository: ICreditCardRepository,
 ) {
     suspend operator fun invoke(
         invoice: Invoice,
@@ -41,13 +43,16 @@ class AdjustInvoiceUseCase(
 
         catch {
             if (existingAdjustment == null) {
+                val creditCard = requireNotNull(
+                    creditCardRepository.getCreditCardById(invoice.creditCardId)
+                ) { "CreditCard ${invoice.creditCardId} not found" }
                 operationRepository.createOperation(
                     kind = Operation.Kind.TRANSACTION,
                     title = null,
                     date = adjustmentDate,
                     categoryId = null,
                     sourceAccountId = null,
-                    targetCreditCardId = invoice.creditCard.id,
+                    targetCreditCardId = invoice.creditCardId,
                     targetInvoiceId = invoice.id,
                     transactions = listOf(
                         Transaction(
@@ -56,7 +61,7 @@ class AdjustInvoiceUseCase(
                             amount = -difference,
                             date = adjustmentDate,
                             target = Transaction.Target.CREDIT_CARD,
-                            creditCard = invoice.creditCard,
+                            creditCard = creditCard,
                             invoice = invoice
                         )
                     ),

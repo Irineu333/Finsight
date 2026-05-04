@@ -39,7 +39,7 @@ class CreateRetroactiveInvoiceUseCase(
         val openingMonth = closingMonth.minusMonth()
 
         val invoice = Invoice(
-            creditCard = creditCard,
+            creditCardId = creditCard.id,
             openingMonth = openingMonth,
             closingMonth = closingMonth,
             dueMonth = targetDueMonth,

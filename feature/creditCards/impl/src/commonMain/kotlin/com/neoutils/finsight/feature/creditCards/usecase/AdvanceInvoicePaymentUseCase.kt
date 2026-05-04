@@ -12,6 +12,8 @@ import com.neoutils.finsight.feature.creditCards.exception.InvoiceException
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
+import com.neoutils.finsight.core.utils.extension.safeOnDay
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.datetime.LocalDate
@@ -26,6 +28,7 @@ private val currentDate
 class AdvanceInvoicePaymentUseCase(
     private val operationRepository: IOperationRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val creditCardRepository: ICreditCardRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
     suspend operator fun invoke(
@@ -44,7 +47,13 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.NotFound)
         }
 
-        ensure(date >= invoice.openingDate && date <= invoice.closingDate) {
+        val creditCard = ensureNotNull(creditCardRepository.getCreditCardById(invoice.creditCardId)) {
+            InvoiceException(InvoiceError.NotFound)
+        }
+        val openingDate = invoice.openingMonth.safeOnDay(creditCard.closingDay)
+        val closingDate = invoice.closingMonth.safeOnDay(creditCard.closingDay)
+
+        ensure(date >= openingDate && date <= closingDate) {
             InvoiceException(InvoiceError.DateOutsideInvoicePeriod)
         }
 
@@ -69,7 +78,7 @@ class AdvanceInvoicePaymentUseCase(
                 date = date,
                 categoryId = null,
                 sourceAccountId = account.id,
-                targetCreditCardId = invoice.creditCard.id,
+                targetCreditCardId = invoice.creditCardId,
                 targetInvoiceId = invoice.id,
                 transactions = listOf(
                     Transaction(
@@ -79,7 +88,7 @@ class AdvanceInvoicePaymentUseCase(
                         amount = amount,
                         date = date,
                         target = Transaction.Target.ACCOUNT,
-                        creditCard = invoice.creditCard,
+                        creditCard = creditCard,
                         invoice = invoice,
                         account = account,
                     ),
@@ -90,7 +99,7 @@ class AdvanceInvoicePaymentUseCase(
                         amount = amount,
                         date = date,
                         target = Transaction.Target.CREDIT_CARD,
-                        creditCard = invoice.creditCard,
+                        creditCard = creditCard,
                         invoice = invoice,
                         account = null,
                     ),

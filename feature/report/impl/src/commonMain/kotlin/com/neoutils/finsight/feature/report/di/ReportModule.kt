@@ -20,7 +20,7 @@ val reportModule = module {
 
     factory { CalculateReportCategorySpendingUseCase() }
 
-    factory { BuildReportViewerParamsUseCase(get()) }
+    factory { BuildReportViewerParamsUseCase(get(), get()) }
 
     viewModel {
         ReportConfigViewModel(

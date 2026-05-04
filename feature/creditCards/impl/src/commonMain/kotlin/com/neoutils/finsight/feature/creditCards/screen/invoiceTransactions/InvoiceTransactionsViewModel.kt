@@ -10,6 +10,7 @@ import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.creditCards.resources.*
 import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.core.utils.util.dayMonth
@@ -83,6 +84,7 @@ class InvoiceTransactionsViewModel(
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
+            creditCard = creditCard,
             invoices = invoices.map { invoice ->
                 val invoiceTransactions = transactions.filter {
                     it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
@@ -100,15 +102,19 @@ class InvoiceTransactionsViewModel(
                     .filter { it.type == Transaction.Type.ADJUSTMENT }
                     .sumOf { it.amount }
 
+                val openingDate = invoice.openingMonth.safeOnDay(creditCard.closingDay)
+                val closingDate = invoice.closingMonth.safeOnDay(creditCard.closingDay)
+                val dueDate = invoice.dueMonth.safeOnDay(creditCard.dueDay)
+
                 val nextDateLabel = when (invoice.status) {
                     Invoice.Status.OPEN -> UiText.ResWithArgs(
                         Res.string.invoice_closes_on,
-                        dayMonth.format(invoice.closingDate)
+                        dayMonth.format(closingDate)
                     )
 
                     Invoice.Status.CLOSED -> UiText.ResWithArgs(
                         Res.string.invoice_due_on,
-                        dayMonth.format(invoice.dueDate)
+                        dayMonth.format(dueDate)
                     )
 
                     Invoice.Status.PAID -> invoice.paidAt?.let { paidDate ->
@@ -120,7 +126,7 @@ class InvoiceTransactionsViewModel(
 
                     Invoice.Status.FUTURE -> UiText.ResWithArgs(
                         Res.string.invoice_opens_on,
-                        dayMonth.format(invoice.openingDate)
+                        dayMonth.format(openingDate)
                     )
 
                     Invoice.Status.RETROACTIVE -> null
@@ -134,8 +140,8 @@ class InvoiceTransactionsViewModel(
                     total = invoiceTransactions.sumOf { -it.signedImpact() },
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
-                    closingDate = invoice.closingDate,
-                    isClosable = invoice.isClosable && currentDate >= invoice.closingDate,
+                    closingDate = closingDate,
+                    isClosable = invoice.isClosable && currentDate >= closingDate,
                 )
             },
             selectedInvoiceIndex = index,

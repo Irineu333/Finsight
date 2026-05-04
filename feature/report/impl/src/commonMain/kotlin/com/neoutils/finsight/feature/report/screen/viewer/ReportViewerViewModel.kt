@@ -10,6 +10,7 @@ import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportPerspective
 import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.domain.extension.signedImpact
+import com.neoutils.finsight.core.utils.extension.safeOnDay
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
@@ -73,6 +74,7 @@ class ReportViewerViewModel(
         invoicesFlow,
     ) { operations, accounts, creditCards, invoices ->
         val invoiceIds = invoices.map { it.id }.toSet()
+        val creditCardsById = creditCards.associateBy { it.id }
         val invoiceTransactions = operations
             .flatMap { it.transactions }
             .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
@@ -90,8 +92,14 @@ class ReportViewerViewModel(
             val total = invoiceTransactions.sumOf { -it.signedImpact() }
 
             ReportViewerUiState.Stats.Invoice(
-                openingDate = invoices.minOf { it.openingDate },
-                closingDate = invoices.maxOf { it.closingDate },
+                openingDate = invoices.minOf { invoice ->
+                    val cc = creditCardsById[invoice.creditCardId]
+                    invoice.openingMonth.safeOnDay(cc?.closingDay ?: 1)
+                },
+                closingDate = invoices.maxOf { invoice ->
+                    val cc = creditCardsById[invoice.creditCardId]
+                    invoice.closingMonth.safeOnDay(cc?.closingDay ?: 1)
+                },
                 expense = expense,
                 advancePayment = advancePayment,
                 adjustment = adjustment,

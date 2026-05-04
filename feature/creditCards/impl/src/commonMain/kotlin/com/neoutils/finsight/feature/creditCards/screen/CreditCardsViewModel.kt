@@ -60,7 +60,7 @@ class CreditCardsViewModel(
     private val invoicesFlow = invoiceRepository
         .observeUnpaidInvoices()
         .map { invoices ->
-            invoices.associateBy { it.creditCard.id }
+            invoices.associateBy { it.creditCardId }
         }
 
     private val transactionsFlow = combine(

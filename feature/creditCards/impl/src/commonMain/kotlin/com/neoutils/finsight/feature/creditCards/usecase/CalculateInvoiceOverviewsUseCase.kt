@@ -30,7 +30,7 @@ class CalculateInvoiceOverviewsUseCase {
 
                 InvoiceOverviewResult(
                     invoiceId = invoice.id,
-                    creditCardName = invoice.creditCard.name,
+                    creditCardId = invoice.creditCardId,
                     invoiceStatus = invoice.status,
                     expense = expense,
                     advancePayment = advancePayment,
@@ -59,7 +59,7 @@ class CalculateInvoiceOverviewsUseCase {
 
     data class InvoiceOverviewResult(
         val invoiceId: Long,
-        val creditCardName: String,
+        val creditCardId: Long,
         val invoiceStatus: Invoice.Status,
         val expense: Double,
         val advancePayment: Double,

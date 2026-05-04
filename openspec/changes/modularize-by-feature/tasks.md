@@ -394,7 +394,7 @@
 - [x] 21.C.6 Criar `feature/budgets/ui/`; deps: `budgets:api` + `categories:api` + `:core:ui`
 - [x] 21.C.7 Criar `feature/installments/ui/`; deps: `installments:api` + `transactions:api` + `creditCards:api` + `:core:ui`
 - [x] 21.C.8 Criar `feature/dashboard/ui/`; deps: `dashboard:api` + `transactions:api` + `:core:ui` + Navigation (vai receber `DashboardEntry` em 21.M)
-- [ ] 21.C.9 (Opcional) Criar `feature/home/ui/` se em 21.M decidirmos mover `HomeChrome*`/`HomeRoute` componentes para lá. Pode ficar pendente até 21.M.
+- [x] 21.C.9 (Opcional) Criar `feature/home/ui/` se em 21.M decidirmos mover `HomeChrome*`/`HomeRoute` componentes para lá. Pode ficar pendente até 21.M.
 - [x] 21.C.10 `./gradlew :app:assembleDebug` — build passa com 8 módulos `:ui` vazios
 
 ### 21.D `creditCards:ui` — `Invoice` → `creditCardId` + `InvoiceUi` + componentes + ViewModels
@@ -428,20 +428,20 @@
 > `Account` e `Category` já são display-friendly (sem refs cruzadas) — não precisam virar IDs nem ganhar `XxUi` agora. Apenas movemos os componentes que outras features renderizam.
 
 **accounts:ui:**
-- [ ] 21.E.1 `AccountCard` → `accounts:ui/component/`
-- [ ] 21.E.2 `AccountSelector` → `accounts:ui/component/`
-- [ ] 21.E.3 `accounts:impl/build.gradle.kts`: adicionar `implementation(projects.feature.accounts.ui)`
+- [x] 21.E.1 `AccountCard` → `accounts:ui/component/`
+- [x] 21.E.2 `AccountSelector` → `accounts:ui/component/`
+- [x] 21.E.3 `accounts:impl/build.gradle.kts`: adicionar `implementation(projects.feature.accounts.ui)`
 
 **categories:ui:**
-- [ ] 21.E.4 `CategorySelector` → `categories:ui/component/`
-- [ ] 21.E.5 `MultiCategorySelector` → `categories:ui/component/`
-- [ ] 21.E.6 `CategoryIconBox` → `categories:ui/component/`
-- [ ] 21.E.7 `CategorySpendingCard` → `categories:ui/component/` (renderiza `CategorySpending` de `categories:api`; consumido por `dashboard:impl` e `report:impl`)
-- [ ] 21.E.8 `categories:impl/build.gradle.kts`: adicionar `implementation(projects.feature.categories.ui)`
+- [x] 21.E.4 `CategorySelector` → `categories:ui/component/`
+- [x] 21.E.5 `MultiCategorySelector` → `categories:ui/component/`
+- [x] 21.E.6 `CategoryIconBox` → `categories:ui/component/`
+- [x] 21.E.7 `CategorySpendingCard` → `categories:ui/component/` (renderiza `CategorySpending` de `categories:api`; consumido por `dashboard:impl` e `report:impl`)
+- [x] 21.E.8 `categories:impl/build.gradle.kts`: adicionar `implementation(projects.feature.categories.ui)`
 
 **Cross-impl wiring:**
-- [ ] 21.E.9 Cada `:impl` que renderizava esses componentes via `:core:sharedui` adiciona `implementation(projects.feature.accounts.ui)` / `projects.feature.categories.ui` conforme uso. Atualizar imports de `core.sharedui.component.*` para `feature.<x>.component.*`.
-- [ ] 21.E.10 `./gradlew :app:assembleDebug` — build passa
+- [x] 21.E.9 Cada `:impl` que renderizava esses componentes via `:core:sharedui` adiciona `implementation(projects.feature.accounts.ui)` / `projects.feature.categories.ui` conforme uso. Atualizar imports de `core.sharedui.component.*` para `feature.<x>.component.*`.
+- [x] 21.E.10 `./gradlew :app:assembleDebug` — build passa
 
 ### 21.F `transactions:ui` — `Transaction`/`Operation` → IDs + `TransactionUi`/`OperationUi` + componentes + ViewModels
 
@@ -523,13 +523,13 @@
 
 ### 21.L Mover entry points D11 de `:api` para `:ui`
 
-- [ ] 21.L.1 `DashboardEntry` move de `dashboard:api` para `dashboard:ui`; impl atual no `:app` continua válida (passa a importar de `dashboard:ui`)
-- [ ] 21.L.2 `TransactionsEntry` move de `transactions:api` para `transactions:ui`; impl atual no `:app` passa a importar de `transactions:ui`
-- [ ] 21.L.3 `transactions:api` perde Compose/Navigation; volta para `kmp-library`
-- [ ] 21.L.4 `dashboard:api` perde Compose/Navigation; volta para `kmp-library`
-- [ ] 21.L.5 `home:api` reavaliar — se tem só `HomeRoute`/`HomeChrome`/`NavigationDispatcher` (que são pure data), pode ficar; senão move parte para `home:ui`
-- [ ] 21.L.6 `:app/AppNavHost`: ajustar imports de entry points (`DashboardEntry`/`TransactionsEntry`) que mudaram de `:api` para `:ui`
-- [ ] 21.L.7 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.L.1 `DashboardEntry` move de `dashboard:api` para `dashboard:ui`; impl atual no `:app` continua válida (passa a importar de `dashboard:ui`)
+- [x] 21.L.2 `TransactionsEntry` move de `transactions:api` para `transactions:ui`; impl atual no `:app` passa a importar de `transactions:ui`
+- [x] 21.L.3 `transactions:api` perde Compose/Navigation; volta para `kmp-library`
+- [x] 21.L.4 `dashboard:api` perde Compose/Navigation; volta para `kmp-library`
+- [x] 21.L.5 `home:api` reavaliar — se tem só `HomeRoute`/`HomeChrome`/`NavigationDispatcher` (que são pure data), pode ficar; senão move parte para `home:ui`
+- [x] 21.L.6 `:app/AppNavHost`: ajustar imports de entry points (`DashboardEntry`/`TransactionsEntry`) que mudaram de `:api` para `:ui`
+- [x] 21.L.7 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.M Mover models residuais de `:core:domain` para `:feature:X:api`
 
@@ -568,21 +568,21 @@
 
 ### 21.P Aplicar D12 nos novos pacotes `:ui`
 
-- [ ] 21.P.1 Confirmar que cada `feature/<x>/ui/src/commonMain/kotlin/com/neoutils/finsight/feature/<x>/` segue o pacote raiz da feature, com subpacotes `model`, `mapper`, `component`, `entry`, `extension` conforme aplicável
-- [ ] 21.P.2 Atualizar D12 em `design.md` com a entrada `:feature:<x>:ui`
+- [x] 21.P.1 Confirmar que cada `feature/<x>/ui/src/commonMain/kotlin/com/neoutils/finsight/feature/<x>/` segue o pacote raiz da feature, com subpacotes `model`, `mapper`, `component`, `entry`, `extension` conforme aplicável
+- [x] 21.P.2 Atualizar D12 em `design.md` com a entrada `:feature:<x>:ui`
 
 ### 21.Q Verificação final
 
-- [ ] 21.Q.1 `grep -r "projects.core.domain" --include="*.kts"` retorna vazio
-- [ ] 21.Q.2 `grep -r "projects.core.sharedui" --include="*.kts"` retorna vazio
-- [ ] 21.Q.3 `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` retorna vazio
-- [ ] 21.Q.4 `grep -r "import com.neoutils.finsight.core.sharedui" --include="*.kt"` retorna vazio
-- [ ] 21.Q.5 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio (D10 inalterada)
-- [ ] 21.Q.6 `grep -r "projects.feature.*\.ui" feature/*/ui/build.gradle.kts` retorna vazio (nova regra `:ui ↮ :ui`)
-- [ ] 21.Q.7 `grep -r "projects.feature.*\.impl" feature/*/impl/build.gradle.kts` retorna vazio (D10 inalterada para `:impl`)
-- [ ] 21.Q.8 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
-- [ ] 21.Q.9 `./gradlew allTests` — testes passam (exceto pré-existentes documentados em §17.7/§18.23)
-- [ ] 21.Q.10 Build manual em Android, iOS e Desktop; validar golden paths (criar transação, ver dashboard, fechar fatura, confirmar recurring, ajustar saldo, transferência entre contas) — UX inalterada
+- [x] 21.Q.1 `grep -r "projects.core.domain" --include="*.kts"` retorna vazio
+- [x] 21.Q.2 `grep -r "projects.core.sharedui" --include="*.kts"` retorna vazio
+- [x] 21.Q.3 `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` retorna vazio
+- [x] 21.Q.4 `grep -r "import com.neoutils.finsight.core.sharedui" --include="*.kt"` retorna vazio
+- [x] 21.Q.5 `grep -r "projects.feature.*\.api" feature/*/api/build.gradle.kts` retorna vazio (D10 inalterada)
+- [x] 21.Q.6 `grep -r "projects.feature.*\.ui" feature/*/ui/build.gradle.kts` retorna vazio (nova regra `:ui ↮ :ui`)
+- [x] 21.Q.7 `grep -r "projects.feature.*\.impl" feature/*/impl/build.gradle.kts` retorna vazio (D10 inalterada para `:impl`)
+- [x] 21.Q.8 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.Q.9 `./gradlew allTests` — testes passam (exceto pré-existentes documentados em §17.7/§18.23)
+- [x] 21.Q.10 Build manual em Android, iOS e Desktop; validar golden paths (criar transação, ver dashboard, fechar fatura, confirmar recurring, ajustar saldo, transferência entre contas) — UX inalterada
 
 ## 22. Documentation
 

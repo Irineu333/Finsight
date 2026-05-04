@@ -547,15 +547,15 @@
 
 ### 21.N Apagar `:core:domain`
 
-- [ ] 21.N.1 `git rm -r core/domain/`
-- [ ] 21.N.2 Remover `include(":core:domain")` de `settings.gradle.kts`
-- [ ] 21.N.3 Atualizar `build.gradle.kts` consumidores: remover `api(projects.core.domain)` / `implementation(projects.core.domain)` de `feature/*/api`, `feature/*/impl`, `feature/*/ui` (incluindo as deps transitórias adicionadas em 21.C.3 e 21.C.4), `core/sharedui` (transitório), `feature/report/impl`
-- [ ] 21.N.4 `feature/transactions/api/build.gradle.kts`: readicionar `kotlinSerialization` + `kotlinx.serialization.json` (necessário para `@Serializable Transaction.Type/Target` por causa de `HomeRoute.Transactions`); promover `kotlinx.datetime` para `api`
-- [ ] 21.N.5 `feature/home/api/build.gradle.kts`, `feature/dashboard/api/build.gradle.kts`, `feature/installments/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` onde precisarem dos types de transactions
-- [ ] 21.N.6 `feature/creditCards/api/build.gradle.kts`: readicionar `kotlinx.datetime` (Invoice continua usando `LocalDate`/`Instant`/`YearMonth`)
-- [ ] 21.N.7 Verificar via `grep -r "projects.core.domain" --include="*.kts"` que retorna vazio
-- [ ] 21.N.8 Verificar via `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` que retorna vazio
-- [ ] 21.N.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
+- [x] 21.N.1 `git rm -r core/domain/`
+- [x] 21.N.2 Remover `include(":core:domain")` de `settings.gradle.kts`
+- [x] 21.N.3 Atualizar `build.gradle.kts` consumidores: remover `api(projects.core.domain)` / `implementation(projects.core.domain)` de `feature/*/api`, `feature/*/impl`, `feature/*/ui` (incluindo as deps transitórias adicionadas em 21.C.3 e 21.C.4), `core/sharedui` (transitório), `feature/report/impl`
+- [x] 21.N.4 `feature/transactions/api/build.gradle.kts`: readicionar `kotlinSerialization` + `kotlinx.serialization.json` (necessário para `@Serializable Transaction.Type/Target` por causa de `HomeRoute.Transactions`); promover `kotlinx.datetime` para `api`
+- [x] 21.N.5 `feature/home/api/build.gradle.kts`, `feature/dashboard/api/build.gradle.kts`, `feature/installments/api/build.gradle.kts`: substituir `api(projects.core.domain)` por `api(projects.feature.transactions.api)` onde precisarem dos types de transactions
+- [x] 21.N.6 `feature/creditCards/api/build.gradle.kts`: readicionar `kotlinx.datetime` (Invoice continua usando `LocalDate`/`Instant`/`YearMonth`)
+- [x] 21.N.7 Verificar via `grep -r "projects.core.domain" --include="*.kts"` que retorna vazio
+- [x] 21.N.8 Verificar via `grep -r "import com.neoutils.finsight.core.domain" --include="*.kt"` que retorna vazio
+- [x] 21.N.9 `./gradlew :app:assembleDebug :app:compileKotlinJvm :app:compileKotlinIosArm64` — todos passam
 
 ### 21.O Apagar `:core:sharedui`
 

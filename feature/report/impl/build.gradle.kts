@@ -17,7 +17,6 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.utils)
             implementation(projects.core.database)
-            implementation(projects.core.domain)
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.creditCards.api)

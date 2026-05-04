@@ -8,7 +8,6 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.ui)
             implementation(projects.core.utils)
-            implementation(projects.core.domain)
             implementation(projects.feature.creditCards.api)
             implementation(libs.kotlinx.datetime)
         }

@@ -1,6 +1,7 @@
 plugins {
     id("kmp-compose")
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -8,7 +9,8 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
-            api(projects.core.domain)
+            api(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
 
             api(projects.feature.creditCards.api)
 

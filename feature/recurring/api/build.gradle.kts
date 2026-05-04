@@ -9,7 +9,6 @@ kotlin {
             implementation(libs.kotlinx.coroutinesCore)
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
-            api(projects.core.domain)
 
             api(projects.feature.categories.api)
             implementation(projects.core.database)

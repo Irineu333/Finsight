@@ -10,7 +10,6 @@ kotlin {
             implementation(projects.core.utils)
             implementation(projects.feature.accounts.api)
             implementation(projects.feature.transactions.api)
-            implementation(projects.core.domain)
         }
     }
 }

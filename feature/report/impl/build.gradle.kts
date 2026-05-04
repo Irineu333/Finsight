@@ -9,6 +9,10 @@ kotlin {
         commonMain.dependencies {
             api(projects.feature.report.api)
             implementation(projects.core.ui)
+
+            implementation(projects.feature.categories.ui)
+
+            implementation(projects.feature.accounts.ui)
             implementation(projects.core.sharedui)
             implementation(projects.core.analytics)
             implementation(projects.core.utils)

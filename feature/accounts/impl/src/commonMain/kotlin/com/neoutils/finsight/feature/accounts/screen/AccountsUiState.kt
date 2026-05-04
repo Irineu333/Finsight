@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.accounts.screen
 
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Transaction
-import com.neoutils.finsight.core.sharedui.model.AccountUi
+import com.neoutils.finsight.feature.accounts.model.AccountUi
 import com.neoutils.finsight.core.sharedui.model.OperationUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth

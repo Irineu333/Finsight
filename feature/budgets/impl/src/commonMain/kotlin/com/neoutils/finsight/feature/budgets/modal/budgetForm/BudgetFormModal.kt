@@ -29,7 +29,7 @@ import com.neoutils.finsight.feature.budgets.resources.*
 import com.neoutils.finsight.core.ui.component.IconPickerSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.core.sharedui.component.MultiCategorySelector
+import com.neoutils.finsight.feature.categories.component.MultiCategorySelector
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
 import com.neoutils.finsight.core.ui.modal.iconPicker.IconPickerModal
 import com.neoutils.finsight.feature.recurring.modal.RecurringFormModalEntry

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="category_selector_label">Categoria</string>
+    <string name="category_selector_none">Nenhuma</string>
+    <string name="multi_category_selector_none">Nenhuma</string>
+    <string name="multi_category_selector_and">e</string>
+    <string name="multi_category_selector_label">Categorias</string>
+    <string name="category_spending_card_title">Gastos por Categoria</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_default">Default</string>
+    <string name="accounts_initial_balance">Initial Balance</string>
+    <string name="accounts_income">Income</string>
+    <string name="accounts_expenses">Expenses</string>
+    <string name="accounts_adjustments">Adjustments</string>
+    <string name="accounts_invoices">Invoices</string>
+    <string name="accounts_advance_payments">Advance Payments</string>
+    <string name="accounts_balance">Balance</string>
+    <string name="account_selector_label">Account</string>
+</resources>

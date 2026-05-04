@@ -39,7 +39,7 @@ import com.neoutils.finsight.feature.recurring.resources.view_recurring_reactiva
 import com.neoutils.finsight.feature.recurring.resources.view_recurring_status_label
 import com.neoutils.finsight.feature.recurring.resources.view_recurring_stop
 import com.neoutils.finsight.feature.recurring.resources.view_recurring_type_label
-import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet

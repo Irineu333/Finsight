@@ -50,7 +50,7 @@ import com.neoutils.finsight.feature.recurring.resources.recurring_screen_create
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_day
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_empty
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_title
-import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModal

@@ -48,13 +48,13 @@ import com.neoutils.finsight.feature.dashboard.resources.*
 import com.neoutils.finsight.core.sharedui.resources.Res as SharedUiRes
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_empty
 import com.neoutils.finsight.core.sharedui.resources.credit_cards_create
-import com.neoutils.finsight.core.sharedui.component.AccountCard
-import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
+import com.neoutils.finsight.feature.accounts.component.AccountCard
+import com.neoutils.finsight.feature.accounts.component.AccountCardVariant
 import com.neoutils.finsight.core.ui.component.BalanceCard
 import com.neoutils.finsight.core.ui.component.BalanceCardConfig
-import com.neoutils.finsight.core.sharedui.component.BudgetProgressCard
-import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
-import com.neoutils.finsight.core.sharedui.component.CategorySpendingCard
+import com.neoutils.finsight.feature.budgets.component.BudgetProgressCard
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.component.CategorySpendingCard
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCard
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCardVariant
 import com.neoutils.finsight.feature.dashboard.constant.showHeader

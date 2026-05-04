@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.accounts.component
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -20,21 +20,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.sharedui.model.AccountUi
 import com.neoutils.finsight.core.ui.theme.Adjustment
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.theme.InvoicePayment
-import com.neoutils.finsight.core.sharedui.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.accounts_advance_payments
-import com.neoutils.finsight.core.sharedui.resources.accounts_adjustments
-import com.neoutils.finsight.core.sharedui.resources.accounts_balance
-import com.neoutils.finsight.core.sharedui.resources.accounts_default
-import com.neoutils.finsight.core.sharedui.resources.accounts_expenses
-import com.neoutils.finsight.core.sharedui.resources.accounts_income
-import com.neoutils.finsight.core.sharedui.resources.accounts_initial_balance
-import com.neoutils.finsight.core.sharedui.resources.accounts_invoices
 import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.feature.accounts.model.AccountUi
+import com.neoutils.finsight.feature.accounts.ui.resources.Res
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_advance_payments
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_adjustments
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_balance
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_default
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_expenses
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_income
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_initial_balance
+import com.neoutils.finsight.feature.accounts.ui.resources.accounts_invoices
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 

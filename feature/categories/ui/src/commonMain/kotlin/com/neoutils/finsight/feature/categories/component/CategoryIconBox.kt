@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.categories.component
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -14,6 +14,7 @@ import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.util.AppIcon
+
 @Composable
 fun CategoryIconBox(
     category: Category,

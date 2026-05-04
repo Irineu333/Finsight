@@ -38,6 +38,8 @@ import com.neoutils.finsight.feature.transactions.resources.edit_transaction_tit
 import com.neoutils.finsight.feature.transactions.resources.edit_transaction_title_label
 import com.neoutils.finsight.core.ui.component.*
 import com.neoutils.finsight.core.sharedui.component.*
+import com.neoutils.finsight.feature.categories.component.CategorySelector
+import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceMonthNavigator
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal

@@ -9,8 +9,16 @@ kotlin {
             implementation(projects.core.ui)
             implementation(projects.core.utils)
             implementation(projects.feature.accounts.api)
+            implementation(projects.feature.transactions.api)
+            implementation(projects.core.domain)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.neoutils.finsight.feature.accounts.ui.resources"
+    generateResClass = auto
 }
 
 android {

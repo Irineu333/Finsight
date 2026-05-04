@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.neoutils.finsight.core.sharedui.component
+package com.neoutils.finsight.feature.accounts.component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Account
-import com.neoutils.finsight.core.sharedui.resources.Res
-import com.neoutils.finsight.core.sharedui.resources.account_selector_label
+import com.neoutils.finsight.feature.accounts.ui.resources.Res
+import com.neoutils.finsight.feature.accounts.ui.resources.account_selector_label
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

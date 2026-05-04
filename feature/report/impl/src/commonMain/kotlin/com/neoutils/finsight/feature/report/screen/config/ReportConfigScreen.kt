@@ -30,8 +30,8 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.creditCards.extension.toUiText
 import com.neoutils.finsight.feature.report.resources.*
-import com.neoutils.finsight.core.sharedui.component.AccountCard
-import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
+import com.neoutils.finsight.feature.accounts.component.AccountCard
+import com.neoutils.finsight.feature.accounts.component.AccountCardVariant
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCard
 import com.neoutils.finsight.feature.creditCards.component.CreditCardCardVariant
 import com.neoutils.finsight.feature.report.model.ReportViewerParams

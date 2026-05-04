@@ -1,4 +1,4 @@
-package com.neoutils.finsight.core.sharedui.model
+package com.neoutils.finsight.feature.accounts.model
 
 import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Transaction

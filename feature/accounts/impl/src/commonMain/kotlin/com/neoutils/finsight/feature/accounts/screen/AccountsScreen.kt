@@ -45,9 +45,9 @@ import com.neoutils.finsight.core.domain.model.Account
 import com.neoutils.finsight.core.domain.model.Category
 import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.sharedui.component.AccountCard
-import com.neoutils.finsight.core.sharedui.component.AccountCardVariant
-import com.neoutils.finsight.core.sharedui.model.AccountUi
+import com.neoutils.finsight.feature.accounts.component.AccountCard
+import com.neoutils.finsight.feature.accounts.component.AccountCardVariant
+import com.neoutils.finsight.feature.accounts.model.AccountUi
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.core.sharedui.component.OperationCard

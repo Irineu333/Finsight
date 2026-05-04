@@ -11,7 +11,7 @@ import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth
-import com.neoutils.finsight.core.sharedui.model.AccountUi
+import com.neoutils.finsight.feature.accounts.model.AccountUi
 import com.neoutils.finsight.core.domain.model.OperationPerspective
 import com.neoutils.finsight.core.sharedui.model.OperationUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi

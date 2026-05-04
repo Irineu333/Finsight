@@ -10,8 +10,15 @@ kotlin {
             implementation(projects.core.utils)
             implementation(projects.feature.budgets.api)
             implementation(projects.feature.categories.api)
+            implementation(projects.feature.categories.ui)
         }
     }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.neoutils.finsight.feature.budgets.ui.resources"
+    generateResClass = auto
 }
 
 android {

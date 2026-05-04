@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.domain.model.Category
-import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 
 @Composable
 fun CategoryCard(

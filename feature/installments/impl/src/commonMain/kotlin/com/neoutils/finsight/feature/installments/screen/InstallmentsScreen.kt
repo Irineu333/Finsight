@@ -76,7 +76,7 @@ import com.neoutils.finsight.core.domain.model.Invoice
 import com.neoutils.finsight.core.domain.model.Operation
 import com.neoutils.finsight.core.domain.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.sharedui.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.sharedui.component.OperationCard
 import com.neoutils.finsight.feature.installments.modal.addInstallment.AddInstallmentModal

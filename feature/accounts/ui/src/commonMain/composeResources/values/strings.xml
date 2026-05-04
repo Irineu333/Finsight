@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accounts_default">Padrão</string>
+    <string name="accounts_initial_balance">Saldo Inicial</string>
+    <string name="accounts_income">Receitas</string>
+    <string name="accounts_expenses">Despesas</string>
+    <string name="accounts_adjustments">Ajustes</string>
+    <string name="accounts_invoices">Faturas</string>
+    <string name="accounts_advance_payments">Adiantamentos</string>
+    <string name="accounts_balance">Saldo</string>
+    <string name="account_selector_label">Conta</string>
+</resources>

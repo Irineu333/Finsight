@@ -2,10 +2,13 @@ package com.neoutils.finsight.feature.recurring.screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,9 +34,9 @@ class RecurringViewModel(
     ) { args ->
         @Suppress("UNCHECKED_CAST")
         val recurring = args[0] as List<Recurring>
-        val accounts = args[1] as List<com.neoutils.finsight.feature.accounts.model.Account>
-        val categories = args[2] as List<com.neoutils.finsight.feature.categories.model.Category>
-        val creditCards = args[3] as List<com.neoutils.finsight.feature.creditCards.model.CreditCard>
+        val accounts = args[1] as List<Account>
+        val categories = args[2] as List<Category>
+        val creditCards = args[3] as List<CreditCard>
         val filter = args[4] as RecurringFilter
         val statusFilter = args[5] as RecurringStatusFilter
 

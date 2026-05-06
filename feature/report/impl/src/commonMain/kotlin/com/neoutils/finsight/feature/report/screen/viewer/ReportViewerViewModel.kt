@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.report.event.PrintReport
 import com.neoutils.finsight.feature.report.event.ShareReport
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportPerspective
@@ -255,7 +256,7 @@ class ReportViewerViewModel(
 
 private fun List<Transaction>.toCategoryBreakdown(
     transactionType: Transaction.Type,
-    categoriesById: Map<Long, com.neoutils.finsight.feature.categories.model.Category>,
+    categoriesById: Map<Long, Category>,
 ): List<CategorySpending> {
     val typedTransactions = filter { it.type == transactionType && it.categoryId != null }
     val totalAmount = typedTransactions.sumOf { it.amount }

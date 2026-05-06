@@ -50,7 +50,10 @@ import com.neoutils.finsight.feature.recurring.resources.recurring_screen_create
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_day
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_empty
 import com.neoutils.finsight.feature.recurring.resources.recurring_screen_title
+import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.categories.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringModal
@@ -336,9 +339,9 @@ private fun RecurringEmptyState(
 @Composable
 private fun RecurringCard(
     recurring: Recurring,
-    category: com.neoutils.finsight.feature.categories.model.Category?,
-    account: com.neoutils.finsight.feature.accounts.model.Account?,
-    creditCard: com.neoutils.finsight.feature.creditCards.model.CreditCard?,
+    category: Category?,
+    account: Account?,
+    creditCard: CreditCard?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

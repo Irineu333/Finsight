@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceSelector
@@ -214,7 +215,7 @@ class EditInvoiceBalanceModal(
         }
     }
 
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.core.ui.extension.CurrencyFormatter): String {
+    private fun formatMoney(cents: Long, formatter: CurrencyFormatter): String {
         val isNegative = cents < 0
         val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted

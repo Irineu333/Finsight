@@ -3,6 +3,7 @@ package com.neoutils.finsight.feature.transactions.model
 import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
+import com.neoutils.finsight.feature.creditCards.model.InvoiceUi
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.model.Transaction
@@ -14,7 +15,7 @@ data class OperationUi(
     val category: Category? = null,
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
-    val targetInvoice: com.neoutils.finsight.feature.creditCards.model.InvoiceUi? = null,
+    val targetInvoice: InvoiceUi? = null,
     val transactions: List<TransactionUi> = emptyList(),
 ) {
     val id: Long get() = operation.id

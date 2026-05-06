@@ -40,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.produceState
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
@@ -775,14 +778,14 @@ private fun PendingRecurringCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
-                val categoryRepo = org.koin.compose.koinInject<com.neoutils.finsight.feature.categories.repository.ICategoryRepository>()
-                val categoryState = androidx.compose.runtime.produceState<com.neoutils.finsight.feature.categories.model.Category?>(
+                val categoryRepo = koinInject<ICategoryRepository>()
+                val categoryState = produceState<Category?>(
                     initialValue = null,
                     recurring.categoryId,
                 ) {
                     value = recurring.categoryId?.let { categoryRepo.getCategoryById(it) }
                 }
-                val resolvedCategory: com.neoutils.finsight.feature.categories.model.Category? = categoryState.value
+                val resolvedCategory: Category? = categoryState.value
                 if (resolvedCategory != null) {
                     CategoryIconBox(
                         category = resolvedCategory,

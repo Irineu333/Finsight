@@ -1,6 +1,8 @@
 package com.neoutils.finsight.feature.transactions.di
 
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.mapper.OperationMapper
+import com.neoutils.finsight.feature.transactions.mapper.OperationUiMapper
 import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
 import com.neoutils.finsight.feature.transactions.repository.OperationRepository
 import com.neoutils.finsight.feature.transactions.repository.TransactionRepository
@@ -35,8 +37,8 @@ val transactionsModule = module {
 
     single { TransactionMapper() }
     single { OperationMapper() }
-    factory<com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper> {
-        com.neoutils.finsight.feature.transactions.mapper.OperationUiMapper(
+    factory<IOperationUiMapper> {
+        OperationUiMapper(
             accountRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),

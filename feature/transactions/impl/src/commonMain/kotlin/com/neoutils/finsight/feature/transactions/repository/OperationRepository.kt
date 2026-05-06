@@ -6,10 +6,12 @@ import com.neoutils.finsight.core.database.dao.OperationDao
 import com.neoutils.finsight.core.database.dao.RecurringDao
 import com.neoutils.finsight.core.database.dao.TransactionDao
 import com.neoutils.finsight.core.database.entity.OperationEntity
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.recurring.model.Recurring
-import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.core.database.entity.TransactionEntity
+import com.neoutils.finsight.feature.installments.model.Installment
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.recurring.mapper.IRecurringMapper
 import com.neoutils.finsight.feature.transactions.mapper.OperationMapper
 import com.neoutils.finsight.feature.transactions.mapper.TransactionMapper
@@ -39,8 +41,8 @@ class OperationRepository(
 
     private fun assemble(
         operations: List<OperationEntity>,
-        transactions: List<com.neoutils.finsight.core.database.entity.TransactionEntity>,
-        installments: Map<Long, com.neoutils.finsight.feature.installments.model.Installment>,
+        transactions: List<TransactionEntity>,
+        installments: Map<Long, Installment>,
         recurring: Map<Long, Recurring>,
     ): List<Operation> {
         val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }

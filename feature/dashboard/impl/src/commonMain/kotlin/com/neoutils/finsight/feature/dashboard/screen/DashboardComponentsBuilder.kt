@@ -20,6 +20,7 @@ import com.neoutils.finsight.core.platform.currentPlatform
 import com.neoutils.finsight.feature.creditCards.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
 import com.neoutils.finsight.feature.dashboard.constant.CreditCardsPagerConfig
@@ -44,7 +45,7 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
-    val categories: List<com.neoutils.finsight.feature.categories.model.Category> = emptyList(),
+    val categories: List<Category> = emptyList(),
 )
 
 data class DashboardBuilderContext(

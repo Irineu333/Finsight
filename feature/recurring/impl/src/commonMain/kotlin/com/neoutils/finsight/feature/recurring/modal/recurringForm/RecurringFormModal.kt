@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.recurring.state.RecurringForm
@@ -92,15 +93,15 @@ class RecurringFormModal(
 
         var target by remember { mutableStateOf(initialCreditCard) }
 
-        val categoryRepo = koinInject<com.neoutils.finsight.feature.categories.repository.ICategoryRepository>()
-        val initialCategory by produceState<com.neoutils.finsight.feature.categories.model.Category?>(
+        val categoryRepo = koinInject<ICategoryRepository>()
+        val initialCategory by produceState<Category?>(
             initialValue = null,
             recurring?.categoryId,
         ) {
             value = recurring?.categoryId?.let { categoryRepo.getCategoryById(it) }
         }
         var selectedCategory by remember(initialCategory) {
-            mutableStateOf<com.neoutils.finsight.feature.categories.model.Category?>(initialCategory)
+            mutableStateOf<Category?>(initialCategory)
         }
 
         LaunchedEffect(type) {

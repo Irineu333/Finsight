@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
@@ -226,7 +227,7 @@ class EditAccountBalanceModal(
         }
     }
 
-    private fun formatMoney(cents: Long, formatter: com.neoutils.finsight.core.ui.extension.CurrencyFormatter): String {
+    private fun formatMoney(cents: Long, formatter: CurrencyFormatter): String {
         val isNegative = cents < 0
         val formatted = formatter.format(kotlin.math.abs(cents).toDouble() / 100)
         return if (isNegative) "-$formatted" else formatted

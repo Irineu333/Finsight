@@ -6,6 +6,7 @@ import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.feature.accounts.event.TransferBetweenAccounts
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.feature.accounts.extension.toUiText
@@ -21,7 +22,7 @@ import kotlinx.datetime.LocalDate
 class TransferBetweenAccountsViewModel(
     initialSourceAccount: Account,
     private val transferBetweenAccountsUseCase: TransferBetweenAccountsUseCase,
-    accountRepository: com.neoutils.finsight.feature.accounts.repository.IAccountRepository,
+    accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,

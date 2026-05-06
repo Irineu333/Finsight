@@ -21,10 +21,37 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
 
-**Layers:**
-- `/domain/`: Repositories (interfaces), UseCases, models, Error types (business rules, framework-independent)
-- `/database/`: Room entities, DAOs, Mappers, Repository implementations (data sources)
-- `/ui/`: Screens (composables, ViewModels, UiState), Modals, Components (presentation)
+**Module convention (api/impl):**
+- Cada feature vive em `feature/<name>/` com módulos Gradle `:api` (modelos, interfaces de repositório/use case), `:ui` (composables compartilháveis, opcional) e `:impl` (telas, ViewModels, modais, repositórios e use cases concretos). Features terminais (dashboard, support) podem omitir `:api`.
+- Módulos `:core:*` (`utils`, `platform`, `ui`, `analytics`, `auth`, `database`) são transversais e não contêm lógica de negócio.
+- **Regras de dependência:**
+  - `:feature:X:impl` pode depender de `:feature:Y:api` mas **nunca** de `:feature:Y:impl`.
+  - `:api` não depende de Compose nem de outros `:api` que voltariam a si (grafo é DAG).
+  - Apenas `:app` agrega todos os `:impl` para wiring de DI/navegação.
+- Lista autoritativa de módulos: `settings.gradle.kts`. Detalhes por módulo: `README.md` na raiz de cada feature/core (ver `## Modules` abaixo).
+
+## Modules
+
+**Core**
+- `:core:utils` — extensões puras Kotlin, Flow combiners, datas, `DebounceManager` ([README](core/utils/README.md))
+- `:core:platform` — detecção de plataforma (`Platform`, `currentPlatform`) ([README](core/platform/README.md))
+- `:core:ui` — design system Compose: tema, modais, componentes, `UiText`, formatação ([README](core/ui/README.md))
+- `:core:analytics` — interfaces `Analytics` e `Crashlytics` (impl Firebase) ([README](core/analytics/README.md))
+- `:core:auth` — `AuthService` (impl Firebase Auth) ([README](core/auth/README.md))
+- `:core:database` — Room: `AppDatabase`, entities, DAOs ([README](core/database/README.md))
+
+**Features**
+- `:feature:accounts` — contas/carteiras, transferência, ajuste de saldo ([README](feature/accounts/README.md))
+- `:feature:categories` — taxonomia de categorias e cálculo de gasto por categoria ([README](feature/categories/README.md))
+- `:feature:creditCards` — cartões e ciclo de faturas (open/close/pay/reopen) ([README](feature/creditCards/README.md))
+- `:feature:transactions` — registro de transações, operações, cálculo de saldo ([README](feature/transactions/README.md))
+- `:feature:installments` — parcelamento de transações ao longo de faturas ([README](feature/installments/README.md))
+- `:feature:recurring` — transações recorrentes e ocorrências ([README](feature/recurring/README.md))
+- `:feature:budgets` — orçamentos por categoria e progresso ([README](feature/budgets/README.md))
+- `:feature:report` — geração de relatórios (export/print/share) ([README](feature/report/README.md))
+- `:feature:dashboard` — tela inicial com cards e widgets ([README](feature/dashboard/README.md))
+- `:feature:home` — shell de navegação por abas ([README](feature/home/README.md))
+- `:feature:support` — tickets de suporte (Firestore) ([README](feature/support/README.md))
 
 ## Useful Paths
 

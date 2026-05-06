@@ -194,11 +194,12 @@ class ReportViewerViewModel(
                         }
                     }
             }
-            val cardPerspective = (perspective as? ReportPerspective.CreditCardPerspective)?.let {
-                OperationPerspective.Card(creditCardId = it.creditCardId)
+            val opUiPerspective = when (perspective) {
+                is ReportPerspective.CreditCardPerspective ->
+                    OperationPerspective.Card(creditCardId = perspective.creditCardId)
+                is ReportPerspective.AccountPerspective ->
+                    OperationPerspective.Account(accountId = 0L)
             }
-            val opUiPerspective = cardPerspective
-                ?: OperationPerspective.Account(accountId = 0L)
             operationUiMapper
                 .toUi(operations = filteredOps, perspective = opUiPerspective)
                 .sortedByDescending { it.operation.date }

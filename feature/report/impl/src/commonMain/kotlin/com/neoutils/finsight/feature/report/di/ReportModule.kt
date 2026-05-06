@@ -43,6 +43,7 @@ val reportModule = module {
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
             renderer = get(),
+            operationUiMapper = get(),
             analytics = get(),
         )
     }

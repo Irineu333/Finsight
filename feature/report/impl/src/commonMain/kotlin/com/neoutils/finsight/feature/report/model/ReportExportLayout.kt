@@ -127,7 +127,8 @@ fun ReportViewerUiState.Content.toReportLayout(
                     groups = transactions.map { (date, operations) ->
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
-                            items = operations.map { operation ->
+                            items = operations.map { operationUi ->
+                                val operation = operationUi.operation
                                 TransactionItem(
                                     title = operation.exportTitle(strings),
                                     amount = operation.exportAmount(formatter),

@@ -297,13 +297,14 @@ private fun ReportViewerContent(
                                     )
                                 }
 
-                                items(operations, key = { "op_${it.id}" }) { operation ->
+                                items(operations, key = { "op_${it.id}" }) { operationUi ->
                                     OperationCard(
-                                        operation = operation,
+                                        operationUi = operationUi,
                                         modifier = Modifier
                                             .animateItem()
                                             .padding(horizontal = 16.dp),
                                         onClick = {
+                                            val operation = operationUi.operation
                                             when {
                                                 operation.type.isAdjustment -> modalManager.show(
                                                     viewAdjustmentEntry.create(operation)

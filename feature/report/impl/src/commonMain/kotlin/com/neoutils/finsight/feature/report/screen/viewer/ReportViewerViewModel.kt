@@ -8,6 +8,8 @@ import com.neoutils.finsight.feature.report.event.ShareReport
 import com.neoutils.finsight.feature.categories.model.CategorySpending
 import com.neoutils.finsight.feature.report.model.PerspectiveTab
 import com.neoutils.finsight.feature.report.model.ReportPerspective
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.core.utils.extension.safeOnDay
@@ -43,6 +45,7 @@ class ReportViewerViewModel(
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val renderer: ReportDocumentRenderer,
+    private val operationUiMapper: IOperationUiMapper,
     private val analytics: Analytics,
 ) : ViewModel() {
 
@@ -191,7 +194,15 @@ class ReportViewerViewModel(
                         }
                     }
             }
-            filteredOps.sortedByDescending { it.date }.groupBy { it.date }
+            val cardPerspective = (perspective as? ReportPerspective.CreditCardPerspective)?.let {
+                OperationPerspective.Card(creditCardId = it.creditCardId)
+            }
+            val opUiPerspective = cardPerspective
+                ?: OperationPerspective.Account(accountId = 0L)
+            operationUiMapper
+                .toUi(operations = filteredOps, perspective = opUiPerspective)
+                .sortedByDescending { it.operation.date }
+                .groupBy { it.operation.date }
         } else null
 
         val perspectiveIconKey = when (perspective) {

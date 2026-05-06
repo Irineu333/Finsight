@@ -35,7 +35,6 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
-import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.feature.transactions.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
@@ -56,11 +55,6 @@ class ViewOperationModal(
     private val perspective: OperationPerspective? = null,
 ) : ModalBottomSheet() {
 
-    constructor(operationUi: OperationUi) : this(
-        operation = operationUi.operation,
-        perspective = operationUi.perspective,
-    )
-
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
@@ -75,10 +69,12 @@ class ViewOperationModal(
         val navigationDispatcher = LocalNavigationDispatcher.current
         val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
 
-        LaunchedEffect(viewModel) {
+        LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.OpenRecurring -> manager.show(viewRecurringEntry.create(event.recurring))
+                    is ViewOperationEvent.OpenRecurring -> {
+                        manager.show(viewRecurringEntry.create(event.recurring))
+                    }
                 }
             }
         }

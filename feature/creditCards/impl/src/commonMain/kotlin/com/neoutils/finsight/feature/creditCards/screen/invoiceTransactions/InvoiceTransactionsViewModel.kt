@@ -25,18 +25,21 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.Invoice
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.model.Operation
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
-    creditCardId: Long,
+    private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val operationUiMapper: IOperationUiMapper,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -74,13 +77,17 @@ class InvoiceTransactionsViewModel(
 
         val invoiceOperations = operations
             .filter { it.targetInvoiceId == invoice?.id || it.transactions.any { tx -> tx.invoiceId == invoice?.id } }
-        val filteredOperations = invoiceOperations
+        val invoiceOperationsUi = operationUiMapper.toUi(
+            operations = invoiceOperations,
+            perspective = OperationPerspective.Card(creditCardId = creditCardId),
+        )
+        val filteredOperations = invoiceOperationsUi
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
-            .sortedByDescending { it.date }
-            .groupBy { it.date }
+            .sortedByDescending { it.operation.date }
+            .groupBy { it.operation.date }
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
@@ -208,24 +215,25 @@ private data class InvoiceTransactionsFilters(
     val installmentOnly: Boolean,
 )
 
-private fun List<Operation>.filter(category: Category?): List<Operation> {
+private fun List<OperationUi>.filter(category: Category?): List<OperationUi> {
     if (category == null) return this
-    return filter { operation ->
+    return filter { operationUi ->
+        val operation = operationUi.operation
         operation.categoryId == category.id || operation.primaryTransaction.categoryId == category.id
     }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<OperationUi>.filter(type: Transaction.Type?): List<OperationUi> {
     if (type == null) return this
-    return filter { operation -> operation.type == type }
+    return filter { it.operation.type == type }
 }
 
-private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+private fun List<OperationUi>.filter(recurringOnly: Boolean): List<OperationUi> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { it.operation.recurring != null }
 }
 
-private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+private fun List<OperationUi>.filterInstallment(installmentOnly: Boolean): List<OperationUi> {
     if (!installmentOnly) return this
-    return filter { operation -> operation.installment != null }
+    return filter { it.operation.installment != null }
 }

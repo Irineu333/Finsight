@@ -5,7 +5,7 @@ package com.neoutils.finsight.feature.creditCards.screen.invoiceTransactions
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.util.UiText
 import kotlin.time.ExperimentalTime
@@ -17,7 +17,7 @@ data class InvoiceTransactionsUiState(
     val creditCard: CreditCard? = null,
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
-    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
+    val operations: Map<LocalDate, List<OperationUi>> = emptyMap(),
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
     val selectedType: Transaction.Type? = null,

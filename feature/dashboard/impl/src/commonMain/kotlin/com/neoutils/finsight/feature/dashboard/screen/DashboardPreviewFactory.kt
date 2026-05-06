@@ -8,8 +8,11 @@ import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.categories.model.CategorySpending
-import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.OperationUi
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.model.TransactionUi
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
@@ -276,7 +279,7 @@ class DashboardPreviewFactory {
                                 ),
                             ),
                         ),
-                    ),
+                    ).map { it.toPreviewUi() },
                     hasMore = true,
                 ),
                 config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
@@ -295,3 +298,9 @@ class DashboardPreviewFactory {
         else -> null
     }
 }
+
+private fun Operation.toPreviewUi(): OperationUi = OperationUi(
+    operation = this,
+    perspective = OperationPerspective.Account(accountId = sourceAccountId ?: 0L),
+    transactions = transactions.map { TransactionUi(transaction = it) },
+)

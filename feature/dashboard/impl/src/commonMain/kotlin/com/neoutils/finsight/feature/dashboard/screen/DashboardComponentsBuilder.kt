@@ -18,6 +18,8 @@ import com.neoutils.finsight.core.utils.extension.effectiveDay
 import com.neoutils.finsight.feature.transactions.extension.signedImpact
 import com.neoutils.finsight.core.platform.currentPlatform
 import com.neoutils.finsight.feature.creditCards.mapper.IInvoiceUiMapper
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
 import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
 import com.neoutils.finsight.feature.dashboard.constant.CreditCardsPagerConfig
@@ -58,6 +60,7 @@ class DashboardComponentsBuilder(
     private val calculateBudgetProgressUseCase: ICalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: IGetPendingRecurringUseCase,
     private val invoiceUiMapper: IInvoiceUiMapper,
+    private val operationUiMapper: IOperationUiMapper,
 ) {
 
     suspend fun build(
@@ -371,21 +374,24 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents? {
+    private suspend fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents? {
         val count = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
         val presentOperations = input.operations.filter { it.date <= input.today }
         val recentOperations = presentOperations
             .sortedByDescending { it.date }
             .take(count)
 
-        return if (recentOperations.isNotEmpty()) {
-            DashboardComponent.Recents(
-                operations = recentOperations,
-                hasMore = presentOperations.size > count,
-            )
-        } else {
-            null
-        }
+        if (recentOperations.isEmpty()) return null
+
+        val recentOperationsUi = operationUiMapper.toUi(
+            operations = recentOperations,
+            perspective = OperationPerspective.Account(accountId = 0L),
+        )
+
+        return DashboardComponent.Recents(
+            operations = recentOperationsUi,
+            hasMore = presentOperations.size > count,
+        )
     }
 
     private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions {

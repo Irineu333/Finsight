@@ -283,10 +283,10 @@ private fun DashboardRecentsSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.operations.forEachIndexed { index, operation ->
+        component.operations.forEachIndexed { index, operationUi ->
             val isLastWithFade = component.hasMore && index == component.operations.lastIndex
             OperationCard(
-                operation = operation,
+                operationUi = operationUi,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -309,6 +309,7 @@ private fun DashboardRecentsSection(
                     ),
                 onClick = {
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
+                        val operation = operationUi.operation
                         when {
                             isLastWithFade -> openTransactions(null, null)
                             operation.type.isAdjustment -> modalManager.show(viewAdjustmentEntry.create(operation))

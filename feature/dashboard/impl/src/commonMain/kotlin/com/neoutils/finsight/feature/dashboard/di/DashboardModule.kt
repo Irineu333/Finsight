@@ -43,6 +43,7 @@ val dashboardModule = module {
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),
+            operationUiMapper = get(),
         )
     }
 

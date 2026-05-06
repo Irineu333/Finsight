@@ -16,7 +16,7 @@ import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonth
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.transactions.event.EditTransaction
@@ -86,7 +86,7 @@ class EditTransactionViewModel(
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
             invoiceSelection = dueMonth?.let { month ->
-                InvoiceMonthSelection(
+                InvoiceMonth(
                     dueMonth = month,
                     existingInvoice = invoices.find { it.dueMonth == month }
                 )

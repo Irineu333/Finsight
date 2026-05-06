@@ -8,7 +8,7 @@ import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
-import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonth
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.form.TransactionForm
 import com.neoutils.finsight.core.analytics.Analytics
@@ -75,7 +75,7 @@ class AddTransactionViewModel(
             creditCards = creditCards,
             selectedCreditCard = selectedCard,
             invoiceSelection = dueMonth?.let { month ->
-                InvoiceMonthSelection(
+                InvoiceMonth(
                     dueMonth = month,
                     existingInvoice = invoices.find { it.dueMonth == month }
                 )

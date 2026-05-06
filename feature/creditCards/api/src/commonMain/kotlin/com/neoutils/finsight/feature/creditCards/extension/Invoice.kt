@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.creditCards.extension
 
 import androidx.compose.runtime.Composable
 import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonth
 import com.neoutils.finsight.feature.creditCards.api.resources.Res
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_closed
 import com.neoutils.finsight.feature.creditCards.api.resources.invoice_status_future
@@ -30,7 +30,7 @@ fun Invoice.toLabel(): String {
 }
 
 @Composable
-fun InvoiceMonthSelection.toLabel(): String {
+fun InvoiceMonth.toLabel(): String {
     val formats = LocalDateFormats.current
     val newLabel = stringResource(Res.string.invoice_status_new)
     return existingInvoice?.toLabel() ?: "${formats.yearMonth.format(dueMonth)} • $newLabel"

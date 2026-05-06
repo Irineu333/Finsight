@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
-import com.neoutils.finsight.feature.creditCards.model.InvoiceMonthSelection
+import com.neoutils.finsight.feature.creditCards.model.InvoiceMonth
 import com.neoutils.finsight.feature.creditCards.ui.resources.Res
 import com.neoutils.finsight.feature.creditCards.ui.resources.invoice_navigator_label
 import kotlinx.datetime.YearMonth
@@ -28,7 +28,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvoiceMonthNavigator(
-    selection: InvoiceMonthSelection,
+    selection: InvoiceMonth,
     onNavigate: (YearMonth) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",

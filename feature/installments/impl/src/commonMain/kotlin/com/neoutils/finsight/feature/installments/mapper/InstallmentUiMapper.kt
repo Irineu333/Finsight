@@ -1,42 +1,40 @@
 package com.neoutils.finsight.feature.installments.mapper
 
-import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.installments.model.Installment
 import com.neoutils.finsight.feature.installments.screen.InstallmentWithOperationsUi
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 
 class InstallmentUiMapper {
 
     fun toUi(
         installment: Installment,
-        operations: List<Operation>,
-        invoicesById: Map<Long, Invoice> = emptyMap(),
-        categoriesById: Map<Long, Category> = emptyMap(),
+        operations: List<OperationUi>,
     ): InstallmentWithOperationsUi? {
-        val sortedOperations = operations.sortedBy { it.installment?.number ?: Int.MAX_VALUE }
+        val sortedOperations = operations.sortedBy {
+            it.operation.installment?.number ?: Int.MAX_VALUE
+        }
 
         if (sortedOperations.isEmpty()) return null
 
         val firstOperation = sortedOperations.first()
-        val firstCategory = firstOperation.categoryId?.let { categoriesById[it] }
+        val firstCategory = firstOperation.category
         val openOperation = sortedOperations.firstOrNull {
-            it.targetInvoiceId?.let { id -> invoicesById[id]?.status?.isOpen } == true
+            it.targetInvoice?.status?.isOpen == true
         }
-        val currentNumber = openOperation?.installment?.number
-            ?: sortedOperations.last().installment?.number
+        val currentNumber = openOperation?.operation?.installment?.number
+            ?: sortedOperations.last().operation.installment?.number
             ?: installment.count
         val installmentAmount = installment.totalAmount / installment.count
         val paidCount = sortedOperations.count {
-            it.targetInvoiceId?.let { id -> invoicesById[id]?.status?.isPaid } == true
+            it.targetInvoice?.status?.isPaid == true
         }
         val isActive = paidCount < installment.count
 
         return InstallmentWithOperationsUi(
             installment = installment,
             operations = sortedOperations,
-            latestOperationDate = sortedOperations.maxOf { it.date },
-            title = firstOperation.defaultLabel,
+            latestOperationDate = sortedOperations.maxOf { it.operation.date },
+            title = firstOperation.operation.defaultLabel,
             categoryName = firstCategory?.name?.uppercase(),
             category = firstCategory,
             isActive = isActive,
@@ -45,7 +43,8 @@ class InstallmentUiMapper {
             remainingAmount = (installment.count - paidCount) * installmentAmount,
             progress = currentNumber.toFloat() / installment.count,
             isDeletable = sortedOperations.all {
-                it.targetInvoiceId?.let { id -> invoicesById[id]?.status?.isEditable } != false
+                val status = it.targetInvoice?.status
+                status == null || status.isEditable
             },
         )
     }

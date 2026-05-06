@@ -3,11 +3,12 @@ package com.neoutils.finsight.feature.installments.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.installments.mapper.InstallmentUiMapper
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,9 +19,9 @@ import kotlinx.coroutines.flow.update
 class InstallmentsViewModel(
     installmentRepository: IInstallmentRepository,
     operationRepository: IOperationRepository,
-    invoiceRepository: IInvoiceRepository,
     categoryRepository: ICategoryRepository,
     private val installmentUiMapper: InstallmentUiMapper,
+    private val operationUiMapper: IOperationUiMapper,
 ) : ViewModel() {
 
     private val selectedInstallmentIndex = MutableStateFlow(0)
@@ -31,22 +32,18 @@ class InstallmentsViewModel(
     private val allInstallmentsUi = combine(
         installmentRepository.observeAllInstallments(),
         operationRepository.observeAllOperations(),
-        invoiceRepository.observeAllInvoices(),
-        categoryRepository.observeAllCategories(),
-    ) { installments, operations, invoices, categories ->
-        val operationsByInstallmentId = operations
-            .filter { it.installment != null }
-            .groupBy { checkNotNull(it.installment).id }
-        val invoicesById = invoices.associateBy { it.id }
-        val categoriesById = categories.associateBy { it.id }
+    ) { installments, operations ->
+        val operationsWithInstallment = operations.filter { it.installment != null }
+        val perspective = OperationPerspective.Account(accountId = 0L)
+        val operationsUiByInstallmentId = operationUiMapper
+            .toUi(operationsWithInstallment, perspective)
+            .groupBy { checkNotNull(it.operation.installment).id }
 
         installments
             .mapNotNull { installment ->
                 installmentUiMapper.toUi(
                     installment = installment,
-                    operations = operationsByInstallmentId[installment.id].orEmpty(),
-                    invoicesById = invoicesById,
-                    categoriesById = categoriesById,
+                    operations = operationsUiByInstallmentId[installment.id].orEmpty(),
                 )
             }
             .sortedWith(
@@ -80,7 +77,7 @@ class InstallmentsViewModel(
         val selectedOperations = filtered.getOrNull(safeSelectedIndex)
             ?.operations.orEmpty()
 
-        val categoryIds = selectedOperations.mapNotNull { it.categoryId }.toSet()
+        val categoryIds = selectedOperations.mapNotNull { it.operation.categoryId }.toSet()
         val categories = filtered
             .mapNotNull { it.category?.takeIf { c -> c.id in categoryIds } }
             .distinctBy { it.id }

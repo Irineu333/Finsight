@@ -44,9 +44,9 @@ val installmentsModule = module {
         InstallmentsViewModel(
             installmentRepository = get(),
             operationRepository = get(),
-            invoiceRepository = get(),
             categoryRepository = get(),
             installmentUiMapper = get(),
+            operationUiMapper = get(),
         )
     }
 

@@ -73,7 +73,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.categories.component.CategoryIconBox
@@ -286,7 +286,7 @@ private fun InstallmentsContent(
                                         modalManager.show(
                                             DeleteInstallmentModal(
                                                 installment = selected.installment,
-                                                operations = selected.operations,
+                                                operations = selected.operations.map { it.operation },
                                             )
                                         )
                                     },
@@ -334,16 +334,17 @@ private fun InstallmentsContent(
 
                     items(
                         items = uiState.filteredOperations,
-                        key = Operation::id,
-                    ) { operation ->
+                        key = OperationUi::id,
+                    ) { operationUi ->
                         OperationCard(
-                            operation = operation,
+                            operationUi = operationUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
                             amountDecoration = TextDecoration.None,
                             onClick = {
+                                val operation = operationUi.operation
                                 when (operation.type) {
                                     Transaction.Type.ADJUSTMENT -> {
                                         modalManager.show(viewAdjustmentEntry.create(operation))

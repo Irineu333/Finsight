@@ -2,7 +2,7 @@ package com.neoutils.finsight.feature.installments.screen
 
 import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.installments.model.Installment
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.datetime.LocalDate
 
@@ -30,10 +30,11 @@ sealed class InstallmentsUiState {
         val selectedInstallment: InstallmentWithOperationsUi?
             get() = installments.getOrNull(selectedInstallmentIndex)
 
-        val filteredOperations: List<Operation>
+        val filteredOperations: List<OperationUi>
             get() {
                 val operations = selectedInstallment?.operations.orEmpty()
-                return operations.filter { operation ->
+                return operations.filter { operationUi ->
+                    val operation = operationUi.operation
                     (selectedCategory == null || operation.categoryId == selectedCategory.id) &&
                             (selectedType == null || operation.type == selectedType)
                 }
@@ -43,7 +44,7 @@ sealed class InstallmentsUiState {
 
 data class InstallmentWithOperationsUi(
     val installment: Installment,
-    val operations: List<Operation>,
+    val operations: List<OperationUi>,
     val latestOperationDate: LocalDate,
     val title: String,
     val categoryName: String?,

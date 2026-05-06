@@ -11,7 +11,7 @@ import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
 import com.neoutils.finsight.core.utils.extension.toYearMonth
-import com.neoutils.finsight.feature.accounts.model.AccountUi
+import com.neoutils.finsight.feature.accounts.mapper.IAccountUiMapper
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
 import com.neoutils.finsight.feature.transactions.model.OperationUi
@@ -30,6 +30,7 @@ class AccountsViewModel(
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
     private val operationUiMapper: IOperationUiMapper,
+    private val accountUiMapper: IAccountUiMapper,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
@@ -80,7 +81,7 @@ class AccountsViewModel(
                 transaction.accountId == account.id
             }
 
-            AccountUi(
+            accountUiMapper.toUi(
                 account = account,
                 transactions = transactions,
                 month = month,

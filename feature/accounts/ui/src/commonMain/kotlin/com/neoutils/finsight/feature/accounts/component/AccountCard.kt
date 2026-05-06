@@ -38,25 +38,6 @@ import com.neoutils.finsight.feature.accounts.ui.resources.accounts_invoices
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.absoluteValue
 
-sealed class AccountCardVariant {
-
-    data class Dashboard(
-        val balance: Double,
-        val onClick: () -> Unit,
-    ) : AccountCardVariant()
-
-    data class Selection(
-        val selected: Boolean,
-        val onClick: () -> Unit,
-    ) : AccountCardVariant()
-
-    data class Detail(
-        val accountUi: AccountUi,
-        val onEditBalance: () -> Unit,
-        val onEditInitialBalance: () -> Unit,
-    ) : AccountCardVariant()
-}
-
 @Composable
 fun AccountCard(
     account: Account,
@@ -103,6 +84,25 @@ fun AccountCard(
             )
         }
     }
+}
+
+sealed class AccountCardVariant {
+
+    data class Dashboard(
+        val balance: Double,
+        val onClick: () -> Unit,
+    ) : AccountCardVariant()
+
+    data class Selection(
+        val selected: Boolean,
+        val onClick: () -> Unit,
+    ) : AccountCardVariant()
+
+    data class Detail(
+        val accountUi: AccountUi,
+        val onEditBalance: () -> Unit,
+        val onEditInitialBalance: () -> Unit,
+    ) : AccountCardVariant()
 }
 
 @Composable

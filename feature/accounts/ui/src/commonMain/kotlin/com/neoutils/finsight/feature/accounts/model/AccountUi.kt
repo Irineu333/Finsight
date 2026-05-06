@@ -1,10 +1,6 @@
 package com.neoutils.finsight.feature.accounts.model
 
 import com.neoutils.finsight.feature.accounts.model.Account
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.transactions.extension.signedImpact
-import kotlinx.datetime.YearMonth
-import kotlinx.datetime.yearMonth
 
 data class AccountUi(
     val account: Account,
@@ -15,43 +11,4 @@ data class AccountUi(
     val adjustment: Double,
     val invoicePayment: Double,
     val advancePayment: Double,
-) {
-    constructor(
-        account: Account,
-        transactions: List<Transaction>,
-        month: YearMonth,
-    ) : this(
-        account = account,
-        initialBalance = transactions
-            .filter { transaction -> transaction.date.yearMonth < month }
-            .sumOf { transaction -> transaction.signedImpact() },
-        balance = transactions
-            .filter { transaction -> transaction.date.yearMonth <= month }
-            .sumOf { transaction -> transaction.signedImpact() },
-        income = transactions
-            .filter { transaction ->
-                transaction.date.yearMonth == month && transaction.type == Transaction.Type.INCOME
-            }
-            .sumOf { transaction -> transaction.amount },
-        expense = transactions
-            .filter { transaction ->
-                transaction.date.yearMonth == month &&
-                    transaction.type == Transaction.Type.EXPENSE &&
-                    !transaction.isInvoicePayment
-            }
-            .sumOf { transaction -> transaction.amount },
-        adjustment = transactions
-            .filter { transaction ->
-                transaction.date.yearMonth == month && transaction.type == Transaction.Type.ADJUSTMENT
-            }
-            .sumOf { transaction -> transaction.signedImpact() },
-        invoicePayment = transactions
-            .filter { transaction ->
-                transaction.date.yearMonth == month &&
-                    transaction.type == Transaction.Type.EXPENSE &&
-                    transaction.isInvoicePayment
-            }
-            .sumOf { transaction -> transaction.amount },
-        advancePayment = 0.0,
-    )
-}
+)

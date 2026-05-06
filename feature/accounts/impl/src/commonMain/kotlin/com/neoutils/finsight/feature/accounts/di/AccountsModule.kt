@@ -1,6 +1,8 @@
 package com.neoutils.finsight.feature.accounts.di
 
 import com.neoutils.finsight.feature.accounts.mapper.AccountMapper
+import com.neoutils.finsight.feature.accounts.mapper.AccountUiMapper
+import com.neoutils.finsight.feature.accounts.mapper.IAccountUiMapper
 import com.neoutils.finsight.feature.accounts.repository.AccountRepository
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.accounts.usecase.AdjustBalanceUseCase
@@ -32,6 +34,8 @@ val accountsModule = module {
     single<AccountFormModalEntry> { AccountFormModalEntryImpl() }
 
     single { AccountMapper() }
+
+    factory<IAccountUiMapper> { AccountUiMapper() }
 
     single<IAccountRepository> {
         AccountRepository(
@@ -170,6 +174,7 @@ val accountsModule = module {
             operationRepository = get(),
             categoryRepository = get(),
             operationUiMapper = get(),
+            accountUiMapper = get(),
             initialAccountId = it.getOrNull(),
         )
     }

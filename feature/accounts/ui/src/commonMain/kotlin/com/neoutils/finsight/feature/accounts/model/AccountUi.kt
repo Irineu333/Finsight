@@ -1,7 +1,5 @@
 package com.neoutils.finsight.feature.accounts.model
 
-import com.neoutils.finsight.feature.accounts.model.Account
-
 data class AccountUi(
     val account: Account,
     val initialBalance: Double,

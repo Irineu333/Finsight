@@ -2,8 +2,6 @@
 
 package com.neoutils.finsight.feature.creditCards.model
 
-import com.neoutils.finsight.feature.creditCards.model.CreditCard
-import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.core.utils.extension.safeOnDay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

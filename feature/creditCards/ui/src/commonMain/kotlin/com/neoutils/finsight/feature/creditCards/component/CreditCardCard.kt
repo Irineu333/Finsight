@@ -33,24 +33,6 @@ import com.neoutils.finsight.feature.creditCards.model.InvoiceUi
 import com.neoutils.finsight.feature.creditCards.ui.resources.*
 import org.jetbrains.compose.resources.stringResource
 
-sealed class CreditCardCardVariant {
-
-    data class Dashboard(
-        val onClick: () -> Unit,
-        val onCloseInvoice: () -> Unit,
-        val onPayInvoice: () -> Unit,
-        val onAdvancePayment: () -> Unit,
-        val onEditAmount: () -> Unit,
-    ) : CreditCardCardVariant()
-
-    data class Listing(
-        val onClick: (() -> Unit)? = null,
-        val onEditInvoice: ((Invoice) -> Unit)? = null,
-    ) : CreditCardCardVariant()
-
-    data object Selection : CreditCardCardVariant()
-}
-
 @Composable
 fun CreditCardCard(
     creditCard: CreditCard,
@@ -376,4 +358,22 @@ fun CreditCardCard(
             }
         }
     }
+}
+
+sealed class CreditCardCardVariant {
+
+    data class Dashboard(
+        val onClick: () -> Unit,
+        val onCloseInvoice: () -> Unit,
+        val onPayInvoice: () -> Unit,
+        val onAdvancePayment: () -> Unit,
+        val onEditAmount: () -> Unit,
+    ) : CreditCardCardVariant()
+
+    data class Listing(
+        val onClick: (() -> Unit)? = null,
+        val onEditInvoice: ((Invoice) -> Unit)? = null,
+    ) : CreditCardCardVariant()
+
+    data object Selection : CreditCardCardVariant()
 }

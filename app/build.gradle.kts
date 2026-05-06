@@ -84,7 +84,6 @@ kotlin {
             implementation(projects.feature.budgets.impl)
             implementation(projects.feature.report.impl)
             implementation(projects.feature.support.impl)
-            implementation(projects.feature.dashboard.api)
             implementation(projects.feature.dashboard.impl)
             implementation(projects.feature.home.api)
             implementation(projects.feature.home.impl)

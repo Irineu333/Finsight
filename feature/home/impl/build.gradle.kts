@@ -10,7 +10,6 @@ kotlin {
             implementation(projects.core.ui)
             implementation(projects.core.utils)
             implementation(projects.core.analytics)
-            implementation(projects.feature.dashboard.api)
             implementation(projects.feature.dashboard.ui)
             implementation(projects.feature.transactions.api)
             implementation(projects.feature.transactions.ui)

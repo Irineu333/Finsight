@@ -8,7 +8,6 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.ui)
             implementation(projects.core.utils)
-            implementation(projects.feature.dashboard.api)
             implementation(projects.feature.transactions.api)
             api(libs.androidx.navigation.compose)
         }

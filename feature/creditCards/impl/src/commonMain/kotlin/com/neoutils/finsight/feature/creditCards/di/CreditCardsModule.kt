@@ -329,6 +329,7 @@ val creditCardsModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
+            operationUiMapper = get(),
         )
     }
 

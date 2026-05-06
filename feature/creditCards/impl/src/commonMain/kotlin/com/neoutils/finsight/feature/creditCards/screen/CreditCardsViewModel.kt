@@ -4,16 +4,18 @@ package com.neoutils.finsight.feature.creditCards.screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
-import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import com.neoutils.finsight.core.utils.extension.combine
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.mapper.IInvoiceUiMapper
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
+import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
+import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
+import com.neoutils.finsight.feature.transactions.model.OperationPerspective
+import com.neoutils.finsight.feature.transactions.model.OperationUi
+import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,6 +27,7 @@ class CreditCardsViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
     private val invoiceUiMapper: IInvoiceUiMapper,
+    private val operationUiMapper: IOperationUiMapper,
     private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
 
@@ -63,38 +66,43 @@ class CreditCardsViewModel(
             invoices.associateBy { it.creditCardId }
         }
 
-    private val transactionsFlow = combine(
+    private val operationsUiFlow = combine(
         selectedCard,
         invoicesFlow,
     ) { selectedCard, invoices ->
-        invoices[selectedCard?.id]
-    }.flatMapLatest { invoice ->
-        if (invoice != null) {
-            operationRepository.observeOperationsBy(invoiceId = invoice.id)
-        } else {
+        selectedCard?.id to invoices[selectedCard?.id]
+    }.flatMapLatest { (cardId, invoice) ->
+        if (invoice == null || cardId == null) {
             flowOf(emptyList())
+        } else {
+            operationRepository.observeOperationsBy(invoiceId = invoice.id).map { operations ->
+                operationUiMapper.toUi(
+                    operations = operations,
+                    perspective = OperationPerspective.Card(creditCardId = cardId),
+                )
+            }
         }
     }
 
     val uiState = combine(
         creditCards,
-        transactionsFlow,
+        operationsUiFlow,
         invoicesFlow,
         categoryRepository.observeAllCategories(),
         selectedCardIndex,
         filters,
-    ) { creditCards, operations, invoices, categories, index, currentFilters ->
+    ) { creditCards, operationsUi, invoices, categories, index, currentFilters ->
         if (creditCards.isEmpty()) {
             return@combine CreditCardsUiState.Empty
         }
 
-        val filteredOperations = operations
+        val filteredOperations = operationsUi
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
             .filterInstallment(currentFilters.installmentOnly)
-            .sortedByDescending { it.date }
-            .groupBy { it.date }
+            .sortedByDescending { it.operation.date }
+            .groupBy { it.operation.date }
 
         CreditCardsUiState.Content(
             creditCards = creditCards.map { creditCard ->
@@ -155,24 +163,25 @@ private data class CreditCardsFilters(
     val installmentOnly: Boolean,
 )
 
-private fun List<Operation>.filter(category: Category?): List<Operation> {
+private fun List<OperationUi>.filter(category: Category?): List<OperationUi> {
     if (category == null) return this
-    return filter { operation ->
+    return filter { operationUi ->
+        val operation = operationUi.operation
         operation.categoryId == category.id || operation.primaryTransaction.categoryId == category.id
     }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<OperationUi>.filter(type: Transaction.Type?): List<OperationUi> {
     if (type == null) return this
-    return filter { operation -> operation.type == type }
+    return filter { it.operation.type == type }
 }
 
-private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+private fun List<OperationUi>.filter(recurringOnly: Boolean): List<OperationUi> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { it.operation.recurring != null }
 }
 
-private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+private fun List<OperationUi>.filterInstallment(installmentOnly: Boolean): List<OperationUi> {
     if (!installmentOnly) return this
-    return filter { operation -> operation.installment != null }
+    return filter { it.operation.installment != null }
 }

@@ -233,14 +233,15 @@ private fun CreditCardsContent(
                         items(
                             items = operations,
                             key = { it.id }
-                        ) { operation ->
+                        ) { operationUi ->
                             OperationCard(
-                                operation = operation,
+                                operationUi = operationUi,
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
+                                    val operation = operationUi.operation
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
                                             modalManager.show(viewAdjustmentEntry.create(operation))

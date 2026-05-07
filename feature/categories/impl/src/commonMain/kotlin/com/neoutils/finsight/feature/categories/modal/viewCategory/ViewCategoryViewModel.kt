@@ -10,10 +10,12 @@ import com.neoutils.finsight.feature.categories.exception.CategoryException
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
 import com.neoutils.finsight.core.utils.extension.toYearMonth
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
@@ -30,37 +32,29 @@ class ViewCategoryViewModel(
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val categoryFlow = flow {
+    private val transactions = viewModelScope.async { transactionRepository.getAllTransactions() }
+
+    val uiState = selectedYearMonth.map { yearMonth ->
+
         val category = categoryRepository.getCategoryById(categoryId)
+
         if (category == null) {
             crashlytics.recordException(CategoryException(CategoryError.NOT_FOUND))
+            return@map ViewCategoryUiState.Error
         }
-        emit(category)
-    }
 
-    private val transactions = flow {
-        emit(transactionRepository.getAllTransactions())
-    }
+        val transactions = transactions.await()
 
-    val uiState = combine(
-        categoryFlow,
-        transactions,
-        selectedYearMonth,
-    ) { category, transactions, yearMonth ->
-        if (category == null) {
-            ViewCategoryUiState.Error
-        } else {
-            val transactionsForMonth = transactions.filter {
-                it.categoryId == category.id && it.date.yearMonth == yearMonth
-            }
-
-            ViewCategoryUiState.Content(
-                category = category,
-                selectedYearMonth = yearMonth,
-                totalAmount = transactionsForMonth.sumOf { it.amount },
-                transactionCount = transactionsForMonth.size,
-            )
+        val transactionsForMonth = transactions.filter {
+            it.categoryId == category.id && it.date.yearMonth == yearMonth
         }
+
+        ViewCategoryUiState.Content(
+            category = category,
+            selectedYearMonth = yearMonth,
+            totalAmount = transactionsForMonth.sumOf { it.amount },
+            transactionCount = transactionsForMonth.size,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -71,6 +65,7 @@ class ViewCategoryViewModel(
         ViewCategoryAction.NextMonth -> {
             selectedYearMonth.value = selectedYearMonth.value.plusMonth()
         }
+
         ViewCategoryAction.PreviousMonth -> {
             selectedYearMonth.value = selectedYearMonth.value.minusMonth()
         }

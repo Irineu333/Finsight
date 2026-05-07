@@ -9,6 +9,8 @@ import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepositor
 import com.neoutils.finsight.feature.recurring.error.RecurringError
 import com.neoutils.finsight.feature.recurring.exception.RecurringException
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -31,18 +33,20 @@ class ViewRecurringViewModel(
             return@flow
         }
 
-        val account = recurring.accountId?.let { accountRepository.getAccountById(it) }
-        val category = recurring.categoryId?.let { categoryRepository.getCategoryById(it) }
-        val creditCard = recurring.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
+        coroutineScope {
+            val account = recurring.accountId?.let { id -> async { accountRepository.getAccountById(id) } }
+            val category = recurring.categoryId?.let { id -> async { categoryRepository.getCategoryById(id) } }
+            val creditCard = recurring.creditCardId?.let { id -> async { creditCardRepository.getCreditCardById(id) } }
 
-        emit(
-            ViewRecurringUiState.Content(
-                recurring = recurring,
-                account = account,
-                category = category,
-                creditCard = creditCard,
+            emit(
+                ViewRecurringUiState.Content(
+                    recurring = recurring,
+                    account = account?.await(),
+                    category = category?.await(),
+                    creditCard = creditCard?.await(),
+                )
             )
-        )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

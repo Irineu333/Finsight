@@ -94,13 +94,15 @@ val recurringModule = module {
         )
     }
 
-    viewModel {
+    viewModel { (recurringId: Long?) ->
         RecurringFormViewModel(
-            recurring = it.getOrNull(),
+            recurringId = recurringId,
+            recurringRepository = get(),
             categoryRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
             saveRecurringUseCase = get(),
+            currencyFormatter = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

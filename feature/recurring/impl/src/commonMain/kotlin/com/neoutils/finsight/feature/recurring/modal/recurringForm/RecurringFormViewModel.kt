@@ -3,107 +3,169 @@ package com.neoutils.finsight.feature.recurring.modal.recurringForm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
-import com.neoutils.finsight.feature.recurring.event.CreateRecurring
-import com.neoutils.finsight.feature.recurring.event.EditRecurring
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
-import com.neoutils.finsight.feature.accounts.model.Account
-import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.creditCards.model.CreditCard
-import com.neoutils.finsight.feature.recurring.model.Recurring
-import com.neoutils.finsight.feature.recurring.state.RecurringForm
+import com.neoutils.finsight.core.ui.component.ModalManager
+import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
+import com.neoutils.finsight.feature.recurring.error.RecurringError
+import com.neoutils.finsight.feature.recurring.event.CreateRecurring
+import com.neoutils.finsight.feature.recurring.event.EditRecurring
+import com.neoutils.finsight.feature.recurring.exception.RecurringException
+import com.neoutils.finsight.feature.recurring.extension.isAccept
+import com.neoutils.finsight.feature.recurring.model.form.RecurringForm
+import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.SaveRecurringUseCase
-import com.neoutils.finsight.core.ui.component.ModalManager
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class RecurringFormViewModel(
-    private val recurring: Recurring?,
+    private val recurringId: Long?,
+    private val recurringRepository: IRecurringRepository,
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val saveRecurringUseCase: SaveRecurringUseCase,
+    private val currencyFormatter: CurrencyFormatter,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedAccount = MutableStateFlow<Account?>(null)
-    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
-
-    init {
-        viewModelScope.launch {
-            selectedAccount.value = recurring?.accountId?.let { accountRepository.getAccountById(it) }
-            selectedCreditCard.value = recurring?.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
-        }
-    }
+    private val isEditMode = recurringId != null
+    private val form = MutableStateFlow<RecurringForm?>(null)
 
     private val categories = categoryRepository.observeAllCategories()
     private val accounts = accountRepository.observeAllAccounts()
     private val creditCards = creditCardRepository.observeAllCreditCards()
 
+    init {
+        setup()
+    }
+
+    private fun setup() = viewModelScope.launch {
+        if (recurringId == null) {
+            form.value = RecurringForm(account = accountRepository.getDefaultAccount())
+            return@launch
+        }
+
+        val recurring = recurringRepository.getRecurringById(recurringId)
+
+        if (recurring == null) {
+            crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
+            modalManager.dismiss()
+            return@launch
+        }
+
+        coroutineScope {
+            val account = recurring.accountId?.let { id -> async { accountRepository.getAccountById(id) } }
+            val creditCard = recurring.creditCardId?.let { id -> async { creditCardRepository.getCreditCardById(id) } }
+            val category = recurring.categoryId?.let { id -> async { categoryRepository.getCategoryById(id) } }
+
+            form.value = RecurringForm(
+                id = recurring.id,
+                type = recurring.type,
+                amount = currencyFormatter.format(recurring.amount),
+                title = recurring.title.orEmpty(),
+                dayOfMonth = recurring.dayOfMonth.toString(),
+                account = account?.await(),
+                creditCard = creditCard?.await(),
+                category = category?.await(),
+                createdAt = recurring.createdAt,
+                isActive = recurring.isActive,
+            )
+        }
+    }
+
     val uiState = combine(
-        selectedAccount,
-        selectedCreditCard,
+        form.filterNotNull(),
         categories,
         accounts,
         creditCards,
-    ) { account, creditCard, cats, accs, cards ->
-        RecurringFormUiState(
+    ) { form, cats, accs, cards ->
+        RecurringFormUiState.Content(
+            form = form,
             accounts = accs,
-            selectedAccount = account ?: accs.firstOrNull { it.isDefault },
             creditCards = cards,
-            selectedCreditCard = creditCard,
             incomeCategories = cats.filter { it.type == Category.Type.INCOME },
             expenseCategories = cats.filter { it.type == Category.Type.EXPENSE },
+            isEditMode = isEditMode,
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = RecurringFormUiState(
-            selectedAccount = null,
-            selectedCreditCard = null,
-        ),
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = RecurringFormUiState.Loading,
     )
 
     fun onAction(action: RecurringFormAction) {
         when (action) {
+            is RecurringFormAction.TypeChanged -> form.update {
+                it?.copy(
+                    type = action.type,
+                    category = it.category?.takeIf { c ->
+                        c.type.isAccept(action.type)
+                    },
+                )
+            }
+
+            is RecurringFormAction.AmountChanged -> {
+                form.update { it?.copy(amount = action.amount) }
+            }
+            is RecurringFormAction.TitleChanged -> {
+                form.update { it?.copy(title = action.title) }
+            }
+            is RecurringFormAction.DayOfMonthChanged -> {
+                form.update { it?.copy(dayOfMonth = action.dayOfMonth) }
+            }
+
             is RecurringFormAction.SelectAccount -> {
-                selectedAccount.value = action.account
+                form.update { it?.copy(account = action.account) }
             }
-
             is RecurringFormAction.SelectCreditCard -> {
-                selectedCreditCard.value = action.creditCard
+                form.update { it?.copy(creditCard = action.creditCard) }
+            }
+            is RecurringFormAction.SelectCategory -> {
+                form.update { it?.copy(category = action.category) }
             }
 
-            is RecurringFormAction.Submit -> {
-                submit(action.form)
-            }
+            RecurringFormAction.Submit -> submit()
         }
     }
 
-    private fun submit(form: RecurringForm) =
-        viewModelScope.launch {
-            saveRecurringUseCase(
-                id = recurring?.id ?: 0L,
-                type = form.type,
-                amount = form.amount,
-                title = form.title.ifEmpty { null },
-                dayOfMonth = form.dayOfMonth,
-                category = form.category,
-                account = form.account,
-                creditCard = form.creditCard,
-                createdAt = recurring?.createdAt,
-                isActive = recurring?.isActive ?: true,
-            ).onLeft {
-                crashlytics.recordException(it)
-            }.onRight {
-                analytics.logEvent(
-                    if (recurring != null) EditRecurring(form) else CreateRecurring(form)
-                )
-                modalManager.dismissAll()
-            }
+    private fun submit() = viewModelScope.launch {
+        val current = form.value ?: return@launch
+
+        saveRecurringUseCase(
+            id = current.id,
+            type = current.type,
+            amount = current.amount,
+            title = current.title.ifEmpty { null },
+            dayOfMonth = current.dayOfMonth,
+            category = current.category,
+            account = current.account,
+            creditCard = current.creditCard,
+            createdAt = current.createdAt,
+            isActive = current.isActive,
+        ).onLeft {
+            crashlytics.recordException(it)
+        }.onRight {
+            analytics.logEvent(
+                if (isEditMode) {
+                    EditRecurring(current)
+                } else {
+                    CreateRecurring(current)
+                }
+            )
+            modalManager.dismissAll()
         }
+    }
 }

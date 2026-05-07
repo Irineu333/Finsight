@@ -289,7 +289,7 @@ class ViewRecurringModal(
                 }
 
                 OutlinedButton(
-                    onClick = { manager.show(RecurringFormModal(recurring)) },
+                    onClick = { manager.show(RecurringFormModal(recurring.id)) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(

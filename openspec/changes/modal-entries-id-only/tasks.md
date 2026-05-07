@@ -27,11 +27,11 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [x] 2.3 `ViewRecurringModalEntry.create(recurringId: Long)` em `:api`
 - [x] 2.4 Impl ajustado
 - [x] 2.5 `ViewRecurringModal` lida com Loading/Error
-- [ ] 2.6 `RecurringFormUiState` → sealed `Loading | Content(...)`
-- [ ] 2.7 `RecurringFormViewModel` recebe `recurringId: Long?`; em modo criação inicia em `Content` com defaults
-- [ ] 2.8 `RecurringFormModalEntry.create(recurringId: Long?)` em `:api`
-- [ ] 2.9 Impl ajustado
-- [ ] 2.10 `RecurringFormModal` lida com Loading apenas em edição
+- [x] 2.6 `RecurringFormUiState` → sealed `Loading | Content(...)`
+- [x] 2.7 `RecurringFormViewModel` recebe `recurringId: Long?`; em modo criação inicia em `Content` com defaults
+- [x] 2.8 `RecurringFormModalEntry.create(recurringId: Long?)` em `:api`
+- [x] 2.9 Impl ajustado
+- [x] 2.10 `RecurringFormModal` lida com Loading apenas em edição
 - [ ] 2.11 `ConfirmRecurringUiState` → sealed `Loading | Content(...)`; dismiss em entidade não encontrada (action modal)
 - [ ] 2.12 `ConfirmRecurringViewModel` recebe `recurringId: Long, targetDate: LocalDate`
 - [ ] 2.13 `ConfirmRecurringModalEntry.create(recurringId: Long, targetDate: LocalDate)` em `:api`

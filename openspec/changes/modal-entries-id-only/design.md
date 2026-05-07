@@ -86,6 +86,14 @@ val uiState = when {
 
 **Rationale:** `Empty` só faz sentido onde a UX é "inspecionar" (read-only). Em fluxos de ação ou edição, o estado correto é fechar — não há nada útil para o usuário fazer com fantasma.
 
+**Convenção de exceção:** A `Throwable` registrada via `Crashlytics.recordException` MUST seguir o padrão do projeto `XxxException(XxxError.NOT_FOUND)` (ver `AccountException`, `RecurringException`, `InvoiceException`). Se a feature não tem `XxxError.NOT_FOUND` ou `XxxException`, esta task implica:
+
+1. Adicionar `NOT_FOUND` ao `XxxError` em `:feature:X:api/.../error/`.
+2. Criar `XxxException(val error: XxxError) : Exception(error.message)` em `:feature:X:api/.../exception/` (mesmo pacote do error).
+3. Mapear `NOT_FOUND -> UiText.Res(...)` na extension `XxxError.toUiText()` e adicionar string resource correspondente.
+
+`IllegalStateException` ou outros tipos genéricos MUST NOT ser usados — perde a tipagem e quebra a convenção do projeto.
+
 ---
 
 ### D5: `currentBillAmount` deixa de ser parâmetro de entry
@@ -125,6 +133,47 @@ val uiState = when {
 **Decisão:** O conteúdo `Loading` MUST renderizar dentro de uma `Column`/`Box` com altura mínima compatível com a do `Content` final, evitando layout shift quando o fetch resolve.
 
 **Rationale:** Modais que pulam de altura mínima para altura final causam jank em `ModalBottomSheet`. Já é prática em `EditInvoiceBalanceModal` (Title + spacer + CircularProgressIndicator dentro de Column com mesma estrutura).
+
+---
+
+### D9: Forms encapsulam estado editável em `XxxForm` data class
+
+**Decisão:** ViewModels de form modals MUST consolidar os campos editáveis (name, type, icon, etc.) em uma `data class XxxForm` extraída para `:feature:X:impl/.../model/form/XxxForm.kt`. O `UiState.Content` MUST expor a form como um único campo `val form: XxxForm`, não como campos espalhados.
+
+**Forma esperada:**
+
+```kotlin
+// model/form/CategoryForm.kt
+data class CategoryForm(
+    val id: Long = 0,
+    val name: String = "",
+    val type: Category.Type = Category.Type.EXPENSE,
+    val icon: AppIcon = AppIcon.CATEGORY,
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+) {
+    fun build(): Category = Category(id, name, type, icon.key, createdAt)
+}
+
+// modal/categoryForm/CategoryFormUiState.kt
+sealed class CategoryFormUiState {
+    data object Loading : CategoryFormUiState()
+    data class Content(
+        val form: CategoryForm,
+        val validation: Map<CategoryField, Validation>,
+        val isEditMode: Boolean,
+        val canSubmit: Boolean,
+    ) : CategoryFormUiState()
+}
+```
+
+**Rationale:** Precedente direto em `CreditCardForm` + `CreditCardFormUiState`. Vantagens:
+
+- VM mantém um único `MutableStateFlow<XxxForm?>` (`null` = Loading; non-null = Content) em vez de N flows paralelos.
+- `form.copy(name = ...)` via `MutableStateFlow.update { it?.copy(...) }` é atômico e idiomático.
+- `XxxForm` carrega `id` + `createdAt` (ou equivalentes), preservando metadados em edit. `build()` produz a entidade pronta para `repository.insert/update`.
+- O Modal acessa via `state.form.name`, `state.form.type` — sem duplicação.
+
+**Aplica-se a:** `CategoryForm`, `RecurringForm` (já existe), `AccountForm` (criar), `CreditCardForm` (já existe).
 
 ## Risks / Trade-offs
 

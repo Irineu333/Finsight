@@ -4,7 +4,7 @@
 
 Definir o contrato de entrada para modais expostos por `:feature:*:api`. Estabelece que entries recebem ids (não modelos de domínio), padroniza UiStates como sealed `Loading | Content [| Empty]`, define o comportamento de carregamento por id e o tratamento de entidade não-encontrada.
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Modal entries recebem ids para entidades persistentes
 
@@ -73,6 +73,12 @@ ViewModels de modais SHALL receber ids como parâmetros de construtor e MUST res
 - **WHEN** `getXxxById(id)` retorna null
 - **THEN** view modals MUST emitir `Empty`; action modals e form modals em edit-mode MUST chamar `modalManager.dismiss()` e `Crashlytics.recordException`
 
+#### Scenario: Exceção de "entidade não encontrada" segue convenção do projeto
+
+- **WHEN** o VM registra a exceção via `Crashlytics.recordException` em resposta a `getXxxById(id)` retornar null
+- **THEN** a `Throwable` MUST ser `XxxException(XxxError.NOT_FOUND)` (ex: `CategoryException(CategoryError.NOT_FOUND)`), não `IllegalStateException` nem outros tipos genéricos
+- **AND** se `XxxError.NOT_FOUND` ou `XxxException` ainda não existem na feature, eles MUST ser criados em `:feature:X:api/.../error/` e `:feature:X:api/.../exception/` respectivamente
+
 ---
 
 ### Requirement: Valores derivados não são parâmetros de entry
@@ -99,3 +105,21 @@ O conteúdo emitido durante o estado `Loading` SHALL ocupar dimensões compatív
 
 - **WHEN** um modal transita de `Loading` para `Content`
 - **THEN** a altura do bottom sheet MUST permanecer estável (sem reanimação de half-expanded para expanded), tipicamente via uma `Column` placeholder com title + `CircularProgressIndicator` dentro do mesmo padding/estrutura do `Content`
+
+---
+
+### Requirement: Form modals encapsulam estado editável em `XxxForm` data class
+
+ViewModels de form modals SHALL consolidar campos editáveis em uma `data class XxxForm` extraída para `:feature:X:impl/.../model/form/XxxForm.kt`. O `UiState.Content` SHALL expor a form como um único campo `val form: XxxForm`.
+
+#### Scenario: Form fields são consolidados em XxxForm
+
+- **WHEN** um form modal precisa expor múltiplos campos editáveis (name, type, icon, etc.)
+- **THEN** os campos MUST ser agregados em uma `data class XxxForm` no pacote `model/form/` da feature
+- **AND** o `UiState.Content` MUST ter `val form: XxxForm` como campo único, em vez de campos espalhados (`val name`, `val selectedIcon`, `val selectedType`)
+
+#### Scenario: XxxForm carrega metadados para reconstrução da entidade
+
+- **WHEN** o form é usado tanto em criação quanto em edição
+- **THEN** `XxxForm` MUST carregar metadados persistidos (`id`, `createdAt`, etc.) com defaults para criação e valores reais para edição
+- **AND** MUST expor `fun build(): Xxx` que produz a entidade pronta para `repository.insert/update`

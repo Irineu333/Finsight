@@ -1,12 +1,10 @@
 package com.neoutils.finsight.feature.dashboard.repository
 
 import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreference
-import com.neoutils.finsight.feature.dashboard.repository.IDashboardPreferencesRepository
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class DashboardPreferencesRepository(

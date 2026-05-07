@@ -31,7 +31,16 @@ import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.dashboard.action.DashboardAction
+import com.neoutils.finsight.feature.dashboard.builder.DashboardComponentsInput
+import com.neoutils.finsight.feature.dashboard.factory.DashboardPreviewFactory
+import com.neoutils.finsight.feature.dashboard.component.EDIT_ACTIVE_PLACEHOLDER_KEY
+import com.neoutils.finsight.feature.dashboard.component.EDIT_AVAILABLE_PLACEHOLDER_KEY
+import com.neoutils.finsight.feature.dashboard.component.EDIT_SECTION_HEADER_KEY
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentType
+import com.neoutils.finsight.feature.dashboard.model.DashboardEditItem
 import com.neoutils.finsight.feature.dashboard.repository.IDashboardPreferencesRepository
+import com.neoutils.finsight.feature.dashboard.state.DashboardUiState
 
 class DashboardViewModel(
     private val operationRepository: IOperationRepository,

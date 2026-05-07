@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen.entry
+package com.neoutils.finsight.feature.dashboard.entry
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder

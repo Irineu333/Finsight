@@ -1,9 +1,9 @@
 package com.neoutils.finsight.feature.dashboard.usecase
 
 import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreference
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentVariant
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentsBuilder
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentsInput
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentVariant
+import com.neoutils.finsight.feature.dashboard.builder.DashboardComponentsBuilder
+import com.neoutils.finsight.feature.dashboard.builder.DashboardComponentsInput
 import com.neoutils.finsight.feature.dashboard.extension.toViewingVariant
 
 class BuildDashboardViewingUseCase(

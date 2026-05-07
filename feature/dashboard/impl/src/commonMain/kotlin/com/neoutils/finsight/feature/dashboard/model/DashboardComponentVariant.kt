@@ -1,7 +1,21 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.model
 
-import com.neoutils.finsight.feature.dashboard.resources.*
 import com.neoutils.finsight.core.ui.util.UiText
+import com.neoutils.finsight.feature.dashboard.resources.Res
+import com.neoutils.finsight.feature.dashboard.resources.component_accounts_overview
+import com.neoutils.finsight.feature.dashboard.resources.component_balance_stats
+import com.neoutils.finsight.feature.dashboard.resources.component_budgets
+import com.neoutils.finsight.feature.dashboard.resources.component_credit_card_balance_stats
+import com.neoutils.finsight.feature.dashboard.resources.component_credit_cards
+import com.neoutils.finsight.feature.dashboard.resources.component_income_by_category
+import com.neoutils.finsight.feature.dashboard.resources.component_pending_balance
+import com.neoutils.finsight.feature.dashboard.resources.component_pending_recurring
+import com.neoutils.finsight.feature.dashboard.resources.component_quick_actions
+import com.neoutils.finsight.feature.dashboard.resources.component_recents
+import com.neoutils.finsight.feature.dashboard.resources.component_spending_by_category
+import com.neoutils.finsight.feature.dashboard.resources.component_total_balance
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponent
+
 sealed interface DashboardComponentVariant {
     val component: DashboardComponent
     val config: Map<String, String>

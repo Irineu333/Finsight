@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.model
 
 import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
 import com.neoutils.finsight.feature.dashboard.constant.CreditCardsPagerConfig

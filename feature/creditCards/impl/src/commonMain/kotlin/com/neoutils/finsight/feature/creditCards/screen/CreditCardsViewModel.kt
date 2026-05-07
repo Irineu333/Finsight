@@ -72,14 +72,20 @@ class CreditCardsViewModel(
     ) { selectedCard, invoices ->
         selectedCard?.id to invoices[selectedCard?.id]
     }.flatMapLatest { (cardId, invoice) ->
-        if (invoice == null || cardId == null) {
-            flowOf(emptyList())
-        } else {
-            operationRepository.observeOperationsBy(invoiceId = invoice.id).map { operations ->
-                operationUiMapper.toUi(
-                    operations = operations,
-                    perspective = OperationPerspective.Card(creditCardId = cardId),
-                )
+        when {
+            invoice == null -> flowOf(emptyList())
+            cardId == null -> flowOf(emptyList())
+            else -> {
+                operationRepository.observeOperationsBy(
+                    invoiceId = invoice.id,
+                ).map { operations ->
+                    operationUiMapper.toUi(
+                        operations = operations,
+                        perspective = OperationPerspective.Card(
+                            creditCardId = cardId,
+                        ),
+                    )
+                }
             }
         }
     }
@@ -133,8 +139,7 @@ class CreditCardsViewModel(
             is CreditCardsAction.SelectCard -> {
                 selectedCardId.value = creditCardRepository
                     .getAllCreditCards()
-                    .getOrNull(action.index.coerceAtLeast(0))
-                    ?.id
+                    .getOrNull(action.index.coerceAtLeast(0))?.id
             }
 
             is CreditCardsAction.SelectCategory -> {

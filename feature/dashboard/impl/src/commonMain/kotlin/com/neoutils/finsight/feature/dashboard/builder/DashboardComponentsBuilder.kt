@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.builder
 
 import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.budgets.model.Budget
@@ -31,27 +31,13 @@ import com.neoutils.finsight.feature.dashboard.constant.QuickActionsConfig
 import com.neoutils.finsight.feature.dashboard.constant.RecentsConfig
 import com.neoutils.finsight.feature.dashboard.constant.SpendingByCategoryConfig
 import com.neoutils.finsight.feature.dashboard.constant.hideWhenEmpty
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponent
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentType
+import com.neoutils.finsight.feature.dashboard.model.QuickActionType
+import com.neoutils.finsight.feature.dashboard.state.DashboardAccountUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
-
-data class DashboardComponentsInput(
-    val operations: List<Operation>,
-    val creditCards: List<CreditCard>,
-    val invoicesByCreditCardId: Map<Long, Invoice>,
-    val accounts: List<Account>,
-    val budgets: List<Budget>,
-    val recurringList: List<Recurring>,
-    val occurrences: List<RecurringOccurrence>,
-    val today: LocalDate,
-    val targetMonth: YearMonth,
-    val categories: List<Category> = emptyList(),
-)
-
-data class DashboardBuilderContext(
-    val allTransactions: List<Transaction>,
-    val pendingRecurring: List<Recurring>,
-)
 
 class DashboardComponentsBuilder(
     private val calculateBalanceUseCase: ICalculateBalanceUseCase,
@@ -356,10 +342,10 @@ class DashboardComponentsBuilder(
             val effectiveDay = currentYearMonth.effectiveDay(recurring.dayOfMonth)
 
             recurring.isActive &&
-                recurring.id !in handledRecurringIds &&
-                recurring.id !in pendingIds &&
-                effectiveDay > input.today.day &&
-                effectiveDay - input.today.day <= daysAhead
+                    recurring.id !in handledRecurringIds &&
+                    recurring.id !in pendingIds &&
+                    effectiveDay > input.today.day &&
+                    effectiveDay - input.today.day <= daysAhead
         }
 
         val visibleRecurring = (pendingRecurring + upcomingRecurring)
@@ -375,7 +361,10 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private suspend fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents? {
+    private suspend fun recents(
+        input: DashboardComponentsInput,
+        config: Map<String, String>
+    ): DashboardComponent.Recents? {
         val count = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
         val presentOperations = input.operations.filter { it.date <= input.today }
         val recentOperations = presentOperations
@@ -412,6 +401,26 @@ class DashboardComponentsBuilder(
             QuickActionType.SUPPORT.takeUnless { currentPlatform.isDesktop },
         )
 
-        return DashboardComponent.QuickActions(actions = allActions.filter { it.name !in hiddenActions })
+        return DashboardComponent.QuickActions(
+            actions = allActions.filter { it.name !in hiddenActions }
+        )
     }
 }
+
+data class DashboardComponentsInput(
+    val operations: List<Operation>,
+    val creditCards: List<CreditCard>,
+    val invoicesByCreditCardId: Map<Long, Invoice>,
+    val accounts: List<Account>,
+    val budgets: List<Budget>,
+    val recurringList: List<Recurring>,
+    val occurrences: List<RecurringOccurrence>,
+    val today: LocalDate,
+    val targetMonth: YearMonth,
+    val categories: List<Category> = emptyList(),
+)
+
+data class DashboardBuilderContext(
+    val allTransactions: List<Transaction>,
+    val pendingRecurring: List<Recurring>,
+)

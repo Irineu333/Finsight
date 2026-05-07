@@ -5,27 +5,25 @@ package com.neoutils.finsight.feature.dashboard.screen
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.feature.transactions.model.Transaction
-import com.neoutils.finsight.feature.dashboard.resources.Res
-import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_cancel
-import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_confirm
-import com.neoutils.finsight.feature.dashboard.resources.dashboard_edit_title
-import com.neoutils.finsight.feature.dashboard.resources.dashboard_support
+import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.feature.dashboard.action.DashboardAction
+import com.neoutils.finsight.feature.dashboard.resources.*
+import com.neoutils.finsight.feature.dashboard.state.DashboardUiState
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.home.state.HomeChromeConfig
 import com.neoutils.finsight.feature.home.state.HomeChromeEffect
-import com.neoutils.finsight.core.ui.util.LocalDateFormats
+import com.neoutils.finsight.feature.transactions.model.Transaction
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -126,6 +124,7 @@ fun DashboardScreen(
                 is DashboardUiState.Loading -> {
                     DashboardLoadingContent()
                 }
+
                 is DashboardUiState.Empty -> {
                     DashboardEmptyContent(
                         onAction = viewModel::onAction
@@ -148,5 +147,15 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DashboardLoadingContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator()
     }
 }

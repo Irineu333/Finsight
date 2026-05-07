@@ -1,10 +1,11 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.model
 
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.categories.model.CategorySpending
-import com.neoutils.finsight.feature.transactions.model.OperationUi
-import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
+import com.neoutils.finsight.feature.dashboard.state.DashboardAccountUi
+import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.transactions.model.OperationUi
 
 sealed interface DashboardComponent {
     val key: String
@@ -90,4 +91,3 @@ sealed interface DashboardComponent {
         override val key = DashboardComponentType.QUICK_ACTIONS.key
     }
 }
-

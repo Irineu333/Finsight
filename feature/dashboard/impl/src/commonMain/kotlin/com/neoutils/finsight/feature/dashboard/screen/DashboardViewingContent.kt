@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,25 +18,29 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.neoutils.finsight.feature.dashboard.action.DashboardAction
 import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.dashboard.extension.interceptLongPress
 import com.neoutils.finsight.feature.dashboard.resources.*
+import com.neoutils.finsight.feature.dashboard.state.DashboardUiState
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun DashboardViewingContent(
+fun DashboardViewingContent(
     state: DashboardUiState.Viewing,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     onAction: (DashboardAction) -> Unit,
@@ -74,7 +79,9 @@ internal fun DashboardViewingContent(
                         openTransactions = openTransactions,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .interceptLongPress { onAction(DashboardAction.EnterEditMode) },
+                            .interceptLongPress {
+                                onAction(DashboardAction.EnterEditMode)
+                            },
                     )
                 }
             }
@@ -83,54 +90,37 @@ internal fun DashboardViewingContent(
 }
 
 @Composable
-internal fun DashboardLoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-internal fun DashboardEmptyContent(
-    onAction: (DashboardAction) -> Unit,
+private fun DashboardEditTip(
+    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = colorScheme.secondaryContainer,
+        modifier = modifier,
     ) {
-        Column(
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            Text(
-                text = stringResource(Res.string.dashboard_empty_title),
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
+            Icon(
+                imageVector = Icons.Outlined.TouchApp,
+                contentDescription = null,
+                tint = colorScheme.onSecondaryContainer,
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(Res.string.dashboard_empty_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { onAction(DashboardAction.EnterEditMode) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(text = stringResource(Res.string.dashboard_empty_action))
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = stringResource(Res.string.dashboard_edit_tip_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    text = stringResource(Res.string.dashboard_edit_tip_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSecondaryContainer,
+                )
             }
         }
     }

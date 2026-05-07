@@ -46,6 +46,11 @@ import com.neoutils.finsight.feature.dashboard.resources.*
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.dashboard.modal.DashboardComponentOptionsModal
 import com.neoutils.finsight.core.ui.util.stringUiText
+import com.neoutils.finsight.feature.dashboard.action.DashboardAction
+import com.neoutils.finsight.feature.dashboard.component.EditListEntry
+import com.neoutils.finsight.feature.dashboard.component.rememberDashboardEditListEntries
+import com.neoutils.finsight.feature.dashboard.model.DashboardEditItem
+import com.neoutils.finsight.feature.dashboard.state.DashboardUiState
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem

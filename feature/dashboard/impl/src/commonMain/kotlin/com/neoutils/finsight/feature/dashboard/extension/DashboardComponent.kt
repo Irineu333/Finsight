@@ -1,7 +1,7 @@
 package com.neoutils.finsight.feature.dashboard.extension
 
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponent
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentVariant
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponent
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentVariant
 
 fun DashboardComponent.toViewingVariant(config: Map<String, String>): DashboardComponentVariant = when (this) {
     is DashboardComponent.TotalBalance -> DashboardComponentVariant.TotalBalance.Viewing(this, config)

@@ -28,10 +28,10 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.util.stringUiText
 import com.neoutils.finsight.feature.dashboard.constant.*
 import com.neoutils.finsight.feature.dashboard.resources.*
-import com.neoutils.finsight.feature.dashboard.screen.DashboardAction
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentType
-import com.neoutils.finsight.feature.dashboard.screen.DashboardEditItem
-import com.neoutils.finsight.feature.dashboard.screen.QuickActionType
+import com.neoutils.finsight.feature.dashboard.action.DashboardAction
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentType
+import com.neoutils.finsight.feature.dashboard.model.DashboardEditItem
+import com.neoutils.finsight.feature.dashboard.model.QuickActionType
 import org.jetbrains.compose.resources.stringResource
 
 class DashboardComponentOptionsModal(

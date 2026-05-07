@@ -85,9 +85,12 @@ import kotlin.time.ExperimentalTime
 import com.neoutils.finsight.feature.creditCards.ui.resources.Res as CcUiRes
 import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_empty
 import com.neoutils.finsight.feature.creditCards.ui.resources.credit_cards_create
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponent
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentVariant
+import com.neoutils.finsight.feature.dashboard.model.QuickActionType
 
 @Composable
-internal fun DashboardComponentContent(
+fun DashboardComponentContent(
     variant: DashboardComponentVariant,
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
@@ -194,17 +197,8 @@ private fun DashboardPendingRecurringSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
     val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
-    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
+
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -255,17 +249,9 @@ private fun DashboardRecentsSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
     val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
     val viewOperationEntry = koinInject<ViewOperationModalEntry>()
-    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
+
     val component = variant.component
     val showHeader = variant.config.showHeader()
 
@@ -473,13 +459,8 @@ private fun DashboardCreditCardsSection(
 ) {
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
     val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
-    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
+
     val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
     val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
     val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
@@ -565,7 +546,10 @@ private fun DashboardCreditCardsSection(
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
                                         modalManager.show(
-                                            advancePaymentEntry.create(invoice = it.invoice, currentBillAmount = it.amount)
+                                            advancePaymentEntry.create(
+                                                invoice = it.invoice,
+                                                currentBillAmount = it.amount
+                                            )
                                         )
                                     }
                                 }
@@ -599,17 +583,7 @@ private fun DashboardSpendingByCategorySection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
     val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
 
     CategorySpendingCard(
@@ -631,17 +605,9 @@ private fun DashboardIncomeByCategorySection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
+
     val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
+
     val component = variant.component
 
     CategorySpendingCard(
@@ -664,17 +630,7 @@ private fun DashboardBudgetsSection(
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
-    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
     val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
     val component = variant.component
 
     BudgetProgressCard(
@@ -881,16 +837,7 @@ private fun DashboardAccountsRow(
     val navigationDispatcher = LocalNavigationDispatcher.current
     val modalManager = LocalModalManager.current
     val accountFormEntry = koinInject<AccountFormModalEntry>()
-    val creditCardFormEntry = koinInject<CreditCardFormModalEntry>()
-    val confirmRecurringEntry = koinInject<ConfirmRecurringModalEntry>()
-    val viewAdjustmentEntry = koinInject<ViewAdjustmentModalEntry>()
-    val viewOperationEntry = koinInject<ViewOperationModalEntry>()
-    val viewCategoryEntry = koinInject<ViewCategoryModalEntry>()
-    val viewBudgetEntry = koinInject<ViewBudgetModalEntry>()
-    val closeInvoiceEntry = koinInject<CloseInvoiceModalEntry>()
-    val payInvoiceEntry = koinInject<PayInvoiceModalEntry>()
-    val advancePaymentEntry = koinInject<AdvancePaymentModalEntry>()
-    val editInvoiceBalanceEntry = koinInject<EditInvoiceBalanceModalEntry>()
+
     val component = variant.component
     val showHeader = variant.config.showHeader()
 

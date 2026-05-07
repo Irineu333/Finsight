@@ -1,5 +1,6 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.model
 
+import com.neoutils.finsight.core.ui.util.UiText
 import com.neoutils.finsight.feature.dashboard.resources.Res
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_accounts
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_budgets
@@ -10,7 +11,6 @@ import com.neoutils.finsight.feature.dashboard.resources.dashboard_recurring
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_reports
 import com.neoutils.finsight.feature.dashboard.resources.dashboard_support
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
-import com.neoutils.finsight.core.ui.util.UiText
 
 enum class QuickActionType(
     val title: UiText,

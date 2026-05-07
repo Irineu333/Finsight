@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.state
 
 import com.neoutils.finsight.feature.accounts.model.Account
 

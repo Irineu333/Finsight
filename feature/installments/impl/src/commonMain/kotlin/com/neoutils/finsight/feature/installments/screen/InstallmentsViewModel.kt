@@ -3,7 +3,6 @@ package com.neoutils.finsight.feature.installments.screen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.installments.mapper.InstallmentUiMapper
 import com.neoutils.finsight.feature.installments.repository.IInstallmentRepository
 import com.neoutils.finsight.feature.transactions.mapper.IOperationUiMapper
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.update
 class InstallmentsViewModel(
     installmentRepository: IInstallmentRepository,
     operationRepository: IOperationRepository,
-    categoryRepository: ICategoryRepository,
     private val installmentUiMapper: InstallmentUiMapper,
     private val operationUiMapper: IOperationUiMapper,
 ) : ViewModel() {

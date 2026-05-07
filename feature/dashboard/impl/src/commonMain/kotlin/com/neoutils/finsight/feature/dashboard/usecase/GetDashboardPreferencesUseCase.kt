@@ -4,8 +4,8 @@ import com.neoutils.finsight.feature.dashboard.model.DashboardComponentPreferenc
 import com.neoutils.finsight.feature.dashboard.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.feature.dashboard.constant.AccountsOverviewConfig
 import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentType
-import com.neoutils.finsight.feature.dashboard.screen.QuickActionType
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentType
+import com.neoutils.finsight.feature.dashboard.model.QuickActionType
 import com.neoutils.finsight.feature.dashboard.constant.QuickActionsConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

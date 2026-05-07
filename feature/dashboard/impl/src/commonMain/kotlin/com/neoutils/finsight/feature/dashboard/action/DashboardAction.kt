@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.action
 
 sealed class DashboardAction {
     data object EnterEditMode : DashboardAction()

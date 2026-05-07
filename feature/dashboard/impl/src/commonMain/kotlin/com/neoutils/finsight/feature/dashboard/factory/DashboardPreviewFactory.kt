@@ -1,4 +1,4 @@
-package com.neoutils.finsight.feature.dashboard.screen
+package com.neoutils.finsight.feature.dashboard.factory
 
 import com.neoutils.finsight.feature.dashboard.resources.*
 import com.neoutils.finsight.feature.creditCards.model.CreditCardUi
@@ -17,6 +17,11 @@ import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.budgets.model.Budget
 import com.neoutils.finsight.feature.budgets.model.BudgetProgress
 import com.neoutils.finsight.feature.dashboard.constant.DashboardComponentConfig
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponent
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentType
+import com.neoutils.finsight.feature.dashboard.model.DashboardComponentVariant
+import com.neoutils.finsight.feature.dashboard.model.QuickActionType
+import com.neoutils.finsight.feature.dashboard.state.DashboardAccountUi
 
 class DashboardPreviewFactory {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {

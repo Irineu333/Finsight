@@ -8,11 +8,11 @@ import com.neoutils.finsight.feature.dashboard.usecase.BuildDashboardViewingUseC
 import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.feature.dashboard.usecase.GetDashboardPreferencesUseCase
-import com.neoutils.finsight.feature.dashboard.screen.DashboardComponentsBuilder
+import com.neoutils.finsight.feature.dashboard.builder.DashboardComponentsBuilder
 import com.neoutils.finsight.feature.dashboard.screen.DashboardEntry
-import com.neoutils.finsight.feature.dashboard.screen.DashboardPreviewFactory
+import com.neoutils.finsight.feature.dashboard.factory.DashboardPreviewFactory
 import com.neoutils.finsight.feature.dashboard.screen.DashboardViewModel
-import com.neoutils.finsight.feature.dashboard.screen.entry.DashboardEntryImpl
+import com.neoutils.finsight.feature.dashboard.entry.DashboardEntryImpl
 import com.russhwolf.settings.Settings
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module

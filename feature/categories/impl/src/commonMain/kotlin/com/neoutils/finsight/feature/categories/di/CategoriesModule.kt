@@ -3,6 +3,7 @@ package com.neoutils.finsight.feature.categories.di
 import com.neoutils.finsight.feature.categories.mapper.CategoryMapper
 import com.neoutils.finsight.feature.categories.repository.CategoryRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
+import com.neoutils.finsight.feature.categories.usecase.CalculateCategoryAmountUseCase
 import com.neoutils.finsight.feature.categories.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.feature.categories.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModalEntry
@@ -42,6 +43,12 @@ val categoriesModule = module {
         )
     }
 
+    factory {
+        CalculateCategoryAmountUseCase(
+            transactionRepository = get(),
+        )
+    }
+
     viewModel {
         CategoriesViewModel(
             categoryRepository = get(),
@@ -76,7 +83,7 @@ val categoriesModule = module {
         ViewCategoryViewModel(
             categoryId = it.get(),
             categoryRepository = get(),
-            transactionRepository = get(),
+            calculateCategoryAmount = get(),
             crashlytics = get(),
         )
     }

@@ -23,6 +23,7 @@ import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.core.ui.component.MonthSelector
 import com.neoutils.finsight.feature.categories.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormModal
@@ -56,7 +57,7 @@ class ViewCategoryModal(
 
         when (val state = uiState) {
             ViewCategoryUiState.Loading -> LoadingContent()
-            ViewCategoryUiState.Empty -> EmptyContent()
+            ViewCategoryUiState.Error -> ErrorContent()
             is ViewCategoryUiState.Content -> Content(
                 state = state,
                 onAction = viewModel::onAction,
@@ -80,29 +81,12 @@ class ViewCategoryModal(
     }
 
     @Composable
-    private fun EmptyContent() {
+    private fun ErrorContent() {
         val manager = LocalModalManager.current
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(Res.string.view_category_unavailable),
-                style = MaterialTheme.typography.titleMedium,
-                color = colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { manager.dismiss() },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text(text = stringResource(Res.string.view_category_close))
-            }
-        }
+        ModalErrorContent(
+            message = stringResource(Res.string.view_category_unavailable),
+            onClose = { manager.dismiss() },
+        )
     }
 
     @Composable

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Definir o contrato de entrada para modais expostos por `:feature:*:api`. Estabelece que entries recebem ids (não modelos de domínio), padroniza UiStates como sealed `Loading | Content [| Empty]`, define o comportamento de carregamento por id e o tratamento de entidade não-encontrada.
+Definir o contrato de entrada para modais expostos por `:feature:*:api`. Estabelece que entries recebem ids (não modelos de domínio), padroniza UiStates como sealed `Loading | Content [| Error]`, define o comportamento de carregamento por id e o tratamento de entidade não-encontrada.
 
 ## ADDED Requirements
 
@@ -29,12 +29,13 @@ Toda função `create(...)` em modal entry de `:feature:*:api` SHALL aceitar `Lo
 
 ### Requirement: UiStates de modais id-driven seguem padrão sealed
 
-Modais cujo VM carrega entidade por id SHALL ter UiState `sealed` com pelo menos `Loading` e `Content`. `Empty` MUST ser adicionado quando o modal exibe mensagem em vez de fechar ao receber id inexistente.
+Modais cujo VM carrega entidade por id SHALL ter UiState `sealed` com pelo menos `Loading` e `Content`. `Error` MUST ser adicionado quando o modal exibe mensagem em vez de fechar ao receber id inexistente.
 
-#### Scenario: View modal tem Loading, Content e Empty
+#### Scenario: View modal tem Loading, Content e Error
 
 - **WHEN** um view modal recebe um id que pode apontar para entidade deletada
-- **THEN** seu UiState MUST ter `Loading`, `Content(model)` e `Empty`
+- **THEN** seu UiState MUST ter `Loading`, `Content(model)` e `Error`
+- **AND** `Error` MUST ser usado para falhas de hidratação por id (não significa "lista vazia")
 
 #### Scenario: Action modal tem apenas Loading e Content
 
@@ -71,11 +72,11 @@ ViewModels de modais SHALL receber ids como parâmetros de construtor e MUST res
 #### Scenario: VM trata id deletado conforme tipo de modal
 
 - **WHEN** `getXxxById(id)` retorna null
-- **THEN** view modals MUST emitir `Empty`; action modals e form modals em edit-mode MUST chamar `modalManager.dismiss()` e `Crashlytics.recordException`
+- **THEN** view modals MUST emitir `Error` **e** chamar `Crashlytics.recordException`; action modals e form modals em edit-mode MUST chamar `modalManager.dismiss()` e `Crashlytics.recordException`
 
 #### Scenario: Exceção de "entidade não encontrada" segue convenção do projeto
 
-- **WHEN** o VM registra a exceção via `Crashlytics.recordException` em resposta a `getXxxById(id)` retornar null
+- **WHEN** o VM registra a exceção via `Crashlytics.recordException` em resposta a `getXxxById(id)` retornar null (em qualquer categoria de modal — view, action ou form em edit-mode)
 - **THEN** a `Throwable` MUST ser `XxxException(XxxError.NOT_FOUND)` (ex: `CategoryException(CategoryError.NOT_FOUND)`), não `IllegalStateException` nem outros tipos genéricos
 - **AND** se `XxxError.NOT_FOUND` ou `XxxException` ainda não existem na feature, eles MUST ser criados em `:feature:X:api/.../error/` e `:feature:X:api/.../exception/` respectivamente
 

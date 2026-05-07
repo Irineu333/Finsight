@@ -6,11 +6,11 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 1. Categories
 
-- [x] 1.1 `ViewCategoryUiState` → sealed `Loading | Empty | Content(category, selectedYearMonth, totalAmount, transactionCount)`
-- [x] 1.2 `ViewCategoryViewModel` recebe `categoryId: Long`; emite `Empty` se `getCategoryById` retornar `null`
+- [x] 1.1 `ViewCategoryUiState` → sealed `Loading | Error | Content(category, selectedYearMonth, totalAmount, transactionCount)`
+- [x] 1.2 `ViewCategoryViewModel` recebe `categoryId: Long`; emite `Error` se `getCategoryById` retornar `null`
 - [x] 1.3 `ViewCategoryModalEntry.create(categoryId: Long)` em `:feature:categories:api`
 - [x] 1.4 `ViewCategoryModalEntryImpl` ajustado
-- [x] 1.5 `ViewCategoryModal` lida com `Loading` (layout estável) e `Empty` (mensagem + dismiss)
+- [x] 1.5 `ViewCategoryModal` lida com `Loading` (layout estável) e `Error` (mensagem + dismiss)
 - [x] 1.6 `CategoryFormUiState` → sealed `Loading | Content(name, validation, selectedIcon, selectedType, isEditMode, canSubmit)`
 - [x] 1.7 `CategoryFormViewModel` recebe `categoryId: Long?, initialType: Category.Type?`; só carrega quando `categoryId != null`. Em modo criação, emite `Content` com defaults imediatamente
 - [x] 1.8 `CategoryFormModalEntry.create(categoryId: Long?, initialType: Category.Type?)` em `:api`
@@ -22,11 +22,11 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 2. Recurring
 
-- [ ] 2.1 Criar/converter `ViewRecurringUiState` → sealed `Loading | Empty | Content(recurring, ...)`
-- [ ] 2.2 `ViewRecurringViewModel` recebe `recurringId: Long`
-- [ ] 2.3 `ViewRecurringModalEntry.create(recurringId: Long)` em `:api`
-- [ ] 2.4 Impl ajustado
-- [ ] 2.5 `ViewRecurringModal` lida com Loading/Empty
+- [x] 2.1 Criar/converter `ViewRecurringUiState` → sealed `Loading | Error | Content(recurring, ...)`
+- [x] 2.2 `ViewRecurringViewModel` recebe `recurringId: Long`
+- [x] 2.3 `ViewRecurringModalEntry.create(recurringId: Long)` em `:api`
+- [x] 2.4 Impl ajustado
+- [x] 2.5 `ViewRecurringModal` lida com Loading/Error
 - [ ] 2.6 `RecurringFormUiState` → sealed `Loading | Content(...)`
 - [ ] 2.7 `RecurringFormViewModel` recebe `recurringId: Long?`; em modo criação inicia em `Content` com defaults
 - [ ] 2.8 `RecurringFormModalEntry.create(recurringId: Long?)` em `:api`
@@ -37,7 +37,7 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [ ] 2.13 `ConfirmRecurringModalEntry.create(recurringId: Long, targetDate: LocalDate)` em `:api`
 - [ ] 2.14 Impl + modal ajustados
 - [ ] 2.15 Atualizar Koin (3 ViewModels)
-- [ ] 2.16 Atualizar `ViewOperationViewModel.OpenRecurring`: passa `recurringId` direto pelo evento, sem buscar `Recurring` antes
+- [x] 2.16 Atualizar `ViewOperationViewModel.OpenRecurring`: passa `recurringId` direto pelo evento, sem buscar `Recurring` antes
 - [ ] 2.17 Demais call-sites
 - [ ] 2.18 `./gradlew :feature:recurring:impl:check`
 
@@ -54,11 +54,11 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 4. Transactions
 
-- [ ] 4.1 `ViewOperationUiState` → sealed `Loading | Empty | Content(operation, perspective, category, account, creditCard, invoice, sourceAccount, destinationAccount)`
+- [ ] 4.1 `ViewOperationUiState` → sealed `Loading | Error | Content(operation, perspective, category, account, creditCard, invoice, sourceAccount, destinationAccount)`
 - [ ] 4.2 `ViewOperationViewModel` recebe `operationId: Long, perspective: OperationPerspective?`; cascata de fetches dispara após resolver `operation`
 - [ ] 4.3 `ViewOperationModalEntry.create(operationId: Long, perspective: OperationPerspective?)` em `:api`
 - [ ] 4.4 Impl + modal ajustados
-- [ ] 4.5 `ViewAdjustmentUiState` → sealed `Loading | Empty | Content(...)`
+- [ ] 4.5 `ViewAdjustmentUiState` → sealed `Loading | Error | Content(...)`
 - [ ] 4.6 `ViewAdjustmentViewModel` recebe `operationId: Long`
 - [ ] 4.7 `ViewAdjustmentModalEntry.create(operationId: Long)` em `:api`
 - [ ] 4.8 Impl + modal ajustados
@@ -108,8 +108,8 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
   - [ ] 8.1.a Criar interface em `:feature:budgets:api`
   - [ ] 8.1.b Criar impl em `:feature:budgets:impl` reutilizando lógica que hoje produz `BudgetProgress` na lista
   - [ ] 8.1.c Refatorar `BudgetsViewModel` (ou builder atual) para usar o novo use case (paridade por construção)
-- [ ] 8.2 `ViewBudgetUiState` → sealed `Loading | Empty | Content(budgetProgress, categories, accentColor)`
-- [ ] 8.3 `ViewBudgetViewModel` recebe `budgetId: Long`; reconstrói `BudgetProgress` via use case; emite `Empty` se budget não existe
+- [ ] 8.2 `ViewBudgetUiState` → sealed `Loading | Error | Content(budgetProgress, categories, accentColor)`
+- [ ] 8.3 `ViewBudgetViewModel` recebe `budgetId: Long`; reconstrói `BudgetProgress` via use case; emite `Error` se budget não existe
 - [ ] 8.4 `ViewBudgetModalEntry.create(budgetId: Long)` em `:api`
 - [ ] 8.5 Impl + modal ajustados (mover busca de `categories` que hoje está no `produceState` do modal para o VM)
 - [ ] 8.6 Atualizar Koin
@@ -124,7 +124,7 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [ ] 9.3 `./gradlew allTests`
 - [ ] 9.4 Smoke test manual (Android + Desktop):
   - [ ] 9.4.a Abrir cada modal afetado, verificar transição `Loading → Content`
-  - [ ] 9.4.b Forçar cenário `Empty` deletando entidade entre ações (debugger)
+  - [ ] 9.4.b Forçar cenário `Error` deletando entidade entre ações (debugger)
   - [ ] 9.4.c Verificar que forms em modo criação não passam por Loading
   - [ ] 9.4.d Verificar que `Pay`/`Advance`/`EditInvoiceBalance` mostram saldo idêntico ao calculado fora do modal
 - [ ] 9.5 Atualizar `CLAUDE.md` se necessário (seção sobre modais)

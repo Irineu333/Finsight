@@ -73,7 +73,7 @@ class ViewOperationModal(
             viewModel.events.collect { event ->
                 when (event) {
                     is ViewOperationEvent.OpenRecurring -> {
-                        manager.show(viewRecurringEntry.create(event.recurring))
+                        manager.show(viewRecurringEntry.create(event.recurringId))
                     }
                 }
             }

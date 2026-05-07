@@ -77,6 +77,7 @@ val categoriesModule = module {
             categoryId = it.get(),
             categoryRepository = get(),
             transactionRepository = get(),
+            crashlytics = get(),
         )
     }
 }

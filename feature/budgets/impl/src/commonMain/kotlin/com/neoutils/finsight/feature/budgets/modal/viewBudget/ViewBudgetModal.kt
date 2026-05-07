@@ -141,7 +141,7 @@ class ViewBudgetModal(
                         label = stringResource(Res.string.view_budget_percentage_label),
                         value = pctLabel,
                         onClick = budgetProgress.recurring?.let { recurring ->
-                            { manager.show(viewRecurringEntry.create(recurring)) }
+                            { manager.show(viewRecurringEntry.create(recurring.id)) }
                         },
                     )
 

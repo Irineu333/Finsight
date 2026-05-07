@@ -51,6 +51,6 @@
     <string name="view_category_transactions_month">Transações no Mês</string>
     <string name="view_category_delete">Excluir</string>
     <string name="view_category_edit">Editar</string>
-    <string name="view_category_unavailable">Categoria não disponível.</string>
+    <string name="view_category_unavailable">A categoria solicitada não está mais disponível.</string>
     <string name="view_category_close">Fechar</string>
 </resources>

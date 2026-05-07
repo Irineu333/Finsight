@@ -17,6 +17,10 @@ class RecurringRepository(
         }
     }
 
+    override suspend fun getRecurringById(id: Long): Recurring? {
+        return dao.getById(id)?.let(mapper::toDomain)
+    }
+
     override suspend fun insert(recurring: Recurring) {
         dao.insert(mapper.toEntity(recurring))
     }

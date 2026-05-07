@@ -157,7 +157,7 @@ fun RecurringScreen(
                             category = recurring.categoryId?.let { uiState.categoriesById[it] },
                             account = recurring.accountId?.let { uiState.accountsById[it] },
                             creditCard = recurring.creditCardId?.let { uiState.creditCardsById[it] },
-                            onClick = { modalManager.show(ViewRecurringModal(recurring)) },
+                            onClick = { modalManager.show(ViewRecurringModal(recurring.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)

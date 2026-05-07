@@ -123,7 +123,6 @@ val transactionsModule = module {
             operation = it.get(),
             perspective = it.getOrNull(),
             operationRepository = get(),
-            recurringRepository = get(),
             accountRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),

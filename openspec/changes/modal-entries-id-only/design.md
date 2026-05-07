@@ -3,7 +3,7 @@
 A análise de 14 entries de modal revelou:
 
 1. **Padrão já existente em `CloseInvoiceModalEntry`**: `(invoiceId: Long, closingDate: LocalDate)` — id + parâmetro transiente.
-2. **Padrão de UiState com Loading**: `AccountsUiState`, `CreditCardsUiState`, `EditInvoiceBalanceUiState` já usam `sealed { Loading, [Empty,] Content }`.
+2. **Padrão de UiState com Loading**: `AccountsUiState`, `CreditCardsUiState`, `EditInvoiceBalanceUiState` já usam `sealed { Loading, [Error,] Content }`.
 3. **Re-fetch já implícito**: `ViewCategoryViewModel`, `ViewOperationViewModel`, `EditInvoiceBalanceViewModel` chamam `getXxxById` no init e usam o model passado apenas como fallback (`?: original`).
 4. **Forms usam o model para prefill**: `CategoryFormViewModel`, `RecurringFormViewModel`, `AccountFormViewModel`, `CreditCardFormViewModel` leem múltiplos campos do model na inicialização.
 
@@ -19,7 +19,7 @@ Restrições relevantes:
 
 - Eliminar vazamento de tipos de domínio em `:feature:*:api` modal entries.
 - Padronizar contrato: entries recebem `Long` ids + parâmetros transientes.
-- Consolidar UiState pattern para modais id-driven: `sealed { Loading, Content [, Empty] }`.
+- Consolidar UiState pattern para modais id-driven: `sealed { Loading, Content [, Error] }`.
 - Garantir que VMs sempre operem em dado fresh re-buscado por id.
 
 **Non-Goals:**
@@ -43,11 +43,11 @@ Restrições relevantes:
 
 ---
 
-### D2: UiState em modais segue `sealed { Loading, Content [, Empty] }`
+### D2: UiState em modais segue `sealed { Loading, Content [, Error] }`
 
-**Decisão:** Modais cujo entry recebe `id` MUST ter UiState selada com pelo menos `Loading` e `Content`. `Empty` é adicionado quando o id pode apontar para entidade deletada e o modal precisa exibir mensagem em vez de fechar.
+**Decisão:** Modais cujo entry recebe `id` MUST ter UiState selada com pelo menos `Loading` e `Content`. `Error` é adicionado quando o id pode apontar para entidade deletada e o modal precisa exibir mensagem em vez de fechar.
 
-**Rationale:** Coerente com `AccountsUiState`, `CreditCardsUiState`, `EditInvoiceBalanceUiState`. O modelo só existe após o fetch — uma data class única forçaria fallback artificial (defaults vazios) que mente sobre o estado real.
+**Rationale:** Coerente com `AccountsUiState`, `CreditCardsUiState`, `EditInvoiceBalanceUiState`. O modelo só existe após o fetch — uma data class única forçaria fallback artificial (defaults vazios) que mente sobre o estado real. `Error` (em vez de `Empty`) reflete a semântica correta: a hidratação por id falhou, não é "lista vazia".
 
 ---
 
@@ -80,11 +80,13 @@ val uiState = when {
 
 | Categoria | Comportamento | Exemplos |
 | --- | --- | --- |
-| **View modals** (read-only) | Emite `Empty`, modal renderiza mensagem "Não disponível" + botão fechar | `ViewCategory`, `ViewOperation`, `ViewAdjustment`, `ViewBudget`, `ViewRecurring` |
+| **View modals** (read-only) | Emite `Error` + `Crashlytics.recordException`, modal renderiza `ModalErrorContent` (ícone + título + mensagem + botão fechar) | `ViewCategory`, `ViewOperation`, `ViewAdjustment`, `ViewBudget`, `ViewRecurring` |
 | **Form modals em edit-mode** | `modalManager.dismiss()` + `Crashlytics.recordException` | `AccountForm(id)`, `CategoryForm(id)`, `RecurringForm(id)`, `CreditCardForm(id)` |
-| **Action/Confirm modals** | `modalManager.dismiss()` direto | `Pay`, `AdvancePayment`, `EditInvoiceBalance`, `ConfirmRecurring`, `CloseInvoice` |
+| **Action/Confirm modals** | `modalManager.dismiss()` + `Crashlytics.recordException` | `Pay`, `AdvancePayment`, `EditInvoiceBalance`, `ConfirmRecurring`, `CloseInvoice` |
 
-**Rationale:** `Empty` só faz sentido onde a UX é "inspecionar" (read-only). Em fluxos de ação ou edição, o estado correto é fechar — não há nada útil para o usuário fazer com fantasma.
+**Rationale:** `Error` (em vez de `Empty`) só faz sentido onde a UX é "inspecionar" (read-only) — a UX permite mostrar a falha. Em fluxos de ação ou edição, o estado correto é fechar — não há nada útil para o usuário fazer com fantasma. Em **todas** as categorias o evento é logado via Crashlytics: id-not-found nunca deveria acontecer no caminho feliz, então é um sinal valioso de bug ou race condition.
+
+**UI compartilhada:** `ModalErrorContent` em `:core:ui` consome `(message, onClose)` e renderiza ícone em surface `errorContainer` + título + descrição + botão fechar. View modals chamam esse componente em vez de inline.
 
 **Convenção de exceção:** A `Throwable` registrada via `Crashlytics.recordException` MUST seguir o padrão do projeto `XxxException(XxxError.NOT_FOUND)` (ver `AccountException`, `RecurringException`, `InvoiceException`). Se a feature não tem `XxxError.NOT_FOUND` ou `XxxException`, esta task implica:
 
@@ -200,6 +202,6 @@ Cada feature é um commit separado para reduzir blast radius e facilitar review.
 ## Open Questions
 
 1. **Existe `CalculateBudgetProgressUseCase`?** Verificar em `:feature:budgets:impl`. Se não, criá-lo como parte da task 8.
-2. **`Empty` state em view modals**: usar componente compartilhado em `:core:ui` ou inline por modal? Sugestão inicial: inline na primeira iteração; extrair se houver duplicação.
+2. **`Error` state em view modals**: usar componente compartilhado em `:core:ui` ou inline por modal? Sugestão inicial: inline na primeira iteração; extrair se houver duplicação.
 3. **`Recurring` em `EditTransaction`** (se houver caso similar a `currentBillAmount`): há outros snapshots derivados sendo passados como parâmetro de entry que ainda não foram catalogados? Validar durante a task 4.
 4. **DI (Koin)**: alguns ViewModels recebem `parametersOf(model)` hoje. Após migração, recebem `parametersOf(id)`. Confirmar que todos os módulos Koin (`viewModel { (id: Long) -> ... }`) estão atualizados.

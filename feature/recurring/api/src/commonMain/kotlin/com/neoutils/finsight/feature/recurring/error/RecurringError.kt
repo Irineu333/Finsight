@@ -6,4 +6,5 @@ enum class RecurringError(val message: String) {
     TITLE_OR_CATEGORY_REQUIRED(message = "Title or category is required."),
     INVALID_DAY(message = "Day of month must be between 1 and 31."),
     ACCOUNT_REQUIRED(message = "Account is required."),
+    NOT_FOUND(message = "Recurring not found."),
 }

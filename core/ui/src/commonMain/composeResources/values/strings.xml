@@ -36,4 +36,8 @@
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancelar</string>
+
+    <!-- Modal error content -->
+    <string name="modal_error_title">Não foi possível carregar</string>
+    <string name="modal_error_close">Fechar</string>
 </resources>

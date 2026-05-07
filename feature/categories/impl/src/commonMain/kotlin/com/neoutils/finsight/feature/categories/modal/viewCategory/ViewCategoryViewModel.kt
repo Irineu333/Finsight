@@ -4,6 +4,9 @@ package com.neoutils.finsight.feature.categories.modal.viewCategory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
+import com.neoutils.finsight.feature.categories.error.CategoryError
+import com.neoutils.finsight.feature.categories.exception.CategoryException
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.transactions.repository.ITransactionRepository
 import com.neoutils.finsight.core.utils.extension.toYearMonth
@@ -22,12 +25,17 @@ class ViewCategoryViewModel(
     private val categoryId: Long,
     private val categoryRepository: ICategoryRepository,
     private val transactionRepository: ITransactionRepository,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
     private val categoryFlow = flow {
-        emit(categoryRepository.getCategoryById(categoryId))
+        val category = categoryRepository.getCategoryById(categoryId)
+        if (category == null) {
+            crashlytics.recordException(CategoryException(CategoryError.NOT_FOUND))
+        }
+        emit(category)
     }
 
     private val transactions = flow {
@@ -40,7 +48,7 @@ class ViewCategoryViewModel(
         selectedYearMonth,
     ) { category, transactions, yearMonth ->
         if (category == null) {
-            ViewCategoryUiState.Empty
+            ViewCategoryUiState.Error
         } else {
             val transactionsForMonth = transactions.filter {
                 it.categoryId == category.id && it.date.yearMonth == yearMonth

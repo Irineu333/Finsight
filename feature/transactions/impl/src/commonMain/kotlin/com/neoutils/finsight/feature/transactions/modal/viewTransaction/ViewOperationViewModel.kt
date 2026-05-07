@@ -9,11 +9,9 @@ import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
-import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -23,7 +21,6 @@ class ViewOperationViewModel(
     operation: Operation,
     private val perspective: OperationPerspective? = null,
     operationRepository: IOperationRepository,
-    private val recurringRepository: IRecurringRepository,
     private val accountRepository: IAccountRepository,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
@@ -72,10 +69,7 @@ class ViewOperationViewModel(
     fun onAction(action: ViewOperationAction) = viewModelScope.launch {
         when (action) {
             is ViewOperationAction.OpenRecurring -> {
-                val recurring = recurringRepository.observeAllRecurring().first()
-                    .firstOrNull { it.id == action.recurringId }
-                    ?: return@launch
-                _events.send(ViewOperationEvent.OpenRecurring(recurring))
+                _events.send(ViewOperationEvent.OpenRecurring(action.recurringId))
             }
         }
     }

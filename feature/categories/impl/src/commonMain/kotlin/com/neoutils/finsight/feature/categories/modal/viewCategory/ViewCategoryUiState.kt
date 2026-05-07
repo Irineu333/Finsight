@@ -5,7 +5,7 @@ import kotlinx.datetime.YearMonth
 
 sealed class ViewCategoryUiState {
     data object Loading : ViewCategoryUiState()
-    data object Empty : ViewCategoryUiState()
+    data object Error : ViewCategoryUiState()
     data class Content(
         val category: Category,
         val selectedYearMonth: YearMonth,

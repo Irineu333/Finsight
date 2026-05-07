@@ -11,7 +11,7 @@ Isso gera três problemas:
 ## What Changes
 
 - **BREAKING** Entries de modal em `:feature:*:api` passam a receber **ids** (e parâmetros transientes não-entidade) em vez de modelos de domínio.
-- **BREAKING** UiStates dos modais migram para o padrão `sealed class { Loading, Content [, Empty] }` consistente com `AccountsUiState`/`CreditCardsUiState`/`EditInvoiceBalanceUiState`. ViewModels carregam a entidade por id e emitem `Empty` quando a entidade foi deletada (race).
+- **BREAKING** UiStates dos modais migram para o padrão `sealed class { Loading, Content [, Error] }` consistente com `AccountsUiState`/`CreditCardsUiState`/`EditInvoiceBalanceUiState`. ViewModels carregam a entidade por id e emitem `Error` quando a entidade foi deletada (race) — `Error` indica falha de hidratação por id, não "lista vazia".
 - **BREAKING** `PayInvoiceModalEntry` e `AdvancePaymentModalEntry` deixam de aceitar `currentBillAmount` — o VM passa a calcular via `CalculateInvoiceUseCase` para garantir saldo fresh.
 - **BREAKING** `ViewBudgetModalEntry` aceita `budgetId` em vez de `BudgetProgress` — o VM reconstrói o progresso internamente via use case.
 - Form modals em modo criação (id == null) continuam renderizando `Content` no primeiro frame — `Loading` só vale em modo edição com fetch real.
@@ -20,7 +20,7 @@ Isso gera três problemas:
 
 ### New Capabilities
 
-- `modal-entries`: Contrato de entrada para modais expostos por `:feature:*:api`. Define o padrão "id-only" (entries recebem `Long` ids e parâmetros transientes), o ciclo `Loading → Content | Empty` para hidratação por id, a regra de `Loading` apenas em edit-mode para forms, e a proibição de valores derivados nos parâmetros.
+- `modal-entries`: Contrato de entrada para modais expostos por `:feature:*:api`. Define o padrão "id-only" (entries recebem `Long` ids e parâmetros transientes), o ciclo `Loading → Content | Error` para hidratação por id, a regra de `Loading` apenas em edit-mode para forms, e a proibição de valores derivados nos parâmetros.
 
 ### Modified Capabilities
 

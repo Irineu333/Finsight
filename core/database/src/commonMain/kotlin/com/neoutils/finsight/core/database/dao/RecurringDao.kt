@@ -17,6 +17,9 @@ interface RecurringDao {
     @Query("SELECT * FROM recurring ORDER BY createdAt ASC")
     suspend fun getAll(): List<RecurringEntity>
 
+    @Query("SELECT * FROM recurring WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): RecurringEntity?
+
     @Insert
     suspend fun insert(entity: RecurringEntity): Long
 

@@ -27,6 +27,7 @@ import com.neoutils.finsight.feature.recurring.modal.recurringForm.RecurringForm
 import com.neoutils.finsight.feature.recurring.modal.stopRecurring.StopRecurringViewModel
 import com.neoutils.finsight.feature.recurring.modal.viewRecurring.ViewRecurringViewModel
 import com.neoutils.finsight.feature.recurring.screen.RecurringViewModel
+import kotlinx.datetime.LocalDate
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -138,10 +139,11 @@ val recurringModule = module {
         )
     }
 
-    viewModel {
+    viewModel { (recurringId: Long, targetDate: LocalDate) ->
         ConfirmRecurringViewModel(
-            recurring = it.get(),
-            targetDate = it.get(),
+            recurringId = recurringId,
+            targetDate = targetDate,
+            recurringRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),

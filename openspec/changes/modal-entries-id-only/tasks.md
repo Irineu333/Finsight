@@ -32,14 +32,14 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [x] 2.8 `RecurringFormModalEntry.create(recurringId: Long?)` em `:api`
 - [x] 2.9 Impl ajustado
 - [x] 2.10 `RecurringFormModal` lida com Loading apenas em edição
-- [ ] 2.11 `ConfirmRecurringUiState` → sealed `Loading | Content(...)`; dismiss em entidade não encontrada (action modal)
-- [ ] 2.12 `ConfirmRecurringViewModel` recebe `recurringId: Long, targetDate: LocalDate`
-- [ ] 2.13 `ConfirmRecurringModalEntry.create(recurringId: Long, targetDate: LocalDate)` em `:api`
-- [ ] 2.14 Impl + modal ajustados
-- [ ] 2.15 Atualizar Koin (3 ViewModels)
+- [x] 2.11 `ConfirmRecurringUiState` → sealed `Loading | Content(...)`; dismiss em entidade não encontrada (action modal)
+- [x] 2.12 `ConfirmRecurringViewModel` recebe `recurringId: Long, targetDate: LocalDate`
+- [x] 2.13 `ConfirmRecurringModalEntry.create(recurringId: Long, targetDate: LocalDate)` em `:api`
+- [x] 2.14 Impl + modal ajustados
+- [x] 2.15 Atualizar Koin (3 ViewModels)
 - [x] 2.16 Atualizar `ViewOperationViewModel.OpenRecurring`: passa `recurringId` direto pelo evento, sem buscar `Recurring` antes
-- [ ] 2.17 Demais call-sites
-- [ ] 2.18 `./gradlew :feature:recurring:impl:check`
+- [x] 2.17 Demais call-sites
+- [x] 2.18 `./gradlew :feature:recurring:impl:check`
 
 ## 3. Accounts
 

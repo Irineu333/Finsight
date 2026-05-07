@@ -231,7 +231,7 @@ private fun DashboardPendingRecurringSection(
                             .safeOnDay(recurring.dayOfMonth)
                             .takeIf { it <= currentDate }
                             ?: currentDate
-                        modalManager.show(confirmRecurringEntry.create(recurring, targetDate))
+                        modalManager.show(confirmRecurringEntry.create(recurring.id, targetDate))
                     }
                 },
                 modifier = Modifier

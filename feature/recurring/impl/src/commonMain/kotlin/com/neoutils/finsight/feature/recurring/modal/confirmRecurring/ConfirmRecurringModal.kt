@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -25,18 +26,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
+import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.core.utils.extension.moneyToDouble
-import com.neoutils.finsight.feature.recurring.resources.*
-import com.neoutils.finsight.core.ui.component.*
-import com.neoutils.finsight.feature.transactions.component.TargetSelector
+import com.neoutils.finsight.core.utils.util.dayMonthYear
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceSelector
-import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.core.utils.util.dayMonthYear
-import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
+import com.neoutils.finsight.feature.recurring.resources.*
+import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -50,21 +51,52 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class ConfirmRecurringModal(
-    private val recurring: Recurring,
+    private val recurringId: Long,
     private val targetDate: LocalDate,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val modalManager = LocalModalManager.current
         val viewModel = koinViewModel<ConfirmRecurringViewModel> {
-            parametersOf(recurring, targetDate)
+            parametersOf(recurringId, targetDate)
         }
         val uiState by viewModel.uiState.collectAsState()
 
+        when (val state = uiState) {
+            ConfirmRecurringUiState.Loading -> LoadingContent()
+            is ConfirmRecurringUiState.Content -> Content(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun Content(
+        state: ConfirmRecurringUiState.Content,
+        onAction: (ConfirmRecurringAction) -> Unit,
+    ) {
+        val modalManager = LocalModalManager.current
+        val recurring = state.recurring
+
         val currencyFormatter = LocalCurrencyFormatter.current
         val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount))
-        val dateText = rememberTextFieldState(dayMonthYear.format(targetDate))
+        val dateText = rememberTextFieldState(dayMonthYear.format(state.confirmDate))
 
         val typeLabel = if (recurring.type.isIncome) {
             stringResource(Res.string.recurring_income)
@@ -72,8 +104,8 @@ class ConfirmRecurringModal(
             stringResource(Res.string.recurring_expense)
         }
 
-        LaunchedEffect(uiState.confirmDate) {
-            val formatted = dayMonthYear.format(uiState.confirmDate)
+        LaunchedEffect(state.confirmDate) {
+            val formatted = dayMonthYear.format(state.confirmDate)
             if (dateText.text.toString() != formatted) {
                 dateText.edit { replace(0, length, formatted) }
             }
@@ -109,16 +141,13 @@ class ConfirmRecurringModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // category display removed in Recurring → IDs refactor (D14);
-            // can be restored by injecting a category lookup in the VM
-
             AnimatedVisibility(recurring.type.isExpense) {
                 TargetSelector(
-                    selectedTarget = uiState.selectedTarget,
+                    selectedTarget = state.selectedTarget,
                     onTargetSelected = { target ->
-                        viewModel.onAction(ConfirmRecurringAction.TargetSelected(target))
+                        onAction(ConfirmRecurringAction.TargetSelected(target))
                     },
-                    availableTargets = uiState.targets,
+                    availableTargets = state.targets,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
@@ -126,13 +155,13 @@ class ConfirmRecurringModal(
             }
 
             AnimatedVisibility(
-                uiState.selectedTarget.isAccount || recurring.type.isIncome
+                state.selectedTarget.isAccount || recurring.type.isIncome
             ) {
                 AccountSelector(
-                    selectedAccount = uiState.selectedAccount,
-                    accounts = uiState.accounts,
+                    selectedAccount = state.selectedAccount,
+                    accounts = state.accounts,
                     onAccountSelected = { account ->
-                        viewModel.onAction(ConfirmRecurringAction.AccountSelected(account))
+                        onAction(ConfirmRecurringAction.AccountSelected(account))
                     },
                     label = stringResource(Res.string.view_recurring_account_label),
                     modifier = Modifier
@@ -141,12 +170,12 @@ class ConfirmRecurringModal(
                 )
             }
 
-            AnimatedVisibility(uiState.selectedTarget.isCreditCard && recurring.type.isExpense) {
+            AnimatedVisibility(state.selectedTarget.isCreditCard && recurring.type.isExpense) {
                 CreditCardSelector(
-                    creditCards = uiState.creditCards,
-                    creditCard = uiState.selectedCreditCard,
+                    creditCards = state.creditCards,
+                    creditCard = state.selectedCreditCard,
                     onCreditCardSelected = { card ->
-                        viewModel.onAction(ConfirmRecurringAction.CreditCardSelected(card))
+                        onAction(ConfirmRecurringAction.CreditCardSelected(card))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -155,13 +184,13 @@ class ConfirmRecurringModal(
             }
 
             AnimatedVisibility(
-                uiState.selectedTarget.isCreditCard && recurring.type.isExpense
+                state.selectedTarget.isCreditCard && recurring.type.isExpense
             ) {
                 InvoiceSelector(
-                    invoices = uiState.invoices,
-                    invoice = uiState.selectedInvoice,
+                    invoices = state.invoices,
+                    invoice = state.selectedInvoice,
                     onInvoiceSelected = {
-                        viewModel.onAction(ConfirmRecurringAction.InvoiceSelected(it))
+                        onAction(ConfirmRecurringAction.InvoiceSelected(it))
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -193,10 +222,10 @@ class ConfirmRecurringModal(
                         onClick = {
                             modalManager.show(
                                 DatePickerModal(
-                                    initialDate = uiState.confirmDate,
+                                    initialDate = state.confirmDate,
                                     maxDate = currentDate,
                                     onDateSelected = { date ->
-                                        viewModel.onAction(ConfirmRecurringAction.DateChanged(date))
+                                        onAction(ConfirmRecurringAction.DateChanged(date))
                                     }
                                 )
                             )
@@ -222,7 +251,7 @@ class ConfirmRecurringModal(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 OutlinedButton(
-                    onClick = { viewModel.onAction(ConfirmRecurringAction.Skip) },
+                    onClick = { onAction(ConfirmRecurringAction.Skip) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                 ) {
@@ -235,13 +264,13 @@ class ConfirmRecurringModal(
 
                 Button(
                     onClick = {
-                        viewModel.onAction(ConfirmRecurringAction.Confirm(amount.text.toString()))
+                        onAction(ConfirmRecurringAction.Confirm(amount.text.toString()))
                     },
                     enabled = amount.text.toString().moneyToDouble() > 0.0 &&
-                            if (uiState.selectedTarget.isCreditCard) {
-                                uiState.selectedCreditCard != null
+                            if (state.selectedTarget.isCreditCard) {
+                                state.selectedCreditCard != null
                             } else {
-                                uiState.selectedAccount != null
+                                state.selectedAccount != null
                             },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),

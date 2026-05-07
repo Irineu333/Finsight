@@ -63,24 +63,60 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class CategoryFormModal(
-    private val category: Category? = null,
+    private val categoryId: Long? = null,
     private val initialType: Category.Type? = null,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<CategoryFormViewModel> { parametersOf(category, initialType) }
+        val viewModel = koinViewModel<CategoryFormViewModel> {
+            parametersOf(categoryId, initialType)
+        }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        when (val state = uiState) {
+            CategoryFormUiState.Loading -> LoadingContent()
+            is CategoryFormUiState.Content -> Content(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.category_form_edit_title),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun Content(
+        state: CategoryFormUiState.Content,
+        onAction: (CategoryFormAction) -> Unit,
+    ) {
         val modalManager = LocalModalManager.current
 
-        val name = rememberTextFieldState(uiState.name)
-        val accentColor = if (uiState.selectedType.isIncome) Income else Expense
+        val name = rememberTextFieldState(state.name)
+        val accentColor = if (state.selectedType.isIncome) Income else Expense
         val iconModalTitle = stringResource(Res.string.category_form_icon_modal_title)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
                 .drop(1)
-                .collect { viewModel.onAction(CategoryFormAction.NameChanged(it)) }
+                .collect { onAction(CategoryFormAction.NameChanged(it)) }
         }
 
         Column(
@@ -92,7 +128,7 @@ class CategoryFormModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = if (uiState.isEditMode) {
+                text = if (state.isEditMode) {
                     stringResource(Res.string.category_form_edit_title)
                 } else {
                     stringResource(Res.string.category_form_new_title)
@@ -102,10 +138,10 @@ class CategoryFormModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (!uiState.isEditMode) {
+            if (!state.isEditMode) {
                 TypeToggle(
-                    selectedType = uiState.selectedType,
-                    onTypeSelected = { viewModel.onAction(CategoryFormAction.TypeChanged(it)) },
+                    selectedType = state.selectedType,
+                    onTypeSelected = { onAction(CategoryFormAction.TypeChanged(it)) },
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -114,7 +150,7 @@ class CategoryFormModal(
             OutlinedTextField(
                 state = name,
                 label = { Text(text = stringResource(Res.string.category_form_name_label)) },
-                trailingIcon = when (uiState.validation[CategoryField.NAME]) {
+                trailingIcon = when (state.validation[CategoryField.NAME]) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -130,8 +166,8 @@ class CategoryFormModal(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done,
                 ),
-                isError = uiState.validation[CategoryField.NAME] is Validation.Error,
-                supportingText = when (val validation = uiState.validation[CategoryField.NAME]) {
+                isError = state.validation[CategoryField.NAME] is Validation.Error,
+                supportingText = when (val validation = state.validation[CategoryField.NAME]) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))
@@ -150,7 +186,7 @@ class CategoryFormModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             IconPickerSelector(
-                selectedIcon = uiState.selectedIcon,
+                selectedIcon = state.selectedIcon,
                 accentColor = accentColor,
                 title = stringResource(Res.string.category_form_icon_select),
                 helperText = stringResource(Res.string.category_form_icon_helper),
@@ -158,14 +194,14 @@ class CategoryFormModal(
                     modalManager.show(
                         IconPickerModal(
                             title = iconModalTitle,
-                            selectedIcon = uiState.selectedIcon,
+                            selectedIcon = state.selectedIcon,
                             accentColor = accentColor,
                             icons = FeatureIconCatalog.withGeneral(
                                 featureIcons = FeatureIconCatalog.categories,
-                                selectedIcon = uiState.selectedIcon,
+                                selectedIcon = state.selectedIcon,
                             ),
                             onIconSelected = { icon ->
-                                viewModel.onAction(CategoryFormAction.IconChanged(icon))
+                                onAction(CategoryFormAction.IconChanged(icon))
                             },
                         )
                     )
@@ -177,8 +213,8 @@ class CategoryFormModal(
             )
 
             Button(
-                onClick = { viewModel.onAction(CategoryFormAction.Submit) },
-                enabled = uiState.canSubmit,
+                onClick = { onAction(CategoryFormAction.Submit) },
+                enabled = state.canSubmit,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {

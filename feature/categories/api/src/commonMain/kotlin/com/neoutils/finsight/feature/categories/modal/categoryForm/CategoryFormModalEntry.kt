@@ -5,7 +5,7 @@ import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 
 interface CategoryFormModalEntry {
     fun create(
-        category: Category? = null,
+        categoryId: Long? = null,
         initialType: Category.Type? = null,
     ): ModalBottomSheet
 }

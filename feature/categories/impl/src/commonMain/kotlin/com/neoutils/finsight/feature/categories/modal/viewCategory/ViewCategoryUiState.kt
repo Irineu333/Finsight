@@ -1,16 +1,15 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.feature.categories.modal.viewCategory
 
 import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.YearMonth
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-data class ViewCategoryUiState(
-    val category: Category,
-    val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
-    val totalAmount: Double = 0.0,
-    val transactionCount: Int = 0
-)
+sealed class ViewCategoryUiState {
+    data object Loading : ViewCategoryUiState()
+    data object Empty : ViewCategoryUiState()
+    data class Content(
+        val category: Category,
+        val selectedYearMonth: YearMonth,
+        val totalAmount: Double,
+        val transactionCount: Int,
+    ) : ViewCategoryUiState()
+}

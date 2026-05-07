@@ -52,13 +52,14 @@ val categoriesModule = module {
 
     viewModel {
         CategoryFormViewModel(
-            category = it.getOrNull(),
+            categoryId = it.getOrNull(),
             initialType = it.getOrNull(),
             repository = get(),
             validateCategoryName = get(),
             modalManager = get(),
             debounceManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
 
@@ -73,7 +74,7 @@ val categoriesModule = module {
 
     viewModel {
         ViewCategoryViewModel(
-            category = it.get(),
+            categoryId = it.get(),
             categoryRepository = get(),
             transactionRepository = get(),
         )

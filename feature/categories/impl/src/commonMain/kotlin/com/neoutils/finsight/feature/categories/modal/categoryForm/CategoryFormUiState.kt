@@ -4,14 +4,18 @@ import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
 
-data class CategoryFormUiState(
-    val name: String = "",
-    val validation: Map<CategoryField, Validation> = mapOf(),
-    val selectedIcon: AppIcon = AppIcon.CATEGORY,
-    val selectedType: Category.Type = Category.Type.EXPENSE,
-    val isEditMode: Boolean = false,
-    val canSubmit: Boolean = false,
-)
+sealed class CategoryFormUiState {
+    data object Loading : CategoryFormUiState()
+
+    data class Content(
+        val name: String,
+        val validation: Map<CategoryField, Validation>,
+        val selectedIcon: AppIcon,
+        val selectedType: Category.Type,
+        val isEditMode: Boolean,
+        val canSubmit: Boolean,
+    ) : CategoryFormUiState()
+}
 
 enum class CategoryField {
     NAME

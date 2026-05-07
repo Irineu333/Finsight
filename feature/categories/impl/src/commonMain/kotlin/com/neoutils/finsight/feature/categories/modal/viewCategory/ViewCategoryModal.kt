@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
@@ -38,25 +37,81 @@ import com.neoutils.finsight.feature.categories.resources.view_category_total_sp
 import com.neoutils.finsight.feature.categories.resources.view_category_transactions_month
 import com.neoutils.finsight.feature.categories.resources.view_category_type_expense
 import com.neoutils.finsight.feature.categories.resources.view_category_type_income
+import com.neoutils.finsight.feature.categories.resources.view_category_unavailable
+import com.neoutils.finsight.feature.categories.resources.view_category_close
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.ExperimentalTime
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class ViewCategoryModal(
-    private val category: Category
+    private val categoryId: Long
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(categoryId) }
+        val uiState by viewModel.uiState.collectAsState()
+
+        when (val state = uiState) {
+            ViewCategoryUiState.Loading -> LoadingContent()
+            ViewCategoryUiState.Empty -> EmptyContent()
+            is ViewCategoryUiState.Content -> Content(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun EmptyContent() {
+        val manager = LocalModalManager.current
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.view_category_unavailable),
+                style = MaterialTheme.typography.titleMedium,
+                color = colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { manager.dismiss() },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(text = stringResource(Res.string.view_category_close))
+            }
+        }
+    }
+
+    @Composable
+    private fun Content(
+        state: ViewCategoryUiState.Content,
+        onAction: (ViewCategoryAction) -> Unit,
+    ) {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
-
-        val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(category) }
-
-        val uiState by viewModel.uiState.collectAsState()
 
         Column(
             modifier = Modifier
@@ -66,12 +121,12 @@ class ViewCategoryModal(
         ) {
 
             MonthSelector(
-                selectedYearMonth = uiState.selectedYearMonth,
+                selectedYearMonth = state.selectedYearMonth,
                 onPreviousMonth = {
-                    viewModel.onAction(ViewCategoryAction.PreviousMonth)
+                    onAction(ViewCategoryAction.PreviousMonth)
                 },
                 onNextMonth = {
-                    viewModel.onAction(ViewCategoryAction.NextMonth)
+                    onAction(ViewCategoryAction.NextMonth)
                 },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -82,7 +137,7 @@ class ViewCategoryModal(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CategoryIconBox(
-                    category = uiState.category,
+                    category = state.category,
                     modifier = Modifier.size(64.dp),
                     contentPadding = PaddingValues(16.dp),
                     shape = RoundedCornerShape(16.dp)
@@ -92,16 +147,16 @@ class ViewCategoryModal(
 
                 Column {
                     Text(
-                        text = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_type_income) else stringResource(Res.string.view_category_type_expense),
+                        text = if (state.category.type.isIncome) stringResource(Res.string.view_category_type_income) else stringResource(Res.string.view_category_type_expense),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (uiState.category.type.isIncome) Income else Expense
+                        color = if (state.category.type.isIncome) Income else Expense
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = uiState.category.name,
+                        text = state.category.name,
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
                     )
@@ -111,16 +166,16 @@ class ViewCategoryModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
-                label = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_total_received) else stringResource(Res.string.view_category_total_spent),
-                value = formatter.format(uiState.totalAmount),
-                valueColor = if (uiState.category.type.isIncome) Income else Expense
+                label = if (state.category.type.isIncome) stringResource(Res.string.view_category_total_received) else stringResource(Res.string.view_category_total_spent),
+                value = formatter.format(state.totalAmount),
+                valueColor = if (state.category.type.isIncome) Income else Expense
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
                 label = stringResource(Res.string.view_category_transactions_month),
-                value = uiState.transactionCount.toString()
+                value = state.transactionCount.toString()
             )
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -131,7 +186,7 @@ class ViewCategoryModal(
             ) {
                 OutlinedButton(
                     onClick = {
-                        manager.show(DeleteCategoryModal(uiState.category))
+                        manager.show(DeleteCategoryModal(state.category))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -158,7 +213,7 @@ class ViewCategoryModal(
 
                 OutlinedButton(
                     onClick = {
-                        manager.show(CategoryFormModal(uiState.category))
+                        manager.show(CategoryFormModal(categoryId = state.category.id))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),

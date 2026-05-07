@@ -7,10 +7,10 @@ import com.neoutils.finsight.feature.categories.modal.categoryForm.CategoryFormM
 
 class CategoryFormModalEntryImpl : CategoryFormModalEntry {
     override fun create(
-        category: Category?,
+        categoryId: Long?,
         initialType: Category.Type?,
     ): ModalBottomSheet = CategoryFormModal(
-        category = category,
+        categoryId = categoryId,
         initialType = initialType,
     )
 }

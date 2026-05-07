@@ -6,4 +6,6 @@
     <string name="view_category_transactions_month">Transactions this Month</string>
     <string name="view_category_delete">Delete</string>
     <string name="view_category_edit">Edit</string>
+    <string name="view_category_unavailable">Category not available.</string>
+    <string name="view_category_close">Close</string>
 </resources>

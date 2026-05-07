@@ -107,7 +107,7 @@ fun AppNavHost() = Surface {
                                     navController.navigateUp()
                                 },
                                 onCategoryClick = { category ->
-                                    modalManager.show(ViewCategoryModal(category))
+                                    modalManager.show(ViewCategoryModal(categoryId = category.id))
                                 }
                             )
                         }

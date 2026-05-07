@@ -2,23 +2,23 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 0. Capability spec
 
-- [ ] 0.1 Spec `modal-entries/spec.md` já criada com Requirements de D1–D7 (revisar antes de iniciar tasks)
+- [x] 0.1 Spec `modal-entries/spec.md` já criada com Requirements de D1–D7 (revisar antes de iniciar tasks)
 
 ## 1. Categories
 
-- [ ] 1.1 `ViewCategoryUiState` → sealed `Loading | Empty | Content(category, selectedYearMonth, totalAmount, transactionCount)`
-- [ ] 1.2 `ViewCategoryViewModel` recebe `categoryId: Long`; emite `Empty` se `getCategoryById` retornar `null`
-- [ ] 1.3 `ViewCategoryModalEntry.create(categoryId: Long)` em `:feature:categories:api`
-- [ ] 1.4 `ViewCategoryModalEntryImpl` ajustado
-- [ ] 1.5 `ViewCategoryModal` lida com `Loading` (layout estável) e `Empty` (mensagem + dismiss)
-- [ ] 1.6 `CategoryFormUiState` → sealed `Loading | Content(name, validation, selectedIcon, selectedType, isEditMode, canSubmit)`
-- [ ] 1.7 `CategoryFormViewModel` recebe `categoryId: Long?, initialType: Category.Type?`; só carrega quando `categoryId != null`. Em modo criação, emite `Content` com defaults imediatamente
-- [ ] 1.8 `CategoryFormModalEntry.create(categoryId: Long?, initialType: Category.Type?)` em `:api`
-- [ ] 1.9 `CategoryFormModalEntryImpl` ajustado
-- [ ] 1.10 `CategoryFormModal` lida com `Loading` apenas em edição
-- [ ] 1.11 Atualizar Koin: `viewModel { (id: Long) -> ViewCategoryViewModel(...) }` e `viewModel { (id: Long?, type: Category.Type?) -> CategoryFormViewModel(...) }`
-- [ ] 1.12 Atualizar todos os call-sites em screens/VMs (`entry.create(category)` → `entry.create(category.id)`)
-- [ ] 1.13 `./gradlew :feature:categories:impl:check`
+- [x] 1.1 `ViewCategoryUiState` → sealed `Loading | Empty | Content(category, selectedYearMonth, totalAmount, transactionCount)`
+- [x] 1.2 `ViewCategoryViewModel` recebe `categoryId: Long`; emite `Empty` se `getCategoryById` retornar `null`
+- [x] 1.3 `ViewCategoryModalEntry.create(categoryId: Long)` em `:feature:categories:api`
+- [x] 1.4 `ViewCategoryModalEntryImpl` ajustado
+- [x] 1.5 `ViewCategoryModal` lida com `Loading` (layout estável) e `Empty` (mensagem + dismiss)
+- [x] 1.6 `CategoryFormUiState` → sealed `Loading | Content(name, validation, selectedIcon, selectedType, isEditMode, canSubmit)`
+- [x] 1.7 `CategoryFormViewModel` recebe `categoryId: Long?, initialType: Category.Type?`; só carrega quando `categoryId != null`. Em modo criação, emite `Content` com defaults imediatamente
+- [x] 1.8 `CategoryFormModalEntry.create(categoryId: Long?, initialType: Category.Type?)` em `:api`
+- [x] 1.9 `CategoryFormModalEntryImpl` ajustado
+- [x] 1.10 `CategoryFormModal` lida com `Loading` apenas em edição
+- [x] 1.11 Atualizar Koin: `viewModel { (id: Long) -> ViewCategoryViewModel(...) }` e `viewModel { (id: Long?, type: Category.Type?) -> CategoryFormViewModel(...) }`
+- [x] 1.12 Atualizar todos os call-sites em screens/VMs (`entry.create(category)` → `entry.create(category.id)`)
+- [x] 1.13 `./gradlew :feature:categories:impl:check`
 
 ## 2. Recurring
 

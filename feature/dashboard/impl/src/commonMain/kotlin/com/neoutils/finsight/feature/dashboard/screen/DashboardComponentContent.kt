@@ -593,7 +593,7 @@ private fun DashboardSpendingByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
-                modalManager.show(viewCategoryEntry.create(category))
+                modalManager.show(viewCategoryEntry.create(category.id))
             }
         }
     )
@@ -618,7 +618,7 @@ private fun DashboardIncomeByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
-                modalManager.show(viewCategoryEntry.create(category))
+                modalManager.show(viewCategoryEntry.create(category.id))
             }
         }
     )

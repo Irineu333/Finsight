@@ -254,7 +254,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
-                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it)) },
+                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -267,7 +267,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
-                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it)) },
+                                    onCategoryClick = { modalManager.show(viewCategoryEntry.create(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),

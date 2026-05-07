@@ -109,8 +109,8 @@ class CategoryFormModal(
     ) {
         val modalManager = LocalModalManager.current
 
-        val name = rememberTextFieldState(state.name)
-        val accentColor = if (state.selectedType.isIncome) Income else Expense
+        val name = rememberTextFieldState(state.form.name)
+        val accentColor = if (state.form.type.isIncome) Income else Expense
         val iconModalTitle = stringResource(Res.string.category_form_icon_modal_title)
 
         LaunchedEffect(Unit) {
@@ -140,7 +140,7 @@ class CategoryFormModal(
 
             if (!state.isEditMode) {
                 TypeToggle(
-                    selectedType = state.selectedType,
+                    selectedType = state.form.type,
                     onTypeSelected = { onAction(CategoryFormAction.TypeChanged(it)) },
                 )
 
@@ -186,7 +186,7 @@ class CategoryFormModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             IconPickerSelector(
-                selectedIcon = state.selectedIcon,
+                selectedIcon = state.form.icon,
                 accentColor = accentColor,
                 title = stringResource(Res.string.category_form_icon_select),
                 helperText = stringResource(Res.string.category_form_icon_helper),
@@ -194,11 +194,11 @@ class CategoryFormModal(
                     modalManager.show(
                         IconPickerModal(
                             title = iconModalTitle,
-                            selectedIcon = state.selectedIcon,
+                            selectedIcon = state.form.icon,
                             accentColor = accentColor,
                             icons = FeatureIconCatalog.withGeneral(
                                 featureIcons = FeatureIconCatalog.categories,
-                                selectedIcon = state.selectedIcon,
+                                selectedIcon = state.form.icon,
                             ),
                             onIconSelected = { icon ->
                                 onAction(CategoryFormAction.IconChanged(icon))

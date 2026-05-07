@@ -3,6 +3,7 @@
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
     <string name="category_error_already_exist">Já existe uma categoria com esse nome.</string>
+    <string name="category_error_not_found">Categoria não encontrada.</string>
 
     <!-- Categories Screen -->
     <string name="categories_title">Categorias</string>

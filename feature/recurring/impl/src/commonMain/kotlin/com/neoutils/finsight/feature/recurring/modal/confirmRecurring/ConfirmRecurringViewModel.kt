@@ -5,18 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.Analytics
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
 import com.neoutils.finsight.core.ui.component.ModalManager
-import com.neoutils.finsight.core.utils.extension.combine
-import com.neoutils.finsight.feature.accounts.model.Account
+import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
+import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
-import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.recurring.error.RecurringError
 import com.neoutils.finsight.feature.recurring.event.ConfirmRecurring
 import com.neoutils.finsight.feature.recurring.event.SkipRecurring
 import com.neoutils.finsight.feature.recurring.exception.RecurringException
-import com.neoutils.finsight.feature.recurring.model.Recurring
+import com.neoutils.finsight.feature.recurring.model.form.RecurringConfirmForm
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.feature.recurring.usecase.SkipRecurringUseCase
@@ -35,10 +34,12 @@ class ConfirmRecurringViewModel(
     private val targetDate: LocalDate,
     private val recurringRepository: IRecurringRepository,
     private val accountRepository: IAccountRepository,
+    private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val confirmRecurringUseCase: ConfirmRecurringUseCase,
     private val skipRecurringUseCase: SkipRecurringUseCase,
+    private val currencyFormatter: CurrencyFormatter,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -46,18 +47,18 @@ class ConfirmRecurringViewModel(
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-    private val recurring = MutableStateFlow<Recurring?>(null)
-    private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
-    private val selectedTarget = MutableStateFlow<Transaction.Target?>(null)
-    private val selectedAccount = MutableStateFlow<Account?>(null)
-    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
-    private val selectedInvoice = MutableStateFlow<Invoice?>(null)
-    private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
+    private fun LocalDate.clampToToday() = takeIf { it <= currentDate } ?: currentDate
 
-    private val accounts = accountRepository.observeAllAccounts()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    private val creditCards = creditCardRepository.observeAllCreditCards()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val form = MutableStateFlow<RecurringConfirmForm?>(null)
+
+    private val invoices = form
+        .map { it?.creditCard }
+        .distinctUntilChanged()
+        .map { creditCard ->
+            creditCard?.let {
+                invoiceRepository.getInvoicesByCreditCard(it.id)
+            }.orEmpty()
+        }
 
     init {
         setup()
@@ -72,52 +73,42 @@ class ConfirmRecurringViewModel(
             return@launch
         }
 
-        selectedTarget.value = if (resolved.creditCardId != null) {
-            Transaction.Target.CREDIT_CARD
-        } else {
-            Transaction.Target.ACCOUNT
-        }
-        selectedAccount.value = resolved.accountId?.let { accountRepository.getAccountById(it) }
-        selectedCreditCard.value = resolved.creditCardId?.let { creditCardRepository.getCreditCardById(it) }
-        recurring.value = resolved
-
-        selectedCreditCard.collectLatest { creditCard ->
-            if (creditCard == null) {
-                invoices.value = emptyList()
-                selectedInvoice.value = null
-                return@collectLatest
-            }
-
-            val allInvoices = invoiceRepository.getInvoicesByCreditCard(creditCard.id)
-            invoices.value = allInvoices
-            selectedInvoice.value = allInvoices.firstOrNull { it.status.isOpen } ?: allInvoices.firstOrNull()
-        }
+        form.value = RecurringConfirmForm(
+            title = resolved.title,
+            type = resolved.type,
+            category = resolved.categoryId?.let {
+                categoryRepository.getCategoryById(it)
+            },
+            date = targetDate.clampToToday(),
+            amount = currencyFormatter.format(resolved.amount),
+            target = if (resolved.creditCardId != null) {
+                Transaction.Target.CREDIT_CARD
+            } else {
+                Transaction.Target.ACCOUNT
+            },
+            account = resolved.accountId?.let {
+                accountRepository.getAccountById(it)
+            },
+            creditCard = resolved.creditCardId?.let {
+                creditCardRepository.getCreditCardById(it)
+            },
+            invoice = resolved.creditCardId?.let {
+                invoiceRepository.getOpenInvoice(it)
+            },
+        )
     }
 
     val uiState = combine(
-        recurring.filterNotNull(),
-        confirmDate,
-        selectedTarget.filterNotNull(),
-        selectedAccount,
-        selectedCreditCard,
-        selectedInvoice,
+        form.filterNotNull(),
         invoices,
-        accounts,
-        creditCards,
-    ) { recurring, date, target, account, creditCard, invoice, invoiceList, accounts, creditCards ->
-
-        val defaultAccount = account ?: accounts.firstOrNull { it.isDefault } ?: accounts.firstOrNull()
-
+        accountRepository.observeAllAccounts(),
+        creditCardRepository.observeAllCreditCards(),
+    ) { form, invoices, accounts, creditCards ->
         ConfirmRecurringUiState.Content(
-            recurring = recurring,
-            confirmDate = date,
-            selectedTarget = target,
+            form = form,
             accounts = accounts,
-            selectedAccount = defaultAccount,
             creditCards = creditCards,
-            selectedCreditCard = creditCard,
-            invoices = invoiceList,
-            selectedInvoice = invoice,
+            invoices = invoices,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -128,63 +119,107 @@ class ConfirmRecurringViewModel(
     fun onAction(action: ConfirmRecurringAction) {
         when (action) {
             is ConfirmRecurringAction.TargetSelected -> {
-                selectedTarget.value = action.target
-                if (action.target.isCreditCard && selectedCreditCard.value == null) {
-                    selectedCreditCard.value = creditCards.value.firstOrNull()
-                }
+                changeTarget(action.target)
             }
 
-            is ConfirmRecurringAction.AccountSelected -> selectedAccount.value = action.account
-            is ConfirmRecurringAction.CreditCardSelected -> selectedCreditCard.value = action.creditCard
+            is ConfirmRecurringAction.AccountSelected -> {
+                form.update { it?.copy(account = action.account) }
+            }
+
+            is ConfirmRecurringAction.CreditCardSelected -> {
+                changeCreditCard(action.creditCard)
+            }
+
             is ConfirmRecurringAction.DateChanged -> {
-                confirmDate.value = action.date.takeIf { it <= currentDate } ?: currentDate
+                form.update { it?.copy(date = action.date.clampToToday()) }
             }
 
-            is ConfirmRecurringAction.InvoiceSelected -> selectedInvoice.value = action.invoice
-            is ConfirmRecurringAction.Confirm -> confirm(action.amount)
-            is ConfirmRecurringAction.Skip -> skip()
+            is ConfirmRecurringAction.InvoiceSelected -> {
+                form.update { it?.copy(invoice = action.invoice) }
+            }
+
+            is ConfirmRecurringAction.AmountChanged -> {
+                form.update { it?.copy(amount = action.amount) }
+            }
+
+            ConfirmRecurringAction.Confirm -> confirm()
+            ConfirmRecurringAction.Skip -> skip()
         }
     }
 
-    private fun confirm(amount: String) = viewModelScope.launch {
-        val recurring = recurring.value ?: return@launch
-        val target = selectedTarget.value ?: return@launch
-        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
+    private fun changeCreditCard(creditCard: CreditCard) = viewModelScope.launch {
+        val current = form.value ?: return@launch
 
-        val parsedAmount = amount.filter { it.isDigit() }
-            .toLongOrNull()
-            ?.toDouble()
-            ?.div(100)
-            ?: recurring.amount
+        val invoice = current.invoice
+            ?.takeIf { it.creditCardId == creditCard.id }
+            ?: invoiceRepository.getOpenInvoice(creditCard.id)
+
+        form.update { it?.copy(creditCard = creditCard, invoice = invoice) }
+    }
+
+    private fun changeTarget(target: Transaction.Target) = viewModelScope.launch {
+        val current = form.value ?: return@launch
+
+        val creditCard = current.creditCard ?: creditCardRepository.getAllCreditCards().firstOrNull()
+        val account = current.account ?: accountRepository.getAllAccounts().firstOrNull()
+
+        val invoice = current.invoice
+            ?.takeIf { it.creditCardId == creditCard?.id }
+            ?: creditCard?.let {
+                invoiceRepository.getOpenInvoice(it.id)
+            }
+
+        form.update {
+            it?.copy(
+                target = target,
+                creditCard = creditCard,
+                account = account,
+                invoice = invoice,
+            )
+        }
+    }
+
+    private fun confirm() = viewModelScope.launch {
+        val form = form.value ?: return@launch
 
         confirmRecurringUseCase(
-            recurring = recurring,
-            date = date,
-            amount = parsedAmount,
-            target = target,
-            account = if (target.isAccount) selectedAccount.value else null,
-            creditCard = if (target.isCreditCard) selectedCreditCard.value else null,
-            invoice = if (target.isCreditCard) selectedInvoice.value else null,
+            recurringId = recurringId,
+            date = form.date,
+            amount = form.amount,
+            target = form.target,
+            account = form.account.takeIf { form.target.isAccount },
+            creditCard = form.creditCard.takeIf { form.target.isCreditCard },
+            invoice = form.invoice.takeIf { form.target.isCreditCard },
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {
-            analytics.logEvent(ConfirmRecurring(recurring, target))
+            analytics.logEvent(
+                ConfirmRecurring(
+                    type = form.type,
+                    target = form.target,
+                    categoryId = form.category?.id,
+                )
+            )
             modalManager.dismiss()
         }
     }
 
     private fun skip() = viewModelScope.launch {
-        val recurring = recurring.value ?: return@launch
-        val target = selectedTarget.value ?: return@launch
-        val date = confirmDate.value.takeIf { it <= currentDate } ?: currentDate
+        val form = form.value ?: return@launch
 
         skipRecurringUseCase(
-            recurring = recurring,
-            date = date,
+            recurringId = recurringId,
+            date = form.date,
         ).onLeft {
             crashlytics.recordException(it)
         }.onRight {
-            analytics.logEvent(SkipRecurring(recurring, target))
+            analytics.logEvent(
+                SkipRecurring(
+                    type = form.type,
+                    target = form.target,
+                    categoryId = form.category?.id,
+                )
+            )
             modalManager.dismiss()
         }
     }

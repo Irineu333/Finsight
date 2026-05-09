@@ -67,13 +67,19 @@ val recurringModule = module {
 
     factory {
         ConfirmRecurringUseCase(
+            recurringRepository = get(),
             operationRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )
     }
 
-    factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
+    factory {
+        SkipRecurringUseCase(
+            recurringRepository = get(),
+            recurringOccurrenceRepository = get(),
+        )
+    }
 
     viewModel {
         RecurringViewModel(
@@ -145,10 +151,12 @@ val recurringModule = module {
             targetDate = targetDate,
             recurringRepository = get(),
             accountRepository = get(),
+            categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             confirmRecurringUseCase = get(),
             skipRecurringUseCase = get(),
+            currencyFormatter = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

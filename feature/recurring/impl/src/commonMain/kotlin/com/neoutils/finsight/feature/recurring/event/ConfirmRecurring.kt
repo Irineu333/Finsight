@@ -5,11 +5,15 @@ import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.transactions.model.Transaction
 
 class ConfirmRecurring(params: Map<String, String>) : Event("confirm_recurring", params) {
-    constructor(recurring: Recurring, target: Transaction.Target) : this(
+    constructor(
+        type: Recurring.Type,
+        target: Transaction.Target,
+        categoryId: Long?,
+    ) : this(
         buildMap {
-            put("type", recurring.type.name.lowercase())
+            put("type", type.name.lowercase())
             put("target", target.name.lowercase())
-            recurring.categoryId?.let { put("categoryId", it.toString()) }
+            categoryId?.let { put("categoryId", it.toString()) }
         }
     )
 }

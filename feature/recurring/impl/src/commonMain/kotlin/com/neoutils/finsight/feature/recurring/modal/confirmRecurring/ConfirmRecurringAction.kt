@@ -12,6 +12,7 @@ sealed class ConfirmRecurringAction {
     data class CreditCardSelected(val creditCard: CreditCard) : ConfirmRecurringAction()
     data class DateChanged(val date: LocalDate) : ConfirmRecurringAction()
     data class InvoiceSelected(val invoice: Invoice) : ConfirmRecurringAction()
-    data class Confirm(val amount: String) : ConfirmRecurringAction()
+    data class AmountChanged(val amount: String) : ConfirmRecurringAction()
+    data object Confirm : ConfirmRecurringAction()
     data object Skip : ConfirmRecurringAction()
 }

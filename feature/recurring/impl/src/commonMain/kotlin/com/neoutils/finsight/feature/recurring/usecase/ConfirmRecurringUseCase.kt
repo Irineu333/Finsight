@@ -6,18 +6,22 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
 import arrow.core.getOrElse
+import com.neoutils.finsight.core.utils.extension.monthsUntil
+import com.neoutils.finsight.core.utils.extension.moneyToDouble
+import com.neoutils.finsight.core.utils.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
+import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finsight.feature.recurring.error.RecurringError
+import com.neoutils.finsight.feature.recurring.exception.RecurringException
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
+import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
+import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
+import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
-import com.neoutils.finsight.feature.recurring.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.feature.creditCards.usecase.IGetOrCreateInvoiceForMonthUseCase
-import com.neoutils.finsight.core.utils.extension.monthsUntil
-import com.neoutils.finsight.core.utils.extension.toYearMonth
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
@@ -25,23 +29,33 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class ConfirmRecurringUseCase(
+    private val recurringRepository: IRecurringRepository,
     private val operationRepository: IOperationRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val getOrCreateInvoiceForMonthUseCase: IGetOrCreateInvoiceForMonthUseCase,
 ) {
     suspend operator fun invoke(
-        recurring: Recurring,
+        recurringId: Long,
         date: LocalDate,
-        amount: Double = recurring.amount,
-        target: Transaction.Target = if (recurring.creditCardId != null) {
-            Transaction.Target.CREDIT_CARD
-        } else {
-            Transaction.Target.ACCOUNT
-        },
-        account: Account? = null,
-        creditCard: CreditCard? = null,
-        invoice: Invoice? = null,
+        amount: String,
+        target: Transaction.Target,
+        account: Account?,
+        creditCard: CreditCard?,
+        invoice: Invoice?,
     ): Either<Throwable, Operation> {
+        val recurring = recurringRepository.getRecurringById(recurringId)
+            ?: return Either.Left(RecurringException(RecurringError.NOT_FOUND))
+
+        if (amount.isEmpty()) {
+            return Either.Left(RecurringException(RecurringError.AMOUNT_REQUIRED))
+        }
+
+        val parsedAmount = amount.moneyToDouble()
+
+        if (parsedAmount <= 0.0) {
+            return Either.Left(RecurringException(RecurringError.AMOUNT_ZERO))
+        }
+
         val yearMonth = date.yearMonth
         val cycleNumber = Instant
             .fromEpochMilliseconds(recurring.createdAt)
@@ -80,7 +94,7 @@ class ConfirmRecurringUseCase(
                                 Recurring.Type.INCOME -> Transaction.Type.INCOME
                                 Recurring.Type.EXPENSE -> Transaction.Type.EXPENSE
                             },
-                            amount = amount,
+                            amount = parsedAmount,
                             title = recurring.title,
                             date = date,
                             categoryId = recurring.categoryId,
@@ -108,7 +122,7 @@ class ConfirmRecurringUseCase(
                                 Recurring.Type.INCOME -> Transaction.Type.INCOME
                                 Recurring.Type.EXPENSE -> Transaction.Type.EXPENSE
                             },
-                            amount = amount,
+                            amount = parsedAmount,
                             title = recurring.title,
                             date = date,
                             categoryId = recurring.categoryId,

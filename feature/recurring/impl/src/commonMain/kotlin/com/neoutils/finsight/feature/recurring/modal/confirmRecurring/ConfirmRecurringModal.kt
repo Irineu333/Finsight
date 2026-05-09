@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,16 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
-import com.neoutils.finsight.core.utils.extension.moneyToDouble
 import com.neoutils.finsight.core.utils.util.dayMonthYear
 import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceSelector
 import com.neoutils.finsight.feature.recurring.resources.*
 import com.neoutils.finsight.feature.transactions.component.TargetSelector
+import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -92,20 +92,25 @@ class ConfirmRecurringModal(
         onAction: (ConfirmRecurringAction) -> Unit,
     ) {
         val modalManager = LocalModalManager.current
-        val recurring = state.recurring
+        val form = state.form
 
-        val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(recurring.amount))
-        val dateText = rememberTextFieldState(dayMonthYear.format(state.confirmDate))
+        val amount = rememberTextFieldState(form.amount)
+        val dateText = rememberTextFieldState(dayMonthYear.format(form.date))
 
-        val typeLabel = if (recurring.type.isIncome) {
+        val typeLabel = if (form.type.isIncome) {
             stringResource(Res.string.recurring_income)
         } else {
             stringResource(Res.string.recurring_expense)
         }
 
-        LaunchedEffect(state.confirmDate) {
-            val formatted = dayMonthYear.format(state.confirmDate)
+        LaunchedEffect(Unit) {
+            snapshotFlow { amount.text.toString() }
+                .drop(1)
+                .collect { onAction(ConfirmRecurringAction.AmountChanged(it)) }
+        }
+
+        LaunchedEffect(form.date) {
+            val formatted = dayMonthYear.format(form.date)
             if (dateText.text.toString() != formatted) {
                 dateText.edit { replace(0, length, formatted) }
             }
@@ -119,7 +124,7 @@ class ConfirmRecurringModal(
                 .padding(bottom = 32.dp),
         ) {
             Text(
-                text = recurring.label,
+                text = form.label,
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface,
                 modifier = Modifier.fillMaxWidth(),
@@ -141,9 +146,9 @@ class ConfirmRecurringModal(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            AnimatedVisibility(recurring.type.isExpense) {
+            AnimatedVisibility(form.type.isExpense) {
                 TargetSelector(
-                    selectedTarget = state.selectedTarget,
+                    selectedTarget = form.target,
                     onTargetSelected = { target ->
                         onAction(ConfirmRecurringAction.TargetSelected(target))
                     },
@@ -154,11 +159,9 @@ class ConfirmRecurringModal(
                 )
             }
 
-            AnimatedVisibility(
-                state.selectedTarget.isAccount || recurring.type.isIncome
-            ) {
+            AnimatedVisibility(form.target.isAccount || form.type.isIncome) {
                 AccountSelector(
-                    selectedAccount = state.selectedAccount,
+                    selectedAccount = form.account,
                     accounts = state.accounts,
                     onAccountSelected = { account ->
                         onAction(ConfirmRecurringAction.AccountSelected(account))
@@ -170,10 +173,10 @@ class ConfirmRecurringModal(
                 )
             }
 
-            AnimatedVisibility(state.selectedTarget.isCreditCard && recurring.type.isExpense) {
+            AnimatedVisibility(form.target.isCreditCard && form.type.isExpense) {
                 CreditCardSelector(
                     creditCards = state.creditCards,
-                    creditCard = state.selectedCreditCard,
+                    creditCard = form.creditCard,
                     onCreditCardSelected = { card ->
                         onAction(ConfirmRecurringAction.CreditCardSelected(card))
                     },
@@ -183,12 +186,10 @@ class ConfirmRecurringModal(
                 )
             }
 
-            AnimatedVisibility(
-                state.selectedTarget.isCreditCard && recurring.type.isExpense
-            ) {
+            AnimatedVisibility(form.target.isCreditCard && form.type.isExpense) {
                 InvoiceSelector(
                     invoices = state.invoices,
-                    invoice = state.selectedInvoice,
+                    invoice = form.invoice,
                     onInvoiceSelected = {
                         onAction(ConfirmRecurringAction.InvoiceSelected(it))
                     },
@@ -222,7 +223,7 @@ class ConfirmRecurringModal(
                         onClick = {
                             modalManager.show(
                                 DatePickerModal(
-                                    initialDate = state.confirmDate,
+                                    initialDate = form.date,
                                     maxDate = currentDate,
                                     onDateSelected = { date ->
                                         onAction(ConfirmRecurringAction.DateChanged(date))
@@ -263,15 +264,8 @@ class ConfirmRecurringModal(
                 }
 
                 Button(
-                    onClick = {
-                        onAction(ConfirmRecurringAction.Confirm(amount.text.toString()))
-                    },
-                    enabled = amount.text.toString().moneyToDouble() > 0.0 &&
-                            if (state.selectedTarget.isCreditCard) {
-                                state.selectedCreditCard != null
-                            } else {
-                                state.selectedAccount != null
-                            },
+                    onClick = { onAction(ConfirmRecurringAction.Confirm) },
+                    enabled = form.isValid(),
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                 ) {

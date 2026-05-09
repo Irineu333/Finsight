@@ -43,14 +43,14 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 3. Accounts
 
-- [ ] 3.1 `AccountFormUiState` → sealed `Loading | Content(...)`
-- [ ] 3.2 `AccountFormViewModel` recebe `accountId: Long?`; em criação inicia em `Content`
-- [ ] 3.3 `AccountFormModalEntry.create(accountId: Long?)` em `:api`
-- [ ] 3.4 Impl ajustado
-- [ ] 3.5 `AccountFormModal` lida com Loading apenas em edição
-- [ ] 3.6 Atualizar Koin
-- [ ] 3.7 Call-sites
-- [ ] 3.8 `./gradlew :feature:accounts:impl:check`
+- [x] 3.1 `AccountFormUiState` → sealed `Loading | Content(...)`
+- [x] 3.2 `AccountFormViewModel` recebe `accountId: Long?`; em criação inicia em `Content`
+- [x] 3.3 `AccountFormModalEntry.create(accountId: Long?)` em `:api`
+- [x] 3.4 Impl ajustado
+- [x] 3.5 `AccountFormModal` lida com Loading apenas em edição
+- [x] 3.6 Atualizar Koin
+- [x] 3.7 Call-sites
+- [x] 3.8 `./gradlew :feature:accounts:impl:check`
 
 ## 4. Transactions
 

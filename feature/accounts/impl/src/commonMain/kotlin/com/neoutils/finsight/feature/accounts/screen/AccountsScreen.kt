@@ -381,7 +381,7 @@ private fun AccountActions(
 
             OutlinedButton(
                 onClick = {
-                    modalManager.show(AccountFormModal(account))
+                    modalManager.show(AccountFormModal(account.id))
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),

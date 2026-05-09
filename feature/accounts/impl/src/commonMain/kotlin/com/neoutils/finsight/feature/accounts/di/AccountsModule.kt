@@ -117,9 +117,10 @@ val accountsModule = module {
         )
     }
 
-    viewModel {
+    viewModel { (id: Long?) ->
         AccountFormViewModel(
-            account = it.getOrNull(),
+            accountId = id,
+            accountRepository = get(),
             validateAccountName = get(),
             createAccountUseCase = get(),
             updateAccountUseCase = get(),

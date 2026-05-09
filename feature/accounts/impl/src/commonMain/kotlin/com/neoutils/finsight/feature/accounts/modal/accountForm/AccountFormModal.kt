@@ -44,7 +44,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.feature.accounts.model.Account
 import com.neoutils.finsight.feature.accounts.resources.Res
 import com.neoutils.finsight.feature.accounts.resources.account_form_default_label
 import com.neoutils.finsight.feature.accounts.resources.account_form_default_state_disabled
@@ -70,25 +69,59 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class AccountFormModal(
-    private val account: Account? = null,
+    private val accountId: Long? = null,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<AccountFormViewModel> { parametersOf(account) }
+        val viewModel = koinViewModel<AccountFormViewModel> { parametersOf(accountId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        when (val state = uiState) {
+            AccountFormUiState.Loading -> LoadingContent()
+            is AccountFormUiState.Content -> Content(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.account_form_edit_title),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun Content(
+        state: AccountFormUiState.Content,
+        onAction: (AccountFormAction) -> Unit,
+    ) {
         val modalManager = LocalModalManager.current
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.account_form_icon_modal_title)
 
-        val name = rememberTextFieldState(uiState.name)
+        val name = rememberTextFieldState(state.form.name)
 
         LaunchedEffect(Unit) {
             snapshotFlow { name.text.toString() }
                 .drop(1)
-                .collect { name ->
-                    viewModel.onAction(AccountFormAction.NameChanged(name))
+                .collect { newName ->
+                    onAction(AccountFormAction.NameChanged(newName))
                 }
         }
 
@@ -101,7 +134,11 @@ class AccountFormModal(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = if (uiState.isEditMode) stringResource(Res.string.account_form_edit_title) else stringResource(Res.string.account_form_new_title),
+                text = if (state.isEditMode) {
+                    stringResource(Res.string.account_form_edit_title)
+                } else {
+                    stringResource(Res.string.account_form_new_title)
+                },
                 style = MaterialTheme.typography.titleLarge,
             )
 
@@ -112,7 +149,7 @@ class AccountFormModal(
                 label = {
                     Text(text = stringResource(Res.string.account_form_name_label))
                 },
-                trailingIcon = when (uiState.validation[AccountField.NAME]) {
+                trailingIcon = when (state.validation[AccountField.NAME]) {
                     Validation.Validating -> {
                         {
                             CircularProgressIndicator(
@@ -128,8 +165,8 @@ class AccountFormModal(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done
                 ),
-                isError = uiState.validation[AccountField.NAME] is Validation.Error,
-                supportingText = when (val validation = uiState.validation[AccountField.NAME]) {
+                isError = state.validation[AccountField.NAME] is Validation.Error,
+                supportingText = when (val validation = state.validation[AccountField.NAME]) {
                     is Validation.Error -> {
                         {
                             Text(text = stringUiText(validation.error))
@@ -151,16 +188,16 @@ class AccountFormModal(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 DefaultAccountSelector(
-                    checked = uiState.isDefault,
-                    canChange = uiState.canChangeDefault,
-                    onCheckedChange = { viewModel.onAction(AccountFormAction.IsDefaultChanged(it)) },
+                    checked = state.form.isDefault,
+                    canChange = state.canChangeDefault,
+                    onCheckedChange = { onAction(AccountFormAction.IsDefaultChanged(it)) },
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             IconPickerSelector(
-                selectedIcon = uiState.selectedIcon,
+                selectedIcon = state.form.icon,
                 accentColor = accentColor,
                 title = stringResource(Res.string.account_form_icon_label),
                 helperText = stringResource(Res.string.account_form_icon_helper),
@@ -168,14 +205,14 @@ class AccountFormModal(
                     modalManager.show(
                         IconPickerModal(
                             title = iconModalTitle,
-                            selectedIcon = uiState.selectedIcon,
+                            selectedIcon = state.form.icon,
                             accentColor = accentColor,
                             icons = FeatureIconCatalog.withGeneral(
                                 featureIcons = FeatureIconCatalog.accounts,
-                                selectedIcon = uiState.selectedIcon,
+                                selectedIcon = state.form.icon,
                             ),
                             onIconSelected = { icon ->
-                                viewModel.onAction(AccountFormAction.IconSelected(icon))
+                                onAction(AccountFormAction.IconSelected(icon))
                             },
                         )
                     )
@@ -188,9 +225,9 @@ class AccountFormModal(
 
             Button(
                 onClick = {
-                    viewModel.onAction(AccountFormAction.Submit)
+                    onAction(AccountFormAction.Submit)
                 },
-                enabled = uiState.canSubmit,
+                enabled = state.canSubmit,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.util.DayInputTransformation
@@ -41,6 +42,7 @@ import com.neoutils.finsight.feature.recurring.resources.recurring_form_amount_l
 import com.neoutils.finsight.feature.recurring.resources.recurring_form_day_label
 import com.neoutils.finsight.feature.recurring.resources.recurring_form_save
 import com.neoutils.finsight.feature.recurring.resources.recurring_form_title_label
+import com.neoutils.finsight.feature.recurring.resources.recurring_form_unavailable
 import com.neoutils.finsight.feature.transactions.component.TargetSelector
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import kotlinx.coroutines.flow.drop
@@ -62,11 +64,21 @@ class RecurringFormModal(
 
         when (val state = uiState) {
             RecurringFormUiState.Loading -> LoadingContent()
+            RecurringFormUiState.Error -> ErrorContent()
             is RecurringFormUiState.Content -> Content(
                 state = state,
                 onAction = viewModel::onAction,
             )
         }
+    }
+
+    @Composable
+    private fun ErrorContent() {
+        val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.recurring_form_unavailable),
+            onClose = { manager.dismiss() },
+        )
     }
 
     @Composable

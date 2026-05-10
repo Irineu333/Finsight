@@ -20,16 +20,19 @@ import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.utils.util.DebounceManager
 import com.neoutils.finsight.core.utils.util.ObservableMutableMap
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AccountFormViewModel(
     private val accountId: Long?,
     private val accountRepository: IAccountRepository,
@@ -63,6 +66,7 @@ class AccountFormViewModel(
     )
 
     private val form = MutableStateFlow<AccountForm?>(null)
+    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
@@ -80,7 +84,7 @@ class AccountFormViewModel(
 
         if (account == null) {
             crashlytics.recordException(AccountException(AccountError.NOT_FOUND))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -93,7 +97,7 @@ class AccountFormViewModel(
         )
     }
 
-    val uiState = combine(
+    private val content = combine(
         form.filterNotNull(),
         account,
         validation,
@@ -104,7 +108,11 @@ class AccountFormViewModel(
             isEditMode = isEditMode,
             canSubmit = validation[AccountField.NAME] == Validation.Valid,
             canChangeDefault = account?.isDefault != true,
-        )
+        ) as AccountFormUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(AccountFormUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

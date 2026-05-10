@@ -19,7 +19,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -45,6 +47,7 @@ class EditInvoiceBalanceViewModel(
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
+    private val notFound = MutableStateFlow(false)
 
     private val editableInvoices = selectedCreditCard
         .filterNotNull()
@@ -71,7 +74,7 @@ class EditInvoiceBalanceViewModel(
 
         if (invoice == null) {
             crashlytics.recordException(InvoiceException(InvoiceError.NotFound))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -79,7 +82,7 @@ class EditInvoiceBalanceViewModel(
 
         if (creditCard == null) {
             crashlytics.recordException(InvoiceException(InvoiceError.CreditCardNotFound))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -91,7 +94,7 @@ class EditInvoiceBalanceViewModel(
         emit(creditCardRepository.getAllCreditCards())
     }
 
-    val uiState = combine(
+    private val content = combine(
         creditCards,
         selectedCreditCard.filterNotNull(),
         editableInvoices,
@@ -104,7 +107,11 @@ class EditInvoiceBalanceViewModel(
             editableInvoices = invoices,
             selectedInvoice = selectedInvoice,
             currentBalance = balance,
-        )
+        ) as EditInvoiceBalanceUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(EditInvoiceBalanceUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

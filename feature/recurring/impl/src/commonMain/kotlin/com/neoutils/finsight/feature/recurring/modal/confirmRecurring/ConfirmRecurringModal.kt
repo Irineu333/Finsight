@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.core.utils.util.dayMonthYear
@@ -64,11 +65,21 @@ class ConfirmRecurringModal(
 
         when (val state = uiState) {
             ConfirmRecurringUiState.Loading -> LoadingContent()
+            ConfirmRecurringUiState.Error -> ErrorContent()
             is ConfirmRecurringUiState.Content -> Content(
                 state = state,
                 onAction = viewModel::onAction,
             )
         }
+    }
+
+    @Composable
+    private fun ErrorContent() {
+        val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.confirm_recurring_unavailable),
+            onClose = { manager.dismiss() },
+        )
     }
 
     @Composable

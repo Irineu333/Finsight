@@ -18,16 +18,20 @@ import com.neoutils.finsight.feature.recurring.extension.isAccept
 import com.neoutils.finsight.feature.recurring.model.form.RecurringForm
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.SaveRecurringUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RecurringFormViewModel(
     private val recurringId: Long?,
     private val recurringRepository: IRecurringRepository,
@@ -43,6 +47,7 @@ class RecurringFormViewModel(
 
     private val isEditMode = recurringId != null
     private val form = MutableStateFlow<RecurringForm?>(null)
+    private val notFound = MutableStateFlow(false)
 
     private val categories = categoryRepository.observeAllCategories()
     private val accounts = accountRepository.observeAllAccounts()
@@ -62,7 +67,7 @@ class RecurringFormViewModel(
 
         if (recurring == null) {
             crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -86,7 +91,7 @@ class RecurringFormViewModel(
         }
     }
 
-    val uiState = combine(
+    private val content = combine(
         form.filterNotNull(),
         categories,
         accounts,
@@ -99,7 +104,11 @@ class RecurringFormViewModel(
             incomeCategories = cats.filter { it.type == Category.Type.INCOME },
             expenseCategories = cats.filter { it.type == Category.Type.EXPENSE },
             isEditMode = isEditMode,
-        )
+        ) as RecurringFormUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(RecurringFormUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

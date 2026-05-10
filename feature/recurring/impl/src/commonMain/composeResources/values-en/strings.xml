@@ -33,4 +33,6 @@
     <string name="recurring_confirm_date_label">Date</string>
     <string name="recurring_confirm_button">Confirm</string>
     <string name="recurring_confirm_skip">Skip</string>
+    <string name="confirm_recurring_unavailable">The requested recurring is no longer available. Refresh the screen to continue.</string>
+    <string name="recurring_form_unavailable">The requested recurring is no longer available. Refresh the screen to continue.</string>
 </resources>

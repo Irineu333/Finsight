@@ -19,14 +19,18 @@ import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.utils.util.DebounceManager
 import com.neoutils.finsight.core.utils.util.ObservableMutableMap
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CategoryFormViewModel(
     private val categoryId: Long?,
     private val initialType: Category.Type?,
@@ -51,6 +55,7 @@ class CategoryFormViewModel(
     )
 
     private val form = MutableStateFlow<CategoryForm?>(null)
+    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
@@ -68,7 +73,7 @@ class CategoryFormViewModel(
                 )
             } ?: run {
                 crashlytics.recordException(CategoryException(CategoryError.NOT_FOUND))
-                modalManager.dismiss()
+                notFound.value = true
                 return@launch
             }
         } else {
@@ -78,7 +83,7 @@ class CategoryFormViewModel(
         }
     }
 
-    val uiState = combine(
+    private val content = combine(
         form.filterNotNull(),
         validation,
     ) { form, validation ->
@@ -87,7 +92,11 @@ class CategoryFormViewModel(
             validation = validation,
             isEditMode = isEditMode,
             canSubmit = validation[CategoryField.NAME] == Validation.Valid,
-        )
+        ) as CategoryFormUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(CategoryFormUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

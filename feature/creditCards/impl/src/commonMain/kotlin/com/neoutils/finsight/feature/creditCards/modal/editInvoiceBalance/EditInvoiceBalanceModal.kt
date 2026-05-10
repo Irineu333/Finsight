@@ -26,7 +26,9 @@ import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
 import com.neoutils.finsight.feature.creditCards.component.InvoiceSelector
+import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.core.ui.theme.Adjustment
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
@@ -35,6 +37,7 @@ import com.neoutils.finsight.feature.creditCards.resources.Res
 import com.neoutils.finsight.feature.creditCards.resources.edit_invoice_balance_label
 import com.neoutils.finsight.feature.creditCards.resources.edit_invoice_balance_save
 import com.neoutils.finsight.feature.creditCards.resources.edit_invoice_balance_title
+import com.neoutils.finsight.feature.creditCards.resources.edit_invoice_balance_unavailable
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -54,6 +57,14 @@ class EditInvoiceBalanceModal(
 
         val currencyFormatter = LocalCurrencyFormatter.current
         when (val state = uiState) {
+            EditInvoiceBalanceUiState.Error -> {
+                val manager = LocalModalManager.current
+                ModalErrorContent(
+                    message = stringResource(Res.string.edit_invoice_balance_unavailable),
+                    onClose = { manager.dismiss() },
+                )
+            }
+
             EditInvoiceBalanceUiState.Loading -> {
                 Column(
                     modifier = Modifier

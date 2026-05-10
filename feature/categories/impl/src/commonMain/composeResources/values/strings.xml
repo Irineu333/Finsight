@@ -23,6 +23,7 @@
     <string name="category_form_expense">Despesa</string>
     <string name="category_form_income">Receita</string>
     <string name="category_form_save">Salvar</string>
+    <string name="category_form_unavailable">Esta categoria não está mais disponível. Atualize a tela para continuar.</string>
 
     <!-- Delete Category Modal -->
     <string name="delete_category_title">Excluir Categoria</string>

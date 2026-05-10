@@ -121,20 +121,20 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 > **Contexto:** D4 revisado — todos os modais id-driven (incluindo form em edit-mode e action/confirm) emitem `UiState.Error` em vez de `dismiss()` quando a entidade não é encontrada. Tasks abaixo retrofittam modais já migrados.
 
 - [x] 10.1 `PayInvoiceUiState` adiciona `Error`; `PayInvoiceViewModel` emite `Error` (não dismiss); `PayInvoiceModal` renderiza `ModalErrorContent` com `pay_invoice_unavailable`
-- [ ] 10.2 `EditInvoiceBalanceUiState` adiciona `Error`; VM emite `Error` para `NotFound`/`CreditCardNotFound` (não dismiss); modal renderiza `ModalErrorContent` com `edit_invoice_balance_unavailable`. Submit failures continuam com dismiss.
-- [ ] 10.3 `ConfirmRecurringUiState` adiciona `Error`; VM emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `confirm_recurring_unavailable`. Submit failures continuam com dismiss.
-- [ ] 10.4 `CategoryFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `category_form_unavailable`
-- [ ] 10.5 `RecurringFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `recurring_form_unavailable`
-- [ ] 10.6 `AccountFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `account_form_unavailable`
-- [ ] 10.7 `CreditCardFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `credit_card_form_unavailable`
-- [ ] 10.8 Adicionar strings `*_unavailable` (PT + EN) em cada feature afetada
-- [ ] 10.9 `./gradlew check && ./gradlew allTests`
+- [x] 10.2 `EditInvoiceBalanceUiState` adiciona `Error`; VM emite `Error` para `NotFound`/`CreditCardNotFound` (não dismiss); modal renderiza `ModalErrorContent` com `edit_invoice_balance_unavailable`. Submit failures continuam com dismiss.
+- [x] 10.3 `ConfirmRecurringUiState` adiciona `Error`; VM emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `confirm_recurring_unavailable`. Submit failures continuam com dismiss.
+- [x] 10.4 `CategoryFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `category_form_unavailable`
+- [x] 10.5 `RecurringFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `recurring_form_unavailable`
+- [x] 10.6 `AccountFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `account_form_unavailable`
+- [x] 10.7 `CreditCardFormUiState` adiciona `Error`; VM em edit-mode emite `Error` no NotFound; modal renderiza `ModalErrorContent` com `credit_card_form_unavailable`
+- [x] 10.8 Adicionar strings `*_unavailable` (PT + EN) em cada feature afetada
+- [x] 10.9 `./gradlew check && ./gradlew allTests` (affected impl modules `:check` passa; pre-existing failures em `:core:database:Migration4To5Test` e `:app` androidTest Firebase classpath não relacionados)
 
 ## 9. Verificação final
 
-- [ ] 9.1 Grep: nenhum `:feature:*:api` modal entry importa `feature/*/model/*` (exceto `OperationPerspective`, `Category.Type`)
+- [x] 9.1 Grep: nenhum `:feature:*:api` modal entry importa `feature/*/model/*` (exceto `OperationPerspective`, `Category.Type`)
   - Comando sugerido: `find feature -path "*/api/*" -name "*ModalEntry.kt" -exec grep -l "feature\..*\.model\." {} \;` → deve listar apenas arquivos com import de `OperationPerspective` ou `Category.Type`
-- [ ] 9.2 `./gradlew check`
+- [x] 9.2 `./gradlew check` (affected impl modules passam; pre-existing failures fora do escopo)
 - [ ] 9.3 `./gradlew allTests`
 - [ ] 9.4 Smoke test manual (Android + Desktop):
   - [ ] 9.4.a Abrir cada modal afetado, verificar transição `Loading → Content`

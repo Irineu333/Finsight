@@ -37,6 +37,8 @@
     <string name="edit_invoice_balance_title">Edit Invoice</string>
     <string name="edit_invoice_balance_label">Amount</string>
     <string name="edit_invoice_balance_save">Save</string>
+    <string name="edit_invoice_balance_unavailable">This invoice is no longer available. Refresh the screen to continue.</string>
+    <string name="credit_card_form_unavailable">This card is no longer available. Refresh the screen to continue.</string>
     <string name="invoice_opens_on">opens on %1$s</string>
     <string name="invoice_closes_on">closes on %1$s</string>
     <string name="invoice_due_on">due on %1$s</string>

@@ -10,6 +10,8 @@ sealed class ConfirmRecurringUiState {
 
     data object Loading : ConfirmRecurringUiState()
 
+    data object Error : ConfirmRecurringUiState()
+
     data class Content(
         val form: RecurringConfirmForm,
         val accounts: List<Account>,

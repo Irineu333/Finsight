@@ -6,6 +6,8 @@ import com.neoutils.finsight.core.ui.util.Validation
 sealed class AccountFormUiState {
     data object Loading : AccountFormUiState()
 
+    data object Error : AccountFormUiState()
+
     data class Content(
         val form: AccountForm,
         val validation: Map<AccountField, Validation>,

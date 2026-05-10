@@ -7,6 +7,8 @@ sealed class CreditCardFormUiState {
 
     data object Loading : CreditCardFormUiState()
 
+    data object Error : CreditCardFormUiState()
+
     data class Content(
         val form: CreditCardForm,
         val validation: Map<CreditCardField, Validation>,

@@ -15,6 +15,7 @@
     <string name="account_form_default_state_off">Definir como padrão</string>
     <string name="account_form_default_state_disabled">Já é a conta padrão</string>
     <string name="account_form_save">Salvar</string>
+    <string name="account_form_unavailable">Esta conta não está mais disponível. Atualize a tela para continuar.</string>
     <string name="delete_account_title">Excluir Conta</string>
     <string name="delete_account_message">Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.</string>
     <string name="delete_account_confirm">Excluir</string>

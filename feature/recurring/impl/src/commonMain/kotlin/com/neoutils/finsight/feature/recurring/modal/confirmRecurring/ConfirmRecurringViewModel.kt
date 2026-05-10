@@ -20,6 +20,7 @@ import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.feature.recurring.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.feature.transactions.model.Transaction
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -28,7 +29,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
 class ConfirmRecurringViewModel(
     private val recurringId: Long,
     private val targetDate: LocalDate,
@@ -50,6 +51,7 @@ class ConfirmRecurringViewModel(
     private fun LocalDate.clampToToday() = takeIf { it <= currentDate } ?: currentDate
 
     private val form = MutableStateFlow<RecurringConfirmForm?>(null)
+    private val notFound = MutableStateFlow(false)
 
     private val invoices = form
         .map { it?.creditCard }
@@ -69,7 +71,7 @@ class ConfirmRecurringViewModel(
 
         if (resolved == null) {
             crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -98,7 +100,7 @@ class ConfirmRecurringViewModel(
         )
     }
 
-    val uiState = combine(
+    private val content = combine(
         form.filterNotNull(),
         invoices,
         accountRepository.observeAllAccounts(),
@@ -109,7 +111,11 @@ class ConfirmRecurringViewModel(
             accounts = accounts,
             creditCards = creditCards,
             invoices = invoices,
-        )
+        ) as ConfirmRecurringUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(ConfirmRecurringUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

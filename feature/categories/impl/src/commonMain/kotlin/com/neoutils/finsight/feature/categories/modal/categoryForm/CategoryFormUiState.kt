@@ -6,6 +6,8 @@ import com.neoutils.finsight.core.ui.util.Validation
 sealed class CategoryFormUiState {
     data object Loading : CategoryFormUiState()
 
+    data object Error : CategoryFormUiState()
+
     data class Content(
         val form: CategoryForm,
         val validation: Map<CategoryField, Validation>,

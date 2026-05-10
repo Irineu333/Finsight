@@ -5,6 +5,7 @@ import com.neoutils.finsight.feature.creditCards.model.Invoice
 
 sealed interface EditInvoiceBalanceUiState {
     data object Loading : EditInvoiceBalanceUiState
+    data object Error : EditInvoiceBalanceUiState
     data class Content(
         val creditCards: List<CreditCard>,
         val selectedCreditCard: CreditCard,

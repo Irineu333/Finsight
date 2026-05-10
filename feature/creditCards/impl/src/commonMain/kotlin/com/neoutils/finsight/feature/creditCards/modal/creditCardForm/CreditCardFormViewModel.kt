@@ -23,14 +23,18 @@ import com.neoutils.finsight.feature.creditCards.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.feature.creditCards.util.CreditCardPeriod
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CreditCardFormViewModel(
     private val creditCardId: Long?,
     private val formatter: CurrencyFormatter,
@@ -54,6 +58,7 @@ class CreditCardFormViewModel(
     )
 
     private val form = MutableStateFlow<CreditCardForm?>(null)
+    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
@@ -70,7 +75,7 @@ class CreditCardFormViewModel(
 
         if (creditCard == null) {
             crashlytics.recordException(CreditCardException(CreditCardError.NOT_FOUND))
-            modalManager.dismiss()
+            notFound.value = true
             return@launch
         }
 
@@ -85,7 +90,7 @@ class CreditCardFormViewModel(
         )
     }
 
-    val uiState = combine(
+    private val content = combine(
         form.filterNotNull(),
         validation,
     ) { form, validation ->
@@ -95,7 +100,11 @@ class CreditCardFormViewModel(
             isEditMode = isEditMode,
             canSubmit = form.isValid() &&
                 validation[CreditCardField.NAME] == Validation.Valid,
-        )
+        ) as CreditCardFormUiState
+    }
+
+    val uiState = notFound.flatMapLatest { error ->
+        if (error) flowOf(CreditCardFormUiState.Error) else content
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

@@ -21,12 +21,11 @@ sealed class OperationPerspective {
                 Operation.Kind.TRANSACTION -> operation.transactions.firstOrNull()
 
                 Operation.Kind.TRANSFER -> operation.transactions.firstOrNull { transaction ->
-                    transaction.type == Transaction.Type.EXPENSE &&
-                            transaction.target == Transaction.Target.ACCOUNT
+                    transaction.type.isIncome && transaction.target.isAccount
                 }
 
                 Operation.Kind.PAYMENT -> operation.transactions.firstOrNull { transaction ->
-                    transaction.target == Transaction.Target.CREDIT_CARD
+                    transaction.target.isCreditCard
                 }
             }
 
@@ -40,7 +39,7 @@ sealed class OperationPerspective {
                 operation.transactions.firstOrNull { transaction ->
                     transaction.target.isCreditCard &&
                             transaction.creditCardId == creditCardId &&
-                            (invoiceId == null || transaction.invoiceId == invoiceId)
+                            invoiceId?.let { transaction.invoiceId == invoiceId } != false
                 }
             }
         }

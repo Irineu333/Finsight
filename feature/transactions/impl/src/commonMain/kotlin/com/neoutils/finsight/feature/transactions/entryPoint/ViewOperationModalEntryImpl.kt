@@ -8,7 +8,7 @@ import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 class ViewOperationModalEntryImpl : ViewOperationModalEntry {
     override fun create(
         operationId: Long,
-        perspective: OperationPerspective?,
+        perspective: OperationPerspective,
     ): ModalBottomSheet = ViewOperationModal(
         operationId = operationId,
         perspective = perspective,

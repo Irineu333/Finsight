@@ -281,7 +281,7 @@ private fun InvoiceTransactionsContent(
                                 }
 
                                 else -> {
-                                    modalManager.show(viewOperationEntry.create(operation.id))
+                                    modalManager.show(viewOperationEntry.create(operation.id, operationUi.perspective))
                                 }
                             }
                         }

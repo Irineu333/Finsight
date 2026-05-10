@@ -306,6 +306,6 @@ class DashboardPreviewFactory {
 
 private fun Operation.toPreviewUi(): OperationUi = OperationUi(
     operation = this,
-    perspective = OperationPerspective.Account(accountId = sourceAccountId ?: 0L),
+    perspective = OperationPerspective.Target,
     transactions = transactions.map { TransactionUi(transaction = it) },
 )

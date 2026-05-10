@@ -148,7 +148,7 @@ private fun TransactionsContent(
                                 }
 
                                 else -> {
-                                    modalManager.show(viewOperationEntry.create(operationUi.operation.id))
+                                    modalManager.show(viewOperationEntry.create(operationUi.operation.id, operationUi.perspective))
                                 }
                             }
                         }

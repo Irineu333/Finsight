@@ -121,7 +121,7 @@ val transactionsModule = module {
     viewModel {
         ViewOperationViewModel(
             operationId = it.get(),
-            perspective = it.getOrNull(),
+            perspective = it.get(),
             operationRepository = get(),
             accountRepository = get(),
             categoryRepository = get(),

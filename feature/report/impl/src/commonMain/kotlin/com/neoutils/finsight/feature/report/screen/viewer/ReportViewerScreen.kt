@@ -310,7 +310,7 @@ private fun ReportViewerContent(
                                                     viewAdjustmentEntry.create(operation)
                                                 )
 
-                                                else -> modalManager.show(viewOperationEntry.create(operation.id))
+                                                else -> modalManager.show(viewOperationEntry.create(operation.id, operationUi.perspective))
                                             }
                                         },
                                     )

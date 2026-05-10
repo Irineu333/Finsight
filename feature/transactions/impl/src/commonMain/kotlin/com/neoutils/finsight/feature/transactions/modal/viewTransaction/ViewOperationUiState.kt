@@ -5,7 +5,6 @@ import com.neoutils.finsight.feature.categories.model.Category
 import com.neoutils.finsight.feature.creditCards.model.CreditCard
 import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
-import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.model.Transaction
 
 sealed class ViewOperationUiState {
@@ -16,15 +15,12 @@ sealed class ViewOperationUiState {
 
     data class Content(
         val operation: Operation,
-        val perspective: OperationPerspective? = null,
+        val transaction: Transaction,
         val category: Category? = null,
         val account: Account? = null,
         val creditCard: CreditCard? = null,
         val invoice: Invoice? = null,
         val sourceAccount: Account? = null,
         val destinationAccount: Account? = null,
-    ) : ViewOperationUiState() {
-        val transaction: Transaction = perspective?.resolve(operation = operation)
-            ?: operation.primaryTransaction
-    }
+    ) : ViewOperationUiState()
 }

@@ -1,6 +1,9 @@
 package com.neoutils.finsight.feature.transactions.model
 
 sealed class OperationPerspective {
+
+    data object Target : OperationPerspective()
+
     data class Account(
         val accountId: Long,
     ) : OperationPerspective()
@@ -14,6 +17,19 @@ sealed class OperationPerspective {
         operation: Operation,
     ): Transaction? {
         return when (this) {
+            Target -> when (operation.kind) {
+                Operation.Kind.TRANSACTION -> operation.transactions.firstOrNull()
+
+                Operation.Kind.TRANSFER -> operation.transactions.firstOrNull { transaction ->
+                    transaction.type == Transaction.Type.EXPENSE &&
+                            transaction.target == Transaction.Target.ACCOUNT
+                }
+
+                Operation.Kind.PAYMENT -> operation.transactions.firstOrNull { transaction ->
+                    transaction.target == Transaction.Target.CREDIT_CARD
+                }
+            }
+
             is Account -> {
                 operation.transactions.firstOrNull { transaction ->
                     transaction.target.isAccount && transaction.accountId == accountId

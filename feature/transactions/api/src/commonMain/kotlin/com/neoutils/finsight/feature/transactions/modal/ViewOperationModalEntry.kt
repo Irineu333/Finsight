@@ -6,6 +6,6 @@ import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 interface ViewOperationModalEntry {
     fun create(
         operationId: Long,
-        perspective: OperationPerspective? = null,
+        perspective: OperationPerspective,
     ): ModalBottomSheet
 }

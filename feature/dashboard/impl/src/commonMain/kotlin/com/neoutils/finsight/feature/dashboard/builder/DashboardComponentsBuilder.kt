@@ -375,7 +375,7 @@ class DashboardComponentsBuilder(
 
         val recentOperationsUi = operationUiMapper.toUi(
             operations = recentOperations,
-            perspective = OperationPerspective.Account(accountId = 0L),
+            perspective = OperationPerspective.Target,
         )
 
         return DashboardComponent.Recents(

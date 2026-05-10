@@ -53,7 +53,7 @@ import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_tr
 
 class ViewOperationModal(
     private val operationId: Long,
-    private val perspective: OperationPerspective? = null,
+    private val perspective: OperationPerspective,
 ) : ModalBottomSheet() {
 
     @Composable

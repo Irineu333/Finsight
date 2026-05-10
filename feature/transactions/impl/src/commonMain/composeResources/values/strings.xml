@@ -73,6 +73,7 @@
     <string name="view_operation_edit">Editar</string>
     <string name="view_operation_unavailable">A operação solicitada não está mais disponível.</string>
     <string name="operation_error_not_found">Operação não encontrada.</string>
+    <string name="operation_error_perspective_mismatch">A operação não corresponde à perspectiva solicitada.</string>
 
     <string name="operation_card_transfer">Transferência</string>
     <string name="operation_card_payment">Pagamento de Fatura</string>

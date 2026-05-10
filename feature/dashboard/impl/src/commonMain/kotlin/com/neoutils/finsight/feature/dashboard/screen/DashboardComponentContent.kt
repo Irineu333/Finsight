@@ -302,7 +302,7 @@ private fun DashboardRecentsSection(
                         when {
                             isLastWithFade -> openTransactions(null, null)
                             operation.type.isAdjustment -> modalManager.show(viewAdjustmentEntry.create(operation))
-                            else -> modalManager.show(viewOperationEntry.create(operation.id))
+                            else -> modalManager.show(viewOperationEntry.create(operation.id, operationUi.perspective))
                         }
                     }
                 },

@@ -98,7 +98,7 @@ class TransactionsViewModel(
                     .filter(filters.target)
                     .filter { it.date.yearMonth == yearMonth }
                     .sortedByDescending { it.date },
-                perspective = OperationPerspective.Account(accountId = 0L),
+                perspective = OperationPerspective.Target,
             ).groupBy { it.operation.date },
         )
     }.stateIn(

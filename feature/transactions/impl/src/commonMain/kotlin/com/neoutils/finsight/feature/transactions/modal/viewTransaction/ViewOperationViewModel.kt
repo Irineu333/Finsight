@@ -3,6 +3,7 @@ package com.neoutils.finsight.feature.transactions.modal.viewTransaction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.core.analytics.crashlytics.Crashlytics
+import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.feature.accounts.repository.IAccountRepository
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
 import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepository
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
 
 class ViewOperationViewModel(
     private val operationId: Long,
-    private val perspective: OperationPerspective? = null,
+    private val perspective: OperationPerspective,
     private val operationRepository: IOperationRepository,
     private val accountRepository: IAccountRepository,
     private val categoryRepository: ICategoryRepository,
@@ -44,13 +45,19 @@ class ViewOperationViewModel(
             return@flow
         }
 
-        val tx = perspective?.resolve(operation) ?: operation.primaryTransaction
+        val transaction = perspective.resolve(operation)
+
+        if (transaction == null) {
+            crashlytics.recordException(OperationException(OperationError.PERSPECTIVE_MISMATCH))
+            emit(ViewOperationUiState.Error)
+            return@flow
+        }
 
         coroutineScope {
-            val category = tx.categoryId?.let { id -> async { categoryRepository.getCategoryById(id) } }
-            val account = tx.accountId?.let { id -> async { accountRepository.getAccountById(id) } }
-            val creditCard = tx.creditCardId?.let { id -> async { creditCardRepository.getCreditCardById(id) } }
-            val invoice = tx.invoiceId?.let { id -> async { invoiceRepository.getInvoiceById(id) } }
+            val category = transaction.categoryId?.let { id -> async { categoryRepository.getCategoryById(id) } }
+            val account = transaction.accountId?.let { id -> async { accountRepository.getAccountById(id) } }
+            val creditCard = transaction.creditCardId?.let { id -> async { creditCardRepository.getCreditCardById(id) } }
+            val invoice = transaction.invoiceId?.let { id -> async { invoiceRepository.getInvoiceById(id) } }
 
             val sourceAccount = operation.transactions
                 .firstOrNull { it.type == Transaction.Type.EXPENSE && it.target == Transaction.Target.ACCOUNT }
@@ -65,7 +72,7 @@ class ViewOperationViewModel(
             emit(
                 ViewOperationUiState.Content(
                     operation = operation,
-                    perspective = perspective,
+                    transaction = transaction,
                     category = category?.await(),
                     account = account?.await(),
                     creditCard = creditCard?.await(),

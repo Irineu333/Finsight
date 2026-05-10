@@ -199,7 +199,7 @@ class ReportViewerViewModel(
                 is ReportPerspective.CreditCardPerspective ->
                     OperationPerspective.Card(creditCardId = perspective.creditCardId)
                 is ReportPerspective.AccountPerspective ->
-                    OperationPerspective.Account(accountId = 0L)
+                    OperationPerspective.Target
             }
             operationUiMapper
                 .toUi(operations = filteredOps, perspective = opUiPerspective)

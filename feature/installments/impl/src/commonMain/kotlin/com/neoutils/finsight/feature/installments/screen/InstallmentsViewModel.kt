@@ -32,7 +32,7 @@ class InstallmentsViewModel(
         operationRepository.observeAllOperations(),
     ) { installments, operations ->
         val operationsWithInstallment = operations.filter { it.installment != null }
-        val perspective = OperationPerspective.Account(accountId = 0L)
+        val perspective = OperationPerspective.Target
         val operationsUiByInstallmentId = operationUiMapper
             .toUi(operationsWithInstallment, perspective)
             .groupBy { checkNotNull(it.operation.installment).id }

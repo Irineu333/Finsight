@@ -5,8 +5,6 @@ import kotlinx.datetime.LocalDate
 
 sealed class PayInvoiceAction {
     data class SelectAccount(val account: Account?) : PayInvoiceAction()
-    data class Submit(
-        val date: LocalDate,
-        val account: Account? = null,
-    ) : PayInvoiceAction()
+    data class SelectDate(val date: LocalDate) : PayInvoiceAction()
+    data object Submit : PayInvoiceAction()
 }

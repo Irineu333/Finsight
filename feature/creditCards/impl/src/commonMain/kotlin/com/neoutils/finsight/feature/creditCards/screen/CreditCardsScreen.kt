@@ -512,8 +512,7 @@ private fun CardActions(
                     onClick = {
                         modalManager.show(
                             PayInvoiceModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount
+                                invoiceId = invoice.invoice.id,
                             )
                         )
                     },

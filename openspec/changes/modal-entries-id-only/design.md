@@ -74,19 +74,20 @@ val uiState = when {
 
 ---
 
-### D4: Entidade deletada — comportamento por categoria de modal
+### D4: Entidade deletada — `Error` universal
 
-**Decisão:** Quando `getXxxById(id)` retorna `null`:
+**Decisão:** Quando `getXxxById(id)` retorna `null` (em qualquer categoria de modal — view, form em edit-mode ou action), o VM SHALL:
 
-| Categoria | Comportamento | Exemplos |
-| --- | --- | --- |
-| **View modals** (read-only) | Emite `Error` + `Crashlytics.recordException`, modal renderiza `ModalErrorContent` (ícone + título + mensagem + botão fechar) | `ViewCategory`, `ViewOperation`, `ViewAdjustment`, `ViewBudget`, `ViewRecurring` |
-| **Form modals em edit-mode** | `modalManager.dismiss()` + `Crashlytics.recordException` | `AccountForm(id)`, `CategoryForm(id)`, `RecurringForm(id)`, `CreditCardForm(id)` |
-| **Action/Confirm modals** | `modalManager.dismiss()` + `Crashlytics.recordException` | `Pay`, `AdvancePayment`, `EditInvoiceBalance`, `ConfirmRecurring`, `CloseInvoice` |
+1. Chamar `Crashlytics.recordException(XxxException(XxxError.NOT_FOUND))`
+2. Emitir `UiState.Error` (não chamar `modalManager.dismiss()`)
 
-**Rationale:** `Error` (em vez de `Empty`) só faz sentido onde a UX é "inspecionar" (read-only) — a UX permite mostrar a falha. Em fluxos de ação ou edição, o estado correto é fechar — não há nada útil para o usuário fazer com fantasma. Em **todas** as categorias o evento é logado via Crashlytics: id-not-found nunca deveria acontecer no caminho feliz, então é um sinal valioso de bug ou race condition.
+O modal renderiza `ModalErrorContent` (`:core:ui`) com mensagem específica da feature e botão fechar que chama `modalManager.dismiss()`.
 
-**UI compartilhada:** `ModalErrorContent` em `:core:ui` consome `(message, onClose)` e renderiza ícone em surface `errorContainer` + título + descrição + botão fechar. View modals chamam esse componente em vez de inline.
+**Rationale:** Fechar silenciosamente é confuso — o usuário tocou em "Pagar"/"Editar"/"Confirmar" e o modal apenas pisca. Mostrar a falha explicitamente, mesmo num fluxo de ação, dá feedback claro e mantém o usuário no controle (ele decide fechar). Como view modals já consolidaram esse padrão, estender para action/form-edit uniformiza o contrato e o teste: toda transição `Loading → Error` segue o mesmo fluxo.
+
+**Trade-off considerado:** O fluxo de ação perde o "atalho" de fechar direto. Aceitável: o caminho feliz não passa pelo Error (id-not-found só ocorre em race condition ou bug); quando ocorre, o feedback explícito vence o atalho silencioso.
+
+**UI compartilhada:** `ModalErrorContent(message, onClose, title?, closeLabel?)` em `:core:ui` renderiza ícone + título + descrição + botão fechar. Cada feature provê uma string `xxx_unavailable` (ou equivalente) para `message`.
 
 **Convenção de exceção:** A `Throwable` registrada via `Crashlytics.recordException` MUST seguir o padrão do projeto `XxxException(XxxError.NOT_FOUND)` (ver `AccountException`, `RecurringException`, `InvoiceException`). Se a feature não tem `XxxError.NOT_FOUND` ou `XxxException`, esta task implica:
 

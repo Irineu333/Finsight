@@ -27,6 +27,7 @@
     <string name="pay_invoice_amount_label">Invoice Amount</string>
     <string name="pay_invoice_date_label">Payment Date</string>
     <string name="pay_invoice_confirm">Pay Invoice</string>
+    <string name="pay_invoice_unavailable">This invoice is no longer available. Refresh the screen to continue.</string>
     <string name="advance_payment_title">Advance Payment</string>
     <string name="advance_payment_description">Pay part of the invoice before closing.</string>
     <string name="advance_payment_amount_label">Amount</string>

@@ -27,20 +27,20 @@ Toda função `create(...)` em modal entry de `:feature:*:api` SHALL aceitar `Lo
 
 ---
 
-### Requirement: UiStates de modais id-driven seguem padrão sealed
+### Requirement: UiStates de modais id-driven seguem padrão sealed Loading|Content|Error
 
-Modais cujo VM carrega entidade por id SHALL ter UiState `sealed` com pelo menos `Loading` e `Content`. `Error` MUST ser adicionado quando o modal exibe mensagem em vez de fechar ao receber id inexistente.
+Modais cujo VM carrega entidade por id SHALL ter UiState `sealed` com `Loading`, `Content` e `Error`. `Error` representa falha de hidratação por id (entidade não encontrada) e MUST ser exibido com `ModalErrorContent` em vez de fechar silenciosamente.
 
-#### Scenario: View modal tem Loading, Content e Error
+#### Scenario: Modal id-driven tem Loading, Content e Error
 
-- **WHEN** um view modal recebe um id que pode apontar para entidade deletada
+- **WHEN** um modal id-driven é carregado e o id pode apontar para entidade deletada
 - **THEN** seu UiState MUST ter `Loading`, `Content(model)` e `Error`
 - **AND** `Error` MUST ser usado para falhas de hidratação por id (não significa "lista vazia")
 
-#### Scenario: Action modal tem apenas Loading e Content
+#### Scenario: Form modal em modo criação dispensa Error
 
-- **WHEN** um modal de ação (pay, confirm, edit balance) recebe um id e fecha em caso de entidade deletada
-- **THEN** seu UiState MUST ter `Loading` e `Content`, e o VM MUST chamar `modalManager.dismiss()` se a entidade não existir
+- **WHEN** um form modal é aberto com `id == null` (criação) e nunca faz fetch
+- **THEN** o `Error` ainda deve existir no UiState para o caso de edit (`id != null`), mas em criação o estado inicial MUST ser `Content` com defaults sem nunca transitar para `Loading` ou `Error`
 
 ---
 
@@ -69,10 +69,12 @@ ViewModels de modais SHALL receber ids como parâmetros de construtor e MUST res
 - **WHEN** o ViewModel é construído via Koin com `parametersOf(id)`
 - **THEN** o VM MUST chamar `repository.getXxxById(id)` para obter o estado canônico
 
-#### Scenario: VM trata id deletado conforme tipo de modal
+#### Scenario: VM trata id deletado emitindo Error
 
-- **WHEN** `getXxxById(id)` retorna null
-- **THEN** view modals MUST emitir `Error` **e** chamar `Crashlytics.recordException`; action modals e form modals em edit-mode MUST chamar `modalManager.dismiss()` e `Crashlytics.recordException`
+- **WHEN** `getXxxById(id)` retorna null (em qualquer categoria de modal — view, form em edit-mode ou action)
+- **THEN** o VM MUST chamar `Crashlytics.recordException(XxxException(XxxError.NOT_FOUND))` e emitir `UiState.Error`
+- **AND** o modal MUST renderizar `ModalErrorContent` com mensagem da feature e botão fechar que chama `modalManager.dismiss()`
+- **AND** o VM MUST NOT chamar `modalManager.dismiss()` automaticamente — o fechamento é decisão explícita do usuário via botão
 
 #### Scenario: Exceção de "entidade não encontrada" segue convenção do projeto
 

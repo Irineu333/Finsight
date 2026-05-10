@@ -537,7 +537,7 @@ private fun DashboardCreditCardsSection(
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
                                         modalManager.show(
-                                            payInvoiceEntry.create(invoice = it.invoice, currentBillAmount = it.amount)
+                                            payInvoiceEntry.create(invoiceId = it.invoice.id)
                                         )
                                     }
                                 }

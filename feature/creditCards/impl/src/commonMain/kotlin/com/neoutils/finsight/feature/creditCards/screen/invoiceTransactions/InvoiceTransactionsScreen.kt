@@ -563,8 +563,7 @@ private fun InvoiceActions(
                 onClick = {
                     modalManager.show(
                         PayInvoiceModal(
-                            invoice = invoice,
-                            currentBillAmount = summary.total
+                            invoiceId = invoice.id,
                         )
                     )
                 },

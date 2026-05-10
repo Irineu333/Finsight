@@ -37,6 +37,7 @@
     <string name="pay_invoice_amount_label">Valor da Fatura</string>
     <string name="pay_invoice_date_label">Data do Pagamento</string>
     <string name="pay_invoice_confirm">Pagar Fatura</string>
+    <string name="pay_invoice_unavailable">Esta fatura não está mais disponível. Atualize a tela para continuar.</string>
     <string name="advance_payment_title">Antecipar Pagamento</string>
     <string name="advance_payment_description">Pague parte da fatura antes do fechamento.</string>
     <string name="advance_payment_amount_label">Valor</string>

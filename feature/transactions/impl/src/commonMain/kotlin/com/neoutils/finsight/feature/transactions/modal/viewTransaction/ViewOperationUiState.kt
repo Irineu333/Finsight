@@ -8,17 +8,23 @@ import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
 import com.neoutils.finsight.feature.transactions.model.Transaction
 
-data class ViewOperationUiState(
-    val operation: Operation,
-    val perspective: OperationPerspective? = null,
-    val category: Category? = null,
-    val account: Account? = null,
-    val creditCard: CreditCard? = null,
-    val invoice: Invoice? = null,
-    val sourceAccount: Account? = null,
-    val destinationAccount: Account? = null,
-) {
-    val transaction: Transaction = perspective?.let { selectedPerspective ->
-        selectedPerspective.resolve(operation = operation)
-    } ?: operation.primaryTransaction
+sealed class ViewOperationUiState {
+
+    data object Loading : ViewOperationUiState()
+
+    data object Error : ViewOperationUiState()
+
+    data class Content(
+        val operation: Operation,
+        val perspective: OperationPerspective? = null,
+        val category: Category? = null,
+        val account: Account? = null,
+        val creditCard: CreditCard? = null,
+        val invoice: Invoice? = null,
+        val sourceAccount: Account? = null,
+        val destinationAccount: Account? = null,
+    ) : ViewOperationUiState() {
+        val transaction: Transaction = perspective?.resolve(operation = operation)
+            ?: operation.primaryTransaction
+    }
 }

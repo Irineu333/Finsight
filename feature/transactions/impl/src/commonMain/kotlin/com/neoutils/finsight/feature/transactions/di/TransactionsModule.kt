@@ -120,13 +120,14 @@ val transactionsModule = module {
 
     viewModel {
         ViewOperationViewModel(
-            operation = it.get(),
+            operationId = it.get(),
             perspective = it.getOrNull(),
             operationRepository = get(),
             accountRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            crashlytics = get(),
         )
     }
 

@@ -54,10 +54,10 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 4. Transactions
 
-- [ ] 4.1 `ViewOperationUiState` → sealed `Loading | Error | Content(operation, perspective, category, account, creditCard, invoice, sourceAccount, destinationAccount)`
-- [ ] 4.2 `ViewOperationViewModel` recebe `operationId: Long, perspective: OperationPerspective?`; cascata de fetches dispara após resolver `operation`
-- [ ] 4.3 `ViewOperationModalEntry.create(operationId: Long, perspective: OperationPerspective?)` em `:api`
-- [ ] 4.4 Impl + modal ajustados
+- [x] 4.1 `ViewOperationUiState` → sealed `Loading | Error | Content(operation, perspective, category, account, creditCard, invoice, sourceAccount, destinationAccount)`
+- [x] 4.2 `ViewOperationViewModel` recebe `operationId: Long, perspective: OperationPerspective?`; cascata de fetches dispara após resolver `operation`
+- [x] 4.3 `ViewOperationModalEntry.create(operationId: Long, perspective: OperationPerspective?)` em `:api`
+- [x] 4.4 Impl + modal ajustados
 - [ ] 4.5 `ViewAdjustmentUiState` → sealed `Loading | Error | Content(...)`
 - [ ] 4.6 `ViewAdjustmentViewModel` recebe `operationId: Long`
 - [ ] 4.7 `ViewAdjustmentModalEntry.create(operationId: Long)` em `:api`

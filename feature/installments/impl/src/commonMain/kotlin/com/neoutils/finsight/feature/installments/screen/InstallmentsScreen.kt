@@ -351,7 +351,7 @@ private fun InstallmentsContent(
                                     }
 
                                     else -> {
-                                        modalManager.show(viewOperationEntry.create(operation))
+                                        modalManager.show(viewOperationEntry.create(operation.id))
                                     }
                                 }
                             },

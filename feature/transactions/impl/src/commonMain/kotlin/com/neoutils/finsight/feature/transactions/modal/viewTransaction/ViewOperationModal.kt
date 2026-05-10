@@ -32,6 +32,7 @@ import com.neoutils.finsight.feature.transactions.resources.*
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
 import com.neoutils.finsight.feature.transactions.model.OperationPerspective
@@ -51,22 +52,20 @@ import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_pa
 import com.neoutils.finsight.feature.transactions.ui.resources.operation_card_transfer
 
 class ViewOperationModal(
-    private val operation: Operation,
+    private val operationId: Long,
     private val perspective: OperationPerspective? = null,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<ViewOperationViewModel> {
-            parametersOf(operation, perspective)
+            parametersOf(operationId, perspective)
         }
 
         val uiState by viewModel.uiState.collectAsState()
 
         val manager = LocalModalManager.current
-        val navigationDispatcher = LocalNavigationDispatcher.current
         val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
 
         LaunchedEffect(Unit) {
@@ -79,6 +78,49 @@ class ViewOperationModal(
             }
         }
 
+        when (val state = uiState) {
+            ViewOperationUiState.Loading -> LoadingContent()
+            ViewOperationUiState.Error -> ErrorContent()
+            is ViewOperationUiState.Content -> Content(
+                state = state,
+                onAction = viewModel::onAction,
+            )
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun ErrorContent() {
+        val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.view_operation_unavailable),
+            onClose = { manager.dismiss() },
+        )
+    }
+
+    @Composable
+    private fun Content(
+        state: ViewOperationUiState.Content,
+        onAction: (ViewOperationAction) -> Unit,
+    ) {
+        val formatter = LocalCurrencyFormatter.current
+        val manager = LocalModalManager.current
+        val navigationDispatcher = LocalNavigationDispatcher.current
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -90,15 +132,15 @@ class ViewOperationModal(
             ) {
                 Box {
                     Surface(
-                        color = uiState.operationColor().copy(alpha = 0.2f),
+                        color = state.operationColor().copy(alpha = 0.2f),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(64.dp),
                     ) {
-                        uiState.category?.let { category ->
+                        state.category?.let { category ->
                             Icon(
                                 imageVector = AppIcon.fromKey(category.iconKey).icon,
                                 contentDescription = null,
-                                tint = uiState.operationColor(),
+                                tint = state.operationColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -106,14 +148,14 @@ class ViewOperationModal(
                         } ?: run {
                             Icon(
                                 imageVector = when {
-                                    uiState.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
-                                    uiState.operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
-                                    uiState.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                    uiState.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                    state.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
+                                    state.operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
+                                    state.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                    state.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
                                     else -> Icons.Default.Tune
                                 },
                                 contentDescription = null,
-                                tint = uiState.operationColor(),
+                                tint = state.operationColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -121,7 +163,7 @@ class ViewOperationModal(
                         }
                     }
 
-                    if (uiState.transaction.target.isCreditCard || uiState.operation.kind == Operation.Kind.PAYMENT) {
+                    if (state.transaction.target.isCreditCard || state.operation.kind == Operation.Kind.PAYMENT) {
                         Surface(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
@@ -143,22 +185,22 @@ class ViewOperationModal(
 
                 Column {
                     Text(
-                        text = when (uiState.transaction.type) {
+                        text = when (state.transaction.type) {
                             Transaction.Type.INCOME -> stringResource(Res.string.view_operation_type_income)
                             Transaction.Type.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
                             Transaction.Type.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = uiState.operationColor()
+                        color = state.operationColor()
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = when (uiState.operation.kind) {
+                        text = when (state.operation.kind) {
                             Operation.Kind.PAYMENT -> stringResource(TxUiRes.string.operation_card_payment)
                             Operation.Kind.TRANSFER -> stringResource(TxUiRes.string.operation_card_transfer)
-                            else -> uiState.operation.defaultLabel
+                            else -> state.operation.defaultLabel
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
@@ -170,23 +212,23 @@ class ViewOperationModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_operation_amount_label),
-                value = formatter.format(uiState.transaction.amount),
-                valueColor = uiState.operationColor()
+                value = formatter.format(state.transaction.amount),
+                valueColor = state.operationColor()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
                 label = stringResource(Res.string.view_operation_date_label),
-                value = dayMonthYear.format(uiState.transaction.date)
+                value = dayMonthYear.format(state.transaction.date)
             )
 
             val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
             val originCreditCardLabel = stringResource(Res.string.view_operation_origin_credit_card)
-            if (uiState.transaction.type.isExpense) {
+            if (state.transaction.type.isExpense) {
                 DetailRow(
                     label = stringResource(Res.string.view_operation_origin_label),
-                    value = when (uiState.transaction.target) {
+                    value = when (state.transaction.target) {
                         Transaction.Target.ACCOUNT -> originAccountLabel
                         Transaction.Target.CREDIT_CARD -> originCreditCardLabel
                     },
@@ -194,9 +236,9 @@ class ViewOperationModal(
                 )
             }
 
-            if (uiState.operation.kind == Operation.Kind.TRANSFER) {
-                val sourceAccount = uiState.sourceAccount
-                val destinationAccount = uiState.destinationAccount
+            if (state.operation.kind == Operation.Kind.TRANSFER) {
+                val sourceAccount = state.sourceAccount
+                val destinationAccount = state.destinationAccount
 
                 sourceAccount?.let { account ->
                     DetailRow(
@@ -223,8 +265,8 @@ class ViewOperationModal(
                 }
             }
 
-            if (uiState.operation.kind != Operation.Kind.TRANSFER) {
-                uiState.account?.let { account ->
+            if (state.operation.kind != Operation.Kind.TRANSFER) {
+                state.account?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_operation_account_label),
                         value = account.name,
@@ -238,7 +280,7 @@ class ViewOperationModal(
             }
 
             val deletedLabel = stringResource(Res.string.view_operation_deleted)
-            uiState.creditCard?.let { creditCard ->
+            state.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_card_label),
                     value = creditCard.name,
@@ -251,7 +293,7 @@ class ViewOperationModal(
                     }
                 )
             } ?: run {
-                if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
+                if (state.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
                         label = stringResource(Res.string.view_operation_card_label),
                         value = deletedLabel,
@@ -261,7 +303,7 @@ class ViewOperationModal(
                 }
             }
 
-            uiState.invoice?.let { invoice ->
+            state.invoice?.let { invoice ->
                 val creditCardId = invoice.creditCardId
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
@@ -279,7 +321,7 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.operation.installment?.let { installment ->
+            state.operation.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_operation_installment_label),
                     value = "${installment.label} de ${formatter.format(installment.totalAmount)}",
@@ -291,26 +333,24 @@ class ViewOperationModal(
                 )
             }
 
-                uiState.operation.recurring?.let { recurring ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_recurring_label),
-                        value = recurring.label,
-                        valueColor = colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            viewModel.onAction(
-                                ViewOperationAction.OpenRecurring(recurring.id)
-                            )
-                        }
-                    )
-                }
+            state.operation.recurring?.let { recurring ->
+                DetailRow(
+                    label = stringResource(Res.string.view_operation_recurring_label),
+                    value = recurring.label,
+                    valueColor = colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = {
+                        onAction(ViewOperationAction.OpenRecurring(recurring.id))
+                    }
+                )
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-            uiState.invoice?.let { invoice ->
+            state.invoice?.let { invoice ->
                 when (invoice.status) {
                     Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
-                        EditAndDelete(uiState)
+                        EditAndDelete(state)
                     }
 
                     Invoice.Status.CLOSED, Invoice.Status.PAID -> {
@@ -323,14 +363,14 @@ class ViewOperationModal(
                     }
                 }
             } ?: run {
-                EditAndDelete(uiState)
+                EditAndDelete(state)
             }
         }
     }
 
     @Composable
     private fun EditAndDelete(
-        uiState: ViewOperationUiState,
+        state: ViewOperationUiState.Content,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -340,13 +380,13 @@ class ViewOperationModal(
 
         OutlinedButton(
             onClick = {
-                manager.show(DeleteTransactionModal(uiState.transaction))
+                manager.show(DeleteTransactionModal(state.transaction))
             },
             modifier = when {
-                uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
-                !uiState.operation.isEditable -> Modifier.fillMaxWidth()
-                uiState.operation.installment != null -> Modifier.fillMaxWidth()
-                uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.creditCard == null -> Modifier.fillMaxWidth()
+                state.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
+                !state.operation.isEditable -> Modifier.fillMaxWidth()
+                state.operation.installment != null -> Modifier.fillMaxWidth()
+                state.transaction.target == Transaction.Target.CREDIT_CARD && state.creditCard == null -> Modifier.fillMaxWidth()
                 else -> Modifier.weight(1f)
             },
             shape = RoundedCornerShape(12.dp),
@@ -372,15 +412,15 @@ class ViewOperationModal(
         }
 
         when {
-            uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
-            !uiState.operation.isEditable -> Unit
-            uiState.operation.installment != null -> Unit
-            uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.creditCard == null -> Unit
+            state.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
+            !state.operation.isEditable -> Unit
+            state.operation.installment != null -> Unit
+            state.transaction.target == Transaction.Target.CREDIT_CARD && state.creditCard == null -> Unit
 
             else -> {
                 OutlinedButton(
                     onClick = {
-                        manager.show(EditTransactionModal(uiState.transaction))
+                        manager.show(EditTransactionModal(state.transaction))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -449,7 +489,7 @@ class ViewOperationModal(
         }
     }
 
-    private fun ViewOperationUiState.operationColor() = when {
+    private fun ViewOperationUiState.Content.operationColor() = when {
         operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
         operation.kind == Operation.Kind.TRANSFER -> Info
         transaction.type == Transaction.Type.INCOME -> Income

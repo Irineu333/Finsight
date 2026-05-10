@@ -71,6 +71,8 @@
     <string name="view_operation_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
     <string name="view_operation_delete">Excluir</string>
     <string name="view_operation_edit">Editar</string>
+    <string name="view_operation_unavailable">A operação solicitada não está mais disponível.</string>
+    <string name="operation_error_not_found">Operação não encontrada.</string>
 
     <string name="operation_card_transfer">Transferência</string>
     <string name="operation_card_payment">Pagamento de Fatura</string>

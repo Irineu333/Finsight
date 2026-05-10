@@ -81,6 +81,7 @@ import com.neoutils.finsight.core.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.core.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.feature.transactions.ui.resources.Res as TxUiRes
 import com.neoutils.finsight.feature.transactions.ui.resources.transactions_filter_recurring
+
 @Composable
 fun AccountsScreen(
     initialAccountId: Long? = null,
@@ -228,60 +229,65 @@ private fun AccountsContent(
                         )
                     }
 
-                item(
-                    key = "filters_row"
-                ) {
-                    FiltersRow(
-                        uiState = uiState,
-                        onAction = onAction,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .animateItem()
-                    )
-                }
-                uiState.operations.forEach { (date, operations) ->
                     item(
-                        key = "date_title_$date"
+                        key = "filters_row"
                     ) {
-                        Text(
-                            text = LocalDateFormats.current.formatRelativeDate(date),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                        FiltersRow(
+                            uiState = uiState,
+                            onAction = onAction,
                             modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
                                 .animateItem()
                         )
                     }
+                    uiState.operations.forEach { (date, operations) ->
+                        item(
+                            key = "date_title_$date"
+                        ) {
+                            Text(
+                                text = LocalDateFormats.current.formatRelativeDate(date),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem()
+                            )
+                        }
 
-                    items(
-                        items = operations,
-                        key = { it.id }
-                    ) { operationUi ->
-                        OperationCard(
-                            operationUi = operationUi,
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .fillMaxWidth()
-                                .animateItem(),
-                            onClick = {
-                                when (operationUi.displayType) {
-                                    Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(viewAdjustmentEntry.create(operationUi.operation))
-                                    }
+                        items(
+                            items = operations,
+                            key = { it.id }
+                        ) { operationUi ->
+                            OperationCard(
+                                operationUi = operationUi,
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .fillMaxWidth()
+                                    .animateItem(),
+                                onClick = {
+                                    when (operationUi.displayType) {
+                                        Transaction.Type.ADJUSTMENT -> {
+                                            modalManager.show(viewAdjustmentEntry.create(operationUi.operation))
+                                        }
 
-                                    else -> {
-                                        modalManager.show(viewOperationEntry.create(operationUi.operation, operationUi.perspective))
+                                        else -> {
+                                            modalManager.show(
+                                                viewOperationEntry.create(
+                                                    operationUi.operation.id,
+                                                    operationUi.perspective
+                                                )
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
         }
     }
-}
 }
 
 @Composable

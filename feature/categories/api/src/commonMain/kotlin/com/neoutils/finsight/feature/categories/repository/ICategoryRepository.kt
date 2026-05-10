@@ -9,6 +9,7 @@ interface ICategoryRepository {
     fun observeCategoriesByType(type: Category.Type): Flow<List<Category>>
     suspend fun getCategoryById(id: Long): Category?
     fun observeCategoryById(id: Long): Flow<Category?>
+    fun observeCategoriesByIds(ids: List<Long>): Flow<List<Category>>
     suspend fun insert(category: Category)
     suspend fun update(category: Category)
     suspend fun delete(category: Category)

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.neoutils.finsight.feature.budgets.modal.viewBudget
 
 import androidx.compose.foundation.BorderStroke
@@ -14,6 +16,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,25 +26,17 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.budgets.model.BudgetProgress
-import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.core.ui.util.AppIcon
-import com.neoutils.finsight.feature.categories.component.CategoryIconBox
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
-import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormModal
-import com.neoutils.finsight.feature.budgets.modal.deleteBudget.DeleteBudgetModal
-import com.neoutils.finsight.feature.categories.model.Category
-import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import com.neoutils.finsight.feature.budgets.model.LimitType
-import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
-import org.koin.compose.koinInject
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
+import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.core.ui.theme.Expense
 import com.neoutils.finsight.core.ui.theme.Income
 import com.neoutils.finsight.core.ui.theme.Info
-import com.neoutils.finsight.core.ui.theme.budgetProgressColor
+import com.neoutils.finsight.core.ui.util.AppIcon
+import com.neoutils.finsight.feature.budgets.model.LimitType
+import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormModal
+import com.neoutils.finsight.feature.budgets.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.feature.budgets.resources.Res
 import com.neoutils.finsight.feature.budgets.resources.view_budget_delete
 import com.neoutils.finsight.feature.budgets.resources.view_budget_edit
@@ -49,24 +45,63 @@ import com.neoutils.finsight.feature.budgets.resources.view_budget_limit_label
 import com.neoutils.finsight.feature.budgets.resources.view_budget_percentage_label
 import com.neoutils.finsight.feature.budgets.resources.view_budget_remaining_label
 import com.neoutils.finsight.feature.budgets.resources.view_budget_spent_label
+import com.neoutils.finsight.feature.budgets.resources.view_budget_unavailable
+import com.neoutils.finsight.feature.categories.component.CategoryIconBox
+import com.neoutils.finsight.feature.categories.model.Category
+import com.neoutils.finsight.feature.recurring.modal.ViewRecurringModalEntry
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class ViewBudgetModal(
-    private val budgetProgress: BudgetProgress,
+    private val budgetId: Long,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val uiState by viewModel.uiState.collectAsState()
+
+        when (val state = uiState) {
+            ViewBudgetUiState.Loading -> LoadingContent()
+            ViewBudgetUiState.Error -> ErrorContent()
+            is ViewBudgetUiState.Content -> Content(state = state)
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun ErrorContent() {
+        val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.view_budget_unavailable),
+            onClose = { manager.dismiss() },
+        )
+    }
+
+    @Composable
+    private fun Content(state: ViewBudgetUiState.Content) {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
         val viewRecurringEntry = koinInject<ViewRecurringModalEntry>()
+        val budgetProgress = state.budgetProgress
         val budget = budgetProgress.budget
-
-        val categoryRepo = koinInject<ICategoryRepository>()
-        val categories by produceState<List<Category>>(initialValue = emptyList(), budget.categoryIds) {
-            value = categoryRepo.getAllCategories().filter { it.id in budget.categoryIds }
-        }
-        val accentColor = budgetProgressColor(budgetProgress.progress)
+        val accentColor = state.accentColor
 
         Column(
             modifier = Modifier
@@ -95,11 +130,11 @@ class ViewBudgetModal(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (categories.isNotEmpty()) {
+            if (state.categories.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(items = categories, key = { it.id }) { category ->
+                    items(items = state.categories, key = { it.id }) { category ->
                         val categoryColor = when (category.type) {
                             Category.Type.INCOME -> Income
                             Category.Type.EXPENSE -> Expense

@@ -104,17 +104,17 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 8. Budgets (D6)
 
-- [ ] 8.1 Verificar se existe `CalculateBudgetProgressUseCase` (ou equivalente) em `:feature:budgets`. Se não:
-  - [ ] 8.1.a Criar interface em `:feature:budgets:api`
-  - [ ] 8.1.b Criar impl em `:feature:budgets:impl` reutilizando lógica que hoje produz `BudgetProgress` na lista
-  - [ ] 8.1.c Refatorar `BudgetsViewModel` (ou builder atual) para usar o novo use case (paridade por construção)
-- [ ] 8.2 `ViewBudgetUiState` → sealed `Loading | Error | Content(budgetProgress, categories, accentColor)`
-- [ ] 8.3 `ViewBudgetViewModel` recebe `budgetId: Long`; reconstrói `BudgetProgress` via use case; emite `Error` se budget não existe
-- [ ] 8.4 `ViewBudgetModalEntry.create(budgetId: Long)` em `:api`
-- [ ] 8.5 Impl + modal ajustados (mover busca de `categories` que hoje está no `produceState` do modal para o VM)
-- [ ] 8.6 Atualizar Koin
-- [ ] 8.7 Call-sites
-- [ ] 8.8 `./gradlew :feature:budgets:impl:check`
+- [x] 8.1 Verificar se existe `CalculateBudgetProgressUseCase` (ou equivalente) em `:feature:budgets`. Se não:
+  - [x] 8.1.a Criar interface em `:feature:budgets:api`
+  - [x] 8.1.b Criar impl em `:feature:budgets:impl` reutilizando lógica que hoje produz `BudgetProgress` na lista
+  - [x] 8.1.c Refatorar `BudgetsViewModel` (ou builder atual) para usar o novo use case (paridade por construção)
+- [x] 8.2 `ViewBudgetUiState` → sealed `Loading | Error | Content(budgetProgress, categories, accentColor)`
+- [x] 8.3 `ViewBudgetViewModel` recebe `budgetId: Long`; reconstrói `BudgetProgress` via use case; emite `Error` se budget não existe
+- [x] 8.4 `ViewBudgetModalEntry.create(budgetId: Long)` em `:api`
+- [x] 8.5 Impl + modal ajustados (mover busca de `categories` que hoje está no `produceState` do modal para o VM)
+- [x] 8.6 Atualizar Koin
+- [x] 8.7 Call-sites
+- [x] 8.8 `./gradlew :feature:budgets:impl:check`
 
 ## 10. Retrofit: `Error` universal em form/action modals (revisão de D4)
 

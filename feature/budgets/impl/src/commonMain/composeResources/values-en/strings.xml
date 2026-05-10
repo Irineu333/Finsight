@@ -1,4 +1,10 @@
 <resources>
+    <!-- Budget errors -->
+    <string name="budget_error_not_found">Budget not found.</string>
+
+    <!-- Modal unavailable -->
+    <string name="view_budget_unavailable">The requested budget is no longer available.</string>
+
     <string name="view_budget_percentage_label">Percentage</string>
     <string name="view_budget_limit_label">Limit</string>
     <string name="view_budget_spent_label">Spent</string>

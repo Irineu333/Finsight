@@ -9,6 +9,7 @@ import com.neoutils.finsight.feature.budgets.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.feature.budgets.modal.viewBudget.ViewBudgetModalEntry
 import com.neoutils.finsight.feature.budgets.modal.viewBudget.ViewBudgetModalEntryImpl
+import com.neoutils.finsight.feature.budgets.modal.viewBudget.ViewBudgetViewModel
 import com.neoutils.finsight.feature.budgets.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.feature.budgets.screen.BudgetsViewModel
 import org.koin.core.module.dsl.viewModel
@@ -65,6 +66,18 @@ val budgetsModule = module {
             budgetRepository = get(),
             modalManager = get(),
             analytics = get(),
+        )
+    }
+
+    viewModel { (budgetId: Long) ->
+        ViewBudgetViewModel(
+            budgetId = budgetId,
+            budgetRepository = get(),
+            operationRepository = get(),
+            recurringRepository = get(),
+            categoryRepository = get(),
+            calculateBudgetProgress = get(),
+            crashlytics = get(),
         )
     }
 }

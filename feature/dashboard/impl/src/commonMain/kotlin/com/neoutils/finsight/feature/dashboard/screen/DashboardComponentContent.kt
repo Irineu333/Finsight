@@ -637,7 +637,7 @@ private fun DashboardBudgetsSection(
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                modalManager.show(viewBudgetEntry.create(budget))
+                modalManager.show(viewBudgetEntry.create(budget.budget.id))
             }
         },
     )

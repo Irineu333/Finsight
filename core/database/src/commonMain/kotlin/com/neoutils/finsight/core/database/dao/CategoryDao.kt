@@ -25,6 +25,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE id = :id")
     fun observeCategoryById(id: Long): Flow<CategoryEntity?>
 
+    @Query("SELECT * FROM categories WHERE id IN (:ids) ORDER BY createdAt ASC")
+    fun observeCategoriesByIds(ids: List<Long>): Flow<List<CategoryEntity>>
+
     @Insert
     suspend fun insert(category: CategoryEntity)
 

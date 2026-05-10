@@ -14,8 +14,14 @@ interface BudgetDao {
     @Query("SELECT * FROM budgets ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<BudgetEntity>>
 
+    @Query("SELECT * FROM budgets WHERE id = :id")
+    fun observeById(id: Long): Flow<BudgetEntity?>
+
     @Query("SELECT * FROM budget_categories")
     fun observeAllBudgetCategories(): Flow<List<BudgetCategoryEntity>>
+
+    @Query("SELECT * FROM budget_categories WHERE budgetId = :budgetId")
+    fun observeBudgetCategoriesByBudgetId(budgetId: Long): Flow<List<BudgetCategoryEntity>>
 
     @Insert
     suspend fun insert(budget: BudgetEntity): Long

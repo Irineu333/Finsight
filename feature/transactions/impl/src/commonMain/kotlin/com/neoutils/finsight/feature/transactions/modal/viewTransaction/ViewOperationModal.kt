@@ -20,17 +20,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.transactions.resources.*
 import com.neoutils.finsight.core.ui.component.LocalModalManager
+import com.neoutils.finsight.core.ui.component.ModalManager
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
+import com.neoutils.finsight.feature.home.dispatcher.NavigationDispatcher
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
 import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
@@ -127,93 +129,14 @@ class ViewOperationModal(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box {
-                    Surface(
-                        color = state.operationColor().copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.size(64.dp),
-                    ) {
-                        state.category?.let { category ->
-                            Icon(
-                                imageVector = AppIcon.fromKey(category.iconKey).icon,
-                                contentDescription = null,
-                                tint = state.operationColor(),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                            )
-                        } ?: run {
-                            Icon(
-                                imageVector = when {
-                                    state.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
-                                    state.operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
-                                    state.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                    state.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                    else -> Icons.Default.Tune
-                                },
-                                contentDescription = null,
-                                tint = state.operationColor(),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-
-                    if (state.transaction.target.isCreditCard || state.operation.kind == Operation.Kind.PAYMENT) {
-                        Surface(
-                            color = colorScheme.surfaceVariant,
-                            shape = CircleShape,
-                            modifier = Modifier
-                                .size(22.dp)
-                                .align(Alignment.BottomEnd)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CreditCard,
-                                contentDescription = null,
-                                tint = colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(3.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = when (state.transaction.type) {
-                            Transaction.Type.INCOME -> stringResource(Res.string.view_operation_type_income)
-                            Transaction.Type.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
-                            Transaction.Type.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
-                        },
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = state.operationColor()
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = when (state.operation.kind) {
-                            Operation.Kind.PAYMENT -> stringResource(TxUiRes.string.operation_card_payment)
-                            Operation.Kind.TRANSFER -> stringResource(TxUiRes.string.operation_card_transfer)
-                            else -> state.operation.defaultLabel
-                        },
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = colorScheme.onSurface
-                    )
-                }
-            }
+            Header(state)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
                 label = stringResource(Res.string.view_operation_amount_label),
                 value = formatter.format(state.transaction.amount),
-                valueColor = state.operationColor()
+                valueColor = state.color()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -223,103 +146,11 @@ class ViewOperationModal(
                 value = dayMonthYear.format(state.transaction.date)
             )
 
-            val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
-            val originCreditCardLabel = stringResource(Res.string.view_operation_origin_credit_card)
-            if (state.transaction.type.isExpense) {
-                DetailRow(
-                    label = stringResource(Res.string.view_operation_origin_label),
-                    value = when (state.transaction.target) {
-                        Transaction.Target.ACCOUNT -> originAccountLabel
-                        Transaction.Target.CREDIT_CARD -> originCreditCardLabel
-                    },
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            if (state.operation.kind == Operation.Kind.TRANSFER) {
-                val sourceAccount = state.sourceAccount
-                val destinationAccount = state.destinationAccount
-
-                sourceAccount?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_source_account_label),
-                        value = account.name,
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
-                        }
-                    )
-                }
-
-                destinationAccount?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_destination_account_label),
-                        value = account.name,
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
-                        }
-                    )
-                }
-            }
-
-            if (state.operation.kind != Operation.Kind.TRANSFER) {
-                state.account?.let { account ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_account_label),
-                        value = account.name,
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
-                        }
-                    )
-                }
-            }
-
-            val deletedLabel = stringResource(Res.string.view_operation_deleted)
-            state.creditCard?.let { creditCard ->
-                DetailRow(
-                    label = stringResource(Res.string.view_operation_card_label),
-                    value = creditCard.name,
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = {
-                        manager.dismissAll()
-                        navigationDispatcher.dispatch(
-                            NavigationDestination.CreditCards(creditCard.id)
-                        )
-                    }
-                )
-            } ?: run {
-                if (state.transaction.target == Transaction.Target.CREDIT_CARD) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_card_label),
-                        value = deletedLabel,
-                        valueColor = colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-            }
-
-            state.invoice?.let { invoice ->
-                val creditCardId = invoice.creditCardId
-                DetailRow(
-                    label = stringResource(Res.string.view_operation_invoice_label),
-                    value = invoice.toLabel(),
-                    valueColor = Color(invoice.status.colorValue),
-                    modifier = Modifier.padding(top = 8.dp),
-                    onClick = creditCardId?.let {
-                        {
-                            manager.dismissAll()
-                            navigationDispatcher.dispatch(
-                                NavigationDestination.InvoiceTransactions(it)
-                            )
-                        }
-                    }
-                )
-            }
+            KindSpecificRows(
+                state = state,
+                manager = manager,
+                navigationDispatcher = navigationDispatcher,
+            )
 
             state.operation.installment?.let { installment ->
                 DetailRow(
@@ -347,77 +178,293 @@ class ViewOperationModal(
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
-            state.invoice?.let { invoice ->
-                when (invoice.status) {
-                    Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
-                        EditAndDelete(state)
-                    }
+            Actions(state)
+        }
+    }
 
-                    Invoice.Status.CLOSED, Invoice.Status.PAID -> {
-                        Text(
-                            text = stringResource(Res.string.view_operation_closed_invoice_message),
-                            fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth()
+    @Composable
+    private fun Header(state: ViewOperationUiState.Content) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box {
+                Surface(
+                    color = state.color().copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.size(64.dp),
+                ) {
+                    val tint = state.color()
+                    state.category?.let { category ->
+                        Icon(
+                            imageVector = AppIcon.fromKey(category.iconKey).icon,
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        )
+                    } ?: run {
+                        Icon(
+                            imageVector = state.fallbackIcon(),
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
                         )
                     }
                 }
-            } ?: run {
-                EditAndDelete(state)
+
+                if (state.showsCardBadge()) {
+                    Surface(
+                        color = colorScheme.surfaceVariant,
+                        shape = CircleShape,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .align(Alignment.BottomEnd)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreditCard,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(3.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.width(16.dp))
+
+            Column {
+                Text(
+                    text = state.typeLabel(),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = state.color()
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = state.titleLabel(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = colorScheme.onSurface
+                )
             }
         }
     }
 
     @Composable
-    private fun EditAndDelete(
+    private fun KindSpecificRows(
         state: ViewOperationUiState.Content,
-    ) = Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        manager: ModalManager,
+        navigationDispatcher: NavigationDispatcher,
     ) {
+        when (state) {
+            is ViewOperationUiState.Content.Single -> SingleRows(state, manager, navigationDispatcher)
+            is ViewOperationUiState.Content.Transfer -> TransferRows(state, manager, navigationDispatcher)
+            is ViewOperationUiState.Content.Payment -> PaymentRows(state, manager, navigationDispatcher)
+        }
+    }
 
-        val manager = LocalModalManager.current
+    @Composable
+    private fun SingleRows(
+        state: ViewOperationUiState.Content.Single,
+        manager: ModalManager,
+        navigationDispatcher: NavigationDispatcher,
+    ) {
+        val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
+        val originCreditCardLabel = stringResource(Res.string.view_operation_origin_credit_card)
+        val deletedLabel = stringResource(Res.string.view_operation_deleted)
 
-        OutlinedButton(
-            onClick = {
-                manager.show(DeleteTransactionModal(state.transaction))
-            },
-            modifier = when {
-                state.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
-                !state.operation.isEditable -> Modifier.fillMaxWidth()
-                state.operation.installment != null -> Modifier.fillMaxWidth()
-                state.transaction.target == Transaction.Target.CREDIT_CARD && state.creditCard == null -> Modifier.fillMaxWidth()
-                else -> Modifier.weight(1f)
-            },
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = colorScheme.error,
-            ),
-            border = BorderStroke(
-                width = 1.dp,
-                color = colorScheme.error,
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(
-                text = stringResource(Res.string.view_operation_delete),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+        if (state.transaction.type.isExpense) {
+            DetailRow(
+                label = stringResource(Res.string.view_operation_origin_label),
+                value = when (state.transaction.target) {
+                    Transaction.Target.ACCOUNT -> originAccountLabel
+                    Transaction.Target.CREDIT_CARD -> originCreditCardLabel
+                },
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
-        when {
-            state.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
-            !state.operation.isEditable -> Unit
-            state.operation.installment != null -> Unit
-            state.transaction.target == Transaction.Target.CREDIT_CARD && state.creditCard == null -> Unit
+        state.account?.let { account ->
+            DetailRow(
+                label = stringResource(Res.string.view_operation_account_label),
+                value = account.name,
+                modifier = Modifier.padding(top = 8.dp),
+                onClick = {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                }
+            )
+        }
 
-            else -> {
+        if (state.transaction.target == Transaction.Target.CREDIT_CARD) {
+            state.creditCard?.let { creditCard ->
+                DetailRow(
+                    label = stringResource(Res.string.view_operation_card_label),
+                    value = creditCard.name,
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = {
+                        manager.dismissAll()
+                        navigationDispatcher.dispatch(
+                            NavigationDestination.CreditCards(creditCard.id)
+                        )
+                    }
+                )
+            } ?: DetailRow(
+                label = stringResource(Res.string.view_operation_card_label),
+                value = deletedLabel,
+                valueColor = colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
+        state.invoice?.let { invoice ->
+            InvoiceRow(invoice, manager, navigationDispatcher)
+        }
+    }
+
+    @Composable
+    private fun TransferRows(
+        state: ViewOperationUiState.Content.Transfer,
+        manager: ModalManager,
+        navigationDispatcher: NavigationDispatcher,
+    ) {
+        state.sourceAccount?.let { account ->
+            DetailRow(
+                label = stringResource(Res.string.view_operation_source_account_label),
+                value = account.name,
+                modifier = Modifier.padding(top = 8.dp),
+                onClick = {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                }
+            )
+        }
+
+        state.destinationAccount?.let { account ->
+            DetailRow(
+                label = stringResource(Res.string.view_operation_destination_account_label),
+                value = account.name,
+                modifier = Modifier.padding(top = 8.dp),
+                onClick = {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                }
+            )
+        }
+    }
+
+    @Composable
+    private fun PaymentRows(
+        state: ViewOperationUiState.Content.Payment,
+        manager: ModalManager,
+        navigationDispatcher: NavigationDispatcher,
+    ) {
+        val deletedLabel = stringResource(Res.string.view_operation_deleted)
+
+        state.sourceAccount?.let { account ->
+            DetailRow(
+                label = stringResource(Res.string.view_operation_account_label),
+                value = account.name,
+                modifier = Modifier.padding(top = 8.dp),
+                onClick = {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                }
+            )
+        }
+
+        state.creditCard?.let { creditCard ->
+            DetailRow(
+                label = stringResource(Res.string.view_operation_card_label),
+                value = creditCard.name,
+                modifier = Modifier.padding(top = 8.dp),
+                onClick = {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(
+                        NavigationDestination.CreditCards(creditCard.id)
+                    )
+                }
+            )
+        } ?: DetailRow(
+            label = stringResource(Res.string.view_operation_card_label),
+            value = deletedLabel,
+            valueColor = colorScheme.error,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        state.invoice?.let { invoice ->
+            InvoiceRow(invoice, manager, navigationDispatcher)
+        }
+    }
+
+    @Composable
+    private fun InvoiceRow(
+        invoice: Invoice,
+        manager: ModalManager,
+        navigationDispatcher: NavigationDispatcher,
+    ) {
+        val creditCardId = invoice.creditCardId
+        DetailRow(
+            label = stringResource(Res.string.view_operation_invoice_label),
+            value = invoice.toLabel(),
+            valueColor = Color(invoice.status.colorValue),
+            modifier = Modifier.padding(top = 8.dp),
+            onClick = creditCardId?.let {
+                {
+                    manager.dismissAll()
+                    navigationDispatcher.dispatch(
+                        NavigationDestination.InvoiceTransactions(it)
+                    )
+                }
+            }
+        )
+    }
+
+    @Composable
+    private fun Actions(state: ViewOperationUiState.Content) {
+        when (state) {
+            is ViewOperationUiState.Content.Single -> {
+                val invoice = state.invoice
+                if (invoice != null && !invoice.status.isEditable) {
+                    Text(
+                        text = stringResource(Res.string.view_operation_closed_invoice_message),
+                        fontSize = 14.sp,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    SingleActions(state)
+                }
+            }
+
+            is ViewOperationUiState.Content.Transfer,
+            is ViewOperationUiState.Content.Payment -> {
+                DeleteOnly(state)
+            }
+        }
+    }
+
+    @Composable
+    private fun SingleActions(state: ViewOperationUiState.Content.Single) {
+        val manager = LocalModalManager.current
+        val canEdit = state.transaction.type != Transaction.Type.ADJUSTMENT &&
+                state.operation.installment == null &&
+                !(state.transaction.target == Transaction.Target.CREDIT_CARD && state.creditCard == null)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DeleteButton(
+                state = state,
+                modifier = if (canEdit) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+            )
+
+            if (canEdit) {
                 OutlinedButton(
                     onClick = {
                         manager.show(EditTransactionModal(state.transaction))
@@ -445,6 +492,51 @@ class ViewOperationModal(
                     )
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun DeleteOnly(state: ViewOperationUiState.Content) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DeleteButton(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+
+    @Composable
+    private fun DeleteButton(
+        state: ViewOperationUiState.Content,
+        modifier: Modifier,
+    ) {
+        val manager = LocalModalManager.current
+        OutlinedButton(
+            onClick = { manager.show(DeleteTransactionModal(state.transaction)) },
+            modifier = modifier,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colorScheme.error,
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = colorScheme.error,
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = stringResource(Res.string.view_operation_delete),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 
@@ -489,11 +581,47 @@ class ViewOperationModal(
         }
     }
 
-    private fun ViewOperationUiState.Content.operationColor() = when {
-        operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
-        operation.kind == Operation.Kind.TRANSFER -> Info
-        transaction.type == Transaction.Type.INCOME -> Income
-        transaction.type == Transaction.Type.EXPENSE -> Expense
-        else -> Adjustment
+    private fun ViewOperationUiState.Content.color(): Color = when (this) {
+        is ViewOperationUiState.Content.Transfer -> Info
+        is ViewOperationUiState.Content.Payment -> InvoicePayment
+        is ViewOperationUiState.Content.Single -> when (transaction.type) {
+            Transaction.Type.INCOME -> Income
+            Transaction.Type.EXPENSE -> Expense
+            Transaction.Type.ADJUSTMENT -> Adjustment
+        }
+    }
+
+    private fun ViewOperationUiState.Content.fallbackIcon(): ImageVector = when (this) {
+        is ViewOperationUiState.Content.Payment -> Icons.Default.Payment
+        is ViewOperationUiState.Content.Transfer -> Icons.Default.SwapHoriz
+        is ViewOperationUiState.Content.Single -> when (transaction.type) {
+            Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+            Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+            Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+        }
+    }
+
+    private fun ViewOperationUiState.Content.showsCardBadge(): Boolean = when (this) {
+        is ViewOperationUiState.Content.Payment -> true
+        is ViewOperationUiState.Content.Single -> transaction.target.isCreditCard
+        is ViewOperationUiState.Content.Transfer -> false
+    }
+
+    @Composable
+    private fun ViewOperationUiState.Content.typeLabel(): String = when (this) {
+        is ViewOperationUiState.Content.Payment -> stringResource(Res.string.view_operation_type_expense)
+        is ViewOperationUiState.Content.Single,
+        is ViewOperationUiState.Content.Transfer -> when (transaction.type) {
+            Transaction.Type.INCOME -> stringResource(Res.string.view_operation_type_income)
+            Transaction.Type.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
+            Transaction.Type.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
+        }
+    }
+
+    @Composable
+    private fun ViewOperationUiState.Content.titleLabel(): String = when (this) {
+        is ViewOperationUiState.Content.Payment -> stringResource(TxUiRes.string.operation_card_payment)
+        is ViewOperationUiState.Content.Transfer -> stringResource(TxUiRes.string.operation_card_transfer)
+        is ViewOperationUiState.Content.Single -> operation.defaultLabel
     }
 }

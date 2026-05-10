@@ -170,7 +170,7 @@ private fun InvoiceTransactionsContent(
                                     },
                                     onClick = {
                                         menuExpanded = false
-                                        modalManager.show(CreditCardFormModal(creditCard))
+                                        modalManager.show(CreditCardFormModal(creditCard.id))
                                     }
                                 )
                                 DropdownMenuItem(

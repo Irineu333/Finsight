@@ -69,13 +69,13 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 5. CreditCards — Form
 
-- [ ] 5.1 `CreditCardFormUiState` → sealed `Loading | Content(...)`
-- [ ] 5.2 `CreditCardFormViewModel` recebe `creditCardId: Long?`; em criação inicia em `Content`
-- [ ] 5.3 `CreditCardFormModalEntry.create(creditCardId: Long?)` em `:api`
-- [ ] 5.4 Impl + modal ajustados
-- [ ] 5.5 Atualizar Koin
-- [ ] 5.6 Call-sites
-- [ ] 5.7 `./gradlew :feature:creditCards:impl:check`
+- [x] 5.1 `CreditCardFormUiState` → sealed `Loading | Content(...)`
+- [x] 5.2 `CreditCardFormViewModel` recebe `creditCardId: Long?`; em criação inicia em `Content`
+- [x] 5.3 `CreditCardFormModalEntry.create(creditCardId: Long?)` em `:api`
+- [x] 5.4 Impl + modal ajustados
+- [x] 5.5 Atualizar Koin
+- [x] 5.6 Call-sites
+- [x] 5.7 `./gradlew :feature:creditCards:impl:check`
 
 ## 6. CreditCards — Edit invoice balance
 

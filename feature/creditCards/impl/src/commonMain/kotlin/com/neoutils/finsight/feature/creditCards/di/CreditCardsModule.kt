@@ -227,8 +227,9 @@ val creditCardsModule = module {
 
     viewModel {
         CreditCardFormViewModel(
+            creditCardId = it.getOrNull(),
             formatter = get(),
-            creditCard = it.getOrNull(),
+            creditCardRepository = get(),
             addCreditCardUseCase = get(),
             updateCreditCardUseCase = get(),
             validateCreditCardName = get(),

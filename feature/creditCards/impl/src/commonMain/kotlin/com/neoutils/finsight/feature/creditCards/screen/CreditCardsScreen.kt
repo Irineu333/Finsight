@@ -390,7 +390,7 @@ private fun CardActions(
 
             OutlinedButton(
                 onClick = {
-                    modalManager.show(CreditCardFormModal(creditCard))
+                    modalManager.show(CreditCardFormModal(creditCard.id))
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),

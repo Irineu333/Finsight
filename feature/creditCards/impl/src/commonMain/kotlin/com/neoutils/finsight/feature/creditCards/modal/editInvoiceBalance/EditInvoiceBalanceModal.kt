@@ -22,7 +22,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.core.ui.extension.CurrencyFormatter
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.component.CreditCardSelector
@@ -42,13 +41,13 @@ import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 class EditInvoiceBalanceModal(
-    private val initialInvoice: Invoice,
+    private val invoiceId: Long,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditInvoiceBalanceViewModel> {
-            parametersOf(initialInvoice)
+            parametersOf(invoiceId)
         }
 
         val uiState by viewModel.uiState.collectAsState()

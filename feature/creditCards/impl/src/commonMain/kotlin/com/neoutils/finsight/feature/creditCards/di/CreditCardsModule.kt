@@ -283,7 +283,7 @@ val creditCardsModule = module {
 
     viewModel {
         EditInvoiceBalanceViewModel(
-            initialInvoice = it.get(),
+            initialInvoiceId = it.get(),
             adjustInvoiceUseCase = get(),
             calculateInvoiceUseCase = get(),
             invoiceRepository = get(),

@@ -183,7 +183,7 @@ private fun CreditCardsContent(
                             onEditInvoice = { invoice ->
                                 modalManager.show(
                                     EditInvoiceBalanceModal(
-                                        initialInvoice = invoice
+                                        invoiceId = invoice.id
                                     )
                                 )
                             },

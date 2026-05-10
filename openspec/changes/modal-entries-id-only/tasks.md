@@ -79,13 +79,13 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 
 ## 6. CreditCards — Edit invoice balance
 
-- [ ] 6.1 `EditInvoiceBalanceUiState` revisar (já é sealed; ajustar campos se necessário)
-- [ ] 6.2 `EditInvoiceBalanceViewModel` recebe `initialInvoiceId: Long`; resolve `Invoice` no init e segue lógica atual
-- [ ] 6.3 `EditInvoiceBalanceModalEntry.create(invoiceId: Long)` em `:api`
-- [ ] 6.4 Impl ajustado
-- [ ] 6.5 Comportamento de entidade deletada: dismiss + crashlytics
-- [ ] 6.6 Atualizar Koin
-- [ ] 6.7 Call-sites
+- [x] 6.1 `EditInvoiceBalanceUiState` revisar (já é sealed; ajustar campos se necessário)
+- [x] 6.2 `EditInvoiceBalanceViewModel` recebe `initialInvoiceId: Long`; resolve `Invoice` no init e segue lógica atual
+- [x] 6.3 `EditInvoiceBalanceModalEntry.create(invoiceId: Long)` em `:api`
+- [x] 6.4 Impl ajustado
+- [x] 6.5 Comportamento de entidade deletada: dismiss + crashlytics
+- [x] 6.6 Atualizar Koin
+- [x] 6.7 Call-sites
 
 ## 7. CreditCards — Pay / Advance (D5)
 

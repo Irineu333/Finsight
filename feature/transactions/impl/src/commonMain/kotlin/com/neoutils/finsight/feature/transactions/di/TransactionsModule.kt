@@ -110,11 +110,12 @@ val transactionsModule = module {
 
     viewModel {
         ViewAdjustmentViewModel(
-            operation = it.get(),
+            operationId = it.get(),
             operationRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
+            crashlytics = get(),
         )
     }
 

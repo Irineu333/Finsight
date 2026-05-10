@@ -20,6 +20,7 @@
     <string name="view_adjustment_credit_card_label">Credit Card</string>
     <string name="view_adjustment_deleted">Deleted</string>
     <string name="view_adjustment_delete_label">Delete Adjustment</string>
+    <string name="view_adjustment_unavailable">Adjustment not available.</string>
     <string name="view_operation_unavailable">Operation not available.</string>
     <string name="operation_error_not_found">Operation not found.</string>
     <string name="operation_error_perspective_mismatch">Operation does not match the requested perspective.</string>

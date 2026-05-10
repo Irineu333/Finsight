@@ -58,14 +58,14 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [x] 4.2 `ViewOperationViewModel` recebe `operationId: Long, perspective: OperationPerspective?`; cascata de fetches dispara após resolver `operation`
 - [x] 4.3 `ViewOperationModalEntry.create(operationId: Long, perspective: OperationPerspective?)` em `:api`
 - [x] 4.4 Impl + modal ajustados
-- [ ] 4.5 `ViewAdjustmentUiState` → sealed `Loading | Error | Content(...)`
-- [ ] 4.6 `ViewAdjustmentViewModel` recebe `operationId: Long`
-- [ ] 4.7 `ViewAdjustmentModalEntry.create(operationId: Long)` em `:api`
-- [ ] 4.8 Impl + modal ajustados
-- [ ] 4.9 Atualizar Koin (2 ViewModels)
-- [ ] 4.10 Call-sites em todas as features (Dashboard, Accounts, Categories, CreditCards/InvoiceTransactions, Transactions, Recurring, Budgets, Installments, Report)
-- [ ] 4.11 Validar Open Question 3 do `design.md`: existem outros snapshots derivados em entries de `:transactions:api` que não estão catalogados?
-- [ ] 4.12 `./gradlew :feature:transactions:impl:check`
+- [x] 4.5 `ViewAdjustmentUiState` → sealed `Loading | Error | Content(...)`
+- [x] 4.6 `ViewAdjustmentViewModel` recebe `operationId: Long`
+- [x] 4.7 `ViewAdjustmentModalEntry.create(operationId: Long)` em `:api`
+- [x] 4.8 Impl + modal ajustados
+- [x] 4.9 Atualizar Koin (2 ViewModels)
+- [x] 4.10 Call-sites em todas as features (Dashboard, Accounts, Categories, CreditCards/InvoiceTransactions, Transactions, Recurring, Budgets, Installments, Report)
+- [x] 4.11 Validar Open Question 3 do `design.md`: existem outros snapshots derivados em entries de `:transactions:api` que não estão catalogados?
+- [x] 4.12 `./gradlew :feature:transactions:impl:check`
 
 ## 5. CreditCards — Form
 

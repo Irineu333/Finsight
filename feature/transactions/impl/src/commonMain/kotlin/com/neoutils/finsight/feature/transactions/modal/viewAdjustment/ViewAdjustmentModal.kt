@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 import com.neoutils.finsight.core.ui.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.creditCards.extension.toLabel
@@ -31,6 +30,7 @@ import com.neoutils.finsight.feature.transactions.resources.*
 import com.neoutils.finsight.feature.home.dispatcher.LocalNavigationDispatcher
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.feature.home.dispatcher.NavigationDestination
 import com.neoutils.finsight.feature.transactions.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.core.ui.theme.Adjustment
@@ -41,17 +41,53 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
-    private val operation: Operation
+    private val operationId: Long,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> {
+            parametersOf(operationId)
+        }
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        when (val state = uiState) {
+            ViewAdjustmentUiState.Loading -> LoadingContent()
+            ViewAdjustmentUiState.Error -> ErrorContent()
+            is ViewAdjustmentUiState.Content -> Content(state)
+        }
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(96.dp))
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(96.dp))
+        }
+    }
+
+    @Composable
+    private fun ErrorContent() {
+        val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.view_adjustment_unavailable),
+            onClose = { manager.dismiss() },
+        )
+    }
+
+    @Composable
+    private fun Content(state: ViewAdjustmentUiState.Content) {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
         val navigationDispatcher = LocalNavigationDispatcher.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
-        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         Column(
             modifier = Modifier
@@ -63,7 +99,7 @@ class ViewAdjustmentModal(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AdjustmentIconBox(
-                    showCreditCardBadge = uiState.transaction.target.isCreditCard
+                    showCreditCardBadge = state.transaction.target.isCreditCard
                 )
 
                 Spacer(Modifier.width(16.dp))
@@ -81,7 +117,7 @@ class ViewAdjustmentModal(
                     val balanceAdjust = stringResource(Res.string.view_adjustment_balance_adjust)
                     val invoiceAdjust = stringResource(Res.string.view_adjustment_invoice_adjust)
                     Text(
-                        text = uiState.transaction.title ?: when (uiState.transaction.target) {
+                        text = state.transaction.title ?: when (state.transaction.target) {
                             Transaction.Target.ACCOUNT -> balanceAdjust
                             Transaction.Target.CREDIT_CARD -> invoiceAdjust
                         },
@@ -95,7 +131,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_adjusted_value_label),
-                value = formatter.formatWithSign(uiState.transaction.amount),
+                value = formatter.formatWithSign(state.transaction.amount),
                 valueColor = Adjustment
             )
 
@@ -103,7 +139,7 @@ class ViewAdjustmentModal(
 
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_date_label),
-                value = dayMonthYear.format(uiState.transaction.date)
+                value = dayMonthYear.format(state.transaction.date)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -112,13 +148,13 @@ class ViewAdjustmentModal(
             val accountTypeLabel = stringResource(Res.string.view_adjustment_account_label)
             DetailRow(
                 label = stringResource(Res.string.view_adjustment_type_row_label),
-                value = when (uiState.transaction.target) {
+                value = when (state.transaction.target) {
                     Transaction.Target.ACCOUNT -> accountTypeLabel
                     Transaction.Target.CREDIT_CARD -> creditCardLabel
                 }
             )
 
-            uiState.account?.let { account ->
+            state.account?.let { account ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_account_label),
                     value = account.name,
@@ -133,7 +169,7 @@ class ViewAdjustmentModal(
             }
 
             val deletedLabel = stringResource(Res.string.view_adjustment_deleted)
-            uiState.creditCard?.let { creditCard ->
+            state.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_card_label),
                     value = creditCard.name,
@@ -148,7 +184,7 @@ class ViewAdjustmentModal(
                     }
                 )
             } ?: run {
-                if (uiState.transaction.target == Transaction.Target.CREDIT_CARD) {
+                if (state.transaction.target == Transaction.Target.CREDIT_CARD) {
                     DetailRow(
                         label = stringResource(Res.string.view_adjustment_card_label),
                         value = deletedLabel,
@@ -160,7 +196,7 @@ class ViewAdjustmentModal(
                 }
             }
 
-            uiState.invoice?.let { invoice ->
+            state.invoice?.let { invoice ->
                 val creditCardId = invoice.creditCardId
                 DetailRow(
                     label = stringResource(Res.string.view_operation_invoice_label),
@@ -184,7 +220,7 @@ class ViewAdjustmentModal(
 
             OutlinedButton(
                 onClick = {
-                    manager.show(DeleteTransactionModal(uiState.transaction))
+                    manager.show(DeleteTransactionModal(state.transaction))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),

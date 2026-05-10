@@ -301,7 +301,7 @@ private fun DashboardRecentsSection(
                         val operation = operationUi.operation
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operation.type.isAdjustment -> modalManager.show(viewAdjustmentEntry.create(operation))
+                            operation.type.isAdjustment -> modalManager.show(viewAdjustmentEntry.create(operation.id))
                             else -> modalManager.show(viewOperationEntry.create(operation.id, operationUi.perspective))
                         }
                     }

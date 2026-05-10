@@ -88,6 +88,7 @@
     <string name="view_adjustment_credit_card_label">Cartão de Crédito</string>
     <string name="view_adjustment_deleted">Excluído</string>
     <string name="view_adjustment_delete_label">Excluir Ajuste</string>
+    <string name="view_adjustment_unavailable">O ajuste solicitado não está mais disponível.</string>
     <string name="edit_transaction_title">Editar Transação</string>
     <string name="edit_transaction_title_label">Título</string>
     <string name="edit_transaction_amount_label">Valor</string>

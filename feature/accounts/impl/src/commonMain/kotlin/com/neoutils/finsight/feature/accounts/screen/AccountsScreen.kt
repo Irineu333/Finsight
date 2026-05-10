@@ -268,7 +268,7 @@ private fun AccountsContent(
                                 onClick = {
                                     when (operationUi.displayType) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            modalManager.show(viewAdjustmentEntry.create(operationUi.operation))
+                                            modalManager.show(viewAdjustmentEntry.create(operationUi.operation.id))
                                         }
 
                                         else -> {

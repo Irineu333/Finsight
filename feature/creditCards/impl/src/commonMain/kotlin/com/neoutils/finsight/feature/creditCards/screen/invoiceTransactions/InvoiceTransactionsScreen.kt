@@ -277,7 +277,7 @@ private fun InvoiceTransactionsContent(
                             val operation = operationUi.operation
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(viewAdjustmentEntry.create(operation))
+                                    modalManager.show(viewAdjustmentEntry.create(operation.id))
                                 }
 
                                 else -> {

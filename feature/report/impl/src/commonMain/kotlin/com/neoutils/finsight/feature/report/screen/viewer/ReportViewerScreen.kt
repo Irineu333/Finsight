@@ -307,7 +307,7 @@ private fun ReportViewerContent(
                                             val operation = operationUi.operation
                                             when {
                                                 operation.type.isAdjustment -> modalManager.show(
-                                                    viewAdjustmentEntry.create(operation)
+                                                    viewAdjustmentEntry.create(operation.id)
                                                 )
 
                                                 else -> modalManager.show(viewOperationEntry.create(operation.id, operationUi.perspective))

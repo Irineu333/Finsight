@@ -6,11 +6,18 @@ import com.neoutils.finsight.feature.creditCards.model.Invoice
 import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.transactions.model.Transaction
 
-data class ViewAdjustmentUiState(
-    val operation: Operation,
-    val account: Account? = null,
-    val creditCard: CreditCard? = null,
-    val invoice: Invoice? = null,
-) {
-    val transaction: Transaction = operation.primaryTransaction
+sealed class ViewAdjustmentUiState {
+
+    data object Loading : ViewAdjustmentUiState()
+
+    data object Error : ViewAdjustmentUiState()
+
+    data class Content(
+        val operation: Operation,
+        val account: Account? = null,
+        val creditCard: CreditCard? = null,
+        val invoice: Invoice? = null,
+    ) : ViewAdjustmentUiState() {
+        val transaction: Transaction = operation.primaryTransaction
+    }
 }

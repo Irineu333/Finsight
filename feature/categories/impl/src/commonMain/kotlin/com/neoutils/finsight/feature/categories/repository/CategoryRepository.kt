@@ -41,10 +41,8 @@ class CategoryRepository(
         }
     }
 
-    override fun observeCategoriesByIds(ids: List<Long>): Flow<List<Category>> {
-        return dao.observeCategoriesByIds(ids).map { entities ->
-            entities.map { mapper.toDomain(it) }
-        }
+    override suspend fun getCategoriesByIds(ids: List<Long>): List<Category> {
+        return dao.getCategoriesByIds(ids).map { mapper.toDomain(it) }
     }
 
     override suspend fun insert(category: Category) {

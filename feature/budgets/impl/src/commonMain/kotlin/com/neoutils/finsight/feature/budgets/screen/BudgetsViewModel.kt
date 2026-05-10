@@ -4,11 +4,9 @@ package com.neoutils.finsight.feature.budgets.screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
-import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
-import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
-import com.neoutils.finsight.feature.budgets.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.core.utils.extension.toYearMonth
+import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
+import com.neoutils.finsight.feature.budgets.usecase.IGetBudgetProgressUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -22,34 +20,29 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class BudgetsViewModel(
-    private val budgetRepository: IBudgetRepository,
-    private val operationRepository: IOperationRepository,
-    private val recurringRepository: IRecurringRepository,
-    private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
+    budgetRepository: IBudgetRepository,
+    private val getBudgetProgress: IGetBudgetProgressUseCase,
 ) : ViewModel() {
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
     val uiState = combine(
         budgetRepository.observeAllBudgets(),
-        operationRepository.observeAllOperations(),
-        recurringRepository.observeAllRecurring(),
         selectedMonth,
-    ) { budgets, operations, recurringList, selectedMonth ->
-        val transactions = operations.flatMap { it.transactions }
+    ) { budgets, selectedMonth ->
         val systemToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val today = if (selectedMonth == systemToday.yearMonth) {
-            systemToday
-        } else {
-            LocalDate(selectedMonth.year, selectedMonth.month, 1)
+
+        val today = systemToday.takeIf {
+            selectedMonth == systemToday.yearMonth
+        } ?: selectedMonth.firstDay
+
+        val budgetProgress = budgets.mapNotNull { budget ->
+            getBudgetProgress(
+                budgetId = budget.id,
+                today = today,
+            )
         }
-        val budgetProgress = calculateBudgetProgressUseCase(
-            budgets = budgets,
-            transactions = transactions,
-            recurringList = recurringList,
-            operations = operations,
-            today = today,
-        )
+
         if (budgetProgress.isEmpty()) {
             BudgetsUiState.Empty(selectedMonth = selectedMonth)
         } else {
@@ -61,7 +54,9 @@ class BudgetsViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = BudgetsUiState.Loading(selectedMonth = selectedMonth.value),
+        initialValue = BudgetsUiState.Loading(
+            selectedMonth = selectedMonth.value
+        ),
     )
 
     fun onAction(action: BudgetsAction) {

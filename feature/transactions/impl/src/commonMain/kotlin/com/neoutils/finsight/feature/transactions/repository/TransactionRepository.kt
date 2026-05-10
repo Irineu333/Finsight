@@ -60,6 +60,19 @@ class TransactionRepository(
         ).map(mapper::toDomain)
     }
 
+    override suspend fun getTransactionsByCategoryIdsAndDateRange(
+        categoryIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction> {
+        if (categoryIds.isEmpty()) return emptyList()
+        return dao.getTransactionsByCategoryIdsAndDateRange(
+            categoryIds = categoryIds,
+            startDate = startDate,
+            endDate = endDate,
+        ).map(mapper::toDomain)
+    }
+
     override fun observeTransactionsBy(
         type: Transaction.Type?,
         target: Transaction.Target?,

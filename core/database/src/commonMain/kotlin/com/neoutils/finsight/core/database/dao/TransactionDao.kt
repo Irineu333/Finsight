@@ -78,6 +78,18 @@ interface TransactionDao {
 
     @Query("""
         SELECT * FROM transactions
+        WHERE categoryId IN (:categoryIds)
+          AND date BETWEEN :startDate AND :endDate
+        ORDER BY date DESC, id DESC
+    """)
+    suspend fun getTransactionsByCategoryIdsAndDateRange(
+        categoryIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<TransactionEntity>
+
+    @Query("""
+        SELECT * FROM transactions
         WHERE (:type IS NULL OR type = :type)
           AND (:target IS NULL OR target = :target)
           AND (:date IS NULL OR date = :date)

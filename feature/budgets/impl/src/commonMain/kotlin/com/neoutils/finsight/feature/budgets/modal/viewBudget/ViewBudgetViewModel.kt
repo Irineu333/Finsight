@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
-
 package com.neoutils.finsight.feature.budgets.modal.viewBudget
 
 import androidx.lifecycle.ViewModel
@@ -9,60 +7,44 @@ import com.neoutils.finsight.core.ui.theme.budgetProgressColor
 import com.neoutils.finsight.feature.budgets.error.BudgetError
 import com.neoutils.finsight.feature.budgets.exception.BudgetException
 import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
-import com.neoutils.finsight.feature.budgets.usecase.ICalculateBudgetProgressUseCase
+import com.neoutils.finsight.feature.budgets.usecase.IGetBudgetProgressUseCase
 import com.neoutils.finsight.feature.categories.repository.ICategoryRepository
-import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
-import com.neoutils.finsight.feature.transactions.repository.IOperationRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
-    budgetRepository: IBudgetRepository,
-    operationRepository: IOperationRepository,
-    recurringRepository: IRecurringRepository,
     categoryRepository: ICategoryRepository,
-    private val calculateBudgetProgress: ICalculateBudgetProgressUseCase,
+    private val getBudgetProgress: IGetBudgetProgressUseCase,
+    private val budgetRepository: IBudgetRepository,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val budget = budgetRepository.observeBudgetById(budgetId)
+    private val budget = flow {
+        val budget = budgetRepository.getBudgetById(budgetId)
 
-    val uiState = budget.flatMapLatest { budget ->
         if (budget == null) {
             crashlytics.recordException(BudgetException(BudgetError.NOT_FOUND))
-            return@flatMapLatest flowOf(ViewBudgetUiState.Error)
         }
 
-        combine(
-            operationRepository.observeAllOperations(),
-            recurringRepository.observeAllRecurring(),
-            categoryRepository.observeCategoriesByIds(budget.categoryIds),
-        ) { operations, recurringList, categories ->
-            val transactions = operations.flatMap { it.transactions }
-            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            val budgetProgress = calculateBudgetProgress(
-                budgets = listOf(budget),
-                transactions = transactions,
-                recurringList = recurringList,
-                operations = operations,
-                today = today,
-            ).first()
+        emit(budget)
+    }
 
-            ViewBudgetUiState.Content(
-                budgetProgress = budgetProgress,
-                categories = categories,
-                accentColor = budgetProgressColor(budgetProgress.progress),
-            )
+    val uiState = budget.map { budget ->
+
+        if (budget == null) {
+            return@map ViewBudgetUiState.Error
         }
+
+        val progress = getBudgetProgress(budget)
+
+        ViewBudgetUiState.Content(
+            budgetProgress = progress,
+            categories = categoryRepository.getCategoriesByIds(budget.categoryIds),
+            accentColor = budgetProgressColor(progress.progress),
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

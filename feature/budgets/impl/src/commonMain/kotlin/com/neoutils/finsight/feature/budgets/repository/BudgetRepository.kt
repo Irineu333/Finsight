@@ -26,15 +26,10 @@ class BudgetRepository(
         }
     }
 
-    override fun observeBudgetById(id: Long): Flow<Budget?> {
-        return combine(
-            dao.observeById(id),
-            dao.observeBudgetCategoriesByBudgetId(id),
-        ) { entity, budgetCategories ->
-            entity?.let {
-                mapper.toDomain(it, budgetCategories.map { c -> c.categoryId })
-            }
-        }
+    override suspend fun getBudgetById(id: Long): Budget? {
+        val entity = dao.getById(id) ?: return null
+        val categoryIds = dao.getBudgetCategoriesByBudgetId(id).map { it.categoryId }
+        return mapper.toDomain(entity, categoryIds)
     }
 
     override suspend fun getAllBudgets(): List<Budget> {

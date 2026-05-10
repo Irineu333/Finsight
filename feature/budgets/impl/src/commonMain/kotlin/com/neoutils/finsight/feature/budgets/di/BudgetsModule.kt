@@ -3,8 +3,8 @@ package com.neoutils.finsight.feature.budgets.di
 import com.neoutils.finsight.feature.budgets.mapper.BudgetMapper
 import com.neoutils.finsight.feature.budgets.repository.BudgetRepository
 import com.neoutils.finsight.feature.budgets.repository.IBudgetRepository
-import com.neoutils.finsight.feature.budgets.usecase.CalculateBudgetProgressUseCase
-import com.neoutils.finsight.feature.budgets.usecase.ICalculateBudgetProgressUseCase
+import com.neoutils.finsight.feature.budgets.usecase.GetBudgetProgressUseCase
+import com.neoutils.finsight.feature.budgets.usecase.IGetBudgetProgressUseCase
 import com.neoutils.finsight.feature.budgets.usecase.ValidateBudgetTitleUseCase
 import com.neoutils.finsight.feature.budgets.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.feature.budgets.modal.viewBudget.ViewBudgetModalEntry
@@ -28,8 +28,14 @@ val budgetsModule = module {
         )
     }
 
-    factory<ICalculateBudgetProgressUseCase> { CalculateBudgetProgressUseCase() }
-    factory { CalculateBudgetProgressUseCase() }
+    factory<IGetBudgetProgressUseCase> {
+        GetBudgetProgressUseCase(
+            budgetRepository = get(),
+            transactionRepository = get(),
+            operationRepository = get(),
+            recurringRepository = get(),
+        )
+    }
 
     factory {
         ValidateBudgetTitleUseCase(
@@ -40,9 +46,7 @@ val budgetsModule = module {
     viewModel {
         BudgetsViewModel(
             budgetRepository = get(),
-            operationRepository = get(),
-            recurringRepository = get(),
-            calculateBudgetProgressUseCase = get(),
+            getBudgetProgress = get(),
         )
     }
 
@@ -72,11 +76,9 @@ val budgetsModule = module {
     viewModel { (budgetId: Long) ->
         ViewBudgetViewModel(
             budgetId = budgetId,
-            budgetRepository = get(),
-            operationRepository = get(),
-            recurringRepository = get(),
             categoryRepository = get(),
-            calculateBudgetProgress = get(),
+            getBudgetProgress = get(),
+            budgetRepository = get(),
             crashlytics = get(),
         )
     }

@@ -29,6 +29,12 @@ interface ITransactionRepository {
         endDate: LocalDate,
     ): List<Transaction>
 
+    suspend fun getTransactionsByCategoryIdsAndDateRange(
+        categoryIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): List<Transaction>
+
     fun observeTransactionsBy(
         type: Transaction.Type? = null,
         target: Transaction.Target? = null,

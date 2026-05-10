@@ -8,8 +8,8 @@ import com.neoutils.finsight.feature.transactions.model.Operation
 import com.neoutils.finsight.feature.recurring.model.Recurring
 import com.neoutils.finsight.feature.recurring.model.RecurringOccurrence
 import com.neoutils.finsight.feature.transactions.model.Transaction
+import com.neoutils.finsight.feature.budgets.usecase.IGetBudgetProgressUseCase
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateBalanceUseCase
-import com.neoutils.finsight.feature.budgets.usecase.ICalculateBudgetProgressUseCase
 import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.feature.dashboard.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.feature.transactions.usecase.ICalculateTransactionStatsUseCase
@@ -44,7 +44,7 @@ class DashboardComponentsBuilder(
     private val calculateTransactionStatsUseCase: ICalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
-    private val calculateBudgetProgressUseCase: ICalculateBudgetProgressUseCase,
+    private val getBudgetProgress: IGetBudgetProgressUseCase,
     private val getPendingRecurringUseCase: IGetPendingRecurringUseCase,
     private val invoiceUiMapper: IInvoiceUiMapper,
     private val operationUiMapper: IOperationUiMapper,
@@ -303,16 +303,13 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun budgets(
+    private suspend fun budgets(
         input: DashboardComponentsInput,
         allTransactions: List<Transaction>,
     ): DashboardComponent.Budgets? {
-        val budgetProgress = calculateBudgetProgressUseCase(
-            budgets = input.budgets,
-            transactions = allTransactions,
-            recurringList = input.recurringList,
-            operations = input.operations,
-        )
+        val budgetProgress = input.budgets.map { budget ->
+            getBudgetProgress(budget = budget)
+        }
 
         return if (budgetProgress.isNotEmpty()) {
             DashboardComponent.Budgets(

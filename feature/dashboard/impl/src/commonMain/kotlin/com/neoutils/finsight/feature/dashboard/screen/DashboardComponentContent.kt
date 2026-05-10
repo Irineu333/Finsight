@@ -546,10 +546,7 @@ private fun DashboardCreditCardsSection(
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     creditCardUi.invoiceUi?.let {
                                         modalManager.show(
-                                            advancePaymentEntry.create(
-                                                invoice = it.invoice,
-                                                currentBillAmount = it.amount
-                                            )
+                                            advancePaymentEntry.create(invoiceId = it.invoice.id)
                                         )
                                     }
                                 }

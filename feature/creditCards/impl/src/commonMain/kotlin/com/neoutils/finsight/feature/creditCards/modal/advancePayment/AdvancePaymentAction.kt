@@ -8,9 +8,11 @@ sealed class AdvancePaymentAction {
         val account: Account?
     ) : AdvancePaymentAction()
 
+    data class SelectDate(
+        val date: LocalDate
+    ) : AdvancePaymentAction()
+
     data class Submit(
-        val amount: Double,
-        val date: LocalDate,
-        val account: Account? = null,
+        val amount: Double
     ) : AdvancePaymentAction()
 }

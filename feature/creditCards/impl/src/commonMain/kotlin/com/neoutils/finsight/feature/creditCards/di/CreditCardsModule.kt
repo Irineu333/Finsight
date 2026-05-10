@@ -313,6 +313,7 @@ val creditCardsModule = module {
         AdvancePaymentViewModel(
             invoiceId = it.get(),
             advanceInvoicePaymentUseCase = get(),
+            calculateInvoiceUseCase = get(),
             accountRepository = get(),
             invoiceRepository = get(),
             creditCardRepository = get(),

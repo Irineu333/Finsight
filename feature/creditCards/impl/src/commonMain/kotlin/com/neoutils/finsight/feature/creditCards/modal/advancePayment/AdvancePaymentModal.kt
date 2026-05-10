@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.feature.creditCards.modal.advancePayment
 
 import androidx.compose.foundation.layout.*
@@ -12,8 +10,10 @@ import androidx.compose.material.icons.twotone.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -21,54 +21,96 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.feature.creditCards.model.Invoice
-import com.neoutils.finsight.feature.creditCards.resources.*
-import com.neoutils.finsight.feature.accounts.component.AccountSelector
 import com.neoutils.finsight.core.ui.component.LocalModalManager
 import com.neoutils.finsight.core.ui.component.ModalBottomSheet
+import com.neoutils.finsight.core.ui.component.ModalErrorContent
 import com.neoutils.finsight.core.ui.modal.date.DatePickerModal
 import com.neoutils.finsight.core.ui.util.DateInputTransformation
-import com.neoutils.finsight.core.utils.util.dayMonthYear
 import com.neoutils.finsight.core.ui.util.rememberMoneyInputTransformation
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import com.neoutils.finsight.core.utils.util.dayMonthYear
+import com.neoutils.finsight.feature.accounts.component.AccountSelector
+import com.neoutils.finsight.feature.creditCards.model.form.AdvancePaymentForm
+import com.neoutils.finsight.feature.creditCards.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-
-private val currentDate
-    get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvancePaymentModal(
-    private val invoice: Invoice,
-    private val currentBillAmount: Double
+    private val invoiceId: Long,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-
         val viewModel = koinViewModel<AdvancePaymentViewModel> {
-            parametersOf(invoice.id)
+            parametersOf(invoiceId)
         }
 
         val uiState by viewModel.uiState.collectAsState()
 
+        when (val state = uiState) {
+            AdvancePaymentUiState.Loading -> LoadingContent()
+            AdvancePaymentUiState.Error -> ErrorContent()
+            is AdvancePaymentUiState.Content -> ContentContent(state, viewModel)
+        }
+    }
+
+    @Composable
+    private fun ErrorContent() {
         val manager = LocalModalManager.current
+        ModalErrorContent(
+            message = stringResource(Res.string.advance_payment_unavailable),
+            onClose = { manager.dismiss() },
+        )
+    }
+
+    @Composable
+    private fun LoadingContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(Res.string.advance_payment_title),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            CircularProgressIndicator()
+        }
+    }
+
+    @Composable
+    private fun ContentContent(
+        state: AdvancePaymentUiState.Content,
+        viewModel: AdvancePaymentViewModel,
+    ) {
+        val manager = LocalModalManager.current
+        val form = state.form
 
         val amount = rememberTextFieldState()
+        val date = rememberTextFieldState(dayMonthYear.format(form.date))
 
-        val openingDate = uiState.openingDate ?: return
-        val closingDate = uiState.closingDate ?: return
-        val maxDate = closingDate.coerceAtMost(currentDate)
+        LaunchedEffect(form.date) {
+            val formatted = dayMonthYear.format(form.date)
+            if (date.text.toString() != formatted) {
+                date.edit { replace(0, length, formatted) }
+            }
+        }
 
-        val date = rememberTextFieldState(
-            dayMonthYear.format(
-                currentDate.coerceIn(openingDate, maxDate)
-            )
-        )
+        LaunchedEffect(viewModel) {
+            snapshotFlow { date.text.toString() }
+                .collect { text ->
+                    val parsed = runCatching {
+                        dayMonthYear.parse(text)
+                    }.getOrNull() ?: return@collect
+
+                    if (parsed != state.form.date) {
+                        viewModel.onAction(AdvancePaymentAction.SelectDate(parsed))
+                    }
+                }
+        }
 
         Column(
             modifier = Modifier
@@ -110,8 +152,8 @@ class AdvancePaymentModal(
             Spacer(modifier = Modifier.height(8.dp))
 
             AccountSelector(
-                selectedAccount = uiState.selectedAccount,
-                accounts = uiState.accounts,
+                selectedAccount = form.account,
+                accounts = state.accounts,
                 onAccountSelected = {
                     viewModel.onAction(AdvancePaymentAction.SelectAccount(it))
                 },
@@ -135,13 +177,11 @@ class AdvancePaymentModal(
                         onClick = {
                             manager.show(
                                 DatePickerModal(
-                                    initialDate = runCatching { dayMonthYear.parse(date.text.toString()) }.getOrNull(),
-                                    minDate = openingDate,
-                                    maxDate = maxDate,
+                                    initialDate = form.date,
+                                    minDate = form.minDate,
+                                    maxDate = form.maxDate,
                                     onDateSelected = { selectedDate ->
-                                        date.edit {
-                                            replace(0, length, dayMonthYear.format(selectedDate))
-                                        }
+                                        viewModel.onAction(AdvancePaymentAction.SelectDate(selectedDate))
                                     }
                                 )
                             )
@@ -167,21 +207,10 @@ class AdvancePaymentModal(
                     viewModel.onAction(
                         AdvancePaymentAction.Submit(
                             amount = parseMoneyToDouble(amount.text.toString()),
-                            date = dayMonthYear.parse(date.text.toString()),
                         )
                     )
                 },
-                enabled = isValidPayment(
-                    amount = amount.text.toString(),
-                    date = date.text.toString(),
-                    minDate = openingDate,
-                    maxDate = maxDate,
-                    outstandingDebt = if (currentBillAmount < 0.0) {
-                        -currentBillAmount
-                    } else {
-                        currentBillAmount
-                    }.coerceAtLeast(0.0),
-                ) && uiState.selectedAccount != null,
+                enabled = canSubmit(form, amount.text.toString(), date.text.toString()),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -194,21 +223,16 @@ class AdvancePaymentModal(
         }
     }
 
-    private fun isValidPayment(
-        amount: String,
-        date: String,
-        minDate: LocalDate,
-        maxDate: LocalDate,
-        outstandingDebt: Double,
+    private fun canSubmit(
+        form: AdvancePaymentForm,
+        rawAmountText: String,
+        rawDateText: String,
     ): Boolean {
-        if (amount.isEmpty()) return false
-        val parsedAmount = parseMoneyToDouble(amount)
-        if (parsedAmount <= 0.0) return false
-        if (outstandingDebt <= 0.0) return false
-        if (parsedAmount > outstandingDebt) return false
-        if (date.isEmpty()) return false
-        val parsedDate = runCatching { dayMonthYear.parse(date) }.getOrElse { return false }
-        return parsedDate in minDate..maxDate
+        if (rawAmountText.isEmpty()) return false
+        if (rawDateText.isEmpty()) return false
+        val parsedDate = runCatching { dayMonthYear.parse(rawDateText) }.getOrNull() ?: return false
+        if (parsedDate != form.date) return false
+        return form.isValid(parseMoneyToDouble(rawAmountText))
     }
 
     private fun parseMoneyToDouble(formatted: String): Double {

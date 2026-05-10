@@ -93,14 +93,14 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [x] 7.2 `PayInvoiceViewModel` recebe `invoiceId: Long`; calcula `currentBillAmount` via `CalculateInvoiceUseCase`
 - [x] 7.3 `PayInvoiceModalEntry.create(invoiceId: Long)` em `:api`
 - [x] 7.4 Impl + modal ajustados (consumir `currentBillAmount` do `Content`)
-- [ ] 7.5 `AdvancePaymentUiState` → sealed `Loading | Content(...)`
-- [ ] 7.6 `AdvancePaymentViewModel` recebe `invoiceId: Long`; calcula valores via use cases
-- [ ] 7.7 `AdvancePaymentModalEntry.create(invoiceId: Long)` em `:api`
-- [ ] 7.8 Impl + modal ajustados
-- [ ] 7.9 Atualizar Koin (2 ViewModels)
-- [ ] 7.10 Call-sites — revisar em `CreditCardsViewModel`, `InvoiceTransactionsViewModel`, `DashboardViewModel`. Confirmar que nenhum chamava com snapshot diferente do que `CalculateInvoiceUseCase` retornaria
-- [ ] 7.11 Comportamento de entidade deletada: dismiss + crashlytics
-- [ ] 7.12 `./gradlew :feature:creditCards:impl:check`
+- [x] 7.5 `AdvancePaymentUiState` → sealed `Loading | Content(...)`
+- [x] 7.6 `AdvancePaymentViewModel` recebe `invoiceId: Long`; calcula valores via use cases
+- [x] 7.7 `AdvancePaymentModalEntry.create(invoiceId: Long)` em `:api`
+- [x] 7.8 Impl + modal ajustados
+- [x] 7.9 Atualizar Koin (2 ViewModels)
+- [x] 7.10 Call-sites — revisar em `CreditCardsViewModel`, `InvoiceTransactionsViewModel`, `DashboardViewModel`. Confirmar que nenhum chamava com snapshot diferente do que `CalculateInvoiceUseCase` retornaria
+- [x] 7.11 Comportamento de entidade deletada: dismiss + crashlytics
+- [x] 7.12 `./gradlew :feature:creditCards:impl:check`
 
 ## 8. Budgets (D6)
 

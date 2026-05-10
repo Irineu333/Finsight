@@ -33,6 +33,7 @@
     <string name="advance_payment_amount_label">Amount</string>
     <string name="advance_payment_date_label">Date</string>
     <string name="advance_payment_confirm">Advance Payment</string>
+    <string name="advance_payment_unavailable">This invoice is no longer available. Refresh the screen to continue.</string>
     <string name="edit_invoice_balance_title">Edit Invoice</string>
     <string name="edit_invoice_balance_label">Amount</string>
     <string name="edit_invoice_balance_save">Save</string>

@@ -1,11 +1,13 @@
 package com.neoutils.finsight.feature.creditCards.modal.advancePayment
 
 import com.neoutils.finsight.feature.accounts.model.Account
-import kotlinx.datetime.LocalDate
+import com.neoutils.finsight.feature.creditCards.model.form.AdvancePaymentForm
 
-data class AdvancePaymentUiState(
-    val accounts: List<Account> = emptyList(),
-    val selectedAccount: Account? = null,
-    val openingDate: LocalDate? = null,
-    val closingDate: LocalDate? = null,
-)
+sealed interface AdvancePaymentUiState {
+    data object Loading : AdvancePaymentUiState
+    data object Error : AdvancePaymentUiState
+    data class Content(
+        val form: AdvancePaymentForm,
+        val accounts: List<Account>,
+    ) : AdvancePaymentUiState
+}

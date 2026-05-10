@@ -450,8 +450,7 @@ private fun InvoiceActions(
                 onClick = {
                     modalManager.show(
                         AdvancePaymentModal(
-                            invoice = invoice,
-                            currentBillAmount = summary.total,
+                            invoiceId = invoice.id,
                         )
                     )
                 },

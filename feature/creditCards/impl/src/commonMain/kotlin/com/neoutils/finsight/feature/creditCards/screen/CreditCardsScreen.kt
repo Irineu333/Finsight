@@ -422,8 +422,7 @@ private fun CardActions(
                     onClick = {
                         modalManager.show(
                             AdvancePaymentModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount,
+                                invoiceId = invoice.invoice.id,
                             )
                         )
                     },

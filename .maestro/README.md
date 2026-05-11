@@ -81,7 +81,7 @@ maestro hierarchy  # dump da árvore atual no terminal
 └── README.md
 ```
 
-Cada flow é independente e **deve** começar chamando `helpers/reset-app.yaml` em `onFlowStart`. Pré-condições adicionais (conta, categoria, cartão) são montadas via outros helpers em `helpers/seed-*.yaml`.
+Cada flow é independente e **deve** começar chamando `helpers/reset-app.yaml` como primeiro passo via `- runFlow:`. Pré-condições adicionais (conta, categoria, cartão) são montadas em seguida via outros helpers em `helpers/seed-*.yaml`.
 
 ## Convenção de testTag
 

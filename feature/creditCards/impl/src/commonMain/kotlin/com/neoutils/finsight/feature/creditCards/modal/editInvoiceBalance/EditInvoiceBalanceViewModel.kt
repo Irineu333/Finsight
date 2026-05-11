@@ -14,14 +14,10 @@ import com.neoutils.finsight.feature.creditCards.repository.ICreditCardRepositor
 import com.neoutils.finsight.feature.creditCards.repository.IInvoiceRepository
 import com.neoutils.finsight.feature.creditCards.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.CalculateInvoiceUseCase
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,7 +26,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalTime::class)
 class EditInvoiceBalanceViewModel(
     private val initialInvoiceId: Long,
     private val adjustInvoiceUseCase: AdjustInvoiceUseCase,
@@ -47,23 +43,15 @@ class EditInvoiceBalanceViewModel(
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
-    private val notFound = MutableStateFlow(false)
+    private val editableInvoices = MutableStateFlow<List<Invoice>>(emptyList())
 
-    private val editableInvoices = selectedCreditCard
-        .filterNotNull()
-        .map { creditCard ->
-            invoiceRepository
-                .getInvoicesByCreditCard(creditCard.id)
-                .filter {
-                    it.status.isEditable
-                }
-        }
+    private val balance = selectedInvoice.map { invoice ->
+        invoice?.let { calculateInvoiceUseCase(it.id) }
+    }
 
-    private val balance = selectedInvoice
-        .filterNotNull()
-        .map { invoice ->
-            calculateInvoiceUseCase(invoice.id)
-        }
+    private val creditCards = flow {
+        emit(creditCardRepository.getAllCreditCards())
+    }
 
     init {
         setup()
@@ -74,67 +62,84 @@ class EditInvoiceBalanceViewModel(
 
         if (invoice == null) {
             crashlytics.recordException(InvoiceException(InvoiceError.NotFound))
-            notFound.value = true
             return@launch
         }
-
         val creditCard = creditCardRepository.getCreditCardById(invoice.creditCardId)
 
         if (creditCard == null) {
             crashlytics.recordException(InvoiceException(InvoiceError.CreditCardNotFound))
-            notFound.value = true
             return@launch
         }
 
         selectedInvoice.value = invoice
         selectedCreditCard.value = creditCard
+
+        editableInvoices.value = invoiceRepository.getEditableInvoicesByCreditCard(creditCard.id)
     }
 
-    private val creditCards = flow {
-        emit(creditCardRepository.getAllCreditCards())
-    }
-
-    private val content = combine(
+    val uiState = combine(
         creditCards,
-        selectedCreditCard.filterNotNull(),
+        selectedCreditCard,
         editableInvoices,
-        selectedInvoice.filterNotNull(),
+        selectedInvoice,
         balance,
     ) { cards, selectedCard, invoices, selectedInvoice, balance ->
-        EditInvoiceBalanceUiState.Content(
-            creditCards = cards,
-            selectedCreditCard = selectedCard,
-            editableInvoices = invoices,
-            selectedInvoice = selectedInvoice,
-            currentBalance = balance,
-        ) as EditInvoiceBalanceUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(EditInvoiceBalanceUiState.Error) else content
+        when {
+            cards.isEmpty() -> EditInvoiceBalanceUiState.Error
+            selectedCard == null -> EditInvoiceBalanceUiState.Loading
+            invoices.isEmpty() -> EditInvoiceBalanceUiState.Error
+            selectedInvoice == null -> EditInvoiceBalanceUiState.Loading
+            else -> EditInvoiceBalanceUiState.Content(
+                creditCards = cards,
+                selectedCreditCard = selectedCard,
+                editableInvoices = invoices,
+                selectedInvoice = selectedInvoice,
+                currentBalance = balance ?: 0.0,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = EditInvoiceBalanceUiState.Loading,
     )
 
-    fun onAction(action: EditInvoiceBalanceAction) = viewModelScope.launch {
+    fun onAction(action: EditInvoiceBalanceAction) {
         when (action) {
-            is EditInvoiceBalanceAction.SelectCreditCard -> {
-                selectedCreditCard.value = action.creditCard
-
-                selectedInvoice.value = invoiceRepository
-                    .getOpenInvoice(action.creditCard.id) ?: return@launch
-            }
-
-            is EditInvoiceBalanceAction.SelectInvoice -> {
-                selectedInvoice.value = action.invoice
-            }
-
-            is EditInvoiceBalanceAction.Submit -> {
-                submit(action.targetBalance)
-            }
+            is EditInvoiceBalanceAction.SelectCreditCard -> changeCreditCard(action.creditCardId)
+            is EditInvoiceBalanceAction.SelectInvoice -> changeInvoice(action.invoiceId)
+            is EditInvoiceBalanceAction.Submit -> submit(action.targetBalance)
         }
+    }
+
+    private fun changeCreditCard(creditCardId: Long) = viewModelScope.launch {
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
+
+        if (creditCard == null) {
+            crashlytics.recordException(InvoiceException(InvoiceError.CreditCardNotFound))
+            return@launch
+        }
+
+        val openInvoice = invoiceRepository.getOpenInvoice(creditCardId)
+
+        if (openInvoice == null) {
+            crashlytics.recordException(InvoiceException(InvoiceError.NotFound))
+            return@launch
+        }
+
+        selectedCreditCard.value = creditCard
+        editableInvoices.value = invoiceRepository.getEditableInvoicesByCreditCard(creditCard.id)
+        selectedInvoice.value = openInvoice
+    }
+
+    private fun changeInvoice(invoiceId: Long) = viewModelScope.launch {
+        val invoice = invoiceRepository.getInvoiceById(invoiceId)
+
+        if (invoice == null) {
+            crashlytics.recordException(InvoiceException(InvoiceError.NotFound))
+            return@launch
+        }
+
+        selectedInvoice.value = invoice
     }
 
     private fun submit(targetBalance: Double) = viewModelScope.launch {

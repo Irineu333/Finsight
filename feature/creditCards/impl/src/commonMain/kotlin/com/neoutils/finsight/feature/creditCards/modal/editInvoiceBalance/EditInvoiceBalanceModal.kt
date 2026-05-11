@@ -123,7 +123,7 @@ class EditInvoiceBalanceModal(
                         creditCards = state.creditCards,
                         creditCard = state.selectedCreditCard,
                         onCreditCardSelected = { creditCard ->
-                            viewModel.onAction(EditInvoiceBalanceAction.SelectCreditCard(creditCard))
+                            viewModel.onAction(EditInvoiceBalanceAction.SelectCreditCard(creditCard.id))
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -134,7 +134,7 @@ class EditInvoiceBalanceModal(
                         invoices = state.editableInvoices,
                         invoice = state.selectedInvoice,
                         onInvoiceSelected = { invoice ->
-                            viewModel.onAction(EditInvoiceBalanceAction.SelectInvoice(invoice))
+                            viewModel.onAction(EditInvoiceBalanceAction.SelectInvoice(invoice.id))
                         },
                         modifier = Modifier.fillMaxWidth()
                     )

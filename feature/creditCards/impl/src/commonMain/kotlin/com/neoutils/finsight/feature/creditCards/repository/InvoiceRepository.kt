@@ -28,6 +28,10 @@ class InvoiceRepository(
         return dao.getAllInvoicesByCreditCard(creditCardId).map(mapper::toDomain)
     }
 
+    override suspend fun getEditableInvoicesByCreditCard(creditCardId: Long): List<Invoice> {
+        return getInvoicesByCreditCard(creditCardId).filter { it.status.isEditable }
+    }
+
     override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> {
         return dao.observeInvoiceById(invoiceId).map { entity ->
             entity?.let(mapper::toDomain)

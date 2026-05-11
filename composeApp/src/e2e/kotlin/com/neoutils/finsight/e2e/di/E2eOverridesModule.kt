@@ -17,3 +17,5 @@ val e2eOverridesModule: Module = module {
     single<Crashlytics> { E2eCrashlytics() }
     single<ISupportRepository> { InMemorySupportRepository() }
 }
+
+const val koinAllowOverride: Boolean = true

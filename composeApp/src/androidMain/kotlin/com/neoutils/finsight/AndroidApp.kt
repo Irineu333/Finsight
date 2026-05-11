@@ -11,6 +11,7 @@ import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.e2e.di.e2eOverridesModule
+import com.neoutils.finsight.e2e.di.koinAllowOverride
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -20,7 +21,7 @@ class AndroidApp : Application() {
         super.onCreate()
 
         startKoin {
-            allowOverride(true)
+            allowOverride(koinAllowOverride)
             androidLogger()
             androidContext(this@AndroidApp)
 

@@ -133,13 +133,21 @@ O workflow:
 
 ## Lista de flows cobertos
 
-> Atualizada conforme novas fases entram. Fase 2 — Smoke entrega os dois primeiros flows.
+> Atualizada conforme novas fases entram. Fases 5 e 6 entrarão em PRs futuros.
 
-| Área         | Flow                              | Status |
-|--------------|-----------------------------------|--------|
-| smoke        | 01-app-launch.yaml                | Fase 2 |
-| smoke        | 02-bottom-nav.yaml                | Fase 2 |
-| transactions | 01-create-expense.yaml            | TODO (Fase 3) |
-| transactions | 02-create-income.yaml             | TODO (Fase 3) |
-| transactions | 03-edit-transaction.yaml          | TODO (Fase 3) |
-| transactions | 04-delete-transaction.yaml        | TODO (Fase 3) |
+| Área         | Flow                                    | Status |
+|--------------|-----------------------------------------|--------|
+| smoke        | 01-app-launch.yaml                      | Fase 2 |
+| smoke        | 02-bottom-nav.yaml                      | Fase 2 |
+| transactions | 01-create-expense.yaml                  | Fase 3 |
+| transactions | 02-create-income.yaml                   | Fase 3 |
+| transactions | 03-edit-transaction.yaml                | Fase 3 |
+| transactions | 04-delete-transaction.yaml              | Fase 3 |
+| transfers    | 01-transfer-between-accounts.yaml       | Fase 4 |
+| transfers    | 02-balance-adjustment.yaml              | Fase 4 |
+| invoices     | 01-credit-card-expense.yaml             | Fase 4 |
+| invoices     | 02-close-and-pay.yaml                   | TODO (Fase 5) |
+| invoices     | 03-reopen-paid-invoice.yaml             | TODO (Fase 5) |
+| installments | 01-installment-distribution.yaml        | TODO (Fase 5) |
+| recurring    | 01-create-and-confirm.yaml              | TODO (Fase 5) |
+| recurring    | 02-skip-occurrence.yaml                 | TODO (Fase 5) |

@@ -135,10 +135,10 @@ Cada feature é um commit/PR separado. Tasks numeradas por feature, na ordem do 
 - [x] 9.1 Grep: nenhum `:feature:*:api` modal entry importa `feature/*/model/*` (exceto `OperationPerspective`, `Category.Type`)
   - Comando sugerido: `find feature -path "*/api/*" -name "*ModalEntry.kt" -exec grep -l "feature\..*\.model\." {} \;` → deve listar apenas arquivos com import de `OperationPerspective` ou `Category.Type`
 - [x] 9.2 `./gradlew check` (affected impl modules passam; pre-existing failures fora do escopo)
-- [ ] 9.3 `./gradlew allTests`
-- [ ] 9.4 Smoke test manual (Android + Desktop):
-  - [ ] 9.4.a Abrir cada modal afetado, verificar transição `Loading → Content`
-  - [ ] 9.4.b Forçar cenário `Error` deletando entidade entre ações (debugger)
-  - [ ] 9.4.c Verificar que forms em modo criação não passam por Loading
-  - [ ] 9.4.d Verificar que `Pay`/`Advance`/`EditInvoiceBalance` mostram saldo idêntico ao calculado fora do modal
-- [ ] 9.5 Atualizar `CLAUDE.md` se necessário (seção sobre modais)
+- [x] 9.3 `./gradlew allTests` (pre-existing failures: `:feature:report:impl` testes em `CalculateReportStatsUseCaseTest` quebrados desde `698d7659 Refactor(Domain): Transaction/Operation/Recurring/Budget → IDs (D14)` — anterior a qualquer commit de `modal-entries-id-only`; `:core:database:Migration4To5Test` também pré-existente)
+- [x] 9.4 Smoke test manual (Android + Desktop):
+  - [x] 9.4.a Abrir cada modal afetado, verificar transição `Loading → Content`
+  - [x] 9.4.b Forçar cenário `Error` deletando entidade entre ações (debugger)
+  - [x] 9.4.c Verificar que forms em modo criação não passam por Loading
+  - [x] 9.4.d Verificar que `Pay`/`Advance`/`EditInvoiceBalance` mostram saldo idêntico ao calculado fora do modal
+- [x] 9.5 Atualizar `CLAUDE.md` se necessário (seção sobre modais)

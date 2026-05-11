@@ -71,6 +71,8 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 
+**Modal entries (`:feature:*:api`):** entries recebem `Long` ids (+ parâmetros transientes não-entidade como `OperationPerspective`, `Category.Type`, `LocalDate`) — nunca modelos de domínio. Imports de `feature/*/model/*` em `:api` ficam restritos a tipos de seleção. ViewModels resolvem a entidade pelo id no init. UiState de modal id-driven segue `sealed { Loading, Content[, Error] }`: `Error` indica falha de hidratação (entidade deletada por race) e renderiza `ModalErrorContent` em vez de `dismiss()`. Forms em modo criação (id == null) emitem `Content` no primeiro frame — `Loading` só vale em edit-mode com fetch real.
+
 **Error Handling:** Arrow library (Either/flatMap/catch)
 
 > More details in the architecture skill.

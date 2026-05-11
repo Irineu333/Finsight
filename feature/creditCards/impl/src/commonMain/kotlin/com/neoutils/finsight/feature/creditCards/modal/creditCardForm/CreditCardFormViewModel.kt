@@ -23,18 +23,14 @@ import com.neoutils.finsight.feature.creditCards.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.UpdateCreditCardUseCase
 import com.neoutils.finsight.feature.creditCards.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.feature.creditCards.util.CreditCardPeriod
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class CreditCardFormViewModel(
     private val creditCardId: Long?,
     private val formatter: CurrencyFormatter,
@@ -57,8 +53,15 @@ class CreditCardFormViewModel(
         )
     )
 
+    private val creditCard = flow {
+        val creditCard = creditCardId?.let { creditCardRepository.getCreditCardById(it) }
+        if (isEditMode && creditCard == null) {
+            crashlytics.recordException(CreditCardException(CreditCardError.NOT_FOUND))
+        }
+        emit(creditCard)
+    }
+
     private val form = MutableStateFlow<CreditCardForm?>(null)
-    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
@@ -71,13 +74,7 @@ class CreditCardFormViewModel(
             return@launch
         }
 
-        val creditCard = creditCardRepository.getCreditCardById(creditCardId)
-
-        if (creditCard == null) {
-            crashlytics.recordException(CreditCardException(CreditCardError.NOT_FOUND))
-            notFound.value = true
-            return@launch
-        }
+        val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return@launch
 
         form.value = CreditCardForm(
             name = creditCard.name,
@@ -90,21 +87,22 @@ class CreditCardFormViewModel(
         )
     }
 
-    private val content = combine(
-        form.filterNotNull(),
+    val uiState = combine(
+        form,
+        creditCard,
         validation,
-    ) { form, validation ->
-        CreditCardFormUiState.Content(
-            form = form,
-            validation = validation,
-            isEditMode = isEditMode,
-            canSubmit = form.isValid() &&
-                validation[CreditCardField.NAME] == Validation.Valid,
-        ) as CreditCardFormUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(CreditCardFormUiState.Error) else content
+    ) { form, creditCard, validation ->
+        when {
+            isEditMode && creditCard == null -> CreditCardFormUiState.Error
+            form == null -> CreditCardFormUiState.Loading
+            else -> CreditCardFormUiState.Content(
+                form = form,
+                validation = validation,
+                isEditMode = isEditMode,
+                canSubmit = form.isValid() &&
+                    validation[CreditCardField.NAME] == Validation.Valid,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

@@ -19,18 +19,14 @@ import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.utils.util.DebounceManager
 import com.neoutils.finsight.core.utils.util.ObservableMutableMap
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class CategoryFormViewModel(
     private val categoryId: Long?,
     private val initialType: Category.Type?,
@@ -54,49 +50,54 @@ class CategoryFormViewModel(
         )
     )
 
+    private val category = flow {
+        val category = categoryId?.let { repository.getCategoryById(it) }
+        if (isEditMode && category == null) {
+            crashlytics.recordException(CategoryException(CategoryError.NOT_FOUND))
+        }
+        emit(category)
+    }
+
     private val form = MutableStateFlow<CategoryForm?>(null)
-    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
     }
 
     private fun setup() = viewModelScope.launch {
-        if (categoryId != null) {
-            form.value = repository.getCategoryById(categoryId)?.let {
-                CategoryForm(
-                    id = it.id,
-                    name = it.name,
-                    type = it.type,
-                    icon = AppIcon.fromKey(it.iconKey),
-                    createdAt = it.createdAt,
-                )
-            } ?: run {
-                crashlytics.recordException(CategoryException(CategoryError.NOT_FOUND))
-                notFound.value = true
-                return@launch
-            }
-        } else {
+        if (categoryId == null) {
             form.value = CategoryForm(
                 type = initialType ?: Category.Type.EXPENSE,
             )
+            return@launch
         }
+
+        val category = repository.getCategoryById(categoryId) ?: return@launch
+
+        form.value = CategoryForm(
+            id = category.id,
+            name = category.name,
+            type = category.type,
+            icon = AppIcon.fromKey(category.iconKey),
+            createdAt = category.createdAt,
+        )
     }
 
-    private val content = combine(
-        form.filterNotNull(),
+    val uiState = combine(
+        form,
+        category,
         validation,
-    ) { form, validation ->
-        CategoryFormUiState.Content(
-            form = form,
-            validation = validation,
-            isEditMode = isEditMode,
-            canSubmit = validation[CategoryField.NAME] == Validation.Valid,
-        ) as CategoryFormUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(CategoryFormUiState.Error) else content
+    ) { form, category, validation ->
+        when {
+            isEditMode && category == null -> CategoryFormUiState.Error
+            form == null -> CategoryFormUiState.Loading
+            else -> CategoryFormUiState.Content(
+                form = form,
+                validation = validation,
+                isEditMode = isEditMode,
+                canSubmit = validation[CategoryField.NAME] == Validation.Valid,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

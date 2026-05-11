@@ -20,7 +20,6 @@ import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.feature.recurring.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.feature.transactions.model.Transaction
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -29,7 +28,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalTime::class)
 class ConfirmRecurringViewModel(
     private val recurringId: Long,
     private val targetDate: LocalDate,
@@ -50,8 +49,15 @@ class ConfirmRecurringViewModel(
 
     private fun LocalDate.clampToToday() = takeIf { it <= currentDate } ?: currentDate
 
+    private val recurring = flow {
+        val recurring = recurringRepository.getRecurringById(recurringId)
+        if (recurring == null) {
+            crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
+        }
+        emit(recurring)
+    }
+
     private val form = MutableStateFlow<RecurringConfirmForm?>(null)
-    private val notFound = MutableStateFlow(false)
 
     private val invoices = form
         .map { it?.creditCard }
@@ -67,13 +73,7 @@ class ConfirmRecurringViewModel(
     }
 
     private fun setup() = viewModelScope.launch {
-        val resolved = recurringRepository.getRecurringById(recurringId)
-
-        if (resolved == null) {
-            crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
-            notFound.value = true
-            return@launch
-        }
+        val resolved = recurringRepository.getRecurringById(recurringId) ?: return@launch
 
         form.value = RecurringConfirmForm(
             title = resolved.title,
@@ -100,22 +100,23 @@ class ConfirmRecurringViewModel(
         )
     }
 
-    private val content = combine(
-        form.filterNotNull(),
+    val uiState = combine(
+        form,
+        recurring,
         invoices,
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
-    ) { form, invoices, accounts, creditCards ->
-        ConfirmRecurringUiState.Content(
-            form = form,
-            accounts = accounts,
-            creditCards = creditCards,
-            invoices = invoices,
-        ) as ConfirmRecurringUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(ConfirmRecurringUiState.Error) else content
+    ) { form, recurring, invoices, accounts, creditCards ->
+        when {
+            recurring == null -> ConfirmRecurringUiState.Error
+            form == null -> ConfirmRecurringUiState.Loading
+            else -> ConfirmRecurringUiState.Content(
+                form = form,
+                accounts = accounts,
+                creditCards = creditCards,
+                invoices = invoices,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

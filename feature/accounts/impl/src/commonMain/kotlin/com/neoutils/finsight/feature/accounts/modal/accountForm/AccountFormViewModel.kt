@@ -20,19 +20,14 @@ import com.neoutils.finsight.core.ui.util.AppIcon
 import com.neoutils.finsight.core.ui.util.Validation
 import com.neoutils.finsight.core.utils.util.DebounceManager
 import com.neoutils.finsight.core.utils.util.ObservableMutableMap
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class AccountFormViewModel(
     private val accountId: Long?,
     private val accountRepository: IAccountRepository,
@@ -48,11 +43,11 @@ class AccountFormViewModel(
     private val isEditMode = accountId != null
 
     private val account = flow {
-        emit(
-            accountId?.let {
-                accountRepository.getAccountById(accountId)
-            }
-        )
+        val account = accountId?.let { accountRepository.getAccountById(it) }
+        if (isEditMode && account == null) {
+            crashlytics.recordException(AccountException(AccountError.NOT_FOUND))
+        }
+        emit(account)
     }
 
     private val validation = ObservableMutableMap(
@@ -66,7 +61,6 @@ class AccountFormViewModel(
     )
 
     private val form = MutableStateFlow<AccountForm?>(null)
-    private val notFound = MutableStateFlow(false)
 
     init {
         setup()
@@ -76,17 +70,10 @@ class AccountFormViewModel(
 
         if (accountId == null) {
             form.value = AccountForm()
-
             return@launch
         }
 
-        val account = accountRepository.getAccountById(accountId)
-
-        if (account == null) {
-            crashlytics.recordException(AccountException(AccountError.NOT_FOUND))
-            notFound.value = true
-            return@launch
-        }
+        val account = accountRepository.getAccountById(accountId) ?: return@launch
 
         form.value = AccountForm(
             id = account.id,
@@ -97,22 +84,22 @@ class AccountFormViewModel(
         )
     }
 
-    private val content = combine(
-        form.filterNotNull(),
+    val uiState = combine(
+        form,
         account,
         validation,
     ) { form, account, validation ->
-        AccountFormUiState.Content(
-            form = form,
-            validation = validation,
-            isEditMode = isEditMode,
-            canSubmit = validation[AccountField.NAME] == Validation.Valid,
-            canChangeDefault = account?.isDefault != true,
-        ) as AccountFormUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(AccountFormUiState.Error) else content
+        when {
+            isEditMode && account == null -> AccountFormUiState.Error
+            form == null -> AccountFormUiState.Loading
+            else -> AccountFormUiState.Content(
+                form = form,
+                validation = validation,
+                isEditMode = isEditMode,
+                canSubmit = validation[AccountField.NAME] == Validation.Valid,
+                canChangeDefault = account?.isDefault != true,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

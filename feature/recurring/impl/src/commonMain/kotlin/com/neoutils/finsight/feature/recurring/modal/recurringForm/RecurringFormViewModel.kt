@@ -18,20 +18,16 @@ import com.neoutils.finsight.feature.recurring.extension.isAccept
 import com.neoutils.finsight.feature.recurring.model.form.RecurringForm
 import com.neoutils.finsight.feature.recurring.repository.IRecurringRepository
 import com.neoutils.finsight.feature.recurring.usecase.SaveRecurringUseCase
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class RecurringFormViewModel(
     private val recurringId: Long?,
     private val recurringRepository: IRecurringRepository,
@@ -46,8 +42,16 @@ class RecurringFormViewModel(
 ) : ViewModel() {
 
     private val isEditMode = recurringId != null
+
+    private val recurring = flow {
+        val recurring = recurringId?.let { recurringRepository.getRecurringById(it) }
+        if (isEditMode && recurring == null) {
+            crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
+        }
+        emit(recurring)
+    }
+
     private val form = MutableStateFlow<RecurringForm?>(null)
-    private val notFound = MutableStateFlow(false)
 
     private val categories = categoryRepository.observeAllCategories()
     private val accounts = accountRepository.observeAllAccounts()
@@ -63,13 +67,7 @@ class RecurringFormViewModel(
             return@launch
         }
 
-        val recurring = recurringRepository.getRecurringById(recurringId)
-
-        if (recurring == null) {
-            crashlytics.recordException(RecurringException(RecurringError.NOT_FOUND))
-            notFound.value = true
-            return@launch
-        }
+        val recurring = recurringRepository.getRecurringById(recurringId) ?: return@launch
 
         coroutineScope {
             val account = recurring.accountId?.let { id -> async { accountRepository.getAccountById(id) } }
@@ -91,24 +89,25 @@ class RecurringFormViewModel(
         }
     }
 
-    private val content = combine(
-        form.filterNotNull(),
+    val uiState = combine(
+        form,
+        recurring,
         categories,
         accounts,
         creditCards,
-    ) { form, cats, accs, cards ->
-        RecurringFormUiState.Content(
-            form = form,
-            accounts = accs,
-            creditCards = cards,
-            incomeCategories = cats.filter { it.type == Category.Type.INCOME },
-            expenseCategories = cats.filter { it.type == Category.Type.EXPENSE },
-            isEditMode = isEditMode,
-        ) as RecurringFormUiState
-    }
-
-    val uiState = notFound.flatMapLatest { error ->
-        if (error) flowOf(RecurringFormUiState.Error) else content
+    ) { form, recurring, cats, accs, cards ->
+        when {
+            isEditMode && recurring == null -> RecurringFormUiState.Error
+            form == null -> RecurringFormUiState.Loading
+            else -> RecurringFormUiState.Content(
+                form = form,
+                accounts = accs,
+                creditCards = cards,
+                incomeCategories = cats.filter { it.type == Category.Type.INCOME },
+                expenseCategories = cats.filter { it.type == Category.Type.EXPENSE },
+                isEditMode = isEditMode,
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

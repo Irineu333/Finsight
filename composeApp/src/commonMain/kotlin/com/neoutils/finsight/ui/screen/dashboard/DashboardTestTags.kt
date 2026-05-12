@@ -7,5 +7,5 @@ object DashboardTestTags {
 
     fun accountBalance(accountId: Long): String = "dashboard-account-balance-$accountId"
 
-    fun quickAction(type: QuickActionType): String = "dashboard-quick-action-${type.name.lowercase()}"
+    fun quickAction(type: QuickActionType): String = "dashboard-quick-action-${type.tag}"
 }

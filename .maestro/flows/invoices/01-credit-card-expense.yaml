@@ -93,11 +93,11 @@ tags:
 
 - scrollUntilVisible:
     element:
-      id: "dashboard-quick-action-credit_cards"
+      id: "dashboard-quick-action-credit-cards"
     direction: DOWN
     timeout: 10000
 - tapOn:
-    id: "dashboard-quick-action-credit_cards"
+    id: "dashboard-quick-action-credit-cards"
 - extendedWaitUntil:
     visible:
       id: "credit-cards-root"

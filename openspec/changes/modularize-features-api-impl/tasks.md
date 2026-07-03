@@ -5,10 +5,10 @@
 
 ## 1. Fase 0 — build-logic e convenções
 
-- [ ] 1.1 Criar build incluído `build-logic` (limpar resquícios `.gradle` de `build-logic/` e `app/`) com version catalog compartilhado
-- [ ] 1.2 Implementar convention plugins `kmp.library` e `compose.library` (targets Android/iOS/Desktop, compiler options, Compose)
-- [ ] 1.3 Implementar convenções `feature.api` e `feature.impl` com verificação mecânica das regras de dependência (falha de build com mensagem indicando módulo e dependência proibida)
-- [ ] 1.4 Aplicar as convenções ao `:composeApp` atual e validar build verde nos 3 targets sem mover código
+- [x] 1.1 Criar build incluído `build-logic` (limpar resquícios `.gradle` de `build-logic/` e `app/`) com version catalog compartilhado
+- [x] 1.2 Implementar convention plugins `kmp.library` e `compose.library` (targets Android/iOS/Desktop, compiler options, Compose)
+- [x] 1.3 Implementar convenções `feature.api` e `feature.impl` com verificação mecânica das regras de dependência (falha de build com mensagem indicando módulo e dependência proibida)
+- [x] 1.4 Aplicar as convenções ao `:composeApp` atual e validar build verde nos 3 targets sem mover código
 
 ## 2. Fase 1 — módulos core
 

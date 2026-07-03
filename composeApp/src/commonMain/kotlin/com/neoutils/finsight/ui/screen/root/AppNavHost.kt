@@ -15,13 +15,13 @@ import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
-import com.neoutils.finsight.ui.screen.recurring.RecurringScreen
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
 import com.neoutils.finsight.ui.screen.report.toRoute
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
 import com.neoutils.finsight.ui.navigation.categoriesGraph
+import com.neoutils.finsight.ui.navigation.recurringGraph
 import com.neoutils.finsight.ui.navigation.supportGraph
 import com.neoutils.finsight.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
@@ -96,13 +96,7 @@ fun AppNavHost() = Surface {
                             )
                         }
 
-                        composable<AppRoute.Recurring> {
-                            RecurringScreen(
-                                onNavigateBack = {
-                                    navController.navigateUp()
-                                }
-                            )
-                        }
+                        recurringGraph(navController)
 
                         supportGraph(navController)
 

@@ -38,15 +38,16 @@ import com.neoutils.finsight.ui.component.AccountSelector
 import com.neoutils.finsight.ui.component.CategorySelector
 import com.neoutils.finsight.ui.component.CreditCardSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.TargetSelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DayInputTransformation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -67,6 +68,8 @@ class RecurringFormModal(
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val manager = LocalModalManager.current
+        val categoriesEntry = koinInject<CategoriesEntry>()
+        val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         val viewModel = koinViewModel<RecurringFormViewModel> {
             parametersOf(recurring)
@@ -176,7 +179,7 @@ class RecurringFormModal(
                     onCreditCardSelected = {
                         viewModel.onAction(RecurringFormAction.SelectCreditCard(it))
                     },
-                    onEmpty = { manager.show(CreditCardFormModal()) },
+                    onEmpty = { manager.show(creditCardsEntry.creditCardFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
@@ -193,7 +196,7 @@ class RecurringFormModal(
                     else -> emptyList()
                 },
                 onCategorySelected = { selectedCategory = it },
-                onEmpty = { manager.show(CategoryFormModal()) },
+                onEmpty = { manager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 

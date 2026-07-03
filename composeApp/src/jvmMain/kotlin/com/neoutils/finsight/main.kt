@@ -14,6 +14,8 @@ import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.di.categoriesModule
+import com.neoutils.finsight.di.recurringModule
+import com.neoutils.finsight.di.transitionalEntriesModule
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.root.App
@@ -33,6 +35,8 @@ fun main() = application {
             viewModelModule,
             supportModule,
             categoriesModule,
+            recurringModule,
+            transitionalEntriesModule,
         )
     }
 

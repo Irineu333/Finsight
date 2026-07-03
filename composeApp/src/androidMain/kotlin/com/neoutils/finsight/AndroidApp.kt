@@ -12,6 +12,8 @@ import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.di.categoriesModule
+import com.neoutils.finsight.di.recurringModule
+import com.neoutils.finsight.di.transitionalEntriesModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -36,6 +38,8 @@ class AndroidApp : Application() {
                 viewModelModule,
                 supportModule,
                 categoriesModule,
+                recurringModule,
+                transitionalEntriesModule,
             )
         }
     }

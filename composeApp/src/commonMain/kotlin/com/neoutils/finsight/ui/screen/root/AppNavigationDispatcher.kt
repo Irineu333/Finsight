@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
 import com.neoutils.finsight.feature.categories.api.CategoriesRoute
+import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.support.api.SupportRoute
 import com.neoutils.finsight.ui.screen.home.AppRoute
 
@@ -39,7 +40,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.Recurring -> {
-                navController.navigate(AppRoute.Recurring)
+                navController.navigate(RecurringRoute)
             }
 
             NavigationDestination.ReportConfig -> {

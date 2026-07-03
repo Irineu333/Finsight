@@ -5,11 +5,11 @@ import com.neoutils.finsight.di.analyticsModule
 import com.neoutils.finsight.di.crashlyticsModule
 import com.neoutils.finsight.di.authModule
 import com.neoutils.finsight.di.databaseModule
+import com.neoutils.finsight.di.shellModule
 import com.neoutils.finsight.di.reportModule
-import com.neoutils.finsight.di.repositoryModule
-import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.di.creditCardsModule
+import com.neoutils.finsight.di.dashboardModule
 import com.neoutils.finsight.di.categoriesModule
 import com.neoutils.finsight.di.transactionsModule
 import com.neoutils.finsight.di.accountsModule
@@ -29,13 +29,13 @@ class AndroidApp : Application() {
 
             modules(
                 databaseModule,
-                repositoryModule,
+                shellModule,
                 reportModule,
                 analyticsModule,
                 crashlyticsModule,
                 authModule,
-                viewModelModule,
                 supportModule,
+                dashboardModule,
                 categoriesModule,
                 creditCardsModule,
                 transactionsModule,

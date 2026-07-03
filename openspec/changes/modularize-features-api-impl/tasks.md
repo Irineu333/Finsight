@@ -42,11 +42,11 @@
 
 ## 5. Fase 4 — agregadores e shell
 
-- [ ] 5.1 Mover contrato `HomeChrome` para `:core:ui`
-- [ ] 5.2 Extrair `:feature:dashboard` (api/impl; consome entries e apis das demais features; `DashboardPreferences` junto)
-- [ ] 5.3 Quebrar a sealed `AppRoute` restante: shell mantém apenas `HomeRoute`; rotas remanescentes migram para as apis donas
-- [ ] 5.4 Reduzir `:composeApp` a shell (App, AppNavHost, dispatcher, Home, agregação Koin, entry points de plataforma, framework iOS) e deletar os módulos DI por camada
-- [ ] 5.5 Garantir que nada de plataforma sobrou no `commonMain` do shell fora dos source sets corretos (pré-requisito do split futuro `:shared`/`:androidApp`/`:desktopApp`)
+- [x] 5.1 Mover contrato `HomeChrome` para `:core:ui`
+- [x] 5.2 Extrair `:feature:dashboard` (impl; consome entries + apis das demais features; `DashboardPreferences` junto). Sem api: dashboard é folha (nada o consome); `HomeScreen` compõe `DashboardScreen` diretamente (shell enxerga impl). `CreditCardsEntry` ampliada com os modais de fatura que o dashboard abre (payInvoice/advancePayment/closeInvoice/editInvoiceBalance)
+- [x] 5.3 `AppRoute` reduzida a `Home` (todas as rotas de feature migraram para as apis donas); `HomeRoute` (abas Dashboard/Transactions) permanece no shell
+- [x] 5.4 `:composeApp` reduzido a shell (App, AppNavHost, dispatcher, Home, `di/` de infra, entry points de plataforma, framework iOS). Módulos DI por camada mortos: `UseCaseModule`/`MapperModule` (→ creditcards), `RepositoryModule`/`ViewModelModule` (consolidados em `shellModule`: Settings/CurrencyFormatter/ModalManager/DebounceManager)
+- [x] 5.5 Sem código de plataforma no `commonMain` do shell fora dos source sets: resta apenas `expect val databasePlatformModule` (com actuals nos source sets de plataforma) e os entry points de plataforma nos seus source sets
 
 ## 6. Verificação final
 

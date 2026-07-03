@@ -76,6 +76,7 @@ kotlin {
 
             api(projects.feature.accounts.api)
             implementation(projects.feature.accounts.impl)
+            implementation(projects.feature.dashboard.impl)
             api(projects.feature.budgets.api)
             implementation(projects.feature.budgets.impl)
             api(projects.feature.categories.api)

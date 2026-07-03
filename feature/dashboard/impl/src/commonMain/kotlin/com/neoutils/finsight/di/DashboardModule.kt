@@ -1,26 +1,21 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
+import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
-import com.neoutils.finsight.extension.toYearMonth
-import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
-import com.neoutils.finsight.util.DebounceManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-val viewModelModule = module {
-
-    single { ModalManager() }
-
-    factory { DebounceManager(delayMillis = 500L) }
-
+val dashboardModule = module {
+    single<IDashboardPreferencesRepository> {
+        DashboardPreferencesRepository(
+            settings = get(),
+        )
+    }
 
     factory {
         DashboardComponentsBuilder(
@@ -36,7 +31,6 @@ val viewModelModule = module {
 
     single { GetDashboardPreferencesUseCase(get()) }
     factory { BuildDashboardViewingUseCase(get()) }
-
     single { DashboardPreviewFactory() }
 
     viewModel {
@@ -57,6 +51,4 @@ val viewModelModule = module {
             crashlytics = get(),
         )
     }
-
-
 }

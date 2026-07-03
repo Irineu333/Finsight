@@ -130,9 +130,37 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 
 | Acesso | Mecanismo |
 |---|---|
-| **Navegação** | Rota (data class) vive na `api`; consumidor navega por rota. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:composeApp` |
+| **Navegação** | Rota (`@Serializable`) vive na `api`; consumidor navega por rota. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:composeApp` |
 | **Modais** | Método no entry point retornando `Modal` (tipo de `:core:designsystem`) |
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
+
+### Mecanismo de registro de navegação
+
+Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph(navController)`** que registra os
+`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). O `:composeApp` — único
+módulo que enxerga os `impl` — agrega essas extensions no `AppNavHost`:
+
+```kotlin
+// feature/support/impl — ui/navigation/SupportGraph.kt
+fun NavGraphBuilder.supportGraph(navController: NavController) {
+    composable<SupportRoute> { SupportScreen(...) }
+    composable<SupportIssueRoute> { ... }
+}
+
+// :composeApp — AppNavHost
+NavHost(...) {
+    // rotas do shell (Home, abas)...
+    supportGraph(navController)
+}
+```
+
+As rotas (`SupportRoute`, `SupportIssueRoute`) vivem na `api`, então qualquer feature navega para
+elas sem depender do `impl` de destino. *Alternativa descartada:* registrar grafos via Koin —
+indireção desnecessária, já que o shell enxerga os `impl` por definição.
+
+> **Entry point é opcional.** Uma feature só declara `<Nome>Entry` quando **outra** feature consome
+> UI dela (modal/composable). O piloto `support` não expõe modal a terceiros (seu modal é interno),
+> então **não** declara entry point — apenas rotas na `api`.
 
 ### Entry point vs. `:core:ui`
 

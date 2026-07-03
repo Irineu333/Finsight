@@ -115,6 +115,7 @@ internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
         configurations.forEach { configuration ->
             configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
                 val depPath = dependency.path
+                if (depPath == path) return@forEach // auto-referência de source sets KMP
                 val isCore = depPath.startsWith(":core:")
                 val isFeature = depPath.startsWith(":feature:")
                 if (!isCore && !isFeature) return@forEach

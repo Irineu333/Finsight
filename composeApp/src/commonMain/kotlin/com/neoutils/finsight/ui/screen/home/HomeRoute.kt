@@ -42,10 +42,4 @@ sealed class AppRoute {
 
     @Serializable
     data object Reports : AppRoute()
-
-    @Serializable
-    data object Support : AppRoute()
-
-    @Serializable
-    data class SupportIssue(val issueId: String) : AppRoute()
 }

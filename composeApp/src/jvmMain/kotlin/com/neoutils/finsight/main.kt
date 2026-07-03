@@ -12,6 +12,7 @@ import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
+import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.extension.LocalPlatformContext
 import com.neoutils.finsight.extension.PlatformContext
 import com.neoutils.finsight.ui.screen.root.App
@@ -29,6 +30,7 @@ fun main() = application {
             crashlyticsModule,
             authModule,
             viewModelModule,
+            supportModule,
         )
     }
 

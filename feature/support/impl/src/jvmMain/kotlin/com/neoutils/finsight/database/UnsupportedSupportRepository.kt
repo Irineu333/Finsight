@@ -3,7 +3,7 @@ package com.neoutils.finsight.database
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
-import com.neoutils.finsight.domain.repository.ISupportRepository
+import com.neoutils.finsight.feature.support.api.ISupportRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

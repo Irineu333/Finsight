@@ -10,6 +10,7 @@ import com.neoutils.finsight.di.reportModule
 import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
+import com.neoutils.finsight.di.supportModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -32,6 +33,7 @@ class AndroidApp : Application() {
                 crashlyticsModule,
                 authModule,
                 viewModelModule,
+                supportModule,
             )
         }
     }

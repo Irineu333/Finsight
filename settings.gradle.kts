@@ -45,3 +45,7 @@ include(":core:designsystem")
 include(":core:model")
 include(":core:resources")
 include(":core:ui")
+
+// Features
+include(":feature:support:api")
+include(":feature:support:impl")

@@ -1,4 +1,4 @@
-package com.neoutils.finsight.domain.repository
+package com.neoutils.finsight.feature.support.api
 
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.SupportMessage

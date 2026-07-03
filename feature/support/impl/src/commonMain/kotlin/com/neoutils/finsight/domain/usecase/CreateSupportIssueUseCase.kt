@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.error.SupportError
 import com.neoutils.finsight.domain.exception.SupportException
 import com.neoutils.finsight.domain.model.SupportIssue
 import com.neoutils.finsight.domain.model.form.SupportIssueDraft
-import com.neoutils.finsight.domain.repository.ISupportRepository
+import com.neoutils.finsight.feature.support.api.ISupportRepository
 
 class CreateSupportIssueUseCase(
     private val supportRepository: ISupportRepository,

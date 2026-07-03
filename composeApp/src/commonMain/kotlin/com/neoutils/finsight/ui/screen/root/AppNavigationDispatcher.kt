@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
+import com.neoutils.finsight.feature.support.api.SupportRoute
 import com.neoutils.finsight.ui.screen.home.AppRoute
 
 internal class AppNavigationDispatcher(
@@ -45,7 +46,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.Support -> {
-                navController.navigate(AppRoute.Support)
+                navController.navigate(SupportRoute)
             }
         }
     }

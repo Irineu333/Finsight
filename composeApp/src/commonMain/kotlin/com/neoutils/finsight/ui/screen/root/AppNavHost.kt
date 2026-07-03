@@ -22,8 +22,7 @@ import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
 import com.neoutils.finsight.ui.screen.report.toRoute
 import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
-import com.neoutils.finsight.ui.screen.support.SupportIssueScreen
-import com.neoutils.finsight.ui.screen.support.SupportScreen
+import com.neoutils.finsight.ui.navigation.supportGraph
 import com.neoutils.finsight.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
 
@@ -111,30 +110,7 @@ fun AppNavHost() = Surface {
                             )
                         }
 
-                        composable<AppRoute.Support> {
-                            AnimatedVisibilityScopeProvider {
-                                SupportScreen(
-                                    onNavigateBack = {
-                                        navController.navigateUp()
-                                    },
-                                    onOpenIssue = { issueId ->
-                                        navController.navigate(AppRoute.SupportIssue(issueId))
-                                    },
-                                )
-                            }
-                        }
-
-                        composable<AppRoute.SupportIssue> { backStackEntry ->
-                            AnimatedVisibilityScopeProvider {
-                                val route = backStackEntry.toRoute<AppRoute.SupportIssue>()
-                                SupportIssueScreen(
-                                    issueId = route.issueId,
-                                    onNavigateBack = {
-                                        navController.navigateUp()
-                                    },
-                                )
-                            }
-                        }
+                        supportGraph(navController)
 
                         navigation<AppRoute.Reports>(
                             startDestination = ReportRoute.Config,

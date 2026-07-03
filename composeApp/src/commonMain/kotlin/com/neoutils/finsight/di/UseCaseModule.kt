@@ -47,8 +47,6 @@ import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
-import com.neoutils.finsight.domain.usecase.CreateSupportIssueUseCase
 import org.koin.dsl.module
 
 val useCaseModules = module {
@@ -308,8 +306,4 @@ val useCaseModules = module {
     factory { ConfirmRecurringUseCase(operationRepository = get(), recurringOccurrenceRepository = get(), getOrCreateInvoiceForMonthUseCase = get()) }
 
     factory { SkipRecurringUseCase(recurringOccurrenceRepository = get()) }
-
-    factory { CreateSupportIssueUseCase(supportRepository = get()) }
-
-    factory { AddSupportReplyUseCase(supportRepository = get()) }
 }

@@ -23,11 +23,11 @@
 
 ## 3. Fase 2 — piloto :feature:support
 
-- [ ] 3.1 Criar `:feature:support:api` (rotas `@Serializable`, interface `ISupportRepository`, `SupportEntry` com modais públicos)
-- [ ] 3.2 Criar `:feature:support:impl` (telas, ViewModels, `supportIssueForm` modal, `FirebaseSupportRepository`/`UnsupportedSupportRepository`, `supportModule` Koin)
-- [ ] 3.3 Definir e implementar o mecanismo de registro de navegação no shell (open question do design — decidir aqui e documentar em `feature/README.md`)
-- [ ] 3.4 Configurar export seletivo no framework iOS (`export()` de core + `support:api`) e validar símbolos no Swift
-- [ ] 3.5 Migrar testes de support e validar o template completo (fase verde nos 3 targets)
+- [x] 3.1 Criar `:feature:support:api` (rotas `@Serializable` `SupportRoute`/`SupportIssueRoute`, interface `ISupportRepository`). Sem `SupportEntry`: support não expõe modal a outras features (spec `feature-entry-points`), a superfície cross-feature é só a rota
+- [x] 3.2 Criar `:feature:support:impl` (telas, ViewModels, `supportIssueForm` modal, `FirebaseSupportRepository`/`UnsupportedSupportRepository`, `supportModule` Koin com `supportPlatformModule` expect/actual para o repositório)
+- [x] 3.3 Mecanismo de navegação decidido: extension `NavGraphBuilder.<feature>Graph(navController)` exposta pelo impl e agregada pelo shell no `AppNavHost` (documentado em `feature/README.md`)
+- [x] 3.4 Export seletivo no framework iOS (`export()` de `:core:*` + `feature:support:api`; impls via `implementation`). Framework linka verde (`linkDebugFrameworkIosSimulatorArm64`); validação de símbolos no Swift limitada pelo ambiente (sem Xcode/Firebase nativo)
+- [x] 3.5 Sem testes de support para migrar (só existem testes de report/common). Template validado: 3 targets compilam e testes unitários verdes
 
 ## 4. Fase 3 — ondas de features
 

@@ -35,6 +35,20 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts += "-lsqlite3"
+            binaryOption("bundleId", "com.neoutils.finsight.ComposeApp")
+
+            // Export seletivo: apenas :core:* e :feature:*:api ficam visíveis ao Swift.
+            // Os :feature:*:impl são linkados via implementation e permanecem invisíveis.
+            export(projects.core.analytics)
+            export(projects.core.auth)
+            export(projects.core.common)
+            export(projects.core.crashlytics)
+            export(projects.core.database)
+            export(projects.core.designsystem)
+            export(projects.core.model)
+            export(projects.core.resources)
+            export(projects.core.ui)
+            export(projects.feature.support.api)
         }
         iosTarget.compilerOptions {
             freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
@@ -43,15 +57,18 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.core.analytics)
-            implementation(projects.core.auth)
-            implementation(projects.core.common)
-            implementation(projects.core.crashlytics)
-            implementation(projects.core.database)
-            implementation(projects.core.designsystem)
-            implementation(projects.core.model)
-            implementation(projects.core.resources)
-            implementation(projects.core.ui)
+            api(projects.core.analytics)
+            api(projects.core.auth)
+            api(projects.core.common)
+            api(projects.core.crashlytics)
+            api(projects.core.database)
+            api(projects.core.designsystem)
+            api(projects.core.model)
+            api(projects.core.resources)
+            api(projects.core.ui)
+
+            api(projects.feature.support.api)
+            implementation(projects.feature.support.impl)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

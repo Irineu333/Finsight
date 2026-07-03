@@ -31,14 +31,14 @@
 
 ## 4. Fase 3 — ondas de features
 
-- [ ] 4.1 Extrair `:feature:categories` (api/impl, rotas, entry point, fatia dos módulos DI)
-- [ ] 4.2 Extrair `:feature:budgets` (api/impl; depende de `categories:api` para spending por categoria)
-- [ ] 4.3 Extrair `:feature:accounts` (api/impl; inclui transferências e ajustes de saldo)
-- [ ] 4.4 Extrair `:feature:creditcards` (api/impl; inclui invoices, installments e invoiceTransactions — a maior onda)
-- [ ] 4.5 Extrair `:feature:recurring` (api/impl; `recurring:impl` → `creditcards:api` para invoice do mês)
-- [ ] 4.6 Extrair `:feature:transactions` (api/impl; `transactions:impl` → `creditcards:api`, `accounts:api`, `categories:api`)
-- [ ] 4.7 Extrair `:feature:report` (api/impl; único impl com source sets de plataforma — print/share)
-- [ ] 4.8 Verificação da fase: check verde; módulos DI por camada contêm apenas o que resta de dashboard/home
+- [x] 4.1 Extrair `:feature:categories` (api/impl, rotas, entry point, fatia dos módulos DI)
+- [x] 4.2 Extrair `:feature:budgets` (api/impl; depende de `categories:api` para spending por categoria)
+- [x] 4.3 Extrair `:feature:accounts` (api/impl; inclui transferências e ajustes de saldo)
+- [x] 4.4 Extrair `:feature:creditcards` (api/impl; inclui invoices, installments e invoiceTransactions — a maior onda)
+- [x] 4.5 Extrair `:feature:recurring` (api/impl; `recurring:impl` → `creditcards:api` para invoice do mês)
+- [x] 4.6 Extrair `:feature:transactions` (api/impl; `transactions:impl` → `creditcards:api`, `accounts:api`, `categories:api`)
+- [x] 4.7 Extrair `:feature:report` (api/impl; único impl com source sets de plataforma — print/share)
+- [x] 4.8 Verificação da fase: 3 targets compilam e testes unitários verdes; regras de dependência impostas (nenhuma violação). Módulos DI por camada reduzidos ao shell/dashboard (`RepositoryModule`: Settings/CurrencyFormatter/DashboardPreferences; `ViewModelModule`: dashboard; `DatabaseModule`: DAOs). `UseCaseModule`/`MapperModule` migraram para `creditcards:impl`. Superfície de api ampliada além do design: interfaces de use case público (`GetOrCreateInvoiceForMonth`, `BuildTransaction`, `AddInstallment`, `InvoiceUiMapper`) e bindings transitórios de `Entry` no shell para resolver os ciclos de modais
 
 ## 5. Fase 4 — agregadores e shell
 

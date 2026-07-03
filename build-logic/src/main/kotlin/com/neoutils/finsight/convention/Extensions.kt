@@ -15,11 +15,9 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
-/** Deriva o namespace Android a partir do path do módulo: `:core:common` -> `com.neoutils.finsight.core.common`. */
 private val Project.derivedNamespace: String
     get() = "com.neoutils.finsight." + path.removePrefix(":").replace(":", ".").replace("-", "")
 
-/** Targets KMP (Android/iOS/Desktop), compiler options e config Android comuns a todo módulo de biblioteca. */
 internal fun Project.configureKotlinMultiplatform() {
     with(pluginManager) {
         apply("org.jetbrains.kotlin.multiplatform")
@@ -70,7 +68,6 @@ internal fun Project.configureKotlinMultiplatform() {
     }
 }
 
-/** Compose Multiplatform + dependências comuns de UI para módulos que renderizam Compose. */
 internal fun Project.configureCompose() {
     with(pluginManager) {
         apply("org.jetbrains.compose")
@@ -103,19 +100,13 @@ internal fun Project.configureCompose() {
     }
 }
 
-/**
- * Verifica mecanicamente as regras de dependência entre módulos.
- * - api: só pode depender de projetos `:core:*`.
- * - impl: pode depender de `:core:*` e de `:feature:*:api` (inclusive a própria api).
- * Falha o build com mensagem indicando o módulo e a dependência proibida.
- */
 internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
     afterEvaluate {
         val violations = mutableListOf<String>()
         configurations.forEach { configuration ->
             configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
                 val depPath = dependency.path
-                if (depPath == path) return@forEach // auto-referência de source sets KMP
+                if (depPath == path) return@forEach
                 val isCore = depPath.startsWith(":core:")
                 val isFeature = depPath.startsWith(":feature:")
                 if (!isCore && !isFeature) return@forEach
@@ -142,19 +133,13 @@ internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
     }
 }
 
-/**
- * Verifica as regras de dependência do módulo agregador (`:app:shared`).
- * É o único módulo autorizado a depender de `:feature:*:impl`; só pode depender
- * de projetos `:core:*` e `:feature:*` (api ou impl). Falha o build ao encontrar
- * qualquer outra dependência de projeto (ex.: outro `:app:*`).
- */
 internal fun Project.verifyAppSharedDependencyRules() {
     afterEvaluate {
         val violations = mutableListOf<String>()
         configurations.forEach { configuration ->
             configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
                 val depPath = dependency.path
-                if (depPath == path) return@forEach // auto-referência de source sets KMP
+                if (depPath == path) return@forEach
                 val isCore = depPath.startsWith(":core:")
                 val isFeature = depPath.startsWith(":feature:")
                 if (!isCore && !isFeature) {

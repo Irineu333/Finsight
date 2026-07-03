@@ -5,11 +5,6 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.gradle.kotlin.dsl.configure
 
-/**
- * Convenção do módulo agregador `:app:shared`: KMP library (Android library + JVM + iOS),
- * Compose, serialization e Koin. É o único módulo autorizado a depender de `feature:*:impl`,
- * regra verificada mecanicamente por [verifyAppSharedDependencyRules].
- */
 class AppSharedConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         configureKotlinMultiplatform()

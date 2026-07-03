@@ -22,14 +22,14 @@ import kotlin.time.ExperimentalTime
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-class BuildTransactionUseCase(
+class BuildTransactionUseCaseImpl(
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
-) {
+) : BuildTransactionUseCase {
 
-    suspend operator fun invoke(
+    override suspend operator fun invoke(
         form: TransactionForm,
-        id: Long = 0,
-        operationId: Long? = null,
+        id: Long,
+        operationId: Long?,
     ): Either<Throwable, Transaction> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)

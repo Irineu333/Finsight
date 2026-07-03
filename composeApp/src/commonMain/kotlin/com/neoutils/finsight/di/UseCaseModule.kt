@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
+import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -38,6 +39,7 @@ import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
+import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCaseImpl
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
@@ -249,16 +251,16 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        GetOrCreateInvoiceForMonthUseCase(
+    factory<GetOrCreateInvoiceForMonthUseCase> {
+        GetOrCreateInvoiceForMonthUseCaseImpl(
             invoiceRepository = get(),
             createFutureInvoiceUseCase = get(),
             createRetroactiveInvoiceUseCase = get(),
         )
     }
 
-    factory {
-        BuildTransactionUseCase(
+    factory<BuildTransactionUseCase> {
+        BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
         )
     }

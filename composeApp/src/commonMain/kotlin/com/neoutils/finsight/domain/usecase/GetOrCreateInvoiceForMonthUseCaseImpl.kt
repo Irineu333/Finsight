@@ -13,12 +13,12 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
 
-class GetOrCreateInvoiceForMonthUseCase(
+class GetOrCreateInvoiceForMonthUseCaseImpl(
     private val invoiceRepository: IInvoiceRepository,
     private val createFutureInvoiceUseCase: CreateFutureInvoiceUseCase,
     private val createRetroactiveInvoiceUseCase: CreateRetroactiveInvoiceUseCase
-) {
-    suspend operator fun invoke(
+) : GetOrCreateInvoiceForMonthUseCase {
+    override suspend operator fun invoke(
         creditCard: CreditCard,
         targetDueMonth: YearMonth
     ): Either<Throwable, Invoice> = either {

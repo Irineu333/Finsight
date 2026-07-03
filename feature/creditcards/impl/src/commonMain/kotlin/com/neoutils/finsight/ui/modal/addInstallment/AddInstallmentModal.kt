@@ -2,6 +2,9 @@
 
 package com.neoutils.finsight.ui.modal.addInstallment
 
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import org.koin.compose.koinInject
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,7 +32,6 @@ import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.util.DateInputTransformation
 import com.neoutils.finsight.util.dayMonthYear
@@ -52,6 +54,7 @@ class AddInstallmentModal : ModalBottomSheet() {
         val uiState by viewModel.uiState.collectAsState()
 
         val modalManager = LocalModalManager.current
+        val categoriesEntry = koinInject<CategoriesEntry>()
 
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -127,7 +130,7 @@ class AddInstallmentModal : ModalBottomSheet() {
                     selectedCategory = selectedCategory,
                     categories = uiState.categories,
                     onCategorySelected = { selectedCategory = it },
-                    onEmpty = { modalManager.show(CategoryFormModal()) },
+                    onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
                     modifier = Modifier.fillMaxWidth(),
                 )
 

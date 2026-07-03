@@ -81,6 +81,7 @@ kotlin {
             api(projects.feature.categories.api)
             implementation(projects.feature.categories.impl)
             api(projects.feature.creditcards.api)
+            implementation(projects.feature.creditcards.impl)
             api(projects.feature.recurring.api)
             implementation(projects.feature.recurring.impl)
             api(projects.feature.report.api)

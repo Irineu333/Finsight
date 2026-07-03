@@ -78,11 +78,11 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
@@ -139,6 +139,7 @@ private fun InstallmentsContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val transactionsEntry = koinInject<TransactionsEntry>()
 
     Scaffold(
         topBar = {
@@ -350,11 +351,11 @@ private fun InstallmentsContent(
                             onClick = {
                                 when (operation.type) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operation))
+                                        modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
                                     }
 
                                     else -> {
-                                        modalManager.show(ViewOperationModal(operation))
+                                        modalManager.show(transactionsEntry.viewOperationModal(operation))
                                     }
                                 }
                             },

@@ -5,6 +5,8 @@
 
 package com.neoutils.finsight.ui.screen.creditCards
 
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -42,8 +44,6 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
@@ -84,6 +84,7 @@ private fun CreditCardsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val transactionsEntry = koinInject<TransactionsEntry>()
     val navigationDispatcher = LocalNavigationDispatcher.current
 
     Scaffold(
@@ -231,11 +232,11 @@ private fun CreditCardsContent(
                                 onClick = {
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            modalManager.show(ViewAdjustmentModal(operation))
+                                            modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
                                         }
 
                                         else -> {
-                                            modalManager.show(ViewOperationModal(operation))
+                                            modalManager.show(transactionsEntry.viewOperationModal(operation))
                                         }
                                     }
                                 }

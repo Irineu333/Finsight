@@ -42,6 +42,8 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import org.koin.compose.koinInject
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
@@ -50,8 +52,6 @@ import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceModal
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -118,6 +118,7 @@ private fun InvoiceTransactionsContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val transactionsEntry = koinInject<TransactionsEntry>()
     val dateFormats = LocalDateFormats.current
 
     Scaffold(
@@ -273,11 +274,11 @@ private fun InvoiceTransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
+                                    modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    modalManager.show(transactionsEntry.viewOperationModal(operation))
                                 }
                             }
                         }

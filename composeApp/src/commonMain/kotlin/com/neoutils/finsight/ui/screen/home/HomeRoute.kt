@@ -18,13 +18,4 @@ sealed class AppRoute {
 
     @Serializable
     data object Home : AppRoute()
-
-    @Serializable
-    data class CreditCards(val creditCardId: Long? = null) : AppRoute()
-
-    @Serializable
-    data class InvoiceTransactions(val creditCardId: Long) : AppRoute()
-
-    @Serializable
-    data object Installments : AppRoute()
 }

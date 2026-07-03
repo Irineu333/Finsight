@@ -8,6 +8,9 @@ import com.neoutils.finsight.ui.component.NavigationDispatcher
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesRoute
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.report.api.ReportsRoute
 import com.neoutils.finsight.feature.support.api.SupportRoute
@@ -23,11 +26,11 @@ internal class AppNavigationDispatcher(
             }
 
             is NavigationDestination.InvoiceTransactions -> {
-                navController.navigate(AppRoute.InvoiceTransactions(destination.creditCardId))
+                navController.navigate(InvoiceTransactionsRoute(destination.creditCardId))
             }
 
             is NavigationDestination.CreditCards -> {
-                navController.navigate(AppRoute.CreditCards(destination.creditCardId))
+                navController.navigate(CreditCardsRoute(destination.creditCardId))
             }
 
             is NavigationDestination.Accounts -> {
@@ -35,7 +38,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.Installments -> {
-                navController.navigate(AppRoute.Installments)
+                navController.navigate(InstallmentsRoute)
             }
 
             NavigationDestination.Budgets -> {

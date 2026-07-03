@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.transactions
 
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.ui.model.InvoiceOverview
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.toYearMonth
@@ -51,15 +52,4 @@ data class TransactionsUiState(
         val mustShowAdvancePayment = advancePayment != 0.0
     }
 
-    data class InvoiceOverview(
-        val invoiceId: Long,
-        val creditCardName: String,
-        val invoiceStatus: Invoice.Status,
-        val expense: Double,
-        val advancePayment: Double,
-        val adjustment: Double,
-        val total: Double
-    ) {
-        val mustShowAdjustment = adjustment != 0.0
-    }
 }

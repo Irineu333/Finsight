@@ -4,7 +4,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.neoutils.finsight.ui.component.*
@@ -13,18 +12,12 @@ import com.neoutils.finsight.ui.screen.home.AppRoute
 import com.neoutils.finsight.ui.screen.home.HomeScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
-import com.neoutils.finsight.ui.screen.report.ReportRoute
-import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
-import com.neoutils.finsight.ui.screen.report.config.ReportConfigScreen
-import com.neoutils.finsight.ui.screen.report.toRoute
-import com.neoutils.finsight.ui.screen.report.viewer.ReportViewerScreen
 import com.neoutils.finsight.ui.navigation.accountsGraph
 import com.neoutils.finsight.ui.navigation.budgetsGraph
 import com.neoutils.finsight.ui.navigation.categoriesGraph
+import com.neoutils.finsight.ui.navigation.reportGraph
 import com.neoutils.finsight.ui.navigation.recurringGraph
 import com.neoutils.finsight.ui.navigation.supportGraph
-import com.neoutils.finsight.util.PerspectiveTabNavType
-import kotlin.reflect.typeOf
 
 @Composable
 fun AppNavHost() = Surface {
@@ -86,34 +79,7 @@ fun AppNavHost() = Surface {
 
                         supportGraph(navController)
 
-                        navigation<AppRoute.Reports>(
-                            startDestination = ReportRoute.Config,
-                        ) {
-                            composable<ReportRoute.Config> {
-                                ReportConfigScreen(
-                                    onNavigateBack = {
-                                        navController.navigateUp()
-                                    },
-                                    onNavigateToViewer = { params ->
-                                        navController.navigate(params.toRoute())
-                                    },
-                                )
-                            }
-
-                            composable<ReportRoute.Viewer>(
-                                typeMap = mapOf(
-                                    typeOf<PerspectiveTab>() to PerspectiveTabNavType()
-                                )
-                            ) { backStackEntry ->
-                                val route = backStackEntry.toRoute<ReportRoute.Viewer>()
-                                ReportViewerScreen(
-                                    route = route,
-                                    onNavigateBack = {
-                                        navController.navigateUp()
-                                    },
-                                )
-                            }
-                        }
+                        reportGraph(navController)
                     }
                 }
             }

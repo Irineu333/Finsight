@@ -34,10 +34,9 @@ import com.neoutils.finsight.ui.screen.report.service.ReportShareService
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
@@ -120,6 +119,8 @@ private fun ReportViewerContent(
     onPrint: (ReportViewerUiState.Content, ReportExportStrings, String) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val categoriesEntry = koinInject<CategoriesEntry>()
+    val transactionsEntry = koinInject<TransactionsEntry>()
     val dateFormats = LocalDateFormats.current
 
     val exportStrings = ReportExportStrings(
@@ -240,7 +241,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
-                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    onCategoryClick = { modalManager.show(categoriesEntry.viewCategoryModal(it)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -253,7 +254,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
-                                    onCategoryClick = { modalManager.show(ViewCategoryModal(it)) },
+                                    onCategoryClick = { modalManager.show(categoriesEntry.viewCategoryModal(it)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -292,12 +293,10 @@ private fun ReportViewerContent(
                                         onClick = {
                                             when {
                                                 operation.type.isAdjustment -> modalManager.show(
-                                                    ViewAdjustmentModal(
-                                                        operation
-                                                    )
+                                                    transactionsEntry.viewAdjustmentModal(operation)
                                                 )
 
-                                                else -> modalManager.show(ViewOperationModal(operation))
+                                                else -> modalManager.show(transactionsEntry.viewOperationModal(operation))
                                             }
                                         },
                                     )

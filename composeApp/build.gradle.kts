@@ -53,6 +53,7 @@ kotlin {
             export(projects.feature.categories.api)
             export(projects.feature.creditcards.api)
             export(projects.feature.recurring.api)
+            export(projects.feature.report.api)
             export(projects.feature.support.api)
             export(projects.feature.transactions.api)
         }
@@ -82,6 +83,8 @@ kotlin {
             api(projects.feature.creditcards.api)
             api(projects.feature.recurring.api)
             implementation(projects.feature.recurring.impl)
+            api(projects.feature.report.api)
+            implementation(projects.feature.report.impl)
             api(projects.feature.support.api)
             implementation(projects.feature.support.impl)
             api(projects.feature.transactions.api)

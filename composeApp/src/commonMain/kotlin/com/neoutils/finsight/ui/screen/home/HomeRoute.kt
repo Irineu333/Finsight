@@ -27,7 +27,4 @@ sealed class AppRoute {
 
     @Serializable
     data object Installments : AppRoute()
-
-    @Serializable
-    data object Reports : AppRoute()
 }

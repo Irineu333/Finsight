@@ -9,6 +9,7 @@ import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
+import com.neoutils.finsight.feature.report.api.ReportsRoute
 import com.neoutils.finsight.feature.support.api.SupportRoute
 import com.neoutils.finsight.ui.screen.home.AppRoute
 
@@ -46,7 +47,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.ReportConfig -> {
-                navController.navigate(AppRoute.Reports)
+                navController.navigate(ReportsRoute)
             }
 
             NavigationDestination.Support -> {

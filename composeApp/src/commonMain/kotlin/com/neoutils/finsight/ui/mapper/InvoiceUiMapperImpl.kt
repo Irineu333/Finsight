@@ -5,11 +5,11 @@ import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.model.InvoiceUi
 
-class InvoiceUiMapper(
+class InvoiceUiMapperImpl(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
     private val calculateAvailableLimitUseCase: CalculateAvailableLimitUseCase,
-) {
-    suspend fun toUi(
+) : InvoiceUiMapper {
+    override suspend fun toUi(
         invoice: Invoice,
     ): InvoiceUi {
 

@@ -21,15 +21,15 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
 
-class AddInstallmentUseCase(
+class AddInstallmentUseCaseImpl(
     private val operationRepository: IOperationRepository,
     private val installmentRepository: IInstallmentRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
-) {
+) : AddInstallmentUseCase {
 
-    suspend operator fun invoke(
+    override suspend operator fun invoke(
         form: TransactionForm,
         installments: Int,
     ): Either<Throwable, List<Transaction>> {

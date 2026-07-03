@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateRetroactiveInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.AddInstallmentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCaseImpl
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
@@ -144,8 +145,8 @@ val useCaseModules = module {
         )
     }
 
-    factory {
-        AddInstallmentUseCase(
+    factory<AddInstallmentUseCase> {
+        AddInstallmentUseCaseImpl(
             operationRepository = get(),
             installmentRepository = get(),
             invoiceRepository = get(),

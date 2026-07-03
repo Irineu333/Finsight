@@ -1,6 +1,25 @@
-This is a Kotlin Multiplatform project targeting Android, Desktop (JVM).
+This is a Kotlin Multiplatform project targeting Android, Desktop (JVM) and iOS.
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
+## Module structure
+
+The app is modularized **by feature** in the **api/impl** pattern, on top of shared **core**
+modules; dependency rules are enforced mechanically by convention plugins in `build-logic`.
+
+- `build-logic/` — convention plugins (`finsight.kmp.library` / `compose.library` /
+  `feature.api` / `feature.impl`).
+- `core/*` — `common`, `model`, `resources`, `designsystem`, `ui`, `database`,
+  `analytics`, `crashlytics`, `auth`.
+- `feature/<name>/{api,impl}` — one pair per feature (support, categories, budgets,
+  accounts, creditcards, recurring, transactions, report, dashboard). The `api` holds
+  routes, repository/use-case interfaces and the `<Name>Entry`; the `impl` holds the
+  screens, ViewModels, use cases, repositories and the feature's Koin module.
+- `:composeApp` — the shell/aggregator: root `App`, `AppNavHost`, Koin wiring, platform
+  entry points and the iOS framework (hosts `:composeApp:embedAndSignAppleFrameworkForXcode`).
+
+> See **`feature/README.md`** for the normative dependency rules and entry-point pattern,
+> and **`CLAUDE.md`** for the full module map.
+
+* [/composeApp](./composeApp/src) is the app shell — Compose entry points shared across targets.
   It contains several subfolders:
     - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
     - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.

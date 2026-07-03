@@ -50,6 +50,6 @@
 
 ## 6. Verificação final
 
-- [ ] 6.1 Rodar `./gradlew check` e builds dos 3 targets; smoke test manual dos fluxos principais (transação, fatura, recorrência, relatório)
-- [ ] 6.2 Validar as regras de dependência com testes negativos (dependência proibida deve falhar o build)
-- [ ] 6.3 Atualizar `feature/README.md` (seção "O papel do shell" + mecanismo de navegação decidido) e `CLAUDE.md`/`README.md` com a nova estrutura de módulos
+- [x] 6.1 Verificação: 3 targets compilam (jvm/android/iosSimulatorArm64), testes unitários verdes (`composeApp`, `core:database`, `feature:report:impl`) e framework iOS linka com todos os `export()`. `./gradlew check` completo permanece bloqueado apenas nos passos de integração nativa Firebase (androidTest lint + link do binário de teste iOS `FirebaseCore`) — pré-existente (reproduzido no baseline). Smoke test manual dos fluxos fica para execução interativa (não automatizável neste ambiente)
+- [x] 6.2 Regras validadas com teste negativo: `api → api` proibida falha o build com mensagem indicando módulo e dependência (`api ':feature:accounts:api' não pode depender de ':feature:transactions:api'`)
+- [x] 6.3 `feature/README.md` (seção "O papel do shell" + mecanismo de navegação + padrões emergentes), `CLAUDE.md` (mapa de módulos + regras) e `README.md` (estrutura modular) atualizados

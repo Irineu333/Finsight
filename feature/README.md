@@ -182,3 +182,36 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
 - No framework iOS (configurado no `:composeApp`), apenas `:core:*` e `feature:*:api`
   são exportados (`export()`); os `impl` são linkados, mas invisíveis ao Swift.
+
+---
+
+## O papel do shell (`:composeApp`)
+
+O `:composeApp` é o **único módulo agregador** e ficou reduzido a shell puro:
+
+- `App`, `AppNavHost` (agrega os `xxxGraph()` de cada `impl`), `AppNavigationDispatcher`;
+- `HomeScreen` (abas Dashboard/Transactions) e `HomeRoute`/`AppRoute` (só `Home`);
+- agregação dos módulos Koin de todas as features + `shellModule` (singletons cross-cutting:
+  `Settings`, `CurrencyFormatter`, `ModalManager`, `DebounceManager`) e `databaseModule`
+  (provedor de DAOs + `expect databasePlatformModule`);
+- entry points de plataforma (`MainActivity`/`AndroidApp`, `MainViewController`, `main.kt`)
+  e a configuração do framework iOS (export seletivo de `:core:*` + `feature:*:api`).
+
+Adicionar uma feature nova mexe no shell em no máximo três pontos: a lista de módulos Koin,
+a chamada do `xxxGraph()` no `AppNavHost` e o `export()` da api no framework iOS.
+
+## Padrões que emergiram na extração (além do desenho inicial)
+
+Como as dependências entre features são **bidirecionais**, não existe ordem acíclica de
+features completas — daí três padrões consolidados:
+
+1. **Apis primeiro.** Interfaces de repositório e rotas só dependem de `:core:*`, logo são
+   acíclicas e foram extraídas antes dos `impl`, desbloqueando qualquer ordem de extração.
+2. **Interface para use case público com dependência interna.** Um use case consumido por
+   outra feature mas que depende de use cases internos vira **interface na `api` + `Impl` no
+   `impl`** (ex.: `GetOrCreateInvoiceForMonthUseCase`, `BuildTransactionUseCase`,
+   `AddInstallmentUseCase`, `InvoiceUiMapper`). Use cases públicos **sem** dependência interna
+   podem ser classes concretas na `api`.
+3. **Mappers e models de UI compartilhados vão para o core.** Um mapper entity↔model usado por
+   dois `impl` (ex.: `RecurringMapper`) vive em `:core:database`; um model de UI compartilhado
+   (ex.: `InvoiceOverview`) vive em `:core:ui` — evitando arestas `impl → impl`.

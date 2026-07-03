@@ -1,5 +1,5 @@
 package com.neoutils.finsight.extension
 
-import androidx.activity.ComponentActivity
+import android.app.Activity
 
-actual class PlatformContext(val activity: ComponentActivity)
+actual class PlatformContext(val activity: Activity)

@@ -1,5 +1,6 @@
 package com.neoutils.finsight.extension
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 
 expect class PlatformContext
@@ -7,3 +8,6 @@ expect class PlatformContext
 val LocalPlatformContext = staticCompositionLocalOf<PlatformContext> {
     error("No PlatformContext provided")
 }
+
+@Composable
+expect fun ProvidePlatformContext(content: @Composable () -> Unit)

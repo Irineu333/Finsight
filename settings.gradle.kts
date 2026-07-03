@@ -47,8 +47,12 @@ include(":core:resources")
 include(":core:ui")
 
 // Features
+include(":feature:accounts:api")
+include(":feature:budgets:api")
 include(":feature:categories:api")
 include(":feature:categories:impl")
+include(":feature:creditcards:api")
+include(":feature:recurring:api")
 include(":feature:support:api")
 include(":feature:support:impl")
 include(":feature:transactions:api")

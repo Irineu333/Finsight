@@ -63,10 +63,10 @@ coexistem sem ciclo, porque as apis não se enxergam.
 |---|---|---|---|
 | **feature:\*:api** | ✅ | ❌ | ❌ |
 | **feature:\*:impl** | ✅ | ✅ (qualquer) | ❌ |
-| **:composeApp** (shell) | ✅ | ✅ | ✅ (é o agregador) |
+| **:app:shared** (shell) | ✅ | ✅ | ✅ (é o agregador) |
 
-O `:composeApp` é o único módulo que enxerga os `impl` — é ele quem faz o wiring do Koin,
-registra os grafos de navegação e configura o framework iOS.
+O `:app:shared` é o único módulo que enxerga os `impl` — é ele quem faz o wiring do Koin
+(`appModules`) e registra os grafos de navegação. O framework iOS vive em `:app:ios`.
 
 ---
 
@@ -130,14 +130,14 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 
 | Acesso | Mecanismo |
 |---|---|
-| **Navegação** | Rota (`@Serializable`) vive na `api`; consumidor navega por rota. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:composeApp` |
+| **Navegação** | Rota (`@Serializable`) vive na `api`; consumidor navega por rota. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:app:shared` |
 | **Modais** | Método no entry point retornando `Modal` (tipo de `:core:designsystem`) |
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
 
 ### Mecanismo de registro de navegação
 
 Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph(navController)`** que registra os
-`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). O `:composeApp` — único
+`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). O `:app:shared` — único
 módulo que enxerga os `impl` — agrega essas extensions no `AppNavHost`:
 
 ```kotlin
@@ -147,7 +147,7 @@ fun NavGraphBuilder.supportGraph(navController: NavController) {
     composable<SupportIssueRoute> { ... }
 }
 
-// :composeApp — AppNavHost
+// :app:shared — AppNavHost
 NavHost(...) {
     // rotas do shell (Home, abas)...
     supportGraph(navController)
@@ -180,25 +180,33 @@ As assinaturas dos entry points só referenciam tipos do core (`:core:model`,
 - Todos os módulos de feature declaram os targets KMP (Android, iOS, Desktop), mas a
   regra é código `commonMain` puro. Source sets de plataforma no `impl` são exceção
   justificada (ex.: `report:impl`, com serviços nativos de print/share).
-- No framework iOS (configurado no `:composeApp`), apenas `:core:*` e `feature:*:api`
-  são exportados (`export()`); os `impl` são linkados, mas invisíveis ao Swift.
+- No framework iOS (configurado no `:app:ios`), apenas `:core:*` e `feature:*:api`
+  são exportados (`export()`); os `impl` são linkados via `:app:shared`, mas invisíveis ao Swift.
 
 ---
 
-## O papel do shell (`:composeApp`)
+## O papel do shell (`:app:shared`) e os módulos `app/`
 
-O `:composeApp` é o **único módulo agregador** e ficou reduzido a shell puro:
+O app é dividido em quatro módulos de responsabilidade única sob `app/`:
 
-- `App`, `AppNavHost` (agrega os `xxxGraph()` de cada `impl`), `AppNavigationDispatcher`;
-- `HomeScreen` (abas Dashboard/Transactions) e `HomeRoute`/`AppRoute` (só `Home`);
-- agregação dos módulos Koin de todas as features + `shellModule` (singletons cross-cutting:
-  `Settings`, `CurrencyFormatter`, `ModalManager`, `DebounceManager`) e `databaseModule`
-  (provedor de DAOs + `expect databasePlatformModule`);
-- entry points de plataforma (`MainActivity`/`AndroidApp`, `MainViewController`, `main.kt`)
-  e a configuração do framework iOS (export seletivo de `:core:*` + `feature:*:api`).
+- **`:app:shared`** (KMP library, convenção `finsight.app.shared`) — o **único módulo agregador**,
+  reduzido a shell puro:
+  - `App`, `AppNavHost` (agrega os `xxxGraph()` de cada `impl`), `AppNavigationDispatcher`;
+  - `HomeScreen` (abas Dashboard/Transactions) e `HomeRoute`/`AppRoute` (só `Home`);
+  - `appModules`: a lista de agregação dos módulos Koin dos cores injetáveis + de todas as features.
+- **`:app:android`** (`com.android.application`, não-KMP) — `MainActivity`, `AndroidApp` (`startKoin`),
+  Manifest, mipmaps, signing/keystore, `google-services.json`, crashlytics, `versionCode`/`versionName`.
+- **`:app:desktop`** (`kotlin("jvm")`) — `main.kt` + `compose.desktop` com `nativeDistributions`.
+- **`:app:ios`** (KMP só-iOS) — `MainViewController` + framework `ComposeApp` com export seletivo
+  de `:core:*` + `feature:*:api`.
 
-Adicionar uma feature nova mexe no shell em no máximo três pontos: a lista de módulos Koin,
-a chamada do `xxxGraph()` no `AppNavHost` e o `export()` da api no framework iOS.
+Os singletons cross-cutting **não** vivem mais num `shellModule`: cada binding Koin fica no core dono
+(`databaseModule` em `:core:database`, `commonModule` — `Settings`/`CurrencyFormatter`/`DebounceManager` —
+em `:core:common`, `designsystemModule` — `ModalManager` — em `:core:designsystem`); `:app:shared`
+apenas os agrega em `appModules`.
+
+Adicionar uma feature nova mexe no app em no máximo três pontos: a lista `appModules` (`:app:shared`),
+a chamada do `xxxGraph()` no `AppNavHost` (`:app:shared`) e o `export()` da api no framework (`:app:ios`).
 
 ## Padrões que emergiram na extração (além do desenho inicial)
 

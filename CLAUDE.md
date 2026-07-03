@@ -7,8 +7,10 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ```bash
 ./gradlew allTests                                          # All tests
 ./gradlew check                                            # Verification
-./gradlew :composeApp:testDebugUnitTest --tests "*.XxxTest" # Single test class
-./gradlew :composeApp:testDebugUnitTest                    # Unit tests only
+./gradlew :app:shared:testDebugUnitTest --tests "*.XxxTest" # Single test class
+./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
+./gradlew :app:android:assembleDebug                       # Build Android APK
+./gradlew :app:desktop:run                                 # Run Desktop app
 ```
 
 ## Features
@@ -21,11 +23,12 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
 
-## Module structure (feature api/impl + core)
+## Module structure (feature api/impl + core + app)
 
 The app is modularized by **feature** in the **api/impl** pattern, on top of a set of
-**core** modules. Rules are enforced mechanically by convention plugins in `build-logic`
-(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl`).
+**core** modules, with the app split into single-responsibility `app/` modules. Rules are
+enforced mechanically by convention plugins in `build-logic`
+(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`).
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `model` (domain models,
@@ -39,9 +42,18 @@ The app is modularized by **feature** in the **api/impl** pattern, on top of a s
 - **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,
   mappers, the feature's Koin module and `NavGraphBuilder.<name>Graph()`. May depend on
   any `feature:*:api` and `:core:*`.
-- **`:composeApp`** — the shell/aggregator (the only module that sees `impl`s): `App`,
-  `AppNavHost`, dispatcher, `HomeScreen`, Koin aggregation + `shellModule`, platform entry
-  points, iOS framework (exports `:core:*` + `feature:*:api`).
+- **`app/`** — the app, split by responsibility:
+  - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
+    `impl`s): `App`, `AppNavHost`, dispatcher, `HomeScreen`, Koin aggregation (`appModules`).
+    Under the `finsight.app.shared` convention plugin.
+  - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`
+    (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
+  - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
+  - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
+    (exports `:core:*` + `feature:*:api`).
+  - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
+    `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
+    `:core:designsystem`); `:app:shared` only aggregates.
 
 Features: support, categories, budgets, accounts, creditcards (incl. invoices/
 installments/invoiceTransactions), recurring, transactions, report, dashboard.
@@ -53,7 +65,7 @@ installments/invoiceTransactions), recurring, transactions, report, dashboard.
 **Architecture:** Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
 **Dependency Rule (modules):** (1) api ⊄ api, (2) impl ⊄ impl, (3) api ⊄ impl,
-(4) impl → any api + `:core:*`; only `:composeApp` sees `impl`s. Cycles between features
+(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s. Cycles between features
 are impossible by construction (star topology). **Layer rule (within a module):**
 Domain <- Database, Domain <- UI.
 

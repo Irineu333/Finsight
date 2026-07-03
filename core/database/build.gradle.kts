@@ -11,6 +11,7 @@ kotlin {
             api(libs.androidx.sqlite.bundled)
             implementation(projects.core.model)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.koin.core)
         }
     }
 }

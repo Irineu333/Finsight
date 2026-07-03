@@ -30,5 +30,9 @@ gradlePlugin {
             id = "finsight.feature.impl"
             implementationClass = "com.neoutils.finsight.convention.FeatureImplConventionPlugin"
         }
+        register("appShared") {
+            id = "finsight.app.shared"
+            implementationClass = "com.neoutils.finsight.convention.AppSharedConventionPlugin"
+        }
     }
 }

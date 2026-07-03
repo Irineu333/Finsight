@@ -141,3 +141,33 @@ internal fun Project.verifyFeatureDependencyRules(isApi: Boolean) {
         }
     }
 }
+
+/**
+ * Verifica as regras de dependência do módulo agregador (`:app:shared`).
+ * É o único módulo autorizado a depender de `:feature:*:impl`; só pode depender
+ * de projetos `:core:*` e `:feature:*` (api ou impl). Falha o build ao encontrar
+ * qualquer outra dependência de projeto (ex.: outro `:app:*`).
+ */
+internal fun Project.verifyAppSharedDependencyRules() {
+    afterEvaluate {
+        val violations = mutableListOf<String>()
+        configurations.forEach { configuration ->
+            configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
+                val depPath = dependency.path
+                if (depPath == path) return@forEach // auto-referência de source sets KMP
+                val isCore = depPath.startsWith(":core:")
+                val isFeature = depPath.startsWith(":feature:")
+                if (!isCore && !isFeature) {
+                    violations += "app '$path' não pode depender de '$depPath' " +
+                        "(regra: :app:shared só depende de :core:* e :feature:*)"
+                }
+            }
+        }
+        if (violations.isNotEmpty()) {
+            throw org.gradle.api.GradleException(
+                "Violação das regras de dependência de módulos:\n" +
+                    violations.joinToString("\n") { " - $it" }
+            )
+        }
+    }
+}

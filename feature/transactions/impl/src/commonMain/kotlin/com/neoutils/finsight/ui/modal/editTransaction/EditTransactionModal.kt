@@ -2,6 +2,9 @@
 
 package com.neoutils.finsight.ui.modal.editTransaction
 
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
+import org.koin.compose.koinInject
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,8 +34,6 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.date.DatePickerModal
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
-import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.DateInputTransformation
@@ -58,6 +59,8 @@ class EditTransactionModal(
         val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
 
         val manager = LocalModalManager.current
+        val categoriesEntry = koinInject<CategoriesEntry>()
+        val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         val uiState by viewModel.uiState.collectAsState()
 
@@ -164,7 +167,7 @@ class EditTransactionModal(
                         onCreditCardSelected = {
                             viewModel.onAction(EditTransactionAction.SelectCreditCard(it))
                         },
-                        onEmpty = { manager.show(CreditCardFormModal()) },
+                        onEmpty = { manager.show(creditCardsEntry.creditCardFormModal()) },
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .fillMaxWidth()
@@ -212,7 +215,7 @@ class EditTransactionModal(
                         else -> emptyList()
                     },
                     onCategorySelected = { selectedCategory = it },
-                    onEmpty = { manager.show(CategoryFormModal()) },
+                    onEmpty = { manager.show(categoriesEntry.categoryFormModal()) },
                     modifier = Modifier.fillMaxWidth()
                 )
 

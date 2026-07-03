@@ -8,7 +8,6 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -38,7 +37,6 @@ val accountsModule = module {
     }
     factory { AccountMapper() }
 
-    factory { CalculateBalanceUseCase(repository = get()) }
     factory { EnsureDefaultAccountUseCase(repository = get()) }
     factory { ValidateAccountNameUseCase(repository = get()) }
     factory { SetDefaultAccountUseCase(repository = get()) }

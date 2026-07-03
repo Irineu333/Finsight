@@ -2,6 +2,8 @@
 
 package com.neoutils.finsight.ui.modal.viewTransaction
 
+import com.neoutils.finsight.feature.recurring.api.RecurringEntry
+import org.koin.compose.koinInject
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -37,7 +39,6 @@ import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -67,12 +68,13 @@ class ViewOperationModal(
         val uiState by viewModel.uiState.collectAsState()
 
         val manager = LocalModalManager.current
+        val recurringEntry = koinInject<RecurringEntry>()
         val navigationDispatcher = LocalNavigationDispatcher.current
 
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.OpenRecurring -> manager.show(ViewRecurringModal(event.recurring))
+                    is ViewOperationEvent.OpenRecurring -> manager.show(recurringEntry.viewRecurringModal(event.recurring))
                 }
             }
         }

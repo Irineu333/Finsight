@@ -7,26 +7,20 @@ import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
-import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
-import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
-import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
-import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import com.neoutils.finsight.util.CreditCardPeriod
 import com.neoutils.finsight.util.DebounceManager
 import org.koin.core.module.dsl.viewModel
@@ -41,21 +35,6 @@ val viewModelModule = module {
     factory { DebounceManager(delayMillis = 500L) }
 
     factory { CreditCardPeriod(defaultDaysDifference = 8) }
-
-    viewModel {
-        ViewAdjustmentViewModel(
-            operation = it.get(),
-            operationRepository = get(),
-        )
-    }
-
-    viewModel {
-        ViewOperationViewModel(
-            operation = it.get(),
-            perspective = it.getOrNull(),
-            operationRepository = get(),
-        )
-    }
 
     factory {
         DashboardComponentsBuilder(
@@ -94,18 +73,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        TransactionsViewModel(
-            filterType = getOrNull(),
-            category = getOrNull(),
-            filterTarget = getOrNull(),
-            operationRepository = get(),
-            categoryRepository = get(),
-            calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
-        )
-    }
-
-    viewModel {
         CreditCardsViewModel(
             initialCreditCardId = it.getOrNull(),
             creditCardRepository = get(),
@@ -133,46 +100,6 @@ val viewModelModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        AddTransactionViewModel(
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            operationRepository = get(),
-            accountRepository = get(),
-            buildTransactionUseCase = get(),
-            addInstallmentUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        EditTransactionViewModel(
-            transaction = it.get(),
-            transactionRepository = get(),
-            operationRepository = get(),
-            categoryRepository = get(),
-            creditCardRepository = get(),
-            invoiceRepository = get(),
-            accountRepository = get(),
-            buildTransactionUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteTransactionViewModel(
-            transaction = it.get(),
-            operationRepository = get(),
-            modalManager = get(),
-            analytics = get(),
         )
     }
 

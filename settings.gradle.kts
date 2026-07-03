@@ -34,3 +34,14 @@ plugins {
 }
 
 include(":composeApp")
+
+// Core
+include(":core:analytics")
+include(":core:auth")
+include(":core:common")
+include(":core:crashlytics")
+include(":core:database")
+include(":core:designsystem")
+include(":core:model")
+include(":core:resources")
+include(":core:ui")

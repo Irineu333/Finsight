@@ -78,15 +78,15 @@ class BuildTransactionUseCase(
             BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
         }
 
-        ensureNotNull(form.creditCard) {
+        val creditCard = ensureNotNull(form.creditCard) {
             BuildTransactionException(BuildTransactionError.CreditCardRequired)
         }
 
-        ensureNotNull(form.invoiceDueMonth) {
+        val invoiceDueMonth = ensureNotNull(form.invoiceDueMonth) {
             BuildTransactionException(BuildTransactionError.InvoiceRequired)
         }
 
-        val invoice = getOrCreateInvoiceForMonthUseCase(form.creditCard, form.invoiceDueMonth).bind()
+        val invoice = getOrCreateInvoiceForMonthUseCase(creditCard, invoiceDueMonth).bind()
 
         ensure(!invoice.status.isClosed) {
             BuildTransactionException(BuildTransactionError.ClosedInvoice)

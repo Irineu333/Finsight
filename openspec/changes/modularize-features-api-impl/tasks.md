@@ -12,14 +12,14 @@
 
 ## 2. Fase 1 — módulos core
 
-- [ ] 2.1 Extrair `:core:common` (`util/`, `extension/`, `Platform.kt`, `UiText`) com source sets de plataforma
-- [ ] 2.2 Extrair `:core:model` (`domain/model/`, `domain/error/`, `domain/exception/`)
-- [ ] 2.3 Extrair `:core:resources` movendo `composeResources` inteiro (sem split de conteúdo) e ajustando imports de `Res`
-- [ ] 2.4 Extrair `:core:designsystem` (`ui/theme/`, `ui/icons/`, `ModalManager`, componentes genéricos sem modelo de domínio)
-- [ ] 2.5 Extrair `:core:ui` (componentes que renderizam modelos core: `AccountSelector`, `OperationCard`, seletores etc.)
-- [ ] 2.6 Extrair `:core:database` (entities, DAOs, `AppDatabase`, `Converters`, expect/actual de builder por plataforma)
-- [ ] 2.7 Extrair `:core:analytics`, `:core:crashlytics` e `:core:auth` (interfaces de domínio + impls Firebase/no-op por plataforma + módulos Koin próprios)
-- [ ] 2.8 Verificação da fase: check verde nos 3 targets; `:composeApp` sem `util/`, `extension/`, `domain/model`, `theme` e `database/`
+- [x] 2.1 Extrair `:core:common` (`util/`, `extension/`, `Platform.kt`, `UiText`) com source sets de plataforma
+- [x] 2.2 Extrair `:core:model` (`domain/model/`, `domain/error/`, `domain/exception/`) — inclui extensions/NavTypes domain-coupled (`Category`, `Transaction`, `InvoiceExt`, `Transaction*NavType`)
+- [x] 2.3 Extrair `:core:resources` movendo `composeResources` inteiro (sem split de conteúdo) e ajustando imports de `Res` (`publicResClass = true`)
+- [x] 2.4 Extrair `:core:designsystem` (`ui/theme/`, `ModalManager`, componentes genéricos sem modelo de domínio) — `ui/icons/` foi para `:core:common` (usado por `domain/model`)
+- [x] 2.5 Extrair `:core:ui` (componentes que renderizam modelos core: `AccountSelector`, `OperationCard`, seletores + `ui/model/`)
+- [x] 2.6 Extrair `:core:database` (entities, DAOs, `AppDatabase`, `Converters`, expect/actual de builder por plataforma + migration tests). Mappers/repositories permanecem no shell (vão para os impls na Fase 3)
+- [x] 2.7 Extrair `:core:analytics`, `:core:crashlytics` e `:core:auth` (interfaces de domínio + impls Firebase/no-op por plataforma + módulos Koin próprios)
+- [x] 2.8 Verificação da fase: 3 targets compilam (jvm/android/iosSimulatorArm64) e testes unitários verdes. `check` completo falha apenas em passos de integração nativa Firebase (androidTest lint + link do binário de teste iOS `FirebaseCore`) — **pré-existente** (reproduzido no baseline da Fase 0), fora do escopo. `:composeApp` sem `domain/model`, `theme`, `database/` entities; resta `util/PerspectiveTabNavType` e `database/{mapper,repository}` (feature-coupled, saem na Fase 3)
 
 ## 3. Fase 2 — piloto :feature:support
 

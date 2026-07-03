@@ -703,9 +703,10 @@ private fun PendingRecurringCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
             ) {
-                if (recurring.category != null) {
+                val category = recurring.category
+                if (category != null) {
                     CategoryIconBox(
-                        category = recurring.category,
+                        category = category,
                         contentPadding = PaddingValues(12.dp),
                     )
                 } else {

@@ -121,9 +121,10 @@ class ViewBudgetModal(
             }
 
             Column {
-                if (budget.limitType == LimitType.PERCENTAGE && budget.percentage != null) {
+                val percentage = budget.percentage
+                if (budget.limitType == LimitType.PERCENTAGE && percentage != null) {
                     val pctLabel = buildString {
-                        append("${budget.percentage.toInt()}%")
+                        append("${percentage.toInt()}%")
                         budgetProgress.recurringLabel?.let { append(" de $it") }
                     }
                     DetailRow(

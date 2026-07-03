@@ -14,7 +14,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * gesture before the long press threshold is reached. Once the long press wins, it consumes the
  * remaining pointer events until release so the inner tap action cannot complete on pointer up.
  */
-internal fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
+fun Modifier.interceptLongPress(onLongPress: () -> Unit): Modifier = pointerInput(onLongPress) {
     awaitEachGesture {
         val down = awaitFirstDown(pass = PointerEventPass.Initial, requireUnconsumed = false)
         var released = false

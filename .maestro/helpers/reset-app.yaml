@@ -1,0 +1,11 @@
+appId: com.neoutils.finsight.e2e
+---
+# Universal pre-condition for every flow.
+# Wipes Android app state (Room database, settings, in-memory fake Firestore)
+# and iOS keychain, then relaunches the app cold so DI and onboarding restart
+# from a deterministic blank slate.
+- clearState
+- clearKeychain
+- launchApp:
+    appId: com.neoutils.finsight.e2e
+    stopApp: true

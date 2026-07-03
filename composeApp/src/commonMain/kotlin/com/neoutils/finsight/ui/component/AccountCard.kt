@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.ui.screen.accounts.AccountsTestTags
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -226,6 +228,7 @@ private fun DetailContent(
             color = colorScheme.onSurface,
             isTotal = true,
             onEditClick = variant.onEditBalance,
+            editTestTag = AccountsTestTags.EDIT_BALANCE_ACTION,
             signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
         )
     }
@@ -304,6 +307,7 @@ private fun AccountSummaryRow(
     signDisplay: AccountSignDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
     isTotal: Boolean = false,
     onEditClick: (() -> Unit)? = null,
+    editTestTag: String? = null,
 ) {
     val formatter = LocalCurrencyFormatter.current
 
@@ -335,6 +339,9 @@ private fun AccountSummaryRow(
                 .clip(RoundedCornerShape(4.dp))
                 .then(
                     if (onEditClick != null) Modifier.clickable { onEditClick() } else Modifier
+                )
+                .then(
+                    if (onEditClick != null && editTestTag != null) Modifier.testTag(editTestTag) else Modifier
                 ),
         ) {
             if (onEditClick != null) {

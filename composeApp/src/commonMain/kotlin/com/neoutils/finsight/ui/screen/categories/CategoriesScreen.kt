@@ -31,6 +31,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
@@ -77,6 +78,7 @@ private fun CategoriesContent(
     val modalManager = LocalModalManager.current
 
     Scaffold(
+        modifier = Modifier.testTag(CategoriesTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = {
@@ -98,6 +100,7 @@ private fun CategoriesContent(
                     onClick = {
                         modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
                     },
+                    modifier = Modifier.testTag(CategoriesTestTags.FAB),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -201,6 +204,7 @@ private fun CategoriesContent(
                                         modalManager.show(ViewCategoryModal(category))
                                     },
                                     modifier = Modifier
+                                        .testTag(CategoriesTestTags.item(category.id))
                                         .fillMaxWidth()
                                         .animateItem()
                                 )
@@ -255,7 +259,9 @@ private fun EmptyCategoriesState(
 
             OutlinedButton(
                 onClick = onCreateManualCategory,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(CategoriesTestTags.CREATE_MANUAL)
+                    .fillMaxWidth(),
             ) {
                 Text(text = stringResource(Res.string.categories_create_manual))
             }

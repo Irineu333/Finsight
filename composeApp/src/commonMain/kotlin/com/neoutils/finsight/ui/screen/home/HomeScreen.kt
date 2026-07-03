@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,6 +28,7 @@ import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
+import com.neoutils.finsight.ui.screen.transactions.TransactionsTestTags
 import com.neoutils.finsight.util.TransactionTargetNavType
 import com.neoutils.finsight.util.TransactionTypeNavType
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -111,6 +113,7 @@ fun HomeScreen() {
                             modalManager.show(AddTransactionModal())
                         },
                         contentColor = Color.White,
+                        modifier = Modifier.testTag(TransactionsTestTags.FAB),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,

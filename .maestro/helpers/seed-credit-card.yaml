@@ -1,0 +1,53 @@
+appId: com.neoutils.finsight.e2e
+---
+# Cria um cartão de crédito determinístico "E2E Card" partindo do Dashboard.
+#
+# Pré-condição: dashboard-root visível (chame helpers/reset-app.yaml antes).
+# Após executar, o flow retorna ao Dashboard.
+#
+# Caminho: Dashboard → Credit Cards quick action → estado vazio →
+# "Criar cartão" → preencher → submeter → voltar ao Dashboard.
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-credit-cards"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-credit-cards"
+- extendedWaitUntil:
+    visible:
+      id: "credit-cards-root"
+    timeout: 10000
+- tapOn:
+    id: "credit-card-create-empty"
+- extendedWaitUntil:
+    visible:
+      id: "credit-card-form-name"
+    timeout: 5000
+- tapOn:
+    id: "credit-card-form-name"
+- inputText: "E2E Card"
+- hideKeyboard
+- tapOn:
+    id: "credit-card-form-limit"
+- inputText: "100000"
+- hideKeyboard
+- tapOn:
+    id: "credit-card-form-closing-day"
+- inputText: "10"
+- hideKeyboard
+- tapOn:
+    id: "credit-card-form-due-day"
+- inputText: "20"
+- hideKeyboard
+- tapOn:
+    id: "credit-card-form-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "credit-card-form-submit"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000

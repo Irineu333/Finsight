@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
@@ -29,6 +30,7 @@ fun CreditCardSelector(
     onCreditCardSelected: (CreditCard) -> Unit,
     modifier: Modifier = Modifier,
     onEmpty: (() -> Unit)? = null,
+    testTag: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -78,6 +80,7 @@ fun CreditCardSelector(
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
                 .animateContentSize()
+                .let { if (testTag != null) it.testTag(testTag) else it }
         )
 
         ExposedDropdownMenu(

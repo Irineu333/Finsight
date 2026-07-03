@@ -1,0 +1,67 @@
+appId: com.neoutils.finsight.e2e
+name: transfers / transfer between accounts
+tags:
+  - transfers
+---
+# Reset → seed conta extra → abrir transferência entre contas →
+# transferir um valor → assertar que a tela de contas continua estável.
+#
+# Notas:
+# - EnsureDefaultAccountUseCase cria a conta default ("Carteira") com id=1.
+#   helpers/seed-account.yaml cria "E2E Account" com id=2. A pager da
+#   AccountsScreen abre em selectedIndex=0 → source = conta default.
+# - Não selecionamos source explicitamente porque o nome da conta default
+#   é localizável; em vez disso, assumimos source = posição 0 e setamos
+#   apenas o destino, que tem nome estável ("E2E Account") porque foi
+#   digitado pelo seed.
+# - Para asserção robusta, validamos apenas o "feliz fim de fluxo": modal
+#   dispensa em sucesso e a tela de contas continua visível. Validação por
+#   saldo formatado depende de locale; fica fora do escopo desta fase.
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-account.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-accounts"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-root"
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible:
+      id: "accounts-transfer-action"
+    timeout: 10000
+- tapOn:
+    id: "accounts-transfer-action"
+- extendedWaitUntil:
+    visible:
+      id: "transfer-submit"
+    timeout: 5000
+
+- tapOn:
+    id: "transfer-to"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Account"
+    timeout: 5000
+- tapOn:
+    text: "E2E Account"
+
+- tapOn:
+    id: "transfer-amount"
+- inputText: "5000"
+- hideKeyboard
+
+- tapOn:
+    id: "transfer-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "transfer-submit"
+    timeout: 10000
+- assertVisible:
+    id: "accounts-root"

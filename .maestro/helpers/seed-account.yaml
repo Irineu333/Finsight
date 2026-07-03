@@ -1,0 +1,40 @@
+appId: com.neoutils.finsight.e2e
+---
+# Cria uma conta determinística "E2E Account" partindo do Dashboard.
+#
+# Pré-condição: dashboard-root visível (chame helpers/reset-app.yaml antes).
+# Após executar, o flow retorna ao Dashboard. Há também a conta default
+# criada automaticamente por EnsureDefaultAccountUseCase, então a seleção
+# de contas em flows posteriores deve filtrar pelo nome "E2E Account".
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-accounts"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-root"
+    timeout: 10000
+- tapOn:
+    id: "accounts-fab"
+- extendedWaitUntil:
+    visible:
+      id: "account-form-name"
+    timeout: 5000
+- tapOn:
+    id: "account-form-name"
+- inputText: "E2E Account"
+- hideKeyboard
+- tapOn:
+    id: "account-form-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "account-form-submit"
+    timeout: 10000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000

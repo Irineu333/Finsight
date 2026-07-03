@@ -1,0 +1,13 @@
+# Maestro workspace config.
+#
+# - `appId`: default usado por flows que não declaram um próprio (helpers e
+#   smoke confiam neste fallback).
+# - `flows`: glob recursiva que habilita Test Suite. Sem isso, `maestro test
+#   .maestro/` só enxerga arquivos no nível imediato. `flows/**` cobre toda a
+#   árvore por área (smoke, transactions, transfers, invoices, installments,
+#   recurring) sem precisar de config.yaml por subpasta.
+# - Helpers ficam em `.maestro/helpers/` (fora da glob), portanto não são
+#   tratados como flows próprios — apenas referenciados via `runFlow:`.
+appId: com.neoutils.finsight.e2e
+flows:
+  - "flows/**"

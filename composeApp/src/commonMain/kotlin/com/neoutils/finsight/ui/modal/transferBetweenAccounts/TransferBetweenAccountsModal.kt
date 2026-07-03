@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -90,6 +91,7 @@ class TransferBetweenAccountsModal(
                     },
                     label = stringResource(Res.string.transfer_source_account_label),
                     modifier = Modifier.fillMaxWidth(),
+                    testTag = TransferBetweenAccountsTestTags.FROM,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -102,6 +104,7 @@ class TransferBetweenAccountsModal(
                     },
                     label = stringResource(Res.string.transfer_destination_account_label),
                     modifier = Modifier.fillMaxWidth(),
+                    testTag = TransferBetweenAccountsTestTags.TO,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -118,7 +121,9 @@ class TransferBetweenAccountsModal(
                     ),
                     shape = RoundedCornerShape(12.dp),
                     lineLimits = TextFieldLineLimits.SingleLine,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TransferBetweenAccountsTestTags.AMOUNT),
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -179,7 +184,9 @@ class TransferBetweenAccountsModal(
                         sourceAccount = uiState.selectedSourceAccount,
                         destinationAccount = uiState.selectedDestinationAccount,
                     ),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TransferBetweenAccountsTestTags.SUBMIT),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(

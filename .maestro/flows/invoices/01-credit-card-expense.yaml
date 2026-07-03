@@ -1,0 +1,117 @@
+appId: com.neoutils.finsight.e2e
+name: invoices / credit card expense
+tags:
+  - invoices
+---
+# Reset → seed cartão + categoria → criar despesa lançada no cartão pelo
+# FAB do Home → navegar para Credit Cards → abrir InvoiceTransactionsScreen
+# do cartão → assertar que a despesa aparece e que o status da fatura
+# permanece visível (fatura aberta).
+#
+# Notas:
+# - O AddTransactionModal auto-seleciona o único cartão existente quando
+#   target = CREDIT_CARD (LaunchedEffect em AddTransactionModal). Então o
+#   flow só precisa trocar o target via TargetSelector e prosseguir.
+# - Asserção do nome ("E2E Card Expense") é estável: foi digitado pelo flow.
+# - O testTag de cada item de cartão na CreditCardsScreen pager é
+#   `credit-card-item-{id}` (id desconhecido em runtime); para entrar na
+#   InvoiceTransactionsScreen tocamos no nome do cartão, que é estável.
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-credit-card.yaml
+- runFlow: ../../helpers/seed-category.yaml
+
+- tapOn:
+    id: "transactions-fab"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-title"
+    timeout: 5000
+
+- tapOn:
+    id: "transaction-form-title"
+- inputText: "E2E Card Expense"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-target"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-target"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-target-credit-card"
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-target-credit-card"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-credit-card"
+    timeout: 5000
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-category"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-category"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Food"
+    timeout: 5000
+- tapOn:
+    text: "E2E Food"
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-amount"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "5000"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-submit"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "transaction-form-submit"
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-credit-cards"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-credit-cards"
+- extendedWaitUntil:
+    visible:
+      id: "credit-cards-root"
+    timeout: 10000
+
+- tapOn:
+    text: "E2E Card"
+- extendedWaitUntil:
+    visible:
+      id: "invoice-transactions-root"
+    timeout: 10000
+- assertVisible:
+    id: "invoice-status"
+- assertVisible:
+    id: "invoice-total"
+- assertVisible:
+    text: "E2E Card Expense"

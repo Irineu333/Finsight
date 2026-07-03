@@ -25,6 +25,7 @@ import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,6 +88,7 @@ private fun CreditCardsContent(
     val navigationDispatcher = LocalNavigationDispatcher.current
 
     Scaffold(
+        modifier = Modifier.testTag(CreditCardsTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = {
@@ -113,6 +115,7 @@ private fun CreditCardsContent(
                     onClick = {
                         modalManager.show(CreditCardFormModal())
                     },
+                    modifier = Modifier.testTag(CreditCardsTestTags.FAB),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -273,7 +276,9 @@ private fun EmptyCreditCardsState(
 
             Button(
                 onClick = onCreateCreditCard,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(CreditCardsTestTags.CREATE_EMPTY),
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.size(8.dp))
@@ -322,7 +327,9 @@ private fun CreditCardPager(
         CreditCardCard(
             creditCard = creditCards[page].creditCard,
             invoiceUi = creditCards[page].invoiceUi,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CreditCardsTestTags.item(creditCards[page].creditCard.id)),
             variant = CreditCardCardVariant.Listing(
                 onClick = { onCardClick(creditCards[page]) },
                 onEditInvoice = onEditInvoice,

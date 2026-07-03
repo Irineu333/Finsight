@@ -1,0 +1,181 @@
+name: e2e-android
+
+# Manual-only at this stage. Promotion to PR gate requires the criterion
+# documented in the OpenSpec change `add-e2e-tests-maestro` (≥ 2 weeks
+# without flaky runs and total suite < 10 min).
+on:
+  workflow_dispatch:
+    inputs:
+      flows_path:
+        description: "Path passed to `maestro test` (workspace root by default)"
+        required: false
+        default: ".maestro/"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-android-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Pinned to the minimum supported version documented in `.maestro/README.md`.
+  # Bump explicitly (and update README) when validating a newer Maestro release.
+  MAESTRO_VERSION: "2.2.0"
+  # Disable Maestro CLI telemetry. Also drops the opt-out notice that Maestro
+  # otherwise prepends to every command, which corrupts plain stdout parsing
+  # (e.g. `maestro --version`).
+  MAESTRO_CLI_NO_ANALYTICS: "1"
+
+jobs:
+  e2e:
+    name: Maestro Android e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [ 33 ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build e2e debug APK
+        run: ./gradlew :composeApp:assembleE2eDebug --no-daemon
+
+      - name: Locate built APK
+        id: apk
+        run: |
+          APK=$(find composeApp/build/outputs/apk/e2e/debug -name "*.apk" -print -quit)
+          if [ -z "$APK" ]; then
+            echo "::error::No APK produced for e2eDebug"
+            exit 1
+          fi
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Install Maestro CLI
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Maestro version
+        run: |
+          # Extract the first semver-looking token from `maestro --version`
+          # output, so any future preamble lines from the CLI cannot break the
+          # parse on their own.
+          installed=$(maestro --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
+          if [ -z "$installed" ]; then
+            echo "::error::Could not parse Maestro version from \`maestro --version\` output."
+            maestro --version
+            exit 1
+          fi
+          if [ "$installed" != "$MAESTRO_VERSION" ]; then
+            echo "::error::Maestro version mismatch (installed=$installed expected=$MAESTRO_VERSION). Update MAESTRO_VERSION in this workflow and .maestro/README.md."
+            exit 1
+          fi
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Cache the AVD between runs. Cold-booting the emulator costs ~3 min
+      # per run; restoring a snapshot drops it to ~30s. Bump the `-vN` suffix
+      # in the key whenever AVD definition (api-level/profile/arch) changes.
+      - name: AVD cache
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}-pixel-6-x86_64-v1
+
+      - name: Create AVD snapshot for cache
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          disk-size: 6000M
+          ram-size: 4096M
+          script: echo "Generated AVD snapshot for caching."
+
+      # The emulator-runner action splits its `script:` input per line and runs
+      # each line in a fresh `sh -c`, which breaks multi-line shell constructs
+      # (if/then/fi, $(...) state) and forbids `pipefail`. We work around both
+      # limits by writing the real script to a file here and invoking it as a
+      # single line below.
+      - name: Prepare Maestro runner script
+        env:
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          FLOWS_PATH: ${{ github.event.inputs.flows_path }}
+        run: |
+          mkdir -p "$RUNNER_TEMP"
+          cat > "$RUNNER_TEMP/run-maestro.sh" <<'BASH_SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          set -x
+
+          : "${APK_PATH:?APK_PATH not set}"
+          : "${FLOWS_PATH:?FLOWS_PATH not set}"
+
+          # The cached AVD may already have the e2e package installed from a
+          # previous run, signed with a different debug keystore (debug keys
+          # are not stable across Gradle caches). `adb install -r` rejects the
+          # mismatch with INSTALL_FAILED_UPDATE_INCOMPATIBLE, so we uninstall
+          # first and ignore the "package not found" exit when the AVD is
+          # fresh.
+          adb uninstall com.neoutils.finsight.e2e || true
+          adb install -r "$APK_PATH"
+
+          maestro test "$FLOWS_PATH" --format junit --output "$GITHUB_WORKSPACE/maestro-report.xml"
+          BASH_SCRIPT
+          chmod +x "$RUNNER_TEMP/run-maestro.sh"
+          echo "MAESTRO_RUNNER=$RUNNER_TEMP/run-maestro.sh" >> "$GITHUB_ENV"
+
+      - name: Run Maestro flows on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          FLOWS_PATH: ${{ github.event.inputs.flows_path }}
+        with:
+          api-level: ${{ matrix.api-level }}
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          disk-size: 6000M
+          ram-size: 4096M
+          script: bash "$MAESTRO_RUNNER"
+
+      - name: Upload Maestro report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-report-${{ matrix.api-level }}
+          path: |
+            maestro-report.xml
+            /home/runner/.maestro/tests/**
+          if-no-files-found: ignore

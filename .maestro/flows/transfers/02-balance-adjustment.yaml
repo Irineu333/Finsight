@@ -1,0 +1,55 @@
+appId: com.neoutils.finsight.e2e
+name: transfers / balance adjustment
+tags:
+  - transfers
+---
+# Reset → seed conta → ajustar saldo da conta default → assertar que o
+# modal dispensa e voltamos à AccountsScreen.
+#
+# Notas:
+# - O modal EditAccountBalanceModal pré-preenche o campo com o saldo atual
+#   formatado (locale-dependente: "R$ 0,00", "$0.00" etc). Por isso fazemos
+#   eraseText para limpar antes de digitar; o número de caracteres a
+#   apagar é estimado generosamente.
+# - O botão de submit é habilitado quando newBalance != currentBalance.
+#   Saldo inicial é 0; digitamos 10000 (centavos) → 100,00.
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-account.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "dashboard-quick-action-accounts"
+    direction: DOWN
+    timeout: 10000
+- tapOn:
+    id: "dashboard-quick-action-accounts"
+- extendedWaitUntil:
+    visible:
+      id: "accounts-root"
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible:
+      id: "accounts-edit-balance"
+    timeout: 10000
+- tapOn:
+    id: "accounts-edit-balance"
+- extendedWaitUntil:
+    visible:
+      id: "adjustment-amount"
+    timeout: 5000
+
+- tapOn:
+    id: "adjustment-amount"
+- eraseText: 20
+- inputText: "10000"
+- hideKeyboard
+
+- tapOn:
+    id: "adjustment-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "adjustment-submit"
+    timeout: 10000
+- assertVisible:
+    id: "accounts-root"

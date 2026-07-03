@@ -1,0 +1,60 @@
+appId: com.neoutils.finsight.e2e
+name: transactions / create income
+tags:
+  - transactions
+---
+# Reset → cria uma receita pelo FAB do Home → valida que ela aparece na
+# aba Transactions com o título usado.
+#
+# Diferenças em relação a 01-create-expense:
+# - Trocamos o tipo via transaction-form-type-income (target é forçado a
+#   ACCOUNT pelo TransactionForm.from quando tipo é INCOME).
+# - Pulamos a seed-category porque receita exige categoria de tipo INCOME
+#   e título sozinho já satisfaz TransactionForm.isValid (title || category).
+- runFlow: ../../helpers/reset-app.yaml
+
+- tapOn:
+    id: "transactions-fab"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-title"
+    timeout: 5000
+
+- tapOn:
+    id: "transaction-form-type-income"
+
+- tapOn:
+    id: "transaction-form-title"
+- inputText: "E2E Income"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-amount"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "10000"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-submit"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-submit"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000
+
+- tapOn:
+    id: "bottom-nav-transactions"
+- extendedWaitUntil:
+    visible:
+      id: "transactions-root"
+    timeout: 10000
+- assertVisible:
+    text: "E2E Income"

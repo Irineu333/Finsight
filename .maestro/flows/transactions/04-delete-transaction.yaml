@@ -1,0 +1,91 @@
+appId: com.neoutils.finsight.e2e
+name: transactions / delete transaction
+tags:
+  - transactions
+---
+# Reset → cria despesa "E2E Expense" → abre o item, confirma exclusão →
+# valida que ela some da lista e que o Dashboard volta a renderizar
+# o card de saldo total normalmente.
+- runFlow: ../../helpers/reset-app.yaml
+- runFlow: ../../helpers/seed-category.yaml
+
+# Cria a despesa base.
+- tapOn:
+    id: "transactions-fab"
+- extendedWaitUntil:
+    visible:
+      id: "transaction-form-title"
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-title"
+- inputText: "E2E Expense"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-category"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-category"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Food"
+    timeout: 5000
+- tapOn:
+    text: "E2E Food"
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-amount"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-amount"
+- inputText: "5000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "transaction-form-submit"
+    direction: DOWN
+    timeout: 5000
+- tapOn:
+    id: "transaction-form-submit"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000
+
+# Vai à aba Transactions, abre o modal e dispara delete.
+- tapOn:
+    id: "bottom-nav-transactions"
+- extendedWaitUntil:
+    visible:
+      text: "E2E Expense"
+    timeout: 10000
+- tapOn:
+    text: "E2E Expense"
+- extendedWaitUntil:
+    visible:
+      id: "view-transaction-delete"
+    timeout: 5000
+- tapOn:
+    id: "view-transaction-delete"
+- extendedWaitUntil:
+    visible:
+      id: "delete-transaction-confirm"
+    timeout: 5000
+- tapOn:
+    id: "delete-transaction-confirm"
+
+# Item removido da lista; o Dashboard volta a renderizar normalmente.
+- extendedWaitUntil:
+    visible:
+      id: "transactions-root"
+    timeout: 10000
+- assertNotVisible:
+    text: "E2E Expense"
+- tapOn:
+    id: "bottom-nav-dashboard"
+- extendedWaitUntil:
+    visible:
+      id: "dashboard-root"
+    timeout: 10000

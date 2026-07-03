@@ -31,6 +31,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -143,6 +144,7 @@ class CategoryFormModal(
                 shape = RoundedCornerShape(12.dp),
                 lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
+                    .testTag(CategoryFormTestTags.NAME)
                     .animateContentSize()
                     .fillMaxWidth(),
             )
@@ -154,6 +156,7 @@ class CategoryFormModal(
                 accentColor = accentColor,
                 title = stringResource(Res.string.category_form_icon_select),
                 helperText = stringResource(Res.string.category_form_icon_helper),
+                modifier = Modifier.testTag(CategoryFormTestTags.ICON),
                 onClick = {
                     modalManager.show(
                         IconPickerModal(
@@ -179,7 +182,9 @@ class CategoryFormModal(
             Button(
                 onClick = { viewModel.onAction(CategoryFormAction.Submit) },
                 enabled = uiState.canSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .testTag(CategoryFormTestTags.SUBMIT)
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(
@@ -202,7 +207,9 @@ class CategoryFormModal(
     ) {
         Button(
             onClick = { onTypeSelected(Category.Type.EXPENSE) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .testTag(CategoryFormTestTags.TYPE_EXPENSE)
+                .weight(1f),
             colors = when (selectedType) {
                 Category.Type.EXPENSE -> ButtonDefaults.buttonColors(
                     containerColor = Expense,
@@ -225,7 +232,9 @@ class CategoryFormModal(
 
         Button(
             onClick = { onTypeSelected(Category.Type.INCOME) },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .testTag(CategoryFormTestTags.TYPE_INCOME)
+                .weight(1f),
             colors = when (selectedType) {
                 Category.Type.INCOME -> ButtonDefaults.buttonColors(
                     containerColor = Income,

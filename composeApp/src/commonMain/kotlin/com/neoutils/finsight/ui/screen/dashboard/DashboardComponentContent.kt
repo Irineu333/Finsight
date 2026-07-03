@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -655,7 +656,7 @@ private fun DashboardQuickActionCard(
             containerColor = colorScheme.surfaceContainer,
             contentColor = colorScheme.onSurface,
         ),
-        modifier = modifier,
+        modifier = modifier.testTag(DashboardTestTags.quickAction(action)),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -757,6 +758,7 @@ private fun TotalBalanceCard(
 
     Card(
         modifier = modifier
+            .testTag(DashboardTestTags.TOTAL_BALANCE)
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(
@@ -838,6 +840,7 @@ private fun DashboardAccountsRow(
                             }
                         },
                     ),
+                    modifier = Modifier.testTag(DashboardTestTags.accountBalance(accountUi.account.id)),
                 )
             }
 
@@ -929,6 +932,7 @@ private fun DashboardAddAccountCard(
         ),
         shape = RoundedCornerShape(18.dp),
         modifier = modifier
+            .testTag(DashboardTestTags.ADD_ACCOUNT)
             .width(156.dp)
             .height(112.dp),
     ) {

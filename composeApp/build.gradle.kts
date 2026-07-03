@@ -147,10 +147,36 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+
+    flavorDimensions += "mode"
+    productFlavors {
+        create("regular") {
+            dimension = "mode"
+            isDefault = true
+        }
+        create("e2e") {
+            dimension = "mode"
+            applicationIdSuffix = ".e2e"
+            versionNameSuffix = "-e2e"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+// Disable Google Services / Crashlytics processing for the e2e flavor.
+// The plugins remain applied (they are project-level), but their per-variant
+// tasks become no-ops so the e2e build does not depend on real Firebase config.
+tasks.matching { task ->
+    val name = task.name
+    name.startsWith("processE2e") && name.contains("GoogleServices") ||
+        name.startsWith("uploadCrashlyticsMappingFileE2e") ||
+        name.startsWith("injectCrashlyticsMappingFileIdE2e")
+}.configureEach {
+    enabled = false
 }
 
 dependencies {

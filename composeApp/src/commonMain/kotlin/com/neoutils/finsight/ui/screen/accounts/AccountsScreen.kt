@@ -31,6 +31,7 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
@@ -112,6 +113,7 @@ private fun AccountsContent(
     val modalManager = LocalModalManager.current
 
     Scaffold(
+        modifier = Modifier.testTag(AccountsTestTags.ROOT),
         topBar = {
             TopAppBar(
                 title = {
@@ -146,6 +148,7 @@ private fun AccountsContent(
                 onClick = {
                     modalManager.show(AccountFormModal())
                 },
+                modifier = Modifier.testTag(AccountsTestTags.FAB),
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -324,7 +327,9 @@ private fun AccountPager(
                 onEditBalance = { onEditBalance(accounts[page].account) },
                 onEditInitialBalance = { onEditInitialBalance(accounts[page].account) },
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .testTag(AccountsTestTags.item(accounts[page].account.id))
+                .fillMaxWidth(),
         )
     }
 }
@@ -415,7 +420,9 @@ private fun AccountActions(
                 onClick = {
                     modalManager.show(TransferBetweenAccountsModal(account))
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(AccountsTestTags.TRANSFER_ACTION),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = colorScheme.primary

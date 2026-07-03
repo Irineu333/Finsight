@@ -17,9 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.testTagsAsResourceIdSemantics
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.target_selector_account
 import com.neoutils.finsight.resources.target_selector_credit_card
@@ -31,7 +33,9 @@ fun TargetSelector(
     selectedTarget: Transaction.Target,
     onTargetSelected: (Transaction.Target) -> Unit,
     availableTargets: List<Transaction.Target>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    testTag: String? = null,
+    optionTestTag: ((Transaction.Target) -> String)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -58,11 +62,13 @@ fun TargetSelector(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
+                .let { if (testTag != null) it.testTag(testTag) else it }
         )
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.testTagsAsResourceIdSemantics(),
         ) {
             availableTargets.forEach { target ->
                 DropdownMenuItem(
@@ -78,7 +84,8 @@ fun TargetSelector(
                     onClick = {
                         onTargetSelected(target)
                         expanded = false
-                    }
+                    },
+                    modifier = optionTestTag?.invoke(target)?.let { Modifier.testTag(it) } ?: Modifier
                 )
             }
         }

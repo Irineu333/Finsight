@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
+import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
 import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.support.api.SupportRoute
@@ -36,7 +37,7 @@ internal class AppNavigationDispatcher(
             }
 
             NavigationDestination.Budgets -> {
-                navController.navigate(AppRoute.Budgets)
+                navController.navigate(BudgetsRoute)
             }
 
             NavigationDestination.Recurring -> {

@@ -32,8 +32,5 @@ sealed class AppRoute {
     data object Installments : AppRoute()
 
     @Serializable
-    data object Budgets : AppRoute()
-
-    @Serializable
     data object Reports : AppRoute()
 }

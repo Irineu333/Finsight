@@ -10,11 +10,9 @@ import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
-import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
-import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
@@ -28,7 +26,6 @@ import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAcc
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
-import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
@@ -101,38 +98,6 @@ val viewModelModule = module {
             dashboardPreviewFactory = get(),
             analytics = get(),
             crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        BudgetsViewModel(
-            budgetRepository = get(),
-            operationRepository = get(),
-            recurringRepository = get(),
-            calculateBudgetProgressUseCase = get(),
-        )
-    }
-
-    viewModel {
-        BudgetFormViewModel(
-            formatter = get(),
-            budget = it.getOrNull(),
-            budgetRepository = get(),
-            categoryRepository = get(),
-            recurringRepository = get(),
-            validateBudgetTitle = get(),
-            modalManager = get(),
-            debounceManager = get(),
-            analytics = get(),
-        )
-    }
-
-    viewModel {
-        DeleteBudgetViewModel(
-            budget = it.get(),
-            budgetRepository = get(),
-            modalManager = get(),
-            analytics = get(),
         )
     }
 

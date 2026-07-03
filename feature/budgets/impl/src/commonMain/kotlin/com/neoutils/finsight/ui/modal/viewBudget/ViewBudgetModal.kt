@@ -26,12 +26,13 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.recurring.api.RecurringEntry
+import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
@@ -54,6 +55,7 @@ class ViewBudgetModal(
     override fun ColumnScope.BottomSheetContent() {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
+        val recurringEntry = koinInject<RecurringEntry>()
         val budget = budgetProgress.budget
         val accentColor = budgetProgressColor(budgetProgress.progress)
 
@@ -131,7 +133,7 @@ class ViewBudgetModal(
                         label = stringResource(Res.string.view_budget_percentage_label),
                         value = pctLabel,
                         onClick = budgetProgress.recurring?.let { recurring ->
-                            { manager.show(ViewRecurringModal(recurring)) }
+                            { manager.show(recurringEntry.viewRecurringModal(recurring)) }
                         },
                     )
 

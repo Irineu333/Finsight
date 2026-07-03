@@ -28,16 +28,17 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.IconPickerSelector
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.categories.api.CategoriesEntry
+import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MultiCategorySelector
-import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.iconPicker.IconPickerModal
-import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.util.FeatureIconCatalog
 import com.neoutils.finsight.util.Validation
 import com.neoutils.finsight.util.rememberMoneyInputTransformation
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -51,6 +52,8 @@ class BudgetFormModal(
         val viewModel = koinViewModel<BudgetFormViewModel> { parametersOf(budget) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val modalManager = LocalModalManager.current
+        val categoriesEntry = koinInject<CategoriesEntry>()
+        val recurringEntry = koinInject<RecurringEntry>()
         val accentColor = MaterialTheme.colorScheme.primary
         val iconModalTitle = stringResource(Res.string.budget_form_icon_modal_title)
 
@@ -119,7 +122,7 @@ class BudgetFormModal(
                 selectedCategories = uiState.selectedCategories,
                 categories = uiState.availableCategories,
                 onCategoryToggled = { viewModel.onAction(BudgetFormAction.CategoryToggled(it)) },
-                onEmpty = { modalManager.show(CategoryFormModal()) },
+                onEmpty = { modalManager.show(categoriesEntry.categoryFormModal()) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -168,7 +171,7 @@ class BudgetFormModal(
                     recurrings = uiState.incomeRecurrings,
                     selected = uiState.selectedRecurring,
                     onSelected = { viewModel.onAction(BudgetFormAction.RecurringSelected(it)) },
-                    onEmpty = { modalManager.show(RecurringFormModal()) },
+                    onEmpty = { modalManager.show(recurringEntry.recurringFormModal()) },
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),

@@ -3,7 +3,6 @@ package com.neoutils.finsight.di
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.database.repository.BudgetRepository
-import com.neoutils.finsight.database.repository.CategoryRepository
 import com.neoutils.finsight.database.repository.CreditCardRepository
 import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
 import com.neoutils.finsight.database.repository.InvoiceRepository
@@ -14,7 +13,6 @@ import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -35,13 +33,6 @@ val repositoryModule = module {
 
     single<IAccountRepository> {
         AccountRepository(
-            dao = get(),
-            mapper = get(),
-        )
-    }
-
-    single<ICategoryRepository> {
-        CategoryRepository(
             dao = get(),
             mapper = get(),
         )

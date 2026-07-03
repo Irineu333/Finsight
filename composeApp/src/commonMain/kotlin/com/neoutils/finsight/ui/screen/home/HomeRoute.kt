@@ -20,9 +20,6 @@ sealed class AppRoute {
     data object Home : AppRoute()
 
     @Serializable
-    data object Categories : AppRoute()
-
-    @Serializable
     data class CreditCards(val creditCardId: Long? = null) : AppRoute()
 
     @Serializable

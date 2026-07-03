@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.NavigationDispatcher
+import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.support.api.SupportRoute
 import com.neoutils.finsight.ui.screen.home.AppRoute
 
@@ -14,7 +15,7 @@ internal class AppNavigationDispatcher(
     override fun dispatch(destination: NavigationDestination) {
         when (destination) {
             NavigationDestination.Categories -> {
-                navController.navigate(AppRoute.Categories)
+                navController.navigate(CategoriesRoute)
             }
 
             is NavigationDestination.InvoiceTransactions -> {

@@ -47,5 +47,8 @@ include(":core:resources")
 include(":core:ui")
 
 // Features
+include(":feature:categories:api")
+include(":feature:categories:impl")
 include(":feature:support:api")
 include(":feature:support:impl")
+include(":feature:transactions:api")

@@ -11,6 +11,7 @@ import com.neoutils.finsight.di.repositoryModule
 import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.di.supportModule
+import com.neoutils.finsight.di.categoriesModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.startKoin
@@ -34,6 +35,7 @@ class AndroidApp : Application() {
                 authModule,
                 viewModelModule,
                 supportModule,
+                categoriesModule,
             )
         }
     }

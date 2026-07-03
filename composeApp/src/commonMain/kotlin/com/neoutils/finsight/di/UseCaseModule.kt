@@ -7,7 +7,6 @@ import com.neoutils.finsight.domain.usecase.SaveRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.domain.usecase.StopRecurringUseCase
 import com.neoutils.finsight.domain.usecase.ReactivateRecurringUseCase
-import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
@@ -15,7 +14,6 @@ import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateBudgetTitleUseCase
-import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
@@ -27,8 +25,6 @@ import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
-import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
-import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
@@ -88,9 +84,6 @@ val useCaseModules = module {
 
     factory { CalculateTransactionStatsUseCase() }
 
-    factory { CalculateCategorySpendingUseCase() }
-
-    factory { CalculateCategoryIncomeUseCase() }
 
     factory { CalculateReportStatsUseCase() }
 
@@ -181,12 +174,6 @@ val useCaseModules = module {
     }
 
     factory {
-        ValidateCategoryNameUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
         ValidateCreditCardNameUseCase(
             repository = get(),
         )
@@ -273,12 +260,6 @@ val useCaseModules = module {
     factory {
         BuildTransactionUseCase(
             getOrCreateInvoiceForMonthUseCase = get(),
-        )
-    }
-
-    factory {
-        CreateDefaultCategoriesUseCase(
-            categoryRepository = get(),
         )
     }
 

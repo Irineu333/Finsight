@@ -48,7 +48,9 @@ kotlin {
             export(projects.core.model)
             export(projects.core.resources)
             export(projects.core.ui)
+            export(projects.feature.categories.api)
             export(projects.feature.support.api)
+            export(projects.feature.transactions.api)
         }
         iosTarget.compilerOptions {
             freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
@@ -67,8 +69,11 @@ kotlin {
             api(projects.core.resources)
             api(projects.core.ui)
 
+            api(projects.feature.categories.api)
+            implementation(projects.feature.categories.impl)
             api(projects.feature.support.api)
             implementation(projects.feature.support.impl)
+            api(projects.feature.transactions.api)
 
             implementation(compose.runtime)
             implementation(compose.foundation)

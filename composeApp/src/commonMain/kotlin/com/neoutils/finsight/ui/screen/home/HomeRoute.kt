@@ -26,9 +26,6 @@ sealed class AppRoute {
     data class InvoiceTransactions(val creditCardId: Long) : AppRoute()
 
     @Serializable
-    data class Accounts(val accountId: Long? = null) : AppRoute()
-
-    @Serializable
     data object Installments : AppRoute()
 
     @Serializable

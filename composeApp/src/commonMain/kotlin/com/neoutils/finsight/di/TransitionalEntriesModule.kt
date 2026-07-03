@@ -1,9 +1,14 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.Modal
+import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import org.koin.dsl.module
 
 /**
@@ -17,6 +22,16 @@ val transitionalEntriesModule = module {
         object : CreditCardsEntry {
             override fun creditCardFormModal(creditCard: CreditCard?): Modal =
                 CreditCardFormModal(creditCard)
+        }
+    }
+
+    single<TransactionsEntry> {
+        object : TransactionsEntry {
+            override fun viewOperationModal(operationUi: OperationUi): Modal =
+                ViewOperationModal(operationUi)
+
+            override fun viewAdjustmentModal(operation: Operation): Modal =
+                ViewAdjustmentModal(operation)
         }
     }
 }

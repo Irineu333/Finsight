@@ -49,14 +49,13 @@ import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
-import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
@@ -110,6 +109,7 @@ private fun AccountsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val transactionsEntry = koinInject<TransactionsEntry>()
 
     Scaffold(
         topBar = {
@@ -269,11 +269,11 @@ private fun AccountsContent(
                             onClick = {
                                 when (operationUi.displayType) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(ViewAdjustmentModal(operationUi.operation))
+                                        modalManager.show(transactionsEntry.viewAdjustmentModal(operationUi.operation))
                                     }
 
                                     else -> {
-                                        modalManager.show(ViewOperationModal(operationUi))
+                                        modalManager.show(transactionsEntry.viewOperationModal(operationUi))
                                     }
                                 }
                             }

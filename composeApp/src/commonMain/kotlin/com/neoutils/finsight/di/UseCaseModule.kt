@@ -1,23 +1,13 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
-import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
-import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
-import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
-import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
-import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustInvoiceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceOverviewsUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
@@ -29,7 +19,6 @@ import com.neoutils.finsight.domain.usecase.CreateInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.CreateRetroactiveInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteFutureInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.AddInstallmentUseCase
-import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCase
 import com.neoutils.finsight.domain.usecase.GetOrCreateInvoiceForMonthUseCaseImpl
 import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
@@ -41,36 +30,10 @@ import org.koin.dsl.module
 
 val useCaseModules = module {
     factory {
-        AdjustBalanceUseCase(
-            repository = get(),
-            operationRepository = get(),
-            calculateBalanceUseCase = get(),
-        )
-    }
-
-    factory {
         AdjustInvoiceUseCase(
             repository = get(),
             operationRepository = get(),
             calculateInvoiceUseCase = get(),
-        )
-    }
-
-    factory {
-        AdjustFinalBalanceUseCase(
-            adjustBalanceUseCase = get(),
-        )
-    }
-
-    factory {
-        AdjustInitialBalanceUseCase(
-            adjustBalanceUseCase = get(),
-        )
-    }
-
-    factory {
-        CalculateBalanceUseCase(
-            repository = get(),
         )
     }
 
@@ -172,40 +135,6 @@ val useCaseModules = module {
     }
 
     factory {
-        ValidateAccountNameUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
-        SetDefaultAccountUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
-        CreateAccountUseCase(
-            repository = get(),
-            validateAccountName = get(),
-            setDefaultAccount = get(),
-        )
-    }
-
-    factory {
-        UpdateAccountUseCase(
-            repository = get(),
-            validateAccountName = get(),
-            setDefaultAccount = get(),
-        )
-    }
-
-    factory {
-        DeleteAccountUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
         DeleteCreditCardUseCase(
             creditCardRepository = get(),
             operationRepository = get(),
@@ -246,19 +175,6 @@ val useCaseModules = module {
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
-        )
-    }
-
-    factory {
-        EnsureDefaultAccountUseCase(
-            repository = get(),
-        )
-    }
-
-    factory {
-        TransferBetweenAccountsUseCase(
-            operationRepository = get(),
-            accountRepository = get(),
         )
     }
 

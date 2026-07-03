@@ -6,26 +6,21 @@ import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.component.ModalManager
-import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
-import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
-import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
-import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
-import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
@@ -110,15 +105,6 @@ val viewModelModule = module {
             categoryRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
-        )
-    }
-
-    viewModel {
-        AccountsViewModel(
-            accountRepository = get(),
-            operationRepository = get(),
-            categoryRepository = get(),
-            initialAccountId = it.getOrNull(),
         )
     }
 
@@ -215,19 +201,6 @@ val viewModelModule = module {
     }
 
     viewModel {
-        AccountFormViewModel(
-            account = it.getOrNull(),
-            validateAccountName = get(),
-            createAccountUseCase = get(),
-            updateAccountUseCase = get(),
-            modalManager = get(),
-            debounceManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
         CreditCardFormViewModel(
             formatter = get(),
             creditCard = it.getOrNull(),
@@ -252,32 +225,6 @@ val viewModelModule = module {
         )
     }
 
-
-    viewModel {
-        DeleteAccountViewModel(
-            account = it.get(),
-            deleteAccountUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        EditAccountBalanceViewModel(
-            type = it.get(),
-            account = it.get(),
-            targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
-            adjustBalanceUseCase = get(),
-            adjustFinalBalanceUseCase = get(),
-            adjustInitialBalanceUseCase = get(),
-            calculateBalanceUseCase = get(),
-            accountRepository = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
 
     viewModel {
         EditInvoiceBalanceViewModel(
@@ -330,17 +277,6 @@ val viewModelModule = module {
         ReopenInvoiceViewModel(
             invoiceId = it.get(),
             reopenInvoiceUseCase = get(),
-            modalManager = get(),
-            analytics = get(),
-            crashlytics = get(),
-        )
-    }
-
-    viewModel {
-        TransferBetweenAccountsViewModel(
-            initialSourceAccount = it.get(),
-            transferBetweenAccountsUseCase = get(),
-            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

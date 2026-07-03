@@ -13,6 +13,7 @@ import com.neoutils.finsight.di.useCaseModules
 import com.neoutils.finsight.di.viewModelModule
 import com.neoutils.finsight.di.supportModule
 import com.neoutils.finsight.di.categoriesModule
+import com.neoutils.finsight.di.accountsModule
 import com.neoutils.finsight.di.budgetsModule
 import com.neoutils.finsight.di.recurringModule
 import com.neoutils.finsight.di.transitionalEntriesModule
@@ -39,6 +40,7 @@ fun MainViewController(): UIViewController {
                     viewModelModule,
                     supportModule,
                     categoriesModule,
+                    accountsModule,
                     budgetsModule,
                     recurringModule,
                     transitionalEntriesModule,

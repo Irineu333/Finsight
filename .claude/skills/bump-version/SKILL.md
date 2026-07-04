@@ -9,8 +9,8 @@ Bump the project version to `$ARGUMENTS` across all platforms.
 
 | Platform | File | Fields |
 |----------|------|--------|
-| Android  | `composeApp/build.gradle.kts` | `versionCode` (int), `versionName` (string) |
-| Desktop  | `composeApp/build.gradle.kts` | `packageVersion` (string) |
+| Android  | `app/android/build.gradle.kts` | `versionCode` (int), `versionName` (string) |
+| Desktop  | `app/desktop/build.gradle.kts` | `packageVersion` (string) |
 | iOS      | `iosApp/project.yml`          | `CFBundleShortVersionString` (string), `CFBundleVersion` (int) |
 
 ## Rules
@@ -23,8 +23,9 @@ Bump the project version to `$ARGUMENTS` across all platforms.
 ## Steps
 
 1. If `$ARGUMENTS` is empty, ask the user for the target version before proceeding.
-2. Read the current values from the three files above.
-3. Edit `composeApp/build.gradle.kts`: update `versionCode`, `versionName`, and `packageVersion`.
+2. Read the current values from the files above.
+3. Edit `app/android/build.gradle.kts`: update `versionCode` and `versionName`. Edit
+   `app/desktop/build.gradle.kts`: update `packageVersion`.
 4. Edit `iosApp/project.yml`: update `CFBundleShortVersionString` and `CFBundleVersion`.
 5. Run `cd iosApp && ./generate-project.sh` to regenerate the Xcode project.
 6. Report a summary table of old → new values for each platform.

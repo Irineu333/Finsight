@@ -7,8 +7,10 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 ```bash
 ./gradlew allTests                                          # All tests
 ./gradlew check                                            # Verification
-./gradlew :composeApp:testDebugUnitTest --tests "*.XxxTest" # Single test class
-./gradlew :composeApp:testDebugUnitTest                    # Unit tests only
+./gradlew :app:shared:testDebugUnitTest --tests "*.XxxTest" # Single test class
+./gradlew :app:shared:testDebugUnitTest                    # Unit tests only
+./gradlew :app:android:assembleDebug                       # Build Android APK
+./gradlew :app:desktop:run                                 # Run Desktop app
 ```
 
 ## Features
@@ -21,26 +23,57 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 - **Categories**: category management with icons, spending tracking
 - **Budgets**: budget progress per category
 
-**Layers:**
-- `/domain/`: Repositories (interfaces), UseCases, models, Error types (business rules, framework-independent)
-- `/database/`: Room entities, DAOs, Mappers, Repository implementations (data sources)
-- `/ui/`: Screens (composables, ViewModels, UiState), Modals, Components (presentation)
+## Module structure (feature api/impl + core + app)
 
-## Useful Paths
+The app is modularized by **feature** in the **api/impl** pattern, on top of a set of
+**core** modules, with the app split into single-responsibility `app/` modules. Rules are
+enforced mechanically by convention plugins in `build-logic`
+(`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`).
 
-**Extensions (`/extension/`):** Useful extensions for common types
+- **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
+- **`core/`** — `common` (util/extension/UiText/Platform/icons), `model` (domain models,
+  errors, exceptions), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
+  generic components + shared modals like date/icon pickers), `ui` (components that render
+  core models + shared UI models + `HomeChrome`), `database` (Room entities/DAOs/
+  `AppDatabase`/converters + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
+  no-op services).
+- **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
+  use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
+- **`feature/<name>/impl`** — screens, ViewModels, modals, use cases, repository impls,
+  mappers, the feature's Koin module and `NavGraphBuilder.<name>Graph()`. May depend on
+  any `feature:*:api` and `:core:*`.
+- **`app/`** — the app, split by responsibility:
+  - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
+    `impl`s): `App`, `AppNavHost`, dispatcher, `HomeScreen`, Koin aggregation (`appModules`).
+    Under the `finsight.app.shared` convention plugin.
+  - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`
+    (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
+  - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
+  - **`:app:ios`** — KMP iOS-only: `MainViewController` + framework `ComposeApp`
+    (exports `:core:*` + `feature:*:api`).
+  - Koin bindings for cross-cutting singletons live in the owning core (`databaseModule` in
+    `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
+    `:core:designsystem`); `:app:shared` only aggregates.
 
-**Utilities (`/util/`):** General-purpose utilities
+Features: support, categories, budgets, accounts, creditcards (incl. invoices/
+installments/invoiceTransactions), recurring, transactions, report, dashboard.
+
+> Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
 
 ## Conventions
 
 **Architecture:** Clean Architecture + MVI/MVVM + Reactive Flows: ViewModels -> UiState + Actions
 
-**Dependency Rule:** Domain <- Database, Domain <- UI (domain has no dependencies)
+**Dependency Rule (modules):** (1) api ⊄ api, (2) impl ⊄ impl, (3) api ⊄ impl,
+(4) impl → any api + `:core:*`; only `:app:shared` sees `impl`s. Cycles between features
+are impossible by construction (star topology). **Layer rule (within a module):**
+Domain <- Database, Domain <- UI.
 
-**DI (Koin):** `viewModel {}` screens, `factory {}` use cases, `single {}` repositories
+**DI (Koin):** each feature `impl` exposes its module; the shell aggregates them.
+`viewModel {}` screens, `factory {}` use cases, `single {}` repositories.
 
-**Navigation:** Type-safe sealed routes (App-level + Home-level nested)
+**Navigation:** type-safe `@Serializable` routes declared in each feature `api`; each
+`impl` exposes `NavGraphBuilder.<name>Graph()` aggregated by the shell's `AppNavHost`.
 
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 
@@ -51,15 +84,15 @@ Kotlin Multiplatform (Android/Desktop/iOS) finance app with Compose Multiplatfor
 
 ## Strings & Internationalization
 
-**`UiText`** (`/util/UiText`) — sealed class for UI-safe text:
+**`UiText`** (`core/common` — `util/UiText`) — sealed class for UI-safe text:
 - `UiText.asString()` — suspend, for non-Composable contexts
 - `stringUiText(error: UiText): String` — `@Composable`, for UI display
 
-**String resources:** `composeApp/src/commonMain/composeResources/values/strings.xml`
+**String resources:** `core/resources/src/commonMain/composeResources/values/strings.xml`
 
 > Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
 
-## Error Types (`/domain/error/`)
+## Error Types (`core/model` — `domain/error/`)
 `enum class` or `sealed class` with:
 - `val message: String` — English, for logging only
 - `toUiText()` extension — internationalized via `UiText.Res`, for UI display

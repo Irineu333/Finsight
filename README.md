@@ -1,13 +1,29 @@
-This is a Kotlin Multiplatform project targeting Android, Desktop (JVM).
+This is a Kotlin Multiplatform project targeting Android, Desktop (JVM) and iOS.
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-    - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-    - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-      For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-      the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-      Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-      folder is the appropriate location.
+## Module structure
+
+The app is modularized **by feature** in the **api/impl** pattern, on top of shared **core**
+modules; dependency rules are enforced mechanically by convention plugins in `build-logic`.
+
+- `build-logic/` — convention plugins (`finsight.kmp.library` / `compose.library` /
+  `feature.api` / `feature.impl`).
+- `core/*` — `common`, `model`, `resources`, `designsystem`, `ui`, `database`,
+  `analytics`, `crashlytics`, `auth`.
+- `feature/<name>/{api,impl}` — one pair per feature (support, categories, budgets,
+  accounts, creditcards, recurring, transactions, report, dashboard). The `api` holds
+  routes, repository/use-case interfaces and the `<Name>Entry`; the `impl` holds the
+  screens, ViewModels, use cases, repositories and the feature's Koin module.
+- `app/*` — the app split by responsibility: `shared` (KMP library shell/aggregator: root
+  `App`, `AppNavHost`, Koin wiring via `appModules`), `android` (`com.android.application`),
+  `desktop` (`kotlin("jvm")`), `ios` (KMP iOS-only framework, hosts
+  `:app:ios:embedAndSignAppleFrameworkForXcode`).
+
+> See **`feature/README.md`** for the normative dependency rules and entry-point pattern,
+> and **`CLAUDE.md`** for the full module map.
+
+* [/app/shared](./app/shared/src) is the app shell — Compose entry points shared across targets.
+  Platform entry points live in [/app/android](./app/android/src/main),
+  [/app/desktop](./app/desktop/src/main) and [/app/ios](./app/ios/src/iosMain).
 
 ### Build and Run Android Application
 
@@ -16,11 +32,11 @@ in your IDE’s toolbar or build it directly from the terminal:
 
 - on macOS/Linux
   ```shell
-  ./gradlew :composeApp:assembleDebug
+  ./gradlew :app:android:assembleDebug
   ```
 - on Windows
   ```shell
-  .\gradlew.bat :composeApp:assembleDebug
+  .\gradlew.bat :app:android:assembleDebug
   ```
 
 ### Build and Run Desktop (JVM) Application
@@ -30,11 +46,11 @@ in your IDE’s toolbar or run it directly from the terminal:
 
 - on macOS/Linux
   ```shell
-  ./gradlew :composeApp:run
+  ./gradlew :app:desktop:run
   ```
 - on Windows
   ```shell
-  .\gradlew.bat :composeApp:run
+  .\gradlew.bat :app:desktop:run
   ```
 
 ---

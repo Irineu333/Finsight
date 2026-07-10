@@ -14,7 +14,7 @@ import com.neoutils.finsight.ui.navigation.recurringGraph
 import com.neoutils.finsight.ui.navigation.reportGraph
 import com.neoutils.finsight.ui.navigation.supportGraph
 import com.neoutils.finsight.ui.navigation.transactionsGraph
-import com.neoutils.finsight.ui.screen.dashboard.DashboardRoute
+import com.neoutils.finsight.ui.navigation.DashboardGraph
 import com.neoutils.finsight.ui.screen.home.HomeGraph
 
 @Composable
@@ -27,7 +27,7 @@ fun AppNavHost(
         startDestination = HomeGraph,
         modifier = modifier,
     ) {
-        navigation<HomeGraph>(startDestination = DashboardRoute) {
+        navigation<HomeGraph>(startDestination = DashboardGraph) {
             dashboardGraph()
 
             transactionsGraph()

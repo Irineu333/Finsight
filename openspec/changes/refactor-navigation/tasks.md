@@ -38,7 +38,7 @@
 
 ## 6. `NavHost` único
 
-- [x] 6.1 Declarar `navigation<HomeGraph>(startDestination = DashboardRoute)` em `AppNavHost`, aninhando `dashboardGraph()` e `transactionsGraph()`
+- [x] 6.1 Declarar `navigation<HomeGraph>(startDestination = DashboardGraph)` em `AppNavHost`, aninhando `dashboardGraph()` e `transactionsGraph()`
 - [x] 6.2 Mover o `Scaffold` (bottom bar + FAB + `AddTransactionModal`) de `HomeScreen` para `App()`, entre `ModalManagerHost` e `SharedTransitionProvider`
 - [x] 6.3 Derivar a visibilidade da chrome de `destination.hierarchy.any { it.hasRoute<HomeGraph>() }` em conjunção com o `HomeChromeConfig` publicado via `LocalHomeChromeController`
 - [x] 6.4 Derivar a aba selecionada com `hasRoute<T>()`, substituindo a comparação por `route?.contains(serialName)`
@@ -54,3 +54,10 @@
 - [ ] 7.4 Verificar manualmente a preservação de scroll ao alternar Transações → Dashboard → Transações
 - [ ] 7.5 Verificar manualmente a transição Home → Contas → back (animação da bottom bar) e o modo de edição do dashboard ocultando a chrome
 - [ ] 7.6 Verificar o build do framework iOS (`embedAndSignAppleFrameworkForXcode`) com o novo core exportado
+
+## 8. Subgrafo por feature
+
+- [x] 8.1 Envolver todo `<nome>Graph()` em `navigation<<Nome>Graph>(startDestination = <primeira tela>)`
+- [x] 8.2 Manter `<Nome>Graph` na `api` apenas quando outro módulo navega até ele (`support`, `report`); os demais residem no `impl`
+- [x] 8.3 Apontar `NavigationItem` e o `startDestination` de `HomeGraph` para os subgrafos (`DashboardGraph`, `TransactionsGraph`)
+- [x] 8.4 Verificar em runtime que `startDestination` com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`) constrói o `NavHost`

@@ -42,11 +42,15 @@ A `api` de uma feature SHALL declarar somente as rotas que outro módulo navega.
 - **THEN** sua rota reside no `impl` e nenhum módulo `api` é criado para ela
 
 ### Requirement: Grafo de navegação provido por cada feature
-Cada feature navegável SHALL expor no seu `impl` uma única função de extensão `NavGraphBuilder.<nome>Graph()` que registra todos os seus destinos, obtendo o `NavHostController` de `LocalNavController` e MUST NOT recebê-lo como parâmetro. Uma feature com destinos internos SHALL agrupá-los em `navigation<RotaDeEntrada>(startDestination = <destino interno>)`, de modo que sua rota de entrada pública seja o subgrafo. Toda rota que nomeia um nó de grafo SHALL ser nomeada `<Nome>Graph`; rotas que nomeiam uma tela SHALL ser nomeadas `<Nome>Route`. O `:app:shared` SHALL compor o `NavHost` invocando essas funções e MUST NOT registrar destinos de features diretamente.
+Cada feature navegável SHALL expor no seu `impl` uma única função de extensão `NavGraphBuilder.<nome>Graph()` que registra todos os seus destinos, obtendo o `NavHostController` de `LocalNavController` e MUST NOT recebê-lo como parâmetro. Essa função SHALL agrupar seus destinos em `navigation<NomeGraph>(startDestination = <primeira tela>)`, sem exceção — uma feature de tela única também declara seu subgrafo. Toda rota que nomeia um nó de grafo SHALL ser nomeada `<Nome>Graph`; rotas que nomeiam uma tela SHALL ser nomeadas `<Nome>Route`. O `<Nome>Graph` SHALL residir na `api` apenas quando outro módulo navega até ele; caso contrário reside no `impl`, junto da extensão. O `:app:shared` SHALL compor o `NavHost` invocando essas funções e MUST NOT registrar destinos de features diretamente.
+
+#### Scenario: Feature de tela única
+- **WHEN** uma feature possui um único destino (ex.: `budgets`)
+- **THEN** seu grafo ainda declara `navigation<BudgetsGraph>(startDestination = BudgetsRoute)`, e `BudgetsGraph` reside no `impl` porque nenhum outro módulo navega até ele
 
 #### Scenario: Feature com destinos internos
 - **WHEN** uma feature possui uma rota de entrada pública e destinos alcançáveis apenas internamente
-- **THEN** seu grafo declara `navigation<NomeGraph>(startDestination = <destino interno>)` com os destinos internos aninhados
+- **THEN** seu grafo declara `navigation<NomeGraph>(startDestination = <destino interno>)` com os destinos internos aninhados, e `NomeGraph` reside na `api`
 
 #### Scenario: Nome de uma rota
 - **WHEN** uma rota é declarada

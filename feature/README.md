@@ -136,11 +136,11 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 
 ### Mecanismo de registro de navegação
 
-Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph()`** que registra os
-`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). Dentro de cada
-`composable`, o `NavHostController` vem de `LocalNavController` — nenhum grafo recebe o controller
-como parâmetro. O `:app:shared` — único módulo que enxerga os `impl` — agrega essas extensions no
-`AppNavHost`:
+Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph()`** que agrupa os
+`composable<Rota>` da feature em um `navigation<<Feature>Graph>` (as telas permanecem `internal` ao
+`impl`). Dentro de cada `composable`, o `NavHostController` vem de `LocalNavController` — nenhum
+grafo recebe o controller como parâmetro. O `:app:shared` — único módulo que enxerga os `impl` —
+agrega essas extensions no `AppNavHost`:
 
 ```kotlin
 // feature/support/impl — ui/navigation/SupportGraph.kt
@@ -154,21 +154,34 @@ fun NavGraphBuilder.supportGraph() {
     }
 }
 
+// feature/budgets/impl — mesmo com uma tela só, o subgrafo existe
+fun NavGraphBuilder.budgetsGraph() {
+    navigation<BudgetsGraph>(startDestination = BudgetsRoute) {
+        composable<BudgetsRoute> { ... }
+    }
+}
+
 // :app:shared — AppNavHost
 NavHost(...) {
-    navigation<HomeGraph>(startDestination = DashboardRoute) {
+    navigation<HomeGraph>(startDestination = DashboardGraph) {
         dashboardGraph()
         transactionsGraph()
     }
     supportGraph()
+    budgetsGraph()
 }
 ```
 
-Só `SupportGraph` vive na `api`, porque só ele é destino de outra feature; `SupportListRoute` e
-`SupportIssueRoute` são alcançáveis apenas de dentro do próprio `impl` e residem nele, agrupadas sob
-o subgrafo `navigation<SupportGraph>`. **O sufixo diz o que a rota é:** `<Nome>Graph` nomeia o nó de
-um subgrafo, `<Nome>Route` nomeia uma tela. Uma feature que não é destino de ninguém — como o `dashboard`,
-montado só pelo shell — não cria módulo `api` para hospedar sua rota.
+**Toda feature declara seu subgrafo**, mesmo as de tela única: o nó de grafo é o alvo estável de
+`popUpTo` e o lugar onde transições e deep links vão morar. **O sufixo diz o que a rota é:**
+`<Nome>Graph` nomeia o nó de um subgrafo, `<Nome>Route` nomeia uma tela.
+
+**Onde o `<Nome>Graph` mora segue o mesmo critério de triagem de qualquer tipo:** na `api` só se
+outro módulo navegar até ele. `SupportGraph` e `ReportGraph` estão na `api` porque o dashboard abre
+essas features pela entrada. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
+porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
+nunca o grafo. Uma feature que não é destino de ninguém — como o `dashboard`, montado só pelo shell —
+não cria módulo `api` para hospedar rota alguma.
 *Alternativa descartada:* registrar grafos via Koin — indireção desnecessária, já que o shell
 enxerga os `impl` por definição.
 

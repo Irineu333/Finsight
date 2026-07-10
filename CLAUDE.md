@@ -76,8 +76,10 @@ Domain <- Database, Domain <- UI.
 
 **Navigation:** type-safe `@Serializable` routes. A feature's `api` declares only its
 *externally navigable* routes; internal destinations live in the `impl`. Each `impl` exposes
-`NavGraphBuilder.<name>Graph()` aggregated by the shell's single `AppNavHost`. Features navigate
-with `LocalNavController.current.navigate(<Route from the target api>)`.
+`NavGraphBuilder.<name>Graph()` — always a `navigation<<Name>Graph>` subgraph, even for a
+single-screen feature — aggregated by the shell's single `AppNavHost`. `<Name>Graph` names a graph
+node, `<Name>Route` names a screen. Features navigate with
+`LocalNavController.current.navigate(<Route from the target api>)`.
 
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 

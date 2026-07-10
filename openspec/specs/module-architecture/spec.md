@@ -51,15 +51,19 @@ Os entry points de aplicação SHALL residir em módulos dedicados sob `app/`: `
 - **THEN** ele contém somente inicialização (startKoin, janela/activity/controller) e configuração de empacotamento da plataforma, delegando toda a UI a `:app:shared`
 
 ### Requirement: Shell compartilhado em :app:shared
-O `:app:shared` SHALL ser uma KMP library (sem plugin de application) contendo apenas: composable raiz (`App`), NavHost raiz, dispatcher de navegação, `HomeScreen`/`HomeRoute` (abas) e a agregação dos módulos Koin (`appModules`). Ele SHALL ser o único módulo do projeto autorizado a depender de módulos `feature:*:impl`.
+O `:app:shared` SHALL ser uma KMP library (sem plugin de application) contendo apenas: composable raiz (`App`) com o `Scaffold` da chrome do Home, NavHost raiz, a rota do subgrafo de abas (`HomeGraph`) e seu `NavigationItem`, e a agregação dos módulos Koin (`appModules`). Ele SHALL ser o único módulo do projeto autorizado a depender de módulos `feature:*:impl` e o único autorizado a enumerar as features.
 
 #### Scenario: Nova feature adicionada
 - **WHEN** uma nova feature é integrada ao app
-- **THEN** o `:app:shared` muda em no máximo dois pontos (lista de módulos Koin e registro no NavHost) e o `:app:ios` em no máximo um (`export()` da api no framework)
+- **THEN** o `:app:shared` muda em no máximo dois pontos (lista de módulos Koin e registro do grafo no NavHost) e o `:app:ios` em no máximo um (`export()` da api no framework)
 
 #### Scenario: Plataforma consome o shell
 - **WHEN** um entry point de plataforma inicializa o app
 - **THEN** ele chama `startKoin` com a lista `appModules` exposta por `:app:shared` (Android adiciona `androidContext`) e renderiza `App()`
+
+#### Scenario: Shell sem indireção de navegação
+- **WHEN** o `:app:shared` é inspecionado
+- **THEN** ele não contém dispatcher, tradutor ou mapa de destinos de navegação — apenas a composição dos grafos providos pelas features
 
 ### Requirement: Módulos Koin providos pelos cores
 Todo módulo `:core:*` que provê tipos injetáveis SHALL expor seu próprio módulo Koin (com `expect val <nome>PlatformModule` quando houver binding por plataforma), no padrão já estabelecido por `core:analytics`, `core:auth` e `core:crashlytics`. Em particular: `databaseModule` SHALL residir em `:core:database`; os bindings de `Settings`, `CurrencyFormatter` e `DebounceManager` SHALL residir em `:core:common`; o binding de `ModalManager` SHALL residir em `:core:designsystem`. O shell MUST NOT declarar bindings próprios — apenas agregar módulos.
@@ -80,9 +84,13 @@ O framework iOS `ComposeApp` SHALL ser configurado no `:app:ios` e SHALL exporta
 - **THEN** símbolos de `:core:*` e das apis são visíveis ao Swift, símbolos dos impls não são, e o código Swift do `iosApp` permanece inalterado
 
 ### Requirement: Rotas de navegação declaradas por feature
-Cada `api` SHALL declarar suas próprias rotas `@Serializable`. A sealed class única `AppRoute` SHALL ser eliminada; o shell conhece apenas as rotas das abas (`HomeRoute`).
+Cada feature SHALL declarar suas próprias rotas `@Serializable`. A sealed class única `AppRoute` SHALL ser eliminada. As rotas *externamente navegáveis* de uma feature SHALL residir na sua `api`; as rotas alcançáveis apenas de dentro do próprio `impl` SHALL residir no `impl`. O shell conhece apenas a rota do subgrafo de abas (`HomeGraph`).
 
 #### Scenario: Navegação cross-feature
 - **WHEN** o `impl` de uma feature navega para uma tela de outra feature
 - **THEN** ele referencia a rota declarada na `api` da feature destino, sem depender do `impl` dela
+
+#### Scenario: Rota interna promovida indevidamente
+- **WHEN** uma rota declarada em um módulo `api` não é referenciada por nenhum outro módulo
+- **THEN** ela é movida para o `impl` da feature dona, seguindo a regra de que um tipo só reside na `api` se for consumido por outro módulo
 

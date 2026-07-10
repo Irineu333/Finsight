@@ -45,7 +45,7 @@ enforced mechanically by convention plugins in `build-logic`
   any `feature:*:api` and `:core:*`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
-    `impl`s): `App` (hosting the Home `Scaffold`), `AppNavHost`, `HomeRoute`/`NavigationItem`,
+    `impl`s): `App` (hosting the Home `Scaffold`), `AppNavHost`, `HomeGraph`/`NavigationItem`,
     Koin aggregation (`appModules`).
     Under the `finsight.app.shared` convention plugin.
   - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`

@@ -42,18 +42,22 @@ A `api` de uma feature SHALL declarar somente as rotas que outro módulo navega.
 - **THEN** sua rota reside no `impl` e nenhum módulo `api` é criado para ela
 
 ### Requirement: Grafo de navegação provido por cada feature
-Cada feature navegável SHALL expor no seu `impl` uma única função de extensão `NavGraphBuilder.<nome>Graph()` que registra todos os seus destinos. Uma feature com destinos internos SHALL agrupá-los em `navigation<RotaDeEntrada>(startDestination = <destino interno>)`, de modo que sua rota de entrada pública seja o subgrafo. O `:app:shared` SHALL compor o `NavHost` invocando essas funções e MUST NOT registrar destinos de features diretamente.
+Cada feature navegável SHALL expor no seu `impl` uma única função de extensão `NavGraphBuilder.<nome>Graph()` que registra todos os seus destinos, obtendo o `NavHostController` de `LocalNavController` e MUST NOT recebê-lo como parâmetro. Uma feature com destinos internos SHALL agrupá-los em `navigation<RotaDeEntrada>(startDestination = <destino interno>)`, de modo que sua rota de entrada pública seja o subgrafo. Toda rota que nomeia um nó de grafo SHALL ser nomeada `<Nome>Graph`; rotas que nomeiam uma tela SHALL ser nomeadas `<Nome>Route`. O `:app:shared` SHALL compor o `NavHost` invocando essas funções e MUST NOT registrar destinos de features diretamente.
 
 #### Scenario: Feature com destinos internos
 - **WHEN** uma feature possui uma rota de entrada pública e destinos alcançáveis apenas internamente
-- **THEN** seu grafo declara `navigation<RotaPublica>(startDestination = <destino interno>)` com os destinos internos aninhados
+- **THEN** seu grafo declara `navigation<NomeGraph>(startDestination = <destino interno>)` com os destinos internos aninhados
+
+#### Scenario: Nome de uma rota
+- **WHEN** uma rota é declarada
+- **THEN** ela se chama `<Nome>Graph` se for o nó de um subgrafo (`SupportGraph`, `ReportGraph`, `HomeGraph`) e `<Nome>Route` se for uma tela (`AccountsRoute`, `SupportIssueRoute`)
 
 #### Scenario: Composição do NavHost
 - **WHEN** o `AppNavHost` é inspecionado
 - **THEN** ele contém apenas chamadas a `<nome>Graph()` e a declaração do subgrafo de abas, sem nenhum `composable<>` de tela de feature
 
 ### Requirement: NavHost único com subgrafo de abas
-O app SHALL ter exatamente um `NavHost`. As abas SHALL ser declaradas como `navigation<HomeRoute>` no grafo raiz, tendo o dashboard como `startDestination`. A troca de abas SHALL preservar o estado de cada aba via `popUpTo(HomeRoute) { saveState = true }` e `restoreState = true`.
+O app SHALL ter exatamente um `NavHost`. As abas SHALL ser declaradas como `navigation<HomeGraph>` no grafo raiz, tendo o dashboard como `startDestination`. A troca de abas SHALL preservar o estado de cada aba via `popUpTo(HomeGraph) { saveState = true }` e `restoreState = true`.
 
 #### Scenario: Retorno a uma aba já visitada
 - **WHEN** o usuário navega de Transações para Dashboard e volta para Transações
@@ -64,15 +68,15 @@ O app SHALL ter exatamente um `NavHost`. As abas SHALL ser declaradas como `navi
 - **THEN** a navegação ocorre no `NavHost` raiz, sem necessidade de acesso a um controller aninhado
 
 ### Requirement: Chrome do Home derivada do destino e da tela
-O `Scaffold` que hospeda a bottom bar e o FAB SHALL residir no composable raiz `App()`. A visibilidade da chrome SHALL ser a conjunção de (1) o destino atual pertencer à hierarquia de `HomeRoute` e (2) o `HomeChromeConfig` publicado pela tela em foco via `HomeChromeEffect`.
+O `Scaffold` que hospeda a bottom bar e o FAB SHALL residir no composable raiz `App()`. A visibilidade da chrome SHALL ser a conjunção de (1) o destino atual pertencer à hierarquia de `HomeGraph` e (2) o `HomeChromeConfig` publicado pela tela em foco via `HomeChromeEffect`.
 
 #### Scenario: Destino fora das abas
-- **WHEN** o destino atual não pertence à hierarquia de `HomeRoute`
+- **WHEN** o destino atual não pertence à hierarquia de `HomeGraph`
 - **THEN** bottom bar e FAB não são exibidos, sem que a tela de destino precise declarar nada
 
 #### Scenario: Tela de aba oculta a chrome
 - **WHEN** o dashboard entra no modo de edição e publica `HomeChromeConfig.ContentOnly`
-- **THEN** bottom bar e FAB são ocultados enquanto o destino permanece dentro de `HomeRoute`
+- **THEN** bottom bar e FAB são ocultados enquanto o destino permanece dentro de `HomeGraph`
 
 #### Scenario: Aba selecionada
 - **WHEN** a bottom bar precisa destacar a aba corrente

@@ -4,7 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
-import com.neoutils.finsight.feature.support.api.SupportRoute
+import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
 import com.neoutils.finsight.ui.screen.support.SupportIssueRoute
@@ -13,7 +13,7 @@ import com.neoutils.finsight.ui.screen.support.SupportListRoute
 import com.neoutils.finsight.ui.screen.support.SupportScreen
 
 fun NavGraphBuilder.supportGraph() {
-    navigation<SupportRoute>(
+    navigation<SupportGraph>(
         startDestination = SupportListRoute,
     ) {
         composable<SupportListRoute> {

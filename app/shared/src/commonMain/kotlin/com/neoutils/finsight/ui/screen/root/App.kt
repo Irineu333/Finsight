@@ -43,7 +43,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
-import com.neoutils.finsight.ui.screen.home.HomeRoute
+import com.neoutils.finsight.ui.screen.home.HomeGraph
 import com.neoutils.finsight.ui.screen.home.NavigationItem
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
 import com.neoutils.finsight.ui.screen.home.LocalHomeChromeController
@@ -89,7 +89,7 @@ private fun AppScaffold(navController: NavHostController) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = currentBackStackEntry?.destination
 
-    val isHome = destination?.hierarchy?.any { it.hasRoute<HomeRoute>() } == true
+    val isHome = destination?.hierarchy?.any { it.hasRoute<HomeGraph>() } == true
 
     val selectedItem = NavigationItem.entries.firstOrNull { item ->
         destination?.hierarchy?.any { it.hasRoute(item.route::class) } == true
@@ -124,7 +124,7 @@ private fun AppScaffold(navController: NavHostController) {
                                 launchSingleTop = true
                                 restoreState = true
 
-                                popUpTo(HomeRoute) {
+                                popUpTo(HomeGraph) {
                                     saveState = true
                                 }
                             }

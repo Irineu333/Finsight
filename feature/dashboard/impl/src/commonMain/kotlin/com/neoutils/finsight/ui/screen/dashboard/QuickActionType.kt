@@ -6,8 +6,8 @@ import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
-import com.neoutils.finsight.feature.report.api.ReportsRoute
-import com.neoutils.finsight.feature.support.api.SupportRoute
+import com.neoutils.finsight.feature.report.api.ReportGraph
+import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
@@ -45,7 +45,7 @@ enum class QuickActionType(
     ),
     REPORTS(
         title = UiText.Res(Res.string.dashboard_reports),
-        route = ReportsRoute,
+        route = ReportGraph,
     ),
     INSTALLMENTS(
         title = UiText.Res(Res.string.dashboard_installments),
@@ -53,6 +53,6 @@ enum class QuickActionType(
     ),
     SUPPORT(
         title = UiText.Res(Res.string.dashboard_support),
-        route = SupportRoute,
+        route = SupportGraph,
     ),
 }

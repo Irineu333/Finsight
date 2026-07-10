@@ -145,7 +145,7 @@ como parâmetro. O `:app:shared` — único módulo que enxerga os `impl` — ag
 ```kotlin
 // feature/support/impl — ui/navigation/SupportGraph.kt
 fun NavGraphBuilder.supportGraph() {
-    navigation<SupportRoute>(startDestination = SupportListRoute) {
+    navigation<SupportGraph>(startDestination = SupportListRoute) {
         composable<SupportListRoute> {
             val navController = LocalNavController.current
             SupportScreen(...)
@@ -156,7 +156,7 @@ fun NavGraphBuilder.supportGraph() {
 
 // :app:shared — AppNavHost
 NavHost(...) {
-    navigation<HomeRoute>(startDestination = DashboardRoute) {
+    navigation<HomeGraph>(startDestination = DashboardRoute) {
         dashboardGraph()
         transactionsGraph()
     }
@@ -164,9 +164,10 @@ NavHost(...) {
 }
 ```
 
-Só `SupportRoute` vive na `api`, porque só ela é destino de outra feature; `SupportListRoute` e
+Só `SupportGraph` vive na `api`, porque só ele é destino de outra feature; `SupportListRoute` e
 `SupportIssueRoute` são alcançáveis apenas de dentro do próprio `impl` e residem nele, agrupadas sob
-o subgrafo `navigation<SupportRoute>`. Uma feature que não é destino de ninguém — como o `dashboard`,
+o subgrafo `navigation<SupportGraph>`. **O sufixo diz o que a rota é:** `<Nome>Graph` nomeia o nó de
+um subgrafo, `<Nome>Route` nomeia uma tela. Uma feature que não é destino de ninguém — como o `dashboard`,
 montado só pelo shell — não cria módulo `api` para hospedar sua rota.
 *Alternativa descartada:* registrar grafos via Koin — indireção desnecessária, já que o shell
 enxerga os `impl` por definição.
@@ -206,7 +207,7 @@ O app é dividido em quatro módulos de responsabilidade única sob `app/`:
   reduzido a shell puro:
   - `App` (com o `Scaffold` da chrome do Home: bottom bar + FAB), `AppNavHost` (agrega os
     `xxxGraph()` de cada `impl`);
-  - `HomeRoute` (o subgrafo das abas) e `NavigationItem` — o único lugar do projeto autorizado a
+  - `HomeGraph` (o subgrafo das abas) e `NavigationItem` — o único lugar do projeto autorizado a
     enumerar as features;
   - `appModules`: a lista de agregação dos módulos Koin dos cores injetáveis + de todas as features.
 - **`:app:android`** (`com.android.application`, não-KMP) — `MainActivity`, `AndroidApp` (`startKoin`),

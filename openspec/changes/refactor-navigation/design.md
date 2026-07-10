@@ -12,7 +12,7 @@ feature/*/api          core:designsystem              app:shared
 
 O que o dispatcher realmente resolve não é isolamento de tipos, e sim **acesso ao canal**: um composable dentro de `dashboard:impl` não tem `NavHostController`, porque só o `NavGraphBuilder` o recebe. A prova está no grafo de dependências: `dashboard:impl` já depende de `accounts:api`, `budgets:api`, `categories:api`, `creditcards:api`, `recurring:api` e `transactions:api` — seis das oito apis para as quais despacha. `DashboardComponentContent` importa `AccountsEntry` de `feature:accounts:api` para abrir um modal e, no mesmo arquivo, despacha `NavigationDestination.Accounts(id)` em vez de importar `AccountsRoute` do mesmo módulo.
 
-`feature:report` é a única feature que já implementa o desenho correto e serve de referência: `ReportsRoute` na `api` (o subgrafo), `ReportRoute.Config`/`.Viewer` no `impl` (os destinos internos), `PerspectiveTabNavType` junto da rota que o consome.
+`feature:report` é a única feature que já implementa o desenho correto e serve de referência: `ReportGraph` na `api` (o subgrafo), `ReportRoute.Config`/`.Viewer` no `impl` (os destinos internos), `PerspectiveTabNavType` junto da rota que o consome.
 
 Restrições que a mudança não pode violar:
 1. Nenhum módulo `:core:*` enumera as features.
@@ -78,13 +78,13 @@ A assimetria `TransactionsRoute` na `api` / `DashboardRoute` no `impl` é o que 
 
 Consequência: `feature/README.md` está mal redigido hoje ("a `api` declara as rotas") e passa a dizer "as rotas externamente navegáveis".
 
-### 5. `NavHost` único, abas como `navigation<HomeRoute>`
+### 5. `NavHost` único, abas como `navigation<HomeGraph>`
 
 Hoje há dois `NavHost`: o raiz e um aninhado dentro de `HomeScreen`, com `HomeRoute.Dashboard` e `HomeRoute.Transactions`. Um destino registrado no `NavHost` interno é inalcançável a partir do controller externo — nem o dispatcher nem um deep link conseguem abrir uma aba. O `selectedItem` é derivado por `destination.route?.contains(serialName)`, comparação textual, existindo `hasRoute<T>()`.
 
 ```
-NavHost(navController, startDestination = HomeRoute) {
-    navigation<HomeRoute>(startDestination = DashboardRoute) {
+NavHost(navController, startDestination = HomeGraph) {
+    navigation<HomeGraph>(startDestination = DashboardRoute) {
         dashboardGraph()
         transactionsGraph()
     }
@@ -102,7 +102,7 @@ A hipótese inicial era que `HomeChromeConfig`/`HomeChromeStateHolder` existisse
 O que muda é que a visibilidade deixa de ser um estado único e passa a ser uma conjunção:
 
 ```
-visível = destino ∈ hierarquia(HomeRoute)  ∧  chromeConfig.isBottomBarVisible
+visível = destino ∈ hierarquia(HomeGraph)  ∧  chromeConfig.isBottomBarVisible
           └─ derivado do NavController ─┘     └─ publicado pela tela ─┘
 ```
 
@@ -110,7 +110,7 @@ O primeiro termo substitui o `HomeChromeConfig.Default` que `HomeScreen` aplicav
 
 ## Risks / Trade-offs
 
-**Perda de estado das abas** → O `NavHost` aninhado preserva o estado de cada aba gratuitamente. Com um `NavHost` só, a troca de abas exige `popUpTo(HomeRoute) { saveState = true }` + `restoreState = true` + `launchSingleTop = true`. Sem isso, a `LazyColumn` de transações perde o scroll ao voltar. É o único ponto da mudança com regressão visível, e o primeiro a verificar manualmente.
+**Perda de estado das abas** → O `NavHost` aninhado preserva o estado de cada aba gratuitamente. Com um `NavHost` só, a troca de abas exige `popUpTo(HomeGraph) { saveState = true }` + `restoreState = true` + `launchSingleTop = true`. Sem isso, a `LazyColumn` de transações perde o scroll ao voltar. É o único ponto da mudança com regressão visível, e o primeiro a verificar manualmente.
 
 **Bottom bar animando em navegação global** → Com o `Scaffold` no `App()`, sair do Home para Contas anima o desaparecimento da bottom bar, onde antes o `HomeScreen` inteiro era substituído. O comportamento observado deve ser equivalente, mas a `AnimatedVisibility` da bottom bar passa a reagir a toda navegação. Verificar transição Home → Contas → back.
 

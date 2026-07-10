@@ -4,7 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
-import com.neoutils.finsight.feature.report.api.ReportsRoute
+import com.neoutils.finsight.feature.report.api.ReportGraph
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
@@ -15,7 +15,7 @@ import com.neoutils.finsight.util.PerspectiveTabNavType
 import kotlin.reflect.typeOf
 
 fun NavGraphBuilder.reportGraph() {
-    navigation<ReportsRoute>(
+    navigation<ReportGraph>(
         startDestination = ReportRoute.Config,
     ) {
         composable<ReportRoute.Config> {

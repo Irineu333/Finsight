@@ -27,7 +27,7 @@
 - [x] 4.1 Mover `TransactionTypeNavType` e `TransactionTargetNavType` de `:core:model` para `feature:transactions:api`; declarar `androidx.navigation` na `api` de transactions
 - [x] 4.2 Criar `TransactionsRoute(filterType, filterTarget)` em `feature:transactions:api` e remover `HomeRoute.Transactions` do `:app:shared`
 - [x] 4.3 Criar `DashboardRoute` em `feature:dashboard:impl` (não criar `feature:dashboard:api`)
-- [x] 4.4 Descer `SupportIssueRoute` de `feature:support:api` para `feature:support:impl` e converter `supportGraph` em `navigation<SupportRoute>(startDestination = <lista>)`
+- [x] 4.4 Descer `SupportIssueRoute` de `feature:support:api` para `feature:support:impl` e converter `supportGraph` em `navigation<SupportGraph>(startDestination = <lista>)`
 - [x] 4.5 Atualizar o `dashboard:impl` para navegar a `TransactionsRoute` em vez de invocar o callback `openTransactions`, removendo o parâmetro de `DashboardScreen`
 
 ## 5. Grafos de dashboard e transactions
@@ -38,12 +38,12 @@
 
 ## 6. `NavHost` único
 
-- [x] 6.1 Declarar `navigation<HomeRoute>(startDestination = DashboardRoute)` em `AppNavHost`, aninhando `dashboardGraph()` e `transactionsGraph()`
+- [x] 6.1 Declarar `navigation<HomeGraph>(startDestination = DashboardRoute)` em `AppNavHost`, aninhando `dashboardGraph()` e `transactionsGraph()`
 - [x] 6.2 Mover o `Scaffold` (bottom bar + FAB + `AddTransactionModal`) de `HomeScreen` para `App()`, entre `ModalManagerHost` e `SharedTransitionProvider`
-- [x] 6.3 Derivar a visibilidade da chrome de `destination.hierarchy.any { it.hasRoute<HomeRoute>() }` em conjunção com o `HomeChromeConfig` publicado via `LocalHomeChromeController`
+- [x] 6.3 Derivar a visibilidade da chrome de `destination.hierarchy.any { it.hasRoute<HomeGraph>() }` em conjunção com o `HomeChromeConfig` publicado via `LocalHomeChromeController`
 - [x] 6.4 Derivar a aba selecionada com `hasRoute<T>()`, substituindo a comparação por `route?.contains(serialName)`
-- [x] 6.5 Aplicar `popUpTo(HomeRoute) { saveState = true }`, `restoreState = true` e `launchSingleTop = true` na troca de abas
-- [x] 6.6 Remover `HomeScreen.kt`; manter `HomeRoute` como `@Serializable data object` no `:app:shared`
+- [x] 6.5 Aplicar `popUpTo(HomeGraph) { saveState = true }`, `restoreState = true` e `launchSingleTop = true` na troca de abas
+- [x] 6.6 Remover `HomeScreen.kt`; manter `HomeGraph` como `@Serializable data object` no `:app:shared`
 - [x] 6.7 Remover o parâmetro `navController` das assinaturas `NavGraphBuilder.<nome>Graph()`, cujo uso passou a ser `LocalNavController`
 
 ## 7. Documentação e verificação

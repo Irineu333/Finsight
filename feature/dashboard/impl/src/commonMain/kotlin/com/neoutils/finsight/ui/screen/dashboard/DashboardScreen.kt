@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.feature.support.api.SupportRoute
+import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_edit_cancel
@@ -97,7 +97,7 @@ fun DashboardScreen(
                             actions = {
                                 IconButton(
                                     onClick = {
-                                        navController.navigate(SupportRoute)
+                                        navController.navigate(SupportGraph)
                                     }
                                 ) {
                                     Icon(

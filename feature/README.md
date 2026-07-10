@@ -19,8 +19,8 @@ feature/
 
 | Módulo | Contém | Não contém |
 |---|---|---|
-| **api** | Rotas de navegação (data classes), interfaces de repositório, interfaces de use cases públicos, entry point de UI (`<Nome>Entry`) | Qualquer implementação |
-| **impl** | Telas, ViewModels, modais, use cases (públicos e privados), implementações de repositório, mappers, módulo Koin da feature | Tipos consumidos por outras features |
+| **api** | Rotas de navegação **externamente navegáveis** (data classes), interfaces de repositório, interfaces de use cases públicos, entry point de UI (`<Nome>Entry`) | Qualquer implementação |
+| **impl** | Telas, ViewModels, modais, use cases (públicos e privados), implementações de repositório, mappers, rotas de destinos internos, módulo Koin da feature | Tipos consumidos por outras features |
 
 **Critério de triagem:** só entra na `api` o que **outro módulo consome**. Tudo o mais é detalhe de implementação e vive no `impl`. Na dúvida, comece no `impl` — promover para a `api` depois é barato; o inverso quebra consumidores.
 
@@ -130,33 +130,65 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 
 | Acesso | Mecanismo |
 |---|---|
-| **Navegação** | Rota (`@Serializable`) vive na `api`; consumidor navega por rota. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:app:shared` |
+| **Navegação** | Rota (`@Serializable`) externamente navegável vive na `api`; o consumidor obtém o `NavHostController` de `LocalNavController` (`:core:navigation`) e chama `navigate(Rota)`. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:app:shared` |
 | **Modais** | Método no entry point retornando `Modal` (tipo de `:core:designsystem`) |
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
 
 ### Mecanismo de registro de navegação
 
-Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph(navController)`** que registra os
-`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). O `:app:shared` — único
-módulo que enxerga os `impl` — agrega essas extensions no `AppNavHost`:
+Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph()`** que agrupa os
+`composable<Rota>` da feature em um `navigation<<Feature>Graph>` (as telas permanecem `internal` ao
+`impl`). Dentro de cada `composable`, o `NavHostController` vem de `LocalNavController` — nenhum
+grafo recebe o controller como parâmetro. O `:app:shared` — único módulo que enxerga os `impl` —
+agrega essas extensions no `AppNavHost`:
 
 ```kotlin
 // feature/support/impl — ui/navigation/SupportGraph.kt
-fun NavGraphBuilder.supportGraph(navController: NavController) {
-    composable<SupportRoute> { SupportScreen(...) }
-    composable<SupportIssueRoute> { ... }
+fun NavGraphBuilder.supportGraph() {
+    navigation<SupportGraph>(startDestination = SupportListRoute) {
+        composable<SupportListRoute> {
+            val navController = LocalNavController.current
+            SupportScreen(...)
+        }
+        composable<SupportIssueRoute> { ... }
+    }
+}
+
+// feature/budgets/impl — mesmo com uma tela só, o subgrafo existe
+fun NavGraphBuilder.budgetsGraph() {
+    navigation<BudgetsGraph>(startDestination = BudgetsRoute) {
+        composable<BudgetsRoute> { ... }
+    }
 }
 
 // :app:shared — AppNavHost
 NavHost(...) {
-    // rotas do shell (Home, abas)...
-    supportGraph(navController)
+    navigation<HomeGraph>(startDestination = DashboardGraph) {
+        dashboardGraph()
+        transactionsGraph()
+    }
+    supportGraph()
+    budgetsGraph()
 }
 ```
 
-As rotas (`SupportRoute`, `SupportIssueRoute`) vivem na `api`, então qualquer feature navega para
-elas sem depender do `impl` de destino. *Alternativa descartada:* registrar grafos via Koin —
-indireção desnecessária, já que o shell enxerga os `impl` por definição.
+**Toda feature declara seu subgrafo**, mesmo as de tela única: o nó de grafo é o alvo estável de
+`popUpTo` e o lugar onde transições e deep links vão morar. **O sufixo diz o que a rota é:**
+`<Nome>Graph` nomeia o nó de um subgrafo, `<Nome>Route` nomeia uma tela.
+
+Toda rota implementa um marcador de `:core:navigation` — `NavGraphRoute` para os nós de grafo,
+`NavRoute` para as telas (`NavGraphRoute : NavRoute`). Os marcadores não declaram nada: existem para
+que "quem são as rotas do app" e "quem navega" sejam uma busca por implementações, e para que campos
+que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam tipados como `Any`.
+
+**Onde o `<Nome>Graph` mora segue o mesmo critério de triagem de qualquer tipo:** na `api` só se
+outro módulo navegar até ele. `SupportGraph` e `ReportGraph` estão na `api` porque o dashboard abre
+essas features pela entrada. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
+porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
+nunca o grafo. Uma feature que não é destino de ninguém — como o `dashboard`, montado só pelo shell —
+não cria módulo `api` para hospedar rota alguma.
+*Alternativa descartada:* registrar grafos via Koin — indireção desnecessária, já que o shell
+enxerga os `impl` por definição.
 
 > **Entry point é opcional.** Uma feature só declara `<Nome>Entry` quando **outra** feature consome
 > UI dela (modal/composable). O piloto `support` não expõe modal a terceiros (seu modal é interno),
@@ -191,8 +223,10 @@ O app é dividido em quatro módulos de responsabilidade única sob `app/`:
 
 - **`:app:shared`** (KMP library, convenção `finsight.app.shared`) — o **único módulo agregador**,
   reduzido a shell puro:
-  - `App`, `AppNavHost` (agrega os `xxxGraph()` de cada `impl`), `AppNavigationDispatcher`;
-  - `HomeScreen` (abas Dashboard/Transactions) e `HomeRoute`/`AppRoute` (só `Home`);
+  - `App` (com o `Scaffold` da chrome do Home: bottom bar + FAB), `AppNavHost` (agrega os
+    `xxxGraph()` de cada `impl`);
+  - `HomeGraph` (o subgrafo das abas) e `NavigationItem` — o único lugar do projeto autorizado a
+    enumerar as features;
   - `appModules`: a lista de agregação dos módulos Koin dos cores injetáveis + de todas as features.
 - **`:app:android`** (`com.android.application`, não-KMP) — `MainActivity`, `AndroidApp` (`startKoin`),
   Manifest, mipmaps, signing/keystore, `google-services.json`, crashlytics, `versionCode`/`versionName`.

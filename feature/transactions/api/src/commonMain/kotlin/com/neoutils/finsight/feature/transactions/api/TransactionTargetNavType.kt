@@ -1,4 +1,4 @@
-package com.neoutils.finsight.util
+package com.neoutils.finsight.feature.transactions.api
 
 import androidx.navigation.NavType
 import androidx.savedstate.SavedState
@@ -22,11 +22,11 @@ class TransactionTargetNavType : NavType<Transaction.Target?>(isNullableAllowed 
     override fun get(
         bundle: SavedState,
         key: String
-    ): Transaction.Target {
-        return bundle.read { Transaction.Target.valueOf(getString(key)) }
+    ): Transaction.Target? {
+        return bundle.read { getStringOrNull(key)?.let(Transaction.Target::valueOf) }
     }
 
-    override fun parseValue(value: String): Transaction.Target {
-        return Transaction.Target.valueOf(value)
+    override fun parseValue(value: String): Transaction.Target? {
+        return if (value == "null") null else Transaction.Target.valueOf(value)
     }
 }

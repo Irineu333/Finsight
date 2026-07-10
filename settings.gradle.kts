@@ -47,6 +47,7 @@ include(":core:crashlytics")
 include(":core:database")
 include(":core:designsystem")
 include(":core:model")
+include(":core:navigation")
 include(":core:resources")
 include(":core:ui")
 

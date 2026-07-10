@@ -10,5 +10,8 @@ import androidx.compose.runtime.remember
 actual fun ProvidePlatformContext(content: @Composable () -> Unit) {
     val owner = LocalActivityResultRegistryOwner.current
     val platformContext = remember(owner) { PlatformContext(owner as Activity) }
-    CompositionLocalProvider(LocalPlatformContext provides platformContext, content = content)
+    CompositionLocalProvider(
+        LocalPlatformContext provides platformContext,
+        content = content
+    )
 }

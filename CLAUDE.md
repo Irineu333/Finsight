@@ -32,7 +32,8 @@ enforced mechanically by convention plugins in `build-logic`
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `model` (domain models,
-  errors, exceptions), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
+  errors, exceptions), `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
+  markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models + `HomeChrome`), `database` (Room entities/DAOs/
   `AppDatabase`/converters + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
@@ -44,7 +45,8 @@ enforced mechanically by convention plugins in `build-logic`
   any `feature:*:api` and `:core:*`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
-    `impl`s): `App`, `AppNavHost`, dispatcher, `HomeScreen`, Koin aggregation (`appModules`).
+    `impl`s): `App` (hosting the Home `Scaffold`), `AppNavHost`, `HomeGraph`/`NavigationItem`,
+    Koin aggregation (`appModules`).
     Under the `finsight.app.shared` convention plugin.
   - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
@@ -72,8 +74,13 @@ Domain <- Database, Domain <- UI.
 **DI (Koin):** each feature `impl` exposes its module; the shell aggregates them.
 `viewModel {}` screens, `factory {}` use cases, `single {}` repositories.
 
-**Navigation:** type-safe `@Serializable` routes declared in each feature `api`; each
-`impl` exposes `NavGraphBuilder.<name>Graph()` aggregated by the shell's `AppNavHost`.
+**Navigation:** type-safe `@Serializable` routes. A feature's `api` declares only its
+*externally navigable* routes; internal destinations live in the `impl`. Each `impl` exposes
+`NavGraphBuilder.<name>Graph()` — always a `navigation<<Name>Graph>` subgraph, even for a
+single-screen feature — aggregated by the shell's single `AppNavHost`. `<Name>Graph` names a graph
+node and implements `NavGraphRoute`; `<Name>Route` names a screen and implements `NavRoute` (both
+markers live in `:core:navigation`, making every route findable by its implementations). Features navigate with
+`LocalNavController.current.navigate(<Route from the target api>)`.
 
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`
 

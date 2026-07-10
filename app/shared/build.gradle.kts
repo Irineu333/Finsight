@@ -12,6 +12,7 @@ kotlin {
             api(projects.core.database)
             api(projects.core.designsystem)
             api(projects.core.model)
+            api(projects.core.navigation)
             api(projects.core.resources)
             api(projects.core.ui)
 

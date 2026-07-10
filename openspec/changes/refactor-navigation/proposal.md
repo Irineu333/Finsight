@@ -35,7 +35,7 @@ Sem mudança de comportamento observável. Deep links, transições de destino e
 
 **Alterados:** `App.kt`, `AppNavHost.kt`, `HomeGraph.kt`, `BottomNavigationBar.kt`; os `impl` de `dashboard`, `transactions`, `recurring`, `creditcards` e `support` (substituição de `dispatch(...)` por `navigate(...)`); `core/model` perde dois `NavType`.
 
-**Dependências Gradle:** `feature:dashboard:impl` ganha `feature:report:api` e `feature:support:api` (as duas únicas apis de destino que ainda não declara). Todas as demais dependências `impl → api` necessárias já existem. `feature:transactions:api` passa a depender de `androidx.navigation` (para `NavType`) e de `:core:navigation` não — rotas são apenas `@Serializable`.
+**Dependências Gradle:** `feature:dashboard:impl` ganha `feature:report:api` e `feature:support:api` (as duas únicas apis de destino que ainda não declara). Todas as demais dependências `impl → api` necessárias já existem. `feature:transactions:api` passa a depender de `androidx.navigation` (para `NavType`); e todo `feature:*:api` passa a depender de `:core:navigation`, pelos marcadores `NavRoute`/`NavGraphRoute` (decisão 1b do `design.md`).
 
 **Verificação mecânica:** a convenção `feature.api` admite dependências de projeto `:core:*`; `:core:navigation` se enquadra sem alteração no `build-logic`.
 

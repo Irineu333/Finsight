@@ -29,14 +29,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.auth.AuthService
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.extension.ProvidePlatformContext
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.navigation.ProvideNavController
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.FormattingLocalsHost
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -68,11 +67,9 @@ fun App() {
         Surface {
             ProvidePlatformContext {
                 FormattingLocalsHost {
-                    val navController = rememberNavController()
-
-                    CompositionLocalProvider(LocalNavController provides navController) {
+                    ProvideNavController {
                         ModalManagerHost {
-                            AppScaffold(navController)
+                            AppScaffold()
                         }
                     }
                 }
@@ -82,10 +79,11 @@ fun App() {
 }
 
 @Composable
-private fun AppScaffold(navController: NavHostController) {
-    val analytics = koinInject<Analytics>()
+private fun AppScaffold() {
+    val navController = LocalNavController.current
     val modalManager = LocalModalManager.current
     val homeChromeController = rememberHomeChromeStateHolder()
+    val analytics = koinInject<Analytics>()
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = currentBackStackEntry?.destination

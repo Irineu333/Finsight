@@ -8,6 +8,7 @@ import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.navigation.NavGraphRoute
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
@@ -15,7 +16,7 @@ import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsSc
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object CreditCardsGraph
+data object CreditCardsGraph : NavGraphRoute
 
 fun NavGraphBuilder.creditCardsGraph() {
     navigation<CreditCardsGraph>(

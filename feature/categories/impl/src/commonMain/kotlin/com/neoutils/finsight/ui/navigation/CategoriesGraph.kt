@@ -5,11 +5,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.neoutils.finsight.feature.categories.api.CategoriesRoute
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.navigation.NavGraphRoute
 import com.neoutils.finsight.ui.screen.categories.CategoriesScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object CategoriesGraph
+data object CategoriesGraph : NavGraphRoute
 
 fun NavGraphBuilder.categoriesGraph() {
     navigation<CategoriesGraph>(

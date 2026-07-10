@@ -8,6 +8,7 @@ import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.report.api.ReportGraph
 import com.neoutils.finsight.feature.support.api.SupportGraph
+import com.neoutils.finsight.navigation.NavRoute
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
@@ -21,7 +22,7 @@ import com.neoutils.finsight.util.UiText
 
 enum class QuickActionType(
     val title: UiText,
-    val route: Any,
+    val route: NavRoute,
 ) {
     BUDGETS(
         title = UiText.Res(Res.string.dashboard_budgets),

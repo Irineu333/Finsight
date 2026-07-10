@@ -6,11 +6,12 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.navigation.NavGraphRoute
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object AccountsGraph
+data object AccountsGraph : NavGraphRoute
 
 fun NavGraphBuilder.accountsGraph() {
     navigation<AccountsGraph>(

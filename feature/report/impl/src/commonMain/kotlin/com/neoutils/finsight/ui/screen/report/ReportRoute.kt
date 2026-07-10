@@ -1,9 +1,10 @@
 package com.neoutils.finsight.ui.screen.report
 
+import com.neoutils.finsight.navigation.NavRoute
 import com.neoutils.finsight.ui.screen.report.config.PerspectiveTab
 import kotlinx.serialization.Serializable
 
-sealed class ReportRoute {
+sealed class ReportRoute : NavRoute {
     @Serializable
     data object Config : ReportRoute()
 

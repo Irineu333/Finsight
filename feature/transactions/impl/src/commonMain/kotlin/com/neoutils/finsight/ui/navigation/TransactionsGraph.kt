@@ -8,13 +8,14 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.feature.transactions.api.TransactionTargetNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionTypeNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
+import com.neoutils.finsight.navigation.NavGraphRoute
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
 import com.neoutils.finsight.ui.screen.transactions.TransactionsScreen
-import kotlinx.serialization.Serializable
 import kotlin.reflect.typeOf
+import kotlinx.serialization.Serializable
 
 @Serializable
-data object TransactionsGraph
+data object TransactionsGraph : NavGraphRoute
 
 fun NavGraphBuilder.transactionsGraph() {
     navigation<TransactionsGraph>(

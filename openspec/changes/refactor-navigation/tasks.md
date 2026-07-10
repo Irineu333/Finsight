@@ -61,3 +61,10 @@
 - [x] 8.2 Manter `<Nome>Graph` na `api` apenas quando outro módulo navega até ele (`support`, `report`); os demais residem no `impl`
 - [x] 8.3 Apontar `NavigationItem` e o `startDestination` de `HomeGraph` para os subgrafos (`DashboardGraph`, `TransactionsGraph`)
 - [x] 8.4 Verificar em runtime que `startDestination` com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`) constrói o `NavHost`
+
+## 9. Rastreabilidade das rotas
+
+- [x] 9.1 Declarar `NavRoute` e `NavGraphRoute : NavRoute` em `:core:navigation`
+- [x] 9.2 Fazer toda rota implementar o marcador correspondente ao seu sufixo
+- [x] 9.3 Tipar `NavigationItem.route`, `QuickActionType.route` e `onNavigate` como `NavRoute`, eliminando `Any`
+- [x] 9.4 Adicionar `api(projects.core.navigation)` aos módulos `feature:*:api`

@@ -32,8 +32,8 @@ enforced mechanically by convention plugins in `build-logic`
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
 - **`core/`** — `common` (util/extension/UiText/Platform/icons), `model` (domain models,
-  errors, exceptions), `navigation` (`LocalNavController` — the navigation channel, no feature
-  is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
+  errors, exceptions), `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
+  markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
   core models + shared UI models + `HomeChrome`), `database` (Room entities/DAOs/
   `AppDatabase`/converters + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
@@ -78,7 +78,8 @@ Domain <- Database, Domain <- UI.
 *externally navigable* routes; internal destinations live in the `impl`. Each `impl` exposes
 `NavGraphBuilder.<name>Graph()` — always a `navigation<<Name>Graph>` subgraph, even for a
 single-screen feature — aggregated by the shell's single `AppNavHost`. `<Name>Graph` names a graph
-node, `<Name>Route` names a screen. Features navigate with
+node and implements `NavGraphRoute`; `<Name>Route` names a screen and implements `NavRoute` (both
+markers live in `:core:navigation`, making every route findable by its implementations). Features navigate with
 `LocalNavController.current.navigate(<Route from the target api>)`.
 
 **Modals:** `ModalManager` via `LocalModalManager`, extend `ModalBottomSheet`

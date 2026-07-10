@@ -176,6 +176,11 @@ NavHost(...) {
 `popUpTo` e o lugar onde transições e deep links vão morar. **O sufixo diz o que a rota é:**
 `<Nome>Graph` nomeia o nó de um subgrafo, `<Nome>Route` nomeia uma tela.
 
+Toda rota implementa um marcador de `:core:navigation` — `NavGraphRoute` para os nós de grafo,
+`NavRoute` para as telas (`NavGraphRoute : NavRoute`). Os marcadores não declaram nada: existem para
+que "quem são as rotas do app" e "quem navega" sejam uma busca por implementações, e para que campos
+que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam tipados como `Any`.
+
 **Onde o `<Nome>Graph` mora segue o mesmo critério de triagem de qualquer tipo:** na `api` só se
 outro módulo navegar até ele. `SupportGraph` e `ReportGraph` estão na `api` porque o dashboard abre
 essas features pela entrada. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,

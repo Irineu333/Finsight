@@ -13,6 +13,7 @@ import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.navigation.NavRoute
 import org.koin.compose.koinInject
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -302,7 +303,7 @@ private fun DashboardRecentsSection(
 @Composable
 private fun DashboardQuickActionsSection(
     variant: DashboardComponentVariant.QuickActions,
-    onNavigate: (route: Any) -> Unit,
+    onNavigate: (route: NavRoute) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component

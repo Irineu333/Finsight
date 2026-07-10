@@ -47,6 +47,14 @@ Rejeitada. O `Navigator` só compra uma coisa sobre o `NavController` cru: imped
 
 Consequência aceita: uma `impl` pode manipular o backstack global. É um risco de disciplina, não de arquitetura — e hoje o `NavGraphBuilder` de cada feature já recebe o `NavController` inteiro como parâmetro.
 
+### 1b. Marcadores `NavRoute` / `NavGraphRoute`, sem `NavRoute` como espelho de destinos
+
+A decisão 1 rejeitou um `sealed interface NavRoute` **como marcador exigido por um `Navigator`**, pelo risco de reintroduzir o `NavigationDestination` sob outro nome. O que existe aqui é diferente e não tem esse risco: `interface NavRoute` e `interface NavGraphRoute : NavRoute`, vazias, não seladas, em `:core:navigation`. Elas não enumeram nada — cada rota se declara.
+
+O que compram é rastreabilidade. Antes, `NavigationItem.route` e `QuickActionType.route` eram `Any`, e `DashboardQuickActionsSection` recebia `(Any) -> Unit`: o tipo não dizia que aquilo era uma rota, e não havia como perguntar ao compilador quais são as rotas do app. Com os marcadores, "quais rotas existem" e "quem navega" viram uma busca por implementações, e o par `<Nome>Graph : NavGraphRoute` / `<Nome>Route : NavRoute` faz o tipo repetir o que o sufixo já dizia.
+
+Custo: `feature:*:api` passa a depender de `:core:navigation` (dependência de projeto `:core:*`, admitida pela convenção `feature.api`).
+
 ### 2. `:core:navigation` contém uma declaração, e isso é o tamanho certo
 
 Um módulo Gradle para um `staticCompositionLocalOf` parece desproporcional. Duas alternativas foram consideradas:

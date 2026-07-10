@@ -61,11 +61,15 @@ Cada feature navegável SHALL expor no seu `impl` uma única função de extens�
 - **THEN** ele contém apenas chamadas a `<nome>Graph()` e a declaração do subgrafo de abas, sem nenhum `composable<>` de tela de feature
 
 ### Requirement: NavHost único com subgrafo de abas
-O app SHALL ter exatamente um `NavHost`. As abas SHALL ser declaradas como `navigation<HomeGraph>` no grafo raiz, tendo o dashboard como `startDestination`. A troca de abas SHALL preservar o estado de cada aba via `popUpTo(HomeGraph) { saveState = true }` e `restoreState = true`.
+O app SHALL ter exatamente um `NavHost`. As abas SHALL ser declaradas como `navigation<HomeGraph>` no grafo raiz, tendo o dashboard como `startDestination`. A troca de abas SHALL usar `popUpTo(DashboardRoute) { inclusive = false }` e `launchSingleTop = true`, mantendo o dashboard como raiz da pilha das abas. A troca de abas MUST NOT usar `saveState`/`restoreState`: o dashboard empilha destinos de outras abas (transações filtradas por um widget), e o estado salvo de uma aba passaria a conter destinos de outra.
 
-#### Scenario: Retorno a uma aba já visitada
-- **WHEN** o usuário navega de Transações para Dashboard e volta para Transações
-- **THEN** a posição de rolagem e o estado da aba Transações são preservados
+#### Scenario: Retorno ao dashboard a partir de um destino empilhado
+- **WHEN** o usuário abre transações filtradas por um widget do dashboard e toca na aba Dashboard
+- **THEN** a pilha é desempilhada até o dashboard e ele é exibido
+
+#### Scenario: Voltar de um destino empilhado
+- **WHEN** o usuário abre transações filtradas por um widget do dashboard e aciona o voltar
+- **THEN** o dashboard é exibido, pois permanece na pilha abaixo do destino empilhado
 
 #### Scenario: Navegação direta para uma aba
 - **WHEN** um destino do subgrafo de abas é alvo de `navigate` a partir de qualquer ponto do app

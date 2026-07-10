@@ -42,7 +42,7 @@
 - [x] 6.2 Mover o `Scaffold` (bottom bar + FAB + `AddTransactionModal`) de `HomeScreen` para `App()`, entre `ModalManagerHost` e `SharedTransitionProvider`
 - [x] 6.3 Derivar a visibilidade da chrome de `destination.hierarchy.any { it.hasRoute<HomeGraph>() }` em conjunção com o `HomeChromeConfig` publicado via `LocalHomeChromeController`
 - [x] 6.4 Derivar a aba selecionada com `hasRoute<T>()`, substituindo a comparação por `route?.contains(serialName)`
-- [x] 6.5 Aplicar `popUpTo(HomeGraph) { saveState = true }`, `restoreState = true` e `launchSingleTop = true` na troca de abas
+- [x] 6.5 Aplicar `popUpTo(DashboardRoute) { inclusive = false }` e `launchSingleTop = true` na troca de abas, com `NavigationItem` apontando para a rota de tela
 - [x] 6.6 Remover `HomeScreen.kt`; manter `HomeGraph` como `@Serializable data object` no `:app:shared`
 - [x] 6.7 Remover o parâmetro `navController` das assinaturas `NavGraphBuilder.<nome>Graph()`, cujo uso passou a ser `LocalNavController`
 
@@ -51,7 +51,7 @@
 - [x] 7.1 Atualizar `feature/README.md`: a `api` expõe as rotas **externamente navegáveis**; destinos internos residem no `impl`
 - [x] 7.2 Atualizar `CLAUDE.md`: `:core:navigation` na lista de cores; remover "dispatcher" da descrição do `:app:shared`
 - [ ] 7.3 `./gradlew check` e `./gradlew allTests` verdes
-- [ ] 7.4 Verificar manualmente a preservação de scroll ao alternar Transações → Dashboard → Transações
+- [ ] 7.4 Verificar manualmente a troca de abas e o retorno ao dashboard a partir de transações abertas por um widget
 - [ ] 7.5 Verificar manualmente a transição Home → Contas → back (animação da bottom bar) e o modo de edição do dashboard ocultando a chrome
 - [ ] 7.6 Verificar o build do framework iOS (`embedAndSignAppleFrameworkForXcode`) com o novo core exportado
 

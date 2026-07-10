@@ -43,6 +43,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
+import com.neoutils.finsight.ui.screen.dashboard.DashboardRoute
 import com.neoutils.finsight.ui.screen.home.HomeGraph
 import com.neoutils.finsight.ui.screen.home.NavigationItem
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
@@ -122,10 +123,9 @@ private fun AppScaffold(navController: NavHostController) {
                         onItemSelected = { item ->
                             navController.navigate(item.route) {
                                 launchSingleTop = true
-                                restoreState = true
 
-                                popUpTo(HomeGraph) {
-                                    saveState = true
+                                popUpTo(DashboardRoute) {
+                                    inclusive = false
                                 }
                             }
                         }

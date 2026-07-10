@@ -50,17 +50,17 @@
 
 - [x] 7.1 Atualizar `feature/README.md`: a `api` expõe as rotas **externamente navegáveis**; destinos internos residem no `impl`
 - [x] 7.2 Atualizar `CLAUDE.md`: `:core:navigation` na lista de cores; remover "dispatcher" da descrição do `:app:shared`
-- [ ] 7.3 `./gradlew check` e `./gradlew allTests` verdes
-- [ ] 7.4 Verificar manualmente a troca de abas e o retorno ao dashboard a partir de transações abertas por um widget
-- [ ] 7.5 Verificar manualmente a transição Home → Contas → back (animação da bottom bar) e o modo de edição do dashboard ocultando a chrome
-- [ ] 7.6 Verificar o build do framework iOS (`embedAndSignAppleFrameworkForXcode`) com o novo core exportado
+- [x] 7.3 `./gradlew check` e `./gradlew allTests` verdes, exceto `linkDebugTestIos{X64,SimulatorArm64}` de `report:impl` e `app:shared` — falham com `ld: framework 'FirebaseCore' not found`, reproduzido igual na `main` (`3b33900d`): quebra pré-existente, sem relação com esta mudança
+- [x] 7.4 Verificar manualmente a troca de abas e o retorno ao dashboard a partir de transações abertas por um widget
+- [x] 7.5 Verificar manualmente a transição Home → Contas → back (animação da bottom bar) e o modo de edição do dashboard ocultando a chrome
+- [x] 7.6 Verificar o build do framework iOS (`embedAndSignAppleFrameworkForXcode`) com o novo core exportado
 
 ## 8. Subgrafo por feature
 
 - [x] 8.1 Envolver todo `<nome>Graph()` em `navigation<<Nome>Graph>(startDestination = <primeira tela>)`
 - [x] 8.2 Manter `<Nome>Graph` na `api` apenas quando outro módulo navega até ele (`support`, `report`); os demais residem no `impl`
-- [x] 8.3 Apontar `NavigationItem` e o `startDestination` de `HomeGraph` para os subgrafos (`DashboardGraph`, `TransactionsGraph`)
-- [x] 8.4 Verificar em runtime que `startDestination` com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`) constrói o `NavHost`
+- [x] 8.3 Apontar o `startDestination` de `HomeGraph` para `DashboardGraph` (o `NavigationItem` aponta para a rota de tela — ver 6.5)
+- [x] 8.4 Verificar em runtime que `startDestination` com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`) constrói o `NavHost` e que as telas abrem; verificar que um destino aninhado num subgrafo (`InstallmentsRoute` em `CreditCardsGraph`) é navegável de fora
 
 ## 9. Rastreabilidade das rotas
 

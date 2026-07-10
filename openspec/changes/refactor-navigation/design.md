@@ -96,7 +96,7 @@ Onde o `<Nome>Graph` reside continua sendo decidido pela premissa 2, não pela s
 
 Nomenclatura: `<Nome>Graph` para o nó de grafo, `<Nome>Route` para a tela. `HomeRoute` vira `HomeGraph`, `SupportRoute` vira `SupportGraph`, `ReportsRoute` vira `ReportGraph`.
 
-Consequência: `startDestination` de um subgrafo pode ser uma rota com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`). O Navigation resolve os `NavType` a partir do `composable<>` registrado, mas é o ponto a verificar em runtime — falha na construção do `NavHost`, não em compilação.
+Consequência: `startDestination` de um subgrafo pode ser uma rota com argumentos (`AccountsRoute()`, `CreditCardsRoute()`, `TransactionsRoute()`). O Navigation resolve os `NavType` a partir do `composable<>` registrado — verificado em runtime no emulador: as telas abrem e recebem os argumentos. Também verificado que um destino aninhado num subgrafo continua navegável de fora (o dashboard abre `InstallmentsRoute`, que vive dentro de `CreditCardsGraph`), o que confirma a leitura de que o subgrafo do `creditcards` organiza sem isolar.
 
 ### 5. `NavHost` único, abas como `navigation<HomeGraph>`
 

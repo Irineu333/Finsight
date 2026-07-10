@@ -27,11 +27,13 @@ import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.feature.accounts.api.AccountsRoute
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.util.dayMonthYear
@@ -49,7 +51,7 @@ class ViewAdjustmentModal(
 
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
-        val navigationDispatcher = LocalNavigationDispatcher.current
+        val navController = LocalNavController.current
         val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -127,7 +129,7 @@ class ViewAdjustmentModal(
                         .fillMaxWidth(),
                     onClick = {
                         manager.dismissAll()
-                        navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                        navController.navigate(AccountsRoute(account.id))
                     }
                 )
             }
@@ -142,8 +144,8 @@ class ViewAdjustmentModal(
                         .fillMaxWidth(),
                     onClick = {
                         manager.dismissAll()
-                        navigationDispatcher.dispatch(
-                            NavigationDestination.CreditCards(creditCard.id)
+                        navController.navigate(
+                            CreditCardsRoute(creditCard.id)
                         )
                     }
                 )
@@ -172,8 +174,8 @@ class ViewAdjustmentModal(
                     onClick = creditCardId?.let {
                         {
                             manager.dismissAll()
-                            navigationDispatcher.dispatch(
-                                NavigationDestination.InvoiceTransactions(it)
+                            navController.navigate(
+                                InvoiceTransactionsRoute(it)
                             )
                         }
                     }

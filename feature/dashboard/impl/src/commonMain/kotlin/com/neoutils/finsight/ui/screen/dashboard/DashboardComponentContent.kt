@@ -3,11 +3,16 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
+import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.budgets.api.BudgetsEntry
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
+import com.neoutils.finsight.feature.recurring.api.RecurringRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import org.koin.compose.koinInject
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -62,8 +67,6 @@ import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
-import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -78,10 +81,13 @@ import kotlin.time.ExperimentalTime
 @Composable
 internal fun DashboardComponentContent(
     variant: DashboardComponentVariant,
-    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
-    val navigationDispatcher = LocalNavigationDispatcher.current
+    val navController = LocalNavController.current
+
+    val openTransactions = { filterType: Transaction.Type?, filterTarget: Transaction.Target? ->
+        navController.navigate(TransactionsRoute(filterType, filterTarget))
+    }
 
     when (variant) {
         is DashboardComponentVariant.TotalBalance -> {
@@ -116,7 +122,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.AccountsOverview -> {
             DashboardAccountsRow(
                 variant = variant,
-                onOpenAccounts = { navigationDispatcher.dispatch(NavigationDestination.Accounts()) },
+                onOpenAccounts = { navController.navigate(AccountsRoute()) },
                 modifier = modifier,
             )
         }
@@ -124,7 +130,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.CreditCardsPager -> {
             DashboardCreditCardsSection(
                 variant = variant,
-                onOpenCreditCards = { navigationDispatcher.dispatch(NavigationDestination.CreditCards()) },
+                onOpenCreditCards = { navController.navigate(CreditCardsRoute()) },
                 modifier = modifier,
             )
         }
@@ -153,7 +159,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.PendingRecurring -> {
             DashboardPendingRecurringSection(
                 variant = variant,
-                onOpenRecurring = { navigationDispatcher.dispatch(NavigationDestination.Recurring) },
+                onOpenRecurring = { navController.navigate(RecurringRoute) },
                 modifier = modifier,
             )
         }
@@ -169,7 +175,7 @@ internal fun DashboardComponentContent(
         is DashboardComponentVariant.QuickActions -> {
             DashboardQuickActionsSection(
                 variant = variant,
-                onNavigate = { navigationDispatcher.dispatch(it) },
+                onNavigate = { navController.navigate(it) },
                 modifier = modifier,
             )
         }
@@ -296,7 +302,7 @@ private fun DashboardRecentsSection(
 @Composable
 private fun DashboardQuickActionsSection(
     variant: DashboardComponentVariant.QuickActions,
-    onNavigate: (NavigationDestination) -> Unit,
+    onNavigate: (route: Any) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val component = variant.component
@@ -320,7 +326,7 @@ private fun DashboardQuickActionsSection(
                 action = action,
                 onOpen = { type ->
                     if (variant is DashboardComponentVariant.QuickActions.Viewing) {
-                        onNavigate(type.destination)
+                        onNavigate(type.route)
                     }
                 },
                 modifier = Modifier
@@ -439,7 +445,7 @@ private fun DashboardCreditCardsSection(
     onOpenCreditCards: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val navigationDispatcher = LocalNavigationDispatcher.current
+    val navController = LocalNavController.current
     val modalManager = LocalModalManager.current
     val creditCardsEntry = koinInject<CreditCardsEntry>()
     val component = variant.component
@@ -498,8 +504,8 @@ private fun DashboardCreditCardsSection(
                         variant = CreditCardCardVariant.Dashboard(
                             onClick = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    navigationDispatcher.dispatch(
-                                        NavigationDestination.CreditCards(creditCardId = creditCardUi.creditCard.id)
+                                    navController.navigate(
+                                        CreditCardsRoute(creditCardId = creditCardUi.creditCard.id)
                                     )
                                 }
                             },
@@ -799,7 +805,7 @@ private fun DashboardAccountsRow(
     onOpenAccounts: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val navigationDispatcher = LocalNavigationDispatcher.current
+    val navController = LocalNavController.current
     val modalManager = LocalModalManager.current
     val accountsEntry = koinInject<AccountsEntry>()
     val component = variant.component
@@ -839,7 +845,7 @@ private fun DashboardAccountsRow(
                         balance = accountUi.balance,
                         onClick = {
                             if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
-                                navigationDispatcher.dispatch(NavigationDestination.Accounts(accountId = accountUi.account.id))
+                                navController.navigate(AccountsRoute(accountId = accountUi.account.id))
                             }
                         },
                     ),

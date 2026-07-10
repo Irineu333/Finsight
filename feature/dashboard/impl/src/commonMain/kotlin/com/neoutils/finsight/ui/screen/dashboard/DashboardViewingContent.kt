@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.interceptLongPress
 import com.neoutils.finsight.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -36,7 +35,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun DashboardViewingContent(
     state: DashboardUiState.Viewing,
-    openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     onAction: (DashboardAction) -> Unit,
 ) {
     LazyColumn(
@@ -70,7 +68,6 @@ internal fun DashboardViewingContent(
                     }
                     DashboardComponentContent(
                         variant = variant,
-                        openTransactions = openTransactions,
                         modifier = Modifier
                             .fillMaxWidth()
                             .interceptLongPress { onAction(DashboardAction.EnterEditMode) },

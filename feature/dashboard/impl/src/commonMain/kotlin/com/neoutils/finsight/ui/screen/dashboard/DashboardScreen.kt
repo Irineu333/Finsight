@@ -15,14 +15,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.feature.support.api.SupportRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_edit_cancel
 import com.neoutils.finsight.resources.dashboard_edit_confirm
 import com.neoutils.finsight.resources.dashboard_edit_title
 import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
-import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
 import com.neoutils.finsight.ui.screen.home.HomeChromeEffect
 import com.neoutils.finsight.util.LocalDateFormats
@@ -31,7 +30,6 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun DashboardScreen(
-    openTransactions: (filterType: Transaction.Type?, filterTarget: Transaction.Target?) -> Unit = { _, _ -> },
     viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -90,7 +88,7 @@ fun DashboardScreen(
                     }
 
                     else -> {
-                        val navigationDispatcher = LocalNavigationDispatcher.current
+                        val navController = LocalNavController.current
 
                         TopAppBar(
                             title = {
@@ -99,7 +97,7 @@ fun DashboardScreen(
                             actions = {
                                 IconButton(
                                     onClick = {
-                                        navigationDispatcher.dispatch(NavigationDestination.Support)
+                                        navController.navigate(SupportRoute)
                                     }
                                 ) {
                                     Icon(
@@ -135,7 +133,6 @@ fun DashboardScreen(
                 is DashboardUiState.Viewing -> {
                     DashboardViewingContent(
                         state = state,
-                        openTransactions = openTransactions,
                         onAction = viewModel::onAction,
                     )
                 }

@@ -2,8 +2,6 @@
 
 package com.neoutils.finsight.ui.modal.viewTransaction
 
-import com.neoutils.finsight.feature.recurring.api.RecurringEntry
-import org.koin.compose.koinInject
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,11 +10,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,23 +27,28 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.extension.toLabel
+import com.neoutils.finsight.feature.accounts.api.AccountsRoute
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
+import com.neoutils.finsight.feature.recurring.api.RecurringEntry
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.LocalNavigationDispatcher
 import com.neoutils.finsight.ui.component.ModalBottomSheet
-import com.neoutils.finsight.ui.component.NavigationDestination
-import com.neoutils.finsight.extension.toLabel
-import com.neoutils.finsight.ui.model.OperationPerspective
-import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
+import com.neoutils.finsight.ui.model.OperationPerspective
+import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
+import kotlin.uuid.ExperimentalUuidApi
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.uuid.ExperimentalUuidApi
 
 class ViewOperationModal(
     private val operation: Operation,
@@ -69,7 +72,7 @@ class ViewOperationModal(
 
         val manager = LocalModalManager.current
         val recurringEntry = koinInject<RecurringEntry>()
-        val navigationDispatcher = LocalNavigationDispatcher.current
+        val navController = LocalNavController.current
 
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
@@ -209,7 +212,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                            navController.navigate(AccountsRoute(account.id))
                         }
                     )
                 }
@@ -221,7 +224,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                            navController.navigate(AccountsRoute(account.id))
                         }
                     )
                 }
@@ -235,7 +238,7 @@ class ViewOperationModal(
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
                             manager.dismissAll()
-                            navigationDispatcher.dispatch(NavigationDestination.Accounts(account.id))
+                            navController.navigate(AccountsRoute(account.id))
                         }
                     )
                 }
@@ -249,8 +252,8 @@ class ViewOperationModal(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()
-                        navigationDispatcher.dispatch(
-                            NavigationDestination.CreditCards(creditCard.id)
+                        navController.navigate(
+                            CreditCardsRoute(creditCard.id)
                         )
                     }
                 )
@@ -275,8 +278,8 @@ class ViewOperationModal(
                     onClick = creditCardId?.let {
                         {
                             manager.dismissAll()
-                            navigationDispatcher.dispatch(
-                                NavigationDestination.InvoiceTransactions(it)
+                            navController.navigate(
+                                InvoiceTransactionsRoute(it)
                             )
                         }
                     }
@@ -290,7 +293,7 @@ class ViewOperationModal(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         manager.dismissAll()
-                        navigationDispatcher.dispatch(NavigationDestination.Installments)
+                        navController.navigate(InstallmentsRoute)
                     }
                 )
             }

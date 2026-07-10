@@ -1,5 +1,13 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
+import com.neoutils.finsight.feature.accounts.api.AccountsRoute
+import com.neoutils.finsight.feature.budgets.api.BudgetsRoute
+import com.neoutils.finsight.feature.categories.api.CategoriesRoute
+import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
+import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
+import com.neoutils.finsight.feature.recurring.api.RecurringRoute
+import com.neoutils.finsight.feature.report.api.ReportsRoute
+import com.neoutils.finsight.feature.support.api.SupportRoute
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
@@ -9,43 +17,42 @@ import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_reports
 import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.ui.component.NavigationDestination
 import com.neoutils.finsight.util.UiText
 
 enum class QuickActionType(
     val title: UiText,
-    val destination: NavigationDestination,
+    val route: Any,
 ) {
     BUDGETS(
         title = UiText.Res(Res.string.dashboard_budgets),
-        destination = NavigationDestination.Budgets,
+        route = BudgetsRoute,
     ),
     CATEGORIES(
         title = UiText.Res(Res.string.dashboard_categories),
-        destination = NavigationDestination.Categories,
+        route = CategoriesRoute,
     ),
     CREDIT_CARDS(
         title = UiText.Res(Res.string.dashboard_credit_cards),
-        destination = NavigationDestination.CreditCards(),
+        route = CreditCardsRoute(),
     ),
     ACCOUNTS(
         title = UiText.Res(Res.string.dashboard_accounts),
-        destination = NavigationDestination.Accounts(),
+        route = AccountsRoute(),
     ),
     RECURRING(
         title = UiText.Res(Res.string.dashboard_recurring),
-        destination = NavigationDestination.Recurring,
+        route = RecurringRoute,
     ),
     REPORTS(
         title = UiText.Res(Res.string.dashboard_reports),
-        destination = NavigationDestination.ReportConfig,
+        route = ReportsRoute,
     ),
     INSTALLMENTS(
         title = UiText.Res(Res.string.dashboard_installments),
-        destination = NavigationDestination.Installments,
+        route = InstallmentsRoute,
     ),
     SUPPORT(
         title = UiText.Res(Res.string.dashboard_support),
-        destination = NavigationDestination.Support,
+        route = SupportRoute,
     ),
 }

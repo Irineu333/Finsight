@@ -1,4 +1,4 @@
-package com.neoutils.finsight.util
+package com.neoutils.finsight.feature.transactions.api
 
 import androidx.navigation.NavType
 import androidx.savedstate.SavedState
@@ -6,11 +6,11 @@ import androidx.savedstate.read
 import androidx.savedstate.write
 import com.neoutils.finsight.domain.model.Transaction
 
-class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = true) {
+class TransactionTargetNavType : NavType<Transaction.Target?>(isNullableAllowed = true) {
     override fun put(
         bundle: SavedState,
         key: String,
-        value: Transaction.Type?
+        value: Transaction.Target?
     ) {
         bundle.write {
             if (value != null) {
@@ -22,11 +22,11 @@ class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = tr
     override fun get(
         bundle: SavedState,
         key: String
-    ): Transaction.Type {
-        return bundle.read { Transaction.Type.valueOf(getString(key)) }
+    ): Transaction.Target {
+        return bundle.read { Transaction.Target.valueOf(getString(key)) }
     }
 
-    override fun parseValue(value: String): Transaction.Type {
-        return Transaction.Type.valueOf(value)
+    override fun parseValue(value: String): Transaction.Target {
+        return Transaction.Target.valueOf(value)
     }
 }

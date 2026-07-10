@@ -5,7 +5,9 @@
 
 package com.neoutils.finsight.ui.screen.creditCards
 
+import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
+import com.neoutils.finsight.navigation.LocalNavController
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -85,7 +87,7 @@ private fun CreditCardsContent(
 ) {
     val modalManager = LocalModalManager.current
     val transactionsEntry = koinInject<TransactionsEntry>()
-    val navigationDispatcher = LocalNavigationDispatcher.current
+    val navController = LocalNavController.current
 
     Scaffold(
         topBar = {
@@ -163,8 +165,8 @@ private fun CreditCardsContent(
                                 onAction(CreditCardsAction.SelectCard(index))
                             },
                             onCardClick = { creditCardUi ->
-                                navigationDispatcher.dispatch(
-                                    NavigationDestination.InvoiceTransactions(
+                                navController.navigate(
+                                    InvoiceTransactionsRoute(
                                         creditCardUi.creditCard.id
                                     )
                                 )

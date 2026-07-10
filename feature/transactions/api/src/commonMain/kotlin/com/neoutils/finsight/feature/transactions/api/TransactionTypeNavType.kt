@@ -22,11 +22,11 @@ class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = tr
     override fun get(
         bundle: SavedState,
         key: String
-    ): Transaction.Type {
-        return bundle.read { Transaction.Type.valueOf(getString(key)) }
+    ): Transaction.Type? {
+        return bundle.read { getStringOrNull(key)?.let(Transaction.Type::valueOf) }
     }
 
-    override fun parseValue(value: String): Transaction.Type {
-        return Transaction.Type.valueOf(value)
+    override fun parseValue(value: String): Transaction.Type? {
+        return if (value == "null") null else Transaction.Type.valueOf(value)
     }
 }

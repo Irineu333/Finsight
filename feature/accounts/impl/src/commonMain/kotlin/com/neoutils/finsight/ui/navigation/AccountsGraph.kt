@@ -1,15 +1,17 @@
 package com.neoutils.finsight.ui.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
+import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.screen.accounts.AccountsScreen
 
-fun NavGraphBuilder.accountsGraph(navController: NavController) {
+fun NavGraphBuilder.accountsGraph() {
     composable<AccountsRoute> { backStackEntry ->
+        val navController = LocalNavController.current
         val route = backStackEntry.toRoute<AccountsRoute>()
+
         AccountsScreen(
             initialAccountId = route.accountId,
             onNavigateBack = { navController.navigateUp() },

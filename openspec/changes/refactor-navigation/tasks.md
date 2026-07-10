@@ -44,7 +44,7 @@
 - [x] 6.4 Derivar a aba selecionada com `hasRoute<T>()`, substituindo a comparação por `route?.contains(serialName)`
 - [x] 6.5 Aplicar `popUpTo(HomeRoute) { saveState = true }`, `restoreState = true` e `launchSingleTop = true` na troca de abas
 - [x] 6.6 Remover `HomeScreen.kt`; manter `HomeRoute` como `@Serializable data object` no `:app:shared`
-- [x] 6.7 Remover o parâmetro `navController` das assinaturas `NavGraphBuilder.<nome>Graph()` cujo uso passou a ser `LocalNavController` — ou manter e registrar em Open Questions, decidindo por diff mínimo
+- [x] 6.7 Remover o parâmetro `navController` das assinaturas `NavGraphBuilder.<nome>Graph()`, cujo uso passou a ser `LocalNavController`
 
 ## 7. Documentação e verificação
 

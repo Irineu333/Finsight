@@ -136,15 +136,20 @@ modalManager.show(entry.payInvoiceModal(invoice.id))
 
 ### Mecanismo de registro de navegação
 
-Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph(navController)`** que registra os
-`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). O `:app:shared` — único
-módulo que enxerga os `impl` — agrega essas extensions no `AppNavHost`:
+Cada `impl` expõe uma **extension `NavGraphBuilder.<feature>Graph()`** que registra os
+`composable<Rota>` da feature (as telas permanecem `internal` ao `impl`). Dentro de cada
+`composable`, o `NavHostController` vem de `LocalNavController` — nenhum grafo recebe o controller
+como parâmetro. O `:app:shared` — único módulo que enxerga os `impl` — agrega essas extensions no
+`AppNavHost`:
 
 ```kotlin
 // feature/support/impl — ui/navigation/SupportGraph.kt
-fun NavGraphBuilder.supportGraph(navController: NavController) {
+fun NavGraphBuilder.supportGraph() {
     navigation<SupportRoute>(startDestination = SupportListRoute) {
-        composable<SupportListRoute> { SupportScreen(...) }
+        composable<SupportListRoute> {
+            val navController = LocalNavController.current
+            SupportScreen(...)
+        }
         composable<SupportIssueRoute> { ... }
     }
 }
@@ -155,7 +160,7 @@ NavHost(...) {
         dashboardGraph()
         transactionsGraph()
     }
-    supportGraph(navController)
+    supportGraph()
 }
 ```
 

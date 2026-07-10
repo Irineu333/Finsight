@@ -33,18 +33,18 @@ fun AppNavHost(
             transactionsGraph()
         }
 
-        categoriesGraph(navController)
+        categoriesGraph()
 
-        creditCardsGraph(navController)
+        creditCardsGraph()
 
-        accountsGraph(navController)
+        accountsGraph()
 
-        budgetsGraph(navController)
+        budgetsGraph()
 
-        recurringGraph(navController)
+        recurringGraph()
 
-        supportGraph(navController)
+        supportGraph()
 
-        reportGraph(navController)
+        reportGraph()
     }
 }

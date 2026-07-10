@@ -13,10 +13,10 @@ Cada feature que expõe UI a outras features SHALL declarar na sua `api` uma int
 
 #### Scenario: Entry point de feature hospedada
 - **WHEN** uma feature precisa expor seu subgrafo de navegação para ser montado por outra feature
-- **THEN** o método `register(builder: NavGraphBuilder)` é adicionado ao seu `<Nome>Entry` existente, e não a uma segunda interface
+- **THEN** o método `register()` é adicionado ao seu `<Nome>Entry` existente, recebendo o `NavGraphBuilder` como context parameter, e não a uma segunda interface
 
 ### Requirement: Tipos de acesso cross-feature à UI
-O acesso a recursos de UI de outra feature SHALL ocorrer exclusivamente por: (1) navegação por rota declarada na `api` de destino; (2) modal obtido via entry point; (3) conteúdo `@Composable` retornado por entry point (caso excepcional, apenas mediante necessidade real); (4) registro do subgrafo de navegação da feature de destino via `register(builder: NavGraphBuilder)` no seu entry point, quando uma feature hospeda os destinos de outra. Import direto de composable, modal, ViewModel ou função de grafo (`NavGraphBuilder.<nome>Graph()`) de outro `impl` MUST NOT ocorrer.
+O acesso a recursos de UI de outra feature SHALL ocorrer exclusivamente por: (1) navegação por rota declarada na `api` de destino; (2) modal obtido via entry point; (3) conteúdo `@Composable` retornado por entry point (caso excepcional, apenas mediante necessidade real); (4) registro do subgrafo de navegação da feature de destino via um `register()` no seu entry point que receba o `NavGraphBuilder` como context parameter, quando uma feature hospeda os destinos de outra. Import direto de composable, modal, ViewModel ou função de grafo (`NavGraphBuilder.<nome>Graph()`) de outro `impl` MUST NOT ocorrer.
 
 #### Scenario: Abertura de tela de outra feature
 - **WHEN** uma feature precisa levar o usuário a uma tela de outra feature
@@ -24,7 +24,7 @@ O acesso a recursos de UI de outra feature SHALL ocorrer exclusivamente por: (1)
 
 #### Scenario: Feature hospeda os destinos de outra
 - **WHEN** `home:impl` monta `navigation<HomeGraph>` contendo os destinos de `dashboard` e `transactions`
-- **THEN** ele invoca `register(builder)` em `DashboardEntry` e `TransactionsEntry`, obtidos do Koin, e a extensão `NavGraphBuilder.<nome>Graph()` de cada feature permanece interna ao seu `impl`, invocada apenas pelo seu `<Nome>EntryImpl`
+- **THEN** ele invoca o `register()` de `DashboardEntry` e `TransactionsEntry`, obtidos do Koin, com o `NavGraphBuilder` fornecido como context parameter, e a extensão `NavGraphBuilder.<nome>Graph()` de cada feature permanece interna ao seu `impl`, invocada apenas pelo seu `<Nome>EntryImpl`
 
 #### Scenario: Ação primária hospedada por outra feature
 - **WHEN** o FAB do Home precisa abrir o modal de criação de transação

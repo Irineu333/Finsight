@@ -49,14 +49,16 @@ Para montar `navigation<HomeGraph>` sem ver nenhum `impl`, `home:impl` precisa d
 ```kotlin
 // feature/dashboard/api
 interface DashboardEntry {
-    fun register(builder: NavGraphBuilder)
+    context(builder: NavGraphBuilder)
+    fun register()
 }
 
 // feature/home/impl
 fun NavGraphBuilder.homeGraph() {
+    val koin = KoinPlatform.getKoin()
     navigation<HomeGraph>(startDestination = DashboardGraph) {
-        dashboardEntry.register(this)
-        transactionsEntry.register(this)
+        koin.get<DashboardEntry>().register()   // NavGraphBuilder vem do contexto
+        koin.get<TransactionsEntry>().register()
     }
 }
 ```
@@ -69,6 +71,18 @@ O `impl` de cada aba mantém sua `NavGraphBuilder.<nome>Graph()` como hoje; o `<
 - **Registro por DI de uma `List<HomeTab>`**, cada feature contribuindo com ícone, label e grafo. Rejeitada: esconde a decisão de produto "quais abas existem, em que ordem" atrás do container Koin. Torna a bottom bar impossível de ler sem rodar o app. É plugabilidade que ninguém pediu (Non-Goal).
 - **Entry expondo `@Composable fun Content()` por aba**, dispensando grafo. Rejeitada: `TransactionsRoute(filterType, filterTarget)` tem argumentos, e o dashboard empilha essa rota com filtros. Sem destino de navegação, o parâmetro teria de virar estado, e o back stack da transação filtrada desapareceria.
 
+O `NavGraphBuilder` entra como **context parameter**, não como parâmetro comum nem como receiver de extensão membro. As três formas compilam; a escolhida é a única em que o call site é simplesmente `entry.register()`:
+
+| Forma | Call site | Chamável fora de um grafo? |
+|---|---|---|
+| `fun register(builder: NavGraphBuilder)` | `entry.register(this)` | sim — o `this` é só um argumento |
+| `fun NavGraphBuilder.register()` (extensão membro) | `with(entry) { register() }` | não |
+| `context(builder: NavGraphBuilder) fun register()` | `entry.register()` | não |
+
+A extensão membro exige `with` porque o call site precisaria dos dois receivers ao mesmo tempo (o entry como dispatch, o builder como extensão). O context parameter dispensa isso: o receiver implícito do `navigation<>` satisfaz o contexto. O projeto já usa a mesma mecânica em `AnimatedVisibilityScopeProvider` (`:core:designsystem`), resolvido pelo receiver implícito do `composable<>`, e a feature de linguagem está habilitada para todos os módulos pelo `configureKotlinMultiplatform` do `build-logic`.
+
+Ganho colateral: nas duas últimas formas o compilador impede que `register()` seja invocado fora da construção de um grafo. A primeira forma deixava passar.
+
 **Custo aceito:** o entry point de uma feature passa a poder referenciar `NavGraphBuilder`, tipo de `androidx.navigation` e não de `:core:*`. É dependência de biblioteca, não de projeto — `transactions:api` já declara `api(libs.androidx.navigation.compose)`. A capability `feature-entry-points` é ajustada para admitir explicitamente esse quarto tipo de acesso cross-feature.
 
 ### 2. `feature:dashboard:api` passa a existir, e é a regra que o exige
@@ -79,7 +93,11 @@ A decisão 4 de `2026-07-10-refactor-navigation` rejeitou este módulo:
 
 A premissa ("ninguém importa `DashboardRoute`") era verdadeira e deixa de ser. A bottom bar navega para `DashboardRoute`, e a bottom bar sai do shell. A regra que sustentava a rejeição — *um tipo só reside na `api` se outro módulo o consome* — é a mesma que agora obriga a criação. A conclusão inverte porque o fato inverteu, não porque a regra mudou.
 
-`feature/dashboard/api` recebe `DashboardRoute` e `DashboardEntry`. `DashboardGraph` permanece no `impl`: quem navega até o dashboard mira a tela, não o grafo. `HomeGraph.startDestination` continua sendo `DashboardGraph`, montado de dentro de `home:impl`.
+`feature/dashboard/api` recebe `DashboardRoute`, `DashboardGraph` e `DashboardEntry`.
+
+`DashboardGraph` sobe para a `api` porque `home:impl` precisa nomeá-lo: `navigation<HomeGraph>(startDestination = DashboardGraph)` exige que o `startDestination` seja um **filho direto** do grafo, e o filho direto é o subgrafo do dashboard, não a tela. Apontar para `DashboardRoute` falharia em runtime — `NavGraph.findNode` procura o `startDestination` apenas entre os filhos diretos. É a mesma regra da decisão anterior aplicada uma segunda vez: o tipo sobe para a `api` porque outro módulo o referencia.
+
+A extensão `NavGraphBuilder.dashboardGraph()` permanece `internal` no `impl`, invocada apenas por `DashboardEntryImpl`.
 
 ### 3. O `Scaffold` muda de módulo, não de posição na árvore
 
@@ -155,13 +173,13 @@ NavHost(navController, startDestination = HomeGraph) {
 }
 ```
 
-O `LaunchedEffect` de `logScreenView(selectedItem.screenName)` acompanha `NavigationItem` para `home:impl`, que passa a depender de `:core:analytics`.
+O `LaunchedEffect` de `logScreenView(selectedItem.screenName)` acompanha `NavigationItem` para `home:impl`, que passa a depender de `:core:analytics`. O `home` não expõe módulo Koin: não há o que registrar.
 
 Sai a última exceção da capability `module-architecture`: o `:app:shared` deixa de ser "o único módulo autorizado a enumerar as features" e passa a ser apenas "o único autorizado a depender de `impl`s". Quem enumera as abas é `home:impl` — uma feature enumerando features, o que a regra `impl → qualquer api` sempre permitiu.
 
 ## Risks / Trade-offs
 
-**Binding Koin ausente vira erro de runtime** (decisão 5) → `appModules` agrega todos os módulos de feature, e `homeModule` entra na lista junto com `dashboardModule`/`transactionsModule`, que já estão lá. Mitigação: teste de `checkModules()` do Koin em `:app:shared`, ou, no mínimo, um teste que compõe `AppNavHost` sob um `KoinApplication` com `appModules`. O `ComposeAppCommonTest` existente é o lugar.
+**Binding Koin ausente vira erro de runtime** (decisão 5) → os entries que `homeGraph()` resolve vêm de `dashboardModule` e `transactionsModule`, que `appModules` já agrega. O `home` não contribui módulo Koin nenhum: não tem ViewModel, use case nem repositório, e o `HomeChromeStateHolder` é um `remember` de composição. Mitigação: `AppModulesTest` em `:app:shared` monta um `koinApplication { modules(appModules) }` e resolve `DashboardEntry` e `TransactionsEntry`, falhando no `jvmTest` em vez de na primeira composição do `NavHost`.
 
 **`build-logic` pode rejeitar `home:impl → dashboard:api`** → Não deve: é `impl → api`, o caso central da regra 4. Mas `home` é a primeira feature cujo `impl` depende da `api` de uma feature que *não tem* `api` hoje. Verificar `verifyFeatureDependencyRules` após criar `feature/dashboard/api` — o risco real é o `settings.gradle.kts` e o `libs.versions.toml`/`projects.feature.dashboard.api` do type-safe accessor, não a regra.
 

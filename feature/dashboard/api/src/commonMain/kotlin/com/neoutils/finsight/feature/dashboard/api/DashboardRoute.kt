@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.dashboard
+package com.neoutils.finsight.feature.dashboard.api
 
 import com.neoutils.finsight.navigation.NavRoute
 import kotlinx.serialization.Serializable

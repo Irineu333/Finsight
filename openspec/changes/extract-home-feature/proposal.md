@@ -9,7 +9,7 @@ O shell só consegue hospedar o Home porque é o único módulo que enxerga os `
 - **Novos módulos `feature/home/api` e `feature/home/impl`.** A `api` declara `HomeGraph` e o contrato de chrome; o `impl` hospeda `NavigationItem`, o `Scaffold` da chrome, o FAB e `NavGraphBuilder.homeGraph()`.
 - **`HomeChromeConfig`/`HomeChromeController`/`HomeChromeEffect`/`LocalHomeChromeController` migram de `:core:ui` para `feature/home/api`.** `:core:ui` deixa de nomear uma feature. `dashboard:impl` passa a importá-los de `home:api`.
 - **Novo módulo `feature/dashboard/api`**, hospedando `DashboardRoute` e `DashboardEntry`. Hoje o dashboard é `impl`-only porque nenhum módulo o navegava; com o Home fora do shell, `home:impl` passa a navegar até `DashboardRoute` pela bottom bar.
-- **`Entry` ganha registro de grafo.** `DashboardEntry` e `TransactionsEntry` expõem `fun register(builder: NavGraphBuilder)`, permitindo que `home:impl` monte o subgrafo de abas sem depender de nenhum `impl`. Este é o terceiro tipo de acesso cross-feature à UI, ao lado de rota e modal.
+- **`Entry` ganha registro de grafo.** `DashboardEntry` e `TransactionsEntry` expõem `context(builder: NavGraphBuilder) fun register()`, permitindo que `home:impl` monte o subgrafo de abas sem depender de nenhum `impl`. Este é o terceiro tipo de acesso cross-feature à UI, ao lado de rota e modal.
 - **`TransactionsEntry` ganha `addTransactionModal(): Modal`.** O FAB do Home deixa de instanciar `AddTransactionModal` de `transactions:impl`.
 - **O `Scaffold` da chrome sai de `App()` e vira `HomeChromeHost()` em `home:impl`**, invocado pelo shell envolvendo o `AppNavHost`. Mantém-se **por fora** do `NavHost`: a posição na árvore de composição não muda.
 - **`:app:shared` encolhe** para `App()` (tema, contexto de plataforma, `ModalManagerHost`, `LocalNavController`), `AppNavHost()` (só chamadas a `<nome>Graph()`) e `appModules`. Perde `HomeGraph`, `NavigationItem` e a lógica de chrome.
@@ -31,7 +31,7 @@ Nenhuma. O comportamento do Home já é normatizado pelas capabilities `navigati
 
 - `module-architecture`: `:app:shared` deixa de conter o `Scaffold` da chrome, `HomeGraph` e `NavigationItem`, e deixa de ser o único módulo autorizado a enumerar features — passa a ser o único autorizado a depender de `impl`s. A enumeração das abas passa a `home:impl`. Uma feature ganha módulo `api` quando outro módulo consome um tipo seu, incluindo quando esse módulo é outra feature (`home:impl` → `dashboard:api`).
 - `navigation`: o `Scaffold` da chrome reside em `feature:home:impl`, não em `App()`. O subgrafo de abas é montado por `NavGraphBuilder.homeGraph()`, que registra as abas via entry points, e não pelo shell. `HomeGraph` e os tipos de `HomeChrome` residem em `feature:home:api`. A restrição "nenhum módulo `:core:*` enumera features" é mantida e reforçada: `:core:ui` deixa de conhecer `HomeChrome`.
-- `feature-entry-points`: o entry point de uma feature MAY expor o registro do seu subgrafo de navegação (`register(NavGraphBuilder)`), permitindo que outra feature componha o grafo da feature de destino sem enxergar seu `impl`. Passa a ser o quarto tipo de acesso cross-feature à UI.
+- `feature-entry-points`: o entry point de uma feature MAY expor o registro do seu subgrafo de navegação (`context(builder: NavGraphBuilder) fun register()`), permitindo que outra feature componha o grafo da feature de destino sem enxergar seu `impl`. Passa a ser o quarto tipo de acesso cross-feature à UI.
 
 ## Impact
 
@@ -41,6 +41,7 @@ Nenhuma. O comportamento do Home já é normatizado pelas capabilities `navigati
 - `app/shared/.../ui/screen/home/HomeGraph.kt` → `feature/home/api`
 - `app/shared/.../ui/screen/home/NavigationItem.kt` → `feature/home/impl`
 - `app/shared/.../ui/screen/root/App.kt` (`AppScaffold`) → `feature/home/impl` (`HomeChromeHost`)
+- `app/shared/.../ui/screen/root/{App,AppNavHost}.kt` → `app/shared/.../ui/` (o pacote `screen/root` deixa de existir: o shell não tem mais telas)
 - `core/ui/.../ui/screen/home/HomeChrome.kt` → `feature/home/api`
 - `feature/dashboard/impl/.../DashboardRoute.kt` → `feature/dashboard/api`
 

@@ -4,7 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.extension.ProvideWindowScope
-import com.neoutils.finsight.ui.screen.root.App
+import com.neoutils.finsight.ui.App
 import org.koin.core.context.startKoin
 
 fun main() = application {

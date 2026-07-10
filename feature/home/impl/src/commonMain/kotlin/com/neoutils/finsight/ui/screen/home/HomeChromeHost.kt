@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.screen.root
+package com.neoutils.finsight.ui.screen.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.updateTransition
@@ -8,10 +8,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -19,7 +19,6 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -31,59 +30,25 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.neoutils.finsight.domain.analytics.Analytics
-import com.neoutils.finsight.domain.auth.AuthService
-import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.extension.ProvidePlatformContext
+import com.neoutils.finsight.feature.dashboard.api.DashboardRoute
+import com.neoutils.finsight.feature.home.api.HomeChromeConfig
+import com.neoutils.finsight.feature.home.api.HomeGraph
+import com.neoutils.finsight.feature.home.api.LocalHomeChromeController
+import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
-import com.neoutils.finsight.navigation.ProvideNavController
 import com.neoutils.finsight.ui.component.BottomNavigationBar
-import com.neoutils.finsight.ui.component.FormattingLocalsHost
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalManagerHost
-import com.neoutils.finsight.ui.component.SharedTransitionProvider
-import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionModal
-import com.neoutils.finsight.ui.screen.dashboard.DashboardRoute
-import com.neoutils.finsight.ui.screen.home.HomeGraph
-import com.neoutils.finsight.ui.screen.home.NavigationItem
-import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
-import com.neoutils.finsight.ui.screen.home.LocalHomeChromeController
-import com.neoutils.finsight.ui.screen.home.rememberHomeChromeStateHolder
-import com.neoutils.finsight.ui.theme.FinsightTheme
 import org.koin.compose.koinInject
 
 @Composable
-fun App() {
+fun HomeChromeHost(
+    content: @Composable (PaddingValues) -> Unit,
+) {
     val analytics = koinInject<Analytics>()
-    val crashlytics = koinInject<Crashlytics>()
-    val authService = koinInject<AuthService>()
-
-    LaunchedEffect(Unit) {
-        val userId = authService.getUserId()
-        analytics.setUserId(userId)
-        crashlytics.setUserId(userId)
-    }
-
-    FinsightTheme {
-        Surface {
-            ProvidePlatformContext {
-                FormattingLocalsHost {
-                    ProvideNavController {
-                        ModalManagerHost {
-                            AppScaffold()
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppScaffold() {
-    val navController = LocalNavController.current
+    val transactionsEntry = koinInject<TransactionsEntry>()
     val modalManager = LocalModalManager.current
+    val navController = LocalNavController.current
     val homeChromeController = rememberHomeChromeStateHolder()
-    val analytics = koinInject<Analytics>()
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = currentBackStackEntry?.destination
@@ -141,7 +106,7 @@ private fun AppScaffold() {
                 ) {
                     FloatingActionButton(
                         onClick = {
-                            modalManager.show(AddTransactionModal())
+                            modalManager.show(transactionsEntry.addTransactionModal())
                         },
                         contentColor = Color.White,
                     ) {
@@ -154,13 +119,7 @@ private fun AppScaffold() {
                 }
             },
             floatingActionButtonPosition = FabPosition.Center,
-        ) { paddingValues ->
-            SharedTransitionProvider {
-                AppNavHost(
-                    navController = navController,
-                    modifier = Modifier.padding(paddingValues),
-                )
-            }
-        }
+            content = content,
+        )
     }
 }

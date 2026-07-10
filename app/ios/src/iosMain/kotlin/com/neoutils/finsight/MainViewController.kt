@@ -2,7 +2,7 @@ package com.neoutils.finsight
 
 import androidx.compose.ui.window.ComposeUIViewController
 import com.neoutils.finsight.di.appModules
-import com.neoutils.finsight.ui.screen.root.App
+import com.neoutils.finsight.ui.App
 import org.koin.core.context.startKoin
 import platform.UIKit.UIViewController
 

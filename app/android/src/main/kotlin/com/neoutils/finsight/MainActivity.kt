@@ -7,7 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.neoutils.finsight.ui.screen.root.App
+import com.neoutils.finsight.ui.App
 
 class MainActivity : ComponentActivity() {
 

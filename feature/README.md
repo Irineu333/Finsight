@@ -126,13 +126,28 @@ val entry = koinInject<CreditCardsEntry>()
 modalManager.show(entry.payInvoiceModal(invoice.id))
 ```
 
-### Os três tipos de acesso cross-feature
+### Os quatro tipos de acesso cross-feature
 
 | Acesso | Mecanismo |
 |---|---|
 | **Navegação** | Rota (`@Serializable`) externamente navegável vive na `api`; o consumidor obtém o `NavHostController` de `LocalNavController` (`:core:navigation`) e chama `navigate(Rota)`. O registro do `NavGraph` é feito pelo `impl` e agregado pelo `:app:shared` |
 | **Modais** | Método no entry point retornando `Modal` (tipo de `:core:designsystem`) |
 | **Composable embutido** | Método no entry point retornando conteúdo `@Composable` — caso raro; só se surgir necessidade real |
+| **Registro de subgrafo** | `context(builder: NavGraphBuilder) fun register()` no entry point, quando uma feature **hospeda** os destinos de outra |
+
+O quarto caso existe por causa do `home`, que aninha os grafos de `dashboard` e `transactions`
+dentro do seu `navigation<HomeGraph>`. Como `impl ⊄ impl`, ele não pode chamar
+`dashboardGraph()` diretamente: pede o registro ao `DashboardEntry`. As extensions
+`NavGraphBuilder.<feature>Graph()` das features hospedadas ficam `internal`, invocadas apenas
+pelo seu próprio `<Nome>EntryImpl`.
+
+O `NavGraphBuilder` é um **context parameter**, não um parâmetro comum: o receiver implícito do
+`navigation<>` o satisfaz, então o call site é só `entry.register()`, e o compilador impede que
+`register()` seja chamado fora da construção de um grafo. Mesmo mecanismo do
+`AnimatedVisibilityScopeProvider` em `:core:designsystem`.
+
+O lambda do `NavGraphBuilder` não é `@Composable`, então quem monta o grafo resolve os entry
+points por `KoinPlatform.getKoin()`, não por `koinInject()`.
 
 ### Mecanismo de registro de navegação
 
@@ -161,12 +176,18 @@ fun NavGraphBuilder.budgetsGraph() {
     }
 }
 
-// :app:shared — AppNavHost
-NavHost(...) {
+// feature/home/impl — hospeda os grafos das abas sem enxergar nenhum impl
+fun NavGraphBuilder.homeGraph() {
+    val koin = KoinPlatform.getKoin()
     navigation<HomeGraph>(startDestination = DashboardGraph) {
-        dashboardGraph()
-        transactionsGraph()
+        koin.get<DashboardEntry>().register()   // NavGraphBuilder vem do contexto
+        koin.get<TransactionsEntry>().register()
     }
+}
+
+// :app:shared — AppNavHost: só chamadas a <nome>Graph()
+NavHost(...) {
+    homeGraph()
     supportGraph()
     budgetsGraph()
 }
@@ -185,10 +206,13 @@ que guardam rotas (`NavigationItem.route`, `QuickActionType.route`) não sejam t
 outro módulo navegar até ele. `SupportGraph` e `ReportGraph` estão na `api` porque o dashboard abre
 essas features pela entrada. `BudgetsGraph` e `AccountsGraph` ficam no `impl`, ao lado da extension,
 porque quem navega até `budgets` e `accounts` mira a tela (`BudgetsRoute`, `AccountsRoute(id)`) e
-nunca o grafo. Uma feature que não é destino de ninguém — como o `dashboard`, montado só pelo shell —
-não cria módulo `api` para hospedar rota alguma.
-*Alternativa descartada:* registrar grafos via Koin — indireção desnecessária, já que o shell
-enxerga os `impl` por definição.
+nunca o grafo. `DashboardGraph` está na `api` porque o `home:impl` o nomeia como `startDestination`
+do subgrafo de abas — o `startDestination` precisa ser um filho direto do grafo, e o filho direto é
+o subgrafo, não a tela. Uma feature que não é destino de ninguém não cria módulo `api` para hospedar
+rota alguma; o `dashboard` deixou de ser esse caso quando o `home` saiu do shell.
+*Registro via Koin, só quando necessário:* o `:app:shared` enxerga os `impl` e chama as extensions
+diretamente. Uma **feature** que hospeda o grafo de outra não pode, e aí passa pelo `register()` do
+entry point. É a exceção que o `home` obriga, não a regra.
 
 > **Entry point é opcional.** Uma feature só declara `<Nome>Entry` quando **outra** feature consome
 > UI dela (modal/composable). O piloto `support` não expõe modal a terceiros (seu modal é interno),

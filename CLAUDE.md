@@ -35,7 +35,7 @@ enforced mechanically by convention plugins in `build-logic`
   errors, exceptions), `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
-  core models + shared UI models + `HomeChrome`), `database` (Room entities/DAOs/
+  core models + shared UI models — never names a feature), `database` (Room entities/DAOs/
   `AppDatabase`/converters + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
   no-op services).
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
@@ -45,9 +45,9 @@ enforced mechanically by convention plugins in `build-logic`
   any `feature:*:api` and `:core:*`.
 - **`app/`** — the app, split by responsibility:
   - **`:app:shared`** — KMP library, the shell/aggregator (the only module that sees
-    `impl`s): `App` (hosting the Home `Scaffold`), `AppNavHost`, `HomeGraph`/`NavigationItem`,
-    Koin aggregation (`appModules`).
-    Under the `finsight.app.shared` convention plugin.
+    `impl`s): `App` (theme, `LocalNavController`, `ModalManagerHost`, invokes `HomeChromeHost`),
+    `AppNavHost` (only `<name>Graph()` calls), Koin aggregation (`appModules`). Declares no
+    route, no `Scaffold`, no chrome. Under the `finsight.app.shared` convention plugin.
   - **`:app:android`** — `com.android.application` (non-KMP): `MainActivity`, `AndroidApp`
     (startKoin), Manifest, mipmaps, signing, google-services, crashlytics, versionCode/Name.
   - **`:app:desktop`** — `kotlin("jvm")`: `main.kt` + `compose.desktop` `nativeDistributions`.
@@ -57,8 +57,9 @@ enforced mechanically by convention plugins in `build-logic`
     `:core:database`, `commonModule` in `:core:common`, `designsystemModule` in
     `:core:designsystem`); `:app:shared` only aggregates.
 
-Features: support, categories, budgets, accounts, creditcards (incl. invoices/
-installments/invoiceTransactions), recurring, transactions, report, dashboard.
+Features: home (tab chrome: `HomeGraph`, `NavigationItem`, `HomeChromeHost`, FAB), support,
+categories, budgets, accounts, creditcards (incl. invoices/installments/invoiceTransactions),
+recurring, transactions, report, dashboard.
 
 > Normative reference: **`feature/README.md`** (dependency rules, entry points, shell role).
 

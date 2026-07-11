@@ -1,7 +1,7 @@
-package com.neoutils.finsight.ui.screen.home
+package com.neoutils.finsight.feature.dashboard.api
 
 import com.neoutils.finsight.navigation.NavGraphRoute
 import kotlinx.serialization.Serializable
 
 @Serializable
-data object HomeGraph : NavGraphRoute
+data object DashboardGraph : NavGraphRoute

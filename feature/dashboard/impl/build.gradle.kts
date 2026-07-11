@@ -14,6 +14,8 @@ kotlin {
             implementation(projects.core.analytics)
             implementation(projects.core.crashlytics)
 
+            implementation(projects.feature.dashboard.api)
+            implementation(projects.feature.home.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.budgets.api)
             implementation(projects.feature.accounts.api)

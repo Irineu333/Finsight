@@ -10,5 +10,8 @@ fun ProvideNavController(
     navController: NavHostController = rememberNavController(),
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalNavController provides navController, content = content)
+    CompositionLocalProvider(
+        LocalNavController provides navController,
+        content = content
+    )
 }

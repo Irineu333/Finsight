@@ -22,8 +22,8 @@ import com.neoutils.finsight.resources.dashboard_edit_cancel
 import com.neoutils.finsight.resources.dashboard_edit_confirm
 import com.neoutils.finsight.resources.dashboard_edit_title
 import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.ui.screen.home.HomeChromeConfig
-import com.neoutils.finsight.ui.screen.home.HomeChromeEffect
+import com.neoutils.finsight.feature.home.api.HomeChromeConfig
+import com.neoutils.finsight.feature.home.api.HomeChromeEffect
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel

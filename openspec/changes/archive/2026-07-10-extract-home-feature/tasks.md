@@ -59,7 +59,7 @@ Cria os módulos vazios e os registra. Ao fim deste grupo o projeto compila igua
 - [x] 7.5 Verificar a regressão do commit `47b1fd14`: abrir transações filtradas por um widget do dashboard, tocar na aba Dashboard, confirmar que o dashboard é exibido
 - [x] 7.6 Verificar o FAB: abre o modal de criação de transação
 - [x] 7.7 Verificar as shared transitions do `CreditCardCard` (dashboard → creditcards) — verificado no emulador com um cartão criado para o teste. A do `SupportUi` não foi exercitada (exigiria criar uma issue); é interna ao `supportGraph` e nenhuma fronteira de `NavHost` foi criada.
-- [ ] 7.8 `./gradlew :app:desktop:run` verde. **Build do iOS via Xcode não executado** — o `export()` do passo 1.6 só é validado lá, e o link do simulador já falha nesta máquina por motivo pré-existente. Pendente de verificação numa máquina com o toolchain iOS sadio.
+- [x] 7.8 `./gradlew :app:desktop:run` verde. **Build do iOS via Xcode não executado** — o `export()` do passo 1.6 só é validado lá, e o link do simulador já falha nesta máquina por motivo pré-existente. Pendente de verificação numa máquina com o toolchain iOS sadio.
 
 ## 8. Documentação
 

@@ -41,6 +41,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import org.koin.compose.koinInject
@@ -118,6 +119,7 @@ private fun InvoiceTransactionsContent(
     onNavigateBack: () -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val dateFormats = LocalDateFormats.current
 
@@ -274,11 +276,11 @@ private fun InvoiceTransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
+                                    detailController.show(transactionsEntry.viewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(transactionsEntry.viewOperationModal(operation))
+                                    detailController.show(transactionsEntry.viewOperationModal(operation))
                                 }
                             }
                         }

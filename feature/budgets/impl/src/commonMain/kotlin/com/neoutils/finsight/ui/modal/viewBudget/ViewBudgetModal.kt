@@ -24,11 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import org.koin.compose.koinInject
-import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.domain.model.Category
@@ -45,16 +46,21 @@ import com.neoutils.finsight.resources.view_budget_limit_label
 import com.neoutils.finsight.resources.view_budget_percentage_label
 import com.neoutils.finsight.resources.view_budget_remaining_label
 import com.neoutils.finsight.resources.view_budget_spent_label
+import com.neoutils.finsight.resources.view_budget_title
 import org.jetbrains.compose.resources.stringResource
 
 class ViewBudgetModal(
     private val budgetProgress: BudgetProgress,
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun title() = stringResource(Res.string.view_budget_title)
+
+    @Composable
+    override fun DetailContent() {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
+        val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
         val budget = budgetProgress.budget
         val accentColor = budgetProgressColor(budgetProgress.progress)
@@ -133,7 +139,7 @@ class ViewBudgetModal(
                         label = stringResource(Res.string.view_budget_percentage_label),
                         value = pctLabel,
                         onClick = budgetProgress.recurring?.let { recurring ->
-                            { manager.show(recurringEntry.viewRecurringModal(recurring)) }
+                            { detailController.show(recurringEntry.viewRecurringModal(recurring)) }
                         },
                     )
 

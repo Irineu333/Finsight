@@ -35,8 +35,9 @@ import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.model.OperationPerspective
@@ -53,7 +54,7 @@ import org.koin.core.parameter.parametersOf
 class ViewOperationModal(
     private val operation: Operation,
     private val perspective: OperationPerspective? = null,
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
 
     constructor(operationUi: OperationUi) : this(
         operation = operationUi.operation,
@@ -61,7 +62,10 @@ class ViewOperationModal(
     )
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun title() = stringResource(Res.string.view_operation_title)
+
+    @Composable
+    override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<ViewOperationViewModel> {
@@ -70,14 +74,14 @@ class ViewOperationModal(
 
         val uiState by viewModel.uiState.collectAsState()
 
-        val manager = LocalModalManager.current
+        val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
         val navController = LocalNavController.current
 
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.OpenRecurring -> manager.show(recurringEntry.viewRecurringModal(event.recurring))
+                    is ViewOperationEvent.OpenRecurring -> detailController.show(recurringEntry.viewRecurringModal(event.recurring))
                 }
             }
         }
@@ -211,7 +215,7 @@ class ViewOperationModal(
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(AccountsRoute(account.id))
                         }
                     )
@@ -223,7 +227,7 @@ class ViewOperationModal(
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(AccountsRoute(account.id))
                         }
                     )
@@ -237,7 +241,7 @@ class ViewOperationModal(
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(AccountsRoute(account.id))
                         }
                     )
@@ -251,7 +255,7 @@ class ViewOperationModal(
                     value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
-                        manager.dismissAll()
+                        detailController.dismiss()
                         navController.navigate(
                             CreditCardsRoute(creditCard.id)
                         )
@@ -277,7 +281,7 @@ class ViewOperationModal(
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = creditCardId?.let {
                         {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(
                                 InvoiceTransactionsRoute(it)
                             )
@@ -292,7 +296,7 @@ class ViewOperationModal(
                     value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
-                        manager.dismissAll()
+                        detailController.dismiss()
                         navController.navigate(InstallmentsRoute)
                     }
                 )

@@ -52,6 +52,7 @@ import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
 import com.neoutils.finsight.resources.recurring_screen_title
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
@@ -69,6 +70,7 @@ fun RecurringScreen(
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("recurring")
@@ -154,7 +156,7 @@ fun RecurringScreen(
                     ) { recurring ->
                         RecurringCard(
                             recurring = recurring,
-                            onClick = { modalManager.show(ViewRecurringModal(recurring)) },
+                            onClick = { detailController.show(ViewRecurringModal(recurring)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)

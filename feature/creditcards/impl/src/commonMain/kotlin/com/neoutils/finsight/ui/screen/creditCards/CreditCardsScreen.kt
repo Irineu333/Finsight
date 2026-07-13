@@ -87,6 +87,7 @@ private fun CreditCardsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val navController = LocalNavController.current
 
@@ -237,11 +238,11 @@ private fun CreditCardsContent(
                                 onClick = {
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation))
                                         }
 
                                         else -> {
-                                            modalManager.show(transactionsEntry.viewOperationModal(operation))
+                                            detailController.show(transactionsEntry.viewOperationModal(operation))
                                         }
                                     }
                                 }

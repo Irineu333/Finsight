@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
@@ -35,6 +35,7 @@ import com.neoutils.finsight.resources.view_category_delete
 import com.neoutils.finsight.resources.view_category_edit
 import com.neoutils.finsight.resources.view_category_total_received
 import com.neoutils.finsight.resources.view_category_total_spent
+import com.neoutils.finsight.resources.view_category_title
 import com.neoutils.finsight.resources.view_category_transactions_month
 import com.neoutils.finsight.resources.view_category_type_expense
 import com.neoutils.finsight.resources.view_category_type_income
@@ -47,10 +48,13 @@ import kotlin.uuid.Uuid
 
 class ViewCategoryModal(
     private val category: Category
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun title() = stringResource(Res.string.view_category_title)
+
+    @Composable
+    override fun DetailContent() {
         val formatter = LocalCurrencyFormatter.current
         val manager = LocalModalManager.current
 

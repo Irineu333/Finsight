@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
@@ -76,6 +77,7 @@ private fun CategoriesContent(
     onAction: (CategoriesAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
 
     Scaffold(
         topBar = {
@@ -201,7 +203,7 @@ private fun CategoriesContent(
                                 CategoryCard(
                                     category = category,
                                     onClick = {
-                                        modalManager.show(ViewCategoryModal(category))
+                                        detailController.show(ViewCategoryModal(category))
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

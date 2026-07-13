@@ -22,7 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.component.SummaryCard
@@ -59,7 +59,7 @@ private fun TransactionsContent(
     uiState: TransactionsUiState,
     onAction: (TransactionsAction) -> Unit,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val dateFormats = LocalDateFormats.current
 
     Scaffold(
@@ -139,11 +139,11 @@ private fun TransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    modalManager.show(ViewAdjustmentModal(operation))
+                                    detailController.show(ViewAdjustmentModal(operation))
                                 }
 
                                 else -> {
-                                    modalManager.show(ViewOperationModal(operation))
+                                    detailController.show(ViewOperationModal(operation))
                                 }
                             }
                         }

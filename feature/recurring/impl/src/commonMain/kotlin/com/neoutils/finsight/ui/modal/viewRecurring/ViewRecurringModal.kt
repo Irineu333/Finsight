@@ -41,10 +41,12 @@ import com.neoutils.finsight.resources.view_recurring_edit
 import com.neoutils.finsight.resources.view_recurring_reactivate
 import com.neoutils.finsight.resources.view_recurring_status_label
 import com.neoutils.finsight.resources.view_recurring_stop
+import com.neoutils.finsight.resources.view_recurring_title
 import com.neoutils.finsight.resources.view_recurring_type_label
+import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
@@ -57,11 +59,15 @@ import org.jetbrains.compose.resources.stringResource
 
 class ViewRecurringModal(
     private val recurring: Recurring,
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun title() = stringResource(Res.string.view_recurring_title)
+
+    @Composable
+    override fun DetailContent() {
         val manager = LocalModalManager.current
+        val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
         val formatter = LocalCurrencyFormatter.current
         val typeColor = if (recurring.type.isIncome) Income else Expense
@@ -161,7 +167,7 @@ class ViewRecurringModal(
                         label = stringResource(Res.string.view_recurring_account_label),
                         value = account.name,
                         onClick = {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(AccountsRoute(account.id))
                         }
                     )
@@ -173,7 +179,7 @@ class ViewRecurringModal(
                         label = stringResource(Res.string.view_recurring_credit_card_label),
                         value = creditCard.name,
                         onClick = {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(
                                 CreditCardsRoute(creditCard.id)
                             )

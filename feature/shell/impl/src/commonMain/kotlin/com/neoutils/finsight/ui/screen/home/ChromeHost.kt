@@ -12,11 +12,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -47,8 +50,10 @@ import com.neoutils.finsight.feature.shell.api.NavDestination as CatalogDestinat
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.ui.component.BottomNavigationBar
+import com.neoutils.finsight.ui.component.DetailPane
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationRailBar
+import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.koin.compose.koinInject
 
 @Composable
@@ -181,7 +186,19 @@ fun ChromeHost(
                     }
                 }
 
-                content(padding)
+                Box(modifier = Modifier.weight(1f)) {
+                    content(padding)
+                }
+
+                // Reserved as a sibling of the content — outside the rail's AnimatedVisibility — so the
+                // pane is present on every extra-wide window regardless of ChromeConfig: rail | content | pane.
+                if (isExtraWideWindow()) {
+                    DetailPane(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(top = padding.calculateTopPadding()),
+                    )
+                }
             }
         }
     }

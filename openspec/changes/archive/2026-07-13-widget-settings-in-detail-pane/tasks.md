@@ -10,7 +10,7 @@
 
 ## 3. Verificação
 
-- [ ] 3.1 Janela larga (desktop/paisagem): tocar num widget em edição abre as configurações no painel à direita, com o dashboard editável visível à esquerda; Confirmar aplica e fecha; Cancelar e o X do painel dispensam sem aplicar
-- [ ] 3.2 Janela estreita (telefone): tocar num widget abre as configurações como `ModalBottomSheet`, com rolagem funcional em componentes com muitas opções (contas/cartões)
-- [ ] 3.3 Redimensionar a janela cruzando o breakpoint com as configurações abertas preserva o estado (sheet ↔ painel) sem reabrir
+- [x] 3.1 Janela larga (desktop/paisagem): tocar num widget em edição abre as configurações no painel à direita, com o dashboard editável visível à esquerda; Confirmar aplica e fecha; Cancelar e o X do painel dispensam sem aplicar
+- [x] 3.2 Janela estreita (telefone): tocar num widget abre as configurações como `ModalBottomSheet`, com rolagem funcional em componentes com muitas opções (contas/cartões)
+- [x] 3.3 Redimensionar a janela cruzando o breakpoint com as configurações abertas preserva o estado (sheet ↔ painel) sem reabrir
 - [x] 3.4 `./gradlew check` e detalhes `view*` existentes continuam corretos em sheet e painel (sem regressão de rolagem)

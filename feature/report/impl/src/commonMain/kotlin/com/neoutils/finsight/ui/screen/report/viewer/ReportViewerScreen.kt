@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.viewer
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -152,7 +151,7 @@ private fun ReportViewerContent(
             TopAppBar(
                 title = { Text(stringResource(Res.string.report_viewer_title)) },
                 navigationIcon = {
-                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },

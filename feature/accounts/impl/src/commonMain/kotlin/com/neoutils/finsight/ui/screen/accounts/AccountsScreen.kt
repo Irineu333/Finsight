@@ -5,7 +5,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.accounts
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -125,11 +125,13 @@ private fun AccountsContent(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
                 actions = {

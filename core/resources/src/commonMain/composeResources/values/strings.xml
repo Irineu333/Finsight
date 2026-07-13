@@ -46,6 +46,8 @@
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_transactions">Transações</string>
+    <string name="nav_credit_cards">Cartões</string>
+    <string name="nav_installments">Parcelas</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_recents">Recentes</string>

@@ -29,12 +29,10 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph
@@ -47,9 +45,7 @@ import com.neoutils.finsight.feature.shell.api.LocalChromeController
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination as CatalogDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
 import com.neoutils.finsight.navigation.LocalNavController
-import com.neoutils.finsight.navigation.NavRoute
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationRailBar
@@ -73,11 +69,17 @@ fun ChromeHost(
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val destination = currentBackStackEntry?.destination
 
-    // The active section is the destination whose route is anywhere in the current hierarchy — this
-    // keeps the selector highlighted even on sub-destinations pushed inside a section.
+    // The active section, resolved in two tiers so the selector highlights correctly on any screen:
+    // 1. Exact route match against the hierarchy — handles section roots and sibling destinations that
+    //    share a graph but are distinct rail items (e.g. Credit Cards vs Installments).
+    // 2. Fallback for pushed sub-destinations (e.g. an invoice screen), whose route is not in the
+    //    catalog: match the catalog item that owns the current section's start destination.
     val selectedItem = destinations.firstOrNull { item ->
         destination?.hierarchy?.any { it.hasRoute(item.route::class) } == true
-    }
+    } ?: destination?.hierarchy
+        ?.firstNotNullOfOrNull { it as? NavGraph }
+        ?.findStartDestination()
+        ?.let { sectionStart -> destinations.firstOrNull { sectionStart.hasRoute(it.route::class) } }
 
     val isOnPrimaryTab = selectedItem?.primaryTab == true
 
@@ -87,26 +89,20 @@ fun ChromeHost(
         }
     }
 
-    // The one navigation primitive for selecting a section: preserve each section's own back stack
-    // when switching, so returning to a section restores where the user left off.
+    // Selecting a rail/bottom-bar item jumps to a top-level feature host, resetting to the dashboard
+    // root so hosts never stack — the back stack stays "dashboard → host (→ its sub-features)".
     val onItemSelected: (CatalogDestination) -> Unit = { item ->
-        navController.navigateToSection(item.route)
+        navController.navigate(item.route) {
+            popUpTo(navController.graph.findStartDestination().id) { inclusive = false }
+            launchSingleTop = true
+        }
     }
 
     val isWideWindow = currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    // Back-affordance rule: a section root under the persistent desktop rail has nowhere useful to go
-    // back to (the rail is the navigation); on mobile, non-tab screens and any pushed sub-destination
-    // keep their back button. Depth is the count of real screens of the current section on the stack.
-    val currentBackStack by navController.currentBackStack.collectAsState()
-    val sectionDepth = destination?.let { current ->
-        val sectionId = current.topLevelSectionId()
-        currentBackStack.count { entry ->
-            entry.destination !is NavGraph && entry.destination.topLevelSectionId() == sectionId
-        }
-    } ?: 0
-    val canNavigateBack = (!isWideWindow && !isOnPrimaryTab) || sectionDepth > 1
+    // Note: the back affordance is owned by each screen (a feature's main screen hides it in wide
+    // windows via `isWideWindow()`; pushed sub-destinations always show it), not propagated from here.
 
     // Visibility, per form factor:
     // - Desktop rail: persistent — visible unless the screen publishes `ContentOnly`.
@@ -126,10 +122,7 @@ fun ChromeHost(
         modalManager.show(transactionsEntry.addTransactionModal())
     }
 
-    CompositionLocalProvider(
-        LocalChromeController provides chromeController,
-        LocalCanNavigateBack provides canNavigateBack,
-    ) {
+    CompositionLocalProvider(LocalChromeController provides chromeController) {
         Scaffold(
             contentWindowInsets = WindowInsets(),
             bottomBar = {
@@ -194,33 +187,12 @@ fun ChromeHost(
     }
 }
 
-/**
- * Selects a top-level section, preserving multiple back stacks: the current section's stack is saved
- * and the target section's stack restored, so switching sections never loses in-section navigation.
- */
-private fun androidx.navigation.NavController.navigateToSection(route: NavRoute) {
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
-    }
-}
-
 private val CatalogDestination.screenName: String
     get() = route::class.simpleName
         .orEmpty()
         .removeSuffix("Route")
         .removeSuffix("Graph")
         .replaceFirstChar { it.lowercase() }
-
-/**
- * The id of the top-level section graph (the direct child of the host's root graph) that this
- * destination belongs to — used to measure how deep the current section's stack is.
- */
-private fun NavDestination.topLevelSectionId(): Int {
-    val chain = hierarchy.toList()
-    return if (chain.size >= 2) chain[chain.size - 2].id else id
-}
 
 @Composable
 private fun AddTransactionFab(

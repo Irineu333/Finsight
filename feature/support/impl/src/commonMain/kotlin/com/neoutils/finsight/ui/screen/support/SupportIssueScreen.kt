@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.support
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -63,7 +62,7 @@ fun SupportIssueScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

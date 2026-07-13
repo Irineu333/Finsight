@@ -27,12 +27,12 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_accounts
 import com.neoutils.finsight.resources.dashboard_budgets
 import com.neoutils.finsight.resources.dashboard_categories
-import com.neoutils.finsight.resources.dashboard_credit_cards
-import com.neoutils.finsight.resources.dashboard_installments
 import com.neoutils.finsight.resources.dashboard_recurring
 import com.neoutils.finsight.resources.dashboard_reports
 import com.neoutils.finsight.resources.dashboard_support
+import com.neoutils.finsight.resources.nav_credit_cards
 import com.neoutils.finsight.resources.nav_dashboard
+import com.neoutils.finsight.resources.nav_installments
 import com.neoutils.finsight.resources.nav_transactions
 
 /**
@@ -66,7 +66,7 @@ internal object AppNavCatalog : NavCatalog {
         ),
         NavDestination(
             icon = Icons.Default.CreditCard,
-            labelRes = Res.string.dashboard_credit_cards,
+            labelRes = Res.string.nav_credit_cards,
             route = CreditCardsRoute(),
         ),
         NavDestination(
@@ -86,7 +86,7 @@ internal object AppNavCatalog : NavCatalog {
         ),
         NavDestination(
             icon = Icons.Default.CalendarMonth,
-            labelRes = Res.string.dashboard_installments,
+            labelRes = Res.string.nav_installments,
             route = InstallmentsRoute,
         ),
         NavDestination(

@@ -4,7 +4,6 @@
 )
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -135,7 +134,7 @@ private fun InvoiceTransactionsContent(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

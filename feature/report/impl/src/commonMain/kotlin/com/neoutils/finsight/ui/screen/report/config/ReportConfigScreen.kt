@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.config
-import com.neoutils.finsight.navigation.LocalCanNavigateBack
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -98,8 +98,10 @@ private fun ReportConfigContent(
             TopAppBar(
                 title = { Text(stringResource(Res.string.report_config_title)) },
                 navigationIcon = {
-                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

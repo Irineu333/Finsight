@@ -21,7 +21,7 @@
 
 ## 4. Verificação
 
-- [ ] 4.1 Desktop (janela ≥ 840dp): confirmar em cada superfície que as ações ficam fixas no rodapé, corpo rola, e a elevação aparece só com conteúdo rolável (curto = sem flutuar, sem elevação)
-- [ ] 4.2 Mobile (janela < 840dp): confirmar que corpo e ações rolam juntos, sem rodapé fixo, como antes
-- [ ] 4.3 Cruzar o breakpoint com um detalhe aberto (incl. dashboard) e confirmar que o estado é preservado (sheet↔painel sem reabrir)
+- [x] 4.1 Desktop (janela ≥ 840dp): confirmar em cada superfície que as ações ficam fixas no rodapé, corpo rola, e a elevação aparece só com conteúdo rolável (curto = sem flutuar, sem elevação)
+- [x] 4.2 Mobile (janela < 840dp): confirmar que corpo e ações rolam juntos, sem rodapé fixo, como antes
+- [x] 4.3 Cruzar o breakpoint com um detalhe aberto (incl. dashboard) e confirmar que o estado é preservado (sheet↔painel sem reabrir)
 - [x] 4.4 Compilar os módulos afetados (`:core:designsystem` + os 5 feature impls) via `compileDebugKotlinAndroid` — **BUILD SUCCESSFUL** (`check` completo pulado a pedido; validação de rolagem aninhada/medição infinita fica para a verificação manual 4.1)

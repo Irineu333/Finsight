@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -56,21 +57,12 @@ import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
-/** Fixed width of the reserved detail pane in wide windows. */
 private val DetailPaneWidth = 400.dp
 
 val LocalDetailPaneController = compositionLocalOf<DetailPaneController> {
     error("No DetailPaneController provided")
 }
 
-/**
- * A detail (`view*`) surface whose presentation adapts to window width: a `ModalBottomSheet` in narrow
- * windows and a reserved pane on the right in wide ones. It carries its own [ViewModelStore], so a
- * `koinViewModel()` inside [DetailContent] is scoped to this object — the same instance renders on both
- * surfaces, so crossing the width breakpoint transforms sheet ⇄ pane without losing state.
- *
- * Presented via [DetailPaneController], never via `ModalManager`; hence [Content] is unused.
- */
 abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
 
     override val viewModelStore = ViewModelStore()
@@ -81,7 +73,6 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
     @Composable
     protected abstract fun DetailContent()
 
-    /** Renders the pure detail content with the ViewModelStore scoped to this modal. */
     @Composable
     fun RenderContent() {
         CompositionLocalProvider(LocalViewModelStoreOwner provides this) {
@@ -89,8 +80,6 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
         }
     }
 
-    // Adaptive details are presented by DetailPaneController (pane or sheet), not by the ModalManager
-    // overlay stack, so the Modal.Content() entry point is intentionally unused.
     @Composable
     override fun Content() = Unit
 
@@ -99,10 +88,6 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
     }
 }
 
-/**
- * Single-slot controller for the adaptive detail surface, distinct from the `ModalManager` overlay
- * stack. Opening a detail while another is open **replaces** it (no internal back history).
- */
 class DetailPaneController {
 
     var current by mutableStateOf<AdaptiveModal?>(null)
@@ -121,10 +106,7 @@ class DetailPaneController {
     }
 }
 
-/**
- * Provides [LocalDetailPaneController] and renders the narrow-window detail sheet in the overlay layer.
- * Mount inside `ModalManagerHost` so transient modals (forms/confirmations) draw above the detail.
- */
+// Mount inside ModalManagerHost so transient modals (forms/confirmations) draw above the detail sheet.
 @Composable
 fun DetailPaneHost(
     content: @Composable () -> Unit,
@@ -163,11 +145,6 @@ private fun DetailSheetHost(
     }
 }
 
-/**
- * The reserved detail pane for wide windows — a fixed column on the right with a header (title + close)
- * and the scrollable detail content, or an empty-state when nothing is selected. Mount as a sibling of
- * the content in the shell's wide-branch `Row`, only when [isExtraWideWindow].
- */
 @Composable
 fun DetailPane(
     modifier: Modifier = Modifier,
@@ -190,6 +167,7 @@ fun DetailPane(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .padding(start = 24.dp, end = 12.dp)
                                 .padding(vertical = 8.dp),
                         ) {

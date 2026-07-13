@@ -190,8 +190,6 @@ fun ChromeHost(
                     content(padding)
                 }
 
-                // Reserved as a sibling of the content — outside the rail's AnimatedVisibility — so the
-                // pane is present on every extra-wide window regardless of ChromeConfig: rail | content | pane.
                 if (isExtraWideWindow()) {
                     DetailPane(
                         modifier = Modifier

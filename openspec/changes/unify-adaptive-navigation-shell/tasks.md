@@ -57,7 +57,7 @@
 ## 8. Verificação end-to-end
 
 - [~] 8.1 Testes de navegação: alternar seção preserva a pilha interna (desktop); voltar de destino empilhado retorna à seção de origem (**automatizado**: `AppModulesTest.navCatalogProjectionsAreConsistent` cobre as projeções rail/bottom/grid da fonte única + unicidade de chave. **Pendente (manual/device)**: comportamento e2e de save/restore de pilha por seção — o repo não tem harness de Compose UI test)
-- [ ] 8.2 Validar predictive back no Android e o comportamento de voltar no mobile (inalterado) — **requer device**; por design o mobile é inalterado (gating de voltar só afeta desktop/`isWideWindow`)
+- [x] 8.2 Validar predictive back no Android e o comportamento de voltar no mobile (inalterado) — **validado pelo usuário no Android** (funcionou perfeitamente); iOS assumido por paridade (mesmo código `commonMain`)
 - [x] 8.3 Rodar o Desktop (`./gradlew :app:desktop:run`) e validar rail persistente + navegação interna por seção — **validado pelo usuário no desktop**; correções decorrentes registradas na seção 9
 - [~] 8.4 `./gradlew allTests` e `./gradlew check` verdes (**verde**: `testDebugUnitTest` + `jvmTest` de todos os módulos, e compile Android/JVM/iOS. **Não executável aqui**: `check`/`allTests` completos incluem link de binários de teste iOS que estoura o heap de 3 GiB do ambiente — limitação de infra, não regressão de código)
 

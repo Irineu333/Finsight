@@ -2,6 +2,11 @@
 
 package com.neoutils.finsight.ui.component
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -156,8 +161,13 @@ fun DetailPane(
                 .width(DetailPaneWidth)
                 .fillMaxHeight(),
         ) {
-            if (current != null) {
-                key(current.key) {
+            AnimatedContent(
+                targetState = current,
+                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(180)) },
+                contentKey = { it?.key },
+                label = "detail_pane_content",
+            ) { detail ->
+                if (detail != null) {
                     Column(Modifier.fillMaxSize()) {
                         Box(
                             contentAlignment = Alignment.CenterEnd,
@@ -179,12 +189,12 @@ fun DetailPane(
                                 .fillMaxSize()
                                 .verticalScroll(rememberScrollState()),
                         ) {
-                            current.RenderContent()
+                            detail.RenderContent()
                         }
                     }
+                } else {
+                    DetailPaneEmptyState()
                 }
-            } else {
-                DetailPaneEmptyState()
             }
         }
     }

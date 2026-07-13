@@ -46,3 +46,4 @@
 - [x] 6.1 Remover o **título** e o **divisor horizontal** do header do painel largo (`DetailPane` em `AdaptiveDetail.kt`) — o header passa a ser apenas o botão **X** alinhado à direita; revertida a decisão 1.1 de expor `title()`
 - [x] 6.2 Remover o abstract `AdaptiveModal.title()` e os 5 overrides `view*` (transactions/operation+adjustment, categories, budgets, recurring), com os imports de recurso `view_*_title` órfãos
 - [x] 6.3 Compilação Android debug dos módulos afetados OK; spec inalterada (não exigia título/divisor — só o X, empty-state e o arranjo de três colunas, todos mantidos)
+- [x] 6.4 Envolver o conteúdo do painel largo (`DetailPane`) em `AnimatedContent` (fade in/out, chaveado por `it?.key`) para suavizar aparecimento/desaparecimento e a substituição detalhe→detalhe; o caminho estreito (`ModalBottomSheet`) já anima nativamente

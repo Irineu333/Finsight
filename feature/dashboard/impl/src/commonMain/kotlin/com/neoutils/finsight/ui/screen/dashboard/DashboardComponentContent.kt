@@ -10,6 +10,7 @@ import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
+import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
@@ -653,11 +654,11 @@ private fun DashboardSectionHeader(
 
 @Composable
 private fun DashboardQuickActionCard(
-    action: QuickActionType,
-    onOpen: (QuickActionType) -> Unit,
+    action: NavDestination,
+    onOpen: (NavDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringUiText(action.title)
+    val label = stringResource(action.labelRes)
 
     Card(
         onClick = { onOpen(action) },

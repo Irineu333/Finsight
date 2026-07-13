@@ -18,8 +18,8 @@ kotlin {
 
             api(projects.feature.accounts.api)
             implementation(projects.feature.accounts.impl)
-            api(projects.feature.home.api)
-            implementation(projects.feature.home.impl)
+            api(projects.feature.shell.api)
+            implementation(projects.feature.shell.impl)
             api(projects.feature.dashboard.api)
             implementation(projects.feature.dashboard.impl)
             api(projects.feature.budgets.api)

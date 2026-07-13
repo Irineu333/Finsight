@@ -16,7 +16,7 @@ import com.neoutils.finsight.navigation.ProvideNavController
 import com.neoutils.finsight.ui.component.FormattingLocalsHost
 import com.neoutils.finsight.ui.component.ModalManagerHost
 import com.neoutils.finsight.ui.component.SharedTransitionProvider
-import com.neoutils.finsight.ui.screen.home.HomeChromeHost
+import com.neoutils.finsight.ui.screen.home.ChromeHost
 import com.neoutils.finsight.ui.theme.FinsightTheme
 import org.koin.compose.koinInject
 
@@ -38,7 +38,7 @@ fun App() {
                 FormattingLocalsHost {
                     ProvideNavController {
                         ModalManagerHost {
-                            HomeChromeHost { paddingValues ->
+                            ChromeHost { paddingValues ->
                                 SharedTransitionProvider {
                                     AppNavHost(
                                         modifier = Modifier.padding(paddingValues),

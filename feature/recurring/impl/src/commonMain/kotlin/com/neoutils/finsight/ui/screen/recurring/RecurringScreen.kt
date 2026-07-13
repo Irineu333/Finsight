@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.recurring
+import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -85,7 +86,7 @@ fun RecurringScreen(
                     navigationIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

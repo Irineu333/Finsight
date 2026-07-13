@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
@@ -48,6 +49,7 @@ class DashboardComponentsBuilder(
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
+    private val navCatalog: NavCatalog,
 ) {
 
     suspend fun build(
@@ -376,23 +378,18 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions {
+    private fun quickActions(config: Map<String, String>): DashboardComponent.QuickActions? {
+        // On desktop the persistent rail already exposes every feature, so the quick-actions grid is
+        // redundant — omit the whole section (rather than render an empty, header-only gap).
+        if (isDesktop) return null
+
         val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
             ?.split(",")
             ?.filter { it.isNotEmpty() }
             ?.toSet() ?: emptySet()
 
-        val allActions = listOfNotNull(
-            QuickActionType.BUDGETS,
-            QuickActionType.CATEGORIES,
-            QuickActionType.CREDIT_CARDS,
-            QuickActionType.ACCOUNTS,
-            QuickActionType.RECURRING,
-            QuickActionType.REPORTS,
-            QuickActionType.INSTALLMENTS,
-            QuickActionType.SUPPORT.takeUnless { isDesktop },
-        )
+        val allActions = navCatalog.destinations.filter { !it.primaryTab }
 
-        return DashboardComponent.QuickActions(actions = allActions.filter { it.name !in hiddenActions })
+        return DashboardComponent.QuickActions(actions = allActions.filter { it.actionKey !in hiddenActions })
     }
 }

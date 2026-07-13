@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.config
+import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -97,7 +98,7 @@ private fun ReportConfigContent(
             TopAppBar(
                 title = { Text(stringResource(Res.string.report_config_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },

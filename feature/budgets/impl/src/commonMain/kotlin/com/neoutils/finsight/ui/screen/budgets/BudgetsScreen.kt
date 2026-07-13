@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.budgets
+import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -78,7 +79,7 @@ fun BudgetsScreen(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

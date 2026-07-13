@@ -2,16 +2,18 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.DashboardComponentPreference
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
+import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.ui.screen.dashboard.AccountsOverviewConfig
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentConfig
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentType
-import com.neoutils.finsight.ui.screen.dashboard.QuickActionType
 import com.neoutils.finsight.ui.screen.dashboard.QuickActionsConfig
+import com.neoutils.finsight.ui.screen.dashboard.actionKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class GetDashboardPreferencesUseCase(
     private val repository: IDashboardPreferencesRepository,
+    private val navCatalog: NavCatalog,
 ) {
     operator fun invoke(): Flow<List<DashboardComponentPreference>> {
         return repository.observe().map { savedPrefs ->
@@ -90,9 +92,9 @@ class GetDashboardPreferencesUseCase(
             config = mapOf(
                 DashboardComponentConfig.TOP_SPACING to "true",
                 DashboardComponentConfig.SHOW_HEADER to "true",
-                QuickActionsConfig.HIDDEN_ACTIONS to listOf(
-                    QuickActionType.SUPPORT.name
-                ).joinToString(","),
+                QuickActionsConfig.HIDDEN_ACTIONS to navCatalog.destinations
+                    .filter { it.mobileOnly }
+                    .joinToString(",") { it.actionKey },
             ),
         ),
     )

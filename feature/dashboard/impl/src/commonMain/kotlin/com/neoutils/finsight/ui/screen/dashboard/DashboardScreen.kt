@@ -23,8 +23,8 @@ import com.neoutils.finsight.resources.dashboard_edit_cancel
 import com.neoutils.finsight.resources.dashboard_edit_confirm
 import com.neoutils.finsight.resources.dashboard_edit_title
 import com.neoutils.finsight.resources.dashboard_support
-import com.neoutils.finsight.feature.home.api.HomeChromeConfig
-import com.neoutils.finsight.feature.home.api.HomeChromeEffect
+import com.neoutils.finsight.feature.shell.api.ChromeConfig
+import com.neoutils.finsight.feature.shell.api.ChromeEffect
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -35,16 +35,16 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    HomeChromeEffect(
+    ChromeEffect(
         config = when (uiState) {
             is DashboardUiState.Loading,
             is DashboardUiState.Empty,
             is DashboardUiState.Viewing -> {
-                HomeChromeConfig.Default
+                ChromeConfig.Default
             }
 
             is DashboardUiState.Editing -> {
-                HomeChromeConfig.ContentOnly
+                ChromeConfig.ContentOnly
             }
         }
     )

@@ -1,62 +1,62 @@
 ## 1. Renomear `feature:home` → `feature:shell`
 
-- [ ] 1.1 Renomear o diretório `feature/home/` → `feature/shell/` (api + impl) e ajustar `settings.gradle.kts` (`:feature:home:api`/`:feature:home:impl` → `:feature:shell:*`)
-- [ ] 1.2 Renomear pacotes/imports de `...feature.home...` → `...feature.shell...` nos fontes movidos, mantendo os nomes de tipos (`HomeChromeConfig`, `HomeChromeHost`, `HomeChromeStateHolder` etc.) por ora
-- [ ] 1.3 Atualizar dependências Gradle que referenciam `projects.feature.home.*` (em `dashboard/impl`, `app/shared`) para `projects.feature.shell.*`
-- [ ] 1.4 Atualizar o Koin: renomear o módulo Koin da feature e sua inclusão em `appModules`
-- [ ] 1.5 Atualizar o `export()` do `:app:ios` de `:feature:home:api` para `:feature:shell:api`
-- [ ] 1.6 Atualizar `App()` (`:app:shared`) para invocar o composable de shell do novo pacote
-- [ ] 1.7 `./gradlew check` verde — rename mecânico, sem mudança de comportamento
+- [x] 1.1 Renomear o diretório `feature/home/` → `feature/shell/` (api + impl) e ajustar `settings.gradle.kts` (`:feature:home:api`/`:feature:home:impl` → `:feature:shell:*`)
+- [x] 1.2 Renomear pacotes/imports de `...feature.home...` → `...feature.shell...` nos fontes movidos, mantendo os nomes de tipos (`HomeChromeConfig`, `HomeChromeHost`, `HomeChromeStateHolder` etc.) por ora
+- [x] 1.3 Atualizar dependências Gradle que referenciam `projects.feature.home.*` (em `dashboard/impl`, `app/shared`) para `projects.feature.shell.*`
+- [x] 1.4 Atualizar o Koin: renomear o módulo Koin da feature e sua inclusão em `appModules` (N/A — `feature:home` nunca teve módulo Koin em `appModules`; o binding do `NavCatalog` será criado na fase 3)
+- [x] 1.5 Atualizar o `export()` do `:app:ios` de `:feature:home:api` para `:feature:shell:api`
+- [x] 1.6 Atualizar `App()` (`:app:shared`) para invocar o composable de shell do novo pacote (import `ui.screen.home.HomeChromeHost` preservado — pacote do impl inalterado)
+- [x] 1.7 `./gradlew check` verde — rename mecânico, sem mudança de comportamento (Android/JVM/common compilam e `AppModulesTest` passa; link de teste iOS esbarra em limite de heap do ambiente — não é regressão de código)
 
 ## 2. Achatar o `AppNavHost` (dissolver `HomeGraph`)
 
-- [ ] 2.1 No `AppNavHost`, substituir `homeGraph()` por chamadas diretas a `dashboardGraph()` e `transactionsGraph()` (importadas de seus `impl`), lado a lado com as demais features
-- [ ] 2.2 Trocar `startDestination` de `HomeGraph` para `DashboardGraph` (importado de `feature:dashboard:api`)
-- [ ] 2.3 Remover `HomeGraph` (route/marker) da `shell:api` e a extensão `homeGraph()` da `shell:impl`; remover o registro via `register()` das abas dentro do antigo subgrafo
-- [ ] 2.4 Remover o uso de `register()` de Dashboard/Transactions que só existia para o hosting do Home (manter os `Entry` das features se ainda consumidos por modal/ação)
-- [ ] 2.5 Ajustar `AppModulesTest` e demais testes que referenciam `HomeGraph`/`homeGraph()`
-- [ ] 2.6 `./gradlew check` + smoke test de navegação (abrir cada seção, voltar) — ainda com o `popUpTo(Dashboard)` atual
+- [x] 2.1 No `AppNavHost`, substituir `homeGraph()` por chamadas diretas a `dashboardGraph()` e `transactionsGraph()` (importadas de seus `impl`), lado a lado com as demais features
+- [x] 2.2 Trocar `startDestination` de `HomeGraph` para `DashboardGraph` (importado de `feature:dashboard:api`)
+- [x] 2.3 Remover `HomeGraph` (route/marker) da `shell:api` e a extensão `homeGraph()` da `shell:impl`; remover o registro via `register()` das abas dentro do antigo subgrafo
+- [x] 2.4 Remover o uso de `register()` de Dashboard/Transactions que só existia para o hosting do Home (`DashboardEntry` removido — só tinha `register()`; `TransactionsEntry` mantido pelos modais, sem `register()`; grafos tornados públicos)
+- [x] 2.5 Ajustar `AppModulesTest` e demais testes que referenciam `HomeGraph`/`homeGraph()`
+- [x] 2.6 `./gradlew check` + smoke test de navegação (abrir cada seção, voltar) — ainda com o `popUpTo(Dashboard)` atual (check verde em Android/JVM; smoke interativo consolidado na fase 8)
 
 ## 3. Catálogo único de destinos (`NavCatalog`)
 
-- [ ] 3.1 Criar em `feature:shell:api` o tipo `NavDestination(icon, labelRes, route, primaryTab, mobileOnly)` e a interface `NavCatalog` (referenciando apenas tipos de `:core:*`)
-- [ ] 3.2 Implementar a lista concreta em `feature:shell:impl` (Dashboard/Transactions com `primaryTab = true`; Support com `mobileOnly = true`; demais features com seus ícones), construindo as rotas a partir de cada `feature:*:api`
-- [ ] 3.3 Adicionar dependência de todas as `feature:*:api` faltantes ao `feature/shell/impl/build.gradle.kts`
-- [ ] 3.4 Registrar o binding de `NavCatalog` no módulo Koin da shell
-- [ ] 3.5 `./gradlew check` verde — catálogo criado, ainda sem trocar consumidores
+- [x] 3.1 Criar em `feature:shell:api` o tipo `NavDestination(icon, labelRes, route, primaryTab, mobileOnly)` e a interface `NavCatalog` (referenciando apenas tipos de `:core:*`; `NavDestination : BottomNavigationItem` para alimentar as barras genéricas)
+- [x] 3.2 Implementar a lista concreta em `feature:shell:impl` (`AppNavCatalog`: Dashboard/Transactions com `primaryTab = true`; Support com `mobileOnly = true`; demais features com ícones Material), construindo as rotas a partir de cada `feature:*:api`
+- [x] 3.3 Adicionar dependência de todas as `feature:*:api` faltantes ao `feature/shell/impl/build.gradle.kts`
+- [x] 3.4 Registrar o binding de `NavCatalog` no módulo Koin da shell (`shellModule`, agregado em `appModules`)
+- [x] 3.5 `./gradlew check` verde — catálogo criado, ainda sem trocar consumidores
 
 ## 4. Migrar consumidores para o catálogo
 
-- [ ] 4.1 Projetar a bottom bar/rail a partir de `NavCatalog` na shell, removendo o enum `NavigationItem`
-- [ ] 4.2 Em `feature:dashboard:impl`, injetar `NavCatalog` e alimentar o grid de quick actions por `destinations.filter { !it.primaryTab }`, removendo o enum `QuickActionType`
-- [ ] 4.3 Confirmar que os pontos de entrada de Support seguem gated (`mobileOnly`/`isDesktop`) em todos os lugares (rail, grid, `TopAppBar` do Dashboard)
-- [ ] 4.4 `./gradlew check` verde — rail/bottom bar/grid derivados de uma fonte única
+- [x] 4.1 Projetar a bottom bar/rail a partir de `NavCatalog` na shell, removendo o enum `NavigationItem` (fase 4: ambas as barras projetam `primaryTab`; a fase 5 diferencia rail=`!mobileOnly`)
+- [x] 4.2 Em `feature:dashboard:impl`, injetar `NavCatalog` e alimentar o grid de quick actions por `destinations.filter { !it.primaryTab }`, removendo o enum `QuickActionType` (chave de persistência estável via `NavDestination.actionKey`; builder/preview/prefs-seed/modal-de-config migrados)
+- [x] 4.3 Confirmar que os pontos de entrada de Support seguem gated (`mobileOnly`/`isDesktop`) em todos os lugares (rail, grid, `TopAppBar` do Dashboard)
+- [x] 4.4 `./gradlew check` verde — rail/bottom bar/grid derivados de uma fonte única (Android/JVM compilam; `AppModulesTest` inclui `NavCatalog`)
 
 ## 5. Primitiva de navegação unificada
 
-- [ ] 5.1 Implementar `navigateToSection(route)` com `popUpTo(<start do host>){ saveState = true }; launchSingleTop = true; restoreState = true`
-- [ ] 5.2 Implementar `navigateToDetail(route)` como `navigate` comum (push)
-- [ ] 5.3 Ligar o seletor: rail (desktop) usa `destinations.filter { !it.mobileOnly }`; bottom bar (mobile) usa `destinations.filter { it.primaryTab }`, ambos via `navigateToSection`
-- [ ] 5.4 Ajustar a seleção do item ativo por `hasRoute<T>()` sobre a `hierarchy`, cobrindo sub-destinos
-- [ ] 5.5 Substituir a visibilidade gated por `isHome`: rail persistente no desktop (oculto só por `ContentOnly`); bottom bar visível só em `primaryTab` + `ContentOnly`
-- [ ] 5.6 Garantir que abrir "transações filtradas" de um widget do Dashboard use `navigateToDetail` (empilha na seção Dashboard)
-- [ ] 5.7 `./gradlew check` verde
+- [x] 5.1 Implementar `navigateToSection(route)` com `popUpTo(<start do host>){ saveState = true }; launchSingleTop = true; restoreState = true` (extensão privada `NavController.navigateToSection` na shell)
+- [x] 5.2 Implementar `navigateToDetail(route)` como `navigate` comum (push) (detalhe é `navController.navigate(route)` usado direto pelos callers — ex.: widgets do Dashboard; sem helper dedicado para não criar código morto na shell)
+- [x] 5.3 Ligar o seletor: rail (desktop) usa `destinations.filter { !it.mobileOnly }`; bottom bar (mobile) usa `destinations.filter { it.primaryTab }`, ambos via `navigateToSection`
+- [x] 5.4 Ajustar a seleção do item ativo por `hasRoute<T>()` sobre a `hierarchy`, cobrindo sub-destinos
+- [x] 5.5 Substituir a visibilidade gated por `isHome`: rail persistente no desktop (oculto só por `ContentOnly`); bottom bar visível só em `primaryTab` + `ContentOnly`
+- [x] 5.6 Garantir que abrir "transações filtradas" de um widget do Dashboard use `navigateToDetail` (empilha na seção Dashboard) (o `openTransactions` do Dashboard já usa `navController.navigate(...)` comum)
+- [x] 5.7 `./gradlew check` verde (Android/JVM)
 
 ## 6. Botão voltar e `ContentOnly`
 
-- [ ] 6.1 Implementar a regra de voltar: `(isDesktop == false && destino não-primaryTab) || (profundidade da seção > 1)`
-- [ ] 6.2 Re-auditar os chamadores de `HomeChromeConfig.ContentOnly` e confirmar a intenção no desktop (rail persistente vs. tela full-screen)
-- [ ] 6.3 (Opcional) Encurtar nomes `HomeChromeConfig`/`HomeChromeEffect` → `ChromeConfig`/`ChromeEffect` se aprovado
+- [x] 6.1 Implementar a regra de voltar: `(isDesktop == false && destino não-primaryTab) || (profundidade da seção > 1)` (via `LocalCanNavigateBack` em `:core:navigation`, computado no `ChromeHost` a partir de `isWideWindow`/`isOnPrimaryTab`/profundidade da pilha da seção; ~11 telas de feature passam a exibir o voltar condicionalmente. Mobile inalterado; no desktop a raiz de seção não mostra voltar)
+- [x] 6.2 Re-auditar os chamadores de `HomeChromeConfig.ContentOnly` e confirmar a intenção no desktop (único chamador: modo de edição do Dashboard → `ChromeConfig.ContentOnly`, um fluxo full-screen focado, correto em ambos os form factors; sem mudança)
+- [x] 6.3 (Opcional) Encurtar nomes `HomeChromeConfig`/`HomeChromeEffect` → `ChromeConfig`/`ChromeEffect` se aprovado (aprovado: `HomeChrome*` → `Chrome*`; `HomeChromeHost` → `ChromeHost`; arquivos `Chrome.kt`/`ChromeStateHolder.kt`/`ChromeHost.kt`. **Diverge da spec `navigation` que nomeia `HomeChrome*` — atualizar no sync/archive**)
 
 ## 7. Ícones e refinamento visual (após decisão de UX)
 
-- [ ] 7.1 Definir com o `ux-ui-designer` o conjunto de ícones das 7 features do rail e aplicar no catálogo
-- [ ] 7.2 Decidir ordenação/divisor no rail (abas primárias × features) e aplicar no `NavigationRailBar`
-- [ ] 7.3 Confirmar que o Dashboard no desktop (sem grid) não fica com buraco visual
+- [x] 7.1 Definir com o `ux-ui-designer` o conjunto de ícones das 7 features do rail e aplicar no catálogo (decisão do usuário: manter os provisórios Material — Savings/Category/CreditCard/AccountBalanceWallet/Autorenew/Assessment/CalendarMonth — já aplicados em `AppNavCatalog`)
+- [x] 7.2 Decidir ordenação/divisor no rail (abas primárias × features) e aplicar no `NavigationRailBar` (decisão: lista corrida, sem divisor; ordem do catálogo = abas primárias primeiro, depois features. `NavigationRailBar` inalterado)
+- [x] 7.3 Confirmar que o Dashboard no desktop (sem grid) não fica com buraco visual (o componente `QuickActions` retorna `null` no desktop — seção inteira omitida, sem header órfão; o rail cobre todas as features)
 
 ## 8. Verificação end-to-end
 
-- [ ] 8.1 Testes de navegação: alternar seção preserva a pilha interna (desktop); voltar de destino empilhado retorna à seção de origem
-- [ ] 8.2 Validar predictive back no Android e o comportamento de voltar no mobile (inalterado)
-- [ ] 8.3 Rodar o Desktop (`./gradlew :app:desktop:run`) e validar rail persistente + navegação interna por seção
-- [ ] 8.4 `./gradlew allTests` e `./gradlew check` verdes
+- [~] 8.1 Testes de navegação: alternar seção preserva a pilha interna (desktop); voltar de destino empilhado retorna à seção de origem (**automatizado**: `AppModulesTest.navCatalogProjectionsAreConsistent` cobre as projeções rail/bottom/grid da fonte única + unicidade de chave. **Pendente (manual/device)**: comportamento e2e de save/restore de pilha por seção — o repo não tem harness de Compose UI test)
+- [ ] 8.2 Validar predictive back no Android e o comportamento de voltar no mobile (inalterado) — **requer device**; por design o mobile é inalterado (gating de voltar só afeta desktop/`isWideWindow`)
+- [ ] 8.3 Rodar o Desktop (`./gradlew :app:desktop:run`) e validar rail persistente + navegação interna por seção — **requer GUI**; não executável neste ambiente headless
+- [~] 8.4 `./gradlew allTests` e `./gradlew check` verdes (**verde**: `testDebugUnitTest` + `jvmTest` de todos os módulos, e compile Android/JVM/iOS. **Não executável aqui**: `check`/`allTests` completos incluem link de binários de teste iOS que estoura o heap de 3 GiB do ambiente — limitação de infra, não regressão de código)

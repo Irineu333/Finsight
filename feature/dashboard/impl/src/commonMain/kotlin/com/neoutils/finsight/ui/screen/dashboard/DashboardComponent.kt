@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
 
 sealed interface DashboardComponent {
@@ -85,7 +86,7 @@ sealed interface DashboardComponent {
     }
 
     data class QuickActions(
-        val actions: List<QuickActionType>,
+        val actions: List<NavDestination>,
     ) : DashboardComponent {
         override val key = DashboardComponentType.QUICK_ACTIONS.key
     }

@@ -8,7 +8,7 @@ import com.neoutils.finsight.feature.dashboard.api.DashboardRoute
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
 import com.neoutils.finsight.ui.screen.dashboard.DashboardScreen
 
-internal fun NavGraphBuilder.dashboardGraph() {
+fun NavGraphBuilder.dashboardGraph() {
     navigation<DashboardGraph>(
         startDestination = DashboardRoute,
     ) {

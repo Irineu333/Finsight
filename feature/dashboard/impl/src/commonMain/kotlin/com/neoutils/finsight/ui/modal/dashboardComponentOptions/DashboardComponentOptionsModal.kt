@@ -42,12 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.screen.dashboard.*
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 class DashboardComponentOptionsModal(
     private val item: DashboardEditItem,
@@ -723,17 +725,20 @@ private fun QuickActionsConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
+    val navCatalog = koinInject<NavCatalog>()
+    val actions = navCatalog.destinations.filter { !it.primaryTab }
+
     val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
         ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
-    val visibleCount = QuickActionType.entries.count { it.name !in hiddenActions }
+    val visibleCount = actions.count { it.actionKey !in hiddenActions }
 
     DashboardConfigCard {
-        QuickActionType.entries.forEach { action ->
-            val isVisible = action.name !in hiddenActions
+        actions.forEach { action ->
+            val isVisible = action.actionKey !in hiddenActions
             val canToggle = !isVisible || visibleCount > 1
 
             DashboardConfigToggleRow(
-                title = stringUiText(action.title),
+                title = stringResource(action.labelRes),
                 checked = isVisible,
                 enabled = canToggle,
                 supportingText = if (!canToggle) {
@@ -742,7 +747,11 @@ private fun QuickActionsConfigContent(
                     null
                 },
                 onCheckedChange = { checked ->
-                    val newHidden = if (checked) hiddenActions - action.name else hiddenActions + action.name
+                    val newHidden = if (checked) {
+                        hiddenActions - action.actionKey
+                    } else {
+                        hiddenActions + action.actionKey
+                    }
                     onConfigChange(config.toMutableMap().apply {
                         put(QuickActionsConfig.HIDDEN_ACTIONS, newHidden.joinToString(","))
                     })

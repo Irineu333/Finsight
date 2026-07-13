@@ -5,6 +5,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.accounts
+import com.neoutils.finsight.navigation.LocalCanNavigateBack
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -124,7 +125,7 @@ private fun AccountsContent(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    if (LocalCanNavigateBack.current) IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

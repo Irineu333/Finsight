@@ -1,13 +1,16 @@
 package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.*
+import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.model.CreditCardUi
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.getString
 
-class DashboardPreviewFactory {
+class DashboardPreviewFactory(
+    private val navCatalog: NavCatalog,
+) {
     suspend fun createPreview(key: String): DashboardComponentVariant? = when (key) {
         DashboardComponentType.TOTAL_BALANCE.key -> {
             DashboardComponentVariant.TotalBalance.Preview(
@@ -364,7 +367,7 @@ class DashboardPreviewFactory {
         DashboardComponentType.QUICK_ACTIONS.key -> {
             DashboardComponentVariant.QuickActions.Preview(
                 component = DashboardComponent.QuickActions(
-                    actions = QuickActionType.entries,
+                    actions = navCatalog.destinations.filter { !it.primaryTab },
                 ),
                 config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
             )

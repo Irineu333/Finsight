@@ -13,6 +13,8 @@ kotlin {
             implementation(projects.feature.home.api)
             implementation(projects.feature.dashboard.api)
             implementation(projects.feature.transactions.api)
+
+            implementation(libs.compose.material3.adaptive)
         }
     }
 }

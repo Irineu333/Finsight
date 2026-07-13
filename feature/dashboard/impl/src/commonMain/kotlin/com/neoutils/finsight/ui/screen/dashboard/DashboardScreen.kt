@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.feature.support.api.SupportGraph
+import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.dashboard_edit_cancel
@@ -95,15 +96,17 @@ fun DashboardScreen(
                                 Text(text = LocalDateFormats.current.yearMonth.format(uiState.yearMonth))
                             },
                             actions = {
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate(SupportGraph)
+                                if (!isDesktop) {
+                                    IconButton(
+                                        onClick = {
+                                            navController.navigate(SupportGraph)
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.SupportAgent,
+                                            contentDescription = stringResource(Res.string.dashboard_support),
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.SupportAgent,
-                                        contentDescription = stringResource(Res.string.dashboard_support),
-                                    )
                                 }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(

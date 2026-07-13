@@ -52,7 +52,6 @@ class ViewCategoryModal(
     @Composable
     override fun DetailContent() {
         val formatter = LocalCurrencyFormatter.current
-        val manager = LocalModalManager.current
 
         val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(category) }
 
@@ -62,7 +61,7 @@ class ViewCategoryModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 16.dp)
         ) {
 
             MonthSelector(
@@ -122,66 +121,74 @@ class ViewCategoryModal(
                 label = stringResource(Res.string.view_category_transactions_month),
                 value = uiState.transactionCount.toString()
             )
+        }
+    }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+    @Composable
+    override fun DetailActions() {
+        val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewCategoryViewModel> { parametersOf(category) }
+        val uiState by viewModel.uiState.collectAsState()
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedButton(
+                onClick = {
+                    manager.show(DeleteCategoryModal(uiState.category))
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.error,
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = colorScheme.error,
+                )
             ) {
-                OutlinedButton(
-                    onClick = {
-                        manager.show(DeleteCategoryModal(uiState.category))
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = colorScheme.error,
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_category_delete),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_category_delete),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
 
-                OutlinedButton(
-                    onClick = {
-                        manager.show(CategoryFormModal(uiState.category))
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Info,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = Info,
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_category_edit),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            OutlinedButton(
+                onClick = {
+                    manager.show(CategoryFormModal(uiState.category))
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Info,
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = Info,
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_category_edit),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

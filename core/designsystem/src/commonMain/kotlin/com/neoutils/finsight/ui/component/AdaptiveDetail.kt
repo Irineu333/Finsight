@@ -31,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -75,9 +76,19 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
     protected abstract fun DetailContent()
 
     @Composable
-    fun RenderContent() {
+    protected open fun DetailActions() = Unit
+
+    @Composable
+    fun RenderBody() {
         CompositionLocalProvider(LocalViewModelStoreOwner provides this) {
             DetailContent()
+        }
+    }
+
+    @Composable
+    fun RenderActions() {
+        CompositionLocalProvider(LocalViewModelStoreOwner provides this) {
+            DetailActions()
         }
     }
 
@@ -141,7 +152,9 @@ private fun DetailSheetHost(
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    current.RenderContent()
+                    current.RenderBody()
+                    HorizontalDivider(Modifier.padding(horizontal = 24.dp))
+                    current.RenderActions()
                     Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
                 }
             },
@@ -190,12 +203,23 @@ fun DetailPane(
                                 )
                             }
                         }
+                        val scrollState = rememberScrollState()
                         Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState()),
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .verticalScroll(scrollState),
                         ) {
-                            detail.RenderContent()
+                            detail.RenderBody()
+                        }
+                        // Actions pinned at the pane bottom; the shadow appears only while the body
+                        // can still scroll, separating the footer from the content beneath it.
+                        Surface(
+                            color = colorScheme.surface,
+                            shadowElevation = if (scrollState.canScrollForward) 6.dp else 0.dp,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            detail.RenderActions()
                         }
                     }
                 } else {

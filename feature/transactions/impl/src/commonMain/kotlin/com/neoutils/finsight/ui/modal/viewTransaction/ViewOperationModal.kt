@@ -87,7 +87,7 @@ class ViewOperationModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -312,9 +312,22 @@ class ViewOperationModal(
                         }
                     )
                 }
+        }
+    }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+    @Composable
+    override fun DetailActions() {
+        val viewModel = koinViewModel<ViewOperationViewModel> {
+            parametersOf(operation, perspective)
+        }
+        val uiState by viewModel.uiState.collectAsState()
 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp)
+        ) {
             uiState.transaction.invoice?.let { invoice ->
                 when (invoice.status) {
                     Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {

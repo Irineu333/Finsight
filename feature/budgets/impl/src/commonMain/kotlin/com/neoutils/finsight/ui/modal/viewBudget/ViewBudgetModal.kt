@@ -55,7 +55,6 @@ class ViewBudgetModal(
     @Composable
     override fun DetailContent() {
         val formatter = LocalCurrencyFormatter.current
-        val manager = LocalModalManager.current
         val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
         val budget = budgetProgress.budget
@@ -65,7 +64,7 @@ class ViewBudgetModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 16.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -181,60 +180,63 @@ class ViewBudgetModal(
                 drawStopIndicator = {},
                 gapSize = (-4).dp,
             )
+        }
+    }
 
-            Spacer(modifier = Modifier.height(8.dp))
+    @Composable
+    override fun DetailActions() {
+        val manager = LocalModalManager.current
+        val budget = budgetProgress.budget
 
-            HorizontalDivider()
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(
+                onClick = { manager.show(DeleteBudgetModal(budget)) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.error,
+                ),
+                border = BorderStroke(width = 1.dp, color = colorScheme.error),
             ) {
-                OutlinedButton(
-                    onClick = { manager.show(DeleteBudgetModal(budget)) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(width = 1.dp, color = colorScheme.error),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_budget_delete),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_budget_delete),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
 
-                OutlinedButton(
-                    onClick = { manager.show(BudgetFormModal(budget)) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Info,
-                    ),
-                    border = BorderStroke(width = 1.dp, color = Info),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(Res.string.view_budget_edit),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+            OutlinedButton(
+                onClick = { manager.show(BudgetFormModal(budget)) },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Info,
+                ),
+                border = BorderStroke(width = 1.dp, color = Info),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_budget_edit),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                )
             }
         }
     }

@@ -62,7 +62,6 @@ class ViewRecurringModal(
 
     @Composable
     override fun DetailContent() {
-        val manager = LocalModalManager.current
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
         val formatter = LocalCurrencyFormatter.current
@@ -78,7 +77,7 @@ class ViewRecurringModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -191,13 +190,19 @@ class ViewRecurringModal(
                     )
                 }
             }
+        }
+    }
 
-            Spacer(modifier = Modifier.height(8.dp))
+    @Composable
+    override fun DetailActions() {
+        val manager = LocalModalManager.current
 
-            HorizontalDivider()
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

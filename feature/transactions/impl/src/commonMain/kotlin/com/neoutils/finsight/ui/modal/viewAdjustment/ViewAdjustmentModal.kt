@@ -51,7 +51,6 @@ class ViewAdjustmentModal(
     override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current
-        val manager = LocalModalManager.current
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
         val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
@@ -61,7 +60,7 @@ class ViewAdjustmentModal(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -184,34 +183,43 @@ class ViewAdjustmentModal(
                 )
             }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+        }
+    }
 
-            OutlinedButton(
-                onClick = {
-                    manager.show(DeleteTransactionModal(uiState.transaction))
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.error,
-                ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = colorScheme.error,
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(Res.string.view_adjustment_delete_label),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+    @Composable
+    override fun DetailActions() {
+        val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        OutlinedButton(
+            onClick = {
+                manager.show(DeleteTransactionModal(uiState.transaction))
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colorScheme.error,
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = colorScheme.error,
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = stringResource(Res.string.view_adjustment_delete_label),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 

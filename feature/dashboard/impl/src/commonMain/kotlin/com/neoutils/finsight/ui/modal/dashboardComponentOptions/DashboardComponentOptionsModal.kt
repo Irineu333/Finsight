@@ -13,7 +13,6 @@ import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material.icons.rounded.ViewHeadline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -28,7 +27,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,16 +54,17 @@ class DashboardComponentOptionsModal(
     private val onAction: (DashboardAction) -> Unit,
 ) : AdaptiveModal() {
 
+    // Held on the modal instance (stable across the sheet↔pane breakpoint) so the body and the
+    // pinned actions footer, composed separately by the host, share the same edit state.
+    private var config by mutableStateOf(item.config)
+
     @Composable
     override fun DetailContent() {
-        var config by remember { mutableStateOf(item.config) }
-        val detailController = LocalDetailPaneController.current
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -260,39 +259,45 @@ class DashboardComponentOptionsModal(
 
                 else -> Unit
             }
+        }
+    }
 
-            HorizontalDivider()
+    @Composable
+    override fun DetailActions() {
+        val detailController = LocalDetailPaneController.current
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(
+                onClick = { detailController.dismiss() },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
             ) {
-                OutlinedButton(
-                    onClick = { detailController.dismiss() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.component_config_cancel),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                Text(
+                    text = stringResource(Res.string.component_config_cancel),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
 
-                Button(
-                    onClick = {
-                        onAction(DashboardAction.UpdateComponentConfig(item.key, config))
-                        detailController.dismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.component_config_confirm),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+            Button(
+                onClick = {
+                    onAction(DashboardAction.UpdateComponentConfig(item.key, config))
+                    detailController.dismiss()
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.component_config_confirm),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }

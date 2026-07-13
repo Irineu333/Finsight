@@ -23,9 +23,10 @@ Existem 6 superfícies adaptativas. Cinco (`ViewOperationModal`, `ViewAdjustment
 ## Decisions
 
 ### D1 — Slot de ações separado no `AdaptiveModal`
-Adicionar `@Composable protected open fun DetailActions() {}` (default vazio) ao lado do já existente `DetailContent()`. `RenderContent()` continua provendo `LocalViewModelStoreOwner`; a casca decide como arranjar corpo e ações.
+Adicionar `@Composable protected open fun DetailActions() = Unit` (default vazio) ao lado do já existente `DetailContent()`. `RenderBody()`/`RenderActions()` provêm `LocalViewModelStoreOwner`; a casca decide como arranjar corpo e ações. Como todas as superfícies atuais implementam ações, o rodapé é sempre renderizado — sem flag de presença.
 
 - **Por que dois slots (e não um `DetailScaffold` com closures):** decisão do usuário; espelha o slot abstrato já existente (`ColumnScope.BottomSheetContent`), é mais descobrível e mantém o layout na casca (host), sem cada modal ter que arranjar corpo/rodapé.
+- **Por que método (e não `(@Composable () -> Unit)?` nulável):** manter a simetria com `DetailContent()` (também método).
 - **Alternativa descartada:** `DetailScaffold` reutilizável usado por dentro de cada modal com corpo/rodapé por closure — resolveria o estado compartilhado sem hoisting, mas empurra o arranjo para dentro de cada feature.
 
 ### D2 — Estado compartilhado corpo↔ações

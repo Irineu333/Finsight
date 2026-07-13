@@ -25,6 +25,6 @@
 ## 5. Verificação
 
 - [x] 5.1 Confirmar que `:app:shared` (`App`, `AppNavHost`), rotas, grafos, `NavigationItem` e Koin permanecem intocados
-- [ ] 5.2 Rodar o app no desktop e validar: rail à esquerda com FAB no header, Support ausente, e bottom bar ao estreitar a janela abaixo de 600dp
-- [ ] 5.3 Rodar o app no mobile e validar que o comportamento (bottom bar, FAB central, Support presente) não regrediu
-- [ ] 5.4 `./gradlew check`
+- [x] 5.2 Rodar o app no desktop e validar: rail à esquerda com FAB no header, Support ausente, e bottom bar ao estreitar a janela abaixo de 600dp
+- [x] 5.3 Rodar o app no mobile e validar que o comportamento (bottom bar, FAB central, Support presente) não regrediu
+- [x] 5.4 `./gradlew check`

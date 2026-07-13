@@ -136,8 +136,14 @@ private fun DetailSheetHost(
                 skipPartiallyExpanded = true
             ),
             content = {
-                current.RenderContent()
-                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    current.RenderContent()
+                    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+                }
             },
             contentWindowInsets = {
                 WindowInsets.safeDrawing.only(WindowInsetsSides.Top)

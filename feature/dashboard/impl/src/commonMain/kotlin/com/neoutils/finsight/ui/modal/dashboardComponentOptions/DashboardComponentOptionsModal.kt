@@ -4,9 +4,7 @@ package com.neoutils.finsight.ui.modal.dashboardComponentOptions
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
@@ -44,8 +42,8 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.screen.dashboard.*
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
@@ -56,18 +54,16 @@ class DashboardComponentOptionsModal(
     private val accounts: List<Account>,
     private val creditCards: List<CreditCard>,
     private val onAction: (DashboardAction) -> Unit,
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun DetailContent() {
         var config by remember { mutableStateOf(item.config) }
-        val scrollState = rememberScrollState()
-        val modalManager = LocalModalManager.current
+        val detailController = LocalDetailPaneController.current
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -272,7 +268,7 @@ class DashboardComponentOptionsModal(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedButton(
-                    onClick = { modalManager.dismiss() },
+                    onClick = { detailController.dismiss() },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                 ) {
@@ -286,7 +282,7 @@ class DashboardComponentOptionsModal(
                 Button(
                     onClick = {
                         onAction(DashboardAction.UpdateComponentConfig(item.key, config))
-                        modalManager.dismiss()
+                        detailController.dismiss()
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),

@@ -5,6 +5,6 @@ import com.neoutils.finsight.ui.component.ModalManager
 import org.koin.dsl.module
 
 val designsystemModule = module {
-    single { ModalManager() }
     single { DetailPaneController() }
+    single { ModalManager(get()) }
 }

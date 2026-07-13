@@ -7,9 +7,12 @@ import com.neoutils.finsight.domain.analytics.event.SendSupportReply
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.feature.support.api.ISupportRepository
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,8 +26,21 @@ class SupportIssueViewModel(
 
     private val replyText = MutableStateFlow("")
 
+    private val _events = Channel<SupportIssueEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
+    private var issueLoaded = false
+
+    private val issueFlow = supportRepository
+        .observeIssueById(issueId)
+        .onEach { issue ->
+            // The issue vanished after being loaded (deleted) → leave the screen instead of hanging on the spinner.
+            if (issue != null) issueLoaded = true
+            else if (issueLoaded) _events.send(SupportIssueEvent.IssueDeleted)
+        }
+
     val uiState = combine(
-        supportRepository.observeIssueById(issueId),
+        issueFlow,
         supportRepository.observeMessages(issueId),
         replyText,
     ) { issue, messages, replyText ->

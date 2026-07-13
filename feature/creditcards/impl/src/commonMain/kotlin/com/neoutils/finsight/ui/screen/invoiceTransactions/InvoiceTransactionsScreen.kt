@@ -105,6 +105,14 @@ fun InvoiceTransactionsScreen(
         analytics.logScreenView("invoice_transactions")
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                InvoiceTransactionsEvent.CreditCardDeleted -> onNavigateBack()
+            }
+        }
+    }
+
     InvoiceTransactionsContent(
         uiState = uiState,
         onAction = viewModel::onAction,

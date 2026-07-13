@@ -48,7 +48,7 @@ class AccountsViewModel(
         accounts,
         selectedAccountIndex,
     ) { accounts, index ->
-        accounts.getOrNull(index) ?: accounts.first()
+        accounts.getOrNull(index)
     }
 
     private val operations = operationRepository.observeAllOperations()
@@ -57,6 +57,8 @@ class AccountsViewModel(
         selectedAccount,
         operations,
     ) { account, operations ->
+        // No account selected (e.g. all accounts deleted with the screen open) → no operations.
+        account ?: return@combine emptyList()
         val perspective = OperationPerspective.Account(accountId = account.id)
         operations.mapNotNull { operation ->
             perspective.resolve(

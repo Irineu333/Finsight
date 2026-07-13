@@ -52,6 +52,14 @@ fun SupportIssueScreen(
         analytics.logScreenView("support_issue")
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                SupportIssueEvent.IssueDeleted -> onNavigateBack()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

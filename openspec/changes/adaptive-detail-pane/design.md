@@ -42,7 +42,7 @@ O eixo que a feature controla é **qual mecanismo** (detalhe vs modal), não **q
 
 Nova base `AdaptiveModal` em `:core:designsystem` que expõe o **conteúdo puro** do detalhe (`@Composable DetailContent()`), desacoplado do recipiente. Um único `DetailHost` renderiza esse conteúdo nas duas superfícies:
 - **estreito** → dentro de um `ModalBottomSheet` (o wrapper de sheet, incluindo insets e `skipPartiallyExpanded`, escrito uma vez no `DetailHost`);
-- **largo** → dentro de uma coluna fixa à direita, com header (título + X) e o `DetailContent` rolável.
+- **largo** → dentro de uma coluna fixa à direita, com um header enxuto (apenas o botão X, alinhado à direita, sem título nem divisor) e o `DetailContent` rolável.
 
 `AdaptiveModal` mantém `ViewModelStoreOwner` (provendo `LocalViewModelStoreOwner`), então `koinViewModel()` dentro do detalhe resolve para o store escopado ao objeto — idêntico nas duas superfícies. Como é o **mesmo objeto** no `current` do controller, cruzar o breakpoint transforma sheet ⇄ painel sem perder estado (mesma filosofia do commit `4fd3954b`).
 
@@ -71,4 +71,4 @@ O `DetailHost` no modo largo é plugado como **irmão de `content(padding)`** no
 - **Breakpoint do painel:** entra no mesmo Medium/600dp do rail, ou num breakpoint mais alto (Expanded/≥840dp) para evitar conteúdo+painel apertados? (maior impacto visual)
 - **Largura do painel:** valor fixo (ex.: 360–400dp) vs fração da largura; comportamento em telas ultra-largas.
 - **Telas sem detalhe:** manter empty-state reservado em toda tela larga, ou esconder o painel em seções que nunca populam detalhe?
-- **Título/close do painel:** de onde vem o título do header do painel — cada `AdaptiveModal` expõe um `title`, ou o header é responsabilidade do próprio `DetailContent`?
+- ~~**Título/close do painel:** de onde vem o título do header do painel — cada `AdaptiveModal` expõe um `title`, ou o header é responsabilidade do próprio `DetailContent`?~~ **Resolvido:** o header do painel não tem título nem divisor — apenas o botão X; cada `DetailContent` já traz seu próprio cabeçalho.

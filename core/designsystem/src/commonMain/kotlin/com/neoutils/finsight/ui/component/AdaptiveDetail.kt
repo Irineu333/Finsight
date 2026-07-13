@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,9 +65,6 @@ val LocalDetailPaneController = compositionLocalOf<DetailPaneController> {
 abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
 
     override val viewModelStore = ViewModelStore()
-
-    @Composable
-    abstract fun title(): String
 
     @Composable
     protected abstract fun DetailContent()
@@ -163,19 +159,13 @@ fun DetailPane(
             if (current != null) {
                 key(current.key) {
                     Column(Modifier.fillMaxSize()) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                        Box(
+                            contentAlignment = Alignment.CenterEnd,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 24.dp, end = 12.dp)
+                                .padding(end = 12.dp)
                                 .padding(vertical = 8.dp),
                         ) {
-                            Text(
-                                text = current.title(),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colorScheme.onSurface,
-                            )
                             IconButton(onClick = { controller.dismiss() }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -184,12 +174,10 @@ fun DetailPane(
                                 )
                             }
                         }
-                        HorizontalDivider()
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(top = 16.dp),
+                                .verticalScroll(rememberScrollState()),
                         ) {
                             current.RenderContent()
                         }

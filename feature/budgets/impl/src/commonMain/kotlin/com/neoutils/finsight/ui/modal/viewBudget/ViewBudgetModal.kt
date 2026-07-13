@@ -46,15 +46,11 @@ import com.neoutils.finsight.resources.view_budget_limit_label
 import com.neoutils.finsight.resources.view_budget_percentage_label
 import com.neoutils.finsight.resources.view_budget_remaining_label
 import com.neoutils.finsight.resources.view_budget_spent_label
-import com.neoutils.finsight.resources.view_budget_title
 import org.jetbrains.compose.resources.stringResource
 
 class ViewBudgetModal(
     private val budgetProgress: BudgetProgress,
 ) : AdaptiveModal() {
-
-    @Composable
-    override fun title() = stringResource(Res.string.view_budget_title)
 
     @Composable
     override fun DetailContent() {

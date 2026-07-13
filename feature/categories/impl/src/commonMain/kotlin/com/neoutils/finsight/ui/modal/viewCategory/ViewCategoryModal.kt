@@ -35,7 +35,6 @@ import com.neoutils.finsight.resources.view_category_delete
 import com.neoutils.finsight.resources.view_category_edit
 import com.neoutils.finsight.resources.view_category_total_received
 import com.neoutils.finsight.resources.view_category_total_spent
-import com.neoutils.finsight.resources.view_category_title
 import com.neoutils.finsight.resources.view_category_transactions_month
 import com.neoutils.finsight.resources.view_category_type_expense
 import com.neoutils.finsight.resources.view_category_type_income
@@ -49,9 +48,6 @@ import kotlin.uuid.Uuid
 class ViewCategoryModal(
     private val category: Category
 ) : AdaptiveModal() {
-
-    @Composable
-    override fun title() = stringResource(Res.string.view_category_title)
 
     @Composable
     override fun DetailContent() {

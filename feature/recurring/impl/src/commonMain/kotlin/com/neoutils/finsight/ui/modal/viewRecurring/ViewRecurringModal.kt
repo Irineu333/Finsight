@@ -41,7 +41,6 @@ import com.neoutils.finsight.resources.view_recurring_edit
 import com.neoutils.finsight.resources.view_recurring_reactivate
 import com.neoutils.finsight.resources.view_recurring_status_label
 import com.neoutils.finsight.resources.view_recurring_stop
-import com.neoutils.finsight.resources.view_recurring_title
 import com.neoutils.finsight.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
@@ -60,9 +59,6 @@ import org.jetbrains.compose.resources.stringResource
 class ViewRecurringModal(
     private val recurring: Recurring,
 ) : AdaptiveModal() {
-
-    @Composable
-    override fun title() = stringResource(Res.string.view_recurring_title)
 
     @Composable
     override fun DetailContent() {

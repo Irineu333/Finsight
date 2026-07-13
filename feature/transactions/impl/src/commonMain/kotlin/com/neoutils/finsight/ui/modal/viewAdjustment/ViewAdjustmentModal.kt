@@ -48,9 +48,6 @@ class ViewAdjustmentModal(
 ) : AdaptiveModal() {
 
     @Composable
-    override fun title() = stringResource(Res.string.view_adjustment_title)
-
-    @Composable
     override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current

@@ -33,10 +33,16 @@
 ## 5. Verificação
 
 - [x] 5.1 `./gradlew check` e `./gradlew allTests` passam — **compilação de todos os targets (JVM/Desktop + Android + Kotlin/Native iOS) OK e testes unitários Android verdes**; `allTests` completo não finaliza neste ambiente por falha pré-existente no link nativo iOS (`ld: framework 'FirebaseCore' not found`, pods não instalados), alheia a esta mudança
-- [ ] 5.2 Desktop largo: abrir cada um dos 5 detalhes → aparecem no painel à direita; empty-state quando nada selecionado; X fecha — **verificação manual pendente**
-- [ ] 5.3 Detalhe sobre detalhe substitui (ex.: operação → recorrência vinculada); sem "voltar" interno — **verificação manual pendente**
-- [ ] 5.4 Redimensionar cruzando o breakpoint com detalhe aberto: sheet ⇄ painel sem reabrir nem perder estado — **verificação manual pendente**
-- [ ] 5.5 Caso empilhado: em janela larga, abrir formulário (ex.: editar) a partir do detalhe → sheet de overlay por cima do painel, detalhe permanece visível — **verificação manual pendente**
-- [ ] 5.6 Janela estreita: os 5 detalhes continuam como bottom sheet, sem regressão — **verificação manual pendente**
-- [ ] 5.7 Formulários e confirmações permanecem bottom sheet em qualquer largura — **verificação manual pendente**
+- [x] 5.2 Desktop largo: abrir cada um dos 5 detalhes → aparecem no painel à direita; empty-state quando nada selecionado; X fecha — **verificado manualmente**
+- [x] 5.3 Detalhe sobre detalhe substitui (ex.: operação → recorrência vinculada); sem "voltar" interno — **verificado manualmente**
+- [x] 5.4 Redimensionar cruzando o breakpoint com detalhe aberto: sheet ⇄ painel sem reabrir nem perder estado — **verificado manualmente**
+- [x] 5.5 Caso empilhado: em janela larga, abrir formulário (ex.: editar) a partir do detalhe → sheet de overlay por cima do painel, detalhe permanece visível — **verificado manualmente**
+- [x] 5.6 Janela estreita: os 5 detalhes continuam como bottom sheet, sem regressão — **verificado manualmente**
+- [x] 5.7 Formulários e confirmações permanecem bottom sheet em qualquer largura — **verificado manualmente**
 - [x] 5.8 `openspec validate adaptive-detail-pane` continua válido
+
+## 6. Refinamento do header do painel
+
+- [x] 6.1 Remover o **título** e o **divisor horizontal** do header do painel largo (`DetailPane` em `AdaptiveDetail.kt`) — o header passa a ser apenas o botão **X** alinhado à direita; revertida a decisão 1.1 de expor `title()`
+- [x] 6.2 Remover o abstract `AdaptiveModal.title()` e os 5 overrides `view*` (transactions/operation+adjustment, categories, budgets, recurring), com os imports de recurso `view_*_title` órfãos
+- [x] 6.3 Compilação Android debug dos módulos afetados OK; spec inalterada (não exigia título/divisor — só o X, empty-state e o arranjo de três colunas, todos mantidos)

@@ -62,9 +62,6 @@ class ViewOperationModal(
     )
 
     @Composable
-    override fun title() = stringResource(Res.string.view_operation_title)
-
-    @Composable
     override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current

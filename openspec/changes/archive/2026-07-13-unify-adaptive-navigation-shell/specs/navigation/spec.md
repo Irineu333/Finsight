@@ -1,8 +1,8 @@
 ## REMOVED Requirements
 
 ### Requirement: NavHost único com subgrafo de abas
-**Reason**: O subgrafo `HomeGraph` existia apenas para agrupar Dashboard e Transactions e permitir `popUpTo(DashboardRoute)` na troca de abas. Com back stacks por seção (`saveState`/`restoreState`), o agrupamento e o veto a `saveState` deixam de fazer sentido. Substituído por "NavHost único achatado com back stacks por seção".
-**Migration**: `HomeGraph`/`homeGraph()` são removidos; `dashboardGraph()` e `transactionsGraph()` (que já existem) passam a ser invocados direto pelo `AppNavHost`; `startDestination` passa a `DashboardGraph`. A troca de seção passa a usar `popUpTo(<start>){saveState=true}; restoreState=true; launchSingleTop=true`.
+**Reason**: O subgrafo `HomeGraph` existia apenas para agrupar Dashboard e Transactions e permitir `popUpTo(DashboardRoute)` na troca de abas. Com o `AppNavHost` achatado, o agrupamento deixa de fazer sentido. Substituído por "NavHost único achatado com troca de seção normalizada".
+**Migration**: `HomeGraph`/`homeGraph()` são removidos; `dashboardGraph()` e `transactionsGraph()` (que já existem) passam a ser invocados direto pelo `AppNavHost`; `startDestination` passa a `DashboardGraph`. A troca de seção passa a usar `popUpTo(<start>){inclusive=false}; launchSingleTop=true` (sem `saveState`/`restoreState`, incompatíveis com as rotas parametrizadas onipresentes).
 
 ### Requirement: Chrome do Home derivada do destino e da tela
 **Reason**: A chrome deixa de ser "derivada de pertencer a `HomeGraph`" e passa a ser uma shell de navegação adaptativa com duas topologias parametrizadas (mobile: 2 abas; desktop: todos os graphs). Substituída por "Shell de navegação adaptativa unificada".
@@ -10,16 +10,16 @@
 
 ## ADDED Requirements
 
-### Requirement: NavHost único achatado com back stacks por seção
-O app SHALL ter exatamente um `NavHost`, sem subgrafo agregador de abas. Todos os grafos de feature — incluindo `dashboardGraph()` e `transactionsGraph()` — SHALL ser destinos de primeiro nível invocados diretamente pelo `AppNavHost`, e o `startDestination` SHALL ser `DashboardGraph`. Um `NavHost` aninhado MUST NOT ser introduzido. A navegação SHALL se resolver em duas primitivas: **(1)** navegar para um **item do seletor** SHALL usar `popUpTo(<start destination do host>){ saveState = true }; launchSingleTop = true; restoreState = true`, preservando a pilha interna de cada seção (multiple back stacks); **(2)** navegar para qualquer outro destino SHALL ser um `navigate` comum, empilhando na seção corrente. Um destino empilhado a partir de um widget de outra seção (ex.: transações filtradas abertas de um widget do Dashboard) SHALL empilhar **na seção de origem**, de modo que nenhuma seção guarde destinos de outra em seu estado salvo.
+### Requirement: NavHost único achatado com troca de seção normalizada
+O app SHALL ter exatamente um `NavHost`, sem subgrafo agregador de abas. Todos os grafos de feature — incluindo `dashboardGraph()` e `transactionsGraph()` — SHALL ser destinos de primeiro nível invocados diretamente pelo `AppNavHost`, e o `startDestination` SHALL ser `DashboardGraph`. Um `NavHost` aninhado MUST NOT ser introduzido. A navegação SHALL se resolver em dois casos: **(1)** selecionar um **item do seletor** (rail no desktop, bottom bar no mobile) SHALL usar `popUpTo(<start destination do host>){ inclusive = false }; launchSingleTop = true`, normalizando a pilha para `[Dashboard, seção]` a cada seleção; **(2)** navegar para qualquer outro destino SHALL ser um `navigate` comum, empilhando na seção corrente. `saveState`/`restoreState` (multiple back stacks) MUST NOT ser usados: a semântica de estado salvo por seção é incompatível com as rotas parametrizadas onipresentes (`AccountsRoute(id)`, `TransactionsRoute(filtro)`, `CreditCardsRoute(id)` — `restoreState` ignora argumentos) e, misturada com o `navigate()` comum de modais compartilhados, tornava o Dashboard inalcançável. Um destino empilhado a partir de um widget (ex.: transações filtradas abertas de um widget do Dashboard) SHALL empilhar **na seção corrente** via `navigate` comum, com o voltar retornando ao Dashboard.
 
-#### Scenario: Alternar seção preserva a pilha interna
-- **WHEN** o usuário navega dentro da seção Cartões até um sub-destino, alterna para a seção Contas pelo seletor e depois volta para Cartões
-- **THEN** a seção Cartões reexibe o sub-destino em que estava, pois seu back stack foi salvo e restaurado
+#### Scenario: Seleção do seletor normaliza a pilha
+- **WHEN** o usuário navega dentro de uma seção até um sub-destino e depois seleciona outra seção no rail/bottom bar
+- **THEN** a pilha é normalizada para `[Dashboard, nova seção]` (`popUpTo(start){inclusive=false}; launchSingleTop`), de modo que o Dashboard permanece sempre alcançável pelo voltar
 
 #### Scenario: Destino empilhado a partir de um widget
 - **WHEN** o usuário abre transações filtradas a partir de um widget do Dashboard
-- **THEN** o destino empilha na pilha da seção Dashboard, o voltar retorna ao Dashboard, e a seção Transactions mantém sua própria pilha intacta
+- **THEN** o destino empilha na pilha corrente via `navigate` comum e o voltar retorna ao Dashboard
 
 #### Scenario: Contagem de NavHost
 - **WHEN** o código do app é inspecionado
@@ -30,7 +30,7 @@ O app SHALL ter exatamente um `NavHost`, sem subgrafo agregador de abas. Todos o
 - **THEN** a navegação ocorre no `NavHost` raiz, sem necessidade de acesso a um controller aninhado
 
 ### Requirement: Shell de navegação adaptativa unificada
-A shell que hospeda a navegação primária e o FAB SHALL residir em `feature:shell:impl`, exposta como um composable (ex.: `HomeChromeHost`) que recebe o conteúdo do app como parâmetro e é invocada pelo `App()` do `:app:shared`, permanecendo por fora do `NavHost`. A shell SHALL operar sobre uma primitiva única parametrizada por plataforma, diferindo apenas em (1) quais destinos são membros do seletor e (2) onde o seletor é renderizado. O arranjo SHALL ser adaptativo à largura da janela via `currentWindowAdaptiveInfo().windowSizeClass`: em janelas com largura ≥ Medium (600dp) o seletor SHALL ser uma `NavigationRail` à esquerda, contendo **todos os destinos** do catálogo exceto os `mobileOnly`, com o FAB no slot `header`; em janelas mais estreitas o seletor SHALL ser uma bottom bar contendo apenas os destinos `primaryTab`, com o FAB central (`FabPosition.Center`), e os demais destinos permanecem alcançáveis por afordâncias empilhadas (grid). Os destinos do seletor SHALL vir do catálogo único (`NavCatalog`), e a seleção do item ativo SHALL ser determinada por correspondência de tipo da rota (`hasRoute<T>()`) sobre a `hierarchy` do destino, destacando o item raiz mesmo em sub-destinos. O contrato de chrome — `HomeChromeConfig`, `HomeChromeController`, `LocalHomeChromeController` e `HomeChromeEffect` — SHALL residir em `feature:shell:api`, e sua implementação (`HomeChromeStateHolder`) em `feature:shell:impl`. A visibilidade da chrome SHALL ser: no rail (desktop), persistente, oculta apenas quando a tela publica `HomeChromeConfig.ContentOnly`; na bottom bar (mobile), visível quando o destino é `primaryTab` e a tela não publica `ContentOnly`. A ação primária do FAB SHALL ser obtida por entry point e MUST NOT instanciar um modal de outro `impl`.
+A shell que hospeda a navegação primária e o FAB SHALL residir em `feature:shell:impl`, exposta como um composable (`ChromeHost`) que recebe o conteúdo do app como parâmetro e é invocada pelo `App()` do `:app:shared`, permanecendo por fora do `NavHost`. A shell SHALL operar sobre uma primitiva única parametrizada por plataforma, diferindo apenas em (1) quais destinos são membros do seletor e (2) onde o seletor é renderizado. O arranjo SHALL ser adaptativo à largura da janela via `currentWindowAdaptiveInfo().windowSizeClass`: em janelas com largura ≥ Medium (600dp) o seletor SHALL ser uma `NavigationRail` à esquerda, contendo **todos os destinos** do catálogo exceto os `mobileOnly`, com o FAB no slot `header`; em janelas mais estreitas o seletor SHALL ser uma bottom bar contendo apenas os destinos `primaryTab`, com o FAB central (`FabPosition.Center`), e os demais destinos permanecem alcançáveis por afordâncias empilhadas (grid). Os destinos do seletor SHALL vir do catálogo único (`NavCatalog`), e a seleção do item ativo SHALL ser determinada por correspondência de tipo da rota (`hasRoute<T>()`) sobre a `hierarchy` do destino, com fallback pelo dono do *start destination* da seção quando o sub-destino não tem rota no catálogo, destacando o item raiz mesmo em sub-destinos. O contrato de chrome — `ChromeConfig`, `ChromeController`, `LocalChromeController` e `ChromeEffect` — SHALL residir em `feature:shell:api`, e sua implementação (`ChromeStateHolder`) em `feature:shell:impl`. A visibilidade da chrome SHALL ser: no rail (desktop), persistente, oculta apenas quando a tela publica `ChromeConfig.ContentOnly`; na bottom bar (mobile), visível quando o destino é `primaryTab` e a tela não publica `ContentOnly`. O botão voltar SHALL ser decidido por cada tela via o helper `isWideWindow()` (`:core:designsystem`) — telas host de seção o ocultam no desktop, sub-features sempre o exibem —, sem estado global de navegação na shell. A ação primária do FAB SHALL ser obtida por entry point e MUST NOT instanciar um modal de outro `impl`.
 
 #### Scenario: Desktop usa rail persistente com todas as seções
 - **WHEN** a largura da janela é ≥ Medium (600dp)
@@ -45,7 +45,7 @@ A shell que hospeda a navegação primária e o FAB SHALL residir em `feature:sh
 - **THEN** a bottom bar é ocultada e a tela é exibida em modo empilhado com botão voltar
 
 #### Scenario: Tela publica ContentOnly
-- **WHEN** a tela em foco publica `HomeChromeConfig.ContentOnly` via `HomeChromeEffect`
+- **WHEN** a tela em foco publica `ChromeConfig.ContentOnly` via `ChromeEffect`
 - **THEN** o seletor (rail ou bottom bar) e o FAB são ocultados em ambos os form factors
 
 #### Scenario: Item selecionado em sub-destino
@@ -79,7 +79,7 @@ O projeto SHALL prover um módulo `:core:navigation` contendo exclusivamente o c
 
 #### Scenario: Core de UI inspecionado
 - **WHEN** `:core:ui` é inspecionado
-- **THEN** ele não contém `HomeChromeConfig`, `HomeChromeEffect`, `LocalHomeChromeController` nem qualquer outro tipo que nomeie uma feature; esses tipos residem em `feature:shell:api`
+- **THEN** ele não contém `ChromeConfig`, `ChromeEffect`, `LocalChromeController` nem qualquer outro tipo que nomeie uma feature; esses tipos residem em `feature:shell:api`
 
 ### Requirement: Grafo de navegação provido por cada feature
 Cada feature navegável SHALL expor no seu `impl` uma única função de extensão `NavGraphBuilder.<nome>Graph()` que registra todos os seus destinos, obtendo o `NavHostController` de `LocalNavController` e MUST NOT recebê-lo como parâmetro. Essa função SHALL agrupar seus destinos em `navigation<<Name>Graph>(startDestination = <primeira tela>)`, sem exceção — uma feature de tela única também declara seu subgrafo. Toda rota que nomeia um nó de grafo SHALL ser nomeada `<Nome>Graph` e implementar `NavGraphRoute`; rotas que nomeiam uma tela SHALL ser nomeadas `<Nome>Route` e implementar `NavRoute`. Um campo que armazena uma rota MUST NOT ser tipado como `Any`. O `<Nome>Graph` SHALL residir na `api` apenas quando outro módulo navega até ele; caso contrário reside no `impl`, junto da extensão. O `:app:shared` SHALL compor o `NavHost` invocando as funções de grafo de **todas** as features de primeiro nível — incluindo `dashboardGraph()` e `transactionsGraph()` — e MUST NOT registrar destinos de features diretamente nem declarar `navigation<>`. O padrão de uma feature hospedar o grafo de outra via `register()` no entry point permanece disponível, mas nenhuma feature de primeiro nível é hospedada por outra: Dashboard e Transactions são invocados diretamente pelo `AppNavHost`, como as demais.

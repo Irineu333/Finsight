@@ -34,6 +34,8 @@ O problema: no desktop o rail deveria ser uma **sidebar persistente** que altern
 
 ### Decisão 1 — Uma primitiva: "navegar para seção" vs "navegar para sub-destino"
 
+> **SUPERADA na fase 9 (ver tasks 9.5/9.6).** `saveState`/`restoreState` (multiple back stacks) mostrou-se incompatível com as rotas parametrizadas onipresentes (`AccountsRoute(id)`, `TransactionsRoute(filtro)`, `CreditCardsRoute(id)` — `restoreState` ignora argumentos) e, misturada com o `navigate()` comum de modais compartilhados, deixava o Dashboard inalcançável. A troca de seção passou a `popUpTo(<start>){inclusive=false}; launchSingleTop`, que normaliza a pilha para `[Dashboard, seção]` a cada seleção; **não há preservação de pilha por seção**. A abstração `navigateToSection` foi removida e o idioma inlined no seletor do shell (único consumidor). O texto abaixo fica como registro do desenho original. A spec `navigation` reflete a semântica final.
+
 Toda navegação do app se resolve em dois casos:
 
 ```kotlin
@@ -123,6 +125,8 @@ grid (mobile)     = destinations.filter { !it.primaryTab }          // 8 quick a
 
 ### Decisão 6 — Regra de botão voltar derivada do back stack
 
+> **SUPERADA na fase 9 (ver task 9.4).** O cálculo centralizado no `ChromeHost` via `LocalCanNavigateBack` foi removido: o valor global mudava no instante da navegação e vazava para a tela que estava saindo, causando flicker do ícone. Cada tela passou a decidir sozinha via o helper `isWideWindow()` (`:core:designsystem`) — telas host de seção ocultam o voltar no desktop; sub-features sempre o exibem. Sem estado global de navegação. O texto abaixo fica como registro do desenho original.
+
 ```
 mostra voltar  ⟺  (isDesktop == false && destino não é primaryTab)
                    || (profundidade da pilha da seção corrente > 1)
@@ -172,6 +176,6 @@ Rollback: cada passo é um commit isolado; reverter o passo 5/6 restaura o model
 - **Ícones das 7 features** — qual conjunto (Material vs custom)? Decisão de UX; sugerido passar pelo `ux-ui-designer` antes do passo 7.
 - **Divisor/ordenação no rail** — separar visualmente as 2 abas primárias das 7 features, ou lista corrida? UX.
 - **Descer o contrato de chrome para `:core`?** — adiado. Mantido em `shell:api` por ora; mover para `:core:navigation` seria limpeza futura (exige confirmar que `:core:navigation` pode depender de `StringResource`/`ImageVector` sem violar "sem enumerar features").
-- **Nomes** — manter `HomeChromeConfig`/`HomeChromeEffect` ou encurtar para `ChromeConfig`/`ChromeEffect` ao renomear o módulo?
+- **Nomes** — ~~manter `HomeChromeConfig`/`HomeChromeEffect` ou encurtar para `ChromeConfig`/`ChromeEffect` ao renomear o módulo?~~ **Resolvido (task 6.3): encurtado para `Chrome*` (`ChromeConfig`/`ChromeController`/`LocalChromeController`/`ChromeEffect`/`ChromeStateHolder`); composable `HomeChromeHost` → `ChromeHost`.**
 - **`ContentOnly` no desktop** — enumerar exatamente quais telas devem esconder o rail (edição do Dashboard? seletor de ícone? modais já são overlay).
 - **Grid no desktop** — some totalmente ou o Dashboard ganha outro widget no lugar? A proposta diz "rail substitui o grid"; confirmar que o Dashboard no desktop não fica com um buraco visual.

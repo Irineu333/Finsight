@@ -16,6 +16,7 @@
 - [x] 3.3 Reutilizar `NavigationItem.entries`, `selectedItem` e o `onItemSelected` (mesmo `navigate` com `popUpTo(DashboardRoute)` + `launchSingleTop`) nos dois arranjos
 - [x] 3.4 Aplicar a visibilidade da chrome (`HomeChromeConfig` via `updateTransition`/`AnimatedVisibility`) ao rail e ao FAB no modo largo, com transição adequada ao eixo horizontal
 - [x] 3.5 Verificar que a troca entre rail e bottom bar ao cruzar o breakpoint preserva o `NavController` e a pilha
+- [x] 3.6 Fix: cruzar o breakpoint resetava a navegação para o Dashboard — os dois ramos (`Row`/`Scaffold`) moviam o `content` (NavHost) na árvore de composição. Unificado em um único `Scaffold` sempre presente, com a chrome (rail vs bottom bar) como irmãos condicionais e `content(padding)` num call site estável, preservando a identidade do `NavHost`.
 
 ## 4. Ocultar features mobile-only no desktop
 

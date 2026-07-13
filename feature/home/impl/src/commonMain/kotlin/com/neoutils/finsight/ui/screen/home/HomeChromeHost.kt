@@ -16,6 +16,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -97,38 +98,10 @@ fun HomeChromeHost(
     }
 
     CompositionLocalProvider(LocalHomeChromeController provides homeChromeController) {
-        if (isWideWindow) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                homeChromeTransition.AnimatedVisibility(
-                    visible = { it.isBottomBarVisible },
-                    enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
-                    exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
-                ) {
-                    NavigationRailBar(
-                        items = NavigationItem.entries,
-                        selectedItem = selectedItem,
-                        onItemSelected = onItemSelected,
-                        header = {
-                            homeChromeTransition.AnimatedVisibility(
-                                visible = { it.isFloatingActionButtonVisible },
-                                enter = fadeIn(),
-                                exit = fadeOut(),
-                            ) {
-                                AddTransactionFab(onClick = onAddTransaction)
-                            }
-                        },
-                    )
-                }
-
-                Scaffold(
-                    contentWindowInsets = WindowInsets(),
-                    content = content,
-                )
-            }
-        } else {
-            Scaffold(
-                contentWindowInsets = WindowInsets(),
-                bottomBar = {
+        Scaffold(
+            contentWindowInsets = WindowInsets(),
+            bottomBar = {
+                if (!isWideWindow) {
                     homeChromeTransition.AnimatedVisibility(
                         visible = { it.isBottomBarVisible },
                         enter = slideInVertically { it } + expandVertically(),
@@ -141,8 +114,10 @@ fun HomeChromeHost(
                             onItemSelected = onItemSelected,
                         )
                     }
-                },
-                floatingActionButton = {
+                }
+            },
+            floatingActionButton = {
+                if (!isWideWindow) {
                     homeChromeTransition.AnimatedVisibility(
                         visible = { it.isFloatingActionButtonVisible },
                         enter = fadeIn(),
@@ -153,10 +128,36 @@ fun HomeChromeHost(
                     ) {
                         AddTransactionFab(onClick = onAddTransaction)
                     }
-                },
-                floatingActionButtonPosition = FabPosition.Center,
-                content = content,
-            )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.Center,
+        ) { padding ->
+            Row(modifier = Modifier.fillMaxSize()) {
+                if (isWideWindow) {
+                    homeChromeTransition.AnimatedVisibility(
+                        visible = { it.isBottomBarVisible },
+                        enter = slideInHorizontally { -it } + expandHorizontally() + fadeIn(),
+                        exit = shrinkHorizontally() + slideOutHorizontally { -it } + fadeOut(),
+                    ) {
+                        NavigationRailBar(
+                            items = NavigationItem.entries,
+                            selectedItem = selectedItem,
+                            onItemSelected = onItemSelected,
+                            header = {
+                                homeChromeTransition.AnimatedVisibility(
+                                    visible = { it.isFloatingActionButtonVisible },
+                                    enter = fadeIn(),
+                                    exit = fadeOut(),
+                                ) {
+                                    AddTransactionFab(onClick = onAddTransaction)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                content(padding)
+            }
         }
     }
 }

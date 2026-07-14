@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.kotlinx.coroutinesSwing)
     implementation(libs.koin.core)
     implementation(libs.multiplatform.settings)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.gitlive.firebase.app)
+    implementation(libs.firebase.java.sdk)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.multiplatform.settings)

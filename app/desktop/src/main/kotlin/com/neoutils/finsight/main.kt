@@ -8,6 +8,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.neoutils.finsight.di.appModules
 import com.neoutils.finsight.extension.ProvideWindowScope
+import com.neoutils.finsight.firebase.DesktopFirebase
 import com.neoutils.finsight.ui.App
 import com.neoutils.finsight.window.WindowDefaults
 import com.neoutils.finsight.window.WindowStatePersistence
@@ -20,6 +21,7 @@ import java.awt.Dimension
 @OptIn(FlowPreview::class)
 fun main() = application {
     val koin = remember {
+        DesktopFirebase.initialize()
         startKoin {
             modules(appModules)
         }.koin

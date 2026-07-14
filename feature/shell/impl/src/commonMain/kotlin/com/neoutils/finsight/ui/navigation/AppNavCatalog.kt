@@ -38,7 +38,7 @@ import com.neoutils.finsight.resources.nav_transactions
 /**
  * Concrete destination catalog. Order matters: the mobile grid preserves the catalog order of
  * `!primaryTab` destinations. Primary tabs come first, followed by the feature sections, and finally
- * the mobile-only Support entry (excluded from the desktop rail).
+ * the Support entry (shown on every platform, including the desktop rail).
  */
 internal object AppNavCatalog : NavCatalog {
     override val destinations: List<NavDestination> = listOf(
@@ -93,7 +93,6 @@ internal object AppNavCatalog : NavCatalog {
             icon = Icons.Default.SupportAgent,
             labelRes = Res.string.dashboard_support,
             route = SupportGraph,
-            mobileOnly = true,
         ),
     )
 }

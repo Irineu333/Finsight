@@ -79,21 +79,41 @@ O app SHALL prover um `DetailPaneController` dedicado para as superfícies adapt
 - **WHEN** em janela larga, um detalhe está no painel e o usuário abre um formulário a partir dele (ex.: editar)
 - **THEN** o formulário é exibido como modal de overlay via `ModalManager`, por cima do painel, e o detalhe permanece visível no painel
 
-### Requirement: Teardown de overlays inclui o painel de detalhe
+### Requirement: Detalhes dirigidos por id com carregamento reativo
 
-O teardown de todos os overlays transitórios (`ModalManager.dismissAll()`) SHALL também dispensar o detalhe atual do `DetailPaneController`. Um detalhe `view*` aberto (painel em janela larga ou bottom sheet em janela estreita) MUST NOT sobreviver a um `dismissAll()`. Quando nenhum detalhe está aberto, o teardown SHALL ser um no-op sobre o painel. Os fluxos que disparam o teardown (exclusões e submissões de formulário) MUST NOT precisar referenciar o `DetailPaneController` diretamente.
+As superfícies de detalhe `view*` (operação, ajuste, categoria, orçamento, recorrência) SHALL receber **apenas o identificador** da entidade e, quando aplicável, a **configuração de apresentação não-recuperável** (ex.: a perspectiva que seleciona qual transação exibir). Elas MUST NOT receber o objeto de domínio já carregado. Cada detalhe SHALL observar a entidade **por id** e expor um estado de UI com exatamente três apresentações: **carregando**, **erro** e **conteúdo**. O estado inicial SHALL ser **carregando**. Enquanto o detalhe estiver aberto, cada mudança na entidade observada SHALL re-emitir **conteúdo** atualizado, re-renderizando o detalhe **in-place** sem fechá-lo. Este comportamento SHALL valer tanto na apresentação em painel (janela larga) quanto em bottom sheet (janela estreita). A apresentação de **erro** SHALL ocorrer **exclusivamente** quando a **primeira** emissão da observação for vazia (id inexistente / falha de obtenção); uma vez exibido **conteúdo**, uma emissão vazia posterior NÃO leva a **erro** (ver auto-dispensa reativa). A falha de obtenção na primeira emissão SHALL ser **registrada para observabilidade** (crash reporting), para que o erro não seja silencioso.
+
+#### Scenario: Carregando é o estado inicial
+- **WHEN** um detalhe `view*` é aberto por id
+- **THEN** ele exibe a apresentação de **carregando** até a primeira emissão da entidade observada
+
+#### Scenario: Conteúdo ao obter a entidade
+- **WHEN** a observação por id emite a entidade
+- **THEN** o detalhe passa a exibir a apresentação de **conteúdo** com os dados da entidade
+
+#### Scenario: Erro ao não obter a entidade
+- **WHEN** a primeira emissão da observação por id é vazia (id inexistente ou falha de obtenção), sem que o detalhe tenha exibido conteúdo antes
+- **THEN** o detalhe exibe a apresentação de **erro**, sem ficar preso em carregando
+
+#### Scenario: Falha de carregamento é registrada para observabilidade
+- **WHEN** a primeira emissão da observação por id é vazia (id inexistente ou falha de obtenção)
+- **THEN** a falha é registrada no serviço de crash reporting, de modo que o erro não permaneça silencioso
+
+#### Scenario: Editar re-renderiza o detalhe in-place
+- **WHEN** o usuário edita a entidade a partir de um formulário aberto sobre o detalhe e salva a edição
+- **THEN** o detalhe permanece aberto e re-renderiza com os dados atualizados, sem ser dispensado
+
+### Requirement: Auto-dispensa reativa do detalhe ao desaparecer a entidade
+
+Um detalhe `view*` que já exibiu **conteúdo** SHALL se **auto-dispensar** quando a entidade observada desaparecer (emissão vazia após ter havido conteúdo), voltando o painel ao empty-state em janela larga ou fechando o bottom sheet em janela estreita. A auto-dispensa SHALL ser dirigida pela própria observação do detalhe e MUST NOT depender do teardown de modais transitórios (`dismissAll()`). Uma emissão vazia **antes** de qualquer conteúdo MUST NOT ser tratada como desaparecimento — SHALL levar à apresentação de **erro** (ver requisito de carregamento reativo).
 
 #### Scenario: Excluir a entidade de dentro do detalhe fecha o detalhe
-- **WHEN** o usuário exclui uma entidade a partir do seu detalhe `view*` e a confirmação chama `dismissAll()`
-- **THEN** tanto a confirmação quanto o detalhe (painel ou sheet) são dispensados, e o painel retorna ao empty-state em janela larga
+- **WHEN** o usuário exclui a entidade a partir do seu detalhe `view*` e a exclusão é efetivada
+- **THEN** a observação por id emite vazio após ter havido conteúdo, e o detalhe se auto-dispensa, retornando ao empty-state em janela larga
 
-#### Scenario: Teardown sem detalhe aberto
-- **WHEN** `dismissAll()` é chamado e nenhum detalhe está aberto no `DetailPaneController`
-- **THEN** apenas os modais transitórios são dispensados, sem efeito sobre o painel
-
-#### Scenario: Submeter formulário a partir do detalhe fecha o detalhe
-- **WHEN** o usuário salva uma edição aberta a partir de um detalhe `view*` e o form ViewModel chama `dismissAll()`
-- **THEN** o formulário e o detalhe são dispensados juntos, evitando exibição de dados obsoletos no detalhe
+#### Scenario: Excluir a entidade por outro caminho fecha o detalhe aberto
+- **WHEN** um detalhe `view*` está aberto e a entidade observada é excluída por qualquer fluxo enquanto o detalhe permanece na tela
+- **THEN** o detalhe se auto-dispensa reativamente, sem exibir dados fantasma
 
 ### Requirement: Rolagem do conteúdo adaptativo em ambas as apresentações
 

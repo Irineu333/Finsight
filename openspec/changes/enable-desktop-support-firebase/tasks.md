@@ -9,7 +9,8 @@
 
 - [x] 2.1 Implementar leitura/parse do `google-services.json` bundlado → `FirebaseOptions` (`apiKey`, `applicationId`, `projectId`, `gcmSenderId`, `storageBucket`), em unidade isolável para teste
 - [x] 2.2 Implementar um `FirebasePlatform` com storage key/value em arquivo no diretório de dados do usuário (reusar o padrão de path do `WindowStatePersistence`) + log
-- [x] 2.3 No `app/desktop/main.kt`, registrar o `FirebasePlatform` e chamar `Firebase.initialize(context = null, options)` antes do `startKoin`
+- [x] 2.3 No `app/desktop/main.kt`, registrar o `FirebasePlatform` e chamar `Firebase.initialize(context, options)` antes do `startKoin`
+  - **Correção inesperada:** o overload JVM do GitLive faz `context as android.content.Context` (cast não-nulo), então `context = null` lançava `NullPointerException` no boot. Passamos o stub `android.app.Application()` do `firebase-java-sdk` (subclasse de `Context`) como contexto. Corrigido em `Fix(Desktop): pass Application context to Firebase.initialize`.
 
 ## 3. Binding do Support no JVM
 

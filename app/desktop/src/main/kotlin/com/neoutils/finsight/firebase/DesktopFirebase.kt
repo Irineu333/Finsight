@@ -1,5 +1,6 @@
 package com.neoutils.finsight.firebase
 
+import android.app.Application
 import com.google.firebase.FirebasePlatform
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.initialize
@@ -21,6 +22,8 @@ internal object DesktopFirebase {
         ) { "Missing bundled google-services.json in desktop resources." }
             .bufferedReader().use { it.readText() }
 
-        Firebase.initialize(context = null, options = GoogleServicesParser.parse(config))
+        // O overload JVM do GitLive faz `context as android.content.Context`; o `firebase-java-sdk`
+        // provê um stub `Application` (que estende `Context`) para satisfazer esse contrato no desktop.
+        Firebase.initialize(context = Application(), options = GoogleServicesParser.parse(config))
     }
 }

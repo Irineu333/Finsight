@@ -44,6 +44,7 @@ val budgetsModule = module {
             operationRepository = get(),
             recurringRepository = get(),
             calculateBudgetProgressUseCase = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

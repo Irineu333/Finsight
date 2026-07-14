@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -69,6 +70,7 @@ class ViewCategoryModal(
 
         when (val state = uiState) {
             ViewCategoryUiState.Loading -> DetailLoadingState()
+            ViewCategoryUiState.Error -> DetailErrorState()
             is ViewCategoryUiState.Content -> ContentBody(
                 uiState = state,
                 onAction = viewModel::onAction,

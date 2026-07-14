@@ -64,6 +64,7 @@ val transactionsModule = module {
         ViewAdjustmentViewModel(
             operationId = it.get(),
             operationRepository = get(),
+            crashlytics = get(),
         )
     }
     viewModel {
@@ -71,6 +72,7 @@ val transactionsModule = module {
             operationId = it.get(),
             perspective = it.getOrNull(),
             operationRepository = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

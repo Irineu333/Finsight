@@ -67,6 +67,7 @@ val recurringModule = module {
         ViewRecurringViewModel(
             recurringId = it.get(),
             recurringRepository = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

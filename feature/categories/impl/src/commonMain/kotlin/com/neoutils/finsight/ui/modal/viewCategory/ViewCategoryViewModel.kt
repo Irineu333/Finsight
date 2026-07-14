@@ -4,6 +4,8 @@ package com.neoutils.finsight.ui.modal.viewCategory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.toYearMonth
@@ -11,11 +13,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
@@ -26,6 +30,7 @@ class ViewCategoryViewModel(
     categoryId: Long,
     categoryRepository: ICategoryRepository,
     transactionRepository: ITransactionRepository,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val _events = Channel<ViewCategoryEvent>(Channel.BUFFERED)
@@ -39,11 +44,20 @@ class ViewCategoryViewModel(
 
     val uiState = combine(
         categoryRepository.observeCategoryById(categoryId)
-            .onEach { if (it == null) _events.send(ViewCategoryEvent.Dismiss) }
-            .filterNotNull(),
+            .distinctUntilChanged()
+            .withIndex()
+            .onEach { (index, category) ->
+                when {
+                    category != null -> Unit
+                    index == 0 -> crashlytics.recordException(DetailNotFoundException("Category", categoryId))
+                    else -> _events.send(ViewCategoryEvent.Dismiss)
+                }
+            }
+            .filter { (index, category) -> category != null || index == 0 },
         transactions,
         selectedYearMonth,
-    ) { category, transactions, yearMonth ->
+    ) { (_, category), transactions, yearMonth ->
+        category ?: return@combine ViewCategoryUiState.Error
         val transactionsForMonth = transactions.filter {
             it.category?.id == category.id && it.date.yearMonth == yearMonth
         }

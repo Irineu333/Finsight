@@ -60,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
+import com.neoutils.finsight.resources.detail_pane_error
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -254,6 +255,34 @@ fun DetailLoadingState(
     ) {
         CircularProgressIndicator(
             color = colorScheme.primary,
+        )
+    }
+}
+
+@Composable
+fun DetailErrorState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = colorScheme.error,
+            modifier = Modifier
+                .padding(bottom = 12.dp)
+                .size(40.dp),
+        )
+        Text(
+            text = stringResource(Res.string.detail_pane_error),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
     }
 }

@@ -12,6 +12,8 @@ sealed interface ViewCategoryUiState {
 
     data object Loading : ViewCategoryUiState
 
+    data object Error : ViewCategoryUiState
+
     data class Content(
         val category: Category,
         val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),

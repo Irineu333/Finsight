@@ -717,6 +717,7 @@
     <!-- Detail pane -->
     <string name="detail_pane_empty_title">Selecione um item para ver os detalhes</string>
     <string name="detail_pane_close">Fechar</string>
+    <string name="detail_pane_error">Não foi possível carregar os detalhes.</string>
     <string name="view_operation_title">Operação</string>
     <string name="view_adjustment_title">Ajuste</string>
     <string name="view_category_title">Categoria</string>

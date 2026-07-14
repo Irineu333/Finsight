@@ -6,6 +6,8 @@ sealed interface ViewAdjustmentUiState {
 
     data object Loading : ViewAdjustmentUiState
 
+    data object Error : ViewAdjustmentUiState
+
     data class Content(
         val operation: Operation,
     ) : ViewAdjustmentUiState {

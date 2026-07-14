@@ -7,8 +7,6 @@ sealed interface ViewOperationUiState {
 
     data object Loading : ViewOperationUiState
 
-    data object Error : ViewOperationUiState
-
     data class Content(
         val operation: Operation,
         val perspective: OperationPerspective? = null,

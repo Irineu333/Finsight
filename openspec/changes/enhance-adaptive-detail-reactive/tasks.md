@@ -53,5 +53,11 @@
 ## 9. Verificação
 
 - [ ] 9.1 `./gradlew allTests` e `./gradlew check` verdes
-- [x] 9.2 Verificação manual no desktop (janela larga): editar re-renderiza in-place; excluir volta ao empty-state; abrir por id mostra Loading→Content; id inválido mostra Error
+- [x] 9.2 Verificação manual no desktop (janela larga): editar re-renderiza in-place; excluir volta ao empty-state; abrir por id mostra Loading→Content
 - [x] 9.3 Verificação manual em janela estreita (bottom sheet): mesmos fluxos, com auto-dispensa ao excluir
+
+## 10. Refinamento pós-revisão (decisão do dono)
+
+- [x] 10.1 Remover o estado de **Error** dos 5 `View*UiState` (só `Loading | Content`): id inexistente ou entidade excluída **apenas fecham** o detalhe, sem UI de erro. Removidos `DetailErrorState` e a string `detail_pane_error`.
+- [x] 10.2 Fechamento desacoplado do `uiState`: o `map` fica puramente presentacional; o `null` dispara o evento `Dismiss` via `onEach` (efeito colateral fora do transform), coletado pelo modal — reutilizando o `event` já existente. `filterNotNull()` preserva o último `Content` durante o fade.
+- [x] 10.3 Corrigir glitch ao excluir: `AdaptiveModal` não limpa mais o `viewModelStore` no `onDismissed`; a limpeza vai para o `onDispose` do host (`DetailPane`/`DetailSheetHost`), com guarda `controller.current !== detail` para não descartar o VM em re-hospedagem (resize). Assim o fade reaproveita o mesmo VM, sem recriar um que reprocesse `null`.

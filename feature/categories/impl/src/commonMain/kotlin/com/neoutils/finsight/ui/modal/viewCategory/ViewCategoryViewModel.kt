@@ -11,7 +11,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.minusMonth
@@ -26,7 +28,8 @@ class ViewCategoryViewModel(
     transactionRepository: ITransactionRepository,
 ) : ViewModel() {
 
-    private var loadedOnce = false
+    private val _events = Channel<ViewCategoryEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
@@ -34,35 +37,22 @@ class ViewCategoryViewModel(
         emit(transactionRepository.getAllTransactions())
     }
 
-    private val _events = Channel<ViewCategoryEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
-
     val uiState = combine(
-        categoryRepository.observeCategoryById(categoryId),
+        categoryRepository.observeCategoryById(categoryId)
+            .onEach { if (it == null) _events.send(ViewCategoryEvent.Dismiss) }
+            .filterNotNull(),
         transactions,
         selectedYearMonth,
     ) { category, transactions, yearMonth ->
-        when {
-            category != null -> {
-                loadedOnce = true
-                val transactionsForMonth = transactions.filter {
-                    it.category?.id == category.id && it.date.yearMonth == yearMonth
-                }
-                ViewCategoryUiState.Content(
-                    category = category,
-                    selectedYearMonth = yearMonth,
-                    totalAmount = transactionsForMonth.sumOf { it.amount },
-                    transactionCount = transactionsForMonth.size,
-                )
-            }
-
-            loadedOnce -> {
-                _events.send(ViewCategoryEvent.Dismiss)
-                ViewCategoryUiState.Loading
-            }
-
-            else -> ViewCategoryUiState.Error
+        val transactionsForMonth = transactions.filter {
+            it.category?.id == category.id && it.date.yearMonth == yearMonth
         }
+        ViewCategoryUiState.Content(
+            category = category,
+            selectedYearMonth = yearMonth,
+            totalAmount = transactionsForMonth.sumOf { it.amount },
+            transactionCount = transactionsForMonth.size,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

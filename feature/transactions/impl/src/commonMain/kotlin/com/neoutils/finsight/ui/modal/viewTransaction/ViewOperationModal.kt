@@ -36,7 +36,6 @@ import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
-import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -84,7 +83,6 @@ class ViewOperationModal(
 
         when (val state = uiState) {
             ViewOperationUiState.Loading -> DetailLoadingState()
-            ViewOperationUiState.Error -> DetailErrorState()
             is ViewOperationUiState.Content -> ContentBody(
                 uiState = state,
                 formatter = formatter,

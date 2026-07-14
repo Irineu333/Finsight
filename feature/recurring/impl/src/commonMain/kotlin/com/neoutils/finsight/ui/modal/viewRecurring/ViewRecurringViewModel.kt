@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 
@@ -14,27 +16,13 @@ class ViewRecurringViewModel(
     recurringRepository: IRecurringRepository,
 ) : ViewModel() {
 
-    private var loadedOnce = false
-
     private val _events = Channel<ViewRecurringEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
     val uiState = recurringRepository.observeRecurringById(recurringId)
-        .map { recurring ->
-            when {
-                recurring != null -> {
-                    loadedOnce = true
-                    ViewRecurringUiState.Content(recurring)
-                }
-
-                loadedOnce -> {
-                    _events.send(ViewRecurringEvent.Dismiss)
-                    ViewRecurringUiState.Loading
-                }
-
-                else -> ViewRecurringUiState.Error
-            }
-        }
+        .onEach { if (it == null) _events.send(ViewRecurringEvent.Dismiss) }
+        .filterNotNull()
+        .map { ViewRecurringUiState.Content(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

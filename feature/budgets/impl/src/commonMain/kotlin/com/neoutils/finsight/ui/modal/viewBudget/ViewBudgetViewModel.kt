@@ -9,6 +9,9 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 
@@ -20,8 +23,6 @@ class ViewBudgetViewModel(
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
 ) : ViewModel() {
 
-    private var loadedOnce = false
-
     private val _events = Channel<ViewBudgetEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -31,29 +32,19 @@ class ViewBudgetViewModel(
         recurringRepository.observeAllRecurring(),
     ) { budgets, operations, recurringList ->
         val transactions = operations.flatMap { it.transactions }
-        val budgetProgress = calculateBudgetProgressUseCase(
+        calculateBudgetProgressUseCase(
             budgets = budgets,
             transactions = transactions,
             recurringList = recurringList,
             operations = operations,
         ).firstOrNull { it.budget.id == budgetId }
-
-        when {
-            budgetProgress != null -> {
-                loadedOnce = true
-                ViewBudgetUiState.Content(budgetProgress)
-            }
-
-            loadedOnce -> {
-                _events.send(ViewBudgetEvent.Dismiss)
-                ViewBudgetUiState.Loading
-            }
-
-            else -> ViewBudgetUiState.Error
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ViewBudgetUiState.Loading,
-    )
+    }
+        .onEach { if (it == null) _events.send(ViewBudgetEvent.Dismiss) }
+        .filterNotNull()
+        .map { ViewBudgetUiState.Content(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ViewBudgetUiState.Loading,
+        )
 }

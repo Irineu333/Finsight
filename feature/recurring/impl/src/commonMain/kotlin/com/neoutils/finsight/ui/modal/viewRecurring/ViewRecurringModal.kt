@@ -49,7 +49,6 @@ import com.neoutils.finsight.resources.view_recurring_stop
 import com.neoutils.finsight.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -90,7 +89,6 @@ class ViewRecurringModal(
 
         when (val state = uiState) {
             ViewRecurringUiState.Loading -> DetailLoadingState()
-            ViewRecurringUiState.Error -> DetailErrorState()
             is ViewRecurringUiState.Content -> ContentBody(
                 recurring = state.recurring,
                 formatter = formatter,

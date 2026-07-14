@@ -44,6 +44,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -59,7 +60,6 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
-import com.neoutils.finsight.resources.detail_pane_error
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -97,9 +97,9 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
     @Composable
     override fun Content() = Unit
 
-    override fun onDismissed() {
-        viewModelStore.clear()
-    }
+    // The ViewModelStore is cleared by the host (DetailPane/DetailSheetHost) when this
+    // modal leaves composition — not eagerly on dismiss — so the exit animation keeps
+    // reusing the same ViewModels instead of rebuilding fresh ones mid-teardown.
 }
 
 class DetailPaneController {
@@ -143,6 +143,11 @@ private fun DetailSheetHost(
     val current = controller.current ?: return
 
     key(current.key) {
+        DisposableEffect(current) {
+            onDispose {
+                if (controller.current !== current) current.viewModelStore.clear()
+            }
+        }
         ModalBottomSheet(
             onDismissRequest = { controller.dismiss() },
             sheetState = rememberModalBottomSheetState(
@@ -189,6 +194,11 @@ fun DetailPane(
                 label = "detail_pane_content",
             ) { detail ->
                 if (detail != null) {
+                    DisposableEffect(detail) {
+                        onDispose {
+                            if (controller.current !== detail) detail.viewModelStore.clear()
+                        }
+                    }
                     Column(Modifier.fillMaxSize()) {
                         Box(
                             contentAlignment = Alignment.CenterEnd,
@@ -244,34 +254,6 @@ fun DetailLoadingState(
     ) {
         CircularProgressIndicator(
             color = colorScheme.primary,
-        )
-    }
-}
-
-@Composable
-fun DetailErrorState(
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Info,
-            contentDescription = null,
-            tint = colorScheme.error,
-            modifier = Modifier
-                .padding(bottom = 12.dp)
-                .size(40.dp),
-        )
-        Text(
-            text = stringResource(Res.string.detail_pane_error),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
         )
     }
 }

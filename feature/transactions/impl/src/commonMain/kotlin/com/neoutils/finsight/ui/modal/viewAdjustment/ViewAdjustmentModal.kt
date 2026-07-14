@@ -35,7 +35,6 @@ import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
-import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -71,7 +70,6 @@ class ViewAdjustmentModal(
 
         when (val state = uiState) {
             ViewAdjustmentUiState.Loading -> DetailLoadingState()
-            ViewAdjustmentUiState.Error -> DetailErrorState()
             is ViewAdjustmentUiState.Content -> ContentBody(
                 uiState = state,
                 formatter = formatter,

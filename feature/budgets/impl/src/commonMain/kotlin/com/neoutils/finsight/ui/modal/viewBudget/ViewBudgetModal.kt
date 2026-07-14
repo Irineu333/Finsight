@@ -29,7 +29,6 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
-import com.neoutils.finsight.ui.component.DetailErrorState
 import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
@@ -79,7 +78,6 @@ class ViewBudgetModal(
 
         when (val state = uiState) {
             ViewBudgetUiState.Loading -> DetailLoadingState()
-            ViewBudgetUiState.Error -> DetailErrorState()
             is ViewBudgetUiState.Content -> ContentBody(
                 budgetProgress = state.budgetProgress,
                 detailController = detailController,

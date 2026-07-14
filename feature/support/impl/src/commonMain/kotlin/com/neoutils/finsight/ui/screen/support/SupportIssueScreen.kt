@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.SupportMessage
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.util.LocalDateFormats
 import org.jetbrains.compose.resources.stringResource
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -321,7 +322,9 @@ private fun ReplyComposer(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = if (isWideWindow()) 16.dp else 0.dp),
         shape = RoundedCornerShape(
             topStart = 24.dp,
             topEnd = 24.dp

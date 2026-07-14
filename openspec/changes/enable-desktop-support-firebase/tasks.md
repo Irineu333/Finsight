@@ -22,6 +22,7 @@
 - [x] 4.1 Em `AppNavCatalog.kt`, remover `mobileOnly = true` do destino `SupportGraph` (linha ~96) → passa a aparecer no rail do desktop
 - [x] 4.2 Em `DashboardScreen.kt`, remover o gate `if (!isDesktop)` que oculta o `IconButton` de Support no `TopAppBar` (linha ~99) → botão passa a aparecer no desktop
 - [x] 4.3 Revisar o KDoc que menciona "mobile-only Support entry" em `AppNavCatalog.kt` (~linha 41) e `NavDestination.kt` (~linha 10) para refletir que Support já não é mobile-only
+- [x] 4.4 Em `SupportIssueScreen.kt`, aplicar padding horizontal no card de responder (`ReplyComposer`) quando o rail está visível (janela wide) via `isWideWindow()`, para o card não ficar colado ao rail no desktop
 
 ## 5. Verificação
 

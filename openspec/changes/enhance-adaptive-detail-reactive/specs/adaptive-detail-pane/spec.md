@@ -2,7 +2,7 @@
 
 ### Requirement: Detalhes dirigidos por id com carregamento reativo
 
-As superfícies de detalhe `view*` (operação, ajuste, categoria, orçamento, recorrência) SHALL receber **apenas o identificador** da entidade e, quando aplicável, a **configuração de apresentação não-recuperável** (ex.: a perspectiva que seleciona qual transação exibir). Elas MUST NOT receber o objeto de domínio já carregado. Cada detalhe SHALL observar a entidade **por id** e expor um estado de UI com exatamente três apresentações: **carregando**, **erro** e **conteúdo**. O estado inicial SHALL ser **carregando**. Enquanto o detalhe estiver aberto, cada mudança na entidade observada SHALL re-emitir **conteúdo** atualizado, re-renderizando o detalhe **in-place** sem fechá-lo. Este comportamento SHALL valer tanto na apresentação em painel (janela larga) quanto em bottom sheet (janela estreita).
+As superfícies de detalhe `view*` (operação, ajuste, categoria, orçamento, recorrência) SHALL receber **apenas o identificador** da entidade e, quando aplicável, a **configuração de apresentação não-recuperável** (ex.: a perspectiva que seleciona qual transação exibir). Elas MUST NOT receber o objeto de domínio já carregado. Cada detalhe SHALL observar a entidade **por id** e expor um estado de UI com exatamente três apresentações: **carregando**, **erro** e **conteúdo**. O estado inicial SHALL ser **carregando**. Enquanto o detalhe estiver aberto, cada mudança na entidade observada SHALL re-emitir **conteúdo** atualizado, re-renderizando o detalhe **in-place** sem fechá-lo. Este comportamento SHALL valer tanto na apresentação em painel (janela larga) quanto em bottom sheet (janela estreita). A apresentação de **erro** SHALL ocorrer **exclusivamente** quando a **primeira** emissão da observação for vazia (id inexistente / falha de obtenção); uma vez exibido **conteúdo**, uma emissão vazia posterior NÃO leva a **erro** (ver auto-dispensa reativa). A falha de obtenção na primeira emissão SHALL ser **registrada para observabilidade** (crash reporting), para que o erro não seja silencioso.
 
 #### Scenario: Carregando é o estado inicial
 - **WHEN** um detalhe `view*` é aberto por id
@@ -15,6 +15,10 @@ As superfícies de detalhe `view*` (operação, ajuste, categoria, orçamento, r
 #### Scenario: Erro ao não obter a entidade
 - **WHEN** a primeira emissão da observação por id é vazia (id inexistente ou falha de obtenção), sem que o detalhe tenha exibido conteúdo antes
 - **THEN** o detalhe exibe a apresentação de **erro**, sem ficar preso em carregando
+
+#### Scenario: Falha de carregamento é registrada para observabilidade
+- **WHEN** a primeira emissão da observação por id é vazia (id inexistente ou falha de obtenção)
+- **THEN** a falha é registrada no serviço de crash reporting, de modo que o erro não permaneça silencioso
 
 #### Scenario: Editar re-renderiza o detalhe in-place
 - **WHEN** o usuário edita a entidade a partir de um formulário aberto sobre o detalhe e salva a edição

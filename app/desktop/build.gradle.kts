@@ -17,6 +17,10 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
     implementation(libs.koin.core)
+    implementation(libs.multiplatform.settings)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.multiplatform.settings)
 }
 
 compose.desktop {

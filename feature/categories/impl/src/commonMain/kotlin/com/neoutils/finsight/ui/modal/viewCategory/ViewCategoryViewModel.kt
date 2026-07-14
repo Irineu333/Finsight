@@ -8,18 +8,15 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
@@ -44,19 +41,13 @@ class ViewCategoryViewModel(
 
     val uiState = combine(
         categoryRepository.observeCategoryById(categoryId)
-            .distinctUntilChanged()
-            .withIndex()
-            .onEach { (index, category) ->
-                when {
-                    category != null -> Unit
-                    index == 0 -> crashlytics.recordException(DetailNotFoundException("Category", categoryId))
-                    else -> _events.send(ViewCategoryEvent.Dismiss)
-                }
-            }
-            .filter { (index, category) -> category != null || index == 0 },
+            .interceptAbsence(
+                onMissing = { crashlytics.recordException(DetailNotFoundException("Category", categoryId)) },
+                onDisappeared = { _events.send(ViewCategoryEvent.Dismiss) },
+            ),
         transactions,
         selectedYearMonth,
-    ) { (_, category), transactions, yearMonth ->
+    ) { category, transactions, yearMonth ->
         category ?: return@combine ViewCategoryUiState.Error
         val transactionsForMonth = transactions.filter {
             it.category?.id == category.id && it.date.yearMonth == yearMonth

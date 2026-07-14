@@ -8,16 +8,13 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
@@ -44,17 +41,11 @@ class ViewBudgetViewModel(
             operations = operations,
         ).firstOrNull { it.budget.id == budgetId }
     }
-        .distinctUntilChanged()
-        .withIndex()
-        .onEach { (index, budgetProgress) ->
-            when {
-                budgetProgress != null -> Unit
-                index == 0 -> crashlytics.recordException(DetailNotFoundException("Budget", budgetId))
-                else -> _events.send(ViewBudgetEvent.Dismiss)
-            }
-        }
-        .filter { (index, budgetProgress) -> budgetProgress != null || index == 0 }
-        .map { (_, budgetProgress) ->
+        .interceptAbsence(
+            onMissing = { crashlytics.recordException(DetailNotFoundException("Budget", budgetId)) },
+            onDisappeared = { _events.send(ViewBudgetEvent.Dismiss) },
+        )
+        .map { budgetProgress ->
             budgetProgress?.let { ViewBudgetUiState.Content(it) }
                 ?: ViewBudgetUiState.Error
         }

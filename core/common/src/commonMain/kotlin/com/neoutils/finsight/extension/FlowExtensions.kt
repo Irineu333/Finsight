@@ -2,6 +2,36 @@ package com.neoutils.finsight.extension
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.withIndex
+
+/**
+ * Intercepts the absence of a reactively-observed entity (observed by id).
+ *
+ * - The **first** emission being `null` (entity never present: invalid id / load failure)
+ *   triggers [onMissing] and is **emitted** as `null` — the caller renders an error.
+ * - A `null` **after** the entity was present (deleted while being observed) triggers
+ *   [onDisappeared] and is **suppressed** — the caller keeps showing the last value.
+ *
+ * Repeated equal emissions are collapsed, so the interception above reacts only to real changes.
+ */
+fun <T : Any> Flow<T?>.interceptAbsence(
+    onMissing: suspend () -> Unit = {},
+    onDisappeared: suspend () -> Unit = {},
+): Flow<T?> = distinctUntilChanged()
+    .withIndex()
+    .onEach { (index, value) ->
+        when {
+            value != null -> Unit
+            index == 0 -> onMissing()
+            else -> onDisappeared()
+        }
+    }
+    .filter { (index, value) -> value != null || index == 0 }
+    .map { it.value }
 
 fun <T1, T2, T3, T4, T5, T6, R> combine(
     flow1: Flow<T1>,

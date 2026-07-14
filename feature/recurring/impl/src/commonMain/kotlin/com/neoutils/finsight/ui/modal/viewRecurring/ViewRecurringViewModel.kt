@@ -5,15 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 
 class ViewRecurringViewModel(
     recurringId: Long,
@@ -25,17 +22,11 @@ class ViewRecurringViewModel(
     val events = _events.receiveAsFlow()
 
     val uiState = recurringRepository.observeRecurringById(recurringId)
-        .distinctUntilChanged()
-        .withIndex()
-        .onEach { (index, recurring) ->
-            when {
-                recurring != null -> Unit
-                index == 0 -> crashlytics.recordException(DetailNotFoundException("Recurring", recurringId))
-                else -> _events.send(ViewRecurringEvent.Dismiss)
-            }
-        }
-        .filter { (index, recurring) -> recurring != null || index == 0 }
-        .map { (_, recurring) ->
+        .interceptAbsence(
+            onMissing = { crashlytics.recordException(DetailNotFoundException("Recurring", recurringId)) },
+            onDisappeared = { _events.send(ViewRecurringEvent.Dismiss) },
+        )
+        .map { recurring ->
             recurring?.let { ViewRecurringUiState.Content(it) }
                 ?: ViewRecurringUiState.Error
         }

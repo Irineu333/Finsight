@@ -5,16 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.ui.model.OperationPerspective
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 
 class ViewOperationViewModel(
@@ -28,17 +25,11 @@ class ViewOperationViewModel(
     val events = _events.receiveAsFlow()
 
     val uiState = operationRepository.observeOperationById(operationId)
-        .distinctUntilChanged()
-        .withIndex()
-        .onEach { (index, operation) ->
-            when {
-                operation != null -> Unit
-                index == 0 -> crashlytics.recordException(DetailNotFoundException("Operation", operationId))
-                else -> _events.send(ViewOperationEvent.Dismiss)
-            }
-        }
-        .filter { (index, operation) -> operation != null || index == 0 }
-        .map { (_, operation) ->
+        .interceptAbsence(
+            onMissing = { crashlytics.recordException(DetailNotFoundException("Operation", operationId)) },
+            onDisappeared = { _events.send(ViewOperationEvent.Dismiss) },
+        )
+        .map { operation ->
             operation?.let {
                 ViewOperationUiState.Content(it, perspective)
             } ?: ViewOperationUiState.Error

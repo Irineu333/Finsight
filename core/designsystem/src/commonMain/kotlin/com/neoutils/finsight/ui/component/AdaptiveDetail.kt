@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -26,10 +29,12 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -52,6 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelStore
@@ -61,6 +67,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
 import com.neoutils.finsight.resources.detail_pane_error
+import com.neoutils.finsight.resources.detail_pane_error_title
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -217,13 +224,32 @@ fun DetailPane(
                             }
                         }
                         val scrollState = rememberScrollState()
-                        Column(
+                        BoxWithConstraints(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
-                                .verticalScroll(scrollState),
+                                .fillMaxWidth(),
                         ) {
-                            detail.RenderBody()
+                            // The body is at least as tall as the pane viewport, so placeholder
+                            // states (loading/error) that fillMaxSize center vertically, while
+                            // regular content stays top-aligned and scrolls when it overflows.
+                            val viewportHeight = maxHeight
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(scrollState),
+                            ) {
+                                Box(
+                                    // Propagate the min height so placeholder states (which
+                                    // fillMaxSize) get the full viewport and center vertically,
+                                    // while regular column content stays top-aligned.
+                                    propagateMinConstraints = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = viewportHeight),
+                                ) {
+                                    detail.RenderBody()
+                                }
+                            }
                         }
                         // Actions pinned at the pane bottom; the shadow appears only while the body
                         // can still scroll, separating the footer from the content beneath it.
@@ -250,8 +276,8 @@ fun DetailLoadingState(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 48.dp),
+            .fillMaxSize()
+            .padding(24.dp),
     ) {
         CircularProgressIndicator(
             color = colorScheme.primary,
@@ -267,17 +293,30 @@ fun DetailErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
+            .fillMaxSize()
+            .padding(horizontal = 32.dp, vertical = 24.dp),
     ) {
-        Icon(
-            imageVector = Icons.Outlined.Info,
-            contentDescription = null,
-            tint = colorScheme.error,
-            modifier = Modifier
-                .padding(bottom = 12.dp)
-                .size(40.dp),
+        Surface(
+            color = colorScheme.errorContainer,
+            shape = CircleShape,
+            modifier = Modifier.size(72.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ErrorOutline,
+                contentDescription = null,
+                tint = colorScheme.onErrorContainer,
+                modifier = Modifier.padding(18.dp),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = stringResource(Res.string.detail_pane_error_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
+        Spacer(Modifier.height(4.dp))
         Text(
             text = stringResource(Res.string.detail_pane_error),
             style = MaterialTheme.typography.bodyMedium,

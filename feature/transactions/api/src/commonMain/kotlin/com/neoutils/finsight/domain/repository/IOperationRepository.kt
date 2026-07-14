@@ -15,6 +15,8 @@ interface IOperationRepository {
         accountId: Long? = null,
     ): Flow<List<Operation>>
 
+    fun observeOperationById(id: Long): Flow<Operation?>
+
     suspend fun getAllOperations(): List<Operation>
     suspend fun getOperationById(id: Long): Operation?
 

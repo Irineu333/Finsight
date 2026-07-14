@@ -241,7 +241,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categorySpending,
                                     title = stringResource(Res.string.report_viewer_spending_by_category),
-                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it)) },
+                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -254,7 +254,7 @@ private fun ReportViewerContent(
                                 CategorySpendingCard(
                                     categorySpending = state.categoryIncome,
                                     title = stringResource(Res.string.report_viewer_income_by_category),
-                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it)) },
+                                    onCategoryClick = { detailController.show(categoriesEntry.viewCategoryModal(it.id)) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 16.dp),
@@ -293,10 +293,10 @@ private fun ReportViewerContent(
                                         onClick = {
                                             when {
                                                 operation.type.isAdjustment -> detailController.show(
-                                                    transactionsEntry.viewAdjustmentModal(operation)
+                                                    transactionsEntry.viewAdjustmentModal(operation.id)
                                                 )
 
-                                                else -> detailController.show(transactionsEntry.viewOperationModal(operation))
+                                                else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
                                             }
                                         },
                                     )

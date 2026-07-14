@@ -62,13 +62,13 @@ val transactionsModule = module {
 
     viewModel {
         ViewAdjustmentViewModel(
-            operation = it.get(),
+            operationId = it.get(),
             operationRepository = get(),
         )
     }
     viewModel {
         ViewOperationViewModel(
-            operation = it.get(),
+            operationId = it.get(),
             perspective = it.getOrNull(),
             operationRepository = get(),
         )

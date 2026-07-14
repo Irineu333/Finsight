@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class RecurringRepository(
     private val dao: RecurringDao,
@@ -36,6 +37,12 @@ class RecurringRepository(
                     creditCard = entity.creditCardId?.let { creditCardMap[it] },
                 )
             }
+        }
+    }
+
+    override fun observeRecurringById(id: Long): Flow<Recurring?> {
+        return observeAllRecurring().map { list ->
+            list.firstOrNull { it.id == id }
         }
     }
 

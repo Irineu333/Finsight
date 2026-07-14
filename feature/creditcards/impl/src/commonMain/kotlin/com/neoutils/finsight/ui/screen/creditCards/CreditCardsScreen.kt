@@ -238,11 +238,11 @@ private fun CreditCardsContent(
                                 onClick = {
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation))
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
                                         }
 
                                         else -> {
-                                            detailController.show(transactionsEntry.viewOperationModal(operation))
+                                            detailController.show(transactionsEntry.viewOperationModal(operation.id))
                                         }
                                     }
                                 }

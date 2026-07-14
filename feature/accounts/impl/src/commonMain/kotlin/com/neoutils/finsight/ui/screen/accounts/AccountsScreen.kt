@@ -274,11 +274,13 @@ private fun AccountsContent(
                             onClick = {
                                 when (operationUi.displayType) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.operation))
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
                                     }
 
                                     else -> {
-                                        detailController.show(transactionsEntry.viewOperationModal(operationUi))
+                                        detailController.show(
+                                            transactionsEntry.viewOperationModal(operationUi.id, operationUi.perspective)
+                                        )
                                     }
                                 }
                             }

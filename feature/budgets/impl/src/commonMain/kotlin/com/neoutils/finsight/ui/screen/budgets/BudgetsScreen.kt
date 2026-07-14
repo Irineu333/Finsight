@@ -143,7 +143,7 @@ fun BudgetsScreen(
                     ) { progress ->
                         BudgetProgressItem(
                             progress = progress,
-                            onClick = { detailController.show(ViewBudgetModal(progress)) },
+                            onClick = { detailController.show(ViewBudgetModal(progress.budget.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),

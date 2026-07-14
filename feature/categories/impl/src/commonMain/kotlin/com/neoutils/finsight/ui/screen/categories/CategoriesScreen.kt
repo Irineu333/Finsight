@@ -203,7 +203,7 @@ private fun CategoriesContent(
                                 CategoryCard(
                                     category = category,
                                     onClick = {
-                                        detailController.show(ViewCategoryModal(category))
+                                        detailController.show(ViewCategoryModal(category.id))
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

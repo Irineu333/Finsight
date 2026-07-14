@@ -21,9 +21,7 @@ import kotlin.uuid.Uuid
 
 val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManager provided") }
 
-class ModalManager(
-    private val detailPaneController: DetailPaneController,
-) {
+class ModalManager {
 
     private var modalState = mutableStateListOf<Modal>()
 
@@ -52,8 +50,6 @@ class ModalManager(
     fun dismissAll() {
         modalState.forEach(Modal::onDismissed)
         modalState.clear()
-        // Dismiss all overlays includes the detail slot (no-op when no detail is open).
-        detailPaneController.dismiss()
     }
 }
 

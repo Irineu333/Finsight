@@ -11,7 +11,7 @@ import kotlinx.datetime.LocalDate
 
 internal class RecurringEntryImpl : RecurringEntry {
     override fun recurringFormModal(recurring: Recurring?): Modal = RecurringFormModal(recurring)
-    override fun viewRecurringModal(recurring: Recurring): AdaptiveModal = ViewRecurringModal(recurring)
+    override fun viewRecurringModal(recurringId: Long): AdaptiveModal = ViewRecurringModal(recurringId)
     override fun confirmRecurringModal(recurring: Recurring, targetDate: LocalDate): Modal =
         ConfirmRecurringModal(recurring, targetDate)
 }

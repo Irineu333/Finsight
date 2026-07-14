@@ -156,7 +156,7 @@ fun RecurringScreen(
                     ) { recurring ->
                         RecurringCard(
                             recurring = recurring,
-                            onClick = { detailController.show(ViewRecurringModal(recurring)) },
+                            onClick = { detailController.show(ViewRecurringModal(recurring.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)

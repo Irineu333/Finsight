@@ -7,6 +7,6 @@ import kotlinx.datetime.LocalDate
 
 interface RecurringEntry {
     fun recurringFormModal(recurring: Recurring? = null): Modal
-    fun viewRecurringModal(recurring: Recurring): AdaptiveModal
+    fun viewRecurringModal(recurringId: Long): AdaptiveModal
     fun confirmRecurringModal(recurring: Recurring, targetDate: LocalDate): Modal
 }

@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val designsystemModule = module {
     single { DetailPaneController() }
-    single { ModalManager(get()) }
+    single { ModalManager() }
 }

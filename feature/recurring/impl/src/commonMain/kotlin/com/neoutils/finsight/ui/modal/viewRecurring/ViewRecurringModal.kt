@@ -14,13 +14,18 @@ import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
@@ -44,8 +49,12 @@ import com.neoutils.finsight.resources.view_recurring_stop
 import com.neoutils.finsight.resources.view_recurring_type_label
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.DetailErrorState
+import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringModal
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringModal
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
@@ -55,9 +64,11 @@ import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class ViewRecurringModal(
-    private val recurring: Recurring,
+    private val recurringId: Long,
 ) : AdaptiveModal() {
 
     @Composable
@@ -65,6 +76,37 @@ class ViewRecurringModal(
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
         val formatter = LocalCurrencyFormatter.current
+
+        val viewModel = koinViewModel<ViewRecurringViewModel> { parametersOf(recurringId) }
+        val uiState by viewModel.uiState.collectAsState()
+
+        LaunchedEffect(viewModel) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is ViewRecurringEvent.Dismiss -> detailController.dismiss()
+                }
+            }
+        }
+
+        when (val state = uiState) {
+            ViewRecurringUiState.Loading -> DetailLoadingState()
+            ViewRecurringUiState.Error -> DetailErrorState()
+            is ViewRecurringUiState.Content -> ContentBody(
+                recurring = state.recurring,
+                formatter = formatter,
+                detailController = detailController,
+                navController = navController,
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentBody(
+        recurring: Recurring,
+        formatter: CurrencyFormatter,
+        detailController: DetailPaneController,
+        navController: NavController,
+    ) {
         val typeColor = if (recurring.type.isIncome) Income else Expense
 
         val typeLabel = if (recurring.type.isIncome) {
@@ -196,7 +238,19 @@ class ViewRecurringModal(
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewRecurringViewModel> { parametersOf(recurringId) }
+        val uiState by viewModel.uiState.collectAsState()
 
+        val recurring = (uiState as? ViewRecurringUiState.Content)?.recurring ?: return
+
+        Actions(recurring = recurring, manager = manager)
+    }
+
+    @Composable
+    private fun Actions(
+        recurring: Recurring,
+        manager: ModalManager,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

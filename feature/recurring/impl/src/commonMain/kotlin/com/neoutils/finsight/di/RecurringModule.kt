@@ -19,6 +19,7 @@ import com.neoutils.finsight.ui.modal.deleteRecurring.DeleteRecurringViewModel
 import com.neoutils.finsight.ui.modal.reactivateRecurring.ReactivateRecurringViewModel
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormViewModel
 import com.neoutils.finsight.ui.modal.stopRecurring.StopRecurringViewModel
+import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringViewModel
 import com.neoutils.finsight.ui.screen.recurring.RecurringViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -59,6 +60,12 @@ val recurringModule = module {
 
     viewModel {
         RecurringViewModel(
+            recurringRepository = get(),
+        )
+    }
+    viewModel {
+        ViewRecurringViewModel(
+            recurringId = it.get(),
             recurringRepository = get(),
         )
     }

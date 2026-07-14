@@ -292,8 +292,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operation.type.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(operation))
-                            else -> detailController.show(transactionsEntry.viewOperationModal(operation))
+                            operation.type.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                            else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
                         }
                     }
                 },
@@ -576,7 +576,7 @@ private fun DashboardSpendingByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
-                detailController.show(categoriesEntry.viewCategoryModal(category))
+                detailController.show(categoriesEntry.viewCategoryModal(category.id))
             }
         }
     )
@@ -599,7 +599,7 @@ private fun DashboardIncomeByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
-                detailController.show(categoriesEntry.viewCategoryModal(category))
+                detailController.show(categoriesEntry.viewCategoryModal(category.id))
             }
         }
     )
@@ -621,7 +621,7 @@ private fun DashboardBudgetsSection(
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                detailController.show(budgetsEntry.viewBudgetModal(budget))
+                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id))
             }
         },
     )

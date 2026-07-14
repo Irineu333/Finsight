@@ -2,8 +2,15 @@ package com.neoutils.finsight.ui.modal.viewAdjustment
 
 import com.neoutils.finsight.domain.model.Operation
 
-data class ViewAdjustmentUiState(
-    val operation: Operation,
-) {
-    val transaction = operation.primaryTransaction
+sealed interface ViewAdjustmentUiState {
+
+    data object Loading : ViewAdjustmentUiState
+
+    data object Error : ViewAdjustmentUiState
+
+    data class Content(
+        val operation: Operation,
+    ) : ViewAdjustmentUiState {
+        val transaction = operation.primaryTransaction
+    }
 }

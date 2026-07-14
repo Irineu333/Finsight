@@ -36,12 +36,13 @@ import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.DetailErrorState
+import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.model.OperationPerspective
-import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlin.uuid.ExperimentalUuidApi
@@ -52,21 +53,16 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewOperationModal(
-    private val operation: Operation,
+    private val operationId: Long,
     private val perspective: OperationPerspective? = null,
 ) : AdaptiveModal() {
-
-    constructor(operationUi: OperationUi) : this(
-        operation = operationUi.operation,
-        perspective = operationUi.perspective,
-    )
 
     @Composable
     override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current
         val viewModel = koinViewModel<ViewOperationViewModel> {
-            parametersOf(operation, perspective)
+            parametersOf(operationId, perspective)
         }
 
         val uiState by viewModel.uiState.collectAsState()
@@ -78,11 +74,35 @@ class ViewOperationModal(
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.OpenRecurring -> detailController.show(recurringEntry.viewRecurringModal(event.recurring))
+                    is ViewOperationEvent.Dismiss -> detailController.dismiss()
+                    is ViewOperationEvent.OpenRecurring -> detailController.show(
+                        recurringEntry.viewRecurringModal(event.recurring.id)
+                    )
                 }
             }
         }
 
+        when (val state = uiState) {
+            ViewOperationUiState.Loading -> DetailLoadingState()
+            ViewOperationUiState.Error -> DetailErrorState()
+            is ViewOperationUiState.Content -> ContentBody(
+                uiState = state,
+                formatter = formatter,
+                detailController = detailController,
+                navController = navController,
+                viewModel = viewModel,
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentBody(
+        uiState: ViewOperationUiState.Content,
+        formatter: com.neoutils.finsight.extension.CurrencyFormatter,
+        detailController: com.neoutils.finsight.ui.component.DetailPaneController,
+        navController: androidx.navigation.NavController,
+        viewModel: ViewOperationViewModel,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -299,28 +319,30 @@ class ViewOperationModal(
                 )
             }
 
-                uiState.operation.recurring?.let { recurring ->
-                    DetailRow(
-                        label = stringResource(Res.string.view_operation_recurring_label),
-                        value = recurring.label,
-                        valueColor = colorScheme.onSurface,
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            viewModel.onAction(
-                                ViewOperationAction.OpenRecurring(recurring.instance)
-                            )
-                        }
-                    )
-                }
+            uiState.operation.recurring?.let { recurring ->
+                DetailRow(
+                    label = stringResource(Res.string.view_operation_recurring_label),
+                    value = recurring.label,
+                    valueColor = colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 8.dp),
+                    onClick = {
+                        viewModel.onAction(
+                            ViewOperationAction.OpenRecurring(recurring.instance)
+                        )
+                    }
+                )
+            }
         }
     }
 
     @Composable
     override fun DetailActions() {
         val viewModel = koinViewModel<ViewOperationViewModel> {
-            parametersOf(operation, perspective)
+            parametersOf(operationId, perspective)
         }
         val uiState by viewModel.uiState.collectAsState()
+
+        val content = uiState as? ViewOperationUiState.Content ?: return
 
         Column(
             modifier = Modifier
@@ -328,10 +350,10 @@ class ViewOperationModal(
                 .padding(horizontal = 24.dp)
                 .padding(top = 16.dp, bottom = 24.dp)
         ) {
-            uiState.transaction.invoice?.let { invoice ->
+            content.transaction.invoice?.let { invoice ->
                 when (invoice.status) {
                     Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
-                        EditAndDelete(uiState)
+                        EditAndDelete(content)
                     }
 
                     Invoice.Status.CLOSED, Invoice.Status.PAID -> {
@@ -344,14 +366,14 @@ class ViewOperationModal(
                     }
                 }
             } ?: run {
-                EditAndDelete(uiState)
+                EditAndDelete(content)
             }
         }
     }
 
     @Composable
     private fun EditAndDelete(
-        uiState: ViewOperationUiState,
+        uiState: ViewOperationUiState.Content,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -470,7 +492,7 @@ class ViewOperationModal(
         }
     }
 
-    private fun ViewOperationUiState.operationColor() = when {
+    private fun ViewOperationUiState.Content.operationColor() = when {
         operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
         operation.kind == Operation.Kind.TRANSFER -> Info
         transaction.type == Transaction.Type.INCOME -> Income

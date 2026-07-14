@@ -148,6 +148,12 @@ class OperationRepository(
         }
     }
 
+    override fun observeOperationById(id: Long): Flow<Operation?> {
+        return observeAllOperations().map { operations ->
+            operations.firstOrNull { it.id == id }
+        }
+    }
+
     override suspend fun getAllOperations(): List<Operation> {
         val operations = operationDao.getAll()
         val categories = categoryRepository.getAllCategories().associateBy { it.id }

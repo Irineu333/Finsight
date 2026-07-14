@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,8 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Operation
+import androidx.navigation.NavController
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
@@ -33,6 +35,9 @@ import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.DetailErrorState
+import com.neoutils.finsight.ui.component.DetailLoadingState
+import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
@@ -44,7 +49,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
-    private val operation: Operation
+    private val operationId: Long,
 ) : AdaptiveModal() {
 
     @Composable
@@ -53,9 +58,36 @@ class ViewAdjustmentModal(
         val formatter = LocalCurrencyFormatter.current
         val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+        LaunchedEffect(viewModel) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is ViewAdjustmentEvent.Dismiss -> detailController.dismiss()
+                }
+            }
+        }
+
+        when (val state = uiState) {
+            ViewAdjustmentUiState.Loading -> DetailLoadingState()
+            ViewAdjustmentUiState.Error -> DetailErrorState()
+            is ViewAdjustmentUiState.Content -> ContentBody(
+                uiState = state,
+                formatter = formatter,
+                detailController = detailController,
+                navController = navController,
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentBody(
+        uiState: ViewAdjustmentUiState.Content,
+        formatter: CurrencyFormatter,
+        detailController: DetailPaneController,
+        navController: NavController,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -182,19 +214,20 @@ class ViewAdjustmentModal(
                     }
                 )
             }
-
         }
     }
 
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+        val content = uiState as? ViewAdjustmentUiState.Content ?: return
 
         OutlinedButton(
             onClick = {
-                manager.show(DeleteTransactionModal(uiState.transaction))
+                manager.show(DeleteTransactionModal(content.transaction))
             },
             modifier = Modifier
                 .fillMaxWidth()

@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.detail_pane_close
 import com.neoutils.finsight.resources.detail_pane_empty_title
+import com.neoutils.finsight.resources.detail_pane_error
 import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -227,6 +229,50 @@ fun DetailPane(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DetailLoadingState(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+    ) {
+        CircularProgressIndicator(
+            color = colorScheme.primary,
+        )
+    }
+}
+
+@Composable
+fun DetailErrorState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = colorScheme.error,
+            modifier = Modifier
+                .padding(bottom = 12.dp)
+                .size(40.dp),
+        )
+        Text(
+            text = stringResource(Res.string.detail_pane_error),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

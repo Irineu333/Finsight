@@ -139,11 +139,11 @@ private fun TransactionsContent(
                         onClick = {
                             when (operation.type) {
                                 Transaction.Type.ADJUSTMENT -> {
-                                    detailController.show(ViewAdjustmentModal(operation))
+                                    detailController.show(ViewAdjustmentModal(operation.id))
                                 }
 
                                 else -> {
-                                    detailController.show(ViewOperationModal(operation))
+                                    detailController.show(ViewOperationModal(operation.id))
                                 }
                             }
                         }

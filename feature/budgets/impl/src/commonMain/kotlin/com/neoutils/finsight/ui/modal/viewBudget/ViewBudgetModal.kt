@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,8 +29,12 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AdaptiveModal
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.DetailErrorState
+import com.neoutils.finsight.ui.component.DetailLoadingState
+import com.neoutils.finsight.ui.component.DetailPaneController
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
@@ -47,16 +54,47 @@ import com.neoutils.finsight.resources.view_budget_percentage_label
 import com.neoutils.finsight.resources.view_budget_remaining_label
 import com.neoutils.finsight.resources.view_budget_spent_label
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class ViewBudgetModal(
-    private val budgetProgress: BudgetProgress,
+    private val budgetId: Long,
 ) : AdaptiveModal() {
 
     @Composable
     override fun DetailContent() {
-        val formatter = LocalCurrencyFormatter.current
         val detailController = LocalDetailPaneController.current
         val recurringEntry = koinInject<RecurringEntry>()
+
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val uiState by viewModel.uiState.collectAsState()
+
+        LaunchedEffect(viewModel) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is ViewBudgetEvent.Dismiss -> detailController.dismiss()
+                }
+            }
+        }
+
+        when (val state = uiState) {
+            ViewBudgetUiState.Loading -> DetailLoadingState()
+            ViewBudgetUiState.Error -> DetailErrorState()
+            is ViewBudgetUiState.Content -> ContentBody(
+                budgetProgress = state.budgetProgress,
+                detailController = detailController,
+                recurringEntry = recurringEntry,
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentBody(
+        budgetProgress: BudgetProgress,
+        detailController: DetailPaneController,
+        recurringEntry: RecurringEntry,
+    ) {
+        val formatter = LocalCurrencyFormatter.current
         val budget = budgetProgress.budget
         val accentColor = budgetProgressColor(budgetProgress.progress)
 
@@ -134,7 +172,7 @@ class ViewBudgetModal(
                         label = stringResource(Res.string.view_budget_percentage_label),
                         value = pctLabel,
                         onClick = budgetProgress.recurring?.let { recurring ->
-                            { detailController.show(recurringEntry.viewRecurringModal(recurring)) }
+                            { detailController.show(recurringEntry.viewRecurringModal(recurring.id)) }
                         },
                     )
 
@@ -186,6 +224,19 @@ class ViewBudgetModal(
     @Composable
     override fun DetailActions() {
         val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewBudgetViewModel> { parametersOf(budgetId) }
+        val uiState by viewModel.uiState.collectAsState()
+
+        val budgetProgress = (uiState as? ViewBudgetUiState.Content)?.budgetProgress ?: return
+
+        Actions(budgetProgress = budgetProgress, manager = manager)
+    }
+
+    @Composable
+    private fun Actions(
+        budgetProgress: BudgetProgress,
+        manager: ModalManager,
+    ) {
         val budget = budgetProgress.budget
 
         Row(

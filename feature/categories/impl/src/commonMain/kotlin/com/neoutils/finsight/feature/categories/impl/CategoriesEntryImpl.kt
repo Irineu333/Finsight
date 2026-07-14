@@ -11,6 +11,6 @@ internal class CategoriesEntryImpl : CategoriesEntry {
     override fun categoryFormModal(category: Category?, initialType: Category.Type?): Modal =
         CategoryFormModal(category, initialType)
 
-    override fun viewCategoryModal(category: Category): AdaptiveModal =
-        ViewCategoryModal(category)
+    override fun viewCategoryModal(categoryId: Long): AdaptiveModal =
+        ViewCategoryModal(categoryId)
 }

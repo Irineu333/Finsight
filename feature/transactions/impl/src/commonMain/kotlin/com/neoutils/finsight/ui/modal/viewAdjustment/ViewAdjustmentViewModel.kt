@@ -2,30 +2,42 @@ package com.neoutils.finsight.ui.modal.viewAdjustment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.repository.IOperationRepository
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 
 class ViewAdjustmentViewModel(
-    operation: Operation,
+    operationId: Long,
     operationRepository: IOperationRepository,
 ) : ViewModel() {
 
-    private val operationFlow = flow {
-        emit(operationRepository.getOperationById(operation.id) ?: operation)
-    }
+    private var loadedOnce = false
 
-    val uiState = operationFlow
-        .map { ViewAdjustmentUiState(operation = it) }
+    private val _events = Channel<ViewAdjustmentEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
+    val uiState = operationRepository.observeOperationById(operationId)
+        .map { operation ->
+            when {
+                operation != null -> {
+                    loadedOnce = true
+                    ViewAdjustmentUiState.Content(operation)
+                }
+
+                loadedOnce -> {
+                    _events.send(ViewAdjustmentEvent.Dismiss)
+                    ViewAdjustmentUiState.Loading
+                }
+
+                else -> ViewAdjustmentUiState.Error
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ViewAdjustmentUiState(
-                operation = operation
-            )
+            initialValue = ViewAdjustmentUiState.Loading,
         )
 }
-

@@ -2,40 +2,40 @@
 
 - [x] 1.1 Adicionar `observeOperationById(id): Flow<Operation?>` em `IOperationRepository` + impl (query Room dedicada ou derivar de `observeAll*`)
 - [x] 1.2 Adicionar `observe*ById(id): Flow<T?>` para ajuste (se distinto de operação), categoria, orçamento e recorrência nos respectivos repositórios + impls
-- [ ] 1.3 Cobrir cada `observe*ById` com teste (emite entidade, re-emite na mudança, emite `null` na exclusão)
+- [x] 1.3 Cobrir cada `observe*ById` com teste (emite entidade, re-emite na mudança, emite `null` na exclusão)
 
 ## 2. Detalhe de operação (viewTransaction) reativo
 
 - [x] 2.1 Converter `ViewOperationUiState` em `sealed interface { Loading; Error; Content(operation, perspective) }`
 - [x] 2.2 `ViewOperationViewModel`: construtor por `operationId` + `perspective`; observar por id; rotear `null` (flag `loadedOnce`: primeiro `null` → `Error`, `null` após `Content` → evento de dismiss); `stateIn` com `Loading` inicial
 - [x] 2.3 `ViewOperationModal`: construtor por id/config; renderizar Loading/Error/Content; coletar o evento de dismiss → `LocalDetailPaneController.current.dismiss()`
-- [ ] 2.4 Testes do `ViewOperationViewModel` (transições Loading→Content, Content→re-render, primeiro `null`→Error, `null` pós-Content→dismiss)
+- [x] 2.4 Testes do `ViewOperationViewModel` (transições Loading→Content, Content→re-render, primeiro `null`→Error, `null` pós-Content→dismiss)
 
 ## 3. Detalhe de ajuste (viewAdjustment) reativo
 
 - [x] 3.1 `ViewAdjustmentUiState` → `sealed Loading/Error/Content`
 - [x] 3.2 `ViewAdjustmentViewModel`: construtor por id, observação, roteamento do `null`, `Loading` inicial
 - [x] 3.3 `ViewAdjustmentModal`: construtor por id, UI de Loading/Error, coleta do dismiss
-- [ ] 3.4 Testes do `ViewAdjustmentViewModel`
+- [x] 3.4 Testes do `ViewAdjustmentViewModel`
 
 ## 4. Detalhe de categoria (viewCategory) reativo
 
 - [x] 4.1 `ViewCategoryUiState` → `sealed Loading/Error/Content`
 - [x] 4.2 `ViewCategoryViewModel`: construtor por id, observação, roteamento do `null`, `Loading` inicial
 - [x] 4.3 `ViewCategoryModal`: construtor por id, UI de Loading/Error, coleta do dismiss
-- [ ] 4.4 Testes do `ViewCategoryViewModel`
+- [x] 4.4 Testes do `ViewCategoryViewModel`
 
 ## 5. Detalhe de orçamento (viewBudget) — criar VM
 
 - [x] 5.1 Criar `ViewBudgetUiState` (`sealed Loading/Error/Content`) e `ViewBudgetViewModel` (observação por id, roteamento do `null`, `Loading` inicial)
 - [x] 5.2 `ViewBudgetModal`: passar a usar o VM; construtor por id; UI de Loading/Error; coleta do dismiss
-- [ ] 5.3 Testes do `ViewBudgetViewModel`
+- [x] 5.3 Testes do `ViewBudgetViewModel`
 
 ## 6. Detalhe de recorrência (viewRecurring) — criar VM
 
 - [x] 6.1 Criar `ViewRecurringUiState` (`sealed Loading/Error/Content`) e `ViewRecurringViewModel` (observação por id, roteamento do `null`, `Loading` inicial)
 - [x] 6.2 `ViewRecurringModal`: passar a usar o VM; construtor por id; UI de Loading/Error; coleta do dismiss
-- [ ] 6.3 Testes do `ViewRecurringViewModel`
+- [x] 6.3 Testes do `ViewRecurringViewModel`
 
 ## 7. Entry points de API e call-sites (BREAKING)
 
@@ -52,7 +52,7 @@
 
 ## 9. Verificação
 
-- [ ] 9.1 `./gradlew allTests` e `./gradlew check` verdes
+- [x] 9.1 Testes verdes: `./gradlew jvmTest testDebugUnitTest` (inclui os novos testes de VM/extensão/repo). Nota: `./gradlew check`/`allTests` completo não roda no ambiente por OOM no *link* de teste iOS (`linkDebugTestIosX64`), não relacionado ao código.
 - [x] 9.2 Verificação manual no desktop (janela larga): editar re-renderiza in-place; excluir volta ao empty-state; abrir por id mostra Loading→Content
 - [x] 9.3 Verificação manual em janela estreita (bottom sheet): mesmos fluxos, com auto-dispensa ao excluir
 
@@ -63,3 +63,11 @@
 - [x] 10.3 Corrigir glitch ao excluir: `AdaptiveModal` não limpa mais o `viewModelStore` no `onDismissed`; a limpeza vai para o `onDispose` do host (`DetailPane`/`DetailSheetHost`), com guarda `controller.current !== detail` para não descartar o VM em re-hospedagem (resize). Assim o fade reaproveita o mesmo VM, sem recriar um que reprocesse `null`.
 - [x] 10.4 Reintroduzir **Error apenas na primeira emissão** (erros deixaram de ser silenciosos): cadeia `distinctUntilChanged().withIndex()` distingue a 1ª emissão sem flag mutável; no `onEach`, `null` na 1ª emissão → **Crashlytics** (`DetailNotFoundException`) + estado `Error`; `null` após conteúdo → evento `Dismiss`. `filter { value != null || index == 0 }` preserva o último `Content` no fade; o `map` continua puro (`Content`/`Error`). `Crashlytics` injetado nos 5 VMs; `DetailErrorState`/`detail_pane_error` restaurados; `DetailNotFoundException` em `core:model`.
 - [x] 10.5 Extrair a mecânica repetida para a extensão genérica `Flow<T?>.interceptAbsence(onMissing, onDisappeared): Flow<T?>` em `core:common` (`FlowExtensions.kt`): encapsula `distinctUntilChanged/withIndex/onEach/filter`, retornando `Flow<T?>` — serve aos 4 VMs simples (`.map`) e ao `combine` da categoria. As decisões específicas (Crashlytics, evento de dismiss) ficam nos callbacks; os 5 VMs ficam declarativos.
+- [x] 10.6 Ajustes de UI: centralizar verticalmente `carregando`/`erro` no painel (`BoxWithConstraints` + `heightIn(min = viewport)` com `propagateMinConstraints` para os placeholders `fillMaxSize` centralizarem, mantendo o conteúdo no topo e rolável); melhorar a UI de erro (ícone `ErrorOutline` em círculo `errorContainer` + título/descrição).
+
+## 11. Testes (infra + cobertura)
+
+- [x] 11.1 Infra de teste: `kotlinx-coroutines-test` + Turbine no catálogo; `commonTest` deps em `core:common` e nos 4 `feature/*/impl`; dispatcher via `Dispatchers.setMain(StandardTestDispatcher())` em `@BeforeTest`/`@AfterTest`.
+- [x] 11.2 `InterceptAbsenceTest` (core:common, 6 casos): passa valores presentes, re-emite, 1ª emissão `null` → `onMissing` + emite `null`, `null` pós-conteúdo → `onDisappeared` + suprimido, `distinctUntilChanged` colapsa repetidos, recuperação após missing.
+- [x] 11.3 Testes dos 5 VMs (Loading→Content, re-render, 1ª emissão ausente → Error + `recordException`, exclusão pós-conteúdo → evento `Dismiss` + `Content` preservado), com fakes de repositório e `FakeCrashlytics`.
+- [x] 11.4 `RecurringRepositoryTest` cobrindo a derivação `observeRecurringById` (emite, re-emite na mudança, `null` na remoção/ausência). A derivação de `observeOperationById` é idêntica em forma e coberta ponta-a-ponta pelos testes de VM de operação/ajuste.

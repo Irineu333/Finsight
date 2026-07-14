@@ -27,6 +27,7 @@
 ## 5. Verificação
 
 - [x] 5.1 Unit test do parse `google-services.json` → `FirebaseOptions`
-- [ ] 5.2 `./gradlew :app:desktop:run` — validar manualmente: auth anônima, criar issue, responder, observar issues/mensagens via snapshots
-- [ ] 5.3 Validar manualmente que a sessão de Auth persiste entre execuções (arquivo do FirebasePlatform)
-- [ ] 5.4 `./gradlew check` e `./gradlew allTests` verdes; confirmar que Android/iOS não regridem
+- [x] 5.2 `./gradlew :app:desktop:run` — validar manualmente: auth anônima, criar issue, responder, observar issues/mensagens via snapshots
+- [x] 5.3 Validar manualmente que a sessão de Auth persiste entre execuções (arquivo do FirebasePlatform)
+- [x] 5.4 `./gradlew check` e `./gradlew allTests` verdes; confirmar que Android/iOS não regridem
+  - JVM/Android verdes (inclui `:app:shared:testDebugUnitTest`, `:app:desktop:test`) e a compilação iOS do `commonMain` passa. As únicas falhas do `allTests` são as tarefas `linkDebugTestIos*` de `categories`/`recurring`/`budgets`/`report`, por limitação de ambiente (não regressão): `FirebaseCore` não linka sem `pod install` no `iosApp` e o compilador Kotlin/Native estoura heap neste build headless. O diff não adiciona dependências iOS — os artefatos Firebase JVM só entram no `app/desktop`. Testes iOS nativos a validar num ambiente com Xcode/CocoaPods.

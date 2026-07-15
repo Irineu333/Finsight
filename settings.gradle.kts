@@ -52,8 +52,8 @@ include(":core:resources")
 include(":core:ui")
 
 // Features
-include(":feature:home:api")
-include(":feature:home:impl")
+include(":feature:shell:api")
+include(":feature:shell:impl")
 include(":feature:dashboard:api")
 include(":feature:dashboard:impl")
 include(":feature:accounts:api")

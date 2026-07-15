@@ -12,6 +12,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -56,6 +57,10 @@ class FirebaseSupportRepository(
                         it.updatedAt
                     }
                 }
+                .catch {
+                    crashlytics.recordException(it)
+                    emit(emptyList())
+                }
         )
     }
 
@@ -69,7 +74,7 @@ class FirebaseSupportRepository(
                         crashlytics.recordException(it)
                     }.getOrNull()
                 } else null
-            }
+            }.catch { emit(null) }
         )
     }
 
@@ -86,7 +91,7 @@ class FirebaseSupportRepository(
                             crashlytics.recordException(it)
                         }.getOrNull()
                     }.sortedBy { it.createdAt }
-                }
+                }.catch { emit(emptyList()) }
         )
     }
 

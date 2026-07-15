@@ -14,9 +14,12 @@ import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -46,8 +49,12 @@ class InvoiceTransactionsViewModel(
         )
     )
 
+    private val _events = Channel<InvoiceTransactionsEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
     private val creditCardFlow = creditCardRepository
         .observeCreditCardById(creditCardId = creditCardId)
+        .onEach { if (it == null) _events.send(InvoiceTransactionsEvent.CreditCardDeleted) }
         .filterNotNull()
 
     private val invoicesFlow = invoiceRepository

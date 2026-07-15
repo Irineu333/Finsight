@@ -9,6 +9,7 @@ import com.neoutils.finsight.feature.budgets.api.BudgetsEntry
 import com.neoutils.finsight.feature.budgets.impl.BudgetsEntryImpl
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormViewModel
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetViewModel
+import com.neoutils.finsight.ui.modal.viewBudget.ViewBudgetViewModel
 import com.neoutils.finsight.ui.screen.budgets.BudgetsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -34,6 +35,16 @@ val budgetsModule = module {
             operationRepository = get(),
             recurringRepository = get(),
             calculateBudgetProgressUseCase = get(),
+        )
+    }
+    viewModel {
+        ViewBudgetViewModel(
+            budgetId = it.get(),
+            budgetRepository = get(),
+            operationRepository = get(),
+            recurringRepository = get(),
+            calculateBudgetProgressUseCase = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

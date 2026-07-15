@@ -43,7 +43,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.LocalModalManager
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.modal.dashboardComponentOptions.DashboardComponentOptionsModal
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
@@ -56,7 +56,7 @@ fun DashboardEditingContent(
     state: DashboardUiState.Editing,
     onAction: (DashboardAction) -> Unit,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val haptic = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
 
@@ -105,7 +105,7 @@ fun DashboardEditingContent(
                             item = entry.item,
                             onTap = {
                                 if (entry.isActive) {
-                                    modalManager.show(
+                                    detailController.show(
                                         DashboardComponentOptionsModal(
                                             item = entry.item,
                                             accounts = state.accounts,

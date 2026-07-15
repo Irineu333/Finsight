@@ -46,6 +46,8 @@
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_transactions">Transactions</string>
+    <string name="nav_credit_cards">Cards</string>
+    <string name="nav_installments">Installments</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_recents">Recent</string>
@@ -304,6 +306,7 @@
     <string name="add_transaction_save">Save</string>
     <string name="add_transaction_expense">Expense</string>
     <string name="add_transaction_income">Income</string>
+    <string name="add_transaction_fab_description">Add transaction</string>
 
     <!-- Add Installment Modal -->
     <string name="add_installment_title">Register installment</string>
@@ -711,4 +714,15 @@
     <string name="preview_transaction_netflix">Netflix</string>
     <string name="preview_transaction_spotify">Spotify</string>
     <string name="preview_budget_food">Food</string>
+
+    <!-- Detail pane -->
+    <string name="detail_pane_empty_title">Select an item to see details</string>
+    <string name="detail_pane_close">Close</string>
+    <string name="detail_pane_error_title">Unable to load</string>
+    <string name="detail_pane_error">The item was not found or could not be loaded.</string>
+    <string name="view_operation_title">Operation</string>
+    <string name="view_adjustment_title">Adjustment</string>
+    <string name="view_category_title">Category</string>
+    <string name="view_budget_title">Budget</string>
+    <string name="view_recurring_title">Recurring</string>
 </resources>

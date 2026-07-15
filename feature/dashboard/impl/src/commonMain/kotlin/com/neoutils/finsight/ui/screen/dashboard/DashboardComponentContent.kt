@@ -10,6 +10,7 @@ import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.recurring.api.RecurringEntry
 import com.neoutils.finsight.feature.recurring.api.RecurringRoute
+import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
@@ -67,6 +68,7 @@ import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.theme.Expense
@@ -240,7 +242,7 @@ private fun DashboardRecentsSection(
     openTransactions: (Transaction.Type?, Transaction.Target?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val component = variant.component
     val showHeader = variant.config.showHeader()
@@ -290,8 +292,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operation.type.isAdjustment -> modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
-                            else -> modalManager.show(transactionsEntry.viewOperationModal(operation))
+                            operation.type.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                            else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
                         }
                     }
                 },
@@ -563,7 +565,7 @@ private fun DashboardSpendingByCategorySection(
     variant: DashboardComponentVariant.SpendingByCategory,
     modifier: Modifier = Modifier,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
 
@@ -574,7 +576,7 @@ private fun DashboardSpendingByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.SpendingByCategory.Viewing) {
-                modalManager.show(categoriesEntry.viewCategoryModal(category))
+                detailController.show(categoriesEntry.viewCategoryModal(category.id))
             }
         }
     )
@@ -585,7 +587,7 @@ private fun DashboardIncomeByCategorySection(
     variant: DashboardComponentVariant.IncomeByCategory,
     modifier: Modifier = Modifier,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val categoriesEntry = koinInject<CategoriesEntry>()
     val component = variant.component
 
@@ -597,7 +599,7 @@ private fun DashboardIncomeByCategorySection(
             .padding(horizontal = 16.dp),
         onCategoryClick = { category ->
             if (variant is DashboardComponentVariant.IncomeByCategory.Viewing) {
-                modalManager.show(categoriesEntry.viewCategoryModal(category))
+                detailController.show(categoriesEntry.viewCategoryModal(category.id))
             }
         }
     )
@@ -608,7 +610,7 @@ private fun DashboardBudgetsSection(
     variant: DashboardComponentVariant.Budgets,
     modifier: Modifier = Modifier,
 ) {
-    val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val budgetsEntry = koinInject<BudgetsEntry>()
     val component = variant.component
 
@@ -619,7 +621,7 @@ private fun DashboardBudgetsSection(
             .padding(horizontal = 16.dp),
         onBudgetClick = { budget ->
             if (variant is DashboardComponentVariant.Budgets.Viewing) {
-                modalManager.show(budgetsEntry.viewBudgetModal(budget))
+                detailController.show(budgetsEntry.viewBudgetModal(budget.budget.id))
             }
         },
     )
@@ -653,11 +655,11 @@ private fun DashboardSectionHeader(
 
 @Composable
 private fun DashboardQuickActionCard(
-    action: QuickActionType,
-    onOpen: (QuickActionType) -> Unit,
+    action: NavDestination,
+    onOpen: (NavDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val label = stringUiText(action.title)
+    val label = stringResource(action.labelRes)
 
     Card(
         onClick = { onOpen(action) },

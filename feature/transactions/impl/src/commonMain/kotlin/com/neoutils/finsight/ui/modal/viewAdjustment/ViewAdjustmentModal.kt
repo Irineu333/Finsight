@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,8 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Operation
+import androidx.navigation.NavController
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.CurrencyFormatter
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toLabel
 import com.neoutils.finsight.feature.accounts.api.AccountsRoute
@@ -32,8 +34,12 @@ import com.neoutils.finsight.feature.creditcards.api.CreditCardsRoute
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.DetailErrorState
+import com.neoutils.finsight.ui.component.DetailLoadingState
+import com.neoutils.finsight.ui.component.DetailPaneController
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.theme.Adjustment
 import com.neoutils.finsight.util.dayMonthYear
@@ -43,23 +49,50 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class ViewAdjustmentModal(
-    private val operation: Operation
-) : ModalBottomSheet() {
+    private val operationId: Long,
+) : AdaptiveModal() {
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
+    override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current
-        val manager = LocalModalManager.current
+        val detailController = LocalDetailPaneController.current
         val navController = LocalNavController.current
-        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+        LaunchedEffect(viewModel) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is ViewAdjustmentEvent.Dismiss -> detailController.dismiss()
+                }
+            }
+        }
+
+        when (val state = uiState) {
+            ViewAdjustmentUiState.Loading -> DetailLoadingState()
+            ViewAdjustmentUiState.Error -> DetailErrorState()
+            is ViewAdjustmentUiState.Content -> ContentBody(
+                uiState = state,
+                formatter = formatter,
+                detailController = detailController,
+                navController = navController,
+            )
+        }
+    }
+
+    @Composable
+    private fun ContentBody(
+        uiState: ViewAdjustmentUiState.Content,
+        formatter: CurrencyFormatter,
+        detailController: DetailPaneController,
+        navController: NavController,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -128,7 +161,7 @@ class ViewAdjustmentModal(
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
                     onClick = {
-                        manager.dismissAll()
+                        detailController.dismiss()
                         navController.navigate(AccountsRoute(account.id))
                     }
                 )
@@ -143,7 +176,7 @@ class ViewAdjustmentModal(
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
                     onClick = {
-                        manager.dismissAll()
+                        detailController.dismiss()
                         navController.navigate(
                             CreditCardsRoute(creditCard.id)
                         )
@@ -173,7 +206,7 @@ class ViewAdjustmentModal(
                         .fillMaxWidth(),
                     onClick = creditCardId?.let {
                         {
-                            manager.dismissAll()
+                            detailController.dismiss()
                             navController.navigate(
                                 InvoiceTransactionsRoute(it)
                             )
@@ -181,35 +214,45 @@ class ViewAdjustmentModal(
                     }
                 )
             }
+        }
+    }
 
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+    @Composable
+    override fun DetailActions() {
+        val manager = LocalModalManager.current
+        val viewModel = koinViewModel<ViewAdjustmentViewModel> { parametersOf(operationId) }
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            OutlinedButton(
-                onClick = {
-                    manager.show(DeleteTransactionModal(uiState.transaction))
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.error,
-                ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = colorScheme.error,
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(Res.string.view_adjustment_delete_label),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+        val content = uiState as? ViewAdjustmentUiState.Content ?: return
+
+        OutlinedButton(
+            onClick = {
+                manager.show(DeleteTransactionModal(content.transaction))
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = colorScheme.error,
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = colorScheme.error,
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(
+                text = stringResource(Res.string.view_adjustment_delete_label),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 

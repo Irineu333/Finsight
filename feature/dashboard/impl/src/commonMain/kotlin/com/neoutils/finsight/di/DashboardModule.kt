@@ -4,8 +4,6 @@ import com.neoutils.finsight.database.repository.DashboardPreferencesRepository
 import com.neoutils.finsight.domain.repository.IDashboardPreferencesRepository
 import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
-import com.neoutils.finsight.feature.dashboard.api.DashboardEntry
-import com.neoutils.finsight.feature.dashboard.impl.DashboardEntryImpl
 import com.neoutils.finsight.ui.screen.dashboard.DashboardComponentsBuilder
 import com.neoutils.finsight.ui.screen.dashboard.DashboardPreviewFactory
 import com.neoutils.finsight.ui.screen.dashboard.DashboardViewModel
@@ -13,8 +11,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val dashboardModule = module {
-    single<DashboardEntry> { DashboardEntryImpl() }
-
     single<IDashboardPreferencesRepository> {
         DashboardPreferencesRepository(
             settings = get(),
@@ -30,12 +26,13 @@ val dashboardModule = module {
             calculateBudgetProgressUseCase = get(),
             getPendingRecurringUseCase = get(),
             invoiceUiMapper = get(),
+            navCatalog = get(),
         )
     }
 
-    single { GetDashboardPreferencesUseCase(get()) }
+    single { GetDashboardPreferencesUseCase(get(), get()) }
     factory { BuildDashboardViewingUseCase(get()) }
-    single { DashboardPreviewFactory() }
+    single { DashboardPreviewFactory(get()) }
 
     viewModel {
         DashboardViewModel(

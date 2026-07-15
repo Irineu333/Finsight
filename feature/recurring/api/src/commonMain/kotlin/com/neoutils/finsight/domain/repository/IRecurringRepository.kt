@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface IRecurringRepository {
     fun observeAllRecurring(): Flow<List<Recurring>>
+    fun observeRecurringById(id: Long): Flow<Recurring?>
     suspend fun insert(recurring: Recurring)
     suspend fun update(recurring: Recurring)
     suspend fun delete(recurring: Recurring)

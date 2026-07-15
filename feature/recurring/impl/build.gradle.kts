@@ -24,5 +24,9 @@ kotlin {
             implementation(libs.arrow.core)
             implementation(libs.kotlinx.datetime)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.turbine)
+        }
     }
 }

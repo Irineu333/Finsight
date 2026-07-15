@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.recurring
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,6 +52,7 @@ import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
 import com.neoutils.finsight.resources.recurring_screen_title
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.recurringForm.RecurringFormModal
 import com.neoutils.finsight.ui.modal.viewRecurring.ViewRecurringModal
@@ -68,6 +70,7 @@ fun RecurringScreen(
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("recurring")
@@ -85,11 +88,13 @@ fun RecurringScreen(
                     navigationIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -151,7 +156,7 @@ fun RecurringScreen(
                     ) { recurring ->
                         RecurringCard(
                             recurring = recurring,
-                            onClick = { modalManager.show(ViewRecurringModal(recurring)) },
+                            onClick = { detailController.show(ViewRecurringModal(recurring.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp)

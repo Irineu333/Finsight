@@ -5,6 +5,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.accounts
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -48,6 +49,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
@@ -109,6 +111,7 @@ private fun AccountsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
 
     Scaffold(
@@ -124,11 +127,13 @@ private fun AccountsContent(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -269,11 +274,13 @@ private fun AccountsContent(
                             onClick = {
                                 when (operationUi.displayType) {
                                     Transaction.Type.ADJUSTMENT -> {
-                                        modalManager.show(transactionsEntry.viewAdjustmentModal(operationUi.operation))
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
                                     }
 
                                     else -> {
-                                        modalManager.show(transactionsEntry.viewOperationModal(operationUi))
+                                        detailController.show(
+                                            transactionsEntry.viewOperationModal(operationUi.id, operationUi.perspective)
+                                        )
                                     }
                                 }
                             }

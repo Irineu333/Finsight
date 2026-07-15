@@ -46,6 +46,8 @@
     <!-- Bottom Navigation -->
     <string name="nav_dashboard">Dashboard</string>
     <string name="nav_transactions">Transações</string>
+    <string name="nav_credit_cards">Cartões</string>
+    <string name="nav_installments">Parcelas</string>
 
     <!-- Dashboard Screen -->
     <string name="dashboard_recents">Recentes</string>
@@ -304,6 +306,7 @@
     <string name="add_transaction_save">Salvar</string>
     <string name="add_transaction_expense">Despesa</string>
     <string name="add_transaction_income">Receita</string>
+    <string name="add_transaction_fab_description">Adicionar transação</string>
 
     <!-- Add Installment Modal -->
     <string name="add_installment_title">Registrar parcelamento</string>
@@ -711,4 +714,15 @@
     <string name="preview_transaction_netflix">Netflix</string>
     <string name="preview_transaction_spotify">Spotify</string>
     <string name="preview_budget_food">Alimentação</string>
+
+    <!-- Detail pane -->
+    <string name="detail_pane_empty_title">Selecione um item para ver os detalhes</string>
+    <string name="detail_pane_close">Fechar</string>
+    <string name="detail_pane_error_title">Não foi possível carregar</string>
+    <string name="detail_pane_error">O item não foi encontrado ou não pôde ser carregado.</string>
+    <string name="view_operation_title">Operação</string>
+    <string name="view_adjustment_title">Ajuste</string>
+    <string name="view_category_title">Categoria</string>
+    <string name="view_budget_title">Orçamento</string>
+    <string name="view_recurring_title">Recorrência</string>
 </resources>

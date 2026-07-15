@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object TransactionsGraph : NavGraphRoute
 
-internal fun NavGraphBuilder.transactionsGraph() {
+fun NavGraphBuilder.transactionsGraph() {
     navigation<TransactionsGraph>(
         startDestination = TransactionsRoute(),
     ) {

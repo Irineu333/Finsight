@@ -4,9 +4,7 @@ package com.neoutils.finsight.ui.modal.dashboardComponentOptions
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.CreditCard
@@ -15,7 +13,6 @@ import androidx.compose.material.icons.rounded.SpaceBar
 import androidx.compose.material.icons.rounded.ViewHeadline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -30,7 +27,6 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,32 +38,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.resources.*
-import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.ModalBottomSheet
+import com.neoutils.finsight.ui.component.AdaptiveModal
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.screen.dashboard.*
 import com.neoutils.finsight.util.stringUiText
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 class DashboardComponentOptionsModal(
     private val item: DashboardEditItem,
     private val accounts: List<Account>,
     private val creditCards: List<CreditCard>,
     private val onAction: (DashboardAction) -> Unit,
-) : ModalBottomSheet() {
+) : AdaptiveModal() {
+
+    // Held on the modal instance (stable across the sheet↔pane breakpoint) so the body and the
+    // pinned actions footer, composed separately by the host, share the same edit state.
+    private var config by mutableStateOf(item.config)
 
     @Composable
-    override fun ColumnScope.BottomSheetContent() {
-        var config by remember { mutableStateOf(item.config) }
-        val scrollState = rememberScrollState()
-        val modalManager = LocalModalManager.current
-
+    override fun DetailContent() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -262,39 +259,45 @@ class DashboardComponentOptionsModal(
 
                 else -> Unit
             }
+        }
+    }
 
-            HorizontalDivider()
+    @Composable
+    override fun DetailActions() {
+        val detailController = LocalDetailPaneController.current
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(
+                onClick = { detailController.dismiss() },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
             ) {
-                OutlinedButton(
-                    onClick = { modalManager.dismiss() },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.component_config_cancel),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
+                Text(
+                    text = stringResource(Res.string.component_config_cancel),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
 
-                Button(
-                    onClick = {
-                        onAction(DashboardAction.UpdateComponentConfig(item.key, config))
-                        modalManager.dismiss()
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.component_config_confirm),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+            Button(
+                onClick = {
+                    onAction(DashboardAction.UpdateComponentConfig(item.key, config))
+                    detailController.dismiss()
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(
+                    text = stringResource(Res.string.component_config_confirm),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -723,17 +726,19 @@ private fun QuickActionsConfigContent(
     config: Map<String, String>,
     onConfigChange: (Map<String, String>) -> Unit,
 ) {
-    val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
-        ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
-    val visibleCount = QuickActionType.entries.count { it.name !in hiddenActions }
+    val navCatalog = koinInject<NavCatalog>()
+    val actions = navCatalog.destinations.filter { !it.primaryTab }
+
+    val hiddenActions = parseHiddenActionKeys(config)
+    val visibleCount = actions.count { it.actionKey !in hiddenActions }
 
     DashboardConfigCard {
-        QuickActionType.entries.forEach { action ->
-            val isVisible = action.name !in hiddenActions
+        actions.forEach { action ->
+            val isVisible = action.actionKey !in hiddenActions
             val canToggle = !isVisible || visibleCount > 1
 
             DashboardConfigToggleRow(
-                title = stringUiText(action.title),
+                title = stringResource(action.labelRes),
                 checked = isVisible,
                 enabled = canToggle,
                 supportingText = if (!canToggle) {
@@ -742,7 +747,11 @@ private fun QuickActionsConfigContent(
                     null
                 },
                 onCheckedChange = { checked ->
-                    val newHidden = if (checked) hiddenActions - action.name else hiddenActions + action.name
+                    val newHidden = if (checked) {
+                        hiddenActions - action.actionKey
+                    } else {
+                        hiddenActions + action.actionKey
+                    }
                     onConfigChange(config.toMutableMap().apply {
                         put(QuickActionsConfig.HIDDEN_ACTIONS, newHidden.joinToString(","))
                     })

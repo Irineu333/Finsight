@@ -4,6 +4,7 @@
 )
 
 package com.neoutils.finsight.ui.screen.creditCards
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -86,6 +87,7 @@ private fun CreditCardsContent(
     onNavigateBack: () -> Unit
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
     val transactionsEntry = koinInject<TransactionsEntry>()
     val navController = LocalNavController.current
 
@@ -96,11 +98,13 @@ private fun CreditCardsContent(
                     Text(text = stringResource(Res.string.credit_cards_title))
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -234,11 +238,11 @@ private fun CreditCardsContent(
                                 onClick = {
                                     when (operation.type) {
                                         Transaction.Type.ADJUSTMENT -> {
-                                            modalManager.show(transactionsEntry.viewAdjustmentModal(operation))
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
                                         }
 
                                         else -> {
-                                            modalManager.show(transactionsEntry.viewOperationModal(operation))
+                                            detailController.show(transactionsEntry.viewOperationModal(operation.id))
                                         }
                                     }
                                 }

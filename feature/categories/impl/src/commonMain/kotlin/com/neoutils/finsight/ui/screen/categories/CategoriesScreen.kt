@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
 package com.neoutils.finsight.ui.screen.categories
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryModal
@@ -75,6 +77,7 @@ private fun CategoriesContent(
     onAction: (CategoriesAction) -> Unit,
 ) {
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
 
     Scaffold(
         topBar = {
@@ -83,11 +86,13 @@ private fun CategoriesContent(
                     Text(text = stringResource(Res.string.categories_title))
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
             )
@@ -198,7 +203,7 @@ private fun CategoriesContent(
                                 CategoryCard(
                                     category = category,
                                     onClick = {
-                                        modalManager.show(ViewCategoryModal(category))
+                                        detailController.show(ViewCategoryModal(category.id))
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()

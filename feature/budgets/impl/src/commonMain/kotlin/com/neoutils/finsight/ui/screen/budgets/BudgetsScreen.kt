@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.budgets
+import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
@@ -62,6 +64,7 @@ fun BudgetsScreen(
     val analytics = koinInject<Analytics>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("budgets")
@@ -78,11 +81,13 @@ fun BudgetsScreen(
                     actionIconContentColor = colorScheme.onBackground,
                 ),
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                        )
+                    if (!isWideWindow()) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -138,7 +143,7 @@ fun BudgetsScreen(
                     ) { progress ->
                         BudgetProgressItem(
                             progress = progress,
-                            onClick = { modalManager.show(ViewBudgetModal(progress)) },
+                            onClick = { detailController.show(ViewBudgetModal(progress.budget.id)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateItem(),

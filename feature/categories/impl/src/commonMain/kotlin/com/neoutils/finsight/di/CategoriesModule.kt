@@ -63,9 +63,10 @@ val categoriesModule = module {
 
     viewModel {
         ViewCategoryViewModel(
-            category = it.get(),
+            categoryId = it.get(),
             categoryRepository = get(),
             transactionRepository = get(),
+            crashlytics = get(),
         )
     }
 }

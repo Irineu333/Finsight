@@ -68,7 +68,6 @@ class ViewBudgetViewModelTest {
         override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
         override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
         override suspend fun createOperation(
-            kind: Operation.Kind,
             title: String?,
             date: LocalDate,
             categoryId: Long?,

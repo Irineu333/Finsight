@@ -59,7 +59,6 @@ import kotlinx.datetime.LocalDate
 data class OperationEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val kind: Kind,
     val title: String?,
     val date: LocalDate,
     val categoryId: Long? = null,
@@ -70,10 +69,4 @@ data class OperationEntity(
     val recurringCycle: Int? = null,
     val installmentId: Long? = null,
     val installmentNumber: Int? = null,
-) {
-    enum class Kind {
-        TRANSACTION,
-        PAYMENT,
-        TRANSFER,
-    }
-}
+)

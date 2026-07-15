@@ -56,7 +56,6 @@ class TransferBetweenAccountsUseCase(
 
         catch {
             operationRepository.createOperation(
-                kind = Operation.Kind.TRANSFER,
                 title = null,
                 date = date,
                 categoryId = null,

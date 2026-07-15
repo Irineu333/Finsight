@@ -15,7 +15,6 @@ class ComposeAppCommonTest {
     @Test
     fun operationLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val operation = Operation(
-            kind = Operation.Kind.TRANSACTION,
             title = null,
             date = LocalDate(2026, 3, 3),
             transactions = emptyList(),

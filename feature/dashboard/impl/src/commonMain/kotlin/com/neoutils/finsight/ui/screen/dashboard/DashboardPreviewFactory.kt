@@ -244,7 +244,6 @@ class DashboardPreviewFactory(
                     operations = listOf(
                         Operation(
                             id = 1,
-                            kind = Operation.Kind.TRANSACTION,
                             title = getString(Res.string.preview_transaction_supermarket),
                             date = LocalDate(2026, 3, 20),
                             category = Category(
@@ -287,7 +286,6 @@ class DashboardPreviewFactory(
                         ),
                         Operation(
                             id = 2,
-                            kind = Operation.Kind.TRANSACTION,
                             title = getString(Res.string.preview_category_salary),
                             date = LocalDate(2026, 3, 5),
                             sourceAccount = Account(
@@ -316,7 +314,6 @@ class DashboardPreviewFactory(
                         ),
                         Operation(
                             id = 3,
-                            kind = Operation.Kind.TRANSACTION,
                             title = getString(Res.string.preview_transaction_spotify),
                             date = LocalDate(2026, 3, 1),
                             category = Category(

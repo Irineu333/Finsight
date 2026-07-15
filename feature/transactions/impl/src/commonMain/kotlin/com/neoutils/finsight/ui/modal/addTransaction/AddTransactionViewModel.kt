@@ -125,7 +125,6 @@ class AddTransactionViewModel(
             .flatMap {
                 catch {
                     operationRepository.createOperation(
-                        kind = Operation.Kind.TRANSACTION,
                         title = it.title,
                         date = it.date,
                         categoryId = it.category?.id,

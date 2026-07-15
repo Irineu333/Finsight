@@ -62,7 +62,6 @@ class ConfirmRecurringUseCase(
                         .getOrElse { throw it }
 
                 operationRepository.createOperation(
-                    kind = Operation.Kind.TRANSACTION,
                     title = recurring.title,
                     date = date,
                     categoryId = recurring.category?.id,
@@ -87,7 +86,6 @@ class ConfirmRecurringUseCase(
             } else {
                 val sourceAccount = account ?: recurring.account
                 operationRepository.createOperation(
-                    kind = Operation.Kind.TRANSACTION,
                     title = recurring.title,
                     date = date,
                     categoryId = recurring.category?.id,

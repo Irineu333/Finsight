@@ -236,6 +236,9 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 // System-account names mirror `SystemAccount` in :core:model.
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(connection: SQLiteConnection) {
+        // --- 0. Operation kind is now derived from the legs, not persisted ---
+        connection.execSQL("ALTER TABLE `operations` DROP COLUMN `kind`")
+
         // --- 1. Extend the chart of accounts ---
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'ASSET'")
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'BRL'")

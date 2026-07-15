@@ -45,7 +45,6 @@ class AdjustBalanceUseCase(
 
             if (existingAdjustment == null) {
                 operationRepository.createOperation(
-                    kind = Operation.Kind.TRANSACTION,
                     title = null,
                     date = adjustmentDate,
                     categoryId = null,

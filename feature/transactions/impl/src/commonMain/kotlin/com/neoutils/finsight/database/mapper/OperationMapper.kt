@@ -32,7 +32,6 @@ class OperationMapper {
 
         return Operation(
             id = entity.id,
-            kind = toDomain(entity.kind),
             title = entity.title ?: primaryTransaction.title,
             date = primaryTransaction.date,
             recurring = entity.recurringId?.let { recurringId ->
@@ -61,21 +60,5 @@ class OperationMapper {
             },
             transactions = transactions.sortedByDescending { it.id },
         )
-    }
-
-    fun toDomain(kind: OperationEntity.Kind): Operation.Kind {
-        return when (kind) {
-            OperationEntity.Kind.TRANSACTION -> Operation.Kind.TRANSACTION
-            OperationEntity.Kind.PAYMENT -> Operation.Kind.PAYMENT
-            OperationEntity.Kind.TRANSFER -> Operation.Kind.TRANSFER
-        }
-    }
-
-    fun toEntity(kind: Operation.Kind): OperationEntity.Kind {
-        return when (kind) {
-            Operation.Kind.TRANSACTION -> OperationEntity.Kind.TRANSACTION
-            Operation.Kind.PAYMENT -> OperationEntity.Kind.PAYMENT
-            Operation.Kind.TRANSFER -> OperationEntity.Kind.TRANSFER
-        }
     }
 }

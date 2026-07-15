@@ -45,7 +45,6 @@ class PayInvoicePaymentUseCase(
         }
 
         operationRepository.createOperation(
-            kind = Operation.Kind.PAYMENT,
             title = null,
             date = date,
             categoryId = null,

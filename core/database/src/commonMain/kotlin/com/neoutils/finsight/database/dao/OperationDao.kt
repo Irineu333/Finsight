@@ -27,7 +27,7 @@ interface OperationDao {
     @Query("SELECT * FROM operations ORDER BY date DESC, id DESC")
     suspend fun getAll(): List<OperationEntity>
 
-    @Query("DELETE FROM operations WHERE targetCreditCardId = :creditCardId AND kind = 'TRANSACTION'")
+    @Query("DELETE FROM operations WHERE targetCreditCardId = :creditCardId AND (SELECT COUNT(*) FROM transactions WHERE transactions.operationId = operations.id) = 1")
     suspend fun deleteTransactionsByCreditCardId(creditCardId: Long)
 
     @Query(

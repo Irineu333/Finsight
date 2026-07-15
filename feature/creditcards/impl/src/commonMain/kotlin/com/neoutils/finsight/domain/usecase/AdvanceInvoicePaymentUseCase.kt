@@ -64,7 +64,6 @@ class AdvanceInvoicePaymentUseCase(
         
         catch {
             operationRepository.createOperation(
-                kind = Operation.Kind.PAYMENT,
                 title = null,
                 date = date,
                 categoryId = null,

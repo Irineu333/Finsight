@@ -138,7 +138,6 @@ class AddInstallmentUseCaseImpl(
             catch {
                 transactions.mapIndexed { index, transaction ->
                     operationRepository.createOperation(
-                        kind = Operation.Kind.TRANSACTION,
                         title = transaction.title,
                         date = transaction.date,
                         categoryId = transaction.category?.id,

@@ -202,6 +202,8 @@ class CalculateReportStatsUseCaseTest {
                 source = accountA,
                 destination = accountC,
             ),
+            // Two single-leg operations (a 2-account-leg operation would derive as a
+            // transfer): income 50 on A and expense 20 on B.
             operation(
                 date = LocalDate(2026, 3, 12),
                 transactions = listOf(
@@ -211,6 +213,11 @@ class CalculateReportStatsUseCaseTest {
                         date = LocalDate(2026, 3, 12),
                         account = accountA,
                     ),
+                ),
+            ),
+            operation(
+                date = LocalDate(2026, 3, 12),
+                transactions = listOf(
                     transaction(
                         type = Transaction.Type.EXPENSE,
                         amount = 20.0,
@@ -238,10 +245,8 @@ class CalculateReportStatsUseCaseTest {
     private fun operation(
         date: LocalDate,
         transactions: List<Transaction>,
-        kind: Operation.Kind = Operation.Kind.TRANSACTION,
     ): Operation {
         return Operation(
-            kind = kind,
             title = null,
             date = date,
             transactions = transactions,
@@ -256,7 +261,6 @@ class CalculateReportStatsUseCaseTest {
     ): Operation {
         return operation(
             date = date,
-            kind = Operation.Kind.TRANSFER,
             transactions = listOf(
                 transaction(
                     type = Transaction.Type.EXPENSE,

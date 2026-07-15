@@ -237,7 +237,6 @@ class OperationRepository(
     }
 
     override suspend fun createOperation(
-        kind: Operation.Kind,
         title: String?,
         date: LocalDate,
         categoryId: Long?,
@@ -255,7 +254,6 @@ class OperationRepository(
 
         val operationId = operationDao.insert(
             OperationEntity(
-                kind = operationMapper.toEntity(kind),
                 title = title,
                 date = date,
                 categoryId = categoryId,

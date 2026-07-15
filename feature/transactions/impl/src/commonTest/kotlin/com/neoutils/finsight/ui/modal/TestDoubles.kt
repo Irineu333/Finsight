@@ -36,7 +36,6 @@ class FakeOperationRepository : IOperationRepository {
     override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
     override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
     override suspend fun createOperation(
-        kind: Operation.Kind,
         title: String?,
         date: LocalDate,
         categoryId: Long?,
@@ -60,7 +59,6 @@ fun operation(
     type: Transaction.Type = Transaction.Type.EXPENSE,
 ): Operation = Operation(
     id = id,
-    kind = Operation.Kind.TRANSACTION,
     title = "Op $id",
     date = LocalDate(2026, 1, 1),
     transactions = listOf(

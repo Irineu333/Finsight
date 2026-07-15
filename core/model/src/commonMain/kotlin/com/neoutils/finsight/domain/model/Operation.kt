@@ -4,7 +4,6 @@ import kotlinx.datetime.LocalDate
 
 data class Operation(
     val id: Long = 0,
-    val kind: Kind,
     val title: String?,
     val date: LocalDate,
     val recurring: OperationRecurring? = null,
@@ -16,6 +15,15 @@ data class Operation(
     val transactions: List<Transaction>,
 ) {
     val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
+
+    // Derived from the legs, never persisted: two accounts = transfer, an account
+    // and a card = payment, otherwise a single-leg transaction.
+    val kind: Kind
+        get() = when {
+            transactions.size >= 2 && transactions.any { it.target == Transaction.Target.CREDIT_CARD } -> Kind.PAYMENT
+            transactions.size >= 2 -> Kind.TRANSFER
+            else -> Kind.TRANSACTION
+        }
 
     val accountTransaction: Transaction?
         get() = transactions.firstOrNull { it.target == Transaction.Target.ACCOUNT }

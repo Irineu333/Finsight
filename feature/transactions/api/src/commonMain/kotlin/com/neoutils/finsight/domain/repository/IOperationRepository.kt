@@ -21,7 +21,6 @@ interface IOperationRepository {
     suspend fun getOperationById(id: Long): Operation?
 
     suspend fun createOperation(
-        kind: Operation.Kind,
         title: String?,
         date: LocalDate,
         categoryId: Long?,

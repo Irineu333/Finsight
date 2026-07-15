@@ -48,9 +48,6 @@ class PayInvoicePaymentUseCase(
             title = null,
             date = date,
             categoryId = null,
-            sourceAccountId = account.id,
-            targetCreditCardId = invoice.creditCard.id,
-            targetInvoiceId = invoice.id,
             transactions = listOf(
                 Transaction(
                     category = null,

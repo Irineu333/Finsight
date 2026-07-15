@@ -236,8 +236,36 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
 // System-account names mirror `SystemAccount` in :core:model.
 val MIGRATION_7_8 = object : Migration(7, 8) {
     override fun migrate(connection: SQLiteConnection) {
-        // --- 0. Operation kind is now derived from the legs, not persisted ---
-        connection.execSQL("ALTER TABLE `operations` DROP COLUMN `kind`")
+        // --- 0. Rebuild operations: drop the now-derived `kind` and the denormalized
+        //        `sourceAccountId`/`targetCreditCardId`/`targetInvoiceId` (derived from
+        //        the legs). Table rebuild because those columns carry foreign keys. ---
+        connection.execSQL("PRAGMA foreign_keys=OFF")
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `operations_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`title` TEXT, " +
+                "`date` TEXT NOT NULL, " +
+                "`categoryId` INTEGER, " +
+                "`recurringId` INTEGER, " +
+                "`recurringCycle` INTEGER, " +
+                "`installmentId` INTEGER, " +
+                "`installmentNumber` INTEGER, " +
+                "FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
+                "FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL, " +
+                "FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
+                ")"
+        )
+        connection.execSQL(
+            "INSERT INTO `operations_new` (`id`, `title`, `date`, `categoryId`, `recurringId`, `recurringCycle`, `installmentId`, `installmentNumber`) " +
+                "SELECT `id`, `title`, `date`, `categoryId`, `recurringId`, `recurringCycle`, `installmentId`, `installmentNumber` FROM `operations`"
+        )
+        connection.execSQL("DROP TABLE `operations`")
+        connection.execSQL("ALTER TABLE `operations_new` RENAME TO `operations`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_operations_categoryId` ON `operations` (`categoryId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_operations_installmentId` ON `operations` (`installmentId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_operations_recurringId` ON `operations` (`recurringId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_operations_recurringCycle` ON `operations` (`recurringCycle`)")
+        connection.execSQL("PRAGMA foreign_keys=ON")
 
         // --- 1. Extend the chart of accounts ---
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'ASSET'")

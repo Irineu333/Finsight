@@ -41,7 +41,17 @@ class Migration7To8Test {
                 "`dueDay` INTEGER NOT NULL, `iconKey` TEXT NOT NULL DEFAULT 'card', `createdAt` INTEGER NOT NULL" +
                 ")"
         )
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `operations` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kind` TEXT NOT NULL, `title` TEXT, `date` TEXT NOT NULL)")
+        // FK-target tables present in the real v7 schema.
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `invoices` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `installments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `recurring` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `operations` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kind` TEXT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, " +
+                "`categoryId` INTEGER, `sourceAccountId` INTEGER, `targetCreditCardId` INTEGER, `targetInvoiceId` INTEGER, " +
+                "`recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER)"
+        )
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `transactions` (" +
                 "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, " +

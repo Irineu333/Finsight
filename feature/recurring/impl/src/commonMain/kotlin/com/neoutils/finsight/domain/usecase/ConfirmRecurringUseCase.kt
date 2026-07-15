@@ -65,9 +65,6 @@ class ConfirmRecurringUseCase(
                     title = recurring.title,
                     date = date,
                     categoryId = recurring.category?.id,
-                    sourceAccountId = null,
-                    targetCreditCardId = targetCreditCard.id,
-                    targetInvoiceId = invoice.id,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
                     transactions = listOf(
@@ -88,9 +85,6 @@ class ConfirmRecurringUseCase(
                     title = recurring.title,
                     date = date,
                     categoryId = recurring.category?.id,
-                    sourceAccountId = sourceAccount?.id,
-                    targetCreditCardId = null,
-                    targetInvoiceId = null,
                     recurringId = recurring.id,
                     recurringCycle = cycleNumber,
                     transactions = listOf(

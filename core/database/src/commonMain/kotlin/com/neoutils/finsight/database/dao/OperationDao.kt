@@ -27,7 +27,11 @@ interface OperationDao {
     @Query("SELECT * FROM operations ORDER BY date DESC, id DESC")
     suspend fun getAll(): List<OperationEntity>
 
-    @Query("DELETE FROM operations WHERE targetCreditCardId = :creditCardId AND (SELECT COUNT(*) FROM transactions WHERE transactions.operationId = operations.id) = 1")
+    @Query(
+        "DELETE FROM operations WHERE " +
+            "EXISTS (SELECT 1 FROM transactions t WHERE t.operationId = operations.id AND t.creditCardId = :creditCardId) " +
+            "AND (SELECT COUNT(*) FROM transactions WHERE transactions.operationId = operations.id) = 1"
+    )
     suspend fun deleteTransactionsByCreditCardId(creditCardId: Long)
 
     @Query(
@@ -35,10 +39,7 @@ interface OperationDao {
         UPDATE operations
         SET title = :title,
             date = :date,
-            categoryId = :categoryId,
-            sourceAccountId = :sourceAccountId,
-            targetCreditCardId = :targetCreditCardId,
-            targetInvoiceId = :targetInvoiceId
+            categoryId = :categoryId
         WHERE id = :id
         """
     )
@@ -47,22 +48,21 @@ interface OperationDao {
         title: String?,
         date: LocalDate,
         categoryId: Long?,
-        sourceAccountId: Long?,
-        targetCreditCardId: Long?,
-        targetInvoiceId: Long?,
     )
 
     @Query("SELECT COUNT(*) FROM operations WHERE installmentId = :installmentId")
     suspend fun countByInstallmentId(installmentId: Long): Int
 
+    // The invoice/card/account filters derive from the legs (transactions) since the
+    // denormalized pointer columns were removed; the result set is unchanged.
     @Query(
         """
-        SELECT * FROM operations
-        WHERE (:date IS NULL OR date = :date)
-          AND (:invoiceId IS NULL OR targetInvoiceId = :invoiceId)
-          AND (:creditCardId IS NULL OR targetCreditCardId = :creditCardId)
-          AND (:accountId IS NULL OR sourceAccountId = :accountId)
-        ORDER BY date DESC, id DESC
+        SELECT * FROM operations o
+        WHERE (:date IS NULL OR o.date = :date)
+          AND (:invoiceId IS NULL OR EXISTS (SELECT 1 FROM transactions t WHERE t.operationId = o.id AND t.invoiceId = :invoiceId))
+          AND (:creditCardId IS NULL OR EXISTS (SELECT 1 FROM transactions t WHERE t.operationId = o.id AND t.creditCardId = :creditCardId))
+          AND (:accountId IS NULL OR EXISTS (SELECT 1 FROM transactions t WHERE t.operationId = o.id AND t.accountId = :accountId))
+        ORDER BY o.date DESC, o.id DESC
     """
     )
     fun observeBy(

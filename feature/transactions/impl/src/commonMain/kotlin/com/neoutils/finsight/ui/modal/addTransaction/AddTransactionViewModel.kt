@@ -128,9 +128,6 @@ class AddTransactionViewModel(
                         title = it.title,
                         date = it.date,
                         categoryId = it.category?.id,
-                        sourceAccountId = it.account?.id,
-                        targetCreditCardId = it.creditCard?.id,
-                        targetInvoiceId = it.invoice?.id,
                         transactions = listOf(it),
                     )
                 }

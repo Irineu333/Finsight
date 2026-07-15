@@ -48,9 +48,6 @@ class AdjustBalanceUseCase(
                     title = null,
                     date = adjustmentDate,
                     categoryId = null,
-                    sourceAccountId = account.id,
-                    targetCreditCardId = null,
-                    targetInvoiceId = null,
                     transactions = listOf(
                         Transaction(
                             title = null,

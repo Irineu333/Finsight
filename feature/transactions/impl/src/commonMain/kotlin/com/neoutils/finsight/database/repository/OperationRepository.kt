@@ -240,9 +240,6 @@ class OperationRepository(
         title: String?,
         date: LocalDate,
         categoryId: Long?,
-        sourceAccountId: Long?,
-        targetCreditCardId: Long?,
-        targetInvoiceId: Long?,
         recurringId: Long?,
         recurringCycle: Int?,
         installmentId: Long?,
@@ -257,9 +254,6 @@ class OperationRepository(
                 title = title,
                 date = date,
                 categoryId = categoryId,
-                sourceAccountId = sourceAccountId,
-                targetCreditCardId = targetCreditCardId,
-                targetInvoiceId = targetInvoiceId,
                 recurringId = recurringId,
                 recurringCycle = recurringCycle,
                 installmentId = installmentId,
@@ -288,9 +282,6 @@ class OperationRepository(
             title = transaction.title,
             date = transaction.date,
             categoryId = transaction.category?.id,
-            sourceAccountId = transaction.account?.id,
-            targetCreditCardId = transaction.creditCard?.id,
-            targetInvoiceId = transaction.invoice?.id,
         )
         // Keep the ledger consistent with the edited (single) leg.
         ledgerEntryWriter.rewriteEntries(id, listOf(transaction))

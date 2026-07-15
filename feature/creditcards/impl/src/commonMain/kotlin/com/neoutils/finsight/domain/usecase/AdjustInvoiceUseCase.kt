@@ -45,9 +45,6 @@ class AdjustInvoiceUseCase(
                     title = null,
                     date = adjustmentDate,
                     categoryId = null,
-                    sourceAccountId = null,
-                    targetCreditCardId = invoice.creditCard.id,
-                    targetInvoiceId = invoice.id,
                     transactions = listOf(
                         Transaction(
                             title = null,

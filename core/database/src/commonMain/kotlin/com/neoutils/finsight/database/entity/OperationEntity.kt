@@ -16,24 +16,6 @@ import kotlinx.datetime.LocalDate
             onDelete = ForeignKey.SET_NULL
         ),
         ForeignKey(
-            entity = AccountEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["sourceAccountId"],
-            onDelete = ForeignKey.SET_NULL
-        ),
-        ForeignKey(
-            entity = CreditCardEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["targetCreditCardId"],
-            onDelete = ForeignKey.SET_NULL
-        ),
-        ForeignKey(
-            entity = InvoiceEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["targetInvoiceId"],
-            onDelete = ForeignKey.SET_NULL
-        ),
-        ForeignKey(
             entity = InstallmentEntity::class,
             parentColumns = ["id"],
             childColumns = ["installmentId"],
@@ -48,9 +30,6 @@ import kotlinx.datetime.LocalDate
     ],
     indices = [
         Index(value = ["categoryId"]),
-        Index(value = ["sourceAccountId"]),
-        Index(value = ["targetCreditCardId"]),
-        Index(value = ["targetInvoiceId"]),
         Index(value = ["installmentId"]),
         Index(value = ["recurringId"]),
         Index(value = ["recurringCycle"]),
@@ -62,9 +41,6 @@ data class OperationEntity(
     val title: String?,
     val date: LocalDate,
     val categoryId: Long? = null,
-    val sourceAccountId: Long? = null,
-    val targetCreditCardId: Long? = null,
-    val targetInvoiceId: Long? = null,
     val recurringId: Long? = null,
     val recurringCycle: Int? = null,
     val installmentId: Long? = null,

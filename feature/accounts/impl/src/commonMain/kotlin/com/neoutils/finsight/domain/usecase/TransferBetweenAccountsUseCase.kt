@@ -59,9 +59,6 @@ class TransferBetweenAccountsUseCase(
                 title = null,
                 date = date,
                 categoryId = null,
-                sourceAccountId = sourceAccount.id,
-                targetCreditCardId = null,
-                targetInvoiceId = null,
                 transactions = listOf(
                     Transaction(
                         type = Transaction.Type.EXPENSE,

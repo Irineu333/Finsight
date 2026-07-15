@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "38bc0d9394007354248007080b42e9ae",
+    "identityHash": "2394a5799af0e50f5cc0001268ecedd6",
     "entities": [
       {
         "tableName": "transactions",
@@ -543,7 +543,7 @@
       },
       {
         "tableName": "operations",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `sourceAccountId` INTEGER, `targetCreditCardId` INTEGER, `targetInvoiceId` INTEGER, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`sourceAccountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`targetCreditCardId`) REFERENCES `credit_cards`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`targetInvoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -565,21 +565,6 @@
           {
             "fieldPath": "categoryId",
             "columnName": "categoryId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "sourceAccountId",
-            "columnName": "sourceAccountId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "targetCreditCardId",
-            "columnName": "targetCreditCardId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "targetInvoiceId",
-            "columnName": "targetInvoiceId",
             "affinity": "INTEGER"
           },
           {
@@ -620,33 +605,6 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
           },
           {
-            "name": "index_operations_sourceAccountId",
-            "unique": false,
-            "columnNames": [
-              "sourceAccountId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_sourceAccountId` ON `${TABLE_NAME}` (`sourceAccountId`)"
-          },
-          {
-            "name": "index_operations_targetCreditCardId",
-            "unique": false,
-            "columnNames": [
-              "targetCreditCardId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_targetCreditCardId` ON `${TABLE_NAME}` (`targetCreditCardId`)"
-          },
-          {
-            "name": "index_operations_targetInvoiceId",
-            "unique": false,
-            "columnNames": [
-              "targetInvoiceId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_targetInvoiceId` ON `${TABLE_NAME}` (`targetInvoiceId`)"
-          },
-          {
             "name": "index_operations_installmentId",
             "unique": false,
             "columnNames": [
@@ -681,39 +639,6 @@
             "onUpdate": "NO ACTION",
             "columns": [
               "categoryId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "accounts",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "sourceAccountId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "credit_cards",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "targetCreditCardId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "invoices",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "targetInvoiceId"
             ],
             "referencedColumns": [
               "id"
@@ -1281,7 +1206,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '38bc0d9394007354248007080b42e9ae')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2394a5799af0e50f5cc0001268ecedd6')"
     ]
   }
 }

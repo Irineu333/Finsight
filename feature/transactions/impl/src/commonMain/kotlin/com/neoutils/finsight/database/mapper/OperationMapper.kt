@@ -45,9 +45,13 @@ class OperationMapper {
                 }
             },
             category = entity.categoryId?.let { categories[it] } ?: primaryTransaction.category,
-            sourceAccount = entity.sourceAccountId?.let { accounts[it] },
-            targetCreditCard = entity.targetCreditCardId?.let { creditCards[it] },
-            targetInvoice = entity.targetInvoiceId?.let { invoices[it] },
+            // Derived from the legs (the denormalized pointer columns were removed):
+            // source = the money-out account leg (else any account leg); card/invoice
+            // from the card leg.
+            sourceAccount = transactions.firstOrNull { it.account != null && it.type == Transaction.Type.EXPENSE }?.account
+                ?: transactions.firstOrNull { it.account != null }?.account,
+            targetCreditCard = transactions.firstNotNullOfOrNull { it.creditCard },
+            targetInvoice = transactions.firstNotNullOfOrNull { it.invoice },
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->
                     installments[installmentId]?.let { instance ->

@@ -22,6 +22,10 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getAccountById(id: Long): AccountEntity?
 
+    // Ledger account lookups (chart of accounts includes non-ASSET rows).
+    @Query("SELECT * FROM accounts WHERE type = :type AND name = :name LIMIT 1")
+    suspend fun getByTypeAndName(type: AccountEntity.Type, name: String): AccountEntity?
+
     @Query("SELECT * FROM accounts WHERE id = :id")
     fun observeAccountById(id: Long): Flow<AccountEntity?>
 

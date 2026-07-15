@@ -2,6 +2,7 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.database.repository.LedgerEntryWriter
 import com.neoutils.finsight.database.repository.OperationRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
@@ -45,6 +46,15 @@ val transactionsModule = module {
             operationMapper = get(),
             recurringMapper = get(),
             transactionMapper = get(),
+            ledgerEntryWriter = get(),
+        )
+    }
+    factory {
+        LedgerEntryWriter(
+            entryDao = get(),
+            accountDao = get(),
+            categoryDao = get(),
+            creditCardDao = get(),
         )
     }
     factory { OperationMapper() }

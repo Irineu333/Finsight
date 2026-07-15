@@ -77,9 +77,16 @@ class AdjustBalanceUseCase(
                 return@catch
             }
 
-            repository.update(
-                existingAdjustment.copy(amount = newAmount)
-            )
+            val operationId = existingAdjustment.operationId
+            if (operationId != null) {
+                // Route through the operation so the ledger entries are rebuilt too.
+                operationRepository.updateOperation(
+                    id = operationId,
+                    transaction = existingAdjustment.copy(amount = newAmount),
+                )
+            } else {
+                repository.update(existingAdjustment.copy(amount = newAmount))
+            }
         }.bind()
     }
 }

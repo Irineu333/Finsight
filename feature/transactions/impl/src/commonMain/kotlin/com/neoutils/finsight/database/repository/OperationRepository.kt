@@ -43,6 +43,7 @@ class OperationRepository(
     private val operationMapper: OperationMapper,
     private val recurringMapper: RecurringMapper,
     private val transactionMapper: TransactionMapper,
+    private val ledgerEntryWriter: LedgerEntryWriter,
 ) : IOperationRepository {
 
     private val categoriesFlow = categoryRepository.observeAllCategories().map { it.associateBy { category -> category.id } }
@@ -249,6 +250,9 @@ class OperationRepository(
         installmentNumber: Int?,
         transactions: List<Transaction>,
     ): Operation {
+        // Reject an unbalanced operation before writing anything (Σ = 0 per currency).
+        ledgerEntryWriter.validate(transactions)
+
         val operationId = operationDao.insert(
             OperationEntity(
                 kind = operationMapper.toEntity(kind),
@@ -265,13 +269,17 @@ class OperationRepository(
             )
         )
 
-        transactions.forEach { transaction ->
-            transactionDao.insert(
+        val persisted = transactions.map { transaction ->
+            val transactionId = transactionDao.insert(
                 transactionMapper.toEntity(
                     transaction.copy(operationId = operationId)
                 )
             )
+            transaction.copy(id = transactionId, operationId = operationId)
         }
+
+        // Double-entry ledger legs, written alongside the legacy transactions.
+        ledgerEntryWriter.writeEntries(operationId, persisted)
 
         return getOperationById(operationId)!!
     }
@@ -286,6 +294,8 @@ class OperationRepository(
             targetCreditCardId = transaction.creditCard?.id,
             targetInvoiceId = transaction.invoice?.id,
         )
+        // Keep the ledger consistent with the edited (single) leg.
+        ledgerEntryWriter.rewriteEntries(id, listOf(transaction))
     }
 
     override suspend fun deleteOperationById(id: Long) {

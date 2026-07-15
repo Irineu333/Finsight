@@ -3,6 +3,8 @@ package com.neoutils.finsight.extension
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.Transaction
+import kotlin.math.roundToLong
 
 /**
  * The natural (debit-positive) balance of an account: the sum of the signed
@@ -42,3 +44,19 @@ fun List<Entry>.deriveOperationLabel(): OperationLabel {
 /** True when the entries balance to zero for every currency present. */
 fun List<Entry>.isBalanced(): Boolean =
     groupBy { it.currency }.all { (_, entries) -> entries.sumOf { it.amount } == 0L }
+
+/**
+ * The signed amount, in cents, that a legacy [Transaction] contributes to the
+ * natural (debit-positive) balance of its own account. This is the bridge from
+ * the legacy `Double`/`Type` model to the ledger: it equals `signedImpact * 100`
+ * and holds for both `ASSET` and the `LIABILITY` card leg. Removed with the
+ * legacy model in the final cleanup.
+ */
+fun Transaction.signedCents(): Long {
+    val cents = (amount * 100).roundToLong()
+    return when (type) {
+        Transaction.Type.EXPENSE -> -cents
+        Transaction.Type.INCOME -> cents
+        Transaction.Type.ADJUSTMENT -> cents
+    }
+}

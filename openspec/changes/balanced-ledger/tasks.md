@@ -17,20 +17,20 @@
 - [x] 2.4 Escrever a `Migration` versionada: promover cada conta/cartão/categoria a `AccountEntity`; semear contas `EQUITY` de sistema
 - [x] 2.5 Migrar cada `Transaction` legada para entries balanceadas, sintetizando a contrapartida (categoria → `INCOME`/`EXPENSE`; ajuste → `EQUITY`)
 - [x] 2.6 Converter valores `Double` para inteiro na menor unidade durante a migração
-- [ ] 2.7 Atualizar DAOs (`TransactionDao`/novo `EntryDao`, `OperationDao`) e mappers `Entity`↔`Domain` <!-- EntryDao + AccountMapper/AccountDao feitos; mapper Entry↔domínio e OperationDao vêm com o repositório (Seção 3) -->
+- [x] 2.7 Atualizar DAOs (`TransactionDao`/novo `EntryDao`, `OperationDao`) e mappers `Entity`↔`Domain` <!-- EntryDao/AccountDao/CreditCardDao + AccountMapper feitos; escrita de entries via LedgerEntryWriter; mapper Entry→domínio na leitura (Seção 4) -->
 - [x] 2.8 Teste de migração: saldo de cada conta pós-migração idêntico ao pré-migração (base de amostra representativa)
 - [x] 2.9 Teste de migração: toda operação migrada satisfaz `Σ = 0` por moeda
 
 ## 3. Escrita: construção de operações balanceadas (use cases)
 
-- [ ] 3.1 Repositório de operações: validar `Σ = 0` por moeda num único ponto, retornando `Either` com erro tipado
-- [ ] 3.2 Reescrever `BuildTransactionUseCase` (despesa/receita/compra-cartão) como operações de duas entries balanceadas
-- [ ] 3.3 Reescrever `TransferBetweenAccountsUseCase` como par `ASSET`↔`ASSET`
-- [ ] 3.4 Reescrever `PayInvoicePaymentUseCase` como par `ASSET`↔`LIABILITY`
-- [ ] 3.5 Reescrever `AdjustBalanceUseCase` (e variantes final/inicial) como par contra `EQUITY:Reconciliação`, preservando idempotência por data+conta
-- [ ] 3.6 Reescrever `AddInstallmentUseCase` gerando N operações balanceadas por fatura
-- [ ] 3.7 Ajustar `ConfirmRecurringUseCase` para materializar ocorrências como operações balanceadas
-- [ ] 3.8 Testes de construção: cada tipo de operação produz entries que somam zero; operação desbalanceada é rejeitada
+- [x] 3.1 Repositório de operações: validar `Σ = 0` por moeda num único ponto, retornando `Either` com erro tipado <!-- LedgerEntryWriter valida no createOperation; erro tipado LedgerError via UnbalancedOperationException (padrão Either.catch dos use cases) -->
+- [x] 3.2 Reescrever `BuildTransactionUseCase` (despesa/receita/compra-cartão) como operações de duas entries balanceadas <!-- síntese no ponto único de escrita; contra de categoria/uncategorized -->
+- [x] 3.3 Reescrever `TransferBetweenAccountsUseCase` como par `ASSET`↔`ASSET`
+- [x] 3.4 Reescrever `PayInvoicePaymentUseCase` como par `ASSET`↔`LIABILITY`
+- [x] 3.5 Reescrever `AdjustBalanceUseCase` (e variantes final/inicial) como par contra `EQUITY:Reconciliação`, preservando idempotência por data+conta <!-- update de ajuste existente roteado por updateOperation p/ reconstruir entries -->
+- [x] 3.6 Reescrever `AddInstallmentUseCase` gerando N operações balanceadas por fatura <!-- cada operação passa por createOperation -->
+- [x] 3.7 Ajustar `ConfirmRecurringUseCase` para materializar ocorrências como operações balanceadas <!-- via createOperation -->
+- [x] 3.8 Testes de construção: cada tipo de operação produz entries que somam zero; operação desbalanceada é rejeitada
 
 ## 4. Leitura: relatórios sobre o razão (use cases)
 

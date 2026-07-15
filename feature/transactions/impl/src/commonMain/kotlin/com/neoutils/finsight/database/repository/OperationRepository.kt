@@ -27,6 +27,7 @@ import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine as flowCombine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
@@ -149,9 +150,11 @@ class OperationRepository(
     }
 
     override fun observeOperationById(id: Long): Flow<Operation?> {
-        return observeAllOperations().map { operations ->
-            operations.firstOrNull { it.id == id }
-        }
+        return observeAllOperations()
+            .map { operations -> operations.firstOrNull { it.id == id } }
+            // Derived from the full list, so it re-runs on any operation/lookup change; only notify
+            // consumers when the target actually changed.
+            .distinctUntilChanged()
     }
 
     override suspend fun getAllOperations(): List<Operation> {

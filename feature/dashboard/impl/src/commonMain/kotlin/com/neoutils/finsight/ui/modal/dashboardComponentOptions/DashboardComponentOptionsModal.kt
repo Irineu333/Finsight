@@ -729,8 +729,7 @@ private fun QuickActionsConfigContent(
     val navCatalog = koinInject<NavCatalog>()
     val actions = navCatalog.destinations.filter { !it.primaryTab }
 
-    val hiddenActions = config[QuickActionsConfig.HIDDEN_ACTIONS]
-        ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
+    val hiddenActions = parseHiddenActionKeys(config)
     val visibleCount = actions.count { it.actionKey !in hiddenActions }
 
     DashboardConfigCard {

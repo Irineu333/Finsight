@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 class RecurringRepository(
@@ -41,9 +42,11 @@ class RecurringRepository(
     }
 
     override fun observeRecurringById(id: Long): Flow<Recurring?> {
-        return observeAllRecurring().map { list ->
-            list.firstOrNull { it.id == id }
-        }
+        return observeAllRecurring()
+            .map { list -> list.firstOrNull { it.id == id } }
+            // Derived from the full list, so it re-runs on any recurring/lookup change; only notify
+            // consumers when the target actually changed.
+            .distinctUntilChanged()
     }
 
     override suspend fun insert(recurring: Recurring) {

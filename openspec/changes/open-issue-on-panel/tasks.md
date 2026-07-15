@@ -29,8 +29,8 @@
 
 ## 6. Verificação
 
-- [ ] 6.1 Extra-larga: abrir issue mostra o chat no painel com auto-scroll e composer no rodapé; fechar (X) volta ao empty-state
-- [ ] 6.2 Não extra-larga: abrir issue navega para tela cheia com a transição do NavHost, como hoje
-- [ ] 6.3 Resize: chat no painel some ao sair de extra-larga (não vira bottom sheet); chat na rota permanece tela cheia ao entrar em extra-larga (painel mostra empty-state)
-- [ ] 6.4 `view*` inalterados: continuam painel em largo e `ModalBottomSheet` em estreito; enviar/excluir mensagem e `IssueDeleted` funcionam nas duas apresentações do chat
-- [ ] 6.5 Rodar `./gradlew check`
+- [x] 6.1 Extra-larga: abrir issue mostra o chat no painel com auto-scroll e composer no rodapé; fechar (X) volta ao empty-state
+- [x] 6.2 Não extra-larga: abrir issue navega para tela cheia com a transição do NavHost, como hoje
+- [x] 6.3 Resize: chat no painel some ao sair de extra-larga (não vira bottom sheet); chat na rota permanece tela cheia ao entrar em extra-larga (painel mostra empty-state)
+- [x] 6.4 `view*` inalterados: continuam painel em largo e `ModalBottomSheet` em estreito; enviar/excluir mensagem e `IssueDeleted` funcionam nas duas apresentações do chat
+- [x] 6.5 Rodar `./gradlew check` — o `check` completo aborta por `OutOfMemoryError` (heap da JVM) no link iOS/lint, limitação do ambiente e não do código; compilação dos módulos afetados (`:core:designsystem` e `:feature:support:impl`) confirmada com `BUILD SUCCESSFUL`

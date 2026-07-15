@@ -5,13 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.SendSupportReply
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.feature.support.api.ISupportRepository
 import com.neoutils.finsight.domain.usecase.AddSupportReplyUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,19 +30,18 @@ class SupportIssueViewModel(
     private val _events = Channel<SupportIssueEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private var issueMissingSignaled = false
-
     private val issueFlow = supportRepository
         .observeIssueById(issueId)
-        .onEach { issue ->
-            // A null emission is terminal: the issue does not exist (never created, deleted,
-            // or failed to load), never a transient loading state. Leave the screen instead of
-            // hanging on the spinner — but signal only once so we don't fire repeated navigation.
-            if (issue == null && !issueMissingSignaled) {
-                issueMissingSignaled = true
+        // A null issue is terminal (never existed / deleted / parse failure), never a transient
+        // loading state — leave the screen instead of hanging on the spinner. Repeats are collapsed,
+        // so IssueDeleted fires once. Only an invalid id / load failure is worth reporting.
+        .interceptAbsence(
+            onMissing = {
+                crashlytics.recordException(DetailNotFoundException("SupportIssue", issueId))
                 _events.send(SupportIssueEvent.IssueDeleted)
-            }
-        }
+            },
+            onDisappeared = { _events.send(SupportIssueEvent.IssueDeleted) },
+        )
 
     val uiState = combine(
         issueFlow,

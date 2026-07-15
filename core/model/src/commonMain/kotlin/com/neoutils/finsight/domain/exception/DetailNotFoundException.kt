@@ -2,5 +2,5 @@ package com.neoutils.finsight.domain.exception
 
 class DetailNotFoundException(
     entity: String,
-    id: Long,
+    id: Any,
 ) : IllegalStateException("Detail entity '$entity' with id $id not found")

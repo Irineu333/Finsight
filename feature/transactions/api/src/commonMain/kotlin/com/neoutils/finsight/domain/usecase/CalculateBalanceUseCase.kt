@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.extension.signedCents
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
@@ -20,7 +20,7 @@ class CalculateBalanceUseCase(
             .filter { it.date.yearMonth <= target }
             .filter { it.target.isAccount }
             .filter { accountId == null || it.account?.id == accountId }
-            .sumOf { it.signedImpact() }
+            .sumOf { it.signedCents() } / 100.0
     }
 
     // Ledger-backed form: Σ entries of the account up to the target month.

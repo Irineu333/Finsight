@@ -3,7 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.extension.signedCents
 import kotlinx.datetime.LocalDate
 
 class CalculateReportStatsUseCase {
@@ -29,7 +29,7 @@ class CalculateReportStatsUseCase {
             .filter { it.type.isExpense }
             .sumOf { it.amount }
 
-        val balance = transactions.sumOf { it.signedImpact() }
+        val balance = transactions.sumOf { it.signedCents() } / 100.0
 
         val priorTransactions = operations
             .filter { it.date < startDate }
@@ -38,7 +38,7 @@ class CalculateReportStatsUseCase {
                 operation.reportTransactionsFor(perspective)
             }
 
-        val initialBalance = priorTransactions.sumOf { it.signedImpact() }
+        val initialBalance = priorTransactions.sumOf { it.signedCents() } / 100.0
 
         return ReportStats(
             income = income,

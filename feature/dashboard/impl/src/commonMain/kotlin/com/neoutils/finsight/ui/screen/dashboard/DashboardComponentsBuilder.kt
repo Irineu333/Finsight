@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.extension.signedCents
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -215,7 +215,7 @@ class DashboardComponentsBuilder(
             .filter { it.id !in excludedIds }
             .map { account ->
                 val accountTransactions = allTransactions.filter { it.account?.id == account.id }
-                val balance = accountTransactions.sumOf { it.signedImpact() }
+                val balance = accountTransactions.sumOf { it.signedCents() } / 100.0
                 DashboardAccountUi(account = account, balance = balance)
             }
 

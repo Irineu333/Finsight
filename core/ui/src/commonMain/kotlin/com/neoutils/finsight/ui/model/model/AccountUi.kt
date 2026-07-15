@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.extension.signedCents
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
@@ -24,10 +24,10 @@ data class AccountUi(
         account = account,
         initialBalance = transactions
             .filter { transaction -> transaction.date.yearMonth < month }
-            .sumOf { transaction -> transaction.signedImpact() },
+            .sumOf { transaction -> transaction.signedCents() } / 100.0,
         balance = transactions
             .filter { transaction -> transaction.date.yearMonth <= month }
-            .sumOf { transaction -> transaction.signedImpact() },
+            .sumOf { transaction -> transaction.signedCents() } / 100.0,
         income = transactions
             .filter { transaction ->
                 transaction.date.yearMonth == month && transaction.type == Transaction.Type.INCOME
@@ -44,7 +44,7 @@ data class AccountUi(
             .filter { transaction ->
                 transaction.date.yearMonth == month && transaction.type == Transaction.Type.ADJUSTMENT
             }
-            .sumOf { transaction -> transaction.signedImpact() },
+            .sumOf { transaction -> transaction.signedCents() } / 100.0,
         invoicePayment = transactions
             .filter { transaction ->
                 transaction.date.yearMonth == month &&

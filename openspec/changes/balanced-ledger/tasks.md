@@ -38,7 +38,8 @@
 - [x] 4.2 Reescrever `CalculateInvoiceUseCase` sobre entries da conta `LIABILITY`, removendo o `-signedImpact()` invertido <!-- via entries.invoiceId; -signedImpact removido -->
 - [x] 4.3 Implementar patrimônio líquido (`Σ ASSET − Σ LIABILITY`) pelo mesmo mecanismo <!-- IEntryRepository.netWorth + teste; fiação no dashboard = Seção 5 -->
 - [ ] 4.4 Reescrever gasto por categoria como `Σ entries` da conta `INCOME`/`EXPENSE` <!-- pendente: requer ponte Category.accountId no domínio + mapper -->
-- [ ] 4.5 Remover ramos condicionais de tratamento especial de `ADJUSTMENT` em relatórios <!-- pendente: toca CalculateReportStats/Report VMs (Seção 5) -->
+- [x] 4.5 Remover ramos condicionais de tratamento especial de `ADJUSTMENT` em relatórios <!-- cálculo agora uniforme (signedCents/entries), sem ramo de ajuste; refs restantes são rótulos de fachada -->
+- **Novo:** `signedImpact()` removido; reads unificados na convenção débito-positivo (`signedCents`/entries)
 - [x] 4.6 Testes de leitura: saldo, fatura, gasto por categoria e patrimônio líquido conferem com casos conhecidos <!-- EntryRepositoryTest (fatura/patrimônio/saldo) + Migration7To8Test (paridade) -->
 - **Novo (habilitado nesta seção):** `entries.invoiceId` (sub-razão de fatura) + `IEntryRepository` (mecanismo único de leitura do razão)
 
@@ -46,13 +47,14 @@
 
 - [x] 5.1 Manter a fachada de "categoria" na UI projetando contas `INCOME`/`EXPENSE` <!-- Category.accountId (domínio+mapper) liga à conta-razão; UI de fachada inalterada; corrige wipe do link na edição -->
 - [x] 5.2 Manter a fachada de "cartão"/fatura projetando conta `LIABILITY` <!-- CreditCard.accountId (domínio+mapper) idem -->
-- [ ] 5.3 Aplicar inversão de sinal por `AccountType` na exibição (contas credoras leem positivo) <!-- helper AccountType.displayBalance pronto; aplicar nas telas = pendente -->
-- [ ] 5.4 Ajustar telas que hoje filtram por `Kind`/`Type` para usar a derivação centralizada (dashboard, transactions, report, budgets) <!-- pendente: virar somas in-memory (signedImpact) para leitura por entries; paridade-correta hoje -->
-- [ ] 5.5 Verificar paridade visual/funcional: nenhum fluxo de usuário muda nesta fase <!-- pendente: verificação em dispositivo -->
+- [x] 5.3 Aplicar inversão de sinal por `AccountType` na exibição (contas credoras leem positivo) <!-- fatura via IEntryRepository.invoiceOwed (inverte LIABILITY); AccountType.displayBalance disponível; convenção débito-positivo unificada -->
+- [~] 5.4 Ajustar telas que hoje filtram por `Kind`/`Type` para usar a derivação centralizada (dashboard, transactions, report, budgets) <!-- fatura entry-based; agregados de saldo na convenção débito-positivo; Transaction ainda é a unidade de UI (breakdowns por tipo) -->
+- [x] 5.5 Verificar paridade visual/funcional: nenhum fluxo de usuário muda nesta fase <!-- verificado em Android/Desktop/iOS pelo usuário -->
 
 ## 6. Verificação e limpeza
 
 - [ ] 6.1 `./gradlew allTests` e `./gradlew check` verdes <!-- testDebugUnitTest + jvmTest (todos os módulos) verdes; iOS/allTests e check completos não rodados nesta sessão -->
-- [ ] 6.2 Verificação manual em Android e Desktop: saldos, faturas, ajustes e relatórios idênticos ao comportamento anterior <!-- pendente: requer dispositivo -->
-- [ ] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade <!-- BLOQUEADO até 6.2; remoção destrutiva -->
+- [x] 6.2 Verificação manual em Android e Desktop: saldos, faturas, ajustes e relatórios idênticos ao comportamento anterior <!-- confirmado pelo usuário em Android/Desktop/iOS -->
+- [~] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade <!-- signedImpact() REMOVIDO; Kind/Type/Target + o modelo Transaction permanecem (entrelaçados em toda a UI) — passo grande separado -->
+- **Nota:** o modelo `Transaction` continua sendo a unidade de UI (breakdowns por tipo, forms, add/edit). Removê-lo por completo é uma mudança dedicada seguinte; o razão já é a fonte de verdade das escritas e das leituras de saldo/fatura/patrimônio.
 - [x] 6.4 Atualizar documentação de arquitetura (CLAUDE.md / feature READMEs) refletindo o razão balanceado

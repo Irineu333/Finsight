@@ -78,9 +78,24 @@ val LocalDetailPaneController = compositionLocalOf<DetailPaneController> {
     error("No DetailPaneController provided")
 }
 
-abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
+// A detail hosted by the pane. Two kinds: [AdaptiveModal] is sheet-capable (pane in wide
+// windows, ModalBottomSheet below the breakpoint); [AdaptivePane] is pane-only (shown only
+// in the extra-wide pane and dismissed — never demoted to a sheet — when the window shrinks).
+// The distinction is a property of the detail so the hosts pick the presentation without
+// knowing the feature.
+sealed class AdaptiveDetail : Modal(), ViewModelStoreOwner {
 
     override val viewModelStore = ViewModelStore()
+
+    @Composable
+    override fun Content() = Unit
+
+    // The ViewModelStore is cleared by the host (DetailPane/DetailSheetHost) when this
+    // detail leaves composition — not eagerly on dismiss — so the exit animation keeps
+    // reusing the same ViewModels instead of rebuilding fresh ones mid-teardown.
+}
+
+abstract class AdaptiveModal : AdaptiveDetail() {
 
     @Composable
     protected abstract fun DetailContent()
@@ -101,21 +116,29 @@ abstract class AdaptiveModal : Modal(), ViewModelStoreOwner {
             DetailActions()
         }
     }
+}
+
+// A pane-only detail: owns its full-bleed layout (header + scrollable body + a footer input
+// like a composer), without the `view*` scroll wrapper or the pinned actions footer.
+abstract class AdaptivePane : AdaptiveDetail() {
 
     @Composable
-    override fun Content() = Unit
+    protected abstract fun PaneContent()
 
-    // The ViewModelStore is cleared by the host (DetailPane/DetailSheetHost) when this
-    // modal leaves composition — not eagerly on dismiss — so the exit animation keeps
-    // reusing the same ViewModels instead of rebuilding fresh ones mid-teardown.
+    @Composable
+    fun RenderFullBleed() {
+        CompositionLocalProvider(LocalViewModelStoreOwner provides this) {
+            PaneContent()
+        }
+    }
 }
 
 class DetailPaneController {
 
-    var current by mutableStateOf<AdaptiveModal?>(null)
+    var current by mutableStateOf<AdaptiveDetail?>(null)
         private set
 
-    fun show(detail: AdaptiveModal) {
+    fun show(detail: AdaptiveDetail) {
         val previous = current
         current = detail
         if (previous !== detail) previous?.onDismissed()
@@ -150,10 +173,22 @@ private fun DetailSheetHost(
     if (isExtraWideWindow()) return
     val current = controller.current ?: return
 
-    key(current.key) {
+    // Pane-only details live exclusively in the extra-wide pane: below the breakpoint they are
+    // dismissed (and their store cleared here, since DetailPane — which normally clears it — is no
+    // longer composed), never demoted to a bottom sheet.
+    if (current is AdaptivePane) {
         DisposableEffect(current) {
+            controller.dismiss()
+            onDispose { current.viewModelStore.clear() }
+        }
+        return
+    }
+    val modal = current as AdaptiveModal
+
+    key(modal.key) {
+        DisposableEffect(modal) {
             onDispose {
-                if (controller.current !== current) current.viewModelStore.clear()
+                if (controller.current !== modal) modal.viewModelStore.clear()
             }
         }
         ModalBottomSheet(
@@ -167,9 +202,9 @@ private fun DetailSheetHost(
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    current.RenderBody()
+                    modal.RenderBody()
                     HorizontalDivider(Modifier.padding(horizontal = 24.dp))
-                    current.RenderActions()
+                    modal.RenderActions()
                     Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
                 }
             },
@@ -223,42 +258,56 @@ fun DetailPane(
                                 )
                             }
                         }
-                        val scrollState = rememberScrollState()
-                        BoxWithConstraints(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                        ) {
-                            // The body is at least as tall as the pane viewport, so placeholder
-                            // states (loading/error) that fillMaxSize center vertically, while
-                            // regular content stays top-aligned and scrolls when it overflows.
-                            val viewportHeight = maxHeight
-                            Column(
+                        when (detail) {
+                            // A pane-only detail owns its full-bleed layout (its own scroll and
+                            // footer input): no scroll wrapper, no actions footer.
+                            is AdaptivePane -> Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(scrollState),
+                                    .weight(1f)
+                                    .fillMaxWidth(),
                             ) {
-                                Box(
-                                    // Propagate the min height so placeholder states (which
-                                    // fillMaxSize) get the full viewport and center vertically,
-                                    // while regular column content stays top-aligned.
-                                    propagateMinConstraints = true,
+                                detail.RenderFullBleed()
+                            }
+
+                            is AdaptiveModal -> {
+                                val scrollState = rememberScrollState()
+                                BoxWithConstraints(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(min = viewportHeight),
+                                        .weight(1f)
+                                        .fillMaxWidth(),
                                 ) {
-                                    detail.RenderBody()
+                                    // The body is at least as tall as the pane viewport, so placeholder
+                                    // states (loading/error) that fillMaxSize center vertically, while
+                                    // regular content stays top-aligned and scrolls when it overflows.
+                                    val viewportHeight = maxHeight
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .verticalScroll(scrollState),
+                                    ) {
+                                        Box(
+                                            // Propagate the min height so placeholder states (which
+                                            // fillMaxSize) get the full viewport and center vertically,
+                                            // while regular column content stays top-aligned.
+                                            propagateMinConstraints = true,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = viewportHeight),
+                                        ) {
+                                            detail.RenderBody()
+                                        }
+                                    }
+                                }
+                                // Actions pinned at the pane bottom; the shadow appears only while the body
+                                // can still scroll, separating the footer from the content beneath it.
+                                Surface(
+                                    color = colorScheme.surface,
+                                    shadowElevation = if (scrollState.canScrollForward) 6.dp else 0.dp,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    detail.RenderActions()
                                 }
                             }
-                        }
-                        // Actions pinned at the pane bottom; the shadow appears only while the body
-                        // can still scroll, separating the footer from the content beneath it.
-                        Surface(
-                            color = colorScheme.surface,
-                            shadowElevation = if (scrollState.canScrollForward) 6.dp else 0.dp,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            detail.RenderActions()
                         }
                     }
                 } else {

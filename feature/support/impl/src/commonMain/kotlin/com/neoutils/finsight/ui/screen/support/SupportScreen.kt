@@ -22,8 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.resources.*
+import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.supportIssueForm.CreateSupportIssueModal
+import com.neoutils.finsight.ui.util.isExtraWideWindow
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -36,9 +38,18 @@ fun SupportScreen(
     val analytics = koinInject<Analytics>()
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val modalManager = LocalModalManager.current
+    val detailController = LocalDetailPaneController.current
+    val isExtraWide = isExtraWideWindow()
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("support")
+    }
+
+    // Presentation is decided at click time from the window width: in an extra-wide window the chat
+    // opens in the detail pane; otherwise it navigates full-screen (preserving the NavHost transition).
+    val openIssue: (String) -> Unit = { issueId ->
+        if (isExtraWide) detailController.show(ChatDetail(issueId))
+        else onOpenIssue(issueId)
     }
 
     Scaffold(
@@ -121,7 +132,7 @@ fun SupportScreen(
                     ) { issue ->
                         SupportIssueCard(
                             issue = issue,
-                            onClick = { onOpenIssue(issue.id) },
+                            onClick = { openIssue(issue.id) },
                             modifier = Modifier.animateItem(),
                         )
                     }

@@ -46,8 +46,6 @@ fun SupportIssueScreen(
     },
 ) {
     val analytics = koinInject<Analytics>()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         analytics.logScreenView("support_issue")
@@ -80,27 +78,36 @@ fun SupportIssueScreen(
                 },
             )
         },
-        bottomBar = {
-            when (val content = uiState) {
-                is SupportIssueUiState.Content -> {
-                    ReplyComposer(
-                        value = content.replyText,
-                        onValueChange = viewModel::onReplyTextChange,
-                        onSend = viewModel::sendReply,
-                        enabled = content.canSend,
-                    )
-                }
-
-                else -> Unit
-            }
-        },
     ) { paddingValues ->
+        ChatContent(
+            viewModel = viewModel,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+        )
+    }
+}
+
+/**
+ * The conversation UI (issue header, message list with day dividers and auto-scroll to the last
+ * message, and the reply composer), shared by the full-screen route [SupportIssueScreen] and the
+ * detail-pane `ChatDetail`. Owns its full-bleed layout: the messages take the available space and
+ * the composer stays pinned at the bottom.
+ */
+@Composable
+fun ChatContent(
+    viewModel: SupportIssueViewModel,
+    modifier: Modifier = Modifier,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Column(modifier = modifier) {
         when (val state = uiState) {
             SupportIssueUiState.Loading -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                        .weight(1f)
+                        .fillMaxWidth(),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -108,64 +115,82 @@ fun SupportIssueScreen(
             }
 
             is SupportIssueUiState.Content -> {
-                val dateFormats = LocalDateFormats.current
-                val today = stringResource(Res.string.support_chat_divider_today)
-                val yesterday = stringResource(Res.string.support_chat_divider_yesterday)
-                val listState = rememberLazyListState()
-
-                LaunchedEffect(state.messages.size) {
-                    if (state.messages.isNotEmpty()) {
-                        listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
-                    }
-                }
-
-                LazyColumn(
-                    state = listState,
+                MessagesList(
+                    state = state,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                focusManager.clearFocus(force = true)
-                            }
-                        },
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    item(key = "header") {
-                        SupportIssueCard(
-                            issue = state.issue,
-                            descriptionMaxLines = Int.MAX_VALUE,
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+                ReplyComposer(
+                    value = state.replyText,
+                    onValueChange = viewModel::onReplyTextChange,
+                    onSend = viewModel::sendReply,
+                    enabled = state.canSend,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessagesList(
+    state: SupportIssueUiState.Content,
+    modifier: Modifier = Modifier,
+) {
+    val focusManager = LocalFocusManager.current
+    val dateFormats = LocalDateFormats.current
+    val today = stringResource(Res.string.support_chat_divider_today)
+    val yesterday = stringResource(Res.string.support_chat_divider_yesterday)
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(state.messages.size) {
+        if (state.messages.isNotEmpty()) {
+            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount - 1)
+        }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus(force = true)
+                }
+            },
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        item(key = "header") {
+            SupportIssueCard(
+                issue = state.issue,
+                descriptionMaxLines = Int.MAX_VALUE,
+            )
+        }
+
+        if (state.messages.isEmpty()) {
+            item(key = "messages_empty") {
+                EmptyMessagesState()
+            }
+        } else {
+            itemsIndexed(
+                items = state.messages,
+                key = { _, message -> message.id },
+            ) { index, message ->
+                val isNewDay = index == 0 ||
+                        dateFormats.toLocalDate(state.messages[index - 1].createdAt) !=
+                        dateFormats.toLocalDate(message.createdAt)
+
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    if (isNewDay) {
+                        DateDivider(
+                            label = dateFormats.formatDividerDate(
+                                instant = message.createdAt,
+                                today = today,
+                                yesterday = yesterday,
+                            )
                         )
                     }
-
-                    if (state.messages.isEmpty()) {
-                        item(key = "messages_empty") {
-                            EmptyMessagesState()
-                        }
-                    } else {
-                        itemsIndexed(
-                            items = state.messages,
-                            key = { _, message -> message.id },
-                        ) { index, message ->
-                            val isNewDay = index == 0 ||
-                                    dateFormats.toLocalDate(state.messages[index - 1].createdAt) !=
-                                    dateFormats.toLocalDate(message.createdAt)
-
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                if (isNewDay) {
-                                    DateDivider(
-                                        label = dateFormats.formatDividerDate(
-                                            instant = message.createdAt,
-                                            today = today,
-                                            yesterday = yesterday,
-                                        )
-                                    )
-                                }
-                                MessageBubble(message = message)
-                            }
-                        }
-                    }
+                    MessageBubble(message = message)
                 }
             }
         }

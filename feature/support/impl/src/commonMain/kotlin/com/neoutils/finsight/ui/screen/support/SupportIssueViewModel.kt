@@ -29,14 +29,18 @@ class SupportIssueViewModel(
     private val _events = Channel<SupportIssueEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private var issueLoaded = false
+    private var issueMissingSignaled = false
 
     private val issueFlow = supportRepository
         .observeIssueById(issueId)
         .onEach { issue ->
-            // The issue vanished after being loaded (deleted) → leave the screen instead of hanging on the spinner.
-            if (issue != null) issueLoaded = true
-            else if (issueLoaded) _events.send(SupportIssueEvent.IssueDeleted)
+            // A null emission is terminal: the issue does not exist (never created, deleted,
+            // or failed to load), never a transient loading state. Leave the screen instead of
+            // hanging on the spinner — but signal only once so we don't fire repeated navigation.
+            if (issue == null && !issueMissingSignaled) {
+                issueMissingSignaled = true
+                _events.send(SupportIssueEvent.IssueDeleted)
+            }
         }
 
     val uiState = combine(

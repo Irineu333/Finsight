@@ -49,11 +49,14 @@ import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination as CatalogDestination
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.add_transaction_fab_description
 import com.neoutils.finsight.ui.component.BottomNavigationBar
 import com.neoutils.finsight.ui.component.DetailPane
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.NavigationRailBar
 import com.neoutils.finsight.ui.util.isExtraWideWindow
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -219,7 +222,7 @@ private fun AddTransactionFab(
     ) {
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = null,
+            contentDescription = stringResource(Res.string.add_transaction_fab_description),
             modifier = Modifier.size(24.dp)
         )
     }

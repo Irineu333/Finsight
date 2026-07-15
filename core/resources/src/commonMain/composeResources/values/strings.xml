@@ -306,6 +306,7 @@
     <string name="add_transaction_save">Salvar</string>
     <string name="add_transaction_expense">Despesa</string>
     <string name="add_transaction_income">Receita</string>
+    <string name="add_transaction_fab_description">Adicionar transação</string>
 
     <!-- Add Installment Modal -->
     <string name="add_installment_title">Registrar parcelamento</string>

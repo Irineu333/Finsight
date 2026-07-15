@@ -13,7 +13,8 @@ class CategoryMapper {
             name = entity.name,
             icon = CategoryLazyIcon(entity.iconKey),
             type = toDomain(entity.type),
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            accountId = entity.accountId,
         )
     }
 
@@ -34,7 +35,8 @@ class CategoryMapper {
             name = domain.name,
             iconKey = domain.icon.key,
             type = toEntity(domain.type),
-            createdAt = domain.createdAt
+            createdAt = domain.createdAt,
+            accountId = domain.accountId,
         )
     }
 

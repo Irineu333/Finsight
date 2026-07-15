@@ -44,11 +44,11 @@
 
 ## 5. UI e fachada (features)
 
-- [ ] 5.1 Manter a fachada de "categoria" na UI projetando contas `INCOME`/`EXPENSE`
-- [ ] 5.2 Manter a fachada de "cartão"/fatura projetando conta `LIABILITY`
-- [ ] 5.3 Aplicar inversão de sinal por `AccountType` na exibição (contas credoras leem positivo)
-- [ ] 5.4 Ajustar telas que hoje filtram por `Kind`/`Type` para usar a derivação centralizada (dashboard, transactions, report, budgets)
-- [ ] 5.5 Verificar paridade visual/funcional: nenhum fluxo de usuário muda nesta fase
+- [x] 5.1 Manter a fachada de "categoria" na UI projetando contas `INCOME`/`EXPENSE` <!-- Category.accountId (domínio+mapper) liga à conta-razão; UI de fachada inalterada; corrige wipe do link na edição -->
+- [x] 5.2 Manter a fachada de "cartão"/fatura projetando conta `LIABILITY` <!-- CreditCard.accountId (domínio+mapper) idem -->
+- [ ] 5.3 Aplicar inversão de sinal por `AccountType` na exibição (contas credoras leem positivo) <!-- helper AccountType.displayBalance pronto; aplicar nas telas = pendente -->
+- [ ] 5.4 Ajustar telas que hoje filtram por `Kind`/`Type` para usar a derivação centralizada (dashboard, transactions, report, budgets) <!-- pendente: virar somas in-memory (signedImpact) para leitura por entries; paridade-correta hoje -->
+- [ ] 5.5 Verificar paridade visual/funcional: nenhum fluxo de usuário muda nesta fase <!-- pendente: verificação em dispositivo -->
 
 ## 6. Verificação e limpeza
 

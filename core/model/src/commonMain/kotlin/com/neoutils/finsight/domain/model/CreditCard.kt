@@ -14,7 +14,9 @@ data class CreditCard(
     val closingDay: Int,
     val dueDay: Int,
     val iconKey: String = "card",
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    // The chart-of-accounts LIABILITY row this card projects onto.
+    val accountId: Long? = null,
 ) {
     init {
         if (name.isBlank()) {

@@ -7,7 +7,9 @@ data class Category(
     val name: String,
     val icon: CategoryLazyIcon,
     val type: Type,
-    val createdAt: Long
+    val createdAt: Long,
+    // The chart-of-accounts row (INCOME/EXPENSE) this category projects onto.
+    val accountId: Long? = null,
 ) {
     enum class Type {
         INCOME,

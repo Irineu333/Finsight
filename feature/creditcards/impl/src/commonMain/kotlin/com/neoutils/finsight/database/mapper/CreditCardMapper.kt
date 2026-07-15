@@ -12,7 +12,8 @@ class CreditCardMapper {
             closingDay = entity.closingDay,
             dueDay = entity.dueDay,
             iconKey = entity.iconKey,
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            accountId = entity.accountId,
         )
     }
 
@@ -24,7 +25,8 @@ class CreditCardMapper {
             closingDay = domain.closingDay,
             dueDay = domain.dueDay,
             iconKey = domain.iconKey,
-            createdAt = domain.createdAt
+            createdAt = domain.createdAt,
+            accountId = domain.accountId,
         )
     }
 }

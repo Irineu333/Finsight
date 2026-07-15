@@ -41,6 +41,7 @@ val reportModule = module {
             invoiceRepository = get(),
             calculateReportStatsUseCase = get(),
             calculateReportCategorySpendingUseCase = get(),
+            entryRepository = get(),
             renderer = get(),
             analytics = get(),
         )

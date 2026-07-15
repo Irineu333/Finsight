@@ -2,7 +2,6 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
 import kotlinx.datetime.YearMonth
 
 class CalculateInvoiceOverviewsUseCase {
@@ -35,7 +34,9 @@ class CalculateInvoiceOverviewsUseCase {
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { -it.signedImpact() }
+                    // Card-leg contribution to the invoice (debit-positive owed):
+                    // expense adds, income/adjustment (payments) subtract.
+                    total = invoiceTransactions.sumOf { if (it.type.isExpense) it.amount else -it.amount }
                 )
             }
 

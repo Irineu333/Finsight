@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.extension.signedImpact
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -39,6 +39,7 @@ class ReportViewerViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
+    private val entryRepository: IEntryRepository,
     private val renderer: ReportDocumentRenderer,
     private val analytics: Analytics,
 ) : ViewModel() {
@@ -87,7 +88,7 @@ class ReportViewerViewModel(
             val adjustment = invoiceTransactions
                 .filter { it.type == Transaction.Type.ADJUSTMENT }
                 .sumOf { it.amount }
-            val total = invoiceTransactions.sumOf { -it.signedImpact() }
+            val total = invoices.sumOf { entryRepository.invoiceOwed(it.id) }
 
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },

@@ -8,9 +8,9 @@ import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
-import com.neoutils.finsight.extension.signedImpact
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.util.dayMonth
@@ -36,6 +36,7 @@ class InvoiceTransactionsViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val entryRepository: IEntryRepository,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -72,6 +73,10 @@ class InvoiceTransactionsViewModel(
         filters,
     ) { creditCard, invoices, operations, categories, index, currentFilters ->
         val transactions = operations.flatMap { it.transactions }
+
+        // Invoice owed derived from the ledger (Σ liability-leg entries), not signedImpact.
+        val owedByInvoiceId = mutableMapOf<Long, Double>()
+        for (inv in invoices) owedByInvoiceId[inv.id] = entryRepository.invoiceOwed(inv.id)
 
         val invoice = invoices.getOrNull(index)
 
@@ -135,7 +140,7 @@ class InvoiceTransactionsViewModel(
                     expense = expense,
                     advancePayment = advancePayment,
                     adjustment = adjustment,
-                    total = invoiceTransactions.sumOf { -it.signedImpact() },
+                    total = owedByInvoiceId.getValue(invoice.id),
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,

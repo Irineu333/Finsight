@@ -67,7 +67,6 @@ fun operation(
             amount = amount,
             title = null,
             date = LocalDate(2026, 1, 1),
-            target = Transaction.Target.ACCOUNT,
         ),
     ),
 )

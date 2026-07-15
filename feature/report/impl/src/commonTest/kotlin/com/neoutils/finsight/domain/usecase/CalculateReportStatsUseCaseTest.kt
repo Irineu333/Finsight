@@ -289,7 +289,6 @@ class CalculateReportStatsUseCaseTest {
             amount = amount,
             title = null,
             date = date,
-            target = Transaction.Target.ACCOUNT,
             account = account,
         )
     }
@@ -305,7 +304,6 @@ class CalculateReportStatsUseCaseTest {
             amount = amount,
             title = null,
             date = date,
-            target = Transaction.Target.CREDIT_CARD,
             creditCard = creditCard,
         )
     }

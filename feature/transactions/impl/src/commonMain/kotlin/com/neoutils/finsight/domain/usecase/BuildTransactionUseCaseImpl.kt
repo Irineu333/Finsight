@@ -67,7 +67,6 @@ class BuildTransactionUseCaseImpl(
                 title = form.title,
                 date = date,
                 category = form.category,
-                target = form.target,
                 account = form.account,
                 creditCard = null,
                 invoice = null,
@@ -104,7 +103,6 @@ class BuildTransactionUseCaseImpl(
             title = form.title,
             date = date,
             category = form.category,
-            target = form.target,
             creditCard = form.creditCard,
             invoice = invoice,
         )

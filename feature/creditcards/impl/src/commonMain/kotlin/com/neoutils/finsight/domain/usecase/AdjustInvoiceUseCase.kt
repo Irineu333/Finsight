@@ -54,7 +54,6 @@ class AdjustInvoiceUseCase(
                             type = Transaction.Type.ADJUSTMENT,
                             amount = -difference,
                             date = adjustmentDate,
-                            target = Transaction.Target.CREDIT_CARD,
                             creditCard = invoice.creditCard,
                             invoice = invoice
                         )

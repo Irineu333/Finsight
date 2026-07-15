@@ -68,7 +68,6 @@ class TransferBetweenAccountsUseCase(
                         amount = amount,
                         title = null,
                         date = date,
-                        target = Transaction.Target.ACCOUNT,
                         account = sourceAccount,
                     ),
                     Transaction(
@@ -76,7 +75,6 @@ class TransferBetweenAccountsUseCase(
                         amount = amount,
                         title = null,
                         date = date,
-                        target = Transaction.Target.ACCOUNT,
                         account = destinationAccount,
                     ),
                 ),

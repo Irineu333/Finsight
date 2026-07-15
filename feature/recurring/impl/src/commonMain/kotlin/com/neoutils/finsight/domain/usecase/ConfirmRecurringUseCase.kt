@@ -77,7 +77,6 @@ class ConfirmRecurringUseCase(
                             title = recurring.title,
                             date = date,
                             category = recurring.category,
-                            target = Transaction.Target.CREDIT_CARD,
                             creditCard = targetCreditCard,
                             invoice = invoice,
                         )
@@ -101,7 +100,6 @@ class ConfirmRecurringUseCase(
                             title = recurring.title,
                             date = date,
                             category = recurring.category,
-                            target = Transaction.Target.ACCOUNT,
                             account = sourceAccount,
                         )
                     ),

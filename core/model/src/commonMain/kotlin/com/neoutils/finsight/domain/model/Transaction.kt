@@ -11,11 +11,14 @@ data class Transaction(
     val title: String?,
     val date: LocalDate,
     val category: Category? = null,
-    val target: Target = Target.ACCOUNT,
     val creditCard: CreditCard? = null,
     val invoice: Invoice? = null,
     val account: Account? = null,
 ) {
+    // Derived from the leg's account: a card leg targets the card, otherwise an account.
+    val target: Target
+        get() = if (creditCard != null) Target.CREDIT_CARD else Target.ACCOUNT
+
     @Serializable
     enum class Type {
         EXPENSE,

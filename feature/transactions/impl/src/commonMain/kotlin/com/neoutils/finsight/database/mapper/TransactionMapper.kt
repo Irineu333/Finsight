@@ -23,7 +23,6 @@ class TransactionMapper {
             title = entity.title,
             date = entity.date,
             category = category,
-            target = toDomain(entity.target),
             creditCard = creditCard,
             invoice = invoice,
             account = account,

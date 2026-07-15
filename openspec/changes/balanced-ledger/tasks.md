@@ -13,7 +13,7 @@
 
 - [x] 2.1 Criar `AccountEntity` (plano de contas) com `type` e `currency`, índices e FKs
 - [x] 2.2 Criar `EntryEntity` (operationId, accountId, amount inteiro, currency) com índices e FK `onDelete=CASCADE` para operação
-- [ ] 2.3 Ajustar `OperationEntity` removendo `kind` persistido e os campos redundantes (`target*`, `sourceAccountId`) substituídos por entries <!-- diferido para 6.3: remoção destrutiva quebraria o caminho de leitura legado na coexistência -->
+- [~] 2.3 Ajustar `OperationEntity` removendo `kind` persistido e os campos redundantes (`target*`, `sourceAccountId`) substituídos por entries <!-- kind REMOVIDO (derivado, coluna dropada). sourceAccountId/target* mantidos: observeBy filtra por eles com semântica de "conta de origem"; derivá-los dos legs mudaria o comportamento visível (transferência apareceria para ambas as contas) — muda UX, não é limpeza segura desta fase -->
 - [x] 2.4 Escrever a `Migration` versionada: promover cada conta/cartão/categoria a `AccountEntity`; semear contas `EQUITY` de sistema
 - [x] 2.5 Migrar cada `Transaction` legada para entries balanceadas, sintetizando a contrapartida (categoria → `INCOME`/`EXPENSE`; ajuste → `EQUITY`)
 - [x] 2.6 Converter valores `Double` para inteiro na menor unidade durante a migração
@@ -55,6 +55,6 @@
 
 - [ ] 6.1 `./gradlew allTests` e `./gradlew check` verdes <!-- testDebugUnitTest + jvmTest (todos os módulos) verdes; iOS/allTests e check completos não rodados nesta sessão -->
 - [x] 6.2 Verificação manual em Android e Desktop: saldos, faturas, ajustes e relatórios idênticos ao comportamento anterior <!-- confirmado pelo usuário em Android/Desktop/iOS -->
-- [~] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade <!-- signedImpact() REMOVIDO; Kind/Type/Target + o modelo Transaction permanecem (entrelaçados em toda a UI) — passo grande separado -->
-- **Nota:** o modelo `Transaction` continua sendo a unidade de UI (breakdowns por tipo, forms, add/edit). Removê-lo por completo é uma mudança dedicada seguinte; o razão já é a fonte de verdade das escritas e das leituras de saldo/fatura/patrimônio.
+- [~] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade <!-- FEITO: signedImpact() e Operation.Kind (col. dropada, derivado). Transaction.Type NÃO removível como limpeza: é a classificação receita/despesa/ajuste que dirige exibição/cores/forms/filtros (~460 sites) e não é derivável de uma perna isolada — sua remoção É o redesenho da unidade de UI para entries (a conclusão do task 1.4), que quebraria a paridade "sem mudança visível" desta fase. É a próxima mudança dedicada, não limpeza. -->
+- **Fronteira de escopo:** o razão é a fonte de verdade das escritas e das leituras de saldo/fatura/patrimônio; `signedImpact` e `Operation.Kind` persistido não existem mais. Substituir a unidade de UI `Transaction` por `Entry` (removendo `Type`/`Target` e os pointers denormalizados de `OperationEntity`) altera comportamento visível/UX e é a mudança seguinte — fora do escopo "sem mudança de fluxo" desta fase.
 - [x] 6.4 Atualizar documentação de arquitetura (CLAUDE.md / feature READMEs) refletindo o razão balanceado

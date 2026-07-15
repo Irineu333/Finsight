@@ -99,6 +99,11 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getByOperationId(operationId: Long): List<EntryEntity> = inserted.filter { it.operationId == operationId }
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
+    override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
+    override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = inserted.sumOf { it.amount }
+    override suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
+    override suspend fun invoiceNaturalBalance(invoiceId: Long): Long = inserted.filter { it.invoiceId == invoiceId }.sumOf { it.amount }
+    override suspend fun netWorthCents(): Long = inserted.sumOf { it.amount }
 }
 
 private class FakeAccountDao : AccountDao {

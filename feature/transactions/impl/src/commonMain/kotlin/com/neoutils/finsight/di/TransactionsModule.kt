@@ -2,9 +2,11 @@ package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.database.repository.EntryRepository
 import com.neoutils.finsight.database.repository.LedgerEntryWriter
 import com.neoutils.finsight.database.repository.OperationRepository
 import com.neoutils.finsight.database.repository.TransactionRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
@@ -49,6 +51,7 @@ val transactionsModule = module {
             ledgerEntryWriter = get(),
         )
     }
+    single<IEntryRepository> { EntryRepository(entryDao = get()) }
     factory {
         LedgerEntryWriter(
             entryDao = get(),
@@ -61,7 +64,7 @@ val transactionsModule = module {
     factory { TransactionMapper() }
 
     factory { CalculateTransactionStatsUseCase() }
-    factory { CalculateBalanceUseCase(repository = get()) }
+    factory { CalculateBalanceUseCase(entryRepository = get()) }
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),

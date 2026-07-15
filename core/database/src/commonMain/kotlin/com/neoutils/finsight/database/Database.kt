@@ -260,12 +260,15 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 "`accountId` INTEGER NOT NULL, " +
                 "`amount` INTEGER NOT NULL, " +
                 "`currency` TEXT NOT NULL DEFAULT 'BRL', " +
+                "`invoiceId` INTEGER, " +
                 "FOREIGN KEY(`operationId`) REFERENCES `operations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
-                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION" +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION, " +
+                "FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
                 ")"
         )
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_operationId` ON `entries` (`operationId`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_accountId` ON `entries` (`accountId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_invoiceId` ON `entries` (`invoiceId`)")
 
         // --- 4. Promote categories to INCOME/EXPENSE accounts (ids disjoint via captured offset) ---
         connection.execSQL("CREATE TEMP TABLE `_cat_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
@@ -297,13 +300,14 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
 
         // --- 7. Real-leg entry for every legacy transaction (debit-positive cents = signedImpact * 100) ---
         connection.execSQL(
-            "INSERT INTO `entries` (`operationId`, `accountId`, `amount`, `currency`) " +
+            "INSERT INTO `entries` (`operationId`, `accountId`, `amount`, `currency`, `invoiceId`) " +
                 "SELECT t.`operationId`, " +
                 "CASE t.`target` WHEN 'ACCOUNT' THEN t.`accountId` " +
                 "ELSE (SELECT cc.`accountId` FROM `credit_cards` cc WHERE cc.`id` = t.`creditCardId`) END, " +
                 "CASE t.`type` WHEN 'EXPENSE' THEN -CAST(ROUND(t.`amount` * 100) AS INTEGER) " +
                 "ELSE CAST(ROUND(t.`amount` * 100) AS INTEGER) END, " +
-                "'BRL' " +
+                "'BRL', " +
+                "t.`invoiceId` " +
                 "FROM `transactions` t WHERE t.`operationId` IS NOT NULL"
         )
 

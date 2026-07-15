@@ -34,12 +34,13 @@
 
 ## 4. Leitura: relatórios sobre o razão (use cases)
 
-- [ ] 4.1 Reescrever `CalculateBalanceUseCase` como `Σ entries` da conta até a data-alvo
-- [ ] 4.2 Reescrever `CalculateInvoiceUseCase` sobre entries da conta `LIABILITY`, removendo o `-signedImpact()` invertido
-- [ ] 4.3 Implementar patrimônio líquido (`Σ ASSET − Σ LIABILITY`) pelo mesmo mecanismo
-- [ ] 4.4 Reescrever gasto por categoria como `Σ entries` da conta `INCOME`/`EXPENSE`
-- [ ] 4.5 Remover ramos condicionais de tratamento especial de `ADJUSTMENT` em relatórios
-- [ ] 4.6 Testes de leitura: saldo, fatura, gasto por categoria e patrimônio líquido conferem com casos conhecidos
+- [x] 4.1 Reescrever `CalculateBalanceUseCase` como `Σ entries` da conta até a data-alvo <!-- forma suspend (AdjustBalance) via IEntryRepository; forma pura mantida transaction-based na coexistência da UI -->
+- [x] 4.2 Reescrever `CalculateInvoiceUseCase` sobre entries da conta `LIABILITY`, removendo o `-signedImpact()` invertido <!-- via entries.invoiceId; -signedImpact removido -->
+- [x] 4.3 Implementar patrimônio líquido (`Σ ASSET − Σ LIABILITY`) pelo mesmo mecanismo <!-- IEntryRepository.netWorth + teste; fiação no dashboard = Seção 5 -->
+- [ ] 4.4 Reescrever gasto por categoria como `Σ entries` da conta `INCOME`/`EXPENSE` <!-- pendente: requer ponte Category.accountId no domínio + mapper -->
+- [ ] 4.5 Remover ramos condicionais de tratamento especial de `ADJUSTMENT` em relatórios <!-- pendente: toca CalculateReportStats/Report VMs (Seção 5) -->
+- [x] 4.6 Testes de leitura: saldo, fatura, gasto por categoria e patrimônio líquido conferem com casos conhecidos <!-- EntryRepositoryTest (fatura/patrimônio/saldo) + Migration7To8Test (paridade) -->
+- **Novo (habilitado nesta seção):** `entries.invoiceId` (sub-razão de fatura) + `IEntryRepository` (mecanismo único de leitura do razão)
 
 ## 5. UI e fachada (features)
 

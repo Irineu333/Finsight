@@ -26,10 +26,17 @@ import androidx.room.PrimaryKey
             childColumns = ["accountId"],
             onDelete = ForeignKey.NO_ACTION
         ),
+        ForeignKey(
+            entity = InvoiceEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["invoiceId"],
+            onDelete = ForeignKey.SET_NULL
+        ),
     ],
     indices = [
         Index(value = ["operationId"]),
         Index(value = ["accountId"]),
+        Index(value = ["invoiceId"]),
     ]
 )
 data class EntryEntity(
@@ -39,4 +46,7 @@ data class EntryEntity(
     val accountId: Long,
     val amount: Long,
     val currency: String = "BRL",
+    // Set only on the credit-card (LIABILITY) leg of a purchase, so an invoice's
+    // balance is Σ entries with this invoiceId — the sub-ledger of the card account.
+    val invoiceId: Long? = null,
 )

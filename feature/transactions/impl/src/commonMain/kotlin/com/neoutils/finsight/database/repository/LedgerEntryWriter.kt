@@ -57,6 +57,8 @@ class LedgerEntryWriter(
                         accountId = realAccountId(transaction),
                         amount = transaction.signedCents(),
                         currency = BASE_CURRENCY,
+                        // Only the credit-card leg carries the invoice (its sub-ledger).
+                        invoiceId = transaction.invoice?.id,
                     )
                 )
             }

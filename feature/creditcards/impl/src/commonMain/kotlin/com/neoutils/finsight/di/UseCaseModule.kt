@@ -33,7 +33,7 @@ val useCaseModules = module {
         )
     }
 
-    factory { CalculateInvoiceUseCase(repository = get()) }
+    factory { CalculateInvoiceUseCase(entryRepository = get()) }
 
     factory { CalculateInvoiceOverviewsUseCase() }
 

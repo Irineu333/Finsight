@@ -10,6 +10,8 @@ import kotlin.time.ExperimentalTime
 data class Account(
     val id: Long = 0,
     val name: String,
+    val type: AccountType = AccountType.ASSET,
+    val currency: String = BASE_CURRENCY,
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds()

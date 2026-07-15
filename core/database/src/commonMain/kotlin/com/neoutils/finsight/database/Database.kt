@@ -229,11 +229,113 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+// 1.6.0 — balanced double-entry ledger foundation.
+// Promotes every category and credit card into the unified chart of accounts,
+// seeds EQUITY system accounts, and synthesizes balanced entries from the legacy
+// single/dual-leg transactions (Double reais -> Long cents, debit-positive sign).
+// System-account names mirror `SystemAccount` in :core:model.
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(connection: SQLiteConnection) {
+        // --- 1. Extend the chart of accounts ---
+        connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'ASSET'")
+        connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'BRL'")
+
+        // --- 2. Facade back-references (category/card -> its ledger account) ---
+        connection.execSQL(
+            "ALTER TABLE `categories` ADD COLUMN `accountId` INTEGER " +
+                "REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL"
+        )
+        connection.execSQL(
+            "ALTER TABLE `credit_cards` ADD COLUMN `accountId` INTEGER " +
+                "REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL"
+        )
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_categories_accountId` ON `categories` (`accountId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_credit_cards_accountId` ON `credit_cards` (`accountId`)")
+
+        // --- 3. The ledger entries table ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `entries` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`operationId` INTEGER NOT NULL, " +
+                "`accountId` INTEGER NOT NULL, " +
+                "`amount` INTEGER NOT NULL, " +
+                "`currency` TEXT NOT NULL DEFAULT 'BRL', " +
+                "FOREIGN KEY(`operationId`) REFERENCES `operations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION" +
+                ")"
+        )
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_operationId` ON `entries` (`operationId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_accountId` ON `entries` (`accountId`)")
+
+        // --- 4. Promote categories to INCOME/EXPENSE accounts (ids disjoint via captured offset) ---
+        connection.execSQL("CREATE TEMP TABLE `_cat_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`) " +
+                "SELECT (SELECT base FROM `_cat_base`) + c.`id`, c.`name`, c.`type`, 'BRL', c.`iconKey`, 0, c.`createdAt` " +
+                "FROM `categories` c"
+        )
+        connection.execSQL("UPDATE `categories` SET `accountId` = (SELECT base FROM `_cat_base`) + `id`")
+
+        // --- 5. Promote credit cards to LIABILITY accounts ---
+        connection.execSQL("CREATE TEMP TABLE `_cc_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`) " +
+                "SELECT (SELECT base FROM `_cc_base`) + cc.`id`, cc.`name`, 'LIABILITY', 'BRL', cc.`iconKey`, 0, cc.`createdAt` " +
+                "FROM `credit_cards` cc"
+        )
+        connection.execSQL("UPDATE `credit_cards` SET `accountId` = (SELECT base FROM `_cc_base`) + `id`")
+
+        // --- 6. Seed EQUITY + uncategorized system accounts (ids base+1..+4) ---
+        connection.execSQL("CREATE TEMP TABLE `_sys` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`) VALUES " +
+                "((SELECT base FROM `_sys`) + 1, 'Reconciliação', 'EQUITY', 'BRL', 'wallet', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
+                "((SELECT base FROM `_sys`) + 2, 'Saldo Inicial', 'EQUITY', 'BRL', 'wallet', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
+                "((SELECT base FROM `_sys`) + 3, 'Sem categoria (despesa)', 'EXPENSE', 'BRL', 'default', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
+                "((SELECT base FROM `_sys`) + 4, 'Sem categoria (receita)', 'INCOME', 'BRL', 'default', 0, CAST(strftime('%s','now') AS INTEGER) * 1000)"
+        )
+
+        // --- 7. Real-leg entry for every legacy transaction (debit-positive cents = signedImpact * 100) ---
+        connection.execSQL(
+            "INSERT INTO `entries` (`operationId`, `accountId`, `amount`, `currency`) " +
+                "SELECT t.`operationId`, " +
+                "CASE t.`target` WHEN 'ACCOUNT' THEN t.`accountId` " +
+                "ELSE (SELECT cc.`accountId` FROM `credit_cards` cc WHERE cc.`id` = t.`creditCardId`) END, " +
+                "CASE t.`type` WHEN 'EXPENSE' THEN -CAST(ROUND(t.`amount` * 100) AS INTEGER) " +
+                "ELSE CAST(ROUND(t.`amount` * 100) AS INTEGER) END, " +
+                "'BRL' " +
+                "FROM `transactions` t WHERE t.`operationId` IS NOT NULL"
+        )
+
+        // --- 8. Synthesized contra-leg for single-transaction operations (contra = -real leg) ---
+        connection.execSQL(
+            "INSERT INTO `entries` (`operationId`, `accountId`, `amount`, `currency`) " +
+                "SELECT t.`operationId`, " +
+                "CASE t.`type` " +
+                "WHEN 'ADJUSTMENT' THEN (SELECT base FROM `_sys`) + 1 " +
+                "WHEN 'EXPENSE' THEN COALESCE((SELECT c.`accountId` FROM `categories` c WHERE c.`id` = t.`categoryId`), (SELECT base FROM `_sys`) + 3) " +
+                "WHEN 'INCOME' THEN COALESCE((SELECT c.`accountId` FROM `categories` c WHERE c.`id` = t.`categoryId`), (SELECT base FROM `_sys`) + 4) " +
+                "END, " +
+                "CASE t.`type` WHEN 'EXPENSE' THEN CAST(ROUND(t.`amount` * 100) AS INTEGER) " +
+                "ELSE -CAST(ROUND(t.`amount` * 100) AS INTEGER) END, " +
+                "'BRL' " +
+                "FROM `transactions` t " +
+                "WHERE t.`operationId` IN (" +
+                "SELECT `operationId` FROM `transactions` WHERE `operationId` IS NOT NULL GROUP BY `operationId` HAVING COUNT(*) = 1" +
+                ")"
+        )
+
+        connection.execSQL("DROP TABLE `_cat_base`")
+        connection.execSQL("DROP TABLE `_cc_base`")
+        connection.execSQL("DROP TABLE `_sys`")
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

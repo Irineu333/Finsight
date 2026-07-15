@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.BudgetDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
 import com.neoutils.finsight.database.dao.OperationDao
@@ -20,6 +21,7 @@ import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
+import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.entity.InstallmentEntity
 import com.neoutils.finsight.database.entity.OperationEntity
@@ -40,8 +42,9 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         BudgetCategoryEntity::class,
         RecurringEntity::class,
         RecurringOccurrenceEntity::class,
+        EntryEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -57,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun budgetDao(): BudgetDao
     abstract fun recurringDao(): RecurringDao
     abstract fun recurringOccurrenceDao(): RecurringOccurrenceDao
+    abstract fun entryDao(): EntryDao
 }
 
 // Room compiler generates the actual implementations

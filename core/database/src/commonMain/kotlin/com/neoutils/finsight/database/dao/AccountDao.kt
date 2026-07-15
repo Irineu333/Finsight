@@ -10,10 +10,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AccountDao {
-    @Query("SELECT * FROM accounts ORDER BY createdAt ASC")
+    // Only ASSET rows are user-facing "accounts"; INCOME/EXPENSE/LIABILITY/EQUITY
+    // rows in the same chart-of-accounts table back categories, cards and system
+    // reconciliation and must not leak into the accounts facade.
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' ORDER BY createdAt ASC")
     fun observeAllAccounts(): Flow<List<AccountEntity>>
 
-    @Query("SELECT * FROM accounts ORDER BY createdAt ASC")
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' ORDER BY createdAt ASC")
     suspend fun getAllAccounts(): List<AccountEntity>
 
     @Query("SELECT * FROM accounts WHERE id = :id")
@@ -22,13 +25,13 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id")
     fun observeAccountById(id: Long): Flow<AccountEntity?>
 
-    @Query("SELECT * FROM accounts WHERE isDefault = 1 LIMIT 1")
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' AND isDefault = 1 LIMIT 1")
     suspend fun getDefaultAccount(): AccountEntity?
 
-    @Query("SELECT * FROM accounts WHERE isDefault = 1 LIMIT 1")
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' AND isDefault = 1 LIMIT 1")
     fun observeDefaultAccount(): Flow<AccountEntity?>
 
-    @Query("SELECT COUNT(*) FROM accounts")
+    @Query("SELECT COUNT(*) FROM accounts WHERE type = 'ASSET'")
     suspend fun getAccountCount(): Int
 
     @Insert

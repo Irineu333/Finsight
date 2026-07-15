@@ -20,10 +20,15 @@
 - [x] 4.1 Em `SupportScreen`, mover a decisão para `onOpenIssue`: `if (isExtraWideWindow()) controller.show(ChatDetail(id)) else navController.navigate(SupportIssueRoute(id))`, obtendo `LocalDetailPaneController` e a largura na própria tela
 - [x] 4.2 Manter a rota `SupportIssueRoute` no grafo para o caso de navegação (janela não extra-larga); confirmar que o wide não navega
 
-## 5. Verificação
+## 5. Ajuste visual do painel pane-only (`core/designsystem`)
 
-- [ ] 5.1 Extra-larga: abrir issue mostra o chat no painel com auto-scroll e composer no rodapé; fechar (X) volta ao empty-state
-- [ ] 5.2 Não extra-larga: abrir issue navega para tela cheia com a transição do NavHost, como hoje
-- [ ] 5.3 Resize: chat no painel some ao sair de extra-larga (não vira bottom sheet); chat na rota permanece tela cheia ao entrar em extra-larga (painel mostra empty-state)
-- [ ] 5.4 `view*` inalterados: continuam painel em largo e `ModalBottomSheet` em estreito; enviar/excluir mensagem e `IssueDeleted` funcionam nas duas apresentações do chat
-- [ ] 5.5 Rodar `./gradlew check`
+- [x] 5.1 No `DetailPane`, renderizar o detalhe pane-only sobre `colorScheme.background` (como a rota em tela cheia) para os cards do chat (`surface`) contrastarem, mantendo os `view*` sobre `colorScheme.surface`
+- [x] 5.2 Suavizar o `VerticalDivider` do painel para `outlineVariant` a 50% de alpha, evitando contraste excessivo contra o novo fundo
+
+## 6. Verificação
+
+- [ ] 6.1 Extra-larga: abrir issue mostra o chat no painel com auto-scroll e composer no rodapé; fechar (X) volta ao empty-state
+- [ ] 6.2 Não extra-larga: abrir issue navega para tela cheia com a transição do NavHost, como hoje
+- [ ] 6.3 Resize: chat no painel some ao sair de extra-larga (não vira bottom sheet); chat na rota permanece tela cheia ao entrar em extra-larga (painel mostra empty-state)
+- [ ] 6.4 `view*` inalterados: continuam painel em largo e `ModalBottomSheet` em estreito; enviar/excluir mensagem e `IssueDeleted` funcionam nas duas apresentações do chat
+- [ ] 6.5 Rodar `./gradlew check`

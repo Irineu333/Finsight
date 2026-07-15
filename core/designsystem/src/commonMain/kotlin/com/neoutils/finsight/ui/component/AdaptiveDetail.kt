@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -223,7 +224,7 @@ fun DetailPane(
     val current = controller.current
 
     Row(modifier) {
-        VerticalDivider()
+        VerticalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
         Surface(
             color = colorScheme.surface,
             modifier = Modifier
@@ -242,7 +243,19 @@ fun DetailPane(
                             if (controller.current !== detail) detail.viewModelStore.clear()
                         }
                     }
-                    Column(Modifier.fillMaxSize()) {
+                    // A pane-only detail owns its full-bleed layout with its own cards (all on
+                    // `surface`), so it renders on `background` — like a full-screen route — for the
+                    // cards to stand out. The `view*` details paint their rows directly on `surface`.
+                    val paneColor = if (detail is AdaptivePane) {
+                        colorScheme.background
+                    } else {
+                        colorScheme.surface
+                    }
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .background(paneColor),
+                    ) {
                         Box(
                             contentAlignment = Alignment.CenterEnd,
                             modifier = Modifier

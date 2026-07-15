@@ -14,6 +14,7 @@
 
 - [x] 3.1 Criar `ChatDetail(issueId)` como detalhe pane-only (`ViewModelStoreOwner`) que hospeda o `SupportIssueViewModel(issueId)` e renderiza `ChatContent` full-bleed com o composer fixo no rodapé do painel
 - [x] 3.2 Tratar `IssueDeleted` no `ChatDetail` dispensando o detalhe do painel (`controller.dismiss()`), equivalente ao `onNavigateBack` da rota
+- [x] 3.3 Ocultar o card de header da issue no `ChatDetail` (`showHeader = false`): no painel ele é redundante com o card já visível na lista ao lado; a rota mantém o header
 
 ## 4. Decisão de abertura no clique (`feature/support/impl`)
 

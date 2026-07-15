@@ -35,6 +35,8 @@ class ChatDetail(
         ChatContent(
             viewModel = viewModel,
             modifier = Modifier.fillMaxSize(),
+            // The issue card is already visible in the list beside the pane — omit it here.
+            showHeader = false,
         )
     }
 }

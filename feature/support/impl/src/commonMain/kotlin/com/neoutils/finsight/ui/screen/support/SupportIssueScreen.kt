@@ -98,6 +98,7 @@ fun SupportIssueScreen(
 fun ChatContent(
     viewModel: SupportIssueViewModel,
     modifier: Modifier = Modifier,
+    showHeader: Boolean = true,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -117,6 +118,7 @@ fun ChatContent(
             is SupportIssueUiState.Content -> {
                 MessagesList(
                     state = state,
+                    showHeader = showHeader,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
@@ -136,6 +138,7 @@ fun ChatContent(
 private fun MessagesList(
     state: SupportIssueUiState.Content,
     modifier: Modifier = Modifier,
+    showHeader: Boolean = true,
 ) {
     val focusManager = LocalFocusManager.current
     val dateFormats = LocalDateFormats.current
@@ -160,11 +163,13 @@ private fun MessagesList(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item(key = "header") {
-            SupportIssueCard(
-                issue = state.issue,
-                descriptionMaxLines = Int.MAX_VALUE,
-            )
+        if (showHeader) {
+            item(key = "header") {
+                SupportIssueCard(
+                    issue = state.issue,
+                    descriptionMaxLines = Int.MAX_VALUE,
+                )
+            }
         }
 
         if (state.messages.isEmpty()) {

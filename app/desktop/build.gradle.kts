@@ -39,6 +39,18 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Msi, TargetFormat.Deb)
+
+            // ./gradlew :app:desktop:suggestRuntimeModules
+            modules(
+                "java.compiler",
+                "java.instrument",
+                "java.management",
+                "java.naming",
+                "java.prefs",
+                "java.sql",
+                "jdk.unsupported",
+            )
+
             packageName = "Finsight"
             packageVersion = "1.8.0"
             description = "Finsight finance app"

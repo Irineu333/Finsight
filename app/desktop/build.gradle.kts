@@ -30,6 +30,13 @@ compose.desktop {
     application {
         mainClass = "com.neoutils.finsight.MainKt"
 
+        // ProGuard fails on ~9850 unresolved references pulled in by firebase-java-sdk,
+        // okhttp and slf4j (android.*, conscrypt, slf4j.impl). Minification isn't worth
+        // maintaining a -dontwarn list for a desktop app, so disable it.
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Exe, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Finsight"

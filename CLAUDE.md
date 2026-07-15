@@ -106,6 +106,13 @@ markers live in `:core:navigation`, making every route findable by its implement
 - `toUiText()` extension — internationalized via `UiText.Res`, for UI display
 - `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
+## Ledger (double-entry)
+Money is modeled as a **balanced double-entry ledger** (OpenSpec change `balanced-ledger`).
+- **Chart of accounts:** every account, card and category is an `Account` with a `type` ∈ `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/model`). Cards/categories keep their facade entity, linked by `accountId` to their ledger `Account`; system `EQUITY` accounts (reconciliation/initial balance) are seeded by the migration.
+- **Entries:** an operation is a set of `Entry` (signed `Long` cents, debit-positive, `currency`); `Σ = 0` per currency, validated at the single write boundary (`LedgerEntryWriter` in `OperationRepository`) with `LedgerError.Unbalanced`. Reads derive from `Σ entries` via `IEntryRepository` (balance, invoice owed, net worth) — no `signedImpact()`.
+- **Convention:** debit-positive internally; the UI inverts sign per `AccountType` (`AccountType.displayBalance`). Operation label is **derived** from the accounts' types, never persisted.
+- **Coexistence:** the ledger currently runs alongside the legacy `Transaction`/`signedImpact` model (double-write); the legacy path is removed only after full device parity verification. Room schema is at **v8** (`MIGRATION_7_8`).
+
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:

@@ -52,7 +52,7 @@
 
 ## 6. Verificação e limpeza
 
-- [ ] 6.1 `./gradlew allTests` e `./gradlew check` verdes
-- [ ] 6.2 Verificação manual em Android e Desktop: saldos, faturas, ajustes e relatórios idênticos ao comportamento anterior
-- [ ] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade
-- [ ] 6.4 Atualizar documentação de arquitetura (CLAUDE.md / feature READMEs) refletindo o razão balanceado
+- [ ] 6.1 `./gradlew allTests` e `./gradlew check` verdes <!-- testDebugUnitTest + jvmTest (todos os módulos) verdes; iOS/allTests e check completos não rodados nesta sessão -->
+- [ ] 6.2 Verificação manual em Android e Desktop: saldos, faturas, ajustes e relatórios idênticos ao comportamento anterior <!-- pendente: requer dispositivo -->
+- [ ] 6.3 Remover entidades/colunas legadas (`Transaction.Type`, `Target`, `Operation.Kind`) após confirmação de paridade <!-- BLOQUEADO até 6.2; remoção destrutiva -->
+- [x] 6.4 Atualizar documentação de arquitetura (CLAUDE.md / feature READMEs) refletindo o razão balanceado

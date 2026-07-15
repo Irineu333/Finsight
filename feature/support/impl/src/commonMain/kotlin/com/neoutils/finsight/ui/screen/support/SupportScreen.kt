@@ -52,6 +52,14 @@ fun SupportScreen(
         else onOpenIssue(issueId)
     }
 
+    // The pane is app-scoped, so a chat opened here would linger when navigating to another feature.
+    // Dismiss it when leaving Support (this screen leaves composition).
+    DisposableEffect(Unit) {
+        onDispose {
+            if (detailController.current is ChatDetail) detailController.dismiss()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

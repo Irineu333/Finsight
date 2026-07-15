@@ -19,6 +19,7 @@
 
 - [x] 4.1 Em `SupportScreen`, mover a decisão para `onOpenIssue`: `if (isExtraWideWindow()) controller.show(ChatDetail(id)) else navController.navigate(SupportIssueRoute(id))`, obtendo `LocalDetailPaneController` e a largura na própria tela
 - [x] 4.2 Manter a rota `SupportIssueRoute` no grafo para o caso de navegação (janela não extra-larga); confirmar que o wide não navega
+- [x] 4.3 Dispensar o `ChatDetail` ao sair da feature de suporte (a `SupportScreen` deixa a composição), evitando que o chat persista no painel app-scoped ao navegar para outra feature
 
 ## 5. Ajuste visual do painel pane-only (`core/designsystem`)
 

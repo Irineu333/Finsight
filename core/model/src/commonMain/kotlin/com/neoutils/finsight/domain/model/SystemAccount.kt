@@ -11,4 +11,7 @@ object SystemAccount {
     const val INITIAL_BALANCE = "Saldo Inicial"
     const val UNCATEGORIZED_EXPENSE = "Sem categoria (despesa)"
     const val UNCATEGORIZED_INCOME = "Sem categoria (receita)"
+
+    /** Holds legacy legs whose account/card was deleted (FK SET_NULL) at migration time. */
+    const val REMOVED_ACCOUNT = "Conta removida"
 }

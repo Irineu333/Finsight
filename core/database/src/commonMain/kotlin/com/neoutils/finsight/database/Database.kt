@@ -319,22 +319,30 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         )
         connection.execSQL("UPDATE `credit_cards` SET `accountId` = (SELECT base FROM `_cc_base`) + `id`")
 
-        // --- 6. Seed EQUITY + uncategorized system accounts (ids base+1..+4) ---
+        // --- 6. Seed EQUITY + uncategorized system accounts (ids base+1..+5) ---
         connection.execSQL("CREATE TEMP TABLE `_sys` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
             "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`) VALUES " +
                 "((SELECT base FROM `_sys`) + 1, 'Reconciliação', 'EQUITY', 'BRL', 'wallet', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
                 "((SELECT base FROM `_sys`) + 2, 'Saldo Inicial', 'EQUITY', 'BRL', 'wallet', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
                 "((SELECT base FROM `_sys`) + 3, 'Sem categoria (despesa)', 'EXPENSE', 'BRL', 'default', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
-                "((SELECT base FROM `_sys`) + 4, 'Sem categoria (receita)', 'INCOME', 'BRL', 'default', 0, CAST(strftime('%s','now') AS INTEGER) * 1000)"
+                "((SELECT base FROM `_sys`) + 4, 'Sem categoria (receita)', 'INCOME', 'BRL', 'default', 0, CAST(strftime('%s','now') AS INTEGER) * 1000), " +
+                "((SELECT base FROM `_sys`) + 5, 'Conta removida', 'EQUITY', 'BRL', 'wallet', 0, CAST(strftime('%s','now') AS INTEGER) * 1000)"
         )
 
         // --- 7. Real-leg entry for every legacy transaction (debit-positive cents = signedImpact * 100) ---
+        // Orphaned legs (account/card deleted -> FK SET_NULL left the id null) would violate
+        // entries.accountId NOT NULL and abort the whole upgrade. Route them to the seeded
+        // EQUITY 'Conta removida' account: keeps the operation balanced and preserves category
+        // spending, while staying invisible to asset/liability/net-worth reads (as in v7,
+        // where a deleted account's transactions no longer affected any live balance).
         connection.execSQL(
             "INSERT INTO `entries` (`operationId`, `accountId`, `amount`, `currency`, `invoiceId`) " +
                 "SELECT t.`operationId`, " +
+                "COALESCE(" +
                 "CASE t.`target` WHEN 'ACCOUNT' THEN t.`accountId` " +
                 "ELSE (SELECT cc.`accountId` FROM `credit_cards` cc WHERE cc.`id` = t.`creditCardId`) END, " +
+                "(SELECT base FROM `_sys`) + 5), " +
                 "CASE t.`type` WHEN 'EXPENSE' THEN -CAST(ROUND(t.`amount` * 100) AS INTEGER) " +
                 "ELSE CAST(ROUND(t.`amount` * 100) AS INTEGER) END, " +
                 "'BRL', " +

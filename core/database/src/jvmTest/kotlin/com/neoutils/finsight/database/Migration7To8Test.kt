@@ -89,6 +89,14 @@ class Migration7To8Test {
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (5,'PAYMENT','2024-02-05')")
         connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
         connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
+
+        // Orphaned legs from deleted account/card (FK SET_NULL): accountId/creditCardId is NULL.
+        // op6: expense 20 whose account was deleted (target ACCOUNT, accountId NULL), category Food.
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (6,'TRANSACTION','2024-03-01')")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (6,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)")
+        // op7: card purchase 15 whose card was deleted (target CREDIT_CARD, creditCardId NULL), category Food.
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (7,'TRANSACTION','2024-03-02')")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`creditCardId`) VALUES (7,'EXPENSE',15.0,'2024-03-02',1,'CREDIT_CARD',NULL)")
     }
 
     @AfterTest
@@ -181,6 +189,24 @@ class Migration7To8Test {
 
         // The payment's account leg carries no invoice tag.
         assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` = 3 AND `invoiceId` IS NOT NULL"))
+    }
+
+    @Test
+    fun `given orphaned legs from a deleted account or card when migrated then it does not crash and routes them to removed-account`() {
+        MIGRATION_7_8.migrate(connection) // must not throw on NULL accountId/creditCardId
+
+        // No entry has a null account — a single null would have aborted the whole upgrade.
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` IS NULL"))
+
+        // The two orphaned legs (-2000 and -1500) land on the seeded 'Conta removida' EQUITY account.
+        val removed = scalar(
+            "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e JOIN `accounts` a ON a.`id` = e.`accountId` " +
+                "WHERE a.`type` = 'EQUITY' AND a.`name` = 'Conta removida'"
+        )
+        assertEquals(-3500L, removed)
+
+        // The whole ledger still sums to zero (orphan legs balanced by their category contra).
+        assertEquals(0L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries`"))
     }
 
     @Test

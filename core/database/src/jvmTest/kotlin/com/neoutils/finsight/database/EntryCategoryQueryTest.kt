@@ -70,4 +70,23 @@ class EntryCategoryQueryTest {
         // Both asset accounts as siblings — still only op1 (op2 has no asset leg).
         assertEquals(5000L, categoryTotal("EXPENSE", "1,3"))
     }
+
+    // Mirrors EntryDao.balanceInMonth (the dashboard category-spending query).
+    private fun monthTotal(accountId: Long, yearMonth: String): Long {
+        val stmt = connection.prepare(
+            "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN operations o ON o.id=e.operationId " +
+                "WHERE e.accountId=$accountId AND substr(o.date,1,7)='$yearMonth'"
+        )
+        stmt.step()
+        val total = stmt.getLong(0)
+        stmt.close()
+        return total
+    }
+
+    @Test
+    fun `month total sums a category account within the month`() {
+        // Food(10): op1 +5000 (Jan 10) + op2 +3000 (Jan 15) = 8000 in January, 0 otherwise.
+        assertEquals(8000L, monthTotal(10, "2026-01"))
+        assertEquals(0L, monthTotal(10, "2026-02"))
+    }
 }

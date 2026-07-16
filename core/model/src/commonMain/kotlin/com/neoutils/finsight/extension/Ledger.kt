@@ -60,3 +60,16 @@ fun Transaction.signedCents(): Long {
         Transaction.Type.ADJUSTMENT -> cents
     }
 }
+
+/**
+ * Derives a money leg's [Transaction.Type] from the ledger, so it need not be
+ * persisted. The user's intent is recoverable from the operation's contra leg:
+ * an `EQUITY` counter-leg means a balance adjustment; otherwise the sign of the
+ * leg's own entry gives the direction (money out = expense, money in = income).
+ * Holds for both the `ASSET` account leg and the `LIABILITY` card leg.
+ */
+fun deriveTransactionType(legAmountCents: Long, operationEntries: List<Entry>): Transaction.Type = when {
+    operationEntries.any { it.account.type == AccountType.EQUITY } -> Transaction.Type.ADJUSTMENT
+    legAmountCents < 0 -> Transaction.Type.EXPENSE
+    else -> Transaction.Type.INCOME
+}

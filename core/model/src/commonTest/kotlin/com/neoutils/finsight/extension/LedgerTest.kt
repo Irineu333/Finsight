@@ -4,6 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.Transaction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -89,6 +90,45 @@ class LedgerTest {
         assertEquals(3000L, AccountType.LIABILITY.displayBalance(-3000))
         assertEquals(3000L, AccountType.INCOME.displayBalance(-3000))
         assertEquals(3000L, AccountType.EQUITY.displayBalance(-3000))
+    }
+
+    // --- deriveTransactionType (recovers the leg's type from the ledger) ---
+
+    @Test
+    fun `expense leg derives from a negative amount`() {
+        val op = listOf(entry(AccountType.ASSET, -5000), entry(AccountType.EXPENSE, 5000))
+        assertEquals(Transaction.Type.EXPENSE, deriveTransactionType(-5000, op))
+    }
+
+    @Test
+    fun `income leg derives from a positive amount`() {
+        val op = listOf(entry(AccountType.ASSET, 5000), entry(AccountType.INCOME, -5000))
+        assertEquals(Transaction.Type.INCOME, deriveTransactionType(5000, op))
+    }
+
+    @Test
+    fun `positive adjustment is distinguished from income by its EQUITY counter-leg`() {
+        val op = listOf(entry(AccountType.ASSET, 3000), entry(AccountType.EQUITY, -3000))
+        // Same positive sign as income, but the EQUITY leg makes it an adjustment.
+        assertEquals(Transaction.Type.ADJUSTMENT, deriveTransactionType(3000, op))
+    }
+
+    @Test
+    fun `negative adjustment is still an adjustment`() {
+        val op = listOf(entry(AccountType.ASSET, -3000), entry(AccountType.EQUITY, 3000))
+        assertEquals(Transaction.Type.ADJUSTMENT, deriveTransactionType(-3000, op))
+    }
+
+    @Test
+    fun `card purchase liability leg derives as expense`() {
+        val op = listOf(entry(AccountType.LIABILITY, -5000), entry(AccountType.EXPENSE, 5000))
+        assertEquals(Transaction.Type.EXPENSE, deriveTransactionType(-5000, op))
+    }
+
+    @Test
+    fun `invoice payment card leg derives as income`() {
+        val op = listOf(entry(AccountType.ASSET, -5000), entry(AccountType.LIABILITY, 5000))
+        assertEquals(Transaction.Type.INCOME, deriveTransactionType(5000, op))
     }
 
     @Test

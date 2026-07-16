@@ -15,9 +15,11 @@ data class Transaction(
     val invoice: Invoice? = null,
     val account: Account? = null,
 ) {
-    // Derived from the leg's account: a card leg targets the card, otherwise an account.
+    // Derived from the leg: an account leg targets the account (an invoice-payment
+    // leg carries the card reference too, so `account` takes precedence); only a
+    // pure card leg (no account) targets the card.
     val target: Target
-        get() = if (creditCard != null) Target.CREDIT_CARD else Target.ACCOUNT
+        get() = if (account != null) Target.ACCOUNT else Target.CREDIT_CARD
 
     @Serializable
     enum class Type {

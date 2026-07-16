@@ -57,8 +57,11 @@ class LedgerEntryWriter(
                         accountId = realAccountId(transaction),
                         amount = transaction.signedCents(),
                         currency = BASE_CURRENCY,
-                        // Only the credit-card leg carries the invoice (its sub-ledger).
-                        invoiceId = transaction.invoice?.id,
+                        // Only the credit-card (LIABILITY) leg carries the invoice — its
+                        // sub-ledger. A payment's account leg also references the card but
+                        // must not tag the invoice, or the two legs would cancel it out.
+                        invoiceId = transaction.invoice?.id
+                            ?.takeIf { transaction.target == Transaction.Target.CREDIT_CARD },
                     )
                 )
             }

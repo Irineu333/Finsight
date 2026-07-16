@@ -11,8 +11,11 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.UnbalancedOperationException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
+import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -77,6 +80,34 @@ class LedgerEntryWriterTest {
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val reconciliation = accountDao.accounts.values.first { it.type == AccountEntity.Type.EQUITY }
         assertEquals(-3000L, entryDao.inserted.first { it.accountId == reconciliation.id }.amount)
+    }
+
+    @Test
+    fun `given an invoice payment when written then the bank account is debited and only the card leg tags the invoice`() = runTest {
+        // Card 100 already promoted to ledger account 200.
+        creditCardDao.cards[100L] = CreditCardEntity(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 200)
+        val card = CreditCard(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20)
+        val invoice = Invoice(
+            id = 5,
+            creditCard = card,
+            openingMonth = YearMonth(2026, 1),
+            closingMonth = YearMonth(2026, 2),
+            dueMonth = YearMonth(2026, 2),
+            status = Invoice.Status.CLOSED,
+        )
+        // The paying leg carries account + card + invoice (as the real use case builds it).
+        val accountLeg = Transaction(type = Transaction.Type.EXPENSE, amount = 50.0, title = null, date = DATE, account = assetAccount(1), creditCard = card, invoice = invoice)
+        val cardLeg = Transaction(type = Transaction.Type.INCOME, amount = 50.0, title = null, date = DATE, creditCard = card, invoice = invoice)
+
+        writer.writeEntries(operationId = 4, transactions = listOf(accountLeg, cardLeg))
+
+        assertEquals(0L, entryDao.inserted.sumOf { it.amount })
+        val bankEntry = entryDao.inserted.first { it.accountId == 1L }
+        assertEquals(-5000L, bankEntry.amount) // bank account is debited
+        assertEquals(null, bankEntry.invoiceId) // account leg must NOT tag the invoice
+        val cardEntry = entryDao.inserted.first { it.accountId == 200L }
+        assertEquals(5000L, cardEntry.amount) // liability leg reduces the owed
+        assertEquals(5L, cardEntry.invoiceId) // only the card leg tags the invoice
     }
 
     @Test

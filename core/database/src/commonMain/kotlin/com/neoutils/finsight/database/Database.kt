@@ -338,7 +338,9 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
                 "CASE t.`type` WHEN 'EXPENSE' THEN -CAST(ROUND(t.`amount` * 100) AS INTEGER) " +
                 "ELSE CAST(ROUND(t.`amount` * 100) AS INTEGER) END, " +
                 "'BRL', " +
-                "t.`invoiceId` " +
+                // Only the credit-card leg tags the invoice; a payment's account leg
+                // also has invoiceId but must not, or the legs cancel the owed sum.
+                "CASE WHEN t.`target` = 'CREDIT_CARD' THEN t.`invoiceId` ELSE NULL END " +
                 "FROM `transactions` t WHERE t.`operationId` IS NOT NULL"
         )
 

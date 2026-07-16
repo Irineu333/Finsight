@@ -77,6 +77,18 @@ class Migration7To8Test {
         // op3: adjustment +30 on A (single leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (3,'TRANSACTION','2024-01-12')")
         connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (3,'ADJUSTMENT',30.0,'2024-01-12','ACCOUNT',1)")
+
+        // Card-payment scenario on account C(3): purchase 100 then pay 40 (invoice 1).
+        connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (3,'C','wallet',0,1000)")
+        connection.execSQL("INSERT INTO `credit_cards` (`id`,`name`,`limit`,`closingDay`,`dueDay`,`iconKey`,`createdAt`) VALUES (1,'Card',1000.0,10,20,'card',1000)")
+        connection.execSQL("INSERT INTO `invoices` (`id`) VALUES (1)")
+        // op4: card purchase 100 (single card leg)
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (4,'TRANSACTION','2024-02-01')")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
+        // op5: payment 40 — account leg (also carries the card ref, like the real use case) + card leg
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (5,'PAYMENT','2024-02-05')")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
     }
 
     @AfterTest
@@ -153,6 +165,22 @@ class Migration7To8Test {
         MIGRATION_7_8.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries`"))
+    }
+
+    @Test
+    fun `given a card purchase and payment when migrated then invoice owed is abated and the payer is debited`() {
+        MIGRATION_7_8.migrate(connection)
+
+        // Owed = Σ entries tagged with the invoice: only the card legs (purchase -10000,
+        // payment +4000). The payment's account leg must NOT be tagged, or it cancels out.
+        val invoiceNatural = scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries` WHERE `invoiceId` = 1")
+        assertEquals(-6000L, invoiceNatural) // owed = 60.00 (100 purchased - 40 paid)
+
+        // The paying account (C = 3) is debited by the payment.
+        assertEquals(-4000L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries` WHERE `accountId` = 3"))
+
+        // The payment's account leg carries no invoice tag.
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` = 3 AND `invoiceId` IS NOT NULL"))
     }
 
     @Test

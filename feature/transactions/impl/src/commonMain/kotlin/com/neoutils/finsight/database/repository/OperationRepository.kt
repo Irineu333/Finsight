@@ -2,6 +2,9 @@
 
 package com.neoutils.finsight.database.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.TransactionDao
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
 class OperationRepository(
+    private val database: AppDatabase,
     private val operationDao: OperationDao,
     private val transactionDao: TransactionDao,
     private val recurringDao: RecurringDao,
@@ -249,42 +253,57 @@ class OperationRepository(
         // Reject an unbalanced operation before writing anything (Σ = 0 per currency).
         ledgerEntryWriter.validate(transactions)
 
-        val operationId = operationDao.insert(
-            OperationEntity(
-                title = title,
-                date = date,
-                categoryId = categoryId,
-                recurringId = recurringId,
-                recurringCycle = recurringCycle,
-                installmentId = installmentId,
-                installmentNumber = installmentNumber,
-            )
-        )
-
-        val persisted = transactions.map { transaction ->
-            val transactionId = transactionDao.insert(
-                transactionMapper.toEntity(
-                    transaction.copy(operationId = operationId)
+        // The operation, its legacy transactions and the ledger legs are written in a
+        // single transaction so a mid-way failure (missing facade row, cancellation, DB
+        // error) rolls back everything, never leaving an operation without its entries.
+        val operationId = database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                val operationId = operationDao.insert(
+                    OperationEntity(
+                        title = title,
+                        date = date,
+                        categoryId = categoryId,
+                        recurringId = recurringId,
+                        recurringCycle = recurringCycle,
+                        installmentId = installmentId,
+                        installmentNumber = installmentNumber,
+                    )
                 )
-            )
-            transaction.copy(id = transactionId, operationId = operationId)
-        }
 
-        // Double-entry ledger legs, written alongside the legacy transactions.
-        ledgerEntryWriter.writeEntries(operationId, persisted)
+                val persisted = transactions.map { transaction ->
+                    val transactionId = transactionDao.insert(
+                        transactionMapper.toEntity(
+                            transaction.copy(operationId = operationId)
+                        )
+                    )
+                    transaction.copy(id = transactionId, operationId = operationId)
+                }
+
+                // Double-entry ledger legs, written alongside the legacy transactions.
+                ledgerEntryWriter.writeEntries(operationId, persisted)
+
+                operationId
+            }
+        }
 
         return getOperationById(operationId)!!
     }
 
     override suspend fun updateOperation(id: Long, transaction: Transaction) {
-        operationDao.update(
-            id = id,
-            title = transaction.title,
-            date = transaction.date,
-            categoryId = transaction.category?.id,
-        )
-        // Keep the ledger consistent with the edited (single) leg.
-        ledgerEntryWriter.rewriteEntries(id, listOf(transaction))
+        // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
+        // failure never leaves the operation with its old legs deleted and no new ones.
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                operationDao.update(
+                    id = id,
+                    title = transaction.title,
+                    date = transaction.date,
+                    categoryId = transaction.category?.id,
+                )
+                // Keep the ledger consistent with the edited (single) leg.
+                ledgerEntryWriter.rewriteEntries(id, listOf(transaction))
+            }
+        }
     }
 
     override suspend fun deleteOperationById(id: Long) {

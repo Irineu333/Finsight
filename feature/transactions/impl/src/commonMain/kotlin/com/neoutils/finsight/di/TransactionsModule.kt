@@ -37,6 +37,7 @@ val transactionsModule = module {
     }
     single<IOperationRepository> {
         OperationRepository(
+            database = get(),
             operationDao = get(),
             transactionDao = get(),
             recurringDao = get(),

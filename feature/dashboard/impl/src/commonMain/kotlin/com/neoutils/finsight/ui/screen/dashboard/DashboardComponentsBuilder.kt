@@ -81,13 +81,11 @@ class DashboardComponentsBuilder(
             DashboardComponentType.CREDIT_CARDS_PAGER.key -> creditCardsPager(input, config)
             DashboardComponentType.SPENDING_BY_CATEGORY.key -> spendingByCategory(
                 input = input,
-                allTransactions = context.allTransactions,
                 config = config
             )
 
             DashboardComponentType.INCOME_BY_CATEGORY.key -> incomeByCategory(
                 input = input,
-                allTransactions = context.allTransactions,
                 config = config
             )
 
@@ -259,16 +257,14 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun spendingByCategory(
+    private suspend fun spendingByCategory(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
         config: Map<String, String>,
     ): DashboardComponent.SpendingByCategory? {
         val maxCategories = config[SpendingByCategoryConfig.MAX_CATEGORIES]
             ?.toIntOrNull() ?: SpendingByCategoryConfig.ALL.toInt()
 
         val categorySpending = calculateCategorySpendingUseCase(
-            transactions = allTransactions,
             forYearMonth = input.targetMonth,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 
@@ -281,16 +277,14 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun incomeByCategory(
+    private suspend fun incomeByCategory(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
         config: Map<String, String>,
     ): DashboardComponent.IncomeByCategory? {
         val maxCategories = config[IncomeByCategoryConfig.MAX_CATEGORIES]
             ?.toIntOrNull() ?: IncomeByCategoryConfig.ALL.toInt()
 
         val categoryIncome = calculateCategoryIncomeUseCase(
-            transactions = allTransactions,
             forYearMonth = input.targetMonth,
         ).let { if (maxCategories >= 0) it.take(maxCategories) else it }
 

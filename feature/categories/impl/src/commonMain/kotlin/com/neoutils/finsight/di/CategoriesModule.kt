@@ -4,7 +4,9 @@ import com.neoutils.finsight.database.mapper.CategoryMapper
 import com.neoutils.finsight.database.repository.CategoryRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
+import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
+import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CreateDefaultCategoriesUseCase
 import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
@@ -25,8 +27,12 @@ val categoriesModule = module {
     }
     factory { CategoryMapper() }
 
-    factory { CalculateCategorySpendingUseCase() }
-    factory { CalculateCategoryIncomeUseCase() }
+    factory<CalculateCategorySpendingUseCase> {
+        CalculateCategorySpendingUseCaseImpl(categoryRepository = get(), entryRepository = get())
+    }
+    factory<CalculateCategoryIncomeUseCase> {
+        CalculateCategoryIncomeUseCaseImpl(categoryRepository = get(), entryRepository = get())
+    }
     factory { ValidateCategoryNameUseCase(repository = get()) }
     factory { CreateDefaultCategoriesUseCase(categoryRepository = get()) }
 

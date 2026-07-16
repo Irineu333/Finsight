@@ -130,7 +130,10 @@ class ReportViewerViewModel(
 
         val categorySpending = when {
             !params.includeSpendingByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
+                invoiceIds = invoiceIds.toList(),
+                transactionType = Transaction.Type.EXPENSE,
+            )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
@@ -141,7 +144,10 @@ class ReportViewerViewModel(
 
         val categoryIncome = when {
             !params.includeIncomeByCategory -> null
-            invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
+                invoiceIds = invoiceIds.toList(),
+                transactionType = Transaction.Type.INCOME,
+            )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
@@ -227,22 +233,3 @@ class ReportViewerViewModel(
     }
 }
 
-private fun List<Transaction>.toCategoryBreakdown(
-    transactionType: Transaction.Type,
-): List<CategorySpending> {
-    val typedTransactions = filter { it.type == transactionType && it.category != null }
-    val totalAmount = typedTransactions.sumOf { it.amount }
-    if (totalAmount <= 0) return emptyList()
-
-    return typedTransactions
-        .groupBy { it.category!! }
-        .map { (category, transactions) ->
-            val amount = transactions.sumOf { it.amount }
-            CategorySpending(
-                category = category,
-                amount = amount,
-                percentage = (amount / totalAmount) * 100,
-            )
-        }
-        .sortedByDescending { it.amount }
-}

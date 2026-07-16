@@ -111,4 +111,8 @@ private class FakeEntryRepository(private val balances: Map<Long, Double>) : IEn
         endDate: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
     ): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun categoryTotalsForInvoices(
+        categoryType: com.neoutils.finsight.domain.model.AccountType,
+        invoiceIds: List<Long>,
+    ): Map<Long, Double> = throw NotImplementedError()
 }

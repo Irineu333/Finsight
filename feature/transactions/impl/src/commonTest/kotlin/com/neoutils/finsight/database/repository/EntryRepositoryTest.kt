@@ -58,4 +58,8 @@ private class FakeReadEntryDao(
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
+    override suspend fun categoryTotalsForInvoices(
+        categoryType: String,
+        invoiceIds: List<Long>,
+    ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
 }

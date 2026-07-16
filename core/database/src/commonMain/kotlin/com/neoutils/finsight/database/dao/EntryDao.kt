@@ -103,4 +103,23 @@ interface EntryDao {
         end: LocalDate,
         siblingAccountIds: List<Long>,
     ): List<CategoryAccountTotal>
+
+    /**
+     * Per-category totals scoped to a set of invoices: category legs of operations
+     * that also have a leg tagged with one of [invoiceIds] (the card sub-ledger).
+     */
+    @Query(
+        """
+        SELECT e.accountId AS accountId, COALESCE(SUM(e.amount), 0) AS total
+        FROM entries e
+        JOIN accounts a ON a.id = e.accountId
+        WHERE a.type = :categoryType
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId = e.operationId AND s.invoiceId IN (:invoiceIds))
+        GROUP BY e.accountId
+        """
+    )
+    suspend fun categoryTotalsForInvoices(
+        categoryType: String,
+        invoiceIds: List<Long>,
+    ): List<CategoryAccountTotal>
 }

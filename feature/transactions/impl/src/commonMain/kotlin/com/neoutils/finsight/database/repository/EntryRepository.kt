@@ -45,4 +45,14 @@ class EntryRepository(
             .categoryTotalsWithSiblingLeg(categoryType.name, startDate, endDate, siblingAccountIds)
             .associate { it.accountId to it.total / CENTS_PER_UNIT }
     }
+
+    override suspend fun categoryTotalsForInvoices(
+        categoryType: AccountType,
+        invoiceIds: List<Long>,
+    ): Map<Long, Double> {
+        if (invoiceIds.isEmpty()) return emptyMap()
+        return entryDao
+            .categoryTotalsForInvoices(categoryType.name, invoiceIds)
+            .associate { it.accountId to it.total / CENTS_PER_UNIT }
+    }
 }

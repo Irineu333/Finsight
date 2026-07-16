@@ -38,4 +38,10 @@ interface IEntryRepository {
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
     ): Map<Long, Double>
+
+    /** Natural balance (reais) per category account scoped to a set of invoices. */
+    suspend fun categoryTotalsForInvoices(
+        categoryType: AccountType,
+        invoiceIds: List<Long>,
+    ): Map<Long, Double>
 }

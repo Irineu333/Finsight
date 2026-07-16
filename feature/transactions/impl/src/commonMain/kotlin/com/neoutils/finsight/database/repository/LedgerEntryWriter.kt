@@ -79,7 +79,12 @@ class LedgerEntryWriter(
             }
         }
 
-        if (entries.sumOf { it.amount } != 0L) {
+        // The invariant is Σ = 0 PER CURRENCY (not a flat scalar), so the boundary
+        // stays correct once more than the base currency exists.
+        val balancedPerCurrency = entries
+            .groupBy { it.currency }
+            .all { (_, group) -> group.sumOf { it.amount } == 0L }
+        if (!balancedPerCurrency) {
             throw UnbalancedOperationException(LedgerError.Unbalanced)
         }
 

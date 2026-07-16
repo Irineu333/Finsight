@@ -1,7 +1,9 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.EntryDao
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 private const val CENTS_PER_UNIT = 100.0
@@ -30,5 +32,17 @@ class EntryRepository(
 
     override suspend fun netWorth(): Double {
         return entryDao.netWorthCents() / CENTS_PER_UNIT
+    }
+
+    override suspend fun categoryTotals(
+        categoryType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): Map<Long, Double> {
+        if (siblingAccountIds.isEmpty()) return emptyMap()
+        return entryDao
+            .categoryTotalsWithSiblingLeg(categoryType.name, startDate, endDate, siblingAccountIds)
+            .associate { it.accountId to it.total / CENTS_PER_UNIT }
     }
 }

@@ -132,7 +132,6 @@ class ReportViewerViewModel(
             !params.includeSpendingByCategory -> null
             invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.EXPENSE)
             else -> calculateReportCategorySpendingUseCase(
-                operations = operations,
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
@@ -144,7 +143,6 @@ class ReportViewerViewModel(
             !params.includeIncomeByCategory -> null
             invoices.isNotEmpty() -> invoiceTransactions.toCategoryBreakdown(Transaction.Type.INCOME)
             else -> calculateReportCategorySpendingUseCase(
-                operations = operations,
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,

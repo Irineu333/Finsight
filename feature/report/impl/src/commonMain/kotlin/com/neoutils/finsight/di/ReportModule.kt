@@ -19,7 +19,14 @@ val reportModule = module {
     factory<ReportDocumentRenderer> { HtmlReportDocumentRenderer() }
 
     factory { CalculateReportStatsUseCase() }
-    factory { CalculateReportCategorySpendingUseCase() }
+    factory {
+        CalculateReportCategorySpendingUseCase(
+            entryRepository = get(),
+            categoryRepository = get(),
+            accountRepository = get(),
+            creditCardRepository = get(),
+        )
+    }
     factory { BuildReportViewerParamsUseCase(get()) }
 
     viewModel {

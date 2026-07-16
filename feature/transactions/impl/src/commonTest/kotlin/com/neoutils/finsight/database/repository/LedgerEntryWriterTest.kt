@@ -130,6 +130,12 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getByOperationId(operationId: Long): List<EntryEntity> = inserted.filter { it.operationId == operationId }
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
+    override suspend fun categoryTotalsWithSiblingLeg(
+        categoryType: String,
+        start: kotlinx.datetime.LocalDate,
+        end: kotlinx.datetime.LocalDate,
+        siblingAccountIds: List<Long>,
+    ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = inserted.sumOf { it.amount }
     override suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }

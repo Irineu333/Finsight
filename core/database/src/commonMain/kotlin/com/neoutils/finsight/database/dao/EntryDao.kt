@@ -6,6 +6,10 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.neoutils.finsight.database.entity.EntryEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
+
+/** Aggregated natural balance (cents) of one category/chart account. */
+data class CategoryAccountTotal(val accountId: Long, val total: Long)
 
 @Dao
 interface EntryDao {
@@ -75,4 +79,28 @@ interface EntryDao {
             "WHERE a.type IN ('ASSET', 'LIABILITY')"
     )
     suspend fun netWorthCents(): Long
+
+    /**
+     * Per-category totals in a date range, scoped by perspective: only operations
+     * that also have a leg on one of [siblingAccountIds] (the perspective's asset
+     * accounts, or the card's liability account) are counted. This is category
+     * spending/income "seen from" those accounts.
+     */
+    @Query(
+        """
+        SELECT e.accountId AS accountId, COALESCE(SUM(e.amount), 0) AS total
+        FROM entries e
+        JOIN operations o ON o.id = e.operationId
+        JOIN accounts a ON a.id = e.accountId
+        WHERE a.type = :categoryType AND o.date BETWEEN :start AND :end
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId = o.id AND s.accountId IN (:siblingAccountIds))
+        GROUP BY e.accountId
+        """
+    )
+    suspend fun categoryTotalsWithSiblingLeg(
+        categoryType: String,
+        start: LocalDate,
+        end: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): List<CategoryAccountTotal>
 }

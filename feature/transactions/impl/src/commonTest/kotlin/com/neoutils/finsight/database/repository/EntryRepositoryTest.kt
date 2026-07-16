@@ -52,4 +52,10 @@ private class FakeReadEntryDao(
     override suspend fun getByOperationId(operationId: Long): List<EntryEntity> = throw NotImplementedError()
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = throw NotImplementedError()
+    override suspend fun categoryTotalsWithSiblingLeg(
+        categoryType: String,
+        start: kotlinx.datetime.LocalDate,
+        end: kotlinx.datetime.LocalDate,
+        siblingAccountIds: List<Long>,
+    ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
 }

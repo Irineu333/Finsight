@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.repository
 
+import com.neoutils.finsight.domain.model.AccountType
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
 /**
@@ -24,4 +26,16 @@ interface IEntryRepository {
 
     /** Net worth = Σ ASSET − Σ LIABILITY, via the same entry mechanism. */
     suspend fun netWorth(): Double
+
+    /**
+     * Natural balance (reais) per category account of [categoryType] in a date
+     * range, counting only operations that also have a leg on one of
+     * [siblingAccountIds] — i.e. spending/income "seen from" those accounts.
+     */
+    suspend fun categoryTotals(
+        categoryType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ): Map<Long, Double>
 }

@@ -274,7 +274,17 @@ Logo o D3 estava **certo para a cor e errado como unificação**. O razão preci
 | `TransactionLabel` (operação) | tipos de conta de **todas** as entries | cor, título, ícone, gate de edição |
 | direção da perna (`EXPENSE`/`INCOME`/`ADJUSTMENT`) | sinal da entry **da perspectiva** + contrapartida `EQUITY` | o texto de tipo, o filtro da lista |
 
-Ambas são deriváveis — `deriveTransactionType` (já escrito e testado) faz a segunda. O erro não era técnico: era declarar "uma só" sem ter lido o que a tela mostra. **O CAP-6 dizia que as duas derivações "convergem"; elas não convergem nem se fundem — elas coexistem, com propósitos distintos, e é a spec desta change que estava errada ao proibir a segunda.**
+Ambas são deriváveis — `deriveTransactionType` (já escrito e testado) faz a segunda. O erro não era técnico: era declarar "uma só" sem ter lido o que a tela mostra. A spec desta change estava errada ao proibir a segunda.
+
+> **Correção — este D15 acusava o CAP-6 de um erro que é dele próprio.** A versão anterior dizia:
+> *"O CAP-6 dizia que as duas derivações 'convergem'; elas não convergem nem se fundem."* **Falso, e por
+> não ter aberto o arquivo.** O par que o CAP-6 nomeia é `Operation.kind` × `deriveOperationLabel` —
+> `{TRANSACTION, PAYMENT, TRANSFER}` e `{EXPENSE, INCOME, TRANSFER, PAYMENT}`, **ambos da operação**,
+> mesmo eixo. Esse par **converge**, exatamente como o CAP previu: a 6.4 mata o `kind` e a 1.3 torna o
+> `label` total. O par que **não** converge é o deste D15 — rótulo-da-operação × direção-da-perna —, e o
+> CAP-6 nunca falou dele. Nove rodadas auditaram este design contra o **código** e nenhuma o auditou
+> contra o **arquivo de que ele herda**: a mesma classe de "seis leitores" e "quatro callers", cometida
+> sobre o único artefato que ninguém releu.
 
 ### D3 — Uma função total de rótulo, com `EQUITY` avaliado **antes de qualquer outro caso**
 
@@ -535,7 +545,7 @@ Sem agregados novos, virar o `AccountUi` só teria duas saídas, ambas ruins: hi
 ## Risks / Trade-offs
 
 - **[Mudança silenciosa de número]** Virar os **onze** leitores (D11) do somatório em memória para o razão pode alterar valores exibidos sem erro nem crash. → **Mitigação:** D9 (caracterização antes da troca). É o risco #1 desta change.
-- **[CAP-4 deixa de ser teórico]** `AccountUi` filtra por `transaction.date`; `balanceUpTo` corta por **data da operação**. Coincidem por construção hoje, sem guarda. → **Mitigação:** teste que divirja as datas de propósito e falhe; então garantir a invariante na escrita.
+- **[CAP-4 fecha por construção, não por guarda]** `AccountUi` filtra por `transaction.date` (data da **perna** legada); `balanceUpTo` corta por data da **operação**. A divergência exige **duas** datas — e a segunda é a perna legada, que a §6.9 remove. `Entry`/`EntryEntity` **não têm data** (verificado): o corte sempre foi da operação. → **Mitigação:** um teste que fixe a invariante "a data da operação governa o corte", para um caller futuro não a quebrar (task 4.9). A moldura antiga — *"então garantir a invariante na escrita"* — foi **revogada pelo D17**: não há divergência de valor no create para uma escrita guardar, e a de update é bug corrente coberto por 1.1, não invariante de data.
 - **[Migração destrutiva]** A v9 dropa a tabela `transactions` — o legado deixa de existir e não há rollback de dados. → **Mitigação:** C só acontece depois de B verificado; o razão já contém tudo (backfill da v8, testado com órfãos); teste v8→v9 com dados representativos antes do merge.
 - **[Rename de grande superfície]** D toca dezenas de arquivos. → **Mitigação:** manter em commits separados de qualquer mudança de comportamento. **Exceção obrigatória:** os renames de entity/tabela/coluna (regra nascida no D10, hoje sob o **D14**) andam **junto** da migração, porque separá-los quebra o Room.
 - **[Bug já em produção]** `AdjustInvoiceUseCase:74` atualiza o valor legado sem rota de razão; como `invoiceOwed` já lê o razão, o número **já diverge hoje**. → **Mitigação:** corrigir cedo, com teste — é bug corrente, não dívida da coexistência.

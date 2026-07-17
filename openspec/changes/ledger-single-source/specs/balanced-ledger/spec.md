@@ -102,6 +102,30 @@ A remoção de uma transação SHALL ser impedida quando ela pertencer a uma fat
 - **WHEN** uma transação de uma fatura `CLOSED` ou `PAID` é exibida
 - **THEN** nem remoção nem edição são oferecidas, e o motivo é comunicado ao usuário
 
+### Requirement: Nenhuma feature reimplementa regra derivável do razão
+
+O razão é a autoridade sobre toda regra que se possa derivar das entries e dos tipos das suas contas. Nenhum consumidor — feature, tela, ViewModel, componente ou modelo de UI — SHALL reimplementar uma regra derivável do razão. Toda regra dessa natureza SHALL ter **exatamente uma** implementação, no domínio, e os consumidores SHALL consumi-la em vez de reescrevê-la.
+
+São regras deriváveis do razão, entre outras: o rótulo da operação, a direção da perna sob uma perspectiva, a editabilidade, a deletabilidade, o saldo de conta, o saldo de abertura de um período, o saldo devido de uma fatura, a natureza monetária de uma conta e o estado de encerramento de uma conta. Esta é a forma **geral** da regra que as demais capabilities já declaram caso a caso — derivação de rótulo (nesta capability), cálculo de saldo e saldo de abertura (`ledger-reporting`), tradução domínio→apresentação (`presentation-mapping`), estado de encerramento (`account-lifecycle`). Essas declarações SHALL ser lidas como instâncias desta, e MUST NOT ser tratadas como regras independentes livres para divergir.
+
+A distinção que governa a fronteira: um consumidor MAY decidir **se** aplica uma regra — uma tela pode legitimamente não oferecer uma ação que o domínio permite. Um consumidor MUST NOT decidir **qual é** a regra. Adaptar ao usuário é da camada de apresentação; definir a verdade é do razão.
+
+#### Scenario: Consumidor não redefine a regra
+- **WHEN** uma tela precisa saber se uma transação é editável, qual o seu rótulo, ou qual o saldo de uma conta
+- **THEN** ela obtém a resposta da única implementação de domínio, e MUST NOT reavaliar os tipos de conta, os status ou as entries por conta própria
+
+#### Scenario: Tela pode não oferecer o que o domínio permite
+- **WHEN** o domínio permite uma operação que uma tela decide não expor
+- **THEN** isso não é divergência: a tela escolheu não oferecer a ação, sem redefinir a regra que a governa
+
+#### Scenario: Mesma regra, mesma resposta em toda tela
+- **WHEN** a mesma regra derivável é consultada a partir de telas distintas para a mesma transação
+- **THEN** todas obtêm a mesma resposta, por consultarem a mesma implementação
+
+#### Scenario: Nenhuma cópia em linha
+- **WHEN** o código é inspecionado após a change
+- **THEN** não existe reimplementação em linha de regra derivável do razão — nem em `when` de tela, nem em modelo de UI, nem em predicado local que reenumere à mão o complemento de um predicado existente
+
 ### Requirement: Classificação de entrada distinta da de exibição
 O vocabulário com que o usuário **registra** um lançamento (despesa, receita, ajuste) SHALL pertencer à camada de apresentação e MUST NOT ser persistido como estado da transação. O sistema SHALL traduzir esse vocabulário de entrada em entries balanceadas no momento da escrita, e SHALL derivar o vocabulário de exibição das entries no momento da leitura. O vocabulário de entrada MUST NOT ser unificado com o de exibição, por serem conjuntos distintos.
 

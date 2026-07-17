@@ -79,12 +79,18 @@
 >
 > **Gates locais, não globais** (correção da 5ª rodada — a versão anterior dizia "nenhuma task de §5 é
 > executável antes destas", serializando artificialmente a metade mais barata da change atrás de nove
-> decisões de produto, que é exatamente a crítica que o D1 faz à sua própria 1ª versão):
-> **6.5 depende de 0.3** (a mais cara de errar: é schema — 6.5 já pré-decidiu "uma coluna em `accounts`", que é um dos ramos que 0.3 declara aberto; se 0.3 responder "três flags", pelo argumento do D14 não há outra migração onde caibam) · **4.12 depende de 4b.10** · 5.3 depende de 4b.5 (`OperationUi:30-34` implementa `PAYMENT → EXPENSE`) ·
-> **Atualizado pela investigação:** 4b.1/4b.2/4b.4/4b.5/4b.8 decididas (três eram **no-op**); 4b.10 resolvida pela D21. Restam **4b.7** (real e visível) e **4b.9** (desenho, não escolha).
-> 5.5 e 5.6 dependem de **4b.9** (4b.3 já decidida) · 5.7 depende de 4b.6 · 5.8: gate dissolvido (4b.5 é no-op) ·
-> **4.6/4.7/4.11 dependem de 4b.4** (gate que faltava onde importa) · **6b.2 depende de 4b.10**.
-> 5.1-5.4 e 5.9 não dependem de §4b.
+> decisões de produto, que é exatamente a crítica que o D1 faz à sua própria 1ª versão).
+>
+> **Estado: as nove decisões estão tomadas — nenhum gate de §4b bloqueia execução.** 4b.1/4b.2/4b.4/4b.5
+> decididas pela investigação (três eram **no-op**); 4b.8 estreitada; 4b.3 e 4b.7 decididas pelo usuário;
+> 4b.10 resolvida pela **D21** (o flag de encerramento torna a colisão inalcançável); 4b.9 **redesenhada**
+> pela **D23**. 0.3 idem — decidida ("uma coluna em `accounts`"), que é o que 6.5 assume; o ramo "três
+> flags", que teria custado uma migração, **não** venceu. Resta apenas **4b.6**, que é execução e não
+> decisão (ver §5/§9), e cujos insumos — 4b.1 e 4b.2 — já estão fechados.
+>
+> **Dependências que sobrevivem, agora só de ordem de execução:** 6.5 → 0.3 · 4.12 → 4b.10 ·
+> 5.3 → 4b.5 (`OperationUi:30-34` implementa `PAYMENT → EXPENSE`) · 5.5/5.6 → 4b.9 (D23) ·
+> 5.7 → 4b.6 · 4.6/4.7/4.11 → 4b.4 · 6b.2 → 4b.10. 5.1-5.4, 5.8 e 5.9 não dependem de §4b.
 
 - [x] 4b.1 **DECIDIDO: manter `isPayable` largo, não expor na UI.** Investigado: `PayInvoiceUseCase` tem **4 callers** e o único que envia `RETROACTIVE` é `CloseInvoiceUseCase:53` — é o que faz fechar fatura retroativa funcionar. Estreitar → o clique falha **em silêncio** (`CloseInvoiceViewModel:25` manda ao crashlytics; não há UI de erro). Expor na UI seria botão morto no caso com dívida: `PayInvoicePaymentUseCase:37` exige `== CLOSED` literal. **Consequência: nenhuma.** Contexto original: Decisão real. `isPayable` (`CLOSED|RETROACTIVE`) é usada em `PayInvoiceUseCase:42`, que tem **4 callers**: `PayInvoiceViewModel:70`, `CloseInvoiceUseCase:53`, `CloseInvoiceUseCase:72`, `PayInvoicePaymentUseCase:75`. O ramo `RETROACTIVE` é **vivo** via `CloseInvoiceUseCase:53` — é o que faz fechar fatura retroativa funcionar. **As duas versões anteriores desta task erraram**: a 1ª disse "nunca usada" (refutada pela linha seguinte da própria tabela); a 2ª disse "inalcançável, remover" — que teria **quebrado o fechamento de fatura retroativa**. O fato é: o domínio permite pagar retroativa, a UI nunca oferece.
 - [x] 4b.10 **RESOLVIDO PELA D21, sem decisão a tomar — e a recomendação anterior ("título fixo") está REFUTADA.** Título não resolve em **nenhuma** ponta: (a) a idempotência não o consulta — `getTransactionsBy` aceita só `type, target, date, invoiceId, accountId` (`ITransactionRepository:17-23`), então a baixa seria capturada pelo `firstOrNull()` de `AdjustBalanceUseCase:42` e **mutada** (`:79-82`) ou **apagada** (`:66-74`); (b) o título nem apareceria — `OperationCard:181` captura `ADJUSTMENT + target.isAccount` e rotula "Ajuste de saldo", descartando `operation.label`. **O eixo que funciona é o flag de encerramento que a D21 já cria**: `AccountDao:19` filtra só `type='ASSET'`; somar `AND NOT closed` tira a conta do seletor ⇒ `AdjustBalanceUseCase` nunca é invocado com ela ⇒ colisão **inalcançável**, sem tocar no lookup. Custo zero. ⚠️ **Ponta a cobrir:** `EditAccountBalanceViewModel:82` usa `getAccountById`, que **não filtra** — a conta inicialmente selecionada entra por fora da lista. Contexto original: Com o reuso de `EQUITY:Reconciliação` (D13), uma baixa `{ASSET, EQUITY:Reconciliação}` é **idêntica em forma** a um ajuste, e o D3 rotula ambos `ADJUSTMENT`. Isso colide com `account-lifecycle:25`, que exige a baixa "auditável", e com a idempotência data+conta do `AdjustBalanceUseCase` (ver 4.12). Opções: (a) título fixo na baixa (barato, não toca `AccountType`); (b) 2ª conta `EQUITY:Encerramento` (contradiz `chart-of-accounts` e o D13); (c) aceitar a fusão e remover "auditável" da spec.
@@ -143,8 +149,9 @@
 ## 7. Rename: `Operation` → `Transaction`
 
 > Mecânico e quase todo por refactor de IDE. Manter em commits **separados** de qualquer
-> mudança de comportamento. As entities/tabela/coluna **não** estão aqui: foram em 6.5-6.6,
-> por obrigação do Room (design D10).
+> mudança de comportamento. As entities/tabela/coluna **não** estão aqui: foram em **6.5-6.7**
+> (a 6.7 é quem renomeia entity/DAO/`operationId` — ver 8.2), por obrigação do Room
+> (design **D14**; a regra nasceu no D10, que o D14 revogou).
 
 - [ ] 7.1 Renomear o agregado de domínio `Operation` → `Transaction` (dono de `List<Entry>`), com `OperationRecurring`/`OperationInstallment` acompanhando.
 - [ ] 7.2 Renomear `IOperationRepository`/`OperationRepository`/`OperationMapper` e os bindings Koin correspondentes.
@@ -157,6 +164,16 @@
 - [ ] 8.2 Varredura de resíduo: nenhuma ocorrência de `Operation`, `signedImpact`, `signedCents`, `INITIAL_BALANCE` ou `initialBalance` fora de histórico/arquivo. Depende de **6.7** ter renomeado `operationId` (a versão anterior citava 6.6) — sem isso esta task falha por construção.
 - [ ] 8.3 Paridade em device: saldos, faturas, patrimônio, gasto por categoria, dashboard e relatórios conferidos contra um backup pré-migração — o risco #1 desta change é número mudar em silêncio.
 - [ ] 8.4 Registrar quais CAPS do `balanced-ledger` foram fechadas (CAP-1 resto, CAP-2, CAP-4, CAP-5, CAP-6, CAP-7) e quais permanecem (CAP-3).
+- [ ] 8.5 **Varredura da regra "nenhuma feature reimplementa regra derivável do razão"** (spec `balanced-ledger`). Não é grepável por padrão único — a duplicação se disfarça de `when` local, de predicado com outro nome e de reenumeração à mão do complemento de um predicado existente. A verificação é por **inspeção dirigida**, e a lista de alvos já é conhecida: cada regra derivável tem de ter **um** dono, e nenhum consumidor pode reavaliar tipos de conta, status ou entries por conta própria. Alvos conhecidos, com a task que os fecha:
+  - **rótulo/direção** — 1.3 (total, `EQUITY` primeiro) + 5.8 (dois eixos, D15); consumidores a limpar: `OperationCard:171-192` e `ViewOperationModal` (9d.1), `ReportExportLayout` (9d.2).
+  - **status de fatura** — canônico `Invoice.Status.isEditable`; saem `InvoiceTransactionsUiState:39` e o `when` de `ViewOperationModal:354-367` (5.7). ⚠️ `CreditCardCard:302` **não** entra: é pagabilidade, outro eixo (4b.1).
+  - **bloco de ações de fatura** — 3 cópias (4b.6); `TypeFilterChip` — 5 cópias (9i.1 + 9f.3).
+  - **saldo / abertura** — 3 implementações → `balanceUpTo` (4.8); nenhum recálculo em modelo de UI (5.4).
+  - **inversão de sinal** — hoje 2 à mão por `Transaction.Type`/`Category.Type` (9i.4); passa a ser dos mappers, por `AccountType` (D5/`presentation-mapping`).
+  - **editabilidade/deletabilidade** — 5.5/5.6, gate a gate, e a guarda de escrita da D23 (9k.1).
+  - **encerramento** — um campo em `accounts`, consumido pelas fachadas via `accountId` (D21); **zero** cópias nas fachadas (`account-lifecycle`).
+  
+  Definição de pronto: para cada regra acima, um único dono nomeado, e nenhum consumidor que a reavalie. A regra vale **daqui em diante**, não só no dia do merge — é o que decide se a arquitetura se mantém ou volta a ter cinco cópias de tudo.
 
 ## 9. Cobertura do raio legado — varredura mecânica
 

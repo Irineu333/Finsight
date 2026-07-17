@@ -42,7 +42,8 @@ Três fatos governam o desenho:
 > **Nota de revisão (1ª rodada).** A primeira versão deste design afirmava três fatos falsos, todos
 > pegos por auditoria adversarial e corrigidos aqui: (a) que testar `EQUITY` antes do `else` corrigia
 > a derivação de rótulo — não corrige, ver D3; (b) que restavam **quatro** leitores legados — são
-> **seis**, ver D11; (c) que a deleção da conta fantasma era protegida pela FK — não é, o Room
+> **onze**, ver D11 (a correção desta nota dizia "seis", e o D11 depois refutou também esse número);
+> (c) que a deleção da conta fantasma era protegida pela FK — não é, o Room
 > desliga FK em migração, ver D10. Os erros não estavam nas partes difíceis: estavam onde o texto
 > se elogiava em vez de se provar. As afirmações abaixo foram reverificadas contra o código.
 
@@ -68,6 +69,14 @@ A prova está no histórico: ao descobrir que apagar uma conta fazia dinheiro ev
 
 **Fonte de verdade.** O razão, para os números **e** para o grafo de objetos. Não coexistência, não "metade migrado". A change termina **sem resíduo** — nenhum modelo, tabela, coluna ou helper legado sobrevive.
 
+**Duas camadas, e a regra que as separa.** O app passa a ter uma camada de **engenharia** que fornece a verdade, e uma camada de **usabilidade** que fornece a simplicidade. O razão fornece a verdade; o app adapta ao usuário por meio de features. Isso é o que permite crescer em funcionalidade **sem** crescer a engenharia: o conjunto de `AccountType` é fechado, as regras são derivadas em vez de persistidas, e os invariantes moram uma vez na fronteira de escrita. Uma feature nova é uma fachada e uma leitura — não uma coluna, não um caso especial.
+
+> **A regra que sustenta as duas camadas: nenhuma feature reimplementa regra derivável do razão.**
+> Normativa em `balanced-ledger` ("Nenhuma feature reimplementa regra derivável do razão"), que generaliza
+> as declarações caso a caso de `ledger-reporting`, `presentation-mapping` e `account-lifecycle`.
+
+A fronteira é entre **se** e **qual**: uma tela pode decidir não oferecer uma ação que o domínio permite — isso é adaptação, e é legítimo (o 4b.1 decidiu exatamente assim para o `isPayable`). Uma tela não pode decidir *qual é* a regra. **A ameaça a esta arquitetura não é o núcleo crescer — é a periferia reimplementá-lo**, e foi isso que já aconteceu aqui: o D16 inteiro é o catálogo do sintoma (`isClosable` com regra por tela, o predicado de fatura em quatro formas, `TypeFilterChip` em cinco cópias, `initialBalance` em três implementações, o saldo em três). Nenhuma dessas cresceu a engenharia; todas a duplicaram na camada errada, e foi essa duplicação que produziu as nove divergências de comportamento. **Uma feature adapta; ela não decide.**
+
 **Migração.** `v7 → v9` direto, porque a v8 nunca foi para produção. Não herdar dois erros para depois corrigi-los.
 
 **Como o usuário trabalha** (importa para calibrar o que lhe é levado): decide rápido e espera execução — quando discorda de uma recomendação, ele diz e quer que se siga assim mesmo. Valoriza **verificação acima de autoridade**: elogiou quando um erro do próprio revisor foi pego em vez de propagado. Quer **mapeamento completo**, não amostragem. E as perguntas dele pegam erro de **moldura**, não de detalhe — foi ele quem notou que a decisão de encerrar tinha sido silenciosamente reenquadrada como preservação.
@@ -79,7 +88,7 @@ A prova está no histórico: ao descobrir que apagar uma conta fazia dinheiro ev
 - `Transaction` como agregado dono de `List<Entry>`; `Operation` e a perna legada removidos.
 - Comportamento idêntico ao usuário **onde ele não for deliberadamente corrigido** — o que muda é o nome, não a tela. **Duas exceções sancionadas, que não são regressões e sim o objetivo:**
   1. **Encerrar em vez de apagar** (D13) — decisão explícita do usuário: *"implemente o double entry **corretamente**"*. Apagar conta com lançamentos hoje **crasha** (`SQLiteException 787`, confirmado em runtime) e, no v7, fazia dinheiro evaporar do patrimônio sem contrapartida. Encerrar muda a tela: a conta sai das listas mas permanece no plano de contas, e um lançamento de baixa datado passa a existir no histórico. O patrimônio final coincide, mas **isso é consequência, não justificativa**.
-  2. **As divergências de §4b** (D16) — não existe um comportamento único a preservar: `isClosable` tem regra diferente por tela, `isPayable` nunca é oferecida na UI, `ViewAdjustmentModal` apaga sem gate. Derivar do razão produz **uma** regra, e ela muda pelo menos uma tela. Nove decisões de produto pendentes.
+  2. **As divergências de §4b** (D16) — não existe um comportamento único a preservar: `isClosable` tem regra diferente por tela, `isPayable` nunca é oferecida na UI, `ViewAdjustmentModal` apaga sem gate. Derivar do razão produz **uma** regra, e ela muda pelo menos uma tela. Eram **nove** decisões de produto; **todas foram tomadas** (`tasks.md` §4b) — três se revelaram no-op (divergência em código morto ou inalcançável), duas eram livres, três decididas pelo usuário e uma redesenhada (D23). Nada pendente.
 
   *Fora dessas duas, qualquer mudança de comportamento é regressão.* O que **não** está sancionado, e continua sendo defeito a evitar: efeitos colaterais das exceções acima — ex.: meses anteriores à baixa passarem a incluir a conta encerrada via `assetsBalanceUpToMonth` (D18/risco #1). Sancionar "encerrar" não sanciona isso.
 - Modelos de UI planos; mappers como a única fronteira domínio→apresentação.
@@ -99,7 +108,8 @@ A prova está no histórico: ao descobrir que apagar uma conta fazia dinheiro ev
 
 ```
 A. Razão legível + agregados     Entry hidratada, observeEntries, agregados por conta/mês (D12)
-   └─▶ B. Virar os 6 leitores    AccountUi, ViewCategory, budgets, CalculateBalance, dashboard, relatório
+   └─▶ B. Virar os 11 leitores   AccountUi, ViewCategory, budgets, CalculateBalance, dashboard,
+                                 relatório + os 5 que a contagem antiga omitia (D11)
        └─▶ C. Fim do double-write, drop da tabela legada + v9 única (D14)
            └─▶ D. Rename Operation→Transaction + TransactionUi   ← o objetivo, e o mais barato
 
@@ -337,7 +347,9 @@ OperationUi(                               TransactionUi(      ← plano
 
 `OperationPerspective` bifurca em `Account(accountId)` e `Card(creditCardId, invoiceId?)` **só porque a perna legada tinha duas formas**. Uma `Entry` tem uma forma: `accountId` + `invoiceId?`. As variantes colapsam em `TransactionPerspective(accountId, invoiceId? = null)`, com o cartão entrando via `CreditCard.accountId`.
 
-**Ressalva que a 1ª versão omitiu:** `CreditCard.accountId` é **nullable** (`CreditCard.kt:19`) — a conta do cartão é criada sob demanda (`ensureCardAccount`, `LedgerEntryWriter:133-148`) e a FK é `ON DELETE SET NULL`. Um cartão sem nenhuma operação tem `accountId == null` e a perspectiva é inconstruível, coisa que `OperationPerspective.Card(creditCardId)` não sofria. Fallback declarado: **um cartão sem conta de razão não tem entries, logo a perspectiva resolve para vazio** — semanticamente correto (não há o que mostrar), mas precisa ser explícito no mapper e coberto por teste, e não um NPE.
+**Ressalva que a 1ª versão omitiu — e que o D21 depois dissolveu:** `CreditCard.accountId` é **nullable** (`CreditCard.kt:19`) — a conta do cartão é criada sob demanda (`ensureCardAccount`, `LedgerEntryWriter:133-148`) e a FK é `ON DELETE SET NULL`. Um cartão sem nenhuma operação tem `accountId == null` e a perspectiva é inconstruível, coisa que `OperationPerspective.Card(creditCardId)` não sofria.
+
+> **Dissolvida pelo D21.** Com a criação **eager** que o D21 força (`accountId` `NOT NULL` na v9), todo cartão tem conta desde que nasce e a perspectiva é sempre construível — não há fallback a desenhar. O que resta é **um teste que fixe a invariante** (task 5.2), e é isso que a spec `presentation-mapping` afirma ("Perspectiva de cartão é sempre construível"). O fallback de "resolve para vazio" que esta decisão prescrevia **não é normativo**.
 
 ### D7 — Listas hidratam o domínio e mapeiam; sem projeção de leitura
 
@@ -522,10 +534,10 @@ Sem agregados novos, virar o `AccountUi` só teria duas saídas, ambas ruins: hi
 
 ## Risks / Trade-offs
 
-- **[Mudança silenciosa de número]** Virar os seis leitores do somatório em memória para o razão pode alterar valores exibidos sem erro nem crash. → **Mitigação:** D9 (caracterização antes da troca). É o risco #1 desta change.
+- **[Mudança silenciosa de número]** Virar os **onze** leitores (D11) do somatório em memória para o razão pode alterar valores exibidos sem erro nem crash. → **Mitigação:** D9 (caracterização antes da troca). É o risco #1 desta change.
 - **[CAP-4 deixa de ser teórico]** `AccountUi` filtra por `transaction.date`; `balanceUpTo` corta por **data da operação**. Coincidem por construção hoje, sem guarda. → **Mitigação:** teste que divirja as datas de propósito e falhe; então garantir a invariante na escrita.
 - **[Migração destrutiva]** A v9 dropa a tabela `transactions` — o legado deixa de existir e não há rollback de dados. → **Mitigação:** C só acontece depois de B verificado; o razão já contém tudo (backfill da v8, testado com órfãos); teste v8→v9 com dados representativos antes do merge.
-- **[Rename de grande superfície]** D toca dezenas de arquivos. → **Mitigação:** manter em commits separados de qualquer mudança de comportamento. **Exceção obrigatória:** os renames de entity/tabela/coluna do D10 andam **junto** da migração, porque separá-los quebra o Room.
+- **[Rename de grande superfície]** D toca dezenas de arquivos. → **Mitigação:** manter em commits separados de qualquer mudança de comportamento. **Exceção obrigatória:** os renames de entity/tabela/coluna (regra nascida no D10, hoje sob o **D14**) andam **junto** da migração, porque separá-los quebra o Room.
 - **[Bug já em produção]** `AdjustInvoiceUseCase:74` atualiza o valor legado sem rota de razão; como `invoiceOwed` já lê o razão, o número **já diverge hoje**. → **Mitigação:** corrigir cedo, com teste — é bug corrente, não dívida da coexistência.
 - **[Trade-off: `Entry` ganha `invoiceId` no domínio]** Expor o `invoiceId` vaza um detalhe de sub-razão de cartão para o modelo. → Aceito: é o que torna a `Entry` uma perna completa.
 - **[Trade-off: specs main aspiracionais no intervalo]** As specs sincronizadas do `balanced-ledger` já afirmam coisas que só ficam verdadeiras ao fim desta change. → Aceito conscientemente; os deltas aqui declaram a versão final.
@@ -534,6 +546,6 @@ Sem agregados novos, virar o `AccountUi` só teria duas saídas, ambas ruins: hi
 ## Open Questions
 
 - **[RESOLVIDA — era falso bloqueador]** *"Um lançamento de baixa é editável?"* A investigação do `ViewOperationModal:417-421` mostrou que a regra de editabilidade já tem um gate `ADJUSTMENT` que barra a baixa. Não havia decisão a tomar: a resposta estava no código, e a pergunta só existiu porque o D2 tinha lido a regra pela metade. Registrada como lembrete de que "questão aberta" às vezes é investigação não feita.
-- **Onde `Type` e `Target` passam a morar?** O domínio não os persiste, mas `Target` está numa rota `@Serializable` (`TransactionsRoute`) com `TransactionTargetNavType`: o enum precisa de um endereço estável que `feature/transactions/api` possa serializar. `core/model` (classificação de fronteira) ou `feature/transactions/api` (vocabulário de rota)? D4 fixa o papel, não o endereço.
+- **[RESOLVIDA — não era escolha]** *"Onde `Type` e `Target` passam a morar: `core/model` ou `feature/transactions/api`?"* A varredura da §9 fechou a questão (task 9b.5): há **uma só resposta viável**, `core/model`. Consumidores em módulos **core** — `core/model` (`Recurring.kt:5`, persistido), `core/database` (`RecurringMapper`), `core/analytics` (`event/*`), `core/ui` (`OperationCard`, `AccountUi`, `TargetSelector`) — **não podem** depender de `feature/transactions/api` pela regra de dependência do `CLAUDE.md` (topologia estrela). O design oferecia duas opções como escolha livre; uma delas quebra quatro módulos core. Registrada como lembrete de que "questão aberta" às vezes é um grep não feito — o mesmo padrão da questão acima.
 - **O filtro `filterTarget` da rota vira filtro por `AccountType`?** Seria a expressão nativa no razão (`ASSET` vs `LIABILITY`), mas muda um contrato de navegação serializável — possivelmente com deep links salvos.
 - **Ordem de B:** virar `CalculateBalanceUseCase` primeiro simplifica os outros, ou são independentes? A investigar ao aplicar.

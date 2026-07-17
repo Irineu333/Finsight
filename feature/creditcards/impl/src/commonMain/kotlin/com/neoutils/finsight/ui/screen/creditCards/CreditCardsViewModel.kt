@@ -164,7 +164,7 @@ private fun List<Operation>.filter(category: Category?): List<Operation> {
 
 private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
     if (type == null) return this
-    return filter { operation -> operation.type == type }
+    return filter { operation -> operation.creditCardType == type }
 }
 
 private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {

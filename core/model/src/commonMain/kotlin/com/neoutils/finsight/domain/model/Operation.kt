@@ -29,6 +29,9 @@ data class Operation(
     val type: Transaction.Type
         get() = if (kind == Kind.PAYMENT) Transaction.Type.EXPENSE else primaryTransaction.type
 
+    val creditCardType: Transaction.Type
+        get() = if (kind == Kind.PAYMENT) Transaction.Type.INCOME else primaryTransaction.type
+
     val target: Transaction.Target
         get() = primaryTransaction.target
 

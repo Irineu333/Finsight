@@ -3,7 +3,7 @@
 ### Requirement: Conta com lançamentos é encerrada, nunca apagada
 Uma conta, cartão ou categoria que possua qualquer lançamento MUST NOT ser removida do plano de contas. O sistema SHALL encerrá-la: a conta permanece no plano de contas, com o seu tipo real preservado, marcada como encerrada, e os seus lançamentos históricos permanecem intactos e atribuídos a ela. Uma conta sem nenhum lançamento MAY ser removida, por não haver história a preservar.
 
-Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas. O usuário MUST NOT precisar distinguir "apagar" de "encerrar": a ação continua sendo uma só, e o sistema escolhe o tratamento correto conforme haja ou não história.
+Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas. O estado de encerramento SHALL residir **exclusivamente no plano de contas**, e as fachadas de categoria e cartão SHALL consumi-lo da sua respectiva conta pelo vínculo que já possuem — MUST NOT existir cópia desse estado nas fachadas. Toda categoria e todo cartão SHALL possuir conta no plano de contas desde a sua criação, de modo que a consulta não dependa de tratamento para vínculo ausente. O usuário MUST NOT precisar distinguir "apagar" de "encerrar": a ação continua sendo uma só, e o sistema escolhe o tratamento correto conforme haja ou não história.
 
 #### Scenario: Encerrar conta com lançamentos
 - **WHEN** o usuário remove uma conta que possui lançamentos
@@ -12,6 +12,14 @@ Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lan
 #### Scenario: Remover conta sem lançamentos
 - **WHEN** o usuário remove uma conta que não possui nenhum lançamento
 - **THEN** a conta é removida do plano de contas, por não haver história a preservar
+
+#### Scenario: Categoria encerrada some da sua tela
+- **WHEN** uma categoria com lançamentos é removida
+- **THEN** ela é encerrada no plano de contas e desaparece da tela de categorias e dos seletores, sem que o estado seja duplicado na fachada
+
+#### Scenario: Categoria recém-criada tem conta
+- **WHEN** uma categoria ou cartão é criado
+- **THEN** a sua conta no plano de contas existe imediatamente, e a consulta de encerramento não precisa tratar vínculo ausente
 
 #### Scenario: Conta encerrada não é selecionável
 - **WHEN** o usuário registra um novo lançamento
@@ -24,7 +32,7 @@ Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lan
 ### Requirement: Encerramento com saldo gera lançamento de baixa
 Encerrar uma conta cujo saldo não seja zero SHALL registrar um lançamento de encerramento balanceado que zera esse saldo, tendo como contrapartida a conta `EQUITY` de reconciliação — a mesma usada pelos ajustes de saldo, por encerrar zerando um saldo ser uma reconciliação. O saldo MUST NOT desaparecer sem lançamento: a saída do dinheiro do patrimônio SHALL ser um lançamento **explícito, datado e balanceado**, recuperável do razão.
 
-Esta capability MUST NOT exigir que o lançamento de baixa seja **visualmente distinguível** de um ajuste de saldo: com a contrapartida de reconciliação, as duas operações têm a mesma forma (`{monetária, EQUITY:Reconciliação}`) e a derivação de rótulo — total e sem tratamento especial, conforme `balanced-ledger` — produz `ADJUSTMENT` para ambas. Se a distinção for necessária, ela SHALL vir de estado próprio do lançamento (ex.: título), nunca de um ramo condicional nas leituras. *(A versão anterior desta spec exigia "auditável" num sentido que a spec irmã torna insatisfazível — contradição entre duas specs da mesma change. Resolvida aqui restringindo a promessa ao que o razão de fato garante; se a distinção visual for desejada, é a decisão `tasks.md` 4b.10.)*
+Esta capability MUST NOT exigir que o lançamento de baixa seja **visualmente distinguível** de um ajuste de saldo: com a contrapartida de reconciliação, as duas operações têm a mesma forma (`{monetária, EQUITY:Reconciliação}`) e a derivação de rótulo — total e sem tratamento especial, conforme `balanced-ledger` — produz `ADJUSTMENT` para ambas. Se a distinção for necessária, ela SHALL vir de estado próprio do lançamento (ex.: título), nunca de um ramo condicional nas leituras.
 
 O patrimônio líquido após o encerramento SHALL ser idêntico ao que seria se a conta tivesse sido apagada, já que o saldo encerrado é zero. Contas encerradas SHALL continuar entrando nas leituras pelo mesmo mecanismo das demais, sem ramo condicional.
 

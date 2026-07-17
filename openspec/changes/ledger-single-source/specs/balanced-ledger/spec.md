@@ -92,7 +92,7 @@ A contagem MUST NOT usar o total de entries, já que toda transação balanceada
 - **THEN** ela não é editável, por pertencer a um parcelamento
 
 ### Requirement: Remoção de transação em fatura fechada é impedida
-A remoção de uma transação SHALL ser impedida quando ela pertencer a uma fatura cujo status seja `CLOSED` ou `PAID`, e SHALL ser permitida caso contrário — **preservando a regra do `ViewOperationModal:353-370`**. ⚠️ Esta redação **presume a resolução da divergência `tasks.md` 4b.3**: hoje o `ViewAdjustmentModal:228-256` apaga **sem gate algum**, e derivar uma regra única do razão muda um dos dois modais. Se 4b.3 decidir a favor do `ViewAdjustmentModal`, este requisito inverte. A spec não deve fixar a decisão antes dela ser tomada. Este gate SHALL usar a única definição de status editável de fatura existente, e MUST NOT ser reimplementado em linha pelos consumidores.
+A remoção de uma transação SHALL ser impedida quando ela pertencer a uma fatura cujo status seja `CLOSED` ou `PAID`, e SHALL ser permitida caso contrário — **preservando a regra do `ViewOperationModal:353-370`**. Este gate SHALL usar a única definição de status editável de fatura existente, e MUST NOT ser reimplementado em linha pelos consumidores.
 
 #### Scenario: Transação em fatura aberta pode ser removida
 - **WHEN** uma transação de uma fatura `OPEN`, `FUTURE` ou `RETROACTIVE` é exibida

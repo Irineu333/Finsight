@@ -23,8 +23,11 @@ Três fatos governam o desenho:
 > **Regra de método (imposta pela 5ª rodada).** Antes de este documento afirmar que algo é "código
 > morto", "inalcançável" ou "dissolvido", os **callers** têm de ser grepados e **listados aqui**. As três
 > correções que falharam na 4ª rodada eram do mesmo tipo: um `arquivo:linha` verdadeiro seguido de
-> uma generalização testada contra **um** caller. `isPayable` tem quatro; `advancePayment` tem três
-> telas vivas. Ambas as generalizações teriam caído com um grep de dez segundos.
+> uma generalização testada contra **um** caller. `PayInvoiceUseCase` tem **quatro** callers (`isPayable`
+> tem **um**, e confundir os dois foi o erro); `advancePayment` está vivo em **três** telas. Ambas as
+> generalizações teriam caído com um grep de dez segundos — inclusive esta frase, que carregou a
+> confusão por quatro rodadas **dentro da regra escrita para preveni-la**. Nenhuma auditoria grepou
+> a própria epígrafe.
 >
 > **Nota de investigação (5 agentes, código real).** Cinco investigações paralelas — ciclo de vida
 > de contas, gates de UI, datas/saldos, raio do legado, migração — acharam mais do que três rodadas
@@ -406,6 +409,73 @@ v9   ENCERRAR ──▶ a conta fica no plano de contas, com seu tipo real, marc
 **Contra qual conta `EQUITY` a baixa lança?** Contra **`RECONCILIATION`**, a que já existe. Encerrar uma conta zerando o saldo *é* uma reconciliação, e reusá-la evita três coisas: (i) expandir o conjunto de contas de sistema, que o delta de `chart-of-accounts` desta mesma change restringe; (ii) tornar o **CAP-3** (`ensureSystemAccount` check-then-act, `LedgerEntryWriter:150-155`) load-bearing, sendo que fechá-lo é Non-Goal declarado; (iii) um seed novo, que hoje **não existe no fresh-install** — as contas de sistema nascem preguiçosamente, e um device migrado tem 5 enquanto um novo tem no máximo 3. A versão anterior desta change exigia uma "conta `EQUITY` de baixa" que nenhuma task criava e que a spec irmã proibia: contradição resolvida por reuso.
 
 **Alternativas consideradas e rejeitadas:** (a) tipo `TOMBSTONE` — expande o conjunto fechado de `AccountType` para carregar um hack; (b) predicados por identidade de conta (`nome == 'Conta removida'`) — frágil e contamina o modelo para sempre; (c) declarar a regressão aceitável — decisão de valor que o usuário rejeitou.
+
+### D21 — Estado de encerramento mora em `accounts`; as fachadas consomem da sua conta
+
+**Decisão do usuário**, e ela corrige a recomendação anterior deste design. Desde a v8, categoria e cartão **são** contas: `categories.accountId` (`CategoryEntity:33`) e `credit_cards.accountId` (`CreditCardEntity:34`) apontam para a linha de `accounts` que o razão movimenta. A fachada é a cara que o usuário vê; a conta é a coisa.
+
+```
+categories  id=5  "Alimentação"  accountId=105  ──▶  accounts  id=105  "Alimentação"  EXPENSE
+credit_cards id=2 "Nubank"       accountId=102  ──▶  accounts  id=102  "Nubank"       LIABILITY
+                                                     accounts  id=1    "Conta corrente" ASSET
+```
+
+Logo o encerramento é **um único campo em `accounts`**, e `CategoryDao`/`CreditCardDao` — que hoje só leem das fachadas — passam a consumir a conta pelo `accountId` que já têm.
+
+**A recomendação anterior era "três flags", e estava errada por um motivo que este documento catalogou por oito rodadas:** seria a terceira cópia do mesmo fato, livre para divergir — a doença de `isClosable` (regra diferente por tela), de `initialBalance` (três implementações) e do predicado de fatura (quatro formas). Não se cura duplicação prescrevendo duplicação. O argumento de "não acoplar os DAOs ao plano de contas" também não se sustenta: o acoplamento **já existe** e chama-se `accountId`; fingir que não é a ficção.
+
+**Consequência que a decisão força — criação eager.** Hoje `accountId` é **nullable** nas duas fachadas, porque a conta nasce preguiçosamente na primeira escrita (`ensureCategoryAccount:115-132`, `ensureCardAccount:134-148`). Uma categoria nunca usada não tem conta, e o `JOIN` a perderia. Se categoria **é** uma conta, ela tem conta desde que nasce:
+
+| | Preguiçoso (hoje) | Eager (alvo) |
+|---|---|---|
+| `JOIN` da fachada | `LEFT JOIN` + `NULL` = "não encerrada" — caso especial | `INNER JOIN` |
+| **D6 / task 5.2** | existe só porque `CreditCard.accountId` é nullable | **desaparece** |
+| **CAP-3** (`ensure*` check-then-act) | vale p/ categoria, cartão e sistema | encolhe p/ **só contas de sistema** |
+| `ensureCategoryAccount`/`ensureCardAccount` | inserem sob demanda | viram lookup |
+
+Custo baixo: os passos 4 e 5 da migração **já** promovem toda categoria e cartão existentes e preenchem o `accountId`. Falta a criação nova ser eager e a coluna virar `NOT NULL` na v9.
+
+### D22 — Categoria entra; orçamento perde a categoria encerrada, não a si mesmo
+
+**Decisões do usuário:** categoria entra no escopo do encerramento; encerrar remove a categoria do orçamento; e **orçamento que ficou sem nenhuma categoria viva permanece visível**.
+
+**O que a investigação achou, e que reformula a pergunta.** Um orçamento **não pertence a uma categoria** — `Budget.categories` é `List<Category>`, materializada em `budget_categories` (M2M). E ele **não tem histórico**: `CalculateBudgetProgressUseCase:36-38` filtra por `today.yearMonth`, isto é, é um alvo **mensal vivo**, não um registro. Logo:
+- "esconder o orçamento quando a categoria encerra" **destrói algo vivo** — um orçamento de [Alimentação, Transporte] segue válido para Transporte;
+- "preservar o registro" **não tem objeto** — não existe registro a preservar.
+
+**Bug corrente descoberto aqui.** `budgets.categoryId` é `NOT NULL` com `CASCADE` (`BudgetEntity:14-21`) e **nunca é lido**: `BudgetMapper:26` só o escreve (`domain.categories.firstOrNull()?.id ?: 0`) e `BudgetRepository:29` monta as categorias **só** da M2M. Ou seja, apagar a categoria que por acaso é a primeira da lista **destrói o orçamento inteiro**, mesmo com outras categorias vivas — por causa de uma coluna que ninguém consulta. E o `?: 0` grava `categoryId = 0` para orçamento sem categoria, apontando para categoria inexistente sob FK `NOT NULL` — só não estoura porque hoje não acontece. A string do modal (`strings.xml:335`) promete apenas que as transações sobrevivem; do orçamento não fala.
+
+**Regra:** encerrar uma categoria a remove das categorias do orçamento **por leitura** (o consumidor filtra pelo estado da conta, como na D21), não por escrita — nada é destruído e um eventual reabrir volta a funcionar sozinho. O orçamento sobrevive ajustado enquanto tiver categoria viva; sem nenhuma, **permanece visível** com progresso zero — é do usuário, e é ele quem decide corrigir ou remover. O app não apaga o que é dele.
+
+**Schema (v9):** `budgets.categoryId` **sai** — é resíduo write-only, e é o `CASCADE` dela que causa a destruição.
+
+### D23 — Fatura fechada é imutável **exceto para o próprio pagamento**; a invariante mora no ponto de escrita
+
+**Correção do usuário, e ela pegou uma falha fatal.** A primeira versão deste desenho dizia "nenhuma operação que toque uma fatura **bloqueada** pode ser criada, atualizada ou removida". `isBlocked` = `CLOSED || PAID` (`Invoice.kt:65-66`), e `PayInvoicePaymentUseCase:37` exige `status == CLOSED` e cria uma operação que **toca a fatura** (`:47-61`). A guarda **tornaria impossível pagar fatura** — o fluxo central de um app de cartão. E o texto se gabava de "cobrir create/update/delete de uma vez" sem enumerar o que atravessa a fronteira: o padrão desta sessão, cometido na proposta feita para curá-lo.
+
+**A invariante tem três estados, não dois:**
+
+| Status | Regra | Evidência |
+|---|---|---|
+| `OPEN` / `FUTURE` / `RETROACTIVE` | livre — gastos, ajustes, antecipação | antecipar só em `OPEN` (`CreditCardCard:303`); ajustar só em não-bloqueada (`EditInvoiceBalanceViewModel:42` filtra `isEditable`) |
+| **`CLOSED`** | imutável **exceto o pagamento** — que é o próximo passo esperado | `PayInvoicePaymentUseCase:37` exige exatamente esse status |
+| **`PAID`** | imutável, ponto final — e nem reabrir | `ReopenInvoiceUseCase:29` bloqueia reabrir fatura paga |
+
+**`isBlocked` é o predicado errado para esta invariante.** Ele funde dois estados que se comportam diferente. Os cinco lugares que hoje o usam (`GetOrCreateInvoiceForMonthUseCaseImpl:31`, `AddInstallmentUseCaseImpl:81`, `BuildTransactionUseCaseImpl:90,94` — este último partido em dois `ensure` que levantam o mesmo erro) funcionam **por acidente**: todos são caminhos de **criação de gasto**, onde `CLOSED` e `PAID` de fato coincidem. Aplicá-lo à remoção quebra o pagamento.
+
+**A regra, expressa das entries** — com a máquina que a própria change constrói (D3):
+
+```
+fatura PAID     → nenhuma operação, nunca
+fatura CLOSED   → só operação cujo rótulo derivado é PAYMENT
+demais          → livre
+```
+
+**Onde mora:** no ponto único de escrita, junto do `Σ = 0`. Mesma forma — invariante estrutural validada uma vez, na fronteira que todos atravessam. Hoje a criação está coberta em três lugares, a remoção em dois (um **faltando**: `ViewAdjustmentModal:220-236`) e a atualização em **nenhum**.
+
+**Camadas:** UI **não oferece**; domínio **não permite**. A guarda não substitui o gate de UI — ela garante o dado. Os caminhos de manutenção não a disparam (verificado um a um: `AdjustInvoiceUseCase:67` só alcança fatura não-bloqueada; `AdjustBalanceUseCase:69` é ajuste de conta, sem fatura; `DeleteFutureInvoiceUseCase:31` opera em `FUTURE|RETROACTIVE`) — e se dispararem, é bug a montante e a guarda o pega. Backstop, como o `Σ=0`.
+
+**A objeção que eu mesmo levantei se dissolve pela D13.** "Gate no domínio torna todo cartão indeletável" era verdade **hoje**, porque `DeleteCreditCardUseCase:17` apaga operações em bloco por SQL. Com a D13 o cartão é **encerrado**, não apagado — o bulk delete deixa de existir. A objeção já estava resolvida por uma decisão anterior do usuário, e eu não conectei as duas.
 
 ### D14 — Migração única `v7 → v9`: não herdar dois erros para depois corrigi-los
 

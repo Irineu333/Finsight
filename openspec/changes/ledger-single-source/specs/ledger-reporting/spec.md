@@ -5,7 +5,7 @@ O saldo de qualquer conta SHALL ser calculado exclusivamente como a soma dos `am
 
 SHALL existir **uma única** implementação do cálculo de saldo. MUST NOT existir uma forma alternativa que some lançamentos já carregados em memória, nem qualquer recálculo de saldo em modelo de UI ou componente de tela.
 
-O corte temporal do saldo SHALL usar a data da transação como única referência. Hoje essa invariante vale por construção — os nove pontos de criação passam a mesma data aos dois modelos — e SHALL permanecer verificada por teste, de modo que um consumidor futuro não a quebre em silêncio. *(A versão anterior exigia que a invariante fosse "garantida na escrita, não presumida por convenção", pressupondo uma divergência de data que a investigação refutou: a divergência real é de valor, no update — ver `design.md` D17.)*
+O corte temporal do saldo SHALL usar a data da transação como única referência. Hoje essa invariante vale por construção — os nove pontos de criação passam a mesma data aos dois modelos — e SHALL permanecer verificada por teste, de modo que um consumidor futuro não a quebre em silêncio.
 
 #### Scenario: Saldo de conta corrente
 - **WHEN** o saldo de uma conta `ASSET` é solicitado

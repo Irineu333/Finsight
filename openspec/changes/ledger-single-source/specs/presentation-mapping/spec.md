@@ -41,6 +41,6 @@ Quando uma transação puder ser apresentada sob mais de um ponto de vista (a co
 - **WHEN** um mapeamento é solicitado com uma perspectiva que não corresponde a nenhuma perna da transação
 - **THEN** o mapper não produz modelo de UI para aquela transação e o chamador a omite da lista, sem lançar — e a ausência MUST NOT se manifestar como falha na leitura de uma propriedade
 
-#### Scenario: Conta do cartão ainda não existe
-- **WHEN** uma perspectiva de cartão é construída para um cartão que ainda não tem conta no razão (criada sob demanda)
-- **THEN** a resolução produz vazio, e MUST NOT lançar
+#### Scenario: Perspectiva de cartão é sempre construível
+- **WHEN** uma perspectiva de cartão é construída para qualquer cartão, inclusive um recém-criado sem nenhum lançamento
+- **THEN** ela é construível, porque todo cartão possui conta no plano de contas desde a sua criação (`account-lifecycle`), e a resolução não depende de tratamento para vínculo ausente

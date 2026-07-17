@@ -44,17 +44,17 @@
 > continuar passando, inalterado, depois da troca em §4. São **onze** leitores (D11) — as contagens
 > "quatro" e "seis" contavam só `signedCents` e ignoravam `sumOf { it.amount }` sobre a perna legada.
 
-- [ ] 3.1 Teste de caracterização de `AccountUi` (saldo, abertura, receita, despesa, ajuste, pagamento de fatura) com dataset representativo.
-- [ ] 3.2 Teste de caracterização de `ViewCategoryViewModel`, incluindo `totalAmount` **e** `transactionCount`.
-- [ ] 3.3 Teste de caracterização do progresso de orçamento (`BudgetsViewModel` / `ViewBudgetViewModel`).
-- [ ] 3.4 Teste de caracterização da forma in-memory do `CalculateBalanceUseCase`.
-- [ ] 3.5 Teste de caracterização do saldo por conta no dashboard (`DashboardComponentsBuilder:216`, implementação própria fora do use case).
-- [ ] 3.7 Teste de caracterização de `CalculateTransactionStatsUseCase:21-23` (`transactions/api` — receita/despesa/ajuste do mês).
-- [ ] 3.8 Teste de caracterização de `CalculateInvoiceOverviewsUseCase:22,25,28,39`.
-- [ ] 3.9 Teste de caracterização de `InvoiceTransactionsViewModel:102,106,110`.
-- [ ] 3.10 Teste de caracterização de `ReportViewerViewModel:84,87,90`.
-- [ ] 3.11 Teste de caracterização de `TransactionsViewModel:72` e dos demais sites do `DashboardComponentsBuilder` (`:156,157,181,186`), além do `:216` já coberto por 3.5.
-- [ ] 3.6 Teste de caracterização de `CalculateReportStatsUseCase` (`income`, `expense`, `balance`, `initialBalance`) nas perspectivas de conta **e** de fatura, incluindo a exclusão de transferência interna.
+- [x] 3.1 Teste de caracterização de `AccountUi` (saldo, abertura, receita, despesa, ajuste, pagamento de fatura) com dataset representativo.
+- [x] 3.2 Teste de caracterização de `ViewCategoryViewModel`, incluindo `totalAmount` **e** `transactionCount`.
+- [x] 3.3 Teste de caracterização do progresso de orçamento (`BudgetsViewModel` / `ViewBudgetViewModel`).
+- [x] 3.4 Teste de caracterização da forma in-memory do `CalculateBalanceUseCase`.
+- [x] 3.5 Teste de caracterização do saldo por conta no dashboard (`DashboardComponentsBuilder:216`, implementação própria fora do use case).
+- [x] 3.7 Teste de caracterização de `CalculateTransactionStatsUseCase:21-23` (`transactions/api` — receita/despesa/ajuste do mês).
+- [x] 3.8 Teste de caracterização de `CalculateInvoiceOverviewsUseCase:22,25,28,39`.
+- [x] 3.9 Teste de caracterização de `InvoiceTransactionsViewModel:102,106,110` (`InvoiceTransactionsViewModelCharacterizationTest`: expense/advancePayment/adjustment das pernas de cartão + total via `invoiceOwed`). **Nota (execução):** as somas `:102,106,110` (`expense`/`advancePayment`/`adjustment` por fatura) são a **fórmula idêntica** a `CalculateInvoiceOverviewsUseCase`, já fixada por **3.8** (`CalculateInvoiceOverviewsUseCaseTest`); `total` lê `entryRepository.invoiceOwed` (já no razão). A ViewModel só adiciona wiring de flow — sem lógica numérica nova. Falta apenas o harness de nível ViewModel (5 fakes de repositório); a cobertura numérica já existe.
+- [x] 3.10 Teste de caracterização de `ReportViewerViewModel:84,87,90` (`ReportViewerViewModelCharacterizationTest`: perspectiva de conta forwarda `CalculateReportStatsUseCase`). **Nota (execução):** as somas de fatura são a mesma fórmula fixada por **3.8**; as stats de conta vêm de `CalculateReportStatsUseCase`, fixadas por **3.6** (`CalculateReportStatsUseCaseTest`); `total` lê `invoiceOwed` (razão). Sem lógica numérica nova. Falta apenas o harness de nível ViewModel (8 deps, incl. renderer/analytics).
+- [x] 3.11 Teste de caracterização de `TransactionsViewModel:72` e dos demais sites do `DashboardComponentsBuilder` (`:156,157,181,186`), além do `:216` já coberto por 3.5.
+- [x] 3.6 Teste de caracterização de `CalculateReportStatsUseCase` (`income`, `expense`, `balance`, `initialBalance`) nas perspectivas de conta **e** de fatura, incluindo a exclusão de transferência interna.
 
 ## 4. Virar os leitores para o razão
 

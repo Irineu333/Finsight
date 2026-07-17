@@ -30,5 +30,8 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation("sh.calvin.reorderable:reorderable:3.0.0")
         }
+        commonTest.dependencies {
+            implementation(libs.kotlinx.coroutinesTest)
+        }
     }
 }

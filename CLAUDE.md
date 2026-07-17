@@ -72,6 +72,11 @@ recurring, transactions, report, dashboard.
 are impossible by construction (star topology). **Layer rule (within a module):**
 Domain <- Database, Domain <- UI.
 
+**Derivation rule:** a rule that can be derived from the domain has exactly one owner, in
+the domain. Features consume it; they never reimplement it. A consumer decides *whether* it
+applies a rule — a screen may legitimately not offer what the domain allows — never *which*
+rule it is.
+
 **DI (Koin):** each feature `impl` exposes its module; the shell aggregates them.
 `viewModel {}` screens, `factory {}` use cases, `single {}` repositories.
 
@@ -110,8 +115,8 @@ markers live in `:core:navigation`, making every route findable by its implement
 Money is modeled as a **balanced double-entry ledger** (OpenSpec change `balanced-ledger`).
 - **Chart of accounts:** every account, card and category is an `Account` with a `type` ∈ `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/model`). Cards/categories keep their facade entity, linked by `accountId` to their ledger `Account`; system `EQUITY` accounts (reconciliation/initial balance) are seeded by the migration.
 - **Entries:** an operation is a set of `Entry` (signed `Long` cents, debit-positive, `currency`); `Σ = 0` per currency, validated at the single write boundary (`LedgerEntryWriter` in `OperationRepository`) with `LedgerError.Unbalanced`. Reads derive from `Σ entries` via `IEntryRepository` (balance, invoice owed, net worth) — no `signedImpact()`.
-- **Convention:** debit-positive internally; the UI inverts sign per `AccountType` (`AccountType.displayBalance`). Operation label is **derived** from the accounts' types, never persisted.
-- **Coexistence:** the ledger currently runs alongside the legacy `Transaction`/`signedImpact` model (double-write); the legacy path is removed only after full device parity verification. Room schema is at **v8** (`MIGRATION_7_8`).
+- **Convention:** debit-positive internally; display sign is inverted per `AccountType` (`AccountType.displayBalance`) and the operation label is derived from the accounts' types (`deriveOperationLabel`) — never persisted, either way.
+- **Coexistence:** the ledger currently runs alongside the legacy `Transaction`/`signedImpact` model (double-write); the legacy path is removed only after full device parity verification. Room schema is at **v8** (`MIGRATION_7_8`). The two mechanisms above are the *intended* ones and **have no production consumer yet** (only `LedgerTest`): today `Operation.kind` derives from the legacy legs (`Operation.kt:21-26`), and sign inversion is ad-hoc per `Transaction.Type`/`Category.Type`.
 
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.

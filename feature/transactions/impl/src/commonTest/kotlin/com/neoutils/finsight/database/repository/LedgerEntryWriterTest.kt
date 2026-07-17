@@ -128,6 +128,10 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getAll(): List<EntryEntity> = inserted
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun getByOperationId(operationId: Long): List<EntryEntity> = inserted.filter { it.operationId == operationId }
+    override suspend fun getEntriesWithAccountByOperationId(operationId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
+    override fun observeEntriesWithAccountByOperationId(operationId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
+    override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
+    override suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int = throw NotImplementedError()
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun categoryTotalsWithSiblingLeg(

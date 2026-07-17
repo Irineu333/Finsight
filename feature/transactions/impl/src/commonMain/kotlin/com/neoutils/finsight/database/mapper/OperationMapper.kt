@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.entity.OperationEntity
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.OperationInstallment
 import com.neoutils.finsight.domain.model.Invoice
@@ -23,6 +24,7 @@ class OperationMapper {
         installments: Map<Long, Installment>,
         accounts: Map<Long, Account>,
         recurring: Map<Long, Recurring>,
+        entries: List<Entry> = emptyList(),
     ): Operation? {
         if (transactions.isEmpty()) return null
 
@@ -63,6 +65,7 @@ class OperationMapper {
                 }
             },
             transactions = transactions.sortedByDescending { it.id },
+            entries = entries,
         )
     }
 }

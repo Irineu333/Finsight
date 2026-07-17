@@ -16,4 +16,14 @@ enum class AccountType {
 
     val isDebitNatured: Boolean get() = this == ASSET || this == EXPENSE
     val isCreditNatured: Boolean get() = !isDebitNatured
+
+    /**
+     * True for the account types that hold money: [ASSET] and [LIABILITY]. These
+     * are where a balance physically *is*, and they are what the user chooses in
+     * the form (an account or a card). The remaining types ([INCOME], [EXPENSE],
+     * [EQUITY]) are the synthesized counterparty legs that explain *why* money
+     * moved. Orthogonal to [isDebitNatured], which splits the same five types by
+     * their debit/credit direction rather than by whether they carry a balance.
+     */
+    val isMonetary: Boolean get() = this == ASSET || this == LIABILITY
 }

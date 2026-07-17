@@ -14,4 +14,8 @@ data class Entry(
     val account: Account,
     val amount: Long,
     val currency: String = BASE_CURRENCY,
+    // Set only on the credit-card (LIABILITY) leg of a purchase: the invoice this
+    // leg belongs to. Makes the entry a complete leg, so an invoice's balance is
+    // Σ entries carrying its id — the sub-ledger of the card account.
+    val invoiceId: Long? = null,
 )

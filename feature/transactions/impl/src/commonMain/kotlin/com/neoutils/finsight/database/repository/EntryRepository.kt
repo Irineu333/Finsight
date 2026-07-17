@@ -1,8 +1,15 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.EntryDao
+import com.neoutils.finsight.database.dao.EntryWithAccount
+import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
@@ -11,6 +18,38 @@ private const val CENTS_PER_UNIT = 100.0
 class EntryRepository(
     private val entryDao: EntryDao,
 ) : IEntryRepository {
+
+    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> =
+        entryDao.getEntriesWithAccountByOperationId(operationId).map { it.toDomain() }
+
+    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> =
+        entryDao.observeEntriesWithAccountByOperationId(operationId)
+            .map { rows -> rows.map { it.toDomain() } }
+
+    private fun EntryWithAccount.toDomain() = Entry(
+        id = entry.id,
+        operationId = entry.operationId,
+        account = Account(
+            id = account.id,
+            name = account.name,
+            type = account.type.toDomain(),
+            currency = account.currency,
+            iconKey = account.iconKey,
+            isDefault = account.isDefault,
+            createdAt = account.createdAt,
+        ),
+        amount = entry.amount,
+        currency = entry.currency,
+        invoiceId = entry.invoiceId,
+    )
+
+    private fun AccountEntity.Type.toDomain() = when (this) {
+        AccountEntity.Type.ASSET -> AccountType.ASSET
+        AccountEntity.Type.LIABILITY -> AccountType.LIABILITY
+        AccountEntity.Type.INCOME -> AccountType.INCOME
+        AccountEntity.Type.EXPENSE -> AccountType.EXPENSE
+        AccountEntity.Type.EQUITY -> AccountType.EQUITY
+    }
 
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double {
         val cents = if (accountId == null) {
@@ -23,6 +62,20 @@ class EntryRepository(
 
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double {
         return entryDao.balanceInMonth(accountId, month.toString()) / CENTS_PER_UNIT
+    }
+
+    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows {
+        val totals = entryDao.accountPeriodTotals(accountId, month.toString())
+        return AccountFlows(
+            income = totals.income / CENTS_PER_UNIT,
+            expense = totals.expense / CENTS_PER_UNIT,
+            adjustment = totals.adjustment / CENTS_PER_UNIT,
+            invoicePayment = totals.invoicePayment / CENTS_PER_UNIT,
+        )
+    }
+
+    override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int {
+        return entryDao.entryCountInMonth(accountId, month.toString())
     }
 
     override suspend fun invoiceOwed(invoiceId: Long): Double {

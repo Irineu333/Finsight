@@ -8,6 +8,8 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.TransactionDao
+import com.neoutils.finsight.database.dao.EntryDao
+import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.OperationEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
@@ -15,6 +17,7 @@ import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
@@ -38,6 +41,7 @@ class OperationRepository(
     private val database: AppDatabase,
     private val operationDao: OperationDao,
     private val transactionDao: TransactionDao,
+    private val entryDao: EntryDao,
     private val recurringDao: RecurringDao,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
@@ -72,6 +76,20 @@ class OperationRepository(
         }
     }
 
+    private fun List<EntryEntity>.toDomainEntries(accounts: Map<Long, Account>): List<Entry> =
+        mapNotNull { entity ->
+            accounts[entity.accountId]?.let { account ->
+                Entry(
+                    id = entity.id,
+                    operationId = entity.operationId,
+                    account = account,
+                    amount = entity.amount,
+                    currency = entity.currency,
+                    invoiceId = entity.invoiceId,
+                )
+            }
+        }
+
     override fun observeAllOperations(): Flow<List<Operation>> {
         return combine(
             operationDao.observeAll(),
@@ -82,8 +100,10 @@ class OperationRepository(
             installmentsFlow,
             accountsFlow,
             recurringFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
+            entryDao.observeAll(),
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring, entries ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
+            val entriesByOperationId = entries.groupBy { it.operationId }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
                 operationMapper.toDomain(
@@ -103,6 +123,7 @@ class OperationRepository(
                     installments = installments,
                     accounts = accounts,
                     recurring = recurring,
+                    entries = entriesByOperationId[operation.id].orEmpty().toDomainEntries(accounts),
                 )
             }
         }
@@ -128,8 +149,10 @@ class OperationRepository(
             installmentsFlow,
             accountsFlow,
             recurringFlow,
-        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring ->
+            entryDao.observeAll(),
+        ) { operations, transactions, categories, creditCards, invoices, installments, accounts, recurring, entries ->
             val transactionsByOperationId = transactions.groupBy { it.operationId ?: 0L }
+            val entriesByOperationId = entries.groupBy { it.operationId }
             operations.mapNotNull { operation ->
                 val operationTransactions = transactionsByOperationId[operation.id].orEmpty()
                 operationMapper.toDomain(
@@ -149,6 +172,7 @@ class OperationRepository(
                     installments = installments,
                     accounts = accounts,
                     recurring = recurring,
+                    entries = entriesByOperationId[operation.id].orEmpty().toDomainEntries(accounts),
                 )
             }
         }
@@ -199,6 +223,7 @@ class OperationRepository(
                 installments = installments,
                 accounts = accounts,
                 recurring = recurring,
+                entries = entryDao.getByOperationId(operation.id).toDomainEntries(accounts),
             )
         }
     }
@@ -237,6 +262,7 @@ class OperationRepository(
             installments = installments,
             accounts = accounts,
             recurring = recurring,
+            entries = entryDao.getByOperationId(id).toDomainEntries(accounts),
         )
     }
 

@@ -101,7 +101,11 @@ private class FakeCategoryRepository(private val categories: List<Category>) : I
 }
 
 private class FakeEntryRepository(private val balances: Map<Long, Double>) : IEntryRepository {
+    override suspend fun getEntriesByOperation(operationId: Long): List<com.neoutils.finsight.domain.model.Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(operationId: Long): kotlinx.coroutines.flow.Flow<List<com.neoutils.finsight.domain.model.Entry>> = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
+    override suspend fun accountFlows(month: YearMonth, accountId: Long): com.neoutils.finsight.domain.repository.AccountFlows = throw NotImplementedError()
+    override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()

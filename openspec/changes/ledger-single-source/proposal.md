@@ -8,49 +8,55 @@ Somado a isso, o vocabulário está invertido: `Transaction` nomeia a **perna** 
 
 **Razão como única fonte de verdade**
 - Tornar o razão legível como objeto: `Entry` hidratada com sua `Account` e seu `invoiceId`, observável por operação — capacidade que hoje **não existe**.
-- Virar os quatro leitores que ainda derivam dinheiro do legado: `AccountUi`, `ViewCategoryViewModel`, budgets e a forma in-memory do `CalculateBalanceUseCase`.
+- Estender o razão com os agregados que as telas realmente consomem e que hoje só existem somando pernas em memória: receita/despesa/ajuste/pagamento por conta e período, e contagem de lançamentos por categoria.
+- Virar os **onze** leitores legados (design D11), varridos por `signedCents` **e** `sumOf { it.amount }` sobre a perna legada: `AccountUi`, `CalculateBalanceUseCase`, `ViewCategoryViewModel`, budgets, `DashboardComponentsBuilder`, `CalculateReportStatsUseCase`, `CalculateTransactionStatsUseCase`, `CalculateInvoiceOverviewsUseCase`, `InvoiceTransactionsViewModel`, `ReportViewerViewModel`, `TransactionsViewModel`. As contagens anteriores ("quatro", depois "seis") contavam só `signedCents` — e a rede de caracterização estava ~2x subdimensionada no risco #1 declarado da change.
+- Reescrever o relatório sobre o razão: `income`/`expense` (hoje filtrados por `Transaction.Type`) e `isInternalTransferFor` (hoje dependente de `Operation.Kind.TRANSFER` + `Transaction.Target.ACCOUNT`).
 - **BREAKING** Encerrar o double-write: parar de gravar o modelo legado e dropar a tabela `transactions`.
 
 **`Transaction` dona das pernas, `Operation` removido**
 - **BREAKING** Renomear o agregado `Operation` → `Transaction`, dono de `List<Entry>`. A `Transaction` legada (perna) é removida junto de `TransactionEntity`, `TransactionDao`, `ITransactionRepository`, `TransactionMapper` e `signedCents()`.
-- **BREAKING** Migração v9: dropar a tabela `transactions` legada e renomear `operations` → `transactions` (nessa ordem — o nome precisa ser desocupado antes de ser reocupado).
-- Remover `Operation.Kind` e `Transaction.Target`, ambos substituídos por derivação a partir dos tipos de conta.
+- **BREAKING** Migração **`v7 → v9` única**, substituindo a `MIGRATION_7_8` (que nunca foi para produção): constrói o razão já correto, sem semear `'Saldo Inicial'` nem `'Conta removida'`, reconstrói contas apagadas do v7 como **encerradas** com lançamento de baixa, dropa a tabela `transactions` legada, renomeia `operations` → `transactions` e cria `entries.transactionId` já com o nome final. Não herdar dois erros para depois corrigi-los.
+- Remover `Operation.Kind` (7 arquivos), derivado dos tipos de conta.
+- **Reter** `Transaction.Target` como vocabulário de entrada, movendo-o de campo do domínio para a fronteira de UI. Ele está numa rota `@Serializable` com `TransactionTargetNavType` e em 42 arquivos: é **escolha do usuário** (conta vs cartão), pelo mesmo argumento que retém o `Transaction.Type`. Só a sua materialização como campo da perna é redundante — `ASSET` vs `LIABILITY` já a determina.
 
 **Classificação derivada, total e correta**
-- Unificar as duas derivações parciais coexistentes (CAP-6) numa **função total** `TransactionLabel` sobre `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`.
-- Corrigir o buraco do `EQUITY` em `deriveOperationLabel`: hoje um ajuste de saldo (`{ASSET, EQUITY}`) cai no `else` e é rotulado **`TRANSFER`**. Bug latente, sem consumidor em produção — vira visível no minuto em que a UI ler o razão.
-- Preservar `Transaction.Type` `{EXPENSE, INCOME, ADJUSTMENT}` como **vocabulário de entrada na UI**, deixando de ser estado persistido (reenquadra o CAP-5: o enum não é dívida, a coluna é).
+- Tornar a derivação de rótulo da operação uma **função total** sobre `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`. **Sem fundir** com a derivação da direção da perna: as duas coexistem, com propósitos distintos, e a UI exibe ambas simultaneamente (design D15). *(A versão anterior dizia "unificar" — resíduo do D3 original, revogado pelo D15.)*
+- Corrigir **dois** buracos do `EQUITY` em `deriveOperationLabel`, não um: um ajuste de conta (`{ASSET, EQUITY}`) cai no `else` e é rotulado **`TRANSFER`**; um ajuste de **fatura** (`{LIABILITY, EQUITY}`) casa `LIABILITY` e é rotulado **`PAYMENT`**. O segundo prova que testar `EQUITY` "antes do `else`" é insuficiente — `EQUITY` precisa ser avaliado **antes de qualquer outro caso**. Ambos latentes hoje, por a função não ter consumidor em produção.
+- Preservar `Transaction.Type` como **vocabulário de entrada**, mas **não** como "deixa de ser persistido": `Recurring.kt:5` persiste `type: Transaction.Type` na tabela `recurring`, que esta change não remove. E os **nomes das constantes são contrato externo**: `core/analytics/.../event/Transactions.kt` emite `form.type.name.lowercase()` ao Firebase, com histórico já gravado — renomear constante quebra continuidade de dashboard. O enum fica, com os nomes intactos; só a coluna `TransactionEntity.type` morre com a tabela.
 
 **Modelos de UI planos, mappers no comando**
-- UI models passam a ser DTOs planos, sem grafo de domínio dentro (no máximo um id). `OperationUi` → `TransactionUi`; `AccountUi` perde `account: Account` e as cinco somas do seu construtor.
+- UI models passam a ser DTOs planos, sem grafo de domínio dentro (no máximo um id). `OperationUi` → `TransactionUi`; `AccountUi` perde `account: Account` e as **seis** somas do seu construtor.
 - Mappers passam a deter a resolução de perspectiva, a derivação do rótulo e a inversão de sinal por `AccountType`.
 - `OperationPerspective` (sealed `Account`/`Card`) colapsa numa data class `TransactionPerspective(accountId, invoiceId?)` — a bifurcação existia só porque a perna legada tinha duas formas.
 
 **Correções de fidelidade**
-- `AccountType.isMonetary` (`ASSET`/`LIABILITY`) — o predicado que o modelo antigo não conseguia expressar. `isEditable` passa a ser "exatamente uma perna monetária", tradução **bijetiva** de `transactions.size == 1` nas seis formas de operação.
+- `AccountType.isMonetary` (`ASSET`/`LIABILITY`) — o predicado que o modelo antigo não conseguia expressar. `isEditable` passa a ser "exatamente uma perna monetária", tradução **bijetiva** de `transactions.size == 1` nas **sete** formas de operação enumeradas no design. (A versão anterior dizia oito, contando "a órfã migrada" — que o D13 **abole**: com encerramento, a órfã deixa de existir como categoria.)
 - Remover `SystemAccount.INITIAL_BALANCE`: conta `EQUITY` semeada pela `MIGRATION_7_8` com **zero referências em produção** — o app não tem saldo inicial de verdade.
-- Renomear `initialBalance` → `openingBalance` (saldo de abertura do período, derivado) e unificar suas **três implementações independentes** (`AccountUi`, `TransactionsViewModel`, `CalculateReportStatsUseCase`) em `balanceUpTo`.
+- Renomear `initialBalance` → `openingBalance` (saldo de abertura do período, derivado) e unificar suas **três implementações independentes** (`AccountUi:25`, `CalculateBalanceUseCase:19-23`, `CalculateReportStatsUseCase:41`) em `balanceUpTo`.
 - Corrigir `AdjustInvoiceUseCase:74`, que atualiza o valor legado sem rota de razão — como `invoiceOwed` já lê o razão, editar um ajuste de fatura **já hoje** exibe número divergente.
-- Fechar o CAP-4: hoje o saldo por entries corta por data da **operação** e a forma in-memory por data da **transação**; coincidem por construção, sem guarda. Virar o `AccountUi` é onde isso é exercido pela primeira vez.
+- ~~Fechar o CAP-4 (divergência de data)~~ **revogado**: os 9 sites de criação passam a mesma data aos dois modelos; não há divergência de data. A divergência real é de **valor**, no update (design D17).
 
 **Não-escopo:** reembolso/estorno, FX/câmbio e investimentos seguem fora — o modelo já nasce preparado.
 
 ## Capabilities
 
 ### New Capabilities
+- `account-lifecycle`: contas com lançamentos são encerradas, nunca apagadas — o tipo real é preservado, o histórico permanece, e encerrar com saldo gera lançamento de baixa contra `EQUITY`, tornando explícito o dinheiro que hoje evapora do patrimônio sem registro.
 - `presentation-mapping`: modelos de UI como DTOs planos sem grafo de domínio, e mappers como o único lugar onde domínio vira apresentação (resolução de perspectiva, derivação de rótulo, inversão de sinal, formatação de valor).
 
 ### Modified Capabilities
-- `balanced-ledger`: o rótulo derivado passa a ser função **total** incluindo `ADJUSTMENT` (contrapartida `EQUITY`), fechando o buraco que hoje rotula ajuste como transferência; o agregado passa a se chamar `Transaction` e a ser o dono das entries; o modelo legado deixa de ser espelhado.
+- `balanced-ledger`: o rótulo derivado passa a ser função **total** incluindo `ADJUSTMENT`, com `EQUITY` avaliado antes de qualquer outro caso — fechando os **dois** buracos (ajuste de conta rotulado transferência, ajuste de fatura rotulado pagamento); o agregado passa a se chamar `Transaction` e a ser o dono das entries; o modelo legado deixa de ser espelhado; e a migração que remove o legado ganha requisito próprio, com preservação de dados e atomicidade de schema.
 - `chart-of-accounts`: as contas de sistema deixam de incluir "saldo inicial" — só a de reconciliação permanece, por ser a única com uso real.
-- `ledger-reporting`: o razão passa a ser a **única** fonte de leitura (fim da coexistência), incluindo o grafo de objetos e não só os agregados; o saldo de abertura do período é unificado num mecanismo único; a invariante de data do corte passa a ser garantida, não convencionada.
+- `ledger-reporting`: o razão passa a ser a **única** fonte de leitura (fim da coexistência), incluindo o grafo de objetos e não só os agregados; o saldo de abertura do período é unificado num mecanismo único; a invariante de data do corte passa a ser verificada por teste — a divergência que se supunha de data não existe (os 9 pontos de criação passam a mesma data); a real é de valor, no update (design D17).
 
 ## Impact
 
-- **`core/model`**: `Operation` → `Transaction` (dona de `List<Entry>`); `Transaction` legada, `Operation.Kind` e `Transaction.Target` removidos; `Entry` ganha `invoiceId`; `OperationLabel` → `TransactionLabel` (total); `AccountType.isMonetary`; `signedCents()` e `SystemAccount.INITIAL_BALANCE` removidos.
-- **`core/database`**: `TransactionEntity`/`TransactionDao` removidos; `OperationEntity` → `TransactionEntity`; **migração v9** (drop + rename, nessa ordem) com teste de migração; `EntryDao` ganha hidratação de entries.
+- **`core/model`**: `Operation` → `Transaction` (dona de `List<Entry>`); `Transaction` legada e `Operation.Kind` removidos; `Transaction.Type` e `Transaction.Target` **retidos** como vocabulário de entrada, deixando de ser campo da perna; `Entry` ganha `invoiceId` e `operationId` → `transactionId`; `OperationLabel` → `TransactionLabel` (total); `AccountType.isMonetary`; `signedCents()` e `SystemAccount.INITIAL_BALANCE` removidos.
+- **`core/database`**: `TransactionEntity`/`TransactionDao` legados removidos; `OperationEntity` → `TransactionEntity`, `entries.operationId` e `recurring_occurrences.operationId` → `transactionId` **no mesmo commit da migração** (o Room valida schema em runtime); **`MIGRATION_7_9` única** substitui a `MIGRATION_7_8`, e o `8.json` sai; `AccountEntity` ganha estado de encerramento; `EntryDao` ganha hidratação de entries e agregados por conta/período.
 - **`core/ui`**: `OperationUi` → `TransactionUi` plano; `AccountUi` plano; `OperationPerspective` → `TransactionPerspective` (data class); `core/ui/model` deixa de importar domínio, tornando a regra de camada "Domain ← UI" verificável em vez de convencional.
-- **Features tocadas**: `transactions` (repositório, writer, modais, lista), `accounts`, `creditcards` (faturas/parcelas), `categories`, `budgets`, `dashboard`, `report`, `recurring`.
-- **Testes**: testes de **caracterização** capturando os números atuais **antes** de virar cada leitor legado (a paridade dos leitores legados hoje é verificada em device, não por teste — virar sem rede é como comportamento muda em silêncio); teste de migração v9; teste da função total de rótulo cobrindo `ADJUSTMENT`.
+- **Features tocadas**: `transactions` (repositório, writer, modais, lista), `accounts`, `creditcards` (faturas/parcelas), `categories`, `budgets`, `dashboard`, `report`, `recurring`, **`:core:analytics`** (**6** eventos recebem modelo de domínio por construtor, incl. `DeleteTransaction(transaction: Transaction)`).
+- **Tamanho real**: a perna legada está em **96 arquivos / 493 referências**; **87 arquivos de produção tocam o modelo legado**, e a varredura mecânica da §9 achou **44 sem task** (51%) — incluindo o `LedgerEntryWriter`, o `BuildTransactionUseCase` e o mapper de entrada que o D4 desenha como o coração da change; `Transaction.Type` em 278 refs / 68 arquivos; `Target` em 107 / 42; `Operation.Kind` em 7 arquivos. A task "remover o modelo legado" não é um checkbox.
+- **Decisões de produto pendentes**: a investigação mostrou que **não existe um comportamento único a preservar** — `Invoice.isPayable` é usada no domínio (`PayInvoiceUseCase:42`, 4 callers) e **nunca** na UI, `isClosable` diverge entre telas, `ViewAdjustmentModal` apaga sem gate, e o mesmo `Transaction.Type` tem cor e rótulo diferentes por tela. Derivar a regra do razão produz **uma** regra, que mudará pelo menos uma tela. Nove divergências estão listadas em `tasks.md` §4b (4b.6 é task de unificação, não divergência) e precisam de decisão antes do apply.
+- **Testes**: testes de **caracterização** capturando os números atuais **antes** de virar cada leitor legado (a paridade dos leitores legados hoje é verificada em device, não por teste — virar sem rede é como comportamento muda em silêncio); teste de migração v9; teste da função total de rótulo cobrindo `ADJUSTMENT` nas **duas** formas (`{ASSET, EQUITY}` e `{LIABILITY, EQUITY}`) — um teste que só cubra a primeira passa verde com o bug de pé.
 - **Risco principal**: mudança silenciosa de número em telas que hoje somam pernas em memória. Mitigado pelos testes de caracterização e pela bijeção demonstrável do `isEditable`.
 - **Dependência**: assume as specs `balanced-ledger`, `chart-of-accounts` e `ledger-reporting` já sincronizadas ao main (feito). A change `balanced-ledger` permanece ativa com o gate de testes (task 6.1) em aberto.

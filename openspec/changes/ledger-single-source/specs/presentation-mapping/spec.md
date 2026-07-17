@@ -16,7 +16,7 @@ Um modelo de UI SHALL conter apenas valores já resolvidos para exibição (text
 - **THEN** a UI a identifica pelo id, e o domínio correspondente é resolvido fora do modelo de UI
 
 ### Requirement: Mappers como única fronteira domínio-apresentação
-A tradução de domínio para apresentação SHALL ocorrer exclusivamente em mappers. Derivação de rótulo, resolução de perspectiva, inversão de sinal por `AccountType` e escolha do valor a exibir MUST NOT ocorrer em modelo de UI nem em componente de UI. O módulo de modelos de UI MUST NOT depender de modelos de domínio, tornando a regra de camada "Domain ← UI" verificável por dependência.
+A tradução de domínio para apresentação SHALL ocorrer exclusivamente em mappers. Derivação de rótulo, resolução de perspectiva, inversão de sinal por `AccountType` e escolha do valor a exibir MUST NOT ocorrer em modelo de UI nem em componente de UI. Um modelo de UI MUST NOT declarar campo de tipo de domínio. Esta regra SHALL ser verificável por inspeção dos próprios modelos de UI, e MUST NOT ser expressa como ausência de dependência de módulo: `core/ui` depende de `core/model` **por desenho** — os seus componentes existem para renderizar modelos de domínio — e `core/ui/model` é um pacote, não um módulo Gradle. Tornar a regra verificável por dependência exigiria extrair um módulo novo, o que está fora do escopo desta change.
 
 #### Scenario: Inversão de sinal para exibição
 - **WHEN** um valor do razão em convenção débito-positivo é exibido
@@ -26,9 +26,9 @@ A tradução de domínio para apresentação SHALL ocorrer exclusivamente em map
 - **WHEN** o rótulo de uma transação é exibido
 - **THEN** o mapper o deriva dos tipos de conta das entries, e a UI recebe o rótulo pronto
 
-#### Scenario: Modelos de UI não alcançam o domínio
-- **WHEN** o módulo de modelos de UI é compilado
-- **THEN** ele não declara dependência sobre modelos de domínio
+#### Scenario: Modelo de UI não carrega domínio
+- **WHEN** um modelo de UI é inspecionado
+- **THEN** nenhum de seus campos é de tipo de domínio — no máximo o identificador
 
 ### Requirement: Perspectiva como argumento de mapeamento
 Quando uma transação puder ser apresentada sob mais de um ponto de vista (a conta ou a fatura em que aparece), a perspectiva SHALL ser um argumento do mapeamento, e MUST NOT ser um campo do modelo de UI resolvido preguiçosamente na leitura. A resolução da perspectiva SHALL ocorrer no momento do mapeamento, onde a ausência de correspondência é tratável.
@@ -39,4 +39,8 @@ Quando uma transação puder ser apresentada sob mais de um ponto de vista (a co
 
 #### Scenario: Perspectiva sem correspondência
 - **WHEN** um mapeamento é solicitado com uma perspectiva que não corresponde a nenhuma perna da transação
-- **THEN** a falha é tratada no mapeamento, e MUST NOT ocorrer na leitura de uma propriedade do modelo de UI
+- **THEN** o mapper não produz modelo de UI para aquela transação e o chamador a omite da lista, sem lançar — e a ausência MUST NOT se manifestar como falha na leitura de uma propriedade
+
+#### Scenario: Conta do cartão ainda não existe
+- **WHEN** uma perspectiva de cartão é construída para um cartão que ainda não tem conta no razão (criada sob demanda)
+- **THEN** a resolução produz vazio, e MUST NOT lançar

@@ -26,9 +26,11 @@ As entries SHALL ser a **única** representação das pernas de uma transação:
 - **THEN** apenas suas entries são gravadas, e nenhum modelo de perna legado é espelhado
 
 ### Requirement: Tipo de operação derivado dos tipos de conta
-O sistema SHALL derivar o rótulo de uma transação a partir dos tipos das contas envolvidas nas suas entries, e MUST NOT persistir esse rótulo como estado independente. A derivação SHALL ser uma função **total** sobre o conjunto `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`: uma contrapartida `EQUITY` SHALL produzir `ADJUSTMENT`; `ASSET`→`EXPENSE` SHALL ser despesa; `INCOME`→`ASSET` receita; `ASSET`→`LIABILITY` pagamento; `ASSET`→`ASSET` transferência. A contrapartida `EQUITY` SHALL ser avaliada antes do caso de transferência, de modo que um ajuste nunca seja rotulado como transferência.
+O sistema SHALL derivar o rótulo de uma transação a partir dos tipos das contas envolvidas nas suas entries, e MUST NOT persistir esse rótulo como estado independente. A derivação SHALL ser uma função **total** sobre o conjunto `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`: uma contrapartida `EQUITY` SHALL produzir `ADJUSTMENT`; `ASSET`→`EXPENSE` SHALL ser despesa; `INCOME`→`ASSET` receita; `ASSET`→`LIABILITY` pagamento; `ASSET`→`ASSET` transferência.
 
-SHALL existir uma única derivação de rótulo no sistema. MUST NOT coexistir uma segunda classificação derivada, parcial ou paralela, para o mesmo fim.
+A presença de uma contrapartida `EQUITY` SHALL ser avaliada **antes de qualquer outro caso**, e não apenas antes do caso de transferência: um ajuste pode ocorrer tanto sobre uma conta (`{ASSET, EQUITY}`) quanto sobre uma fatura de cartão (`{LIABILITY, EQUITY}`), e neste segundo caso qualquer avaliação que teste `LIABILITY` primeiro produziria `PAYMENT`. Um ajuste MUST NOT ser rotulado como transferência nem como pagamento, independentemente de a conta ajustada ser `ASSET` ou `LIABILITY`.
+
+SHALL existir uma única derivação **de rótulo de operação** no sistema. Isso MUST NOT ser confundido com a **direção da perna** sob a perspectiva exibida (despesa/receita/ajuste), que é uma derivação distinta, com propósito distinto, e que SHALL coexistir: a interface exibe as duas simultaneamente — um pagamento de fatura mostra a direção "despesa" da perna da conta **e** o rótulo "pagamento" da operação. Cada uma SHALL ter uma única implementação; nenhuma SHALL ser reimplementada em linha pelos consumidores.
 
 #### Scenario: Rótulo derivado de uma transferência
 - **WHEN** uma transação tem duas entries, ambas em contas `ASSET`
@@ -38,9 +40,13 @@ SHALL existir uma única derivação de rótulo no sistema. MUST NOT coexistir u
 - **WHEN** uma transação move valor de uma conta `ASSET` para uma conta `LIABILITY`
 - **THEN** o sistema a apresenta como pagamento
 
-#### Scenario: Rótulo derivado de um ajuste de saldo
+#### Scenario: Rótulo derivado de um ajuste de saldo de conta
 - **WHEN** uma transação tem uma entry em conta `ASSET` e a contrapartida em conta `EQUITY` de reconciliação
 - **THEN** o sistema a apresenta como ajuste, e MUST NOT apresentá-la como transferência
+
+#### Scenario: Rótulo derivado de um ajuste de saldo de fatura
+- **WHEN** uma transação tem uma entry na conta `LIABILITY` de um cartão e a contrapartida em conta `EQUITY` de reconciliação
+- **THEN** o sistema a apresenta como ajuste, e MUST NOT apresentá-la como pagamento
 
 #### Scenario: Derivação é total
 - **WHEN** qualquer transação válida do razão tem seu rótulo derivado
@@ -48,20 +54,30 @@ SHALL existir uma única derivação de rótulo no sistema. MUST NOT coexistir u
 
 ## ADDED Requirements
 
-### Requirement: Editabilidade derivada das pernas monetárias
-A editabilidade de uma transação SHALL ser derivada da contagem das suas entries em contas **monetárias** (`ASSET`/`LIABILITY`): uma transação com exatamente uma perna monetária SHALL ser editável; com mais de uma, MUST NOT ser editável, devendo ser removida e refeita. A editabilidade MUST NOT ser persistida nem derivada da contagem total de entries, já que toda transação balanceada tem ao menos duas.
+### Requirement: Editabilidade derivada, preservando os gates existentes
+A editabilidade de uma transação SHALL ser derivada, nunca persistida, e SHALL preservar cada um dos gates hoje aplicados: uma transação MUST NOT ser editável se pertencer a uma fatura cujo status seja `CLOSED` ou `PAID`; MUST NOT ser editável se o seu rótulo for `ADJUSTMENT`; MUST NOT ser editável se possuir um número de entries em conta **monetária** (`ASSET`/`LIABILITY`) diferente de exatamente uma; e MUST NOT ser editável se pertencer a um parcelamento. Uma transação que passe em todos os gates SHALL ser editável.
+
+A contagem MUST NOT usar o total de entries, já que toda transação balanceada tem ao menos duas. O gate que hoje barra pernas cujo cartão foi apagado SHALL permanecer enquanto o modelo legado existir, e deixar de ser necessário apenas quando a referência à fachada do cartão for removida do modelo de perna — ele testa a existência da **fachada**, não da conta do razão.
 
 #### Scenario: Despesa é editável
-- **WHEN** uma despesa em conta (`ASSET` + `EXPENSE`) é exibida
-- **THEN** ela é editável, por ter exatamente uma perna monetária
+- **WHEN** uma despesa em conta (`ASSET` + `EXPENSE`) sem parcelamento é exibida
+- **THEN** ela é editável
 
 #### Scenario: Compra no cartão é editável
-- **WHEN** uma compra no cartão (`LIABILITY` + `EXPENSE`) é exibida
-- **THEN** ela é editável, por ter exatamente uma perna monetária
+- **WHEN** uma compra no cartão (`LIABILITY` + `EXPENSE`) sem parcelamento é exibida
+- **THEN** ela é editável
 
-#### Scenario: Ajuste é editável
-- **WHEN** um ajuste de saldo (`ASSET` + `EQUITY`) é exibido
-- **THEN** ele é editável, por ter exatamente uma perna monetária
+#### Scenario: Ajuste de conta não é editável
+- **WHEN** um ajuste de saldo de conta (`ASSET` + `EQUITY`) é exibido
+- **THEN** ele não é editável, por seu rótulo ser `ADJUSTMENT` — como hoje
+
+#### Scenario: Ajuste de fatura não é editável
+- **WHEN** um ajuste de saldo de fatura (`LIABILITY` + `EQUITY`) é exibido
+- **THEN** ele não é editável, por seu rótulo ser `ADJUSTMENT` — como hoje
+
+#### Scenario: Lançamento de baixa não é editável
+- **WHEN** o lançamento de baixa gerado ao encerrar uma conta é exibido
+- **THEN** ele não é editável, pelo mesmo gate de rótulo, sem regra nova
 
 #### Scenario: Transferência não é editável
 - **WHEN** uma transferência (`ASSET` + `ASSET`) é exibida
@@ -70,6 +86,21 @@ A editabilidade de uma transação SHALL ser derivada da contagem das suas entri
 #### Scenario: Pagamento de fatura não é editável
 - **WHEN** um pagamento de fatura (`ASSET` + `LIABILITY`) é exibido
 - **THEN** ele não é editável, por ter duas pernas monetárias
+
+#### Scenario: Parcelamento não é editável
+- **WHEN** uma compra pertencente a um parcelamento é exibida
+- **THEN** ela não é editável, por pertencer a um parcelamento
+
+### Requirement: Remoção de transação em fatura fechada é impedida
+A remoção de uma transação SHALL ser impedida quando ela pertencer a uma fatura cujo status seja `CLOSED` ou `PAID`, e SHALL ser permitida caso contrário — **preservando a regra do `ViewOperationModal:353-370`**. ⚠️ Esta redação **presume a resolução da divergência `tasks.md` 4b.3**: hoje o `ViewAdjustmentModal:228-256` apaga **sem gate algum**, e derivar uma regra única do razão muda um dos dois modais. Se 4b.3 decidir a favor do `ViewAdjustmentModal`, este requisito inverte. A spec não deve fixar a decisão antes dela ser tomada. Este gate SHALL usar a única definição de status editável de fatura existente, e MUST NOT ser reimplementado em linha pelos consumidores.
+
+#### Scenario: Transação em fatura aberta pode ser removida
+- **WHEN** uma transação de uma fatura `OPEN`, `FUTURE` ou `RETROACTIVE` é exibida
+- **THEN** a remoção é oferecida
+
+#### Scenario: Transação em fatura fechada não pode ser removida nem editada
+- **WHEN** uma transação de uma fatura `CLOSED` ou `PAID` é exibida
+- **THEN** nem remoção nem edição são oferecidas, e o motivo é comunicado ao usuário
 
 ### Requirement: Classificação de entrada distinta da de exibição
 O vocabulário com que o usuário **registra** um lançamento (despesa, receita, ajuste) SHALL pertencer à camada de apresentação e MUST NOT ser persistido como estado da transação. O sistema SHALL traduzir esse vocabulário de entrada em entries balanceadas no momento da escrita, e SHALL derivar o vocabulário de exibição das entries no momento da leitura. O vocabulário de entrada MUST NOT ser unificado com o de exibição, por serem conjuntos distintos.
@@ -81,3 +112,20 @@ O vocabulário com que o usuário **registra** um lançamento (despesa, receita,
 #### Scenario: Exibição vem das entries
 - **WHEN** a mesma transação é exibida
 - **THEN** o rótulo é derivado das entries, e não lido de um campo persistido
+
+### Requirement: Migração para o razão como única fonte preserva os dados
+A migração que remove o modelo legado SHALL preservar, para todo dispositivo existente, o saldo de cada conta, o saldo devido de cada fatura, o patrimônio líquido e o total de cada categoria — os valores exibidos antes e depois da migração SHALL ser idênticos. A migração MUST NOT abortar em dados legados sujos (lançamentos cujo cartão ou conta foi apagado), MUST NOT deixar `Entry` órfã de conta ou de transação, e MUST NOT remover conta do plano de contas que ainda seja referenciada por alguma `Entry`.
+
+Nenhum estado intermediário observável SHALL existir entre a remoção do modelo legado e a renomeação do agregado: a estrutura de dados e as declarações que a descrevem SHALL mudar na mesma versão de schema, de modo que o banco nunca seja aberto contra uma descrição divergente.
+
+#### Scenario: Saldos preservados
+- **WHEN** um dispositivo com dados representativos é migrado
+- **THEN** o saldo de cada conta, o devido de cada fatura, o patrimônio e os totais por categoria são idênticos aos exibidos antes da migração
+
+#### Scenario: Dados legados sujos não abortam a migração
+- **WHEN** existem lançamentos legados cuja conta ou cartão foi apagado
+- **THEN** a migração conclui, e as entries resultantes permanecem balanceadas
+
+#### Scenario: Banco nunca abre contra descrição divergente
+- **WHEN** a migração renomeia a tabela do agregado
+- **THEN** as declarações que a descrevem mudam na mesma versão, e nenhuma versão intermediária do app abre o banco contra um nome divergente

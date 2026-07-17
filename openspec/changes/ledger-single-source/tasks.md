@@ -21,21 +21,21 @@
 
 ## 1. Correções e fundações independentes
 
-- [ ] 1.1 Corrigir **os dois** `Adjust*UseCase`, que estão quebrados de formas diferentes (design D17) — **não** espelhar um no outro, como a 1ª versão deste plano mandava: `AdjustInvoiceUseCase:74` atualiza o legado sem rota de razão; `AdjustBalanceUseCase:76-85` chama só `updateOperation`, que **nunca toca a tabela `transactions`** (`OperationRepository:292-307`), deixando o legado permanentemente defasado (o use case recalcula a diferença a partir do razão, então nunca converge). Teste que reproduz **as duas** divergências antes do fix.
-- [ ] 1.2 Adicionar `AccountType.isMonetary` (`ASSET`/`LIABILITY`) ao lado de `isDebitNatured`, com KDoc explicando a distinção monetária/contrapartida (design D2). Teste cobrindo os cinco tipos.
-- [ ] 1.3 Tornar `deriveOperationLabel` uma função **total** sobre `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`, com `EQUITY` avaliado **antes de qualquer outro caso** — ordem `EQUITY → EXPENSE → INCOME → LIABILITY → else` (design D3). ⚠️ **NÃO fundir com `deriveTransactionType`**: as duas **coexistem** com propósitos distintos (design D15, task 5.8, `balanced-ledger` spec) — `deriveOperationLabel` é o rótulo da **operação** (cor/título/ícone/gate); `deriveTransactionType` é a direção da **perna da perspectiva** (texto de tipo/filtro). A UI exibe as duas ao mesmo tempo (`ViewOperationModal:169-189`). *(As versões anteriores desta task e da proposta mandavam "fundir"/"unificar" — resíduo do D3 original, que o D15 revogou e a rodada 5 esqueceu de propagar. Quem executasse destruiria `deriveTransactionType`, que a spec obriga a manter.)*
-- [ ] 1.4 Teste que fixa os **dois** buracos do `EQUITY`, um por forma de ajuste: `{ASSET, EQUITY}` deriva `ADJUSTMENT` e não `TRANSFER`; `{LIABILITY, EQUITY}` deriva `ADJUSTMENT` e não `PAYMENT`. Ambos devem falhar contra o `deriveOperationLabel` atual antes de 1.3. **Um teste que só cubra o primeiro caso passa verde com o bug de pé** — foi assim que a 1ª versão deste plano errou.
+- [x] 1.1 Corrigir **os dois** `Adjust*UseCase`, que estão quebrados de formas diferentes (design D17) — **não** espelhar um no outro, como a 1ª versão deste plano mandava: `AdjustInvoiceUseCase:74` atualiza o legado sem rota de razão; `AdjustBalanceUseCase:76-85` chama só `updateOperation`, que **nunca toca a tabela `transactions`** (`OperationRepository:292-307`), deixando o legado permanentemente defasado (o use case recalcula a diferença a partir do razão, então nunca converge). Teste que reproduz **as duas** divergências antes do fix.
+- [x] 1.2 Adicionar `AccountType.isMonetary` (`ASSET`/`LIABILITY`) ao lado de `isDebitNatured`, com KDoc explicando a distinção monetária/contrapartida (design D2). Teste cobrindo os cinco tipos.
+- [x] 1.3 Tornar `deriveOperationLabel` uma função **total** sobre `{EXPENSE, INCOME, ADJUSTMENT, TRANSFER, PAYMENT}`, com `EQUITY` avaliado **antes de qualquer outro caso** — ordem `EQUITY → EXPENSE → INCOME → LIABILITY → else` (design D3). ⚠️ **NÃO fundir com `deriveTransactionType`**: as duas **coexistem** com propósitos distintos (design D15, task 5.8, `balanced-ledger` spec) — `deriveOperationLabel` é o rótulo da **operação** (cor/título/ícone/gate); `deriveTransactionType` é a direção da **perna da perspectiva** (texto de tipo/filtro). A UI exibe as duas ao mesmo tempo (`ViewOperationModal:169-189`). *(As versões anteriores desta task e da proposta mandavam "fundir"/"unificar" — resíduo do D3 original, que o D15 revogou e a rodada 5 esqueceu de propagar. Quem executasse destruiria `deriveTransactionType`, que a spec obriga a manter.)*
+- [x] 1.4 Teste que fixa os **dois** buracos do `EQUITY`, um por forma de ajuste: `{ASSET, EQUITY}` deriva `ADJUSTMENT` e não `TRANSFER`; `{LIABILITY, EQUITY}` deriva `ADJUSTMENT` e não `PAYMENT`. Ambos devem falhar contra o `deriveOperationLabel` atual antes de 1.3. **Um teste que só cubra o primeiro caso passa verde com o bug de pé** — foi assim que a 1ª versão deste plano errou.
 
 ## 2. Razão legível como objeto, e com os agregados que as telas consomem
 
-- [ ] 2.1 Expor `invoiceId` no modelo de domínio `Entry` (hoje só em `EntryEntity`), tornando-a uma perna completa.
-- [ ] 2.2 Adicionar ao `EntryDao` a leitura de entries por operação, hidratadas com sua `Account`.
-- [ ] 2.3 Estender `IEntryRepository` com leitura/observação de `Entry` (hoje só expõe agregados `Double`), e implementar em `EntryRepository`.
-- [ ] 2.4 Adicionar agregados **por conta e período** ao `EntryDao`/`IEntryRepository`: receita, despesa, ajuste e pagamento de fatura (design D12). Sem eles, virar o `AccountUi` só teria duas saídas — somar em memória, violando o requisito "Sem cálculo de saldo em memória" desta própria change, ou manter o legado.
-- [ ] 2.5 Adicionar agregado de **contagem de lançamentos por categoria e mês** (`ViewCategoryViewModel:59` expõe `transactionCount`, que agregado nenhum entrega hoje).
-- [ ] 2.6 Atualizar os fakes de `IEntryRepository` nos testes existentes para a nova superfície.
-- [ ] 2.7 Fazer o agregado carregar suas entries hidratadas no `OperationMapper`, disponíveis a todo consumidor.
-- [ ] 2.8 Teste de SQL real cobrindo a hidratação e os agregados novos, no padrão de `EntryCategoryQueryTest`.
+- [x] 2.1 Expor `invoiceId` no modelo de domínio `Entry` (hoje só em `EntryEntity`), tornando-a uma perna completa.
+- [x] 2.2 Adicionar ao `EntryDao` a leitura de entries por operação, hidratadas com sua `Account`.
+- [x] 2.3 Estender `IEntryRepository` com leitura/observação de `Entry` (hoje só expõe agregados `Double`), e implementar em `EntryRepository`.
+- [x] 2.4 Adicionar agregados **por conta e período** ao `EntryDao`/`IEntryRepository`: receita, despesa, ajuste e pagamento de fatura (design D12). Sem eles, virar o `AccountUi` só teria duas saídas — somar em memória, violando o requisito "Sem cálculo de saldo em memória" desta própria change, ou manter o legado.
+- [x] 2.5 Adicionar agregado de **contagem de lançamentos por categoria e mês** (`ViewCategoryViewModel:59` expõe `transactionCount`, que agregado nenhum entrega hoje).
+- [x] 2.6 Atualizar os fakes de `IEntryRepository` nos testes existentes para a nova superfície.
+- [x] 2.7 Fazer o agregado carregar suas entries hidratadas no `OperationMapper`, disponíveis a todo consumidor.
+- [x] 2.8 Teste de SQL real cobrindo a hidratação e os agregados novos, no padrão de `EntryCategoryQueryTest`.
 
 ## 3. Rede de segurança antes de virar os leitores
 

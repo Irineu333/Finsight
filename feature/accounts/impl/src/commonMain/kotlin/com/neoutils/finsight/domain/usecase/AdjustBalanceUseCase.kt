@@ -73,15 +73,17 @@ class AdjustBalanceUseCase(
                 return@catch
             }
 
-            val operationId = existingAdjustment.operationId
-            if (operationId != null) {
-                // Route through the operation so the ledger entries are rebuilt too.
+            // Both models must be updated: the legacy leg AND the ledger entries.
+            // updateOperation rewrites only the ledger (rewriteEntries) and never the
+            // legacy `transactions` row, so calling it alone leaves the legacy leg
+            // permanently stale (D17).
+            val updated = existingAdjustment.copy(amount = newAmount)
+            repository.update(updated)
+            existingAdjustment.operationId?.let { operationId ->
                 operationRepository.updateOperation(
                     id = operationId,
-                    transaction = existingAdjustment.copy(amount = newAmount),
+                    transaction = updated
                 )
-            } else {
-                repository.update(existingAdjustment.copy(amount = newAmount))
             }
         }.bind()
     }

@@ -43,6 +43,24 @@ class LedgerTest {
         assertEquals(OperationLabel.PAYMENT, entries.deriveOperationLabel())
     }
 
+    // --- EQUITY is evaluated first: both adjustment forms label ADJUSTMENT (task 1.4) ---
+
+    @Test
+    fun `balance adjustment of an account derives an adjustment, not a transfer`() {
+        // {ASSET, EQUITY}: no EXPENSE/INCOME/LIABILITY case matches, so without the
+        // EQUITY-first branch it would fall through to TRANSFER.
+        val entries = listOf(entry(AccountType.ASSET, 3000), entry(AccountType.EQUITY, -3000))
+        assertEquals(OperationLabel.ADJUSTMENT, entries.deriveOperationLabel())
+    }
+
+    @Test
+    fun `balance adjustment of an invoice derives an adjustment, not a payment`() {
+        // {LIABILITY, EQUITY}: LIABILITY would be caught first as PAYMENT unless
+        // EQUITY is tested before every other case.
+        val entries = listOf(entry(AccountType.LIABILITY, -3000), entry(AccountType.EQUITY, 3000))
+        assertEquals(OperationLabel.ADJUSTMENT, entries.deriveOperationLabel())
+    }
+
     // --- isBalanced (Σ = 0 per currency) ---
 
     @Test
@@ -135,5 +153,16 @@ class LedgerTest {
     fun `account nature partitions debit and credit`() {
         assertTrue(AccountType.ASSET.isDebitNatured && AccountType.EXPENSE.isDebitNatured)
         assertTrue(AccountType.LIABILITY.isCreditNatured && AccountType.INCOME.isCreditNatured && AccountType.EQUITY.isCreditNatured)
+    }
+
+    // --- isMonetary: the money-bearing types vs the synthesized counter-legs (task 1.2) ---
+
+    @Test
+    fun `monetary types are the ones that hold money`() {
+        assertTrue(AccountType.ASSET.isMonetary)
+        assertTrue(AccountType.LIABILITY.isMonetary)
+        assertFalse(AccountType.INCOME.isMonetary)
+        assertFalse(AccountType.EXPENSE.isMonetary)
+        assertFalse(AccountType.EQUITY.isMonetary)
     }
 }

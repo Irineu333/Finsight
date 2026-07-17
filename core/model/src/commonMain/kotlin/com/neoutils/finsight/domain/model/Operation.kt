@@ -13,6 +13,9 @@ data class Operation(
     val targetInvoice: Invoice? = null,
     val installment: OperationInstallment? = null,
     val transactions: List<Transaction>,
+    // The balanced double-entry legs of this operation, each hydrated with its
+    // account. Empty only for operations built outside the ledger read path.
+    val entries: List<Entry> = emptyList(),
 ) {
     val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
 

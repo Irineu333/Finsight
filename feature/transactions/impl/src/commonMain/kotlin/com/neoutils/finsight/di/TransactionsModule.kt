@@ -40,6 +40,7 @@ val transactionsModule = module {
             database = get(),
             operationDao = get(),
             transactionDao = get(),
+            entryDao = get(),
             recurringDao = get(),
             categoryRepository = get(),
             creditCardRepository = get(),

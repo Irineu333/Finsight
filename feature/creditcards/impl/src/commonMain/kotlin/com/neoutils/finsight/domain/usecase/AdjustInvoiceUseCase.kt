@@ -71,9 +71,17 @@ class AdjustInvoiceUseCase(
                 return@catch
             }
 
-            repository.update(
-                existingAdjustment.copy(amount = newAmount)
-            )
+            // Both models must be updated: the legacy leg AND the ledger entries.
+            // Updating only the legacy row (as before) left the ledger — which
+            // `invoiceOwed` already reads — permanently stale (D17).
+            val updated = existingAdjustment.copy(amount = newAmount)
+            repository.update(updated)
+            existingAdjustment.operationId?.let { operationId ->
+                operationRepository.updateOperation(
+                    id = operationId,
+                    transaction = updated
+                )
+            }
         }.bind()
     }
 }

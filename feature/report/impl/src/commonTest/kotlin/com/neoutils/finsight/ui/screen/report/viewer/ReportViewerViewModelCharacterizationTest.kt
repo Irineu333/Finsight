@@ -83,16 +83,16 @@ class ReportViewerViewModelCharacterizationTest {
             ),
             operationRepository = fakes.operationRepository(operations),
             accountRepository = fakes.accountRepository(listOf(account)),
-            creditCardRepository = fakes.creditCardRepository,
-            invoiceRepository = fakes.invoiceRepository,
+            creditCardRepository = fakes.creditCardRepository(),
+            invoiceRepository = fakes.invoiceRepository(),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(),
             calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
-                entryRepository = fakes.entryRepository,
+                entryRepository = fakes.entryRepository(),
                 categoryRepository = fakes.categoryRepository,
                 accountRepository = fakes.accountRepository(listOf(account)),
-                creditCardRepository = fakes.creditCardRepository,
+                creditCardRepository = fakes.creditCardRepository(),
             ),
-            entryRepository = fakes.entryRepository,
+            entryRepository = fakes.entryRepository(),
             renderer = fakes.renderer,
             analytics = fakes.analytics,
         )
@@ -105,6 +105,63 @@ class ReportViewerViewModelCharacterizationTest {
             assertEquals(30.0, stats.expense)
             assertEquals(70.0, stats.balance)
             assertEquals(-20.0, stats.initialBalance)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `credit card perspective sums the card legs and reads owed from the ledger`() = runTest(dispatcher) {
+        val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
+        val invoice = Invoice(
+            id = 1, creditCard = card,
+            openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),
+            status = Invoice.Status.OPEN,
+        )
+        fun cardLeg(type: Transaction.Type, amount: Double) = Transaction(
+            type = type, amount = amount, title = null, date = LocalDate(2026, 3, 10), creditCard = card, invoice = invoice,
+        )
+        val operations = listOf(
+            op(1, cardLeg(Transaction.Type.EXPENSE, 60.0)),
+            op(2, cardLeg(Transaction.Type.EXPENSE, 40.0)),
+            op(3, cardLeg(Transaction.Type.ADJUSTMENT, 10.0)),
+            op(4, cardLeg(Transaction.Type.INCOME, 30.0)), // advance payment
+        )
+        val fakes = Fakes()
+        val vm = ReportViewerViewModel(
+            params = ReportViewerParams(
+                perspectiveType = PerspectiveTab.CREDIT_CARD,
+                creditCardId = 1,
+                invoiceIds = listOf(1),
+                startDate = LocalDate(2026, 3, 1),
+                endDate = LocalDate(2026, 3, 31),
+                includeSpendingByCategory = false,
+                includeIncomeByCategory = false,
+                includeTransactionList = false,
+            ),
+            operationRepository = fakes.operationRepository(operations),
+            accountRepository = fakes.accountRepository(emptyList()),
+            creditCardRepository = fakes.creditCardRepository(listOf(card)),
+            invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
+            calculateReportStatsUseCase = CalculateReportStatsUseCase(),
+            calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
+                entryRepository = fakes.entryRepository(),
+                categoryRepository = fakes.categoryRepository,
+                accountRepository = fakes.accountRepository(emptyList()),
+                creditCardRepository = fakes.creditCardRepository(listOf(card)),
+            ),
+            entryRepository = fakes.entryRepository(owed = mapOf(1L to 70.0)),
+            renderer = fakes.renderer,
+            analytics = fakes.analytics,
+        )
+
+        vm.uiState.test {
+            var state = awaitItem()
+            while (state !is ReportViewerUiState.Content) state = awaitItem()
+            val stats = state.stats as ReportViewerUiState.Stats.Invoice
+            assertEquals(100.0, stats.expense)
+            assertEquals(30.0, stats.advancePayment)
+            assertEquals(10.0, stats.adjustment)
+            assertEquals(70.0, stats.total, "owed comes from the ledger's invoiceOwed")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -136,18 +193,18 @@ private class Fakes {
         override suspend fun delete(account: Account) = throw NotImplementedError()
     }
 
-    val creditCardRepository = object : ICreditCardRepository {
-        override fun observeAllCreditCards(): Flow<List<CreditCard>> = MutableStateFlow(emptyList())
-        override suspend fun getAllCreditCards(): List<CreditCard> = emptyList()
-        override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = null
+    fun creditCardRepository(cards: List<CreditCard> = emptyList()) = object : ICreditCardRepository {
+        override fun observeAllCreditCards(): Flow<List<CreditCard>> = MutableStateFlow(cards)
+        override suspend fun getAllCreditCards(): List<CreditCard> = cards
+        override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = cards.firstOrNull { it.id == creditCardId }
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     }
 
-    val invoiceRepository = object : IInvoiceRepository {
-        override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
+    fun invoiceRepository(invoices: List<Invoice> = emptyList()) = object : IInvoiceRepository {
+        override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = MutableStateFlow(invoices)
         override fun observeAllInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
@@ -155,10 +212,10 @@ private class Fakes {
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
         override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
-        override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
         override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
         override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
-        override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
+        override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
         override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
         override suspend fun update(invoice: Invoice) = throw NotImplementedError()
         override suspend fun deleteById(id: Long) = throw NotImplementedError()
@@ -175,14 +232,14 @@ private class Fakes {
         override suspend fun delete(category: Category) = throw NotImplementedError()
     }
 
-    val entryRepository = object : IEntryRepository {
+    fun entryRepository(owed: Map<Long, Double> = emptyMap()) = object : IEntryRepository {
         override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
-        override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
+        override suspend fun invoiceOwed(invoiceId: Long): Double = owed[invoiceId] ?: 0.0
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
         override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()

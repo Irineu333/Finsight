@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IBudgetRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.repository.balancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
@@ -15,12 +17,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
+import kotlin.time.Clock
 
 class ViewBudgetViewModel(
     private val budgetId: Long,
     budgetRepository: IBudgetRepository,
     operationRepository: IOperationRepository,
     recurringRepository: IRecurringRepository,
+    private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -33,10 +40,14 @@ class ViewBudgetViewModel(
         operationRepository.observeAllOperations(),
         recurringRepository.observeAllRecurring(),
     ) { budgets, operations, recurringList ->
-        val transactions = operations.flatMap { it.transactions }
+        val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
+        val categoryBalances = entryRepository.balancesInMonth(
+            month = month,
+            accountIds = budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
+        )
         calculateBudgetProgressUseCase(
             budgets = budgets,
-            transactions = transactions,
+            categoryBalances = categoryBalances,
             recurringList = recurringList,
             operations = operations,
         ).firstOrNull { it.budget.id == budgetId }

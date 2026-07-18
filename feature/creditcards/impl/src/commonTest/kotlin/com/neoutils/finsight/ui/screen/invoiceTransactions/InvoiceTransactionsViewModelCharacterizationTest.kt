@@ -71,7 +71,12 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
             operationRepository = FakeOperationRepository(operations),
             categoryRepository = FakeCategoryRepository(),
-            entryRepository = FakeEntryRepository(owedByInvoiceId = mapOf(1L to 70.0)),
+            entryRepository = FakeEntryRepository(
+                owedByInvoiceId = mapOf(1L to 70.0),
+                flowsByInvoiceId = mapOf(
+                    1L to com.neoutils.finsight.domain.repository.InvoiceFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
+                ),
+            ),
         )
 
         vm.uiState.test {
@@ -137,14 +142,21 @@ private class FakeCategoryRepository : ICategoryRepository {
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private class FakeEntryRepository(private val owedByInvoiceId: Map<Long, Double>) : IEntryRepository {
+private class FakeEntryRepository(
+    private val owedByInvoiceId: Map<Long, Double>,
+    private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.InvoiceFlows> = emptyMap(),
+) : IEntryRepository {
     override suspend fun invoiceOwed(invoiceId: Long): Double = owedByInvoiceId[invoiceId] ?: 0.0
+    override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows =
+        flowsByInvoiceId[invoiceId] ?: com.neoutils.finsight.domain.repository.InvoiceFlows(0.0, 0.0, 0.0)
     override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()

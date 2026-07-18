@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.domain.usecase.ReportLedgerScope
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
@@ -99,16 +100,25 @@ class ReportViewerViewModel(
                 total = total,
             )
         } else {
+            val scope = when (perspective) {
+                is ReportPerspective.AccountPerspective ->
+                    ReportLedgerScope.Accounts(perspective.accountIds.toSet())
+
+                is ReportPerspective.CreditCardPerspective ->
+                    ReportLedgerScope.Card(
+                        liabilityAccountId = creditCards.find { it.id == perspective.creditCardId }?.accountId,
+                    )
+            }
             val reportStats = calculateReportStatsUseCase(
                 operations = operations,
-                perspective = perspective,
+                scope = scope,
                 startDate = startDate,
                 endDate = endDate,
             )
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                initialBalance = reportStats.initialBalance,
+                openingBalance = reportStats.openingBalance,
                 income = reportStats.income,
                 expense = reportStats.expense,
                 balance = reportStats.balance,

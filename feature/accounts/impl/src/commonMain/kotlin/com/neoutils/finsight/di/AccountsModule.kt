@@ -78,6 +78,7 @@ val accountsModule = module {
             accountRepository = get(),
             operationRepository = get(),
             categoryRepository = get(),
+            entryRepository = get(),
             initialAccountId = it.getOrNull(),
         )
     }

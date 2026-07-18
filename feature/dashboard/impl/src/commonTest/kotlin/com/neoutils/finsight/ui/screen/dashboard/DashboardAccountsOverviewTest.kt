@@ -63,6 +63,7 @@ class DashboardAccountsOverviewTest {
         invoiceUiMapper = object : InvoiceUiMapper {
             override suspend fun toUi(invoice: Invoice): InvoiceUi = throw NotImplementedError()
         },
+        entryRepository = ThrowingEntryRepository,
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },
     )
 
@@ -119,15 +120,21 @@ class DashboardAccountsOverviewTest {
         status = Invoice.Status.OPEN,
     )
 
-    private fun singleLegOperation(id: Long, leg: Transaction) =
-        Operation(id = id, title = null, date = leg.date, transactions = listOf(leg))
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+
+    private fun singleLegOperation(id: Long, leg: Transaction, entries: List<Entry> = emptyList()) =
+        Operation(id = id, title = null, date = leg.date, transactions = listOf(leg), entries = entries)
+
+    private fun statsEntries(counter: Account, assetAmount: Double, counterAmount: Double) =
+        listOf(Entry(account = accountA, amount = (assetAmount * 100).toLong()), Entry(account = counter, amount = (counterAmount * 100).toLong()))
 
     @Test
     fun `concrete balance stats sum account income and expense for the month`() = runTest {
         val operations = listOf(
-            singleLegOperation(1, leg(Transaction.Type.INCOME, 100.0, accountA, 5)),
-            singleLegOperation(2, leg(Transaction.Type.EXPENSE, 30.0, accountA, 10)),
-            singleLegOperation(3, leg(Transaction.Type.INCOME, 999.0, accountA, 5).copy(date = LocalDate(2026, 2, 5))), // other month
+            singleLegOperation(1, leg(Transaction.Type.INCOME, 100.0, accountA, 5), statsEntries(incomeAcc, 100.0, -100.0)),
+            singleLegOperation(2, leg(Transaction.Type.EXPENSE, 30.0, accountA, 10), statsEntries(expenseAcc, -30.0, 30.0)),
+            singleLegOperation(3, leg(Transaction.Type.INCOME, 999.0, accountA, 5).copy(date = LocalDate(2026, 2, 5)), statsEntries(incomeAcc, 999.0, -999.0)), // other month
         )
         val component = builder().build(
             key = DashboardComponentType.CONCRETE_BALANCE_STATS.key,
@@ -163,10 +170,17 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
+    // 100 − 30 = 70, account 2 = 50 − 20 = 30, matching the legacy Σ signedCents.
+    override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
     override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
+    override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+    // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
+    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows =
+        com.neoutils.finsight.domain.repository.CardMonthFlows(expense = 60.0, payment = 25.0)
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()

@@ -56,6 +56,9 @@ private class FakeReadEntryDao(
     override suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int = throw NotImplementedError()
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = throw NotImplementedError()
+    override suspend fun balanceOf(accountId: Long): Long = throw NotImplementedError()
+    override suspend fun invoicePeriodTotals(invoiceId: Long): com.neoutils.finsight.database.dao.InvoicePeriodTotals = throw NotImplementedError()
+    override suspend fun cardMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.CardMonthTotals = throw NotImplementedError()
     override suspend fun categoryTotalsWithSiblingLeg(
         categoryType: String,
         start: kotlinx.datetime.LocalDate,

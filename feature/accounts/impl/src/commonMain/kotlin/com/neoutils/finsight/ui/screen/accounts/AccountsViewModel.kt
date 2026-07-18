@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
+import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
@@ -28,6 +30,7 @@ class AccountsViewModel(
     private val accountRepository: IAccountRepository,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
+    private val entryRepository: IEntryRepository,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
 
@@ -76,22 +79,21 @@ class AccountsViewModel(
 
     private val accountsUi = combine(
         accounts,
-        operations,
         selectedMonth,
-    ) { accounts, operations, month ->
-        val allTransactions = operations.flatMap { operation ->
-            operation.transactions
-        }
-
+    ) { accounts, month ->
+        // Derived entirely from the ledger (task 4.4): opening = Σ entries up to the
+        // previous month; balance = Σ entries up to the month; the month's flows come
+        // from the per-account aggregate (task 2.4). No summing of legs in memory.
         accounts.map { account ->
-            val transactions = allTransactions.filter { transaction ->
-                transaction.account?.id == account.id
-            }
-
+            val flows = entryRepository.accountFlows(month = month, accountId = account.id)
             AccountUi(
                 account = account,
-                transactions = transactions,
-                month = month,
+                openingBalance = entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
+                balance = entryRepository.balanceUpTo(target = month, accountId = account.id),
+                income = flows.income,
+                expense = flows.expense,
+                adjustment = flows.adjustment,
+                invoicePayment = flows.invoicePayment,
             )
         }
     }

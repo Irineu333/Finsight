@@ -12,7 +12,7 @@ sealed class ReportViewerUiState {
         data class Account(
             val startDate: LocalDate,
             val endDate: LocalDate,
-            val initialBalance: Double,
+            val openingBalance: Double,
             val income: Double,
             val expense: Double,
             val balance: Double,

@@ -38,6 +38,13 @@ data class Invoice(
         else -> false
     }
 
+    /**
+     * Fatura fechável na data [date]: além do status permitir ([isClosable]), a data de
+     * fechamento já precisa ter chegado — para `OPEN` e `RETROACTIVE` igualmente. É a única
+     * definição do predicado com corte de data; as telas a consomem em vez de reescrevê-la.
+     */
+    fun isClosableOn(date: LocalDate) = isClosable && date >= closingDate
+
     enum class Status(
         val color: Color,
     ) {

@@ -22,7 +22,7 @@ data class InvoiceUi(
 ) {
     val id = invoice.id
     val creditCard = invoice.creditCard
-    val isClosable = (invoice.status.isOpen && currentDate >= closingDate) || invoice.status.isRetroactive
+    val isClosable = invoice.isClosableOn(currentDate)
     val status = invoice.status
     val closingMonth = invoice.closingMonth
     val dueMonth = invoice.dueMonth

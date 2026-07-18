@@ -1,27 +1,46 @@
 package com.neoutils.finsight.domain.usecase
 
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.deriveTransactionType
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
+/**
+ * Month income/expense/adjustment across the ASSET legs of [operations] (task 4.11),
+ * derived from each operation's ledger entries rather than legacy leg types. Callers
+ * pass the operations they want counted (they already exclude transfers/payments by
+ * kind); this reads the ASSET entry of each and classifies it with
+ * [deriveTransactionType]. `expense` is the magnitude of the expense legs; `income`
+ * the magnitude of the income legs; `adjustment` the signed sum of the adjustments.
+ */
 class CalculateTransactionStatsUseCase {
     operator fun invoke(
-        transactions: List<Transaction>,
+        operations: List<Operation>,
         forYearMonth: YearMonth,
     ): TransactionStats {
-        val monthTransactions = transactions.filter { it.date.yearMonth == forYearMonth }
-
-        val accountTransactions = monthTransactions.filter { it.target.isAccount }
-
-        val expense = accountTransactions.filter { it.type.isExpense }
-        val adjustment = accountTransactions.filter { it.type.isAdjustment }
-        val income = accountTransactions.filter { it.type.isIncome }
+        var income = 0L
+        var expense = 0L
+        var adjustment = 0L
+        operations
+            .filter { it.date.yearMonth == forYearMonth }
+            .forEach { operation ->
+                operation.entries
+                    .filter { it.account.type == AccountType.ASSET }
+                    .forEach { entry ->
+                        when (deriveTransactionType(entry.amount, operation.entries)) {
+                            Transaction.Type.INCOME -> income += entry.amount
+                            Transaction.Type.EXPENSE -> expense += -entry.amount
+                            Transaction.Type.ADJUSTMENT -> adjustment += entry.amount
+                        }
+                    }
+            }
 
         return TransactionStats(
-            income = income.sumOf { it.amount },
-            expense = expense.sumOf { it.amount },
-            adjustment = adjustment.sumOf { it.amount },
-            transactions = monthTransactions,
+            income = income / 100.0,
+            expense = expense / 100.0,
+            adjustment = adjustment / 100.0,
         )
     }
 
@@ -29,6 +48,5 @@ class CalculateTransactionStatsUseCase {
         val income: Double,
         val expense: Double,
         val adjustment: Double,
-        val transactions: List<Transaction>
     )
 }

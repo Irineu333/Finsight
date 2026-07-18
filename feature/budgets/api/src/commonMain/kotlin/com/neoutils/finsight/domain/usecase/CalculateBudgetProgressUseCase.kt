@@ -5,7 +5,6 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -13,9 +12,16 @@ import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 
 class CalculateBudgetProgressUseCase {
+    /**
+     * [categoryBalances] maps a category's chart-account id to its `Σ entries` in the
+     * selected month (debit-positive, so an EXPENSE account already reads as +spent).
+     * The caller reads it from the ledger — this use case lives in the feature `api`
+     * and MUST NOT depend on another feature's repository (star topology), so the
+     * ledger read happens in the `impl` that owns the `IEntryRepository` dependency.
+     */
     operator fun invoke(
         budgets: List<Budget>,
-        transactions: List<Transaction>,
+        categoryBalances: Map<Long, Double>,
         recurringList: List<Recurring> = emptyList(),
         operations: List<Operation> = emptyList(),
         today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
@@ -33,10 +39,9 @@ class CalculateBudgetProgressUseCase {
                     (confirmedAmount ?: fallbackAmount) * (budget.percentage ?: 0.0) / 100.0
                 }
             }
-            val spent = transactions
-                .filter { tx -> tx.type.isExpense && budget.categories.any { it.id == tx.category?.id } }
-                .filter { it.date.yearMonth == today.yearMonth }
-                .sumOf { it.amount }
+            val spent = budget.categories
+                .filter { it.type.isExpense }
+                .sumOf { category -> category.accountId?.let { categoryBalances[it] } ?: 0.0 }
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
                 recurringList.find { it.id == budget.recurringId }
             } else null

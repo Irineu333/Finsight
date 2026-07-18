@@ -5,8 +5,10 @@ package com.neoutils.finsight.ui.screen.budgets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IBudgetRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.repository.balancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +27,7 @@ class BudgetsViewModel(
     private val budgetRepository: IBudgetRepository,
     private val operationRepository: IOperationRepository,
     private val recurringRepository: IRecurringRepository,
+    private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
 ) : ViewModel() {
 
@@ -36,16 +39,19 @@ class BudgetsViewModel(
         recurringRepository.observeAllRecurring(),
         selectedMonth,
     ) { budgets, operations, recurringList, selectedMonth ->
-        val transactions = operations.flatMap { it.transactions }
         val systemToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val today = if (selectedMonth == systemToday.yearMonth) {
             systemToday
         } else {
             LocalDate(selectedMonth.year, selectedMonth.month, 1)
         }
+        val categoryBalances = entryRepository.balancesInMonth(
+            month = selectedMonth,
+            accountIds = budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
+        )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = budgets,
-            transactions = transactions,
+            categoryBalances = categoryBalances,
             recurringList = recurringList,
             operations = operations,
             today = today,

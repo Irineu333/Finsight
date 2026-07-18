@@ -1,42 +1,35 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import kotlinx.datetime.YearMonth
 
-class CalculateInvoiceOverviewsUseCase {
+/**
+ * Invoice overviews derived from the ledger (task 4.11): each invoice's
+ * expense/advance-payment/adjustment come from its LIABILITY-leg entries
+ * ([IEntryRepository.invoiceFlows]) and the owed total from [IEntryRepository.invoiceOwed],
+ * replacing the leg-based sums by `Transaction.Type`/`Target`.
+ */
+class CalculateInvoiceOverviewsUseCase(
+    private val entryRepository: IEntryRepository,
+) {
 
-    operator fun invoke(
+    suspend operator fun invoke(
         invoices: List<Invoice>,
-        transactions: List<Transaction>,
         forYearMonth: YearMonth,
     ): InvoiceOverviewStats {
         val invoiceOverviews = invoices
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
-                val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
-                }
-                val expense = invoiceTransactions
-                    .filter { it.type.isExpense }
-                    .sumOf { it.amount }
-                val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.isInvoicePayment }
-                    .sumOf { it.amount }
-                val adjustment = invoiceTransactions
-                    .filter { it.type.isAdjustment }
-                    .sumOf { it.amount }
-
+                val flows = entryRepository.invoiceFlows(invoice.id)
                 InvoiceOverviewResult(
                     invoiceId = invoice.id,
                     creditCardName = invoice.creditCard.name,
                     invoiceStatus = invoice.status,
-                    expense = expense,
-                    advancePayment = advancePayment,
-                    adjustment = adjustment,
-                    // Card-leg contribution to the invoice (debit-positive owed):
-                    // expense adds, income/adjustment (payments) subtract.
-                    total = invoiceTransactions.sumOf { if (it.type.isExpense) it.amount else -it.amount }
+                    expense = flows.expense,
+                    advancePayment = flows.advancePayment,
+                    adjustment = flows.adjustment,
+                    total = entryRepository.invoiceOwed(invoice.id),
                 )
             }
 

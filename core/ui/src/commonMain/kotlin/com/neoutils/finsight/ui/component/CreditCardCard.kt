@@ -299,8 +299,8 @@ fun CreditCardCard(
 
                 if (variant is CreditCardCardVariant.Dashboard) {
                     val canCloseInvoice = invoiceUi?.isClosable == true
-                    val canPayInvoice = invoiceUi?.status == Invoice.Status.CLOSED
-                    val canAdvanceInvoice = invoiceUi?.status == Invoice.Status.OPEN
+                    val canPayInvoice = invoiceUi?.status?.isClosed == true
+                    val canAdvanceInvoice = invoiceUi?.status?.isOpen == true
 
                     if (canCloseInvoice || canPayInvoice || canAdvanceInvoice) {
                         Column(

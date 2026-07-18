@@ -63,8 +63,8 @@ fun ReportViewerUiState.Content.toReportLayout(
             ),
             ReportSummaryItem(
                 label = strings.summaryInitialBalance,
-                value = formatter.format(s.initialBalance),
-                tone = s.initialBalance.toTone(),
+                value = formatter.format(s.openingBalance),
+                tone = s.openingBalance.toTone(),
             ),
             ReportSummaryItem(
                 label = strings.summaryIncome,

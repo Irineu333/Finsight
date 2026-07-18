@@ -49,6 +49,7 @@ import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
 import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -192,6 +193,7 @@ private fun AccountsContent(
                     ) {
                         AccountPager(
                             accounts = uiState.accounts,
+                            domainAccounts = uiState.domainAccounts,
                             selectedIndex = uiState.selectedAccountIndex,
                             onSelectAccount = { index ->
                                 onAction(AccountsAction.SelectAccount(index))
@@ -222,7 +224,7 @@ private fun AccountsContent(
                         key = "account_actions"
                     ) {
                         AccountActions(
-                            accountUi = uiState.accounts[uiState.selectedAccountIndex],
+                            account = uiState.domainAccounts[uiState.selectedAccountIndex],
                             canTransfer = uiState.accounts.size > 1,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -262,24 +264,23 @@ private fun AccountsContent(
                         key = { it.id }
                     ) { operationUi ->
                         OperationCard(
-                            operation = operationUi.operation,
-                            displayType = operationUi.displayType,
-                            displayAmount = operationUi.displayAmount,
-                            displayTarget = operationUi.displayTarget,
-                            displayCategory = operationUi.displayCategory,
+                            operation = operationUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                when (operationUi.displayType) {
+                                when (operationUi.direction) {
                                     Transaction.Type.ADJUSTMENT -> {
                                         detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
                                     }
 
                                     else -> {
                                         detailController.show(
-                                            transactionsEntry.viewOperationModal(operationUi.id, operationUi.perspective)
+                                            transactionsEntry.viewOperationModal(
+                                                operationUi.id,
+                                                uiState.selectedAccountId?.let { TransactionPerspective(it) },
+                                            )
                                         )
                                     }
                                 }
@@ -296,6 +297,7 @@ private fun AccountsContent(
 @Composable
 private fun AccountPager(
     accounts: List<AccountUi>,
+    domainAccounts: List<Account>,
     selectedIndex: Int,
     onSelectAccount: (Int) -> Unit,
     onEditBalance: (Account) -> Unit,
@@ -325,11 +327,11 @@ private fun AccountPager(
         pageSpacing = 8.dp,
     ) { page ->
         AccountCard(
-            account = accounts[page].account,
+            account = domainAccounts[page],
             variant = AccountCardVariant.Detail(
                 accountUi = accounts[page],
-                onEditBalance = { onEditBalance(accounts[page].account) },
-                onEditInitialBalance = { onEditInitialBalance(accounts[page].account) },
+                onEditBalance = { onEditBalance(domainAccounts[page]) },
+                onEditInitialBalance = { onEditInitialBalance(domainAccounts[page]) },
             ),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -338,12 +340,11 @@ private fun AccountPager(
 
 @Composable
 private fun AccountActions(
-    accountUi: AccountUi,
+    account: Account,
     canTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val account = accountUi.account
 
     Column(
         modifier = modifier,

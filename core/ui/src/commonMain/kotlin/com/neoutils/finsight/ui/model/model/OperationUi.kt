@@ -1,47 +1,27 @@
 package com.neoutils.finsight.ui.model
 
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
 
+/**
+ * A flat, display-ready view of an operation for a list item. Carries no domain
+ * graph — only resolved presentation values and the operation id. Both display
+ * axes are derived by the mapper (see `Operation.toOperationUi`): [label] is the
+ * operation's nature (color/title/icon), [direction] is the leg's direction under
+ * the current perspective (the type text and the list filter).
+ */
 data class OperationUi(
-    val operation: Operation,
-    val perspective: OperationPerspective,
-) {
-    val id: Long
-        get() = operation.id
-
-    val kind: Operation.Kind
-        get() = operation.kind
-
-    val recurring = operation.recurring
-
-    val transaction: Transaction by lazy {
-        requireNotNull(
-            perspective.resolve(
-                operation = operation,
-            )
-        ) {
-            "Operation ${operation.id} does not match perspective $perspective"
-        }
-    }
-
-    val displayType: Transaction.Type
-        get() = when (kind) {
-            Operation.Kind.PAYMENT -> Transaction.Type.EXPENSE
-            else -> transaction.type
-        }
-
-    val displayAmount: Double
-        get() = transaction.amount
-
-    val displayDate: LocalDate
-        get() = transaction.date
-
-    val displayTarget: Transaction.Target
-        get() = transaction.target
-
-    val displayCategory: Category?
-        get() = operation.category ?: transaction.category
-}
+    val id: Long,
+    val label: OperationLabel,
+    val direction: Transaction.Type,
+    val title: String,
+    val amount: Double,
+    val date: LocalDate,
+    val categoryId: Long?,
+    val categoryIcon: CategoryLazyIcon?,
+    val isCardTarget: Boolean,
+    val isRecurring: Boolean,
+    val installmentLabel: String?,
+)

@@ -13,8 +13,8 @@ import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.model.OperationPerspective
 import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.ui.model.toOperationUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -62,22 +62,14 @@ class AccountsViewModel(
     ) { account, operations ->
         // No account selected (e.g. all accounts deleted with the screen open) → no operations.
         account ?: return@combine emptyList()
-        val perspective = OperationPerspective.Account(accountId = account.id)
-        operations.mapNotNull { operation ->
-            perspective.resolve(
-                operation = operation,
-            )?.let {
-                OperationUi(
-                    operation = operation,
-                    perspective = perspective,
-                )
-            }
-        }
+        // Flat DTO derived from the ledger under this account's perspective; ops
+        // whose entries don't touch the account map to null and are omitted.
+        operations.mapNotNull { operation -> operation.toOperationUi(accountId = account.id) }
     }
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val accountsUi = combine(
+    private val accountsWithDomain = combine(
         accounts,
         selectedMonth,
     ) { accounts, month ->
@@ -86,8 +78,8 @@ class AccountsViewModel(
         // from the per-account aggregate (task 2.4). No summing of legs in memory.
         accounts.map { account ->
             val flows = entryRepository.accountFlows(month = month, accountId = account.id)
-            AccountUi(
-                account = account,
+            account to AccountUi(
+                id = account.id,
                 openingBalance = entryRepository.balanceUpTo(target = month.minusMonth(), accountId = account.id),
                 balance = entryRepository.balanceUpTo(target = month, accountId = account.id),
                 income = flows.income,
@@ -107,27 +99,29 @@ class AccountsViewModel(
     )
 
     val uiState = combine(
-        accountsUi,
+        accountsWithDomain,
         operationsUi,
         categoryRepository.observeAllCategories(),
         selectedAccountIndex,
         selectedMonth,
         filters,
-    ) { accountsUi, selectedAccountOperations, categories, index, month, currentFilters ->
+    ) { accountsPairs, selectedAccountOperations, categories, index, month, currentFilters ->
         val monthOperations = selectedAccountOperations.filter { operation ->
-            operation.displayDate.yearMonth == month
+            operation.date.yearMonth == month
         }
 
         val filteredOperations = monthOperations
             .filter(currentFilters.category)
             .filter(currentFilters.type)
             .filter(currentFilters.recurringOnly)
-            .sortedByDescending { it.displayDate }
-            .groupBy { it.displayDate }
+            .sortedByDescending { it.date }
+            .groupBy { it.date }
 
         AccountsUiState.Content(
-            accounts = accountsUi,
+            accounts = accountsPairs.map { it.second },
+            domainAccounts = accountsPairs.map { it.first },
             selectedAccountIndex = index,
+            selectedAccountId = accountsPairs.getOrNull(index)?.first?.id,
             selectedMonth = month,
             operations = filteredOperations,
             categories = categories,
@@ -186,16 +180,16 @@ private data class AccountsFilters(
 private fun List<OperationUi>.filter(category: Category?): List<OperationUi> {
     if (category == null) return this
     return filter { operation ->
-        operation.displayCategory?.id == category.id
+        operation.categoryId == category.id
     }
 }
 
 private fun List<OperationUi>.filter(type: Transaction.Type?): List<OperationUi> {
     if (type == null) return this
-    return filter { operation -> operation.displayType == type }
+    return filter { operation -> operation.direction == type }
 }
 
 private fun List<OperationUi>.filter(recurringOnly: Boolean): List<OperationUi> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { operation -> operation.isRecurring }
 }

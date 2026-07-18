@@ -23,8 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.toLabel
@@ -42,7 +41,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
-import com.neoutils.finsight.ui.model.OperationPerspective
+import com.neoutils.finsight.ui.model.TransactionPerspective
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlin.uuid.ExperimentalUuidApi
@@ -54,7 +53,7 @@ import org.koin.core.parameter.parametersOf
 
 class ViewOperationModal(
     private val operationId: Long,
-    private val perspective: OperationPerspective? = null,
+    private val perspective: TransactionPerspective? = null,
 ) : AdaptiveModal() {
 
     @Composable
@@ -130,10 +129,10 @@ class ViewOperationModal(
                         } ?: run {
                             Icon(
                                 imageVector = when {
-                                    uiState.operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
-                                    uiState.operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
-                                    uiState.transaction.type == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                    uiState.transaction.type == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                    uiState.label == OperationLabel.PAYMENT -> Icons.Default.Payment
+                                    uiState.label == OperationLabel.TRANSFER -> Icons.Default.SwapHoriz
+                                    uiState.direction == Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                                    uiState.direction == Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
                                     else -> Icons.Default.Tune
                                 },
                                 contentDescription = null,
@@ -145,7 +144,7 @@ class ViewOperationModal(
                         }
                     }
 
-                    if (uiState.transaction.target.isCreditCard || uiState.operation.kind == Operation.Kind.PAYMENT) {
+                    if (uiState.transaction.target.isCreditCard || uiState.label == OperationLabel.PAYMENT) {
                         Surface(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
@@ -167,7 +166,7 @@ class ViewOperationModal(
 
                 Column {
                     Text(
-                        text = when (uiState.transaction.type) {
+                        text = when (uiState.direction) {
                             Transaction.Type.INCOME -> stringResource(Res.string.view_operation_type_income)
                             Transaction.Type.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
                             Transaction.Type.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
@@ -179,9 +178,9 @@ class ViewOperationModal(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = when (uiState.operation.kind) {
-                            Operation.Kind.PAYMENT -> stringResource(Res.string.operation_card_payment)
-                            Operation.Kind.TRANSFER -> stringResource(Res.string.operation_card_transfer)
+                        text = when (uiState.label) {
+                            OperationLabel.PAYMENT -> stringResource(Res.string.operation_card_payment)
+                            OperationLabel.TRANSFER -> stringResource(Res.string.operation_card_transfer)
                             else -> uiState.operation.label
                         },
                         style = MaterialTheme.typography.headlineSmall,
@@ -218,7 +217,7 @@ class ViewOperationModal(
                 )
             }
 
-            if (uiState.operation.kind == Operation.Kind.TRANSFER) {
+            if (uiState.label == OperationLabel.TRANSFER) {
                 val sourceAccount = uiState.operation.transactions
                     .firstOrNull { it.type == Transaction.Type.EXPENSE && it.target == Transaction.Target.ACCOUNT }
                     ?.account
@@ -251,7 +250,7 @@ class ViewOperationModal(
                 }
             }
 
-            if (uiState.operation.kind != Operation.Kind.TRANSFER) {
+            if (uiState.label != OperationLabel.TRANSFER) {
                 uiState.transaction.account?.let { account ->
                     DetailRow(
                         label = stringResource(Res.string.view_operation_account_label),
@@ -351,19 +350,15 @@ class ViewOperationModal(
                 .padding(top = 16.dp, bottom = 24.dp)
         ) {
             content.transaction.invoice?.let { invoice ->
-                when (invoice.status) {
-                    Invoice.Status.FUTURE, Invoice.Status.OPEN, Invoice.Status.RETROACTIVE -> {
-                        EditAndDelete(content)
-                    }
-
-                    Invoice.Status.CLOSED, Invoice.Status.PAID -> {
-                        Text(
-                            text = stringResource(Res.string.view_operation_closed_invoice_message),
-                            fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                if (invoice.status.isEditable) {
+                    EditAndDelete(content)
+                } else {
+                    Text(
+                        text = stringResource(Res.string.view_operation_closed_invoice_message),
+                        fontSize = 14.sp,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             } ?: run {
                 EditAndDelete(content)
@@ -385,13 +380,7 @@ class ViewOperationModal(
             onClick = {
                 manager.show(DeleteTransactionModal(uiState.transaction))
             },
-            modifier = when {
-                uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Modifier.fillMaxWidth()
-                !uiState.operation.isEditable -> Modifier.fillMaxWidth()
-                uiState.operation.installment != null -> Modifier.fillMaxWidth()
-                uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Modifier.fillMaxWidth()
-                else -> Modifier.weight(1f)
-            },
+            modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = colorScheme.error,
@@ -414,13 +403,7 @@ class ViewOperationModal(
             )
         }
 
-        when {
-            uiState.transaction.type == Transaction.Type.ADJUSTMENT -> Unit
-            !uiState.operation.isEditable -> Unit
-            uiState.operation.installment != null -> Unit
-            uiState.transaction.target == Transaction.Target.CREDIT_CARD && uiState.transaction.creditCard == null -> Unit
-
-            else -> {
+        if (uiState.isEditable) {
                 OutlinedButton(
                     onClick = {
                         manager.show(EditTransactionModal(uiState.transaction))
@@ -449,7 +432,6 @@ class ViewOperationModal(
                 }
             }
         }
-    }
 
     @Composable
     private fun DetailRow(
@@ -493,10 +475,10 @@ class ViewOperationModal(
     }
 
     private fun ViewOperationUiState.Content.operationColor() = when {
-        operation.kind == Operation.Kind.PAYMENT -> InvoicePayment
-        operation.kind == Operation.Kind.TRANSFER -> Info
-        transaction.type == Transaction.Type.INCOME -> Income
-        transaction.type == Transaction.Type.EXPENSE -> Expense
+        label == OperationLabel.PAYMENT -> InvoicePayment
+        label == OperationLabel.TRANSFER -> Info
+        direction == Transaction.Type.INCOME -> Income
+        direction == Transaction.Type.EXPENSE -> Expense
         else -> Adjustment
     }
 }

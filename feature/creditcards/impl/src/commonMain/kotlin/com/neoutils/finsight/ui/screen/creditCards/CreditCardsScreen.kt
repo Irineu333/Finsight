@@ -40,6 +40,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
@@ -229,8 +230,9 @@ private fun CreditCardsContent(
                             items = operations,
                             key = { it.id }
                         ) { operation ->
+                            operation.toOperationUi()?.let { operationUi ->
                             OperationCard(
-                                operation = operation,
+                                operation = operationUi,
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
@@ -247,6 +249,7 @@ private fun CreditCardsContent(
                                     }
                                 }
                             )
+                            }
                         }
                     }
                 }

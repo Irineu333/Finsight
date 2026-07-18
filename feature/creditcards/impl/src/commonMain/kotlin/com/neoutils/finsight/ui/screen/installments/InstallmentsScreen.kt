@@ -83,6 +83,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
@@ -340,8 +341,9 @@ private fun InstallmentsContent(
                         items = uiState.filteredOperations,
                         key = Operation::id,
                     ) { operation ->
+                        operation.toOperationUi()?.let { operationUi ->
                         OperationCard(
-                            operation = operation,
+                            operation = operationUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
@@ -365,6 +367,7 @@ private fun InstallmentsContent(
                                 }
                             },
                         )
+                        }
                     }
                 }
             }

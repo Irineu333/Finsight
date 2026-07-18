@@ -25,6 +25,7 @@ import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
 import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
@@ -130,8 +131,9 @@ private fun TransactionsContent(
                     items = operations,
                     key = { it.id }
                 ) { operation ->
+                    operation.toOperationUi()?.let { operationUi ->
                     OperationCard(
-                        operation = operation,
+                        operation = operationUi,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
@@ -148,6 +150,7 @@ private fun TransactionsContent(
                             }
                         }
                     )
+                    }
                 }
             }
         }

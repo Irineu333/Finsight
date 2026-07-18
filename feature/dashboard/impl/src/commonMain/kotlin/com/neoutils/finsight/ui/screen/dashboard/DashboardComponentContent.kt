@@ -71,6 +71,7 @@ import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.stringUiText
@@ -266,8 +267,9 @@ private fun DashboardRecentsSection(
         }
         component.operations.forEachIndexed { index, operation ->
             val isLastWithFade = component.hasMore && index == component.operations.lastIndex
+            val operationUi = operation.toOperationUi() ?: return@forEachIndexed
             OperationCard(
-                operation = operation,
+                operation = operationUi,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)

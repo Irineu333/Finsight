@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.extension.interceptAbsence
-import com.neoutils.finsight.ui.model.OperationPerspective
+import com.neoutils.finsight.ui.model.TransactionPerspective
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class ViewOperationViewModel(
     operationId: Long,
-    private val perspective: OperationPerspective? = null,
+    private val perspective: TransactionPerspective? = null,
     operationRepository: IOperationRepository,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {

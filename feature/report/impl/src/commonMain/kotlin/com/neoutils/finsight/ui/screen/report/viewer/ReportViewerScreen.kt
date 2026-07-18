@@ -37,6 +37,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
@@ -285,8 +286,9 @@ private fun ReportViewerContent(
                                 }
 
                                 items(operations, key = { "op_${it.id}" }) { operation ->
+                                    operation.toOperationUi()?.let { operationUi ->
                                     OperationCard(
-                                        operation = operation,
+                                        operation = operationUi,
                                         modifier = Modifier
                                             .animateItem()
                                             .padding(horizontal = 16.dp),
@@ -300,6 +302,7 @@ private fun ReportViewerContent(
                                             }
                                         },
                                     )
+                                    }
                                 }
                             }
                         }

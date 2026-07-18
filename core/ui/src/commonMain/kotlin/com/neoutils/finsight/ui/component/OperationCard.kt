@@ -17,13 +17,13 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
@@ -31,6 +31,7 @@ import com.neoutils.finsight.resources.operation_card_balance_adjustment
 import com.neoutils.finsight.resources.operation_card_invoice_adjustment
 import com.neoutils.finsight.resources.operation_card_payment
 import com.neoutils.finsight.resources.operation_card_transfer
+import com.neoutils.finsight.ui.model.OperationUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -38,16 +39,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun OperationCard(
-    operation: Operation,
+    operation: OperationUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     amountDecoration: TextDecoration = TextDecoration.None,
-    displayType: Transaction.Type = operation.type,
-    displayAmount: Double = operation.amount,
-    displayTarget: Transaction.Target = operation.target,
-    displayCategory: Category? = operation.category ?: operation.primaryTransaction.category,
 ) {
     val formatter = LocalCurrencyFormatter.current
+    val color = operation.color()
 
     Card(
         onClick = onClick,
@@ -67,7 +65,7 @@ fun OperationCard(
         ) {
             Box {
                 Surface(
-                    color = operation.color(displayType).copy(alpha = 0.2f),
+                    color = color.copy(alpha = 0.2f),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -75,33 +73,26 @@ fun OperationCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        if (displayCategory != null) {
+                        val categoryIcon = operation.categoryIcon
+                        if (categoryIcon != null) {
                             Icon(
-                                painter = displayCategory.icon(),
+                                painter = categoryIcon(),
                                 contentDescription = null,
-                                tint = operation.color(displayType),
+                                tint = color,
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {
                             Icon(
-                                imageVector = when {
-                                    operation.kind == Operation.Kind.PAYMENT -> Icons.Default.Payment
-                                    operation.kind == Operation.Kind.TRANSFER -> Icons.Default.SwapHoriz
-                                    else -> when (displayType) {
-                                        Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-                                        Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-                                        Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
-                                    }
-                                },
+                                imageVector = operation.icon(),
                                 contentDescription = null,
-                                tint = operation.color(displayType),
+                                tint = color,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
                 }
 
-                if (displayTarget.isCreditCard || operation.kind == Operation.Kind.PAYMENT) {
+                if (operation.isCardTarget) {
                     Surface(
                         color = colorScheme.surfaceVariant,
                         shape = CircleShape,
@@ -128,7 +119,7 @@ fun OperationCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = getTitle(operation, paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = operation.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
@@ -142,59 +133,55 @@ fun OperationCard(
             }
 
             Text(
-                text = when (displayType) {
-                    Transaction.Type.ADJUSTMENT -> {
-                        formatter.formatWithSign(displayAmount)
+                text = when (operation.direction) {
+                    Transaction.Type.ADJUSTMENT -> formatter.formatWithSign(operation.amount)
+                    Transaction.Type.EXPENSE -> if (operation.label == OperationLabel.TRANSFER) {
+                        "-${formatter.format(operation.amount)}"
+                    } else {
+                        formatter.format(operation.amount)
                     }
-
-                    Transaction.Type.EXPENSE -> {
-                        if (operation.kind == Operation.Kind.TRANSFER) {
-                            "-${formatter.format(displayAmount)}"
-                        } else {
-                            formatter.format(displayAmount)
-                        }
-                    }
-
-                    else -> {
-                        formatter.format(displayAmount)
-                    }
+                    else -> formatter.format(operation.amount)
                 },
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = operation.color(displayType),
+                color = color,
                 textDecoration = amountDecoration,
             )
         }
     }
 }
 
-private fun getTitle(
-    operation: Operation,
+private fun OperationUi.displayTitle(
     paymentLabel: String,
     transferLabel: String,
     balanceAdjustLabel: String,
     invoiceAdjustLabel: String,
 ): String {
     val baseTitle = when {
-        operation.kind == Operation.Kind.PAYMENT -> paymentLabel
-        operation.kind == Operation.Kind.TRANSFER -> transferLabel
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isAccount -> balanceAdjustLabel
-        operation.type == Transaction.Type.ADJUSTMENT && operation.target.isCreditCard -> invoiceAdjustLabel
-        else -> operation.label
+        label == OperationLabel.PAYMENT -> paymentLabel
+        label == OperationLabel.TRANSFER -> transferLabel
+        label == OperationLabel.ADJUSTMENT && !isCardTarget -> balanceAdjustLabel
+        label == OperationLabel.ADJUSTMENT && isCardTarget -> invoiceAdjustLabel
+        else -> title
     }
 
-    val installment = operation.installment
-    if (installment != null) {
-        return "$baseTitle • ${installment.label}"
-    }
-
-    return baseTitle
+    return installmentLabel?.let { "$baseTitle • $it" } ?: baseTitle
 }
 
-private fun Operation.color(displayType: Transaction.Type) = when {
-    kind == Operation.Kind.PAYMENT -> InvoicePayment
-    kind == Operation.Kind.TRANSFER -> Info
-    displayType == Transaction.Type.INCOME -> Income
-    displayType == Transaction.Type.EXPENSE -> Expense
+private fun OperationUi.icon() = when {
+    label == OperationLabel.PAYMENT -> Icons.Default.Payment
+    label == OperationLabel.TRANSFER -> Icons.Default.SwapHoriz
+    else -> when (direction) {
+        Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+        Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+        Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+    }
+}
+
+private fun OperationUi.color(): Color = when {
+    label == OperationLabel.PAYMENT -> InvoicePayment
+    label == OperationLabel.TRANSFER -> Info
+    direction == Transaction.Type.INCOME -> Income
+    direction == Transaction.Type.EXPENSE -> Expense
     else -> Adjustment
 }

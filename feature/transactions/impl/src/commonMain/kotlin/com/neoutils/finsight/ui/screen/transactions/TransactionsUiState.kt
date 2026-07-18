@@ -32,7 +32,7 @@ data class TransactionsUiState(
     val isFutureMonth = selectedYearMonth > currentMonth
 
     data class BalanceOverview(
-        val initialBalance: Double = 0.0,
+        val openingBalance: Double = 0.0,
         val income: Double = 0.0,
         val expense: Double = 0.0,
         val adjustment: Double = 0.0,
@@ -45,11 +45,8 @@ data class TransactionsUiState(
 
     data class CreditCardOverview(
         val expense: Double = 0.0,
-        val advancePayment: Double = 0.0,
         val total: Double = 0.0,
         val invoices: List<InvoiceOverview> = emptyList(),
-    ) {
-        val mustShowAdvancePayment = advancePayment != 0.0
-    }
+    )
 
 }

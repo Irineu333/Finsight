@@ -171,7 +171,7 @@ private fun DetailContent(
 
         AccountSummaryRow(
             label = stringResource(Res.string.accounts_initial_balance),
-            amount = accountUi.initialBalance,
+            amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
             signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
             onEditClick = variant.onEditInitialBalance,
@@ -204,15 +204,6 @@ private fun DetailContent(
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_invoices),
                 amount = accountUi.invoicePayment,
-                color = InvoicePayment,
-                signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
-            )
-        }
-
-        if (accountUi.advancePayment != 0.0) {
-            AccountSummaryRow(
-                label = stringResource(Res.string.accounts_advance_payments),
-                amount = accountUi.advancePayment,
                 color = InvoicePayment,
                 signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
             )

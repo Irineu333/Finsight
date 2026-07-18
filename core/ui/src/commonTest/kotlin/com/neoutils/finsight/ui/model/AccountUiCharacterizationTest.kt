@@ -63,12 +63,11 @@ class AccountUiCharacterizationTest {
     fun `account ui sums characterize the legacy figures`() {
         val ui = AccountUi(account = account, transactions = transactions, month = month)
 
-        assertEquals(-15.0, ui.initialBalance, "opening = prior-month expense only")
+        assertEquals(-15.0, ui.openingBalance, "opening = prior-month expense only")
         assertEquals(-35.0, ui.balance, "balance = Σ signed legs up to the month")
         assertEquals(100.0, ui.income)
         assertEquals(80.0, ui.expense, "expense includes the transfer-out leg, excludes the invoice payment")
         assertEquals(40.0, ui.adjustment)
         assertEquals(80.0, ui.invoicePayment)
-        assertEquals(0.0, ui.advancePayment)
     }
 }

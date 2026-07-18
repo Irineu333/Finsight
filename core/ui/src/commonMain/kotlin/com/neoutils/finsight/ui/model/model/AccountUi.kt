@@ -8,13 +8,12 @@ import kotlinx.datetime.yearMonth
 
 data class AccountUi(
     val account: Account,
-    val initialBalance: Double,
+    val openingBalance: Double,
     val balance: Double,
     val income: Double,
     val expense: Double,
     val adjustment: Double,
     val invoicePayment: Double,
-    val advancePayment: Double,
 ) {
     constructor(
         account: Account,
@@ -22,7 +21,7 @@ data class AccountUi(
         month: YearMonth,
     ) : this(
         account = account,
-        initialBalance = transactions
+        openingBalance = transactions
             .filter { transaction -> transaction.date.yearMonth < month }
             .sumOf { transaction -> transaction.signedCents() } / 100.0,
         balance = transactions
@@ -52,6 +51,5 @@ data class AccountUi(
                     transaction.isInvoicePayment
             }
             .sumOf { transaction -> transaction.amount },
-        advancePayment = 0.0,
     )
 }

@@ -12,10 +12,11 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.balancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
-import com.neoutils.finsight.extension.signedCents
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.isDesktop
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -49,6 +50,7 @@ class DashboardComponentsBuilder(
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val getPendingRecurringUseCase: GetPendingRecurringUseCase,
     private val invoiceUiMapper: InvoiceUiMapper,
+    private val entryRepository: IEntryRepository,
     private val navCatalog: NavCatalog,
 ) {
 
@@ -59,7 +61,7 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent? {
         return when (key) {
-            DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input, context.allTransactions)
+            DashboardComponentType.TOTAL_BALANCE.key -> totalBalance(input)
             DashboardComponentType.CONCRETE_BALANCE_STATS.key -> concreteBalanceStats(input, config)
             DashboardComponentType.PENDING_BALANCE_STATS.key -> pendingBalanceStats(
                 pendingRecurring = context.pendingRecurring,
@@ -68,13 +70,11 @@ class DashboardComponentsBuilder(
 
             DashboardComponentType.CREDIT_CARD_BALANCE_STATS.key -> creditCardBalanceStats(
                 input = input,
-                allTransactions = context.allTransactions,
                 config = config,
             )
 
             DashboardComponentType.ACCOUNTS_OVERVIEW.key -> accountsOverview(
                 input = input,
-                allTransactions = context.allTransactions,
                 config = config
             )
 
@@ -89,7 +89,7 @@ class DashboardComponentsBuilder(
                 config = config
             )
 
-            DashboardComponentType.BUDGETS.key -> budgets(input, context.allTransactions)
+            DashboardComponentType.BUDGETS.key -> budgets(input)
             DashboardComponentType.PENDING_RECURRING.key -> pendingRecurring(
                 pendingRecurring = context.pendingRecurring,
                 input = input,
@@ -113,15 +113,12 @@ class DashboardComponentsBuilder(
         )
     }
 
-    private fun totalBalance(
+    private suspend fun totalBalance(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
     ): DashboardComponent.TotalBalance {
+        // Σ entries of all ASSET accounts up to the target month, from the ledger (task 4.3).
         return DashboardComponent.TotalBalance(
-            amount = calculateBalanceUseCase(
-                target = input.targetMonth,
-                transactions = allTransactions,
-            ),
+            amount = calculateBalanceUseCase(target = input.targetMonth),
         )
     }
 
@@ -129,12 +126,11 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.ConcreteBalanceStats? {
-        val transactionsForStats = input.operations
+        val operationsForStats = input.operations
             .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
-            .flatMap { it.transactions }
 
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
+            operations = operationsForStats,
             forYearMonth = input.targetMonth,
         )
 
@@ -167,23 +163,14 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun creditCardBalanceStats(
+    private suspend fun creditCardBalanceStats(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
         config: Map<String, String>,
     ): DashboardComponent.CreditCardBalanceStats? {
-        val monthTransactions = allTransactions.filter { it.date.yearMonth == input.targetMonth }
-
-        val payment = monthTransactions
-            .filter { it.target == Transaction.Target.CREDIT_CARD }
-            .filter { it.type == Transaction.Type.INCOME }
-            .filter { it.isInvoicePayment }
-            .sumOf { it.amount }
-
-        val expense = monthTransactions
-            .filter { it.target == Transaction.Target.CREDIT_CARD }
-            .filter { it.type == Transaction.Type.EXPENSE }
-            .sumOf { it.amount }
+        // Month-wide card expense/payment from the ledger (task 4.11).
+        val flows = entryRepository.cardMonthFlows(input.targetMonth)
+        val payment = flows.payment
+        val expense = flows.expense
 
         val isEmpty = payment <= 0.0 && expense <= 0.0
 
@@ -197,9 +184,8 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun accountsOverview(
+    private suspend fun accountsOverview(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
         config: Map<String, String>,
     ): DashboardComponent.AccountsOverview? {
         val hideSingleAccount = config[AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT] != "false"
@@ -212,9 +198,9 @@ class DashboardComponentsBuilder(
         val accountsUi = input.accounts
             .filter { it.id !in excludedIds }
             .map { account ->
-                val accountTransactions = allTransactions.filter { it.account?.id == account.id }
-                val balance = accountTransactions.sumOf { it.signedCents() } / 100.0
-                DashboardAccountUi(account = account, balance = balance)
+                // All-time natural balance from the ledger (task 4.5), replacing the
+                // in-builder `Σ signedCents` over the account's legacy legs.
+                DashboardAccountUi(account = account, balance = entryRepository.balance(account.id))
             }
 
         return if (accountsUi.isNotEmpty() && !(hideSingleAccount && accountsUi.size == 1)) {
@@ -297,15 +283,19 @@ class DashboardComponentsBuilder(
         }
     }
 
-    private fun budgets(
+    private suspend fun budgets(
         input: DashboardComponentsInput,
-        allTransactions: List<Transaction>,
     ): DashboardComponent.Budgets? {
+        val categoryBalances = entryRepository.balancesInMonth(
+            month = input.targetMonth,
+            accountIds = input.budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
+        )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = input.budgets,
-            transactions = allTransactions,
+            categoryBalances = categoryBalances,
             recurringList = input.recurringList,
             operations = input.operations,
+            today = input.today,
         )
 
         return if (budgetProgress.isNotEmpty()) {

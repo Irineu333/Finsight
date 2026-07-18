@@ -23,6 +23,22 @@ data class AccountFlows(
     val invoicePayment: Double,
 )
 
+/**
+ * The per-invoice money flows (reais) a card invoice screen shows, derived from the
+ * ledger. [adjustment] is signed; the rest are positive magnitudes.
+ */
+data class InvoiceFlows(
+    val expense: Double,
+    val advancePayment: Double,
+    val adjustment: Double,
+)
+
+/** Month-wide card expense/payment (reais) across every card, both positive. */
+data class CardMonthFlows(
+    val expense: Double,
+    val payment: Double,
+)
+
 interface IEntryRepository {
 
     /** The entries (legs) of an operation, each hydrated with its account. */
@@ -37,6 +53,9 @@ interface IEntryRepository {
      */
     suspend fun balanceUpTo(target: YearMonth, accountId: Long? = null): Double
 
+    /** All-time natural balance of [accountId], across every date. */
+    suspend fun balance(accountId: Long): Double
+
     /** Natural balance of [accountId] within [month] — used for category spending. */
     suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double
 
@@ -48,6 +67,12 @@ interface IEntryRepository {
 
     /** Amount owed on an invoice (positive), from its liability-leg entries. */
     suspend fun invoiceOwed(invoiceId: Long): Double
+
+    /** The expense/advance-payment/adjustment breakdown of an invoice, from the ledger. */
+    suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows
+
+    /** Month-wide card expense/payment across every card account. */
+    suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows
 
     /** Net worth = Σ ASSET − Σ LIABILITY, via the same entry mechanism. */
     suspend fun netWorth(): Double
@@ -70,3 +95,13 @@ interface IEntryRepository {
         invoiceIds: List<Long>,
     ): Map<Long, Double>
 }
+
+/**
+ * Natural balance (reais) of each account in [accountIds] within [month]. A thin fan
+ * over [IEntryRepository.balanceInMonth] so callers in different feature `impl`s share
+ * one way to gather per-account month balances from the ledger.
+ */
+suspend fun IEntryRepository.balancesInMonth(
+    month: YearMonth,
+    accountIds: Collection<Long>,
+): Map<Long, Double> = accountIds.distinct().associateWith { balanceInMonth(month, it) }

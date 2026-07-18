@@ -2,50 +2,48 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Operation
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Characterizes [CalculateTransactionStatsUseCase]: income/expense/adjustment as Σ
- * amount of the month's account-target legs of each type. Unlike `AccountUi`, expense
- * here includes invoice payments and adjustment uses the raw amount. Task 4.11 flips
- * this to the ledger; the numbers must survive.
+ * Characterizes [CalculateTransactionStatsUseCase] over the ledger (task 4.11): income/
+ * expense/adjustment as the ASSET legs of the month's operations, classified by
+ * `deriveTransactionType`. Callers pass operations already stripped of transfers and
+ * payments, so those never reach here — the payment-in-expense of the legacy isolated
+ * form was never a production figure (both real callers pre-excluded payments). The
+ * ViewModel-level guards (TransactionsViewModel/Dashboard tests) pin the production
+ * numbers.
  */
 class CalculateTransactionStatsUseCaseTest {
 
     private val useCase = CalculateTransactionStatsUseCase()
     private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
-    private val invoice = Invoice(
-        id = 1, creditCard = card,
-        openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),
-        status = Invoice.Status.OPEN,
-    )
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
 
-    private fun accountLeg(type: Transaction.Type, amount: Double, month: Int, invoice: Invoice? = null) = Transaction(
-        type = type, amount = amount, title = null, date = LocalDate(2026, month, 10), account = account, invoice = invoice,
-    )
+    private fun cents(amount: Double) = (amount * 100).toLong()
+    private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = cents(amount))
+    private fun op(date: LocalDate, entries: List<Entry>) =
+        Operation(title = null, date = date, transactions = emptyList(), entries = entries)
 
     @Test
-    fun `monthly stats sum account legs by type`() {
-        val transactions = listOf(
-            accountLeg(Transaction.Type.INCOME, 100.0, month = 3),
-            accountLeg(Transaction.Type.EXPENSE, 30.0, month = 3),
-            accountLeg(Transaction.Type.ADJUSTMENT, 40.0, month = 3),
-            accountLeg(Transaction.Type.EXPENSE, 80.0, month = 3, invoice = invoice), // payment counted in expense
-            accountLeg(Transaction.Type.INCOME, 999.0, month = 2),                    // other month → excluded
-            Transaction(type = Transaction.Type.EXPENSE, amount = 55.0, title = null, date = LocalDate(2026, 3, 5), creditCard = card), // card leg → excluded
+    fun `monthly stats classify the asset legs by direction`() {
+        val operations = listOf(
+            op(LocalDate(2026, 3, 10), listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
+            op(LocalDate(2026, 3, 10), listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
+            op(LocalDate(2026, 3, 10), listOf(entry(account, 40.0), entry(equityAcc, -40.0))),
+            op(LocalDate(2026, 2, 10), listOf(entry(account, 999.0), entry(incomeAcc, -999.0))), // other month → excluded
         )
 
-        val stats = useCase(transactions = transactions, forYearMonth = YearMonth(2026, 3))
+        val stats = useCase(operations = operations, forYearMonth = YearMonth(2026, 3))
 
         assertEquals(100.0, stats.income)
-        assertEquals(110.0, stats.expense)
+        assertEquals(30.0, stats.expense)
         assertEquals(40.0, stats.adjustment)
     }
 }

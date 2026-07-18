@@ -56,19 +56,29 @@ class ReportViewerViewModelCharacterizationTest {
     @AfterTest fun tearDown() = Dispatchers.resetMain()
 
     private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
 
     private fun accountLeg(type: Transaction.Type, amount: Double, month: Int, day: Int) = Transaction(
         type = type, amount = amount, title = null, date = LocalDate(2026, month, day), account = account,
     )
 
-    private fun op(id: Long, leg: Transaction) = Operation(id = id, title = null, date = leg.date, transactions = listOf(leg))
+    private fun op(id: Long, leg: Transaction, entries: List<Entry> = emptyList()) =
+        Operation(id = id, title = null, date = leg.date, transactions = listOf(leg), entries = entries)
+
+    private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = (amount * 100).toLong())
+
+    // The account-perspective stats now read the ledger legs (task 4.6). Each operation
+    // carries its balanced entries; the report figures derive from those.
+    private fun accountEntries(counter: Account, assetAmount: Double, counterAmount: Double) =
+        listOf(entry(account, assetAmount), entry(counter, counterAmount))
 
     @Test
     fun `account perspective forwards the report stats`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, accountLeg(Transaction.Type.INCOME, 100.0, month = 3, day = 5)),
-            op(2, accountLeg(Transaction.Type.EXPENSE, 30.0, month = 3, day = 10)),
-            op(3, accountLeg(Transaction.Type.EXPENSE, 20.0, month = 2, day = 10)), // prior → opening
+            op(1, accountLeg(Transaction.Type.INCOME, 100.0, month = 3, day = 5), accountEntries(incomeAcc, 100.0, -100.0)),
+            op(2, accountLeg(Transaction.Type.EXPENSE, 30.0, month = 3, day = 10), accountEntries(expenseAcc, -30.0, 30.0)),
+            op(3, accountLeg(Transaction.Type.EXPENSE, 20.0, month = 2, day = 10), accountEntries(expenseAcc, -20.0, 20.0)), // prior → opening
         )
         val fakes = Fakes()
         val vm = ReportViewerViewModel(
@@ -104,7 +114,7 @@ class ReportViewerViewModelCharacterizationTest {
             assertEquals(100.0, stats.income)
             assertEquals(30.0, stats.expense)
             assertEquals(70.0, stats.balance)
-            assertEquals(-20.0, stats.initialBalance)
+            assertEquals(-20.0, stats.openingBalance)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -235,11 +245,14 @@ private class Fakes {
     fun entryRepository(owed: Map<Long, Double> = emptyMap()) = object : IEntryRepository {
         override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
         override suspend fun invoiceOwed(invoiceId: Long): Double = owed[invoiceId] ?: 0.0
+        override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+        override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
         override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()

@@ -8,6 +8,8 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.repository.InvoiceFlows
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -60,6 +62,10 @@ class EntryRepository(
         return cents / CENTS_PER_UNIT
     }
 
+    override suspend fun balance(accountId: Long): Double {
+        return entryDao.balanceOf(accountId) / CENTS_PER_UNIT
+    }
+
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double {
         return entryDao.balanceInMonth(accountId, month.toString()) / CENTS_PER_UNIT
     }
@@ -81,6 +87,23 @@ class EntryRepository(
     override suspend fun invoiceOwed(invoiceId: Long): Double {
         // Liability entries are stored negative (credit); owed reads positive.
         return -entryDao.invoiceNaturalBalance(invoiceId) / CENTS_PER_UNIT
+    }
+
+    override suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows {
+        val totals = entryDao.invoicePeriodTotals(invoiceId)
+        return InvoiceFlows(
+            expense = totals.expense / CENTS_PER_UNIT,
+            advancePayment = totals.advancePayment / CENTS_PER_UNIT,
+            adjustment = totals.adjustment / CENTS_PER_UNIT,
+        )
+    }
+
+    override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows {
+        val totals = entryDao.cardMonthTotals(month.toString())
+        return CardMonthFlows(
+            expense = totals.expense / CENTS_PER_UNIT,
+            payment = totals.payment / CENTS_PER_UNIT,
+        )
     }
 
     override suspend fun netWorth(): Double {

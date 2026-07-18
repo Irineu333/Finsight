@@ -72,11 +72,14 @@ class InvoiceTransactionsViewModel(
         selectedInvoiceIndex,
         filters,
     ) { creditCard, invoices, operations, categories, index, currentFilters ->
-        val transactions = operations.flatMap { it.transactions }
-
-        // Invoice owed derived from the ledger (Σ liability-leg entries), not signedImpact.
+        // Invoice owed and its expense/advancePayment/adjustment breakdown, both derived
+        // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
         val owedByInvoiceId = mutableMapOf<Long, Double>()
-        for (inv in invoices) owedByInvoiceId[inv.id] = entryRepository.invoiceOwed(inv.id)
+        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.InvoiceFlows>()
+        for (inv in invoices) {
+            owedByInvoiceId[inv.id] = entryRepository.invoiceOwed(inv.id)
+            flowsByInvoiceId[inv.id] = entryRepository.invoiceFlows(inv.id)
+        }
 
         val invoice = invoices.getOrNull(index)
 
@@ -93,21 +96,10 @@ class InvoiceTransactionsViewModel(
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
             invoices = invoices.map { invoice ->
-                val invoiceTransactions = transactions.filter {
-                    it.invoice?.id == invoice.id && it.target == Transaction.Target.CREDIT_CARD
-                }
-
-                val expense = invoiceTransactions
-                    .filter { it.type == Transaction.Type.EXPENSE }
-                    .sumOf { it.amount }
-
-                val advancePayment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.INCOME && it.target == Transaction.Target.CREDIT_CARD && it.isInvoicePayment }
-                    .sumOf { it.amount }
-
-                val adjustment = invoiceTransactions
-                    .filter { it.type == Transaction.Type.ADJUSTMENT }
-                    .sumOf { it.amount }
+                val flows = flowsByInvoiceId.getValue(invoice.id)
+                val expense = flows.expense
+                val advancePayment = flows.advancePayment
+                val adjustment = flows.adjustment
 
                 val nextDateLabel = when (invoice.status) {
                     Invoice.Status.OPEN -> UiText.ResWithArgs(
@@ -144,7 +136,7 @@ class InvoiceTransactionsViewModel(
                     dueMonth = invoice.dueMonth,
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
-                    isClosable = invoice.isClosable && currentDate >= invoice.closingDate,
+                    isClosable = invoice.isClosableOn(currentDate),
                 )
             },
             selectedInvoiceIndex = index,

@@ -6,13 +6,18 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
+import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -99,6 +104,30 @@ class ViewBudgetViewModelTest {
         createdAt = 0L,
     )
 
+    private class FakeEntryRepository : IEntryRepository {
+        override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = 0.0
+        override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+        override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
+        override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+        override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
+        override suspend fun netWorth(): Double = throw NotImplementedError()
+        override suspend fun categoryTotals(
+            categoryType: AccountType,
+            startDate: kotlinx.datetime.LocalDate,
+            endDate: kotlinx.datetime.LocalDate,
+            siblingAccountIds: List<Long>,
+        ): Map<Long, Double> = throw NotImplementedError()
+        override suspend fun categoryTotalsForInvoices(
+            categoryType: AccountType,
+            invoiceIds: List<Long>,
+        ): Map<Long, Double> = throw NotImplementedError()
+    }
+
     private fun viewModel(
         budgetRepository: FakeBudgetRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
@@ -107,6 +136,7 @@ class ViewBudgetViewModelTest {
         budgetRepository = budgetRepository,
         operationRepository = FakeOperationRepository(),
         recurringRepository = FakeRecurringRepository(),
+        entryRepository = FakeEntryRepository(),
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(),
         crashlytics = crashlytics,
     )

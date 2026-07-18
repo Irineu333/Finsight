@@ -73,7 +73,7 @@ fun SummaryCard(
                 ) {
                     SummaryRow(
                         label = stringResource(Res.string.summary_card_initial_balance),
-                        amount = balanceOverview.initialBalance,
+                        amount = balanceOverview.openingBalance,
                         color = colorScheme.onSurface,
                         onEditClick = onEditInitialBalance,
                         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE

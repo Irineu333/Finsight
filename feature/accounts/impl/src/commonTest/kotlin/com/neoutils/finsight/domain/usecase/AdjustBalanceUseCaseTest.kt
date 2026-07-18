@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -105,7 +106,31 @@ class FakeOperationRepository(private val stores: LedgerBackedStores) : IOperati
     }
 
     override fun observeAllOperations(): Flow<List<Operation>> = throw NotImplementedError()
-    override fun observeOperationsBy(date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Operation>> = throw NotImplementedError()
+
+    // Rebuilds the operations from the current legacy legs, hydrated with the ledger
+    // entries the writer would have produced (the account leg + its EQUITY counter-leg),
+    // so the ledger-based idempotency lookup of task 4.12 can find the adjustment.
+    override fun observeOperationsBy(date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Operation>> {
+        val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
+        val operations = stores.legacyTransactions
+            .filter { date == null || it.date == date }
+            .filter { accountId == null || it.account?.id == accountId }
+            .groupBy { it.operationId }
+            .mapNotNull { (opId, legs) ->
+                opId ?: return@mapNotNull null
+                val ledgerAmount = stores.ledgerAmountByOperation[opId] ?: legs.sumOf { it.amount }
+                val entries = legs.flatMap { leg ->
+                    val acc = leg.account ?: return@flatMap emptyList<Entry>()
+                    listOf(
+                        Entry(operationId = opId, account = acc, amount = (ledgerAmount * 100).toLong()),
+                        Entry(operationId = opId, account = equity, amount = (-ledgerAmount * 100).toLong()),
+                    )
+                }
+                Operation(id = opId, title = null, date = legs.first().date, transactions = legs, entries = entries)
+            }
+        return flowOf(operations)
+    }
+
     override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
     override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
     override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
@@ -148,6 +173,7 @@ class FakeTransactionRepository(private val stores: LedgerBackedStores) : ITrans
 class FakeEntryRepository(private val stores: LedgerBackedStores) : IEntryRepository {
     override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
 
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double =
         stores.ledgerAmountByOperation.values.sum()
@@ -158,6 +184,8 @@ class FakeEntryRepository(private val stores: LedgerBackedStores) : IEntryReposi
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): com.neoutils.finsight.domain.repository.AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+    override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()

@@ -33,6 +33,23 @@ data class AccountPeriodTotals(
     val invoicePayment: Long,
 )
 
+/**
+ * The per-invoice money flows (cents) a card invoice screen shows, derived from the
+ * card's LIABILITY-leg entries. [expense]/[advancePayment] are positive magnitudes;
+ * [adjustment] is signed.
+ */
+data class InvoicePeriodTotals(
+    val expense: Long,
+    val advancePayment: Long,
+    val adjustment: Long,
+)
+
+/** Month-wide card [expense]/[payment] (cents), both positive magnitudes. */
+data class CardMonthTotals(
+    val expense: Long,
+    val payment: Long,
+)
+
 /** An [EntryEntity] with its referenced [AccountEntity] resolved — a complete leg. */
 data class EntryWithAccount(
     @Embedded val entry: EntryEntity,
@@ -79,6 +96,10 @@ interface EntryDao {
 
     @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE accountId = :accountId AND currency = :currency")
     suspend fun naturalBalanceOf(accountId: Long, currency: String): Long
+
+    /** All-time natural balance of an account, across every date and currency. */
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE accountId = :accountId")
+    suspend fun balanceOf(accountId: Long): Long
 
     // --- Ledger reads (natural, debit-positive cents). All derive from Σ amount. ---
 
@@ -133,6 +154,50 @@ interface EntryDao {
         """
     )
     suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): AccountPeriodTotals
+
+    /**
+     * The expense/advance-payment/adjustment breakdown of a card invoice, from its
+     * LIABILITY-leg entries (the only entries carrying an [invoiceId]), classified by
+     * sign and by whether the operation also has an EQUITY counter-leg. See
+     * [InvoicePeriodTotals]. All are positive magnitudes except [adjustment], which is
+     * signed.
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS advancePayment,
+          COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
+        FROM (
+          SELECT e.amount AS amount,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.operationId = e.operationId AND a.type = 'EQUITY') AS eq
+          FROM entries e
+          WHERE e.invoiceId = :invoiceId
+        )
+        """
+    )
+    suspend fun invoicePeriodTotals(invoiceId: Long): InvoicePeriodTotals
+
+    /**
+     * Month-wide card expense/advance-payment across every LIABILITY (card) account
+     * (yyyy-MM), classified by sign and EQUITY presence. Both positive magnitudes.
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment
+        FROM (
+          SELECT e.amount AS amount,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.operationId = e.operationId AND a2.type = 'EQUITY') AS eq
+          FROM entries e
+          JOIN accounts a ON a.id = e.accountId
+          JOIN operations o ON o.id = e.operationId
+          WHERE a.type = 'LIABILITY' AND substr(o.date, 1, 7) = :yearMonth
+        )
+        """
+    )
+    suspend fun cardMonthTotals(yearMonth: String): CardMonthTotals
 
     /** Number of entries on a category (chart) account within a month (yyyy-MM). */
     @Query(

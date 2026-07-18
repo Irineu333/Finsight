@@ -49,15 +49,12 @@ class TransactionsViewModel(
         selectedYearMonth,
         filters
     ) { operations, categories, yearMonth, filters ->
-        val transactions = operations.flatMap { it.transactions }
-
-        val transactionsForStats = operations
+        val operationsForStats = operations
             .filterNot { it.kind == Operation.Kind.TRANSFER }
             .filterNot { it.kind == Operation.Kind.PAYMENT }
-            .flatMap { it.transactions }
 
         val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
+            operations = operationsForStats,
             forYearMonth = yearMonth,
         )
 
@@ -70,14 +67,10 @@ class TransactionsViewModel(
                     .filter { it.kind == Operation.Kind.PAYMENT }
                     .filter { it.date.yearMonth == yearMonth }
                     .sumOf { it.amount },
-                initialBalance = calculateBalanceUseCase(
-                    target = yearMonth.minusMonth(),
-                    transactions = transactions,
-                ),
-                finalBalance = calculateBalanceUseCase(
-                    target = yearMonth,
-                    transactions = transactions,
-                )
+                // Opening/final balances from the ledger (task 4.11): Σ entries of all
+                // ASSET accounts up to the previous / selected month.
+                openingBalance = calculateBalanceUseCase(target = yearMonth.minusMonth()),
+                finalBalance = calculateBalanceUseCase(target = yearMonth),
             ),
             selectedYearMonth = yearMonth,
             categories = categories,

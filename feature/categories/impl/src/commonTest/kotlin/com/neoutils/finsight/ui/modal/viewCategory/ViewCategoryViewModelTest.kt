@@ -6,10 +6,12 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +24,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -60,92 +61,100 @@ class ViewCategoryViewModelTest {
         override suspend fun delete(category: Category) = throw NotImplementedError()
     }
 
-    private class FakeTransactionRepository(
-        private val transactions: List<Transaction> = emptyList(),
-    ) : ITransactionRepository {
-        override suspend fun getAllTransactions(): List<Transaction> = transactions
-        override suspend fun insert(transaction: Transaction): Long = throw NotImplementedError()
-        override suspend fun update(transaction: Transaction) = throw NotImplementedError()
-        override suspend fun delete(transaction: Transaction) = throw NotImplementedError()
-        override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
-        override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
-        override suspend fun getTransactionBy(id: Long): Transaction? = throw NotImplementedError()
-        override suspend fun getTransactionsBy(
-            type: Transaction.Type?,
-            target: Transaction.Target?,
-            date: LocalDate?,
-            invoiceId: Long?,
-            accountId: Long?,
-        ): List<Transaction> = throw NotImplementedError()
-        override fun observeTransactionsBy(
-            type: Transaction.Type?,
-            target: Transaction.Target?,
-            date: LocalDate?,
-            invoiceId: Long?,
-            creditCardId: Long?,
-            accountId: Long?,
-        ): Flow<List<Transaction>> = throw NotImplementedError()
+    // The ledger reader: Σ entries of the category account in the month, and the entry
+    // count. The month-filtering and category-filtering correctness now lives in SQL
+    // (EntryDao, covered by EntryRepository/DB tests); here we only pin the numbers the
+    // ViewModel surfaces for the account it reads.
+    private class FakeEntryRepository(
+        private val balances: Map<Long, Double> = emptyMap(),
+        private val counts: Map<Long, Int> = emptyMap(),
+    ) : IEntryRepository {
+        override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
+        override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+        override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = counts[accountId] ?: 0
+        override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
+        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+        override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
+        override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+        override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
+        override suspend fun netWorth(): Double = throw NotImplementedError()
+        override suspend fun categoryTotals(
+            categoryType: AccountType,
+            startDate: LocalDate,
+            endDate: LocalDate,
+            siblingAccountIds: List<Long>,
+        ): Map<Long, Double> = throw NotImplementedError()
+        override suspend fun categoryTotalsForInvoices(
+            categoryType: AccountType,
+            invoiceIds: List<Long>,
+        ): Map<Long, Double> = throw NotImplementedError()
     }
 
-    private fun category(id: Long = 1L, name: String = "Food") = Category(
+    private fun category(
+        id: Long = 1L,
+        name: String = "Food",
+        accountId: Long? = 10L,
+    ) = Category(
         id = id,
         name = name,
         icon = CategoryLazyIcon("shopping"),
         type = Category.Type.EXPENSE,
         createdAt = 0L,
+        accountId = accountId,
     )
 
     private fun viewModel(
         categoryRepository: FakeCategoryRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
-        transactions: List<Transaction> = emptyList(),
+        entryRepository: FakeEntryRepository = FakeEntryRepository(),
     ) = ViewCategoryViewModel(
         categoryId = 1L,
         categoryRepository = categoryRepository,
-        transactionRepository = FakeTransactionRepository(transactions),
+        entryRepository = entryRepository,
         crashlytics = crashlytics,
     )
 
-    // The ViewModel starts on the current month (Clock.System.now()), so the dataset
-    // is dated relative to it — as the ViewModel itself is.
+    // The ViewModel starts on the current month (Clock.System.now()).
     private val currentMonth = Clock.System.now().toYearMonth()
 
-    private fun categoryLeg(
-        amount: Double,
-        day: Int,
-        categoryId: Long = 1L,
-        month: YearMonth = currentMonth,
-    ) = Transaction(
-        type = Transaction.Type.EXPENSE,
-        amount = amount,
-        title = null,
-        date = LocalDate(month.year, month.month, day),
-        category = category(id = categoryId),
-    )
-
-    // Characterizes the current totalAmount (Σ amount) and transactionCount (leg count)
-    // for a category in the selected month. Task 4.1 flips this to the ledger
-    // (Σ entries of the category account + entryCountInMonth, task 2.5); these numbers
-    // must survive.
+    // Characterizes the current totalAmount (Σ amount of the category account) and
+    // transactionCount (leg count) for a category in the selected month — now read from
+    // the ledger (task 4.1). The numbers (42.5, 2) must survive the flip.
     @Test
     fun `content characterizes total amount and transaction count for the month`() = runTest(dispatcher) {
         val repository = FakeCategoryRepository()
         val vm = viewModel(
             categoryRepository = repository,
-            transactions = listOf(
-                categoryLeg(amount = 30.0, day = 10),
-                categoryLeg(amount = 12.5, day = 15),
-                categoryLeg(amount = 99.0, day = 3, categoryId = 2L),                 // other category → excluded
-                categoryLeg(amount = 40.0, day = 20, month = currentMonth.plusMonth()), // other month → excluded
+            // EXPENSE category account (id 10): debit-positive natural balance reads as
+            // +42.5 spent, from two entries.
+            entryRepository = FakeEntryRepository(
+                balances = mapOf(10L to 42.5),
+                counts = mapOf(10L to 2),
             ),
         )
 
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
-            repository.emit(category(id = 1L, name = "Food"))
+            repository.emit(category(id = 1L, name = "Food", accountId = 10L))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
             assertEquals(42.5, content.totalAmount)
             assertEquals(2, content.transactionCount)
+        }
+    }
+
+    @Test
+    fun `category never posted to reads zero`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(repository)
+
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, accountId = null))
+            val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
+            assertEquals(0.0, content.totalAmount)
+            assertEquals(0, content.transactionCount)
         }
     }
 

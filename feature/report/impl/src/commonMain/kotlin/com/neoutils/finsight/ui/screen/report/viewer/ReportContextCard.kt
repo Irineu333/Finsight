@@ -142,10 +142,10 @@ internal fun ReportContextCard(
                                 color = colorScheme.onSurfaceVariant,
                             )
                             Text(
-                                text = formatter.format(stats.initialBalance),
+                                text = formatter.format(stats.openingBalance),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (stats.initialBalance >= 0) Income else Expense,
+                                color = if (stats.openingBalance >= 0) Income else Expense,
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))

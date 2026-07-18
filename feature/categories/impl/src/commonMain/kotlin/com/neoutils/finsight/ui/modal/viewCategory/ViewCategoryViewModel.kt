@@ -6,27 +6,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
-import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class ViewCategoryViewModel(
     categoryId: Long,
     categoryRepository: ICategoryRepository,
-    transactionRepository: ITransactionRepository,
+    private val entryRepository: IEntryRepository,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -35,28 +34,31 @@ class ViewCategoryViewModel(
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
 
-    private val transactions = flow {
-        emit(transactionRepository.getAllTransactions())
-    }
-
     val uiState = combine(
         categoryRepository.observeCategoryById(categoryId)
             .interceptAbsence(
                 onMissing = { crashlytics.recordException(DetailNotFoundException("Category", categoryId)) },
                 onDisappeared = { _events.send(ViewCategoryEvent.Dismiss) },
             ),
-        transactions,
         selectedYearMonth,
-    ) { category, transactions, yearMonth ->
+    ) { category, yearMonth ->
         category ?: return@combine ViewCategoryUiState.Error
-        val transactionsForMonth = transactions.filter {
-            it.category?.id == category.id && it.date.yearMonth == yearMonth
-        }
+        // Σ entries of the category's chart account in the month, read from the ledger.
+        // The natural balance is debit-positive; a category reads as a positive figure
+        // once converted to its display sign (EXPENSE +1, INCOME -1).
+        val accountId = category.accountId
+        val displaySign = if (category.type == Category.Type.INCOME) -1.0 else 1.0
+        val totalAmount = accountId?.let {
+            entryRepository.balanceInMonth(yearMonth, it) * displaySign
+        } ?: 0.0
+        val transactionCount = accountId?.let {
+            entryRepository.entryCountInMonth(yearMonth, it)
+        } ?: 0
         ViewCategoryUiState.Content(
             category = category,
             selectedYearMonth = yearMonth,
-            totalAmount = transactionsForMonth.sumOf { it.amount },
-            transactionCount = transactionsForMonth.size,
+            totalAmount = totalAmount,
+            transactionCount = transactionCount,
         )
     }.stateIn(
         scope = viewModelScope,

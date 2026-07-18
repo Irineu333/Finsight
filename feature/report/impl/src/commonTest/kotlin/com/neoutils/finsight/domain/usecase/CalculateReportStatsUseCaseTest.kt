@@ -1,84 +1,77 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
+import kotlin.math.roundToLong
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * Characterizes [CalculateReportStatsUseCase] over the ledger (tasks 4.6/4.7): each
+ * operation carries its hydrated [Entry] legs, direction is derived from the sign of
+ * the scope's leg plus the presence of an EQUITY counter-leg, and internal transfers
+ * are detected from the ASSET legs — no `Transaction.Type`/`Target`/`Operation.Kind`.
+ * The figures are the same the legacy leg-based form produced. Operations that the old
+ * test bundled two unrelated legs into (an income and an adjustment on one card) are
+ * modelled here as the separate ledger events they really are; the aggregate is equal.
+ */
 class CalculateReportStatsUseCaseTest {
 
     private val useCase = CalculateReportStatsUseCase()
 
+    private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
+    private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
+    private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+    private val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET)
+
+    private fun cents(amount: Double) = (amount * 100).roundToLong()
+
+    private fun op(date: LocalDate, entries: List<Entry>) =
+        Operation(title = null, date = date, transactions = emptyList(), entries = entries)
+
+    private fun entry(account: Account, amount: Double) = Entry(account = account, amount = cents(amount))
+
+    private fun accountIncome(account: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(account, amount), entry(incomeAcc, -amount)))
+
+    private fun accountExpense(account: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(account, -amount), entry(expenseAcc, amount)))
+
+    /** [amount] is signed: negative lowers the balance, positive raises it. */
+    private fun accountAdjustment(account: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(account, amount), entry(equityAcc, -amount)))
+
+    private fun transfer(source: Account, destination: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(source, -amount), entry(destination, amount)))
+
+    private fun cardExpense(cardLiability: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(cardLiability, -amount), entry(expenseAcc, amount)))
+
+    private fun cardPayment(cardLiability: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(cardLiability, amount), entry(paymentSource, -amount)))
+
+    private fun cardAdjustment(cardLiability: Account, amount: Double, date: LocalDate) =
+        op(date, listOf(entry(cardLiability, amount), entry(equityAcc, -amount)))
+
     @Test
     fun accountPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
-        val account = Account(id = 1, name = "Carteira")
-        val otherAccount = Account(id = 2, name = "Conta Secundaria")
+        val account = Account(id = 1, name = "Carteira", type = AccountType.ASSET)
+        val otherAccount = Account(id = 2, name = "Conta Secundaria", type = AccountType.ASSET)
 
         val operations = listOf(
-            operation(
-                date = LocalDate(2026, 3, 1),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 100.0,
-                        date = LocalDate(2026, 3, 1),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 5),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = -30.0,
-                        date = LocalDate(2026, 3, 5),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 10),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 40.0,
-                        date = LocalDate(2026, 3, 10),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = 25.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = account,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 500.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = otherAccount,
-                    )
-                ),
-            ),
+            accountIncome(account, 100.0, LocalDate(2026, 3, 1)),
+            accountAdjustment(account, -30.0, LocalDate(2026, 3, 5)),
+            accountExpense(account, 40.0, LocalDate(2026, 3, 10)),
+            accountAdjustment(account, 25.0, LocalDate(2026, 3, 12)),
+            accountIncome(otherAccount, 500.0, LocalDate(2026, 3, 12)),
         )
 
         val result = useCase(
             operations = operations,
-            perspective = ReportPerspective.AccountPerspective(accountIds = listOf(account.id)),
+            scope = ReportLedgerScope.Accounts(setOf(account.id)),
             startDate = LocalDate(2026, 3, 10),
             endDate = LocalDate(2026, 3, 31),
         )
@@ -86,93 +79,27 @@ class CalculateReportStatsUseCaseTest {
         assertEquals(0.0, result.income)
         assertEquals(40.0, result.expense)
         assertEquals(-15.0, result.balance)
-        assertEquals(70.0, result.initialBalance)
+        assertEquals(70.0, result.openingBalance)
     }
 
     @Test
     fun creditCardPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
-        val creditCard = CreditCard(
-            id = 10,
-            name = "Visa",
-            limit = 1000.0,
-            closingDay = 10,
-            dueDay = 20,
-        )
-        val otherCreditCard = creditCard.copy(id = 11, name = "Master")
+        val cardLiability = Account(id = 200, name = "Visa", type = AccountType.LIABILITY)
+        val otherCardLiability = Account(id = 201, name = "Master", type = AccountType.LIABILITY)
 
         val operations = listOf(
-            operation(
-                date = LocalDate(2026, 2, 25),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 100.0,
-                        date = LocalDate(2026, 2, 25),
-                        creditCard = creditCard,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 2, 28),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 30.0,
-                        date = LocalDate(2026, 2, 28),
-                        creditCard = creditCard,
-                    ),
-                    creditCardTransaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = -5.0,
-                        date = LocalDate(2026, 2, 28),
-                        creditCard = creditCard,
-                    ),
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 15),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 200.0,
-                        date = LocalDate(2026, 3, 15),
-                        creditCard = creditCard,
-                    )
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 16),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 80.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = creditCard,
-                    ),
-                    creditCardTransaction(
-                        type = Transaction.Type.ADJUSTMENT,
-                        amount = 10.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = creditCard,
-                    ),
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 16),
-                transactions = listOf(
-                    creditCardTransaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 999.0,
-                        date = LocalDate(2026, 3, 16),
-                        creditCard = otherCreditCard,
-                    )
-                ),
-            ),
+            cardExpense(cardLiability, 100.0, LocalDate(2026, 2, 25)),
+            cardPayment(cardLiability, 30.0, LocalDate(2026, 2, 28)),
+            cardAdjustment(cardLiability, -5.0, LocalDate(2026, 2, 28)),
+            cardExpense(cardLiability, 200.0, LocalDate(2026, 3, 15)),
+            cardPayment(cardLiability, 80.0, LocalDate(2026, 3, 16)),
+            cardAdjustment(cardLiability, 10.0, LocalDate(2026, 3, 16)),
+            cardExpense(otherCardLiability, 999.0, LocalDate(2026, 3, 16)),
         )
 
         val result = useCase(
             operations = operations,
-            perspective = ReportPerspective.CreditCardPerspective(creditCardId = creditCard.id),
+            scope = ReportLedgerScope.Card(liabilityAccountId = cardLiability.id),
             startDate = LocalDate(2026, 3, 1),
             endDate = LocalDate(2026, 3, 31),
         )
@@ -180,59 +107,25 @@ class CalculateReportStatsUseCaseTest {
         assertEquals(80.0, result.income)
         assertEquals(200.0, result.expense)
         assertEquals(-110.0, result.balance)
-        assertEquals(-75.0, result.initialBalance)
+        assertEquals(-75.0, result.openingBalance)
     }
 
     @Test
     fun accountPerspectiveIgnoresInternalTransfersBetweenSelectedAccounts() {
-        val accountA = Account(id = 1, name = "Conta A")
-        val accountB = Account(id = 2, name = "Conta B")
-        val accountC = Account(id = 3, name = "Conta C")
+        val accountA = Account(id = 1, name = "Conta A", type = AccountType.ASSET)
+        val accountB = Account(id = 2, name = "Conta B", type = AccountType.ASSET)
+        val accountC = Account(id = 3, name = "Conta C", type = AccountType.ASSET)
 
         val operations = listOf(
-            transferOperation(
-                date = LocalDate(2026, 3, 10),
-                amount = 100.0,
-                source = accountA,
-                destination = accountB,
-            ),
-            transferOperation(
-                date = LocalDate(2026, 3, 11),
-                amount = 30.0,
-                source = accountA,
-                destination = accountC,
-            ),
-            // Two single-leg operations (a 2-account-leg operation would derive as a
-            // transfer): income 50 on A and expense 20 on B.
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = 50.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = accountA,
-                    ),
-                ),
-            ),
-            operation(
-                date = LocalDate(2026, 3, 12),
-                transactions = listOf(
-                    transaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = 20.0,
-                        date = LocalDate(2026, 3, 12),
-                        account = accountB,
-                    ),
-                ),
-            ),
+            transfer(accountA, accountB, 100.0, LocalDate(2026, 3, 10)),  // internal → excluded
+            transfer(accountA, accountC, 30.0, LocalDate(2026, 3, 11)),   // A→outside → A leg counts
+            accountIncome(accountA, 50.0, LocalDate(2026, 3, 12)),
+            accountExpense(accountB, 20.0, LocalDate(2026, 3, 12)),
         )
 
         val result = useCase(
             operations = operations,
-            perspective = ReportPerspective.AccountPerspective(
-                accountIds = listOf(accountA.id, accountB.id)
-            ),
+            scope = ReportLedgerScope.Accounts(setOf(accountA.id, accountB.id)),
             startDate = LocalDate(2026, 3, 1),
             endDate = LocalDate(2026, 3, 31),
         )
@@ -242,69 +135,28 @@ class CalculateReportStatsUseCaseTest {
         assertEquals(0.0, result.balance)
     }
 
-    private fun operation(
-        date: LocalDate,
-        transactions: List<Transaction>,
-    ): Operation {
-        return Operation(
-            title = null,
-            date = date,
-            transactions = transactions,
+    // Task 4.9 (CAP-4): an [Entry] carries no date — the operation's date alone governs
+    // which side of the period cut every one of its legs lands on. Two same-shape income
+    // operations differing only by date must split cleanly: the earlier into the opening
+    // balance, the later into the period. A future caller that tried to cut by anything
+    // other than the operation date would break this.
+    @Test
+    fun `the operation date governs the period cut`() {
+        val account = Account(id = 1, name = "Carteira", type = AccountType.ASSET)
+        val operations = listOf(
+            accountIncome(account, 100.0, LocalDate(2026, 2, 28)), // before the period → opening
+            accountIncome(account, 40.0, LocalDate(2026, 3, 1)),   // inside the period → income
         )
-    }
 
-    private fun transferOperation(
-        date: LocalDate,
-        amount: Double,
-        source: Account,
-        destination: Account,
-    ): Operation {
-        return operation(
-            date = date,
-            transactions = listOf(
-                transaction(
-                    type = Transaction.Type.EXPENSE,
-                    amount = amount,
-                    date = date,
-                    account = source,
-                ),
-                transaction(
-                    type = Transaction.Type.INCOME,
-                    amount = amount,
-                    date = date,
-                    account = destination,
-                ),
-            ),
+        val result = useCase(
+            operations = operations,
+            scope = ReportLedgerScope.Accounts(setOf(account.id)),
+            startDate = LocalDate(2026, 3, 1),
+            endDate = LocalDate(2026, 3, 31),
         )
-    }
 
-    private fun transaction(
-        type: Transaction.Type,
-        amount: Double,
-        date: LocalDate,
-        account: Account,
-    ): Transaction {
-        return Transaction(
-            type = type,
-            amount = amount,
-            title = null,
-            date = date,
-            account = account,
-        )
-    }
-
-    private fun creditCardTransaction(
-        type: Transaction.Type,
-        amount: Double,
-        date: LocalDate,
-        creditCard: CreditCard,
-    ): Transaction {
-        return Transaction(
-            type = type,
-            amount = amount,
-            title = null,
-            date = date,
-            creditCard = creditCard,
-        )
+        assertEquals(100.0, result.openingBalance)
+        assertEquals(40.0, result.income)
+        assertEquals(40.0, result.balance)
     }
 }

@@ -44,6 +44,7 @@ import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionModal
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionModal
 import com.neoutils.finsight.ui.model.TransactionPerspective
+import com.neoutils.finsight.ui.model.categoryTint
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlin.uuid.ExperimentalUuidApi
@@ -123,7 +124,7 @@ class ViewTransactionModal(
                             Icon(
                                 painter = category.icon(),
                                 contentDescription = null,
-                                tint = uiState.transactionColor(),
+                                tint = categoryTint(uiState.transactionColor(), category.isArchived),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)

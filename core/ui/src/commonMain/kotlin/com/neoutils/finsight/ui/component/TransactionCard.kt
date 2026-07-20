@@ -32,6 +32,7 @@ import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
 import com.neoutils.finsight.resources.transaction_card_payment
 import com.neoutils.finsight.resources.transaction_card_transfer
 import com.neoutils.finsight.ui.model.TransactionUi
+import com.neoutils.finsight.ui.model.categoryTint
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
@@ -78,7 +79,7 @@ fun TransactionCard(
                             Icon(
                                 painter = categoryIcon(),
                                 contentDescription = null,
-                                tint = color,
+                                tint = categoryTint(color, transaction.isCategoryArchived),
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {

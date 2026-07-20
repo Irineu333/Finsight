@@ -21,6 +21,7 @@ data class TransactionUi(
     val date: LocalDate,
     val categoryId: Long?,
     val categoryIcon: CategoryLazyIcon?,
+    val isCategoryArchived: Boolean,
     val isCardTarget: Boolean,
     val isRecurring: Boolean,
     val installmentLabel: String?,

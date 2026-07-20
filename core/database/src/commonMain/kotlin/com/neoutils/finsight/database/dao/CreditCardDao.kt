@@ -34,6 +34,9 @@ interface CreditCardDao {
     @Query("SELECT * FROM credit_cards WHERE id = :id")
     suspend fun getCreditCardById(id: Long): CreditCardEntity?
 
+    @Query(ALL_CREDIT_CARDS + " WHERE cc.id = :creditCardId")
+    fun observeCreditCardWithArchivalById(creditCardId: Long): Flow<CreditCardWithArchival?>
+
     @Query("SELECT * FROM credit_cards WHERE id = :id")
     fun observeCreditCardById(id: Long): Flow<CreditCardEntity?>
 

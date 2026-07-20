@@ -6,6 +6,7 @@ import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
+import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.BASE_CURRENCY
@@ -94,12 +95,23 @@ class LedgerEntryWriter(
         entryDao.insertAll(entries)
     }
 
+    /**
+     * Closure is an account-level invariant, so it is checked where every leg of
+     * every write passes — not in the screens that happen to offer the action.
+     * A closed account keeps its history; it just receives nothing new.
+     */
+    private suspend fun Long.orRejectIfClosed(): Long = also { accountId ->
+        if (accountDao.getAccountById(accountId)?.isClosed == true) {
+            throw ClosedAccountException(LedgerError.ClosedAccount)
+        }
+    }
+
     private suspend fun realAccountId(leg: TransactionLeg): Long = when (leg.target) {
         TransactionTarget.ACCOUNT ->
-            leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
+            (leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
 
         TransactionTarget.CREDIT_CARD ->
-            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
+            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
     }
 
     private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {

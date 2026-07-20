@@ -2,6 +2,15 @@
 
 package com.neoutils.finsight.ui.modal.addTransaction
 
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.transaction_error_generic
+import com.neoutils.finsight.util.UiText
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
@@ -37,6 +46,10 @@ class AddTransactionViewModel(
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
+
+    private val _events = Channel<AddTransactionEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
@@ -128,9 +141,21 @@ class AddTransactionViewModel(
                 }
             }.onLeft {
                 crashlytics.recordException(it)
+                _events.send(AddTransactionEvent.ShowError(it.toUiMessage()))
             }.onRight {
                 analytics.logEvent(CreateTransaction(form))
                 modalManager.dismiss()
             }
+    }
+
+    /**
+     * The write boundary rejects with a typed error; without this the rejection
+     * reached crashlytics and the user saw a modal that simply refused to close.
+     */
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is InvoiceLockedException -> error.toUiText()
+        is ClosedAccountException -> error.toUiText()
+        is UnbalancedTransactionException -> error.toUiText()
+        else -> UiText.Res(Res.string.transaction_error_generic)
     }
 }

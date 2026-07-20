@@ -36,6 +36,11 @@
     <string name="transfer_error_destination_account_not_found">Destination account not found.</string>
     <string name="transfer_error_future_date">Transfer date cannot be in the future.</string>
     <string name="transfer_error_unknown">Unable to complete the transfer.</string>
+    <string name="ledger_error_unbalanced">The transaction is not balanced (its legs do not sum to zero).</string>
+    <string name="ledger_error_paid_invoice">This invoice has been paid and can no longer be changed.</string>
+    <string name="ledger_error_closed_invoice">This invoice is closed. Only its payment can be recorded.</string>
+    <string name="ledger_error_closed_account">This account has been closed and takes no new entries.</string>
+    <string name="transaction_error_generic">The transaction could not be saved.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>

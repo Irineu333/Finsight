@@ -61,6 +61,16 @@ class EditTransactionModal(
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
 
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is EditTransactionEvent.ShowError -> snackbarHostState.showSnackbar(event.message.asString())
+                }
+            }
+        }
+
         val manager = LocalModalManager.current
         val categoriesEntry = koinInject<CategoriesEntry>()
         val creditCardsEntry = koinInject<CreditCardsEntry>()
@@ -314,6 +324,8 @@ class EditTransactionModal(
                 }
             }
         }
+
+        SnackbarHost(hostState = snackbarHostState)
     }
 
     @Composable

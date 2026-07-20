@@ -80,6 +80,7 @@ import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
 import com.neoutils.finsight.ui.theme.Income as IncomeColor
 
@@ -623,7 +624,7 @@ private fun TypeFilterChip(
         when (type) {
             TransactionType.INCOME -> IncomeColor
             TransactionType.EXPENSE -> ExpenseColor
-            else -> null
+            TransactionType.ADJUSTMENT -> AdjustmentColor
         }
     }
 

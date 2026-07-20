@@ -40,6 +40,12 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategoryById(id: Long): CategoryEntity?
 
+    @Query(ALL_CATEGORIES + " WHERE c.id = :id")
+    suspend fun getCategoryWithArchivalById(id: Long): CategoryWithArchival?
+
+    @Query(ALL_CATEGORIES + " WHERE c.id = :id")
+    fun observeCategoryWithArchivalById(id: Long): Flow<CategoryWithArchival?>
+
     @Query("SELECT * FROM categories WHERE id = :id")
     fun observeCategoryById(id: Long): Flow<CategoryEntity?>
 

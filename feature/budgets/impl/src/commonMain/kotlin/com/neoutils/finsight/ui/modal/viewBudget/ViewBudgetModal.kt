@@ -40,6 +40,7 @@ import org.koin.compose.koinInject
 import com.neoutils.finsight.ui.modal.budgetForm.BudgetFormModal
 import com.neoutils.finsight.ui.modal.deleteBudget.DeleteBudgetModal
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -130,10 +131,7 @@ class ViewBudgetModal(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(budget.categories) { category ->
-                        val categoryColor = when (category.type) {
-                            Category.Type.INCOME -> Income
-                            Category.Type.EXPENSE -> Expense
-                        }
+                        val categoryColor = category.displayColor
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),

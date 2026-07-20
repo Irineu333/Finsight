@@ -35,6 +35,7 @@ import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
+import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.view_category_edit
 import com.neoutils.finsight.resources.view_category_total_received
@@ -123,7 +124,7 @@ class ViewCategoryModal(
                         text = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_type_income) else stringResource(Res.string.view_category_type_expense),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (uiState.category.type.isIncome) Income else Expense
+                        color = uiState.category.displayColor
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -141,7 +142,7 @@ class ViewCategoryModal(
             DetailRow(
                 label = if (uiState.category.type.isIncome) stringResource(Res.string.view_category_total_received) else stringResource(Res.string.view_category_total_spent),
                 value = formatter.format(uiState.totalAmount),
-                valueColor = if (uiState.category.type.isIncome) Income else Expense
+                valueColor = uiState.category.displayColor
             )
 
             Spacer(modifier = Modifier.height(8.dp))

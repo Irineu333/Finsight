@@ -57,6 +57,7 @@ import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
@@ -572,13 +573,7 @@ private fun CategoryFilterChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val chipColor =
-        selectedCategory?.let { category ->
-            when (category.type) {
-                Category.Type.INCOME -> IncomeColor
-                Category.Type.EXPENSE -> ExpenseColor
-            }
-        }
+    val chipColor = selectedCategory?.displayColor
 
     FilterChip(
         selected = selectedCategory != null,

@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.ui.model.displayColor
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
@@ -113,10 +114,7 @@ private fun CategorySpendingItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                color = when (spending.category.type) {
-                    Category.Type.INCOME -> Income
-                    Category.Type.EXPENSE -> Expense
-                },
+                color = spending.category.displayColor,
                 trackColor = colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},

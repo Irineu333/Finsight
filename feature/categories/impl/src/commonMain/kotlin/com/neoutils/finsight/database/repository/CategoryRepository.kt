@@ -44,15 +44,11 @@ class CategoryRepository(
     }
 
     override suspend fun getCategoryById(id: Long): Category? {
-        return dao.getCategoryById(id)?.let {
-            mapper.toDomain(it)
-        }
+        return dao.getCategoryWithArchivalById(id)?.let { mapper.toDomain(it) }
     }
 
     override fun observeCategoryById(id: Long): Flow<Category?> {
-        return dao.observeCategoryById(id).map {
-            it?.let { mapper.toDomain(it) }
-        }
+        return dao.observeCategoryWithArchivalById(id).map { row -> row?.let { mapper.toDomain(it) } }
     }
 
     /**

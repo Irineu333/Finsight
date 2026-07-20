@@ -187,6 +187,8 @@ private class FakeAccountDao : AccountDao {
 
 private class FakeCategoryDao : CategoryDao {
     override suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival> = emptyList()
+    override suspend fun getCategoryWithArchivalById(id: Long): CategoryWithArchival? = null
+    override fun observeCategoryWithArchivalById(id: Long): Flow<CategoryWithArchival?> = flowOf(null)
     override fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>> = flowOf(emptyList())
     val categories = linkedMapOf<Long, CategoryEntity>()
     override suspend fun getCategoryById(id: Long): CategoryEntity? = categories[id]
@@ -201,6 +203,7 @@ private class FakeCategoryDao : CategoryDao {
 
 private class FakeCreditCardDao : CreditCardDao {
     override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival> = emptyList()
+    override fun observeCreditCardWithArchivalById(creditCardId: Long): Flow<CreditCardWithArchival?> = flowOf(null)
     override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>> = flowOf(emptyList())
     val cards = linkedMapOf<Long, CreditCardEntity>()
     override suspend fun getCreditCardById(id: Long): CreditCardEntity? = cards[id]

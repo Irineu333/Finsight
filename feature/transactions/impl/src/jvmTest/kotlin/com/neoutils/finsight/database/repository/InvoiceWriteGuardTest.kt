@@ -186,6 +186,27 @@ class InvoiceWriteGuardTest {
     }
 
     @Test
+    fun `a paid invoice cannot have a purchase edited off it`() = runTest {
+        val repository = repository(Invoice.Status.OPEN)
+        val purchase = repository.createTransaction(purchase())
+
+        // The invoice is settled; the edit points the leg somewhere else entirely.
+        // Only the new side used to be checked, so the rewrite silently removed the
+        // entries from the paid invoice.
+        val locked = repository(Invoice.Status.PAID)
+
+        assertFailsWith<InvoiceLockedException> {
+            locked.updateTransaction(
+                id = purchase.id,
+                title = "Moved",
+                date = LocalDate(2026, 3, 6),
+                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, account = payer),
+            )
+        }
+        assertEquals(2, locked.getTransactionById(purchase.id)?.entries?.size)
+    }
+
+    @Test
     fun `a closed account refuses new movement`() = runTest {
         val repository = repository(Invoice.Status.OPEN)
         db.accountDao().close(1)

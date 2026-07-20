@@ -38,5 +38,4 @@ interface ITransactionRepository {
 
     /** Removes several transactions as one unit — see [createTransactions]. */
     suspend fun deleteTransactionsByIds(ids: List<Long>)
-    suspend fun deleteTransactionsByCreditCard(creditCardId: Long)
 }

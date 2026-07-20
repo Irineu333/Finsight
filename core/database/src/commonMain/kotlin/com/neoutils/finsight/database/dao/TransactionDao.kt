@@ -27,25 +27,6 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY date DESC, id DESC")
     suspend fun getAll(): List<TransactionEntity>
 
-    // A purchase on the card: it has a leg on the card's LIABILITY account and that
-    // is its only monetary leg — which is what excludes an invoice payment, whose
-    // other monetary leg is the paying ASSET account.
-    @Query(
-        """
-        DELETE FROM transactions
-        WHERE EXISTS (
-            SELECT 1 FROM entries e
-            JOIN credit_cards c ON c.accountId = e.accountId
-            WHERE e.transactionId = transactions.id AND c.id = :creditCardId
-        )
-        AND (
-            SELECT COUNT(*) FROM entries e
-            JOIN accounts a ON a.id = e.accountId
-            WHERE e.transactionId = transactions.id AND a.type IN ('ASSET', 'LIABILITY')
-        ) = 1
-        """
-    )
-    suspend fun deleteTransactionsByCreditCardId(creditCardId: Long)
 
     @Query(
         """

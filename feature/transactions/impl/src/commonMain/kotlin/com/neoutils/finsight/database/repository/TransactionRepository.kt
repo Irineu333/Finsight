@@ -290,7 +290,17 @@ class TransactionRepository(
     }
 
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {
-        ensureInvoiceAccepts(listOf(leg))
+        // An edit has two sides, and both are changes to an invoice: the one losing
+        // the old entries and the one gaining the new. Checking only the new side let
+        // a purchase be moved *off* a paid invoice, silently removing money from
+        // settled history — the rewrite deletes the old entries either way.
+        ensureInvoiceAcceptsRemoval(id)
+        // Editing is never the payment that settles a closed invoice; that exception
+        // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
+        ensureInvoicesAccept(
+            invoiceIds = listOfNotNull(leg.invoice?.id).toSet(),
+            isPayment = false,
+        )
 
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
         // failure never leaves the transaction with its old legs deleted and no new ones.
@@ -363,7 +373,4 @@ class TransactionRepository(
         }
     }
 
-    override suspend fun deleteTransactionsByCreditCard(creditCardId: Long) {
-        transactionDao.deleteTransactionsByCreditCardId(creditCardId)
-    }
 }

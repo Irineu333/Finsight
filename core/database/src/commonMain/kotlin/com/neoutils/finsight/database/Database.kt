@@ -339,6 +339,28 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
                 "AND (SELECT cc.`accountId` FROM `credit_cards` cc WHERE cc.`id` = t.`creditCardId`) IS NULL)"
         )
 
+        // --- 6b. A leg with no aggregate. `transactions.operationId` has been nullable
+        //          since v1 and no migration ever backfilled it, so such a row can exist.
+        //          Filtering it out would make its money disappear from the balance with
+        //          no error and no trace; instead it gets the aggregate it never had,
+        //          built from what the leg itself carries. ---
+        connection.execSQL(
+            "CREATE TEMP TABLE `_orphan_legs` AS " +
+                "SELECT `id` AS legId, `title` AS legTitle, `date` AS legDate, `categoryId` AS legCategoryId, " +
+                "(SELECT COALESCE(MAX(`id`), 0) FROM `operations`) + ROW_NUMBER() OVER (ORDER BY `id`) AS opId " +
+                "FROM `transactions` WHERE `operationId` IS NULL"
+        )
+        connection.execSQL(
+            "INSERT INTO `operations` (`id`, `title`, `date`, `categoryId`) " +
+                "SELECT opId, legTitle, legDate, legCategoryId FROM `_orphan_legs`"
+        )
+        connection.execSQL(
+            "UPDATE `transactions` SET `operationId` = " +
+                "(SELECT opId FROM `_orphan_legs` WHERE legId = `transactions`.`id`) " +
+                "WHERE `operationId` IS NULL"
+        )
+        connection.execSQL("DROP TABLE `_orphan_legs`")
+
         // --- 7. Build the ledger. `entries_build` carries no foreign keys because
         //        `operations` has not been renamed yet; the final table is created
         //        against the final names in step 10. ---
@@ -407,6 +429,17 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         connection.execSQL(
             "INSERT INTO `entries_build` (`transactionId`, `accountId`, `amount`, `currency`) " +
                 "SELECT opId, (SELECT base FROM `_sys`) + 1, balance, 'BRL' FROM `_writeoff`"
+        )
+
+        // --- 8b. Nothing may enter the ledger unbalanced. A multi-leg v7 operation was
+        //          never checked for `Σ = 0` — the legs are copied verbatim, so a pair
+        //          that was not equal and opposite would land as permanent corruption
+        //          that no reader could detect and the write boundary never sees.
+        //          The residual becomes an explicit equity movement instead. ---
+        connection.execSQL(
+            "INSERT INTO `entries_build` (`transactionId`, `accountId`, `amount`, `currency`) " +
+                "SELECT `transactionId`, (SELECT base FROM `_sys`) + 1, -SUM(`amount`), `currency` " +
+                "FROM `entries_build` GROUP BY `transactionId`, `currency` HAVING SUM(`amount`) <> 0"
         )
 
         // --- 9. The legacy leg model goes away, and the aggregate takes its name. ---

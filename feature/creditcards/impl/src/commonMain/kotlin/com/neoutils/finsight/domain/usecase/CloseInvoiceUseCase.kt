@@ -39,6 +39,12 @@ class CloseInvoiceUseCase(
             InvoiceException(InvoiceError.AlreadyClosed)
         }
 
+        // Reading the predicate instead of re-enumerating around it: the pair of
+        // `!=` above admits FUTURE, which `isClosable` does not and no screen offers.
+        ensure(invoice.isClosable) {
+            InvoiceException(InvoiceError.AlreadyClosed)
+        }
+
         ensure(closedAt.yearMonth == invoice.closingMonth) {
             InvoiceException(InvoiceError.CannotCloseOutsideClosingMonth)
         }

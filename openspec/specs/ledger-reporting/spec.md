@@ -7,7 +7,7 @@ Toda leitura de dinheiro — saldo de conta, saldo de abertura do período, sald
 ## Requirements
 
 ### Requirement: Saldo de conta a partir das entries
-O saldo de qualquer conta SHALL ser calculado exclusivamente como a soma dos `amount` das entries que a referenciam, aplicando a convenção débito-positivo, sem funções de sinal específicas por tipo de lançamento. O cálculo de saldo MUST NOT depender de `signedImpact()` nem de qualquer regra de sinal invertida específica de cartão.
+O saldo de qualquer conta SHALL ser calculado exclusivamente como a soma dos `amount` das entries que a referenciam, aplicando a convenção débito-positivo. O cálculo de saldo MUST NOT aplicar regra de sinal específica por tipo de lançamento, nem inversão especial para cartão.
 
 #### Scenario: Saldo de conta corrente
 - **WHEN** o saldo de uma conta `ASSET` é solicitado
@@ -15,7 +15,7 @@ O saldo de qualquer conta SHALL ser calculado exclusivamente como a soma dos `am
 
 #### Scenario: Saldo de fatura sem sinal invertido ad-hoc
 - **WHEN** o saldo devido de uma fatura de cartão é solicitado
-- **THEN** o sistema o deriva da soma das entries da conta `LIABILITY` do cartão no período, sem aplicar um `-signedImpact()` especial
+- **THEN** o sistema o deriva da soma das entries da conta `LIABILITY` do cartão no período, sem inversão especial de cartão
 
 ### Requirement: Gasto por categoria a partir das entries
 O gasto (ou receita) de uma categoria em um período SHALL ser derivado da soma das entries da conta `EXPENSE` (ou `INCOME`) correspondente, usando o mesmo mecanismo do saldo de conta. Não SHALL existir um caminho de cálculo separado para gasto por categoria.

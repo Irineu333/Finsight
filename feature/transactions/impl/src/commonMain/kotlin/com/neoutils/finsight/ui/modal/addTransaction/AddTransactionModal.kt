@@ -60,6 +60,16 @@ class AddTransactionModal : ModalBottomSheet() {
         val creditCardsEntry = koinInject<CreditCardsEntry>()
 
         val viewModel = koinViewModel<AddTransactionViewModel>()
+
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        LaunchedEffect(Unit) {
+            viewModel.events.collect { event ->
+                when (event) {
+                    is AddTransactionEvent.ShowError -> snackbarHostState.showSnackbar(event.message.asString())
+                }
+            }
+        }
         val uiState by viewModel.uiState.collectAsState()
 
         var type by remember { mutableStateOf(TransactionType.EXPENSE) }
@@ -295,6 +305,8 @@ class AddTransactionModal : ModalBottomSheet() {
                 )
             }
         }
+
+        SnackbarHost(hostState = snackbarHostState)
     }
 
     @Composable

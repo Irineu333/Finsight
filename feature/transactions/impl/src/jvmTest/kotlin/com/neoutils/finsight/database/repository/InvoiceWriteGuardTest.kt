@@ -8,6 +8,7 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
@@ -66,7 +67,18 @@ class InvoiceWriteGuardTest {
         status = status,
     )
 
+    private var seeded = false
+
+    /** The fixture is shared, so a test may build a repository more than once. */
     private suspend fun repository(status: Invoice.Status): TransactionRepository {
+        if (!seeded) {
+            seeded = true
+            seed()
+        }
+        return transactionRepository(status)
+    }
+
+    private suspend fun seed() {
         db.accountDao().insert(AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET))
         db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
         db.creditCardDao().insert(
@@ -82,7 +94,9 @@ class InvoiceWriteGuardTest {
                 status = InvoiceEntity.Status.OPEN,
             )
         )
-        return TransactionRepository(
+    }
+
+    private fun transactionRepository(status: Invoice.Status) = TransactionRepository(
             database = db,
             transactionDao = db.transactionDao(),
             entryDao = db.entryDao(),
@@ -95,8 +109,7 @@ class InvoiceWriteGuardTest {
             transactionMapper = TransactionMapper(),
             recurringMapper = RecurringMapper(),
             ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
-        )
-    }
+    )
 
     private fun purchase() = TransactionIntent(
         title = "Groceries",
@@ -157,6 +170,36 @@ class InvoiceWriteGuardTest {
             repository(Invoice.Status.PAID).createTransaction(purchase())
         }
         assertEquals(LedgerError.PaidInvoice, error.error)
+    }
+
+    @Test
+    fun `a paid invoice refuses removal, in bulk as well as one by one`() = runTest {
+        val repository = repository(Invoice.Status.OPEN)
+        val purchase = repository.createTransaction(purchase())
+
+        val locked = repository(Invoice.Status.PAID)
+
+        assertFailsWith<InvoiceLockedException> { locked.deleteTransactionById(purchase.id) }
+        // The bulk path is the one an installment deletion takes; it used to reach
+        // the row removal without passing the gate at all.
+        assertFailsWith<InvoiceLockedException> { locked.deleteTransactionsByIds(listOf(purchase.id)) }
+    }
+
+    @Test
+    fun `a closed account refuses new movement`() = runTest {
+        val repository = repository(Invoice.Status.OPEN)
+        db.accountDao().close(1)
+
+        val error = assertFailsWith<ClosedAccountException> {
+            repository.createTransaction(
+                TransactionIntent(
+                    title = "Groceries",
+                    date = LocalDate(2026, 3, 5),
+                    legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+                )
+            )
+        }
+        assertEquals(LedgerError.ClosedAccount, error.error)
     }
 
     @Test

@@ -22,7 +22,6 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
-import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -210,12 +209,7 @@ class TransactionRepository(
      * fuses them) is not the predicate: it happens to be right only for creating
      * an expense, where the two coincide.
      */
-    private suspend fun ensureInvoiceAccepts(legs: List<TransactionLeg>) {
-        val invoiceIds = legs.mapNotNull { it.invoice?.id }.toSet()
-        if (invoiceIds.isEmpty()) return
-
-        val isPayment = legs.deriveIntentLabel() == TransactionLabel.PAYMENT
-
+    private suspend fun ensureInvoicesAccept(invoiceIds: Set<Long>, isPayment: Boolean) {
         invoiceIds.forEach { invoiceId ->
             val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
             when {
@@ -225,14 +219,34 @@ class TransactionRepository(
         }
     }
 
+    private suspend fun ensureInvoiceAccepts(legs: List<TransactionLeg>) = ensureInvoicesAccept(
+        invoiceIds = legs.mapNotNull { it.invoice?.id }.toSet(),
+        isPayment = legs.settlesACard(),
+    )
+
     /**
-     * A payment is the one intent that pays a card from an account: an account leg
-     * and a card leg on the same transaction. Derived, like every other label.
+     * Removing a transaction changes its invoice too, so it passes the same gate.
+     * `isPayment` is false because *un*-paying a closed invoice is not the payment
+     * that settles it — a closed invoice is immutable in both directions.
      */
-    private fun List<TransactionLeg>.deriveIntentLabel(): TransactionLabel = when {
-        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard } -> TransactionLabel.PAYMENT
-        else -> TransactionLabel.EXPENSE
-    }
+    private suspend fun ensureInvoiceAcceptsRemoval(id: Long) = ensureInvoicesAccept(
+        invoiceIds = entryDao.getByTransactionId(id).mapNotNull { it.invoiceId }.toSet(),
+        isPayment = false,
+    )
+
+    /**
+     * Whether this intent pays a card from an account — an account leg and a card
+     * leg on the same transaction.
+     *
+     * This deliberately does **not** return a [TransactionLabel], and is not a
+     * second implementation of the label rule: at this point the entries do not
+     * exist yet (the accounts are resolved by the writer, below), so
+     * `deriveTransactionLabel` — which reads `AccountType` — has nothing to read.
+     * It answers one boolean question the gate needs, from the only thing
+     * available here: the user's own account-vs-card choice.
+     */
+    private fun List<TransactionLeg>.settlesACard(): Boolean =
+        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard }
 
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
@@ -294,17 +308,6 @@ class TransactionRepository(
     }
 
     override suspend fun deleteTransactionById(id: Long) {
-        // Removing a transaction is a change to its invoice too, so it passes the
-        // same gate — a paid invoice cannot lose a purchase behind the user's back.
-        transactionDao.getById(id)?.let {
-            val invoiceIds = entryDao.getByTransactionId(id).mapNotNull { entry -> entry.invoiceId }.toSet()
-            invoiceIds.forEach { invoiceId ->
-                val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
-                if (status.isPaid) throw InvoiceLockedException(LedgerError.PaidInvoice)
-                if (status.isClosed) throw InvoiceLockedException(LedgerError.ClosedInvoice)
-            }
-        }
-
         // The installment bookkeeping and the row removal are one transaction: a
         // failure between them would leave the installment's count and total
         // describing transactions that no longer exist.
@@ -320,6 +323,8 @@ class TransactionRepository(
      * transaction — so a bulk delete stays one unit instead of N.
      */
     private suspend fun removeRow(id: Long) {
+        ensureInvoiceAcceptsRemoval(id)
+
         val transaction = transactionDao.getById(id)
         val installmentId = transaction?.installmentId
 

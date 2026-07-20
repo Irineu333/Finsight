@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "55f24106b54583480f03d1c79fd34dbe",
+    "identityHash": "d452611fbcecdde4d06a37397e631058",
     "entities": [
       {
         "tableName": "transactions",
@@ -500,17 +500,11 @@
       },
       {
         "tableName": "budgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `categoryId` INTEGER NOT NULL, `iconCategoryId` INTEGER NOT NULL, `iconKey` TEXT NOT NULL, `title` TEXT NOT NULL, `amount` REAL NOT NULL, `period` TEXT NOT NULL, `limitType` TEXT NOT NULL, `percentage` REAL, `recurringId` INTEGER, `createdAt` INTEGER NOT NULL, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `iconCategoryId` INTEGER NOT NULL, `iconKey` TEXT NOT NULL, `title` TEXT NOT NULL, `amount` REAL NOT NULL, `period` TEXT NOT NULL, `limitType` TEXT NOT NULL, `percentage` REAL, `recurringId` INTEGER, `createdAt` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "categoryId",
-            "columnName": "categoryId",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -572,31 +566,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_budgets_categoryId",
-            "unique": false,
-            "columnNames": [
-              "categoryId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_budgets_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "categories",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "categoryId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
+        }
       },
       {
         "tableName": "budget_categories",
@@ -1036,7 +1006,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '55f24106b54583480f03d1c79fd34dbe')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd452611fbcecdde4d06a37397e631058')"
     ]
   }
 }

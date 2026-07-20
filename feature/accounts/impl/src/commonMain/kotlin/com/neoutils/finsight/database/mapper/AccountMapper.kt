@@ -13,7 +13,8 @@ class AccountMapper {
             currency = entity.currency,
             iconKey = entity.iconKey,
             isDefault = entity.isDefault,
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
+            isClosed = entity.isClosed,
         )
     }
 
@@ -25,7 +26,8 @@ class AccountMapper {
             currency = domain.currency,
             iconKey = domain.iconKey,
             isDefault = domain.isDefault,
-            createdAt = domain.createdAt
+            createdAt = domain.createdAt,
+            isClosed = domain.isClosed,
         )
     }
 

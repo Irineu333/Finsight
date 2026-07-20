@@ -280,8 +280,14 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `isClosed` INTEGER NOT NULL DEFAULT 0")
 
         // --- 2. Facade back-references (category/card -> its ledger account) ---
-        connection.execSQL("ALTER TABLE `categories` ADD COLUMN `accountId` INTEGER")
-        connection.execSQL("ALTER TABLE `credit_cards` ADD COLUMN `accountId` INTEGER")
+        connection.execSQL(
+            "ALTER TABLE `categories` ADD COLUMN `accountId` INTEGER " +
+                "REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL"
+        )
+        connection.execSQL(
+            "ALTER TABLE `credit_cards` ADD COLUMN `accountId` INTEGER " +
+                "REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL"
+        )
 
         // --- 3. Promote categories to INCOME/EXPENSE accounts (ids disjoint via captured offset) ---
         connection.execSQL("CREATE TEMP TABLE `_cat_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
@@ -465,45 +471,33 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
                 "ON `recurring_occurrences` (`recurringId`, `cycleNumber`)"
         )
 
-        // --- 12. Every facade now has an account, so the column becomes NOT NULL —
-        //         without it a JOIN would silently drop a category never used. ---
-        connection.execSQL(
-            "CREATE TABLE `categories_new` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`name` TEXT NOT NULL, " +
-                "`type` TEXT NOT NULL, " +
-                "`iconKey` TEXT NOT NULL, " +
-                "`createdAt` INTEGER NOT NULL, " +
-                "`accountId` INTEGER NOT NULL, " +
-                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION)"
-        )
-        connection.execSQL(
-            "INSERT INTO `categories_new` (`id`, `name`, `type`, `iconKey`, `createdAt`, `accountId`) " +
-                "SELECT `id`, `name`, `type`, `iconKey`, `createdAt`, `accountId` FROM `categories`"
-        )
-        connection.execSQL("DROP TABLE `categories`")
-        connection.execSQL("ALTER TABLE `categories_new` RENAME TO `categories`")
+        // A facade's `accountId` stays nullable: a category or card that never moved
+        // money has no ledger account yet, and the reads below treat that as "open"
+        // rather than requiring a row to exist before it is needed.
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_categories_accountId` ON `categories` (`accountId`)")
-
-        connection.execSQL(
-            "CREATE TABLE `credit_cards_new` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`name` TEXT NOT NULL, " +
-                "`limit` REAL NOT NULL, " +
-                "`closingDay` INTEGER NOT NULL, " +
-                "`dueDay` INTEGER NOT NULL, " +
-                "`iconKey` TEXT NOT NULL, " +
-                "`createdAt` INTEGER NOT NULL, " +
-                "`accountId` INTEGER NOT NULL, " +
-                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION)"
-        )
-        connection.execSQL(
-            "INSERT INTO `credit_cards_new` (`id`, `name`, `limit`, `closingDay`, `dueDay`, `iconKey`, `createdAt`, `accountId`) " +
-                "SELECT `id`, `name`, `limit`, `closingDay`, `dueDay`, `iconKey`, `createdAt`, `accountId` FROM `credit_cards`"
-        )
-        connection.execSQL("DROP TABLE `credit_cards`")
-        connection.execSQL("ALTER TABLE `credit_cards_new` RENAME TO `credit_cards`")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_credit_cards_accountId` ON `credit_cards` (`accountId`)")
+
+        // --- 12. `budgets.categoryId` was a write-only copy of the first category,
+        //         and its CASCADE destroyed whole budgets. The M2M table is the truth. ---
+        connection.execSQL(
+            "CREATE TABLE `budgets_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`iconCategoryId` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, " +
+                "`period` TEXT NOT NULL, " +
+                "`limitType` TEXT NOT NULL DEFAULT 'FIXED', " +
+                "`percentage` REAL, " +
+                "`recurringId` INTEGER, " +
+                "`createdAt` INTEGER NOT NULL)"
+        )
+        connection.execSQL(
+            "INSERT INTO `budgets_new` (`id`, `iconCategoryId`, `iconKey`, `title`, `amount`, `period`, `limitType`, `percentage`, `recurringId`, `createdAt`) " +
+                "SELECT `id`, `iconCategoryId`, `iconKey`, `title`, `amount`, `period`, `limitType`, `percentage`, `recurringId`, `createdAt` FROM `budgets`"
+        )
+        connection.execSQL("DROP TABLE `budgets`")
+        connection.execSQL("ALTER TABLE `budgets_new` RENAME TO `budgets`")
 
         connection.execSQL("DROP TABLE `_cat_base`")
         connection.execSQL("DROP TABLE `_cc_base`")

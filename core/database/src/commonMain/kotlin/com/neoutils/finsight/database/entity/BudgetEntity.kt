@@ -3,28 +3,18 @@
 package com.neoutils.finsight.database.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-@Entity(
-    tableName = "budgets",
-    foreignKeys = [
-        ForeignKey(
-            entity = CategoryEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE,
-        )
-    ],
-    indices = [Index(value = ["categoryId"])]
-)
+// A budget's categories live in the `budget_categories` M2M table. `categoryId`
+// used to duplicate the first of them, write-only, under a CASCADE — so deleting
+// the category that happened to be listed first destroyed the whole budget, even
+// with the others still alive.
+@Entity(tableName = "budgets")
 data class BudgetEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val categoryId: Long,
     val iconCategoryId: Long,
     val iconKey: String,
     val title: String,

@@ -8,15 +8,22 @@ import androidx.room.Update
 import com.neoutils.finsight.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
+// A category is closed when *its* ledger account is (design D21) — it keeps no
+// copy of the flag. LEFT JOIN, because a category that never moved money has no
+// account yet, and "never used" is not "closed".
+private const val OPEN_CATEGORIES =
+    "SELECT c.* FROM categories c LEFT JOIN accounts a ON a.id = c.accountId " +
+        "WHERE COALESCE(a.isClosed, 0) = 0"
+
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM categories ORDER BY createdAt ASC")
+    @Query(OPEN_CATEGORIES + " ORDER BY c.createdAt ASC")
     fun observeAllCategories(): Flow<List<CategoryEntity>>
 
-    @Query("SELECT * FROM categories ORDER BY createdAt ASC")
+    @Query(OPEN_CATEGORIES + " ORDER BY c.createdAt ASC")
     suspend fun getAllCategories(): List<CategoryEntity>
 
-    @Query("SELECT * FROM categories WHERE type = :type ORDER BY createdAt ASC")
+    @Query(OPEN_CATEGORIES + " AND c.type = :type ORDER BY c.createdAt ASC")
     fun observeCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")

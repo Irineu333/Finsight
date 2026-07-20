@@ -328,11 +328,11 @@
     <string name="delete_transaction_confirm">Delete</string>
 
     <string name="delete_account_title">Delete Account</string>
-    <string name="delete_account_message">Are you sure you want to delete this account? Associated transactions will not be deleted.</string>
+    <string name="delete_account_message">Are you sure you want to delete this account? If it already has movement, its history is preserved and the account simply stops appearing in the lists. No transaction is deleted.</string>
     <string name="delete_account_confirm">Delete</string>
 
     <string name="delete_credit_card_title">Delete Card</string>
-    <string name="delete_credit_card_message">Are you sure you want to delete the card \"%1$s\"? Associated invoices and transactions will also be deleted.</string>
+    <string name="delete_credit_card_message">Are you sure you want to delete the card \"%1$s\"? If it already has movement, its invoices and transactions are preserved and the card simply stops appearing in the lists.</string>
     <string name="delete_credit_card_confirm">Delete</string>
 
     <string name="delete_category_title">Delete Category</string>

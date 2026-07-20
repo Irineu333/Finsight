@@ -328,11 +328,11 @@
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
-    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? As transações associadas não serão excluídas.</string>
+    <string name="delete_account_message">Tem certeza que deseja excluir esta conta? Se ela já tiver movimentação, o histórico é preservado e a conta apenas deixa de aparecer nas listas. Nenhuma transação é excluída.</string>
     <string name="delete_account_confirm">Excluir</string>
 
     <string name="delete_credit_card_title">Excluir Cartão</string>
-    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? As faturas e transações associadas também serão excluídas.</string>
+    <string name="delete_credit_card_message">Tem certeza que deseja excluir o cartão \"%1$s\"? Se ele já tiver movimentação, as faturas e transações são preservadas e o cartão apenas deixa de aparecer nas listas.</string>
     <string name="delete_credit_card_confirm">Excluir</string>
 
     <string name="delete_category_title">Excluir Categoria</string>

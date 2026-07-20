@@ -11,6 +11,8 @@ import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.ClosedFacade
+import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
@@ -114,9 +116,12 @@ class LedgerEntryWriterTest {
     }
 
     @Test
-    fun `given an archived category when written then the write is rejected`() = runTest {
-        // Closure is an account-level invariant: the category leg is a leg like any
-        // other, so editing an old transaction must not post to a closed category.
+    fun `given an archived category when written then the write is accepted`() = runTest {
+        // A category holds no money: closing one strands nothing, so it carries no
+        // invariant a write could break. Refusing here froze editing every old
+        // transaction whose category was archived meanwhile — a rule the ledger
+        // never had. Keeping an archived category out of a *new* transaction is the
+        // selector's job (it lists open ones).
         accountDao.accounts[10L] = AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL", isArchived = true)
         categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
         val expense = TransactionLeg(
@@ -126,7 +131,27 @@ class LedgerEntryWriterTest {
             category = Category(id = 1, name = "Food", icon = CategoryLazyIcon("food"), type = Category.Type.EXPENSE, createdAt = 0),
         )
 
-        assertFailsWith<ClosedAccountException> { writer.writeEntries(transactionId = 1, legs = listOf(expense)) }
+        writer.writeEntries(transactionId = 1, legs = listOf(expense))
+
+        assertEquals(0L, entryDao.inserted.sumOf { it.amount })
+        assertEquals(5000L, entryDao.inserted.first { it.accountId == 10L }.amount)
+    }
+
+    @Test
+    fun `given an archived account when written then the write is rejected`() = runTest {
+        // The monetary case, which does carry an invariant: closing an ASSET
+        // required a zero balance, so a new entry there strands money.
+        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, currency = "BRL", isArchived = true)
+        val expense = TransactionLeg(
+            type = TransactionType.EXPENSE,
+            amount = 50.0,
+            account = assetAccount(1),
+        )
+
+        val error = assertFailsWith<ClosedAccountException> {
+            writer.writeEntries(transactionId = 1, legs = listOf(expense))
+        }
+        assertEquals(LedgerError.ClosedAccount(ClosedFacade.ACCOUNT), error.error)
         assertTrue(entryDao.inserted.isEmpty())
     }
 

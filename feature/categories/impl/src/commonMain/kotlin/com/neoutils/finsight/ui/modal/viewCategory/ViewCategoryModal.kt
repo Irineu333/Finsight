@@ -169,36 +169,41 @@ class ViewCategoryModal(
                 .padding(top = 16.dp, bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedButton(
-                onClick = {
-                    manager.show(
-                        when (content.retireAction) {
-                            RetireAction.DELETE -> DeleteCategoryModal(content.category)
-                            RetireAction.ARCHIVE -> ArchiveCategoryModal(content.category)
-                        }
+            // A category is only archived once it has entries, so retiring an archived
+            // one would only ever re-offer archiving what is already archived. A screen
+            // decides whether it offers the action, never which one it is.
+            if (!content.category.isArchived) {
+                OutlinedButton(
+                    onClick = {
+                        manager.show(
+                            when (content.retireAction) {
+                                RetireAction.DELETE -> DeleteCategoryModal(content.category)
+                                RetireAction.ARCHIVE -> ArchiveCategoryModal(content.category)
+                            }
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.error,
+                    ),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = colorScheme.error,
                     )
-                },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.error,
-                ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = colorScheme.error,
-                )
-            ) {
-                Icon(
-                    imageVector = content.retireAction.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(content.retireAction.label),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                ) {
+                    Icon(
+                        imageVector = content.retireAction.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(content.retireAction.label),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
 
             OutlinedButton(

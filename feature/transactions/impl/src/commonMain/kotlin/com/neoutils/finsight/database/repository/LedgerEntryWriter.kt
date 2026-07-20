@@ -7,6 +7,7 @@ import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.BASE_CURRENCY
@@ -96,22 +97,31 @@ class LedgerEntryWriter(
     }
 
     /**
-     * Closure is an account-level invariant, so it is checked where every leg of
-     * every write passes — not in the screens that happen to offer the action.
-     * A closed account keeps its history; it just receives nothing new.
+     * Closure is checked where every leg of every write passes — not in the screens
+     * that happen to offer the action. A closed account keeps its history; it just
+     * receives nothing new.
+     *
+     * Only the **monetary** facades are checked. Closing an ASSET/LIABILITY
+     * requires a zero balance, so a new entry there strands money; a category
+     * closes at any balance, so writing to it breaks nothing the ledger promised.
+     * Keeping an archived category out of a *new* transaction is a selector's job
+     * (it lists open ones), not an invariant — and enforcing it here is what made
+     * editing an old transaction fail for a reason the ledger never had.
      */
-    private suspend fun Long.orRejectIfClosed(): Long = also { accountId ->
+    private suspend fun Long.orRejectIfClosed(facade: ClosedFacade): Long = also { accountId ->
         if (accountDao.getAccountById(accountId)?.isArchived == true) {
-            throw ClosedAccountException(LedgerError.ClosedAccount)
+            throw ClosedAccountException(LedgerError.ClosedAccount(facade))
         }
     }
 
     private suspend fun realAccountId(leg: TransactionLeg): Long = when (leg.target) {
         TransactionTarget.ACCOUNT ->
-            (leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
+            (leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
+                .orRejectIfClosed(ClosedFacade.ACCOUNT)
 
         TransactionTarget.CREDIT_CARD ->
-            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
+            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
+                .orRejectIfClosed(ClosedFacade.CREDIT_CARD)
     }
 
     private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {
@@ -134,8 +144,8 @@ class LedgerEntryWriter(
      * a facade that *has* an account and one that might.
      */
     private suspend fun categoryAccountId(category: Category): Long =
-        (categoryDao.getCategoryById(category.id)?.accountId
-            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
+        categoryDao.getCategoryById(category.id)?.accountId
+            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
 
     private suspend fun cardAccountId(creditCard: CreditCard): Long =
         creditCardDao.getCreditCardById(creditCard.id)?.accountId

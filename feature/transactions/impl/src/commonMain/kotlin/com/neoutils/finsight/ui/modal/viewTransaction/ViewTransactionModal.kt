@@ -375,31 +375,35 @@ class ViewTransactionModal(
 
         val manager = LocalModalManager.current
 
-        OutlinedButton(
-            onClick = {
-                manager.show(DeleteTransactionModal(uiState.transaction))
-            },
-            modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = colorScheme.error,
-            ),
-            border = BorderStroke(
-                width = 1.dp,
-                color = colorScheme.error,
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(
-                text = stringResource(Res.string.view_transaction_delete),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
+        // Deleting is hidden, not disabled, when it would strand a balance on an
+        // archived account: the same reason the invoice branch above hides both.
+        if (uiState.isRemovable) {
+            OutlinedButton(
+                onClick = {
+                    manager.show(DeleteTransactionModal(uiState.transaction))
+                },
+                modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.error,
+                ),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = colorScheme.error,
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = stringResource(Res.string.view_transaction_delete),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
         if (uiState.isEditable) {

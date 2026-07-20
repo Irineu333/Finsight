@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.domain.model.form
 
+import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -31,7 +32,30 @@ data class TransactionForm(
     val account: Account?,
     val installments: Int = 1
 ) {
+    /**
+     * The **monetary** legs this form points at that are archived, and so would be
+     * refused by the write boundary (`LedgerError.ClosedAccount`).
+     *
+     * A form can only reach this state by being *seeded* from an existing
+     * transaction: the selectors only ever list open items.
+     *
+     * An archived *category* is deliberately absent. It refuses nothing — a
+     * category holds no money, so writing to a closed one strands none — and
+     * keeping it out of a new transaction is the selector's job, not a rule that
+     * should also freeze the edit of an old one.
+     */
+    val archivedSelections: Set<ClosedFacade>
+        get() = buildSet {
+            if (account?.isArchived == true) add(ClosedFacade.ACCOUNT)
+            if (creditCard?.isArchived == true) add(ClosedFacade.CREDIT_CARD)
+        }
+
     fun isValid(): Boolean {
+        // Not a second copy of the closure invariant — that one lives on the
+        // `Account` and is enforced at the write boundary, which stays. This is the
+        // form declining to offer a submit the ledger is known to refuse.
+        if (archivedSelections.isNotEmpty()) return false
+
         if (amount.isEmpty()) return false
         if (amount.moneyToDouble() == 0.0) return false
         if (date.isEmpty()) return false

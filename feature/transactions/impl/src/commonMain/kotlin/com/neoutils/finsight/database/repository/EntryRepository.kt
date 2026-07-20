@@ -4,6 +4,7 @@ import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.EntryWithAccount
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -39,19 +40,14 @@ class EntryRepository(
             iconKey = account.iconKey,
             isDefault = account.isDefault,
             createdAt = account.createdAt,
+            // Closure travels with the account: a leg that drops it reports every
+            // archived account as open, and the rules derived from it go quiet.
+            isArchived = account.isArchived,
         ),
         amount = entry.amount,
         currency = entry.currency,
         invoiceId = entry.invoiceId,
     )
-
-    private fun AccountEntity.Type.toDomain() = when (this) {
-        AccountEntity.Type.ASSET -> AccountType.ASSET
-        AccountEntity.Type.LIABILITY -> AccountType.LIABILITY
-        AccountEntity.Type.INCOME -> AccountType.INCOME
-        AccountEntity.Type.EXPENSE -> AccountType.EXPENSE
-        AccountEntity.Type.EQUITY -> AccountType.EQUITY
-    }
 
     override fun observeLedgerChanges(): Flow<Unit> = entryDao.observeEntryCount().map { }
 

@@ -11,7 +11,10 @@ import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
@@ -238,6 +241,30 @@ class TransactionRepository(
     )
 
     /**
+     * The closure invariant, in the removal direction.
+     *
+     * `LedgerEntryWriter` refuses *new* entries on a closed account; nothing refused
+     * taking them away, so deleting a transaction of an archived account reopened a
+     * balance on it — the exact state `ArchiveAccountUseCase` refuses to create,
+     * reached from the other side. The account then accepts no entries and shows in
+     * no selector, so the user cannot zero it again.
+     *
+     * Only *permanent* accounts (ASSET/LIABILITY) are guarded, mirroring the
+     * precondition to close them. A category closes at any balance, so removing its
+     * movement strands nothing.
+     */
+    private suspend fun ensureClosedAccountsKeepTheirBalance(id: Long) {
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val blocking = entryDao.getByTransactionId(id)
+            .toDomainEntries(accounts)
+            .closedLegBlockingChange() ?: return
+
+        throw ClosedAccountException(
+            LedgerError.ClosedAccountRemoval(ClosedFacade.of(blocking.account.type))
+        )
+    }
+
+    /**
      * Whether this intent pays a card from an account — an account leg and a card
      * leg on the same transaction.
      *
@@ -298,6 +325,11 @@ class TransactionRepository(
         // a purchase be moved *off* a paid invoice, silently removing money from
         // settled history — the rewrite deletes the old entries either way.
         ensureInvoiceAcceptsRemoval(id)
+        // Same two-sided reasoning, for closure: the rewrite takes the old legs away,
+        // so pointing an old transaction at a different account is how its archived
+        // account got its balance back — the new legs are all open, so nothing else
+        // here objected.
+        ensureClosedAccountsKeepTheirBalance(id)
         // Editing is never the payment that settles a closed invoice; that exception
         // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
         ensureInvoicesAccept(
@@ -337,6 +369,7 @@ class TransactionRepository(
      */
     private suspend fun removeRow(id: Long) {
         ensureInvoiceAcceptsRemoval(id)
+        ensureClosedAccountsKeepTheirBalance(id)
 
         val transaction = transactionDao.getById(id)
         val installmentId = transaction?.installmentId

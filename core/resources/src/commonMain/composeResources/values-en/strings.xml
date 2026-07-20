@@ -41,7 +41,10 @@
     <string name="ledger_error_unbalanced">The transaction is not balanced (its legs do not sum to zero).</string>
     <string name="ledger_error_paid_invoice">This invoice has been paid and can no longer be changed.</string>
     <string name="ledger_error_closed_invoice">This invoice is closed. Only its payment can be recorded.</string>
-    <string name="ledger_error_closed_account">This account has been closed and takes no new entries.</string>
+    <string name="ledger_error_closed_account">This account is archived and takes no new entries. Pick another account.</string>
+    <string name="ledger_error_closed_credit_card">This card is archived and takes no new entries. Pick another card.</string>
+    <string name="ledger_error_closed_removal_account">This account is archived. Deleting this transaction would give it a balance back, and an archived account cannot be settled.</string>
+    <string name="ledger_error_closed_removal_credit_card">This card is archived. Deleting this transaction would give it a balance back, and an archived card cannot be settled.</string>
     <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
 
     <!-- Installment errors -->

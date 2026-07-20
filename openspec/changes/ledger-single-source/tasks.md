@@ -455,9 +455,10 @@
 ### 10a. Assimetrias entre as três entidades
 
 - [x] 10a.1 **Cartão engolia o erro e fingia sucesso.** `DeleteCreditCardViewModel:27-35` e `ArchiveCreditCardViewModel:38-46` tinham o `dismissAll()` **fora** da cadeia do `Either`: a sheet fechava em erro e em sucesso, e o `toUiMessage()` (`:42-45`) era **código morto** — nenhum `showError`. Conta (`DeleteAccountViewModel:28-34`) e categoria (`DeleteCategoryViewModel:26-33`) já faziam o oposto. Falha silenciosa em app de finanças é o pior modo de falha; alinhado aos outros dois.
-- [x] 10a.2 **Categoria arquivada aceitava escrita.** `LedgerEntryWriter.orRejectIfClosed()` cobria só `realAccountId` (`:109-115`); `contraAccountId` → `categoryAccountId` (`:136`) escapava. O KDoc de `:98-102` **já declarava** a invariante como "checada onde toda perna de toda escrita passa" — metade das pernas não passava. Editar o valor de uma transação antiga gravava entries novos numa categoria arquivada. Teste em `LedgerEntryWriterTest`. ⚠️ **Efeito colateral aceito:** editar transação de categoria arquivada agora falha. É a invariante valendo; se incomodar, a saída é a tela oferecer trocar a categoria — **não** relaxar a invariante.
+- [x] 10a.2 **Categoria arquivada aceitava escrita.** `LedgerEntryWriter.orRejectIfClosed()` cobria só `realAccountId` (`:109-115`); `contraAccountId` → `categoryAccountId` (`:136`) escapava. O KDoc de `:98-102` **já declarava** a invariante como "checada onde toda perna de toda escrita passa" — metade das pernas não passava. Editar o valor de uma transação antiga gravava entries novos numa categoria arquivada. Teste em `LedgerEntryWriterTest`. ~~⚠️ **Efeito colateral aceito:** editar transação de categoria arquivada agora falha. É a invariante valendo; se incomodar, a saída é a tela oferecer trocar a categoria — **não** relaxar a invariante.~~ **REVERTIDO na §10c.4 (decisão do usuário).** O "efeito colateral aceito" era o bug: tratou "conta encerrada não recebe lançamento" como regra cega, sem checar *por que* ela existe. Categoria não é monetária — encerrá-la não prende dinheiro — então a invariante nunca se aplicou a ela. Ver §10c.
 - [x] 10a.3 **Nome único ignorava arquivados, nas três.** Os três `Validate*NameUseCase` varriam listas que o DAO já filtra por `isArchived = 0` (`CategoryDao:9-11`, `AccountDao:20-21`, `CreditCardDao:11-12`), então dava para criar homônimo de um arquivado. Arquivar preserva o nome e o histórico continua renderizando — dois "Mercado" lado a lado, um deles cinza, não é um nome. Trocados para as versões *including closed*; contas ganharam `getAllAccountsIncludingClosed()`.
 - [x] 10a.4 **Atalho de navegação para conta/cartão arquivado na recorrência.** `ViewRecurringModal:200-231` navegava para `AccountsRoute`/`CreditCardsRoute` de item arquivado — telas que não o listam. `ViewTransactionModal:225-285` **já tinha resolvido** o mesmo caso (`onClick = if (isArchived) null else {...}`); a recorrência não seguiu. Mesma forma aplicada, mesmo comentário.
+- [x] 10a.5 **Ação de retirar oferecida a categoria já arquivada.** `ViewCategoryModal.DetailActions` mostrava o botão de arquivar/excluir independentemente de `isArchived`. Como `retireActionOf` só manda `ARCHIVE` quando há lançamentos, e arquivar é irreversível na UI (não há desarquivar em `feature/categories`), o botão de uma categoria arquivada só podia reofertar arquivar o que já está arquivado — e como ela sempre tem lançamentos, nenhum caminho de exclusão se perde ao escondê-lo. Botão escondido para `isArchived`; **Editar permanece**, que é o que dá saída ao caso da 10a.2 (renomear/recategorizar continua possível). Consumidor decidindo *se* oferece a ação, nunca *qual* ela é — a regra segue em `retireActionOf`.
 
 ### 10b. Recorrência órfã — o desenho, e o que a auditoria errou
 
@@ -482,3 +483,33 @@
   - **Julgamento (decisão do usuário):** recorrência quebrada **continua ativa** com estado visível, em vez de auto-pausar. Auto-pausar é mais limpo, mas é outra mudança de estado sem o usuário pedir — o mesmo pecado, de outra cor.
   - **Aceito:** a guarda conta recorrências **inativas** também (ainda referenciam a conta e podem ser reativadas), então uma recorrência esquecida bloqueia a exclusão.
   - **Aceito:** a string é **neutra** ("Há recorrências que dependem disto...") porque a mesma `AccountError` serve conta e cartão — `DeleteCreditCardUseCase` já usava `AccountError.HAS_TRANSACTIONS` antes. Texto por entidade pediria um `CreditCardError` próprio.
+
+### 10c. Encerramento sobre transações — a matriz completa, e a reversão da 10a.2
+
+> Continuação direta da §10a/§10b, aberta quando o usuário achou testando que dava
+> para **mudar o saldo de uma conta arquivada** por três portas diferentes. A §10a
+> tinha coberto excluir *a entidade*; faltava o encerramento agindo sobre as
+> **transações** que a referenciam. A auditoria anterior generalizou o mecanismo
+> ("conta encerrada não recebe lançamento") sem checar a **razão** dele — e foi a
+> razão que decidiu tudo aqui.
+>
+> **Princípio (decisão do usuário).** O encerramento existe para **não prender
+> dinheiro**. Arquivar ASSET/LIABILITY exige saldo zero; só essas duas guardam
+> saldo. Logo:
+> - **conta/cartão arquivado** → transação **travada por inteiro**: adicionar,
+>   editar e excluir, porque as três mexem no saldo de uma conta que não pode ser
+>   acertada de volta;
+> - **categoria arquivada** → **nada travado**: não é monetária, seu saldo é total
+>   de período. Editar e excluir seguem livres; só **adicionar** some — e isso é
+>   papel do **seletor** (lista só as abertas), não de invariante.
+>
+> **Dono único.** A regra mora no razão (`List<Entry>.closedLegBlockingChange()`,
+> `core/model`), derivada, não persistida. Data aplica (`LedgerEntryWriter` +
+> dois guards no `TransactionRepository`); UI consome (`isEditable`/`isRemovable`/
+> `isDeletable`) — nenhuma reescreve o predicado. `ClosedFacade` nomeia **só** as
+> fachadas monetárias: nomear categoria seria inventar um caso que não acontece.
+
+- [x] 10c.1 **Excluir transação de conta/cartão arquivado reabria saldo.** `ArchiveAccountUseCase` só arquiva ASSET/LIABILITY com saldo zero; o encerramento só era guardado na escrita de *novas* entries (`LedgerEntryWriter`), nada na remoção. Apagar devolvia saldo — o estado que arquivar recusa criar, pelo outro lado — e sem conserto (conta não aceita lançamento nem aparece em seletor). `ensureClosedAccountsKeepTheirBalance` em `removeRow`, ao lado do guard de fatura, então unitário e bulk de parcelamento passam pelo mesmo ponto. `LedgerError.ClosedAccountRemoval`. Teste em `InvoiceWriteGuardTest`, verificado que falha sem o guard. Achados no caminho: `EntryRepository` montava `Account` sem `isArchived` (toda perna reportava conta aberta); `DeleteTransactionViewModel` engolia o erro (mesma 10a.1). `AccountEntity.Type.toDomain()` tinha duas cópias — foi para `:core:database`.
+- [x] 10c.2 **Editar transação retargetando para fora da conta arquivada.** A porta mais afiada: `updateTransaction` → `rewriteEntries` apaga as pernas antigas e escreve outras. Apontar uma transação antiga para outra conta **muda o saldo da arquivada sem escrever nada nela** — e toda perna nova está aberta, então o writer não objetava. `updateTransaction` passa a chamar `ensureClosedAccountsKeepTheirBalance`, ao lado do `ensureInvoiceAcceptsRemoval` que já estava lá pelo mesmo raciocínio de "dois lados". `closedLegBlockingRemoval` → `closedLegBlockingChange` (vale editar e excluir). UI: `isEditable` ganha o gate — declarado **antes** dele, porque inicializador de `val` roda em ordem e lido de cima leria `false` sempre. Teste que retargeta e afirma que o saldo não se moveu.
+- [x] 10c.3 **UI: esconder excluir/editar em vez de só recusar.** `ViewTransactionModal` esconde Excluir quando `!isRemovable` e Editar quando `!isEditable`; `ViewAdjustmentModal` soma `closedLegBlockingChange` ao gate de deletar que já tinha. Escondido, não desabilitado — a mesma forma que o modal já usa com fatura fechada. **Efeito colateral aceito (por ora):** transação de conta arquivada não mostra nenhuma das duas ações, e a área fica vazia sem texto (fatura fechada mostra um aviso; esta não, porque o usuário pediu para não exibir mensagem de erro na UI). Se incomodar, uma linha discreta nesse caso resolve.
+- [x] 10c.4 **Reverte o lado "categoria" da 10a.2.** A 10a.2 fez `LedgerEntryWriter.orRejectIfClosed` cobrir a perna de categoria, congelando a edição de toda transação cuja categoria foi arquivada depois — por uma invariante que **não existe** (categoria não guarda saldo). O writer deixa de checar a perna de categoria; `ClosedFacade` perde `CATEGORY` (e a string `ledger_error_closed_category` sai órfã); `TransactionForm.archivedSelections` para de sinalizar categoria. O teste da 10a.2 em `LedgerEntryWriterTest` inverte de "rejeita" para "aceita", e ganha o par monetário que **continua** rejeitando (conta arquivada). Varredura confirmou que nada escapa: toda exclusão passa por `removeRow`, `rewriteEntries` tem caller único e guardado, e os seletores de adicionar (transação, recorrência, orçamento) usam as listas filtradas.

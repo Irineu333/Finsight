@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
@@ -58,6 +59,9 @@ class InvoiceWriteGuardTest {
 
     private val payer = Account(id = 1, name = "Checking", type = AccountType.ASSET)
 
+    /** A second open account, so an edit has somewhere to retarget to. */
+    private val other = Account(id = 3, name = "Savings", type = AccountType.ASSET)
+
     private fun invoice(status: Invoice.Status) = Invoice(
         id = 1,
         creditCard = card,
@@ -81,6 +85,7 @@ class InvoiceWriteGuardTest {
     private suspend fun seed() {
         db.accountDao().insert(AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET))
         db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
+        db.accountDao().insert(AccountEntity(id = 3, name = "Savings", type = AccountEntity.Type.ASSET))
         db.creditCardDao().insert(
             CreditCardEntity(id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 2)
         )
@@ -186,6 +191,87 @@ class InvoiceWriteGuardTest {
     }
 
     @Test
+    fun `a closed account refuses removal, in bulk as well as one by one`() = runTest {
+        // The inconsistency this closes: archiving an ASSET/LIABILITY requires a zero
+        // balance, and nothing stopped a removal from reopening one afterwards. The
+        // account then takes no entries and shows in no selector, so the balance
+        // could never be zeroed again.
+        val repository = repository(Invoice.Status.OPEN)
+        val spend = repository.createTransaction(
+            TransactionIntent(
+                title = "Groceries",
+                date = LocalDate(2026, 3, 5),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+            )
+        )
+        db.accountDao().close(1)
+
+        val error = assertFailsWith<ClosedAccountException> {
+            repository.deleteTransactionById(spend.id)
+        }
+        assertEquals(LedgerError.ClosedAccountRemoval(ClosedFacade.ACCOUNT), error.error)
+        assertFailsWith<ClosedAccountException> {
+            repository.deleteTransactionsByIds(listOf(spend.id))
+        }
+        assertEquals(2, repository.getTransactionById(spend.id)?.entries?.size)
+    }
+
+    @Test
+    fun `a closed account refuses having a transaction retargeted off it`() = runTest {
+        // The sharpest form of the hole: no removal, no write to the closed account —
+        // the edit just points the leg at a different account. The rewrite deletes
+        // the old legs, so the archived account's balance changes without a single
+        // entry ever being written to it, and every new leg is open so the write
+        // boundary waves it through.
+        val repository = repository(Invoice.Status.OPEN)
+        val spend = repository.createTransaction(
+            TransactionIntent(
+                title = "Groceries",
+                date = LocalDate(2026, 3, 5),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+            )
+        )
+        db.accountDao().close(1)
+
+        val error = assertFailsWith<ClosedAccountException> {
+            repository.updateTransaction(
+                id = spend.id,
+                title = "Moved",
+                date = LocalDate(2026, 3, 6),
+                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = other),
+            )
+        }
+        assertEquals(LedgerError.ClosedAccountRemoval(ClosedFacade.ACCOUNT), error.error)
+        // The legs are untouched: the balance the archive precondition guaranteed
+        // is still there.
+        assertEquals(-1000L, db.entryDao().balanceOf(1))
+    }
+
+    @Test
+    fun `a closed category does not block removal`() = runTest {
+        // A category closes at any balance — its balance is a period total, not money
+        // sitting anywhere — so removing its movement strands nothing. Guarding it
+        // would make the guard a blanket rule instead of the mirror of the
+        // archive precondition.
+        val repository = repository(Invoice.Status.OPEN)
+        val spend = repository.createTransaction(
+            TransactionIntent(
+                title = "Groceries",
+                date = LocalDate(2026, 3, 5),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+            )
+        )
+        // Close the EXPENSE bucket the writer synthesized for the uncategorized leg.
+        val expenseAccountId = db.entryDao().getEntriesWithAccountByTransactionId(spend.id)
+            .first { it.account.type == AccountEntity.Type.EXPENSE }
+            .account.id
+        db.accountDao().close(expenseAccountId)
+
+        repository.deleteTransactionById(spend.id)
+        assertEquals(null, repository.getTransactionById(spend.id))
+    }
+
+    @Test
     fun `a paid invoice cannot have a purchase edited off it`() = runTest {
         val repository = repository(Invoice.Status.OPEN)
         val purchase = repository.createTransaction(purchase())
@@ -220,7 +306,7 @@ class InvoiceWriteGuardTest {
                 )
             )
         }
-        assertEquals(LedgerError.ClosedAccount, error.error)
+        assertEquals(LedgerError.ClosedAccount(ClosedFacade.ACCOUNT), error.error)
     }
 
     @Test

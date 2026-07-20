@@ -177,4 +177,40 @@ class LedgerTest {
         assertFalse(AccountType.INCOME.isPermanent)
         assertFalse(AccountType.EXPENSE.isPermanent)
     }
+
+    // --- closedLegBlockingChange: the delete gate, shared by the write boundary
+    // and by the screens that decide whether to offer deleting.
+
+    private fun archived(type: AccountType, id: Long) = Entry(
+        account = Account(id = id, name = "acc$id", type = type, isArchived = true),
+        amount = 0,
+    )
+
+    @Test
+    fun `entries on open accounts block no removal`() {
+        val entries = listOf(entry(AccountType.ASSET, -5000), entry(AccountType.EXPENSE, 5000))
+        assertEquals(null, entries.closedLegBlockingChange())
+    }
+
+    @Test
+    fun `an archived asset leg blocks the removal`() {
+        // Archiving it required a zero balance; taking the movement away reopens one.
+        val entries = listOf(archived(AccountType.ASSET, 1), entry(AccountType.EXPENSE, 5000))
+        assertEquals(1L, entries.closedLegBlockingChange()?.account?.id)
+    }
+
+    @Test
+    fun `an archived liability leg blocks the removal`() {
+        val entries = listOf(archived(AccountType.LIABILITY, 2), entry(AccountType.ASSET, 5000))
+        assertEquals(2L, entries.closedLegBlockingChange()?.account?.id)
+    }
+
+    @Test
+    fun `an archived category leg blocks nothing`() {
+        // A category archives at any balance, so its movement strands nothing. Without
+        // this the gate would be a blanket "archived", not the mirror of the
+        // precondition that let the account close.
+        val entries = listOf(entry(AccountType.ASSET, -5000), archived(AccountType.EXPENSE, 3))
+        assertEquals(null, entries.closedLegBlockingChange())
+    }
 }

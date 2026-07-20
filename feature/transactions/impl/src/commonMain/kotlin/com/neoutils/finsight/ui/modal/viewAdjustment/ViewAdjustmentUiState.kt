@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.closedLegBlockingChange
 
 sealed interface ViewAdjustmentUiState {
 
@@ -30,10 +31,15 @@ sealed interface ViewAdjustmentUiState {
          * delete its adjustment. The invariant itself lives at the write boundary;
          * this only keeps the UI from proposing what would be refused.
          *
-         * An account adjustment has no invoice and is always deletable; a card one
-         * whose invoice did not resolve fails **closed**, so the screen hides the
-         * action rather than offering to delete what it could not verify.
+         * An account adjustment has no invoice; a card one whose invoice did not
+         * resolve fails **closed**, so the screen hides the action rather than
+         * offering to delete what it could not verify.
+         *
+         * Either way the removal must also not reopen a balance on an archived
+         * account — an adjustment is exactly the kind of transaction that zeroed
+         * one before it was archived.
          */
-        val isDeletable = if (isCardTarget) invoice?.status?.isEditable == true else true
+        val isDeletable = transaction.entries.closedLegBlockingChange() == null &&
+            if (isCardTarget) invoice?.status?.isEditable == true else true
     }
 }

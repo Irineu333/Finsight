@@ -20,12 +20,10 @@ import com.neoutils.finsight.resources.add_installment_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
 import com.neoutils.finsight.util.UiText
 import kotlin.time.Clock
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,8 +42,6 @@ class AddInstallmentViewModel(
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
     private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
 
-    private val _events = Channel<AddInstallmentEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
 
     private val categories = categoryRepository.observeAllCategories()
 
@@ -129,13 +125,11 @@ class AddInstallmentViewModel(
             installments = installments,
         ).onLeft {
             crashlytics.recordException(it)
-            _events.send(
-                AddInstallmentEvent.ShowError(
-                    when (it) {
-                        is InstallmentException -> it.error.toUiText()
-                        else -> UiText.Res(Res.string.add_installment_error_generic)
-                    }
-                )
+            modalManager.showError(
+                when (it) {
+                    is InstallmentException -> it.error.toUiText()
+                    else -> UiText.Res(Res.string.add_installment_error_generic)
+                }
             )
         }.onRight {
             analytics.logEvent(CreateInstallments(form, count = installments))

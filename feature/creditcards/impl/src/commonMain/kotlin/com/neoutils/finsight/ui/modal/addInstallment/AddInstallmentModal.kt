@@ -57,7 +57,6 @@ class AddInstallmentModal : ModalBottomSheet() {
         val modalManager = LocalModalManager.current
         val categoriesEntry = koinInject<CategoriesEntry>()
 
-        val snackbarHostState = remember { SnackbarHostState() }
 
         val title = rememberTextFieldState()
         val amount = rememberTextFieldState()
@@ -66,15 +65,6 @@ class AddInstallmentModal : ModalBottomSheet() {
         var selectedCategory by remember { mutableStateOf<Category?>(null) }
         var installments by remember { mutableStateOf(2) }
 
-        LaunchedEffect(Unit) {
-            viewModel.events.collect { event ->
-                when (event) {
-                    is AddInstallmentEvent.ShowError -> {
-                        snackbarHostState.showSnackbar(event.message.asString())
-                    }
-                }
-            }
-        }
 
         val form by remember {
             derivedStateOf {
@@ -260,12 +250,6 @@ class AddInstallmentModal : ModalBottomSheet() {
                 }
             }
 
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-            )
         }
     }
 }

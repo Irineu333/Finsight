@@ -263,7 +263,9 @@
 
   **Propagação.** O erro morria em `crashlytics.recordException` e a folha simplesmente não fechava — o mesmo defeito que a 8.8 registra ter corrigido **para os modais de transação**, e que eu não levei para os outros. Quinta reincidência do padrão "corrigi a instância, não varri a classe".
 
-  Desta vez a correção é estrutural em vez de por modal: `ModalManager` ganhou um canal de erro e o `ModalManagerHost` um snackbar. Qualquer modal chama `modalManager.showError(uiText)` e o usuário vê — sem canal de eventos por ViewModel, e sem que um modal esquecido volte a ficar mudo. As seis ViewModels de excluir/encerrar passam por ele.
+  Desta vez a correção é estrutural em vez de por modal: `ModalManager.showError(uiText)` abre uma **modal de erro** (`ErrorModal`) sobre a que falhou. Qualquer modal chama um método e o usuário vê — sem canal de eventos por ViewModel, e sem que um modal esquecido volte a ficar mudo. A modal que recusou fica aberta atrás de propósito: os motivos são acionáveis (um saldo a resolver, uma categoria em uso), então fechar o erro devolve o usuário à ação.
+
+  **Escolha de forma (usuário):** modal de erro, não snackbar. Uma 1ª versão usava snackbar. Ao trocar, os **oito** modais do app convergiram para o mesmo mecanismo — inclusive `AddInstallmentModal` e `TransferBetweenAccountsModal`, que já traziam da main um canal de eventos e um snackbar próprios. Os quatro `*Event.kt` que existiam só para carregar `ShowError` foram removidos. ⚠️ Esses dois últimos são **anteriores a esta change**: converti para o app não ficar com dois padrões de erro, mas é mudança fora do escopo original e pode ser revertida sem prejuízo ao resto.
 
 - [x] 8.14 **Encerrar deixa de gerar baixa automática; passa a exigir saldo zero (decisão do usuário, revoga a D13 nesse ponto).** A D13 e a spec `account-lifecycle` prescreviam que encerrar com saldo ≠ 0 gerasse um lançamento de baixa contra reconciliação. O usuário recusou: é "mágica" que pode contrariar a expectativa dele.
 

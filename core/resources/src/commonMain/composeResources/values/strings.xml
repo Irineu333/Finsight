@@ -209,6 +209,8 @@
     <string name="retire_action_delete">Excluir</string>
     <string name="retire_action_close">Encerrar</string>
     <string name="retire_action_error_generic">Não foi possível concluir a ação.</string>
+    <string name="error_modal_title">Não foi possível concluir</string>
+    <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <string name="accounts_filter_category">Categoria</string>

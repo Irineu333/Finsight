@@ -74,15 +74,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
@@ -290,7 +290,7 @@ private fun InstallmentsContent(
                                         modalManager.show(
                                             DeleteInstallmentModal(
                                                 installment = selected.installment,
-                                                operations = selected.operations,
+                                                transactions = selected.transactions,
                                             )
                                         )
                                     },
@@ -337,17 +337,17 @@ private fun InstallmentsContent(
                     }
 
                     items(
-                        items = uiState.filteredOperations,
-                        key = Operation::id,
-                    ) { operation ->
-                        operation.toOperationUi()?.let { operationUi ->
-                        OperationCard(
-                            operation = operationUi,
+                        items = uiState.filteredTransactions,
+                        key = Transaction::id,
+                    ) { transaction ->
+                        transaction.toTransactionUi()?.let { transactionUi ->
+                        TransactionCard(
+                            transaction = transactionUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
-                            amountDecoration = when (operation.targetInvoice?.status) {
+                            amountDecoration = when (transaction.targetInvoice?.status) {
 
                                 Invoice.Status.PAID,
                                 Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
@@ -355,13 +355,13 @@ private fun InstallmentsContent(
                                 else -> TextDecoration.None
                             },
                             onClick = {
-                                when (operationUi.direction) {
+                                when (transactionUi.direction) {
                                     TransactionType.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
                                     }
 
                                     else -> {
-                                        detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                                        detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                                     }
                                 }
                             },
@@ -411,7 +411,7 @@ private fun EmptyInstallmentsState(
 
 @Composable
 private fun InstallmentPager(
-    installments: List<InstallmentWithOperationsUi>,
+    installments: List<InstallmentWithTransactionsUi>,
     selectedIndex: Int,
     onSelectInstallment: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -450,7 +450,7 @@ private fun InstallmentPager(
 
 @Composable
 private fun InstallmentSummaryCard(
-    ui: InstallmentWithOperationsUi,
+    ui: InstallmentWithTransactionsUi,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current

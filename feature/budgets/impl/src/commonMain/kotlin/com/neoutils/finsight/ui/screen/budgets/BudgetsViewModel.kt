@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.balancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -25,7 +25,7 @@ import kotlin.time.ExperimentalTime
 
 class BudgetsViewModel(
     private val budgetRepository: IBudgetRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val recurringRepository: IRecurringRepository,
     private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
@@ -35,10 +35,10 @@ class BudgetsViewModel(
 
     val uiState = combine(
         budgetRepository.observeAllBudgets(),
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
         selectedMonth,
-    ) { budgets, operations, recurringList, selectedMonth ->
+    ) { budgets, transactions, recurringList, selectedMonth ->
         val systemToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val today = if (selectedMonth == systemToday.yearMonth) {
             systemToday
@@ -53,7 +53,7 @@ class BudgetsViewModel(
             budgets = budgets,
             categoryBalances = categoryBalances,
             recurringList = recurringList,
-            operations = operations,
+            transactions = transactions,
             today = today,
         )
         if (budgetProgress.isEmpty()) {

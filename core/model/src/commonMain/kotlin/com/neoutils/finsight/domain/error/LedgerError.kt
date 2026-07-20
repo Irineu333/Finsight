@@ -7,21 +7,21 @@ import com.neoutils.finsight.resources.ledger_error_unbalanced
 import com.neoutils.finsight.util.UiText
 
 sealed class LedgerError(val message: String) {
-    data object Unbalanced : LedgerError("Operation entries must sum to zero for every currency.")
+    data object Unbalanced : LedgerError("Transaction entries must sum to zero for every currency.")
 
     /** A paid invoice is settled history: nothing about it may change. */
     data object PaidInvoice : LedgerError("A paid invoice cannot be changed.")
 
     /**
      * A closed invoice takes no new spending, but it must still accept the payment
-     * that settles it — the one operation that is *about* closing the cycle.
+     * that settles it — the one transaction that is *about* closing the cycle.
      */
     data object ClosedInvoice : LedgerError("A closed invoice only accepts its own payment.")
 }
 
-class UnbalancedOperationException(val error: LedgerError) : Exception(error.message)
+class UnbalancedTransactionException(val error: LedgerError) : Exception(error.message)
 
-/** Raised at the write boundary when an invoice's status forbids the operation. */
+/** Raised at the write boundary when an invoice's status forbids the transaction. */
 class InvoiceLockedException(val error: LedgerError) : Exception(error.message)
 
 fun LedgerError.toUiText() = when (this) {

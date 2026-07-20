@@ -36,8 +36,8 @@ import com.neoutils.finsight.ui.component.CategorySpendingCard
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.report.ReportRoute
 import com.neoutils.finsight.ui.screen.report.toParams
 import com.neoutils.finsight.util.LocalDateFormats
@@ -137,10 +137,10 @@ private fun ReportViewerContent(
         sectionSpendingByCategory = stringResource(Res.string.report_viewer_spending_by_category),
         sectionIncomeByCategory = stringResource(Res.string.report_viewer_income_by_category),
         sectionTransactions = stringResource(Res.string.report_viewer_transactions),
-        operationTransfer = stringResource(Res.string.operation_card_transfer),
-        operationPayment = stringResource(Res.string.operation_card_payment),
-        operationBalanceAdjustment = stringResource(Res.string.operation_card_balance_adjustment),
-        operationInvoiceAdjustment = stringResource(Res.string.operation_card_invoice_adjustment),
+        transactionTransfer = stringResource(Res.string.transaction_card_transfer),
+        transactionPayment = stringResource(Res.string.transaction_card_payment),
+        transactionBalanceAdjustment = stringResource(Res.string.transaction_card_balance_adjustment),
+        transactionInvoiceAdjustment = stringResource(Res.string.transaction_card_invoice_adjustment),
         columnCategory = stringResource(Res.string.report_output_column_category),
         columnTransaction = stringResource(Res.string.report_output_column_transaction),
         columnAmount = stringResource(Res.string.report_output_column_amount),
@@ -273,7 +273,7 @@ private fun ReportViewerContent(
                                 )
                             }
 
-                            state.transactions.forEach { (date, operations) ->
+                            state.transactions.forEach { (date, transactions) ->
                                 item(key = "date_$date") {
                                     Text(
                                         text = dateFormats.formatRelativeDate(date),
@@ -285,20 +285,20 @@ private fun ReportViewerContent(
                                     )
                                 }
 
-                                items(operations, key = { "op_${it.id}" }) { operation ->
-                                    operation.toOperationUi()?.let { operationUi ->
-                                    OperationCard(
-                                        operation = operationUi,
+                                items(transactions, key = { "op_${it.id}" }) { transaction ->
+                                    transaction.toTransactionUi()?.let { transactionUi ->
+                                    TransactionCard(
+                                        transaction = transactionUi,
                                         modifier = Modifier
                                             .animateItem()
                                             .padding(horizontal = 16.dp),
                                         onClick = {
                                             when {
-                                                operationUi.direction.isAdjustment -> detailController.show(
-                                                    transactionsEntry.viewAdjustmentModal(operation.id)
+                                                transactionUi.direction.isAdjustment -> detailController.show(
+                                                    transactionsEntry.viewAdjustmentModal(transaction.id)
                                                 )
 
-                                                else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                                                else -> detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                                             }
                                         },
                                     )

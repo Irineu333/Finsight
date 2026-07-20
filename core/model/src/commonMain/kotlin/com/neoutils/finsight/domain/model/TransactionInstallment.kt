@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.model
 
-data class OperationInstallment(
+data class TransactionInstallment(
     val instance: Installment,
     val number: Int,
 ) {

@@ -26,7 +26,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class DashboardViewModel(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
@@ -69,7 +69,7 @@ class DashboardViewModel(
 
     private val viewingState: Flow<DashboardUiState> = combine(
         invoices,
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         creditCardRepository.observeAllCreditCards(),
         accountRepository.observeAllAccounts(),
         budgetRepository.observeAllBudgets(),
@@ -77,12 +77,12 @@ class DashboardViewModel(
         recurringOccurrenceRepository.observeAllOccurrences(),
         dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, operations, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+    ) { invoices, transactions, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         val items = buildDashboardViewingUseCase(
             input = DashboardComponentsInput(
-                operations = operations,
+                transactions = transactions,
                 creditCards = creditCards,
                 invoicesByCreditCardId = invoices,
                 accounts = accounts,

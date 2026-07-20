@@ -26,7 +26,7 @@ class CalculateReportCategorySpendingUseCase(
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         val categoryType = accountType(transactionType)
-        // The perspective is expressed as the sibling legs an operation must have:
+        // The perspective is expressed as the sibling legs an transaction must have:
         // its asset accounts (all, when none selected) or the card's ledger account.
         val siblingAccountIds = when (perspective) {
             is ReportPerspective.AccountPerspective ->

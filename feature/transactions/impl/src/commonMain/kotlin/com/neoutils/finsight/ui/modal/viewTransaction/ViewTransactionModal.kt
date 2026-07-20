@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -52,7 +52,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
-class ViewOperationModal(
+class ViewTransactionModal(
     private val transactionId: Long,
     private val perspective: TransactionPerspective? = null,
 ) : AdaptiveModal() {
@@ -61,7 +61,7 @@ class ViewOperationModal(
     override fun DetailContent() {
 
         val formatter = LocalCurrencyFormatter.current
-        val viewModel = koinViewModel<ViewOperationViewModel> {
+        val viewModel = koinViewModel<ViewTransactionViewModel> {
             parametersOf(transactionId, perspective)
         }
 
@@ -74,8 +74,8 @@ class ViewOperationModal(
         LaunchedEffect(viewModel) {
             viewModel.events.collect { event ->
                 when (event) {
-                    is ViewOperationEvent.Dismiss -> detailController.dismiss()
-                    is ViewOperationEvent.OpenRecurring -> detailController.show(
+                    is ViewTransactionEvent.Dismiss -> detailController.dismiss()
+                    is ViewTransactionEvent.OpenRecurring -> detailController.show(
                         recurringEntry.viewRecurringModal(event.recurring.id)
                     )
                 }
@@ -83,9 +83,9 @@ class ViewOperationModal(
         }
 
         when (val state = uiState) {
-            ViewOperationUiState.Loading -> DetailLoadingState()
-            ViewOperationUiState.Error -> DetailErrorState()
-            is ViewOperationUiState.Content -> ContentBody(
+            ViewTransactionUiState.Loading -> DetailLoadingState()
+            ViewTransactionUiState.Error -> DetailErrorState()
+            is ViewTransactionUiState.Content -> ContentBody(
                 uiState = state,
                 formatter = formatter,
                 detailController = detailController,
@@ -97,11 +97,11 @@ class ViewOperationModal(
 
     @Composable
     private fun ContentBody(
-        uiState: ViewOperationUiState.Content,
+        uiState: ViewTransactionUiState.Content,
         formatter: com.neoutils.finsight.extension.CurrencyFormatter,
         detailController: com.neoutils.finsight.ui.component.DetailPaneController,
         navController: androidx.navigation.NavController,
-        viewModel: ViewOperationViewModel,
+        viewModel: ViewTransactionViewModel,
     ) {
         Column(
             modifier = Modifier
@@ -114,7 +114,7 @@ class ViewOperationModal(
             ) {
                 Box {
                     Surface(
-                        color = uiState.operationColor().copy(alpha = 0.2f),
+                        color = uiState.transactionColor().copy(alpha = 0.2f),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(64.dp),
                     ) {
@@ -122,7 +122,7 @@ class ViewOperationModal(
                             Icon(
                                 painter = category.icon(),
                                 contentDescription = null,
-                                tint = uiState.operationColor(),
+                                tint = uiState.transactionColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -130,14 +130,14 @@ class ViewOperationModal(
                         } ?: run {
                             Icon(
                                 imageVector = when {
-                                    uiState.label == OperationLabel.PAYMENT -> Icons.Default.Payment
-                                    uiState.label == OperationLabel.TRANSFER -> Icons.Default.SwapHoriz
+                                    uiState.label == TransactionLabel.PAYMENT -> Icons.Default.Payment
+                                    uiState.label == TransactionLabel.TRANSFER -> Icons.Default.SwapHoriz
                                     uiState.direction == TransactionType.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
                                     uiState.direction == TransactionType.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
                                     else -> Icons.Default.Tune
                                 },
                                 contentDescription = null,
-                                tint = uiState.operationColor(),
+                                tint = uiState.transactionColor(),
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)
@@ -145,7 +145,7 @@ class ViewOperationModal(
                         }
                     }
 
-                    if (uiState.isCardTarget || uiState.label == OperationLabel.PAYMENT) {
+                    if (uiState.isCardTarget || uiState.label == TransactionLabel.PAYMENT) {
                         Surface(
                             color = colorScheme.surfaceVariant,
                             shape = CircleShape,
@@ -168,21 +168,21 @@ class ViewOperationModal(
                 Column {
                     Text(
                         text = when (uiState.direction) {
-                            TransactionType.INCOME -> stringResource(Res.string.view_operation_type_income)
-                            TransactionType.EXPENSE -> stringResource(Res.string.view_operation_type_expense)
-                            TransactionType.ADJUSTMENT -> stringResource(Res.string.view_operation_type_adjustment)
+                            TransactionType.INCOME -> stringResource(Res.string.view_transaction_type_income)
+                            TransactionType.EXPENSE -> stringResource(Res.string.view_transaction_type_expense)
+                            TransactionType.ADJUSTMENT -> stringResource(Res.string.view_transaction_type_adjustment)
                         },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = uiState.operationColor()
+                        color = uiState.transactionColor()
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = when (uiState.label) {
-                            OperationLabel.PAYMENT -> stringResource(Res.string.operation_card_payment)
-                            OperationLabel.TRANSFER -> stringResource(Res.string.operation_card_transfer)
-                            else -> uiState.operation.displayTitle
+                            TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
+                            TransactionLabel.TRANSFER -> stringResource(Res.string.transaction_card_transfer)
+                            else -> uiState.transaction.displayTitle
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
@@ -193,35 +193,35 @@ class ViewOperationModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             DetailRow(
-                label = stringResource(Res.string.view_operation_amount_label),
+                label = stringResource(Res.string.view_transaction_amount_label),
                 value = formatter.format(uiState.amount),
-                valueColor = uiState.operationColor()
+                valueColor = uiState.transactionColor()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             DetailRow(
-                label = stringResource(Res.string.view_operation_date_label),
+                label = stringResource(Res.string.view_transaction_date_label),
                 value = dayMonthYear.format(uiState.date)
             )
 
-            val originAccountLabel = stringResource(Res.string.view_operation_origin_account)
-            val originCreditCardLabel = stringResource(Res.string.view_operation_origin_credit_card)
+            val originAccountLabel = stringResource(Res.string.view_transaction_origin_account)
+            val originCreditCardLabel = stringResource(Res.string.view_transaction_origin_credit_card)
             if (uiState.direction.isExpense) {
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_origin_label),
+                    label = stringResource(Res.string.view_transaction_origin_label),
                     value = if (uiState.isCardTarget) originCreditCardLabel else originAccountLabel,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
-            if (uiState.label == OperationLabel.TRANSFER) {
+            if (uiState.label == TransactionLabel.TRANSFER) {
                 val sourceAccount = uiState.sourceAccount
                 val destinationAccount = uiState.destinationAccount
 
                 sourceAccount?.let { account ->
                     DetailRow(
-                        label = stringResource(Res.string.view_operation_source_account_label),
+                        label = stringResource(Res.string.view_transaction_source_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
@@ -233,7 +233,7 @@ class ViewOperationModal(
 
                 destinationAccount?.let { account ->
                     DetailRow(
-                        label = stringResource(Res.string.view_operation_destination_account_label),
+                        label = stringResource(Res.string.view_transaction_destination_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
@@ -244,10 +244,10 @@ class ViewOperationModal(
                 }
             }
 
-            if (uiState.label != OperationLabel.TRANSFER) {
+            if (uiState.label != TransactionLabel.TRANSFER) {
                 uiState.account?.let { account ->
                     DetailRow(
-                        label = stringResource(Res.string.view_operation_account_label),
+                        label = stringResource(Res.string.view_transaction_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
                         onClick = {
@@ -258,10 +258,10 @@ class ViewOperationModal(
                 }
             }
 
-            val deletedLabel = stringResource(Res.string.view_operation_deleted)
+            val deletedLabel = stringResource(Res.string.view_transaction_deleted)
             uiState.creditCard?.let { creditCard ->
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_card_label),
+                    label = stringResource(Res.string.view_transaction_card_label),
                     value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
@@ -274,7 +274,7 @@ class ViewOperationModal(
             } ?: run {
                 if (uiState.isCardTarget) {
                     DetailRow(
-                        label = stringResource(Res.string.view_operation_card_label),
+                        label = stringResource(Res.string.view_transaction_card_label),
                         value = deletedLabel,
                         valueColor = colorScheme.error,
                         modifier = Modifier.padding(top = 8.dp)
@@ -285,7 +285,7 @@ class ViewOperationModal(
             uiState.invoice?.let { invoice ->
                 val creditCardId = uiState.creditCard?.id
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_invoice_label),
+                    label = stringResource(Res.string.view_transaction_invoice_label),
                     value = invoice.toLabel(),
                     valueColor = invoice.status.color,
                     modifier = Modifier.padding(top = 8.dp),
@@ -300,9 +300,9 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.operation.installment?.let { installment ->
+            uiState.transaction.installment?.let { installment ->
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_installment_label),
+                    label = stringResource(Res.string.view_transaction_installment_label),
                     value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
@@ -312,15 +312,15 @@ class ViewOperationModal(
                 )
             }
 
-            uiState.operation.recurring?.let { recurring ->
+            uiState.transaction.recurring?.let { recurring ->
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_recurring_label),
+                    label = stringResource(Res.string.view_transaction_recurring_label),
                     value = recurring.label,
                     valueColor = colorScheme.onSurface,
                     modifier = Modifier.padding(top = 8.dp),
                     onClick = {
                         viewModel.onAction(
-                            ViewOperationAction.OpenRecurring(recurring.instance)
+                            ViewTransactionAction.OpenRecurring(recurring.instance)
                         )
                     }
                 )
@@ -330,12 +330,12 @@ class ViewOperationModal(
 
     @Composable
     override fun DetailActions() {
-        val viewModel = koinViewModel<ViewOperationViewModel> {
+        val viewModel = koinViewModel<ViewTransactionViewModel> {
             parametersOf(transactionId, perspective)
         }
         val uiState by viewModel.uiState.collectAsState()
 
-        val content = uiState as? ViewOperationUiState.Content ?: return
+        val content = uiState as? ViewTransactionUiState.Content ?: return
 
         Column(
             modifier = Modifier
@@ -348,7 +348,7 @@ class ViewOperationModal(
                     EditAndDelete(content)
                 } else {
                     Text(
-                        text = stringResource(Res.string.view_operation_closed_invoice_message),
+                        text = stringResource(Res.string.view_transaction_closed_invoice_message),
                         fontSize = 14.sp,
                         color = colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth()
@@ -362,7 +362,7 @@ class ViewOperationModal(
 
     @Composable
     private fun EditAndDelete(
-        uiState: ViewOperationUiState.Content,
+        uiState: ViewTransactionUiState.Content,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -372,7 +372,7 @@ class ViewOperationModal(
 
         OutlinedButton(
             onClick = {
-                manager.show(DeleteTransactionModal(uiState.operation))
+                manager.show(DeleteTransactionModal(uiState.transaction))
             },
             modifier = if (uiState.isEditable) Modifier.weight(1f) else Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -391,7 +391,7 @@ class ViewOperationModal(
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
-                text = stringResource(Res.string.view_operation_delete),
+                text = stringResource(Res.string.view_transaction_delete),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -400,7 +400,7 @@ class ViewOperationModal(
         if (uiState.isEditable) {
                 OutlinedButton(
                     onClick = {
-                        manager.show(EditTransactionModal(uiState.operation))
+                        manager.show(EditTransactionModal(uiState.transaction))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -419,7 +419,7 @@ class ViewOperationModal(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = stringResource(Res.string.view_operation_edit),
+                        text = stringResource(Res.string.view_transaction_edit),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -468,9 +468,9 @@ class ViewOperationModal(
         }
     }
 
-    private fun ViewOperationUiState.Content.operationColor() = when {
-        label == OperationLabel.PAYMENT -> InvoicePayment
-        label == OperationLabel.TRANSFER -> Info
+    private fun ViewTransactionUiState.Content.transactionColor() = when {
+        label == TransactionLabel.PAYMENT -> InvoicePayment
+        label == TransactionLabel.TRANSFER -> Info
         direction == TransactionType.INCOME -> Income
         direction == TransactionType.EXPENSE -> Expense
         else -> Adjustment

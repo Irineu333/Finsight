@@ -37,7 +37,7 @@ val dashboardModule = module {
 
     viewModel {
         DashboardViewModel(
-            operationRepository = get(),
+            transactionRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
             accountRepository = get(),

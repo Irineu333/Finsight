@@ -3,13 +3,13 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.CardMonthFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.InvoiceFlows
 import com.neoutils.finsight.extension.naturalBalanceOf
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +23,7 @@ import kotlin.test.assertEquals
 
 /**
  * Characterizes [AdjustBalanceUseCase] over the ledger: a re-adjustment must
- * recompute the adjustment from its own ledger leg, so the operation ends up
+ * recompute the adjustment from its own ledger leg, so the transaction ends up
  * describing the newly targeted balance rather than accumulating onto a stale
  * value (the D17 divergence, which the legacy double-write made possible).
  */
@@ -36,11 +36,11 @@ class AdjustBalanceUseCaseTest {
     fun `re-adjusting a balance rewrites the adjustment from the ledger`() = runTest {
         val ledger = LedgerStore(account)
         val useCase = AdjustBalanceUseCase(
-            operationRepository = FakeOperationRepository(ledger),
+            transactionRepository = FakeTransactionRepository(ledger),
             calculateBalanceUseCase = CalculateBalanceUseCase(FakeEntryRepository(ledger)),
         )
 
-        // First adjustment: balance 0 -> 100, creates the adjustment operation.
+        // First adjustment: balance 0 -> 100, creates the adjustment transaction.
         useCase(targetBalance = 100.0, adjustmentDate = date, account = account).getOrNull()
         // Second adjustment on the same date: 100 -> 150, takes the update branch.
         useCase(targetBalance = 150.0, adjustmentDate = date, account = account).getOrNull()
@@ -51,16 +51,16 @@ class AdjustBalanceUseCaseTest {
 
 /**
  * The double-entry ledger as the writer would build it: an adjustment leg on the
- * account plus its EQUITY reconciliation counter-leg, keyed by operation id.
+ * account plus its EQUITY reconciliation counter-leg, keyed by transaction id.
  */
 class LedgerStore(private val account: Account) {
     private val equity = Account(id = 999, name = "Reconciliation", type = AccountType.EQUITY)
-    val entriesByOperation = mutableMapOf<Long, List<Entry>>()
-    val dateByOperation = mutableMapOf<Long, LocalDate>()
-    private var nextOperationId = 0L
+    val entriesByTransaction = mutableMapOf<Long, List<Entry>>()
+    val dateByTransaction = mutableMapOf<Long, LocalDate>()
+    private var nextTransactionId = 0L
 
-    fun write(transactionId: Long, legs: List<OperationLeg>) {
-        entriesByOperation[transactionId] = legs.flatMap { leg ->
+    fun write(transactionId: Long, legs: List<TransactionLeg>) {
+        entriesByTransaction[transactionId] = legs.flatMap { leg ->
             val cents = (leg.amount * 100).roundToLong()
             listOf(
                 Entry(transactionId = transactionId, account = leg.account ?: account, amount = cents),
@@ -69,68 +69,68 @@ class LedgerStore(private val account: Account) {
         }
     }
 
-    fun create(date: LocalDate, legs: List<OperationLeg>): Long {
-        val transactionId = ++nextOperationId
-        dateByOperation[transactionId] = date
+    fun create(date: LocalDate, legs: List<TransactionLeg>): Long {
+        val transactionId = ++nextTransactionId
+        dateByTransaction[transactionId] = date
         write(transactionId, legs)
         return transactionId
     }
 
     fun accountBalance(): Double =
-        entriesByOperation.values.flatten().naturalBalanceOf(account.id) / 100.0
+        entriesByTransaction.values.flatten().naturalBalanceOf(account.id) / 100.0
 }
 
-class FakeOperationRepository(private val ledger: LedgerStore) : IOperationRepository {
-    override suspend fun createOperation(intent: OperationIntent): Operation {
+class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionRepository {
+    override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         val transactionId = ledger.create(intent.date, intent.legs)
-        return Operation(
+        return Transaction(
             id = transactionId,
             title = intent.title,
             date = intent.date,
-            entries = ledger.entriesByOperation.getValue(transactionId),
+            entries = ledger.entriesByTransaction.getValue(transactionId),
         )
     }
 
-    override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> =
-        intents.map { createOperation(it) }
+    override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> =
+        intents.map { createTransaction(it) }
 
-    override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) {
-        ledger.dateByOperation[id] = date
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {
+        ledger.dateByTransaction[id] = date
         ledger.write(id, listOf(leg))
     }
 
-    override suspend fun deleteOperationById(id: Long) {
-        ledger.entriesByOperation.remove(id)
-        ledger.dateByOperation.remove(id)
+    override suspend fun deleteTransactionById(id: Long) {
+        ledger.entriesByTransaction.remove(id)
+        ledger.dateByTransaction.remove(id)
     }
 
-    override fun observeOperationsBy(
+    override fun observeTransactionsBy(
         date: LocalDate?,
         invoiceId: Long?,
         creditCardId: Long?,
         accountId: Long?,
-    ): Flow<List<Operation>> {
-        val operations = ledger.entriesByOperation
-            .filter { (id, _) -> date == null || ledger.dateByOperation[id] == date }
+    ): Flow<List<Transaction>> {
+        val transactions = ledger.entriesByTransaction
+            .filter { (id, _) -> date == null || ledger.dateByTransaction[id] == date }
             .filter { (_, entries) -> accountId == null || entries.any { it.account.id == accountId } }
             .map { (id, entries) ->
-                Operation(id = id, title = null, date = ledger.dateByOperation.getValue(id), entries = entries)
+                Transaction(id = id, title = null, date = ledger.dateByTransaction.getValue(id), entries = entries)
             }
-        return flowOf(operations)
+        return flowOf(transactions)
     }
 
-    override fun observeAllOperations(): Flow<List<Operation>> = throw NotImplementedError()
-    override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
-    override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
-    override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-    override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
+    override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
+    override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
+    override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
+    override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
+    override suspend fun deleteTransactionsByCreditCard(creditCardId: Long) = throw NotImplementedError()
 }
 
 class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = ledger.accountBalance()
 
-    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

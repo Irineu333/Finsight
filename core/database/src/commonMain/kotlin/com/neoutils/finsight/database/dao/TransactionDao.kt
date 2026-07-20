@@ -10,7 +10,7 @@ import kotlinx.datetime.LocalDate
 @Dao
 interface TransactionDao {
     @Insert
-    suspend fun insert(operation: TransactionEntity): Long
+    suspend fun insert(transaction: TransactionEntity): Long
 
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun deleteById(id: Long)

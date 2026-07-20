@@ -9,12 +9,12 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.TransferError
 import com.neoutils.finsight.domain.error.TransferException
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -25,7 +25,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class TransferBetweenAccountsUseCase(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
 ) {
     suspend operator fun invoke(
@@ -33,7 +33,7 @@ class TransferBetweenAccountsUseCase(
         destinationAccountId: Long,
         amount: Double,
         date: LocalDate,
-    ): Either<TransferException, Operation> = either {
+    ): Either<TransferException, Transaction> = either {
         ensure(amount > 0.0) {
             TransferException(TransferError.InvalidAmount)
         }
@@ -57,17 +57,17 @@ class TransferBetweenAccountsUseCase(
         }
 
         catch {
-            operationRepository.createOperation(
-                OperationIntent(
+            transactionRepository.createTransaction(
+                TransactionIntent(
                     title = null,
                     date = date,
                     legs = listOf(
-                        OperationLeg(
+                        TransactionLeg(
                             type = TransactionType.EXPENSE,
                             amount = amount,
                             account = sourceAccount,
                         ),
-                        OperationLeg(
+                        TransactionLeg(
                             type = TransactionType.INCOME,
                             amount = amount,
                             account = destinationAccount,

@@ -6,7 +6,7 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
-import com.neoutils.finsight.database.mapper.OperationMapper
+import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
@@ -30,11 +30,11 @@ import kotlin.test.assertEquals
 
 /**
  * End-to-end proof of task 2.7 against a real in-memory Room database: the
- * [OperationRepository] read path (`getOperationById`) populates
- * [com.neoutils.finsight.domain.model.Operation.entries] with the operation's ledger
+ * [TransactionRepository] read path (`getTransactionById`) populates
+ * [com.neoutils.finsight.domain.model.Transaction.entries] with the transaction's ledger
  * legs, each hydrated with its account, from real `entries`/`accounts` rows.
  */
-class OperationRepositoryEntriesTest {
+class TransactionRepositoryEntriesTest {
 
     private val db = Room.inMemoryDatabaseBuilder<AppDatabase>()
         .setDriver(BundledSQLiteDriver())
@@ -43,7 +43,7 @@ class OperationRepositoryEntriesTest {
 
     @AfterTest fun tearDown() = db.close()
 
-    private fun repository(accounts: List<Account>) = OperationRepository(
+    private fun repository(accounts: List<Account>) = TransactionRepository(
         database = db,
         transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
@@ -53,13 +53,13 @@ class OperationRepositoryEntriesTest {
         invoiceRepository = FakeInvoiceRepository,
         installmentRepository = FakeInstallmentRepository,
         accountRepository = FakeAccountRepository(accounts),
-        operationMapper = OperationMapper(),
+        transactionMapper = TransactionMapper(),
         recurringMapper = RecurringMapper(),
         ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
     )
 
     @Test
-    fun `getOperationById hydrates the operation's ledger entries`() = runTest {
+    fun `getTransactionById hydrates the transaction's ledger entries`() = runTest {
         val asset = Account(id = 1, name = "A", type = AccountType.ASSET)
         val expense = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
         db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
@@ -75,11 +75,11 @@ class OperationRepositoryEntriesTest {
             ),
         )
 
-        val operation = repository(listOf(asset, expense)).getOperationById(transactionId)!!
+        val transaction = repository(listOf(asset, expense)).getTransactionById(transactionId)!!
 
-        assertEquals(2, operation.entries.size, "both ledger legs are carried onto the operation")
-        val assetLeg = operation.entries.first { it.account.id == 1L }
-        val expenseLeg = operation.entries.first { it.account.id == 10L }
+        assertEquals(2, transaction.entries.size, "both ledger legs are carried onto the transaction")
+        val assetLeg = transaction.entries.first { it.account.id == 1L }
+        val expenseLeg = transaction.entries.first { it.account.id == 10L }
         assertEquals(-5000, assetLeg.amount)
         assertEquals(AccountType.ASSET, assetLeg.account.type)
         assertEquals(5000, expenseLeg.amount)

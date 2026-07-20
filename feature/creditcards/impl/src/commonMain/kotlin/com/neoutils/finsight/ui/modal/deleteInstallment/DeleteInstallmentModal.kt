@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.delete_installment_confirm
@@ -30,13 +30,13 @@ import org.koin.core.parameter.parametersOf
 
 class DeleteInstallmentModal(
     private val installment: Installment,
-    private val operations: List<Operation>,
+    private val transactions: List<Transaction>,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
         val viewModel = koinViewModel<DeleteInstallmentViewModel> {
-            parametersOf(installment, operations)
+            parametersOf(installment, transactions)
         }
 
         Column(
@@ -54,7 +54,7 @@ class DeleteInstallmentModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.delete_installment_message, operations.size),
+                text = stringResource(Res.string.delete_installment_message, transactions.size),
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )

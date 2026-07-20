@@ -5,7 +5,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -56,7 +56,7 @@ class DashboardAccountsOverviewTest {
     )
 
     private fun input(accounts: List<Account>) = DashboardComponentsInput(
-        operations = emptyList(),
+        transactions = emptyList(),
         creditCards = emptyList(),
         invoicesByCreditCardId = emptyMap(),
         accounts = accounts,
@@ -111,22 +111,22 @@ class DashboardAccountsOverviewTest {
     private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
     private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
 
-    private fun operation(id: Long, date: LocalDate, entries: List<Entry>) =
-        Operation(id = id, title = null, date = date, entries = entries)
+    private fun transaction(id: Long, date: LocalDate, entries: List<Entry>) =
+        Transaction(id = id, title = null, date = date, entries = entries)
 
     private fun statsEntries(counter: Account, assetAmount: Double, counterAmount: Double) =
         listOf(Entry(account = accountA, amount = (assetAmount * 100).toLong()), Entry(account = counter, amount = (counterAmount * 100).toLong()))
 
     @Test
     fun `concrete balance stats sum account income and expense for the month`() = runTest {
-        val operations = listOf(
-            operation(1, LocalDate(2026, 3, 5), statsEntries(incomeAcc, 100.0, -100.0)),
-            operation(2, LocalDate(2026, 3, 10), statsEntries(expenseAcc, -30.0, 30.0)),
-            operation(3, LocalDate(2026, 2, 5), statsEntries(incomeAcc, 999.0, -999.0)), // other month
+        val transactions = listOf(
+            transaction(1, LocalDate(2026, 3, 5), statsEntries(incomeAcc, 100.0, -100.0)),
+            transaction(2, LocalDate(2026, 3, 10), statsEntries(expenseAcc, -30.0, 30.0)),
+            transaction(3, LocalDate(2026, 2, 5), statsEntries(incomeAcc, 999.0, -999.0)), // other month
         )
         val component = builder().build(
             key = DashboardComponentType.CONCRETE_BALANCE_STATS.key,
-            input = input(listOf(accountA)).copy(operations = operations),
+            input = input(listOf(accountA)).copy(transactions = transactions),
             context = DashboardBuilderContext(pendingRecurring = emptyList()),
             config = emptyMap(),
         )
@@ -150,8 +150,8 @@ class DashboardAccountsOverviewTest {
 }
 
 private object ThrowingEntryRepository : IEntryRepository {
-    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
     // 100 − 30 = 70, account 2 = 50 − 20 = 30, matching the legacy Σ signedCents.

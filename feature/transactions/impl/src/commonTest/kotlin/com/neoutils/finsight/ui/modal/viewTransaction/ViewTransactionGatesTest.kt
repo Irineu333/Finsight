@@ -4,9 +4,9 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationInstallment
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionInstallment
+import com.neoutils.finsight.domain.model.TransactionLabel
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,12 +14,12 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * The edit gate of [ViewOperationUiState.Content] is derived from the ledger
+ * The edit gate of [ViewTransactionUiState.Content] is derived from the ledger
  * entries gate by gate (design D2 / spec "Editabilidade derivada"): not an
  * adjustment (label), exactly one monetary leg (entry types), no installment.
  * Each test isolates one gate so a green result cannot come from another gate.
  */
-class ViewOperationGatesTest {
+class ViewTransactionGatesTest {
 
     private val date = LocalDate(2026, 1, 1)
 
@@ -29,9 +29,9 @@ class ViewOperationGatesTest {
 
     private fun content(
         entries: List<Entry>,
-        installment: OperationInstallment? = null,
-    ) = ViewOperationUiState.Content(
-        operation = Operation(
+        installment: TransactionInstallment? = null,
+    ) = ViewTransactionUiState.Content(
+        transaction = Transaction(
             id = 1L,
             title = "Op",
             date = date,
@@ -45,7 +45,7 @@ class ViewOperationGatesTest {
         val content = content(
             entries = listOf(entry(AccountType.ASSET, -10_000), entry(AccountType.EXPENSE, 10_000)),
         )
-        assertEquals(OperationLabel.EXPENSE, content.label)
+        assertEquals(TransactionLabel.EXPENSE, content.label)
         assertTrue(content.isEditable)
     }
 
@@ -62,7 +62,7 @@ class ViewOperationGatesTest {
         val content = content(
             entries = listOf(entry(AccountType.ASSET, -10_000), entry(AccountType.EQUITY, 10_000)),
         )
-        assertEquals(OperationLabel.ADJUSTMENT, content.label)
+        assertEquals(TransactionLabel.ADJUSTMENT, content.label)
         assertFalse(content.isEditable)
     }
 
@@ -71,7 +71,7 @@ class ViewOperationGatesTest {
         val content = content(
             entries = listOf(entry(AccountType.ASSET, -10_000), entry(AccountType.ASSET, 10_000)),
         )
-        assertEquals(OperationLabel.TRANSFER, content.label)
+        assertEquals(TransactionLabel.TRANSFER, content.label)
         assertFalse(content.isEditable)
     }
 
@@ -80,7 +80,7 @@ class ViewOperationGatesTest {
         val content = content(
             entries = listOf(entry(AccountType.ASSET, -10_000), entry(AccountType.LIABILITY, 10_000)),
         )
-        assertEquals(OperationLabel.PAYMENT, content.label)
+        assertEquals(TransactionLabel.PAYMENT, content.label)
         assertFalse(content.isEditable)
     }
 
@@ -88,7 +88,7 @@ class ViewOperationGatesTest {
     fun installmentIsNotEditable_installmentGate() {
         val content = content(
             entries = listOf(entry(AccountType.LIABILITY, -10_000), entry(AccountType.EXPENSE, 10_000)),
-            installment = OperationInstallment(instance = Installment(count = 3, totalAmount = 300.0), number = 1),
+            installment = TransactionInstallment(instance = Installment(count = 3, totalAmount = 300.0), number = 1),
         )
         // Passes every other gate — only the installment gate closes it.
         assertFalse(content.isEditable)

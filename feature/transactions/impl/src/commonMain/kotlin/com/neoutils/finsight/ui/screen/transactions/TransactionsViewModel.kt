@@ -5,13 +5,13 @@ package com.neoutils.finsight.ui.screen.transactions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
@@ -30,7 +30,7 @@ class TransactionsViewModel(
     private val filterType: TransactionType?,
     private val category: Category?,
     private val filterTarget: TransactionTarget?,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
@@ -47,19 +47,19 @@ class TransactionsViewModel(
     )
 
     val uiState = combine(
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         categoryRepository.observeAllCategories(),
         selectedYearMonth,
         filters
-    ) { operations, categories, yearMonth, filters ->
+    ) { transactions, categories, yearMonth, filters ->
         // Transfers and card payments move money between the user's own accounts;
         // neither is income or expense. Derived from the ledger, never persisted.
-        val operationsForStats = operations.filterNot {
-            it.label == OperationLabel.TRANSFER || it.label == OperationLabel.PAYMENT
+        val transactionsForStats = transactions.filterNot {
+            it.label == TransactionLabel.TRANSFER || it.label == TransactionLabel.PAYMENT
         }
 
         val stats = calculateTransactionStatsUseCase(
-            operations = operationsForStats,
+            transactions = transactionsForStats,
             forYearMonth = yearMonth,
         )
 
@@ -68,8 +68,8 @@ class TransactionsViewModel(
                 income = stats.income,
                 expense = stats.expense,
                 adjustment = stats.adjustment,
-                payment = operations
-                    .filter { it.label == OperationLabel.PAYMENT }
+                payment = transactions
+                    .filter { it.label == TransactionLabel.PAYMENT }
                     .filter { it.date.yearMonth == yearMonth }
                     .sumOf { it.amount },
                 // Opening/final balances from the ledger (task 4.11): Σ entries of all
@@ -84,7 +84,7 @@ class TransactionsViewModel(
             selectedTarget = filters.target,
             showRecurringOnly = filters.recurringOnly,
             showInstallmentOnly = filters.installmentOnly,
-            operations = operations
+            transactions = transactions
                 .filter(filters.recurringOnly)
                 .filterInstallment(filters.installmentOnly)
                 .filter(filters.category)
@@ -137,29 +137,29 @@ class TransactionsViewModel(
     }
 }
 
-private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { operation -> operation.recurring != null }
+    return filter { transaction -> transaction.recurring != null }
 }
 
-private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Operation> {
+private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { operation -> operation.installment != null }
+    return filter { transaction -> transaction.installment != null }
 }
 
-private fun List<Operation>.filter(category: Category?): List<Operation> {
+private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
     return filter { it.category?.id == category.id }
 }
 
-private fun List<Operation>.filter(type: TransactionType?): List<Operation> {
+private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
     if (type == null) return this
-    return filter { operation ->
-        operation.primaryEntry?.let { deriveTransactionType(it.amount, operation.entries) } == type
+    return filter { transaction ->
+        transaction.primaryEntry?.let { deriveTransactionType(it.amount, transaction.entries) } == type
     }
 }
 
-private fun List<Operation>.filter(target: TransactionTarget?): List<Operation> {
+private fun List<Transaction>.filter(target: TransactionTarget?): List<Transaction> {
     if (target == null) return this
-    return filter { operation -> operation.isCardTarget == target.isCreditCard }
+    return filter { transaction -> transaction.isCardTarget == target.isCreditCard }
 }

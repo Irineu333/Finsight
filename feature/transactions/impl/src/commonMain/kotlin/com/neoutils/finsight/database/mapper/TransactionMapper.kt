@@ -6,17 +6,17 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.OperationInstallment
+import com.neoutils.finsight.domain.model.TransactionInstallment
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationRecurring
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.Recurring
 
-class OperationMapper {
+class TransactionMapper {
 
     /**
-     * Builds the domain [Operation] from its row plus its hydrated ledger legs.
-     * Everything about *what the operation is* comes from the entries — the row
+     * Builds the domain [Transaction] from its row plus its hydrated ledger legs.
+     * Everything about *what the transaction is* comes from the entries — the row
      * only carries what the ledger cannot express (title, date, the user's
      * category choice, and the recurring/installment links).
      */
@@ -28,20 +28,20 @@ class OperationMapper {
         installments: Map<Long, Installment>,
         recurring: Map<Long, Recurring>,
         entries: List<Entry>,
-    ): Operation? {
+    ): Transaction? {
         if (entries.isEmpty()) return null
 
         val assetEntries = entries.filter { it.account.type == AccountType.ASSET }
         val cardAccountId = entries.firstOrNull { it.account.type == AccountType.LIABILITY }?.account?.id
 
-        return Operation(
+        return Transaction(
             id = entity.id,
             title = entity.title,
             date = entity.date,
             recurring = entity.recurringId?.let { recurringId ->
                 entity.recurringCycle?.let { cycleNumber ->
                     recurring[recurringId]?.let { instance ->
-                        OperationRecurring(instance = instance, cycleNumber = cycleNumber)
+                        TransactionRecurring(instance = instance, cycleNumber = cycleNumber)
                     }
                 }
             },
@@ -55,7 +55,7 @@ class OperationMapper {
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->
                     installments[installmentId]?.let { instance ->
-                        OperationInstallment(instance = instance, number = number)
+                        TransactionInstallment(instance = instance, number = number)
                     }
                 }
             },

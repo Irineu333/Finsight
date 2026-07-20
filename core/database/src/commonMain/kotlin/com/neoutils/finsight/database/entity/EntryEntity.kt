@@ -6,9 +6,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * A single leg of a balanced operation in the double-entry ledger. [amount] is
+ * A single leg of a balanced transaction in the double-entry ledger. [amount] is
  * signed and stored in the currency's minor unit (debit-positive convention).
- * Deleting the parent operation cascades to its entries; an account referenced
+ * Deleting the parent transaction cascades to its entries; an account referenced
  * by any entry cannot be deleted (NO ACTION) so the zero-sum invariant is kept.
  */
 @Entity(

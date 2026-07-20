@@ -1,35 +1,35 @@
 package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.deriveTransactionType
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
 /**
- * Month income/expense/adjustment across the ASSET legs of [operations] (task 4.11),
- * derived from each operation's ledger entries rather than legacy leg types. Callers
- * pass the operations they want counted (they already exclude transfers/payments by
+ * Month income/expense/adjustment across the ASSET legs of [transactions] (task 4.11),
+ * derived from each transaction's ledger entries rather than legacy leg types. Callers
+ * pass the transactions they want counted (they already exclude transfers/payments by
  * kind); this reads the ASSET entry of each and classifies it with
  * [deriveTransactionType]. `expense` is the magnitude of the expense legs; `income`
  * the magnitude of the income legs; `adjustment` the signed sum of the adjustments.
  */
 class CalculateTransactionStatsUseCase {
     operator fun invoke(
-        operations: List<Operation>,
+        transactions: List<Transaction>,
         forYearMonth: YearMonth,
     ): TransactionStats {
         var income = 0L
         var expense = 0L
         var adjustment = 0L
-        operations
+        transactions
             .filter { it.date.yearMonth == forYearMonth }
-            .forEach { operation ->
-                operation.entries
+            .forEach { transaction ->
+                transaction.entries
                     .filter { it.account.type == AccountType.ASSET }
                     .forEach { entry ->
-                        when (deriveTransactionType(entry.amount, operation.entries)) {
+                        when (deriveTransactionType(entry.amount, transaction.entries)) {
                             TransactionType.INCOME -> income += entry.amount
                             TransactionType.EXPENSE -> expense += -entry.amount
                             TransactionType.ADJUSTMENT -> adjustment += entry.amount

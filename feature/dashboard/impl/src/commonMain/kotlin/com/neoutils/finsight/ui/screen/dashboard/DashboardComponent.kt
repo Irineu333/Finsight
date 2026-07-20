@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.feature.shell.api.NavDestination
 import com.neoutils.finsight.ui.model.CreditCardUi
@@ -79,7 +79,7 @@ sealed interface DashboardComponent {
     }
 
     data class Recents(
-        val operations: List<Operation>,
+        val transactions: List<Transaction>,
         val hasMore: Boolean,
     ) : DashboardComponent {
         override val key = DashboardComponentType.RECENTS.key

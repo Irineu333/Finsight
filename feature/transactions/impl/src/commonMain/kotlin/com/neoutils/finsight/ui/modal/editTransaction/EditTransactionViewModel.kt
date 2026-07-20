@@ -9,7 +9,7 @@ import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.YearMonth
 
 class EditTransactionViewModel(
-    private val operation: Operation,
-    private val operationRepository: IOperationRepository,
+    private val transaction: Transaction,
+    private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -37,9 +37,9 @@ class EditTransactionViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val selectedCreditCard = MutableStateFlow(operation.targetCreditCard)
-    private val selectedDueMonth = MutableStateFlow(operation.targetInvoice?.dueMonth)
-    private val selectedAccount = MutableStateFlow(operation.sourceAccount)
+    private val selectedCreditCard = MutableStateFlow(transaction.targetCreditCard)
+    private val selectedDueMonth = MutableStateFlow(transaction.targetInvoice?.dueMonth)
+    private val selectedAccount = MutableStateFlow(transaction.sourceAccount)
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -82,9 +82,9 @@ class EditTransactionViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = EditTransactionUiState(
-            selectedCreditCard = operation.targetCreditCard,
-            selectedAccount = operation.sourceAccount,
-            invoiceSelection = operation.targetInvoice?.let {
+            selectedCreditCard = transaction.targetCreditCard,
+            selectedAccount = transaction.sourceAccount,
+            invoiceSelection = transaction.targetInvoice?.let {
                 InvoiceMonthSelection(
                     dueMonth = it.dueMonth,
                     existingInvoice = it
@@ -117,8 +117,8 @@ class EditTransactionViewModel(
     ) = viewModelScope.launch {
         buildTransactionUseCase(form).flatMap { intent ->
             catch {
-                operationRepository.updateOperation(
-                    id = operation.id,
+                transactionRepository.updateTransaction(
+                    id = transaction.id,
                     title = intent.title,
                     date = intent.date,
                     leg = intent.legs.first(),

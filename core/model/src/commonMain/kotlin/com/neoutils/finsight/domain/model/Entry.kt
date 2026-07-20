@@ -1,11 +1,11 @@
 package com.neoutils.finsight.domain.model
 
 /**
- * A single leg of a balanced [Operation].
+ * A single leg of a balanced [Transaction].
  *
  * [amount] is signed and expressed in the currency's minor unit (e.g. cents),
  * following the debit-positive convention: a positive amount debits the account,
- * a negative amount credits it. For every currency present in an operation, the
+ * a negative amount credits it. For every currency present in an transaction, the
  * sum of its entries' amounts is exactly zero.
  */
 data class Entry(

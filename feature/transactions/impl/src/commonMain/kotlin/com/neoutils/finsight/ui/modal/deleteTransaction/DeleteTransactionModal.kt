@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.delete_transaction_confirm
@@ -23,12 +23,12 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 class DeleteTransactionModal(
-    private val operation: Operation
+    private val transaction: Transaction
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<DeleteTransactionViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<DeleteTransactionViewModel> { parametersOf(transaction) }
 
         Column(
             modifier = Modifier

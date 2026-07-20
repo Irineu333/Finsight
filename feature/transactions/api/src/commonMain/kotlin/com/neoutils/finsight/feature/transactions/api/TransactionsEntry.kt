@@ -6,6 +6,6 @@ import com.neoutils.finsight.ui.model.TransactionPerspective
 
 interface TransactionsEntry {
     fun addTransactionModal(): Modal
-    fun viewOperationModal(transactionId: Long, perspective: TransactionPerspective? = null): AdaptiveModal
+    fun viewTransactionModal(transactionId: Long, perspective: TransactionPerspective? = null): AdaptiveModal
     fun viewAdjustmentModal(transactionId: Long): AdaptiveModal
 }

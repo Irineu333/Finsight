@@ -32,7 +32,7 @@ val budgetsModule = module {
     viewModel {
         BudgetsViewModel(
             budgetRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             recurringRepository = get(),
             entryRepository = get(),
             calculateBudgetProgressUseCase = get(),
@@ -42,7 +42,7 @@ val budgetsModule = module {
         ViewBudgetViewModel(
             budgetId = it.get(),
             budgetRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             recurringRepository = get(),
             entryRepository = get(),
             calculateBudgetProgressUseCase = get(),

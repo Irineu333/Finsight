@@ -6,8 +6,8 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeOperationRepository
-import com.neoutils.finsight.ui.modal.operation
+import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.ui.modal.transaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class ViewOperationViewModelTest {
+class ViewTransactionViewModelTest {
 
     private val dispatcher = StandardTestDispatcher()
 
@@ -32,52 +32,52 @@ class ViewOperationViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel(
-        repository: FakeOperationRepository,
+        repository: FakeTransactionRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
-    ) = ViewOperationViewModel(
+    ) = ViewTransactionViewModel(
         transactionId = 1L,
         perspective = null,
-        operationRepository = repository,
+        transactionRepository = repository,
         crashlytics = crashlytics,
     )
 
     @Test
     fun loadingThenContent() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val vm = viewModel(repository)
 
         vm.uiState.test {
-            assertEquals(ViewOperationUiState.Loading, awaitItem())
-            repository.emit(operation(id = 1L, amount = 100.0))
-            val content = assertIs<ViewOperationUiState.Content>(awaitItem())
+            assertEquals(ViewTransactionUiState.Loading, awaitItem())
+            repository.emit(transaction(id = 1L, amount = 100.0))
+            val content = assertIs<ViewTransactionUiState.Content>(awaitItem())
             assertEquals(100.0, content.amount)
         }
     }
 
     @Test
     fun editReemitsContentInPlace() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val vm = viewModel(repository)
 
         vm.uiState.test {
-            assertEquals(ViewOperationUiState.Loading, awaitItem())
-            repository.emit(operation(id = 1L, amount = 100.0))
-            assertEquals(100.0, assertIs<ViewOperationUiState.Content>(awaitItem()).amount)
-            repository.emit(operation(id = 1L, amount = 250.0))
-            assertEquals(250.0, assertIs<ViewOperationUiState.Content>(awaitItem()).amount)
+            assertEquals(ViewTransactionUiState.Loading, awaitItem())
+            repository.emit(transaction(id = 1L, amount = 100.0))
+            assertEquals(100.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount)
+            repository.emit(transaction(id = 1L, amount = 250.0))
+            assertEquals(250.0, assertIs<ViewTransactionUiState.Content>(awaitItem()).amount)
         }
     }
 
     @Test
     fun firstEmissionNullShowsErrorAndRecordsException() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val crashlytics = FakeCrashlytics()
         val vm = viewModel(repository, crashlytics)
 
         vm.uiState.test {
-            assertEquals(ViewOperationUiState.Loading, awaitItem())
+            assertEquals(ViewTransactionUiState.Loading, awaitItem())
             repository.emit(null)
-            assertEquals(ViewOperationUiState.Error, awaitItem())
+            assertEquals(ViewTransactionUiState.Error, awaitItem())
         }
 
         assertEquals(1, crashlytics.recorded.size)
@@ -86,7 +86,7 @@ class ViewOperationViewModelTest {
 
     @Test
     fun deletionAfterContentKeepsContentAndEmitsDismiss() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val crashlytics = FakeCrashlytics()
         val vm = viewModel(repository, crashlytics)
 
@@ -94,12 +94,12 @@ class ViewOperationViewModelTest {
             val state = vm.uiState.testIn(backgroundScope)
             val events = vm.events.testIn(backgroundScope)
 
-            assertEquals(ViewOperationUiState.Loading, state.awaitItem())
-            repository.emit(operation(id = 1L, amount = 100.0))
-            assertIs<ViewOperationUiState.Content>(state.awaitItem())
+            assertEquals(ViewTransactionUiState.Loading, state.awaitItem())
+            repository.emit(transaction(id = 1L, amount = 100.0))
+            assertIs<ViewTransactionUiState.Content>(state.awaitItem())
 
             repository.emit(null)
-            assertIs<ViewOperationEvent.Dismiss>(events.awaitItem())
+            assertIs<ViewTransactionEvent.Dismiss>(events.awaitItem())
             // uiState keeps the last Content — no further state emission
             state.expectNoEvents()
 

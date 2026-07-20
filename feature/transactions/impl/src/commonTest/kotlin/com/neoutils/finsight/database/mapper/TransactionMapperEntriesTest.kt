@@ -10,15 +10,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * Verifies task 2.7: the [OperationMapper] carries the operation's hydrated ledger
- * entries onto the domain [com.neoutils.finsight.domain.model.Operation], making them
+ * Verifies task 2.7: the [TransactionMapper] carries the transaction's hydrated ledger
+ * entries onto the domain [com.neoutils.finsight.domain.model.Transaction], making them
  * available to every consumer.
  */
-class OperationMapperEntriesTest {
+class TransactionMapperEntriesTest {
 
     private val entity = TransactionEntity(id = 7, title = null, date = LocalDate(2026, 3, 10), categoryId = null)
 
-    private fun toDomain(entries: List<Entry>) = OperationMapper().toDomain(
+    private fun toDomain(entries: List<Entry>) = TransactionMapper().toDomain(
         entity = entity,
         categories = emptyMap(),
         creditCards = emptyMap(),
@@ -29,7 +29,7 @@ class OperationMapperEntriesTest {
     )
 
     @Test
-    fun `mapper carries the hydrated entries onto the operation`() {
+    fun `mapper carries the hydrated entries onto the transaction`() {
         val account = Account(id = 1, name = "A", type = AccountType.ASSET)
         val entries = listOf(
             Entry(id = 1, transactionId = 7, account = account, amount = -5000),
@@ -40,7 +40,7 @@ class OperationMapperEntriesTest {
     }
 
     @Test
-    fun `mapper returns null when the operation has no entries`() {
+    fun `mapper returns null when the transaction has no entries`() {
         assertNull(toDomain(emptyList()))
     }
 }

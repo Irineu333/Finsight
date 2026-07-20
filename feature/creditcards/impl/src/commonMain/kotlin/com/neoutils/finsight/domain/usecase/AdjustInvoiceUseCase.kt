@@ -7,15 +7,15 @@ import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 
 class AdjustInvoiceUseCase(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
 ) {
     suspend operator fun invoke(
@@ -31,25 +31,25 @@ class AdjustInvoiceUseCase(
 
         catch {
 
-            // Idempotency over the ledger: the existing adjustment is the operation on
+            // Idempotency over the ledger: the existing adjustment is the transaction on
             // this date carrying this invoice and an EQUITY (reconciliation)
             // counter-leg — the ledger shape of "an invoice adjustment".
-            val existingOperation = operationRepository
-                .observeOperationsBy(date = adjustmentDate, invoiceId = invoice.id)
+            val existingTransaction = transactionRepository
+                .observeTransactionsBy(date = adjustmentDate, invoiceId = invoice.id)
                 .first()
-                .firstOrNull { operation ->
-                    operation.entries.any { it.account.type == AccountType.EQUITY }
+                .firstOrNull { transaction ->
+                    transaction.entries.any { it.account.type == AccountType.EQUITY }
                 }
 
             val difference = target - currentInvoice
 
-            if (existingOperation == null) {
-                operationRepository.createOperation(
-                    OperationIntent(
+            if (existingTransaction == null) {
+                transactionRepository.createTransaction(
+                    TransactionIntent(
                         title = null,
                         date = adjustmentDate,
                         legs = listOf(
-                            OperationLeg(
+                            TransactionLeg(
                                 type = TransactionType.ADJUSTMENT,
                                 amount = -difference,
                                 creditCard = invoice.creditCard,
@@ -63,21 +63,21 @@ class AdjustInvoiceUseCase(
 
             // The adjustment's current size is read back from its own ledger leg, so a
             // re-adjustment can never accumulate onto a stale value (D17).
-            val currentAdjustment = existingOperation.entries
+            val currentAdjustment = existingTransaction.entries
                 .filter { it.invoiceId == invoice.id }
                 .sumOf { it.amount } / 100.0
             val newAmount = currentAdjustment - difference
 
             if (newAmount == 0.0) {
-                operationRepository.deleteOperationById(existingOperation.id)
+                transactionRepository.deleteTransactionById(existingTransaction.id)
                 return@catch
             }
 
-            operationRepository.updateOperation(
-                id = existingOperation.id,
-                title = existingOperation.title,
-                date = existingOperation.date,
-                leg = OperationLeg(
+            transactionRepository.updateTransaction(
+                id = existingTransaction.id,
+                title = existingTransaction.title,
+                date = existingTransaction.date,
+                leg = TransactionLeg(
                     type = TransactionType.ADJUSTMENT,
                     amount = newAmount,
                     creditCard = invoice.creditCard,

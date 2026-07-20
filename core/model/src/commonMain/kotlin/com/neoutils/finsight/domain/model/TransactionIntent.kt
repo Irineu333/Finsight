@@ -12,7 +12,7 @@ import kotlinx.datetime.LocalDate
  * counterpart account has a side effect (it creates the row on demand), so the
  * translation cannot be a pure mapper.
  */
-data class OperationIntent(
+data class TransactionIntent(
     val title: String?,
     val date: LocalDate,
     val category: Category? = null,
@@ -20,7 +20,7 @@ data class OperationIntent(
     val recurringCycle: Int? = null,
     val installmentId: Long? = null,
     val installmentNumber: Int? = null,
-    val legs: List<OperationLeg>,
+    val legs: List<TransactionLeg>,
 )
 
 /**
@@ -29,7 +29,7 @@ data class OperationIntent(
  * property of the resulting ledger — `ASSET` vs `LIABILITY` determines the
  * target, and the entry signs determine the direction.
  */
-data class OperationLeg(
+data class TransactionLeg(
     val type: TransactionType,
     val amount: Double,
     val account: Account? = null,

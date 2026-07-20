@@ -4,11 +4,11 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.extension.deriveOperationLabel
+import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
@@ -27,7 +27,7 @@ import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
 
 data class DashboardComponentsInput(
-    val operations: List<Operation>,
+    val transactions: List<Transaction>,
     val creditCards: List<CreditCard>,
     val invoicesByCreditCardId: Map<Long, Invoice>,
     val accounts: List<Account>,
@@ -127,12 +127,12 @@ class DashboardComponentsBuilder(
     ): DashboardComponent.ConcreteBalanceStats? {
         // Transfers and card payments move money between the user's own accounts:
         // they are not income or expense. Derived from the ledger, never persisted.
-        val operationsForStats = input.operations.filterNot { operation ->
-            operation.entries.deriveOperationLabel() in setOf(OperationLabel.TRANSFER, OperationLabel.PAYMENT)
+        val transactionsForStats = input.transactions.filterNot { transaction ->
+            transaction.entries.deriveTransactionLabel() in setOf(TransactionLabel.TRANSFER, TransactionLabel.PAYMENT)
         }
 
         val stats = calculateTransactionStatsUseCase(
-            operations = operationsForStats,
+            transactions = transactionsForStats,
             forYearMonth = input.targetMonth,
         )
 
@@ -296,7 +296,7 @@ class DashboardComponentsBuilder(
             budgets = input.budgets,
             categoryBalances = categoryBalances,
             recurringList = input.recurringList,
-            operations = input.operations,
+            transactions = input.transactions,
             today = input.today,
         )
 
@@ -349,15 +349,15 @@ class DashboardComponentsBuilder(
 
     private fun recents(input: DashboardComponentsInput, config: Map<String, String>): DashboardComponent.Recents? {
         val count = config[RecentsConfig.COUNT]?.toIntOrNull() ?: RecentsConfig.DEFAULT_COUNT
-        val presentOperations = input.operations.filter { it.date <= input.today }
-        val recentOperations = presentOperations
+        val presentTransactions = input.transactions.filter { it.date <= input.today }
+        val recentTransactions = presentTransactions
             .sortedByDescending { it.date }
             .take(count)
 
-        return if (recentOperations.isNotEmpty()) {
+        return if (recentTransactions.isNotEmpty()) {
             DashboardComponent.Recents(
-                operations = recentOperations,
-                hasMore = presentOperations.size > count,
+                transactions = recentTransactions,
+                hasMore = presentTransactions.size > count,
             )
         } else {
             null

@@ -42,7 +42,7 @@ val reportModule = module {
     viewModel { params ->
         ReportViewerViewModel(
             params = params.get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             accountRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),

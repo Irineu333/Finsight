@@ -7,8 +7,8 @@ import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
-import com.neoutils.finsight.ui.modal.FakeOperationRepository
-import com.neoutils.finsight.ui.modal.operation
+import com.neoutils.finsight.ui.modal.FakeTransactionRepository
+import com.neoutils.finsight.ui.modal.transaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -33,29 +33,29 @@ class ViewAdjustmentViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel(
-        repository: FakeOperationRepository,
+        repository: FakeTransactionRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = ViewAdjustmentViewModel(
         transactionId = 1L,
-        operationRepository = repository,
+        transactionRepository = repository,
         crashlytics = crashlytics,
     )
 
     @Test
     fun loadingThenContent() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val vm = viewModel(repository)
 
         vm.uiState.test {
             assertEquals(ViewAdjustmentUiState.Loading, awaitItem())
-            repository.emit(operation(id = 1L, amount = 42.0, type = TransactionType.ADJUSTMENT))
+            repository.emit(transaction(id = 1L, amount = 42.0, type = TransactionType.ADJUSTMENT))
             assertEquals(42.0, assertIs<ViewAdjustmentUiState.Content>(awaitItem()).signedAmount)
         }
     }
 
     @Test
     fun firstEmissionNullShowsErrorAndRecordsException() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val crashlytics = FakeCrashlytics()
         val vm = viewModel(repository, crashlytics)
 
@@ -71,7 +71,7 @@ class ViewAdjustmentViewModelTest {
 
     @Test
     fun deletionAfterContentEmitsDismiss() = runTest(dispatcher) {
-        val repository = FakeOperationRepository()
+        val repository = FakeTransactionRepository()
         val vm = viewModel(repository)
 
         turbineScope {
@@ -79,7 +79,7 @@ class ViewAdjustmentViewModelTest {
             val events = vm.events.testIn(backgroundScope)
 
             assertEquals(ViewAdjustmentUiState.Loading, state.awaitItem())
-            repository.emit(operation(id = 1L, type = TransactionType.ADJUSTMENT))
+            repository.emit(transaction(id = 1L, type = TransactionType.ADJUSTMENT))
             assertIs<ViewAdjustmentUiState.Content>(state.awaitItem())
 
             repository.emit(null)

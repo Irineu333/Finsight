@@ -405,25 +405,25 @@
     <string name="edit_transaction_income">Income</string>
 
     <!-- View Operation Modal -->
-    <string name="view_operation_type_income">Income</string>
-    <string name="view_operation_type_expense">Expense</string>
-    <string name="view_operation_type_adjustment">Adjustment</string>
-    <string name="view_operation_amount_label">Amount</string>
-    <string name="view_operation_date_label">Date</string>
-    <string name="view_operation_origin_label">Origin</string>
-    <string name="view_operation_origin_account">Account</string>
-    <string name="view_operation_origin_credit_card">Credit Card</string>
-    <string name="view_operation_source_account_label">Source account</string>
-    <string name="view_operation_destination_account_label">Destination account</string>
-    <string name="view_operation_account_label">Account</string>
-    <string name="view_operation_card_label">Card</string>
-    <string name="view_operation_invoice_label">Invoice</string>
-    <string name="view_operation_installment_label">Installment</string>
-    <string name="view_operation_recurring_label">Recurring</string>
-    <string name="view_operation_deleted">Deleted</string>
-    <string name="view_operation_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
-    <string name="view_operation_delete">Delete</string>
-    <string name="view_operation_edit">Edit</string>
+    <string name="view_transaction_type_income">Income</string>
+    <string name="view_transaction_type_expense">Expense</string>
+    <string name="view_transaction_type_adjustment">Adjustment</string>
+    <string name="view_transaction_amount_label">Amount</string>
+    <string name="view_transaction_date_label">Date</string>
+    <string name="view_transaction_origin_label">Origin</string>
+    <string name="view_transaction_origin_account">Account</string>
+    <string name="view_transaction_origin_credit_card">Credit Card</string>
+    <string name="view_transaction_source_account_label">Source account</string>
+    <string name="view_transaction_destination_account_label">Destination account</string>
+    <string name="view_transaction_account_label">Account</string>
+    <string name="view_transaction_card_label">Card</string>
+    <string name="view_transaction_invoice_label">Invoice</string>
+    <string name="view_transaction_installment_label">Installment</string>
+    <string name="view_transaction_recurring_label">Recurring</string>
+    <string name="view_transaction_deleted">Deleted</string>
+    <string name="view_transaction_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
+    <string name="view_transaction_delete">Delete</string>
+    <string name="view_transaction_edit">Edit</string>
 
     <!-- View Adjustment Modal -->
     <string name="view_adjustment_type_label">Adjustment</string>
@@ -477,10 +477,10 @@
     <string name="summary_card_final_balance">Final Balance</string>
     <string name="summary_card_see_invoices">See invoices</string>
 
-    <string name="operation_card_transfer">Transfer</string>
-    <string name="operation_card_payment">Invoice Payment</string>
-    <string name="operation_card_balance_adjustment">Balance Adjustment</string>
-    <string name="operation_card_invoice_adjustment">Invoice Adjustment</string>
+    <string name="transaction_card_transfer">Transfer</string>
+    <string name="transaction_card_payment">Invoice Payment</string>
+    <string name="transaction_card_balance_adjustment">Balance Adjustment</string>
+    <string name="transaction_card_invoice_adjustment">Invoice Adjustment</string>
 
     <string name="target_selector_account">Account</string>
     <string name="target_selector_credit_card">Credit Card</string>
@@ -720,7 +720,7 @@
     <string name="detail_pane_close">Close</string>
     <string name="detail_pane_error_title">Unable to load</string>
     <string name="detail_pane_error">The item was not found or could not be loaded.</string>
-    <string name="view_operation_title">Operation</string>
+    <string name="view_transaction_title">Operation</string>
     <string name="view_adjustment_title">Adjustment</string>
     <string name="view_category_title">Category</string>
     <string name="view_budget_title">Budget</string>

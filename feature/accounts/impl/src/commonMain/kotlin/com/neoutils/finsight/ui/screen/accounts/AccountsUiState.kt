@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.AccountUi
-import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.ui.model.TransactionUi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 
@@ -23,7 +23,7 @@ sealed class AccountsUiState {
         val domainAccounts: List<Account> = emptyList(),
         val selectedAccountIndex: Int,
         val selectedAccountId: Long? = null,
-        val operations: Map<LocalDate, List<OperationUi>>,
+        val transactions: Map<LocalDate, List<TransactionUi>>,
         val categories: List<Category>,
         val selectedCategory: Category? = null,
         val selectedType: TransactionType? = null,

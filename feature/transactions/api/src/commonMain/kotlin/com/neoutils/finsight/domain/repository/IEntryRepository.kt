@@ -41,11 +41,11 @@ data class CardMonthFlows(
 
 interface IEntryRepository {
 
-    /** The entries (legs) of an operation, each hydrated with its account. */
-    suspend fun getEntriesByOperation(transactionId: Long): List<Entry>
+    /** The entries (legs) of an transaction, each hydrated with its account. */
+    suspend fun getEntriesByTransaction(transactionId: Long): List<Entry>
 
-    /** Observes the entries (legs) of an operation, each hydrated with its account. */
-    fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>>
+    /** Observes the entries (legs) of an transaction, each hydrated with its account. */
+    fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>>
 
     /**
      * Natural balance of [accountId] (or of all ASSET accounts when null) up to
@@ -79,7 +79,7 @@ interface IEntryRepository {
 
     /**
      * Natural balance (reais) per category account of [categoryType] in a date
-     * range, counting only operations that also have a leg on one of
+     * range, counting only transactions that also have a leg on one of
      * [siblingAccountIds] — i.e. spending/income "seen from" those accounts.
      */
     suspend fun categoryTotals(

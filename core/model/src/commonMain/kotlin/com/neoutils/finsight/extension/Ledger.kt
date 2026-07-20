@@ -2,7 +2,7 @@ package com.neoutils.finsight.extension
 
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 
 /**
@@ -25,23 +25,23 @@ val AccountType.displaySign: Int get() = if (isDebitNatured) 1 else -1
 fun AccountType.displayBalance(naturalBalance: Long): Long = naturalBalance * displaySign
 
 /**
- * Derives the operation label from the account types of its entries, in a single
+ * Derives the transaction label from the account types of its entries, in a single
  * place, without consulting any persisted kind. `EQUITY` is tested *before any
- * other case*: a reconciliation counter-leg makes the operation an adjustment
+ * other case*: a reconciliation counter-leg makes the transaction an adjustment
  * regardless of where the money sits — otherwise `{ASSET, EQUITY}` would fall
  * through to `TRANSFER` and `{LIABILITY, EQUITY}` would be caught by `LIABILITY`
  * as `PAYMENT`. After it, an `EXPENSE` account makes it an expense; an `INCOME`
  * account an income; a `LIABILITY` account a payment; otherwise (two `ASSET`
  * accounts) a transfer. Total over the seven ledger forms.
  */
-fun List<Entry>.deriveOperationLabel(): OperationLabel {
+fun List<Entry>.deriveTransactionLabel(): TransactionLabel {
     val types = mapTo(mutableSetOf()) { it.account.type }
     return when {
-        AccountType.EQUITY in types -> OperationLabel.ADJUSTMENT
-        AccountType.EXPENSE in types -> OperationLabel.EXPENSE
-        AccountType.INCOME in types -> OperationLabel.INCOME
-        AccountType.LIABILITY in types -> OperationLabel.PAYMENT
-        else -> OperationLabel.TRANSFER
+        AccountType.EQUITY in types -> TransactionLabel.ADJUSTMENT
+        AccountType.EXPENSE in types -> TransactionLabel.EXPENSE
+        AccountType.INCOME in types -> TransactionLabel.INCOME
+        AccountType.LIABILITY in types -> TransactionLabel.PAYMENT
+        else -> TransactionLabel.TRANSFER
     }
 }
 
@@ -51,13 +51,13 @@ fun List<Entry>.isBalanced(): Boolean =
 
 /**
  * Derives a money leg's [TransactionType] from the ledger, so it need not be
- * persisted. The user's intent is recoverable from the operation's contra leg:
+ * persisted. The user's intent is recoverable from the transaction's contra leg:
  * an `EQUITY` counter-leg means a balance adjustment; otherwise the sign of the
  * leg's own entry gives the direction (money out = expense, money in = income).
  * Holds for both the `ASSET` account leg and the `LIABILITY` card leg.
  */
-fun deriveTransactionType(legAmountCents: Long, operationEntries: List<Entry>): TransactionType = when {
-    operationEntries.any { it.account.type == AccountType.EQUITY } -> TransactionType.ADJUSTMENT
+fun deriveTransactionType(legAmountCents: Long, transactionEntries: List<Entry>): TransactionType = when {
+    transactionEntries.any { it.account.type == AccountType.EQUITY } -> TransactionType.ADJUSTMENT
     legAmountCents < 0 -> TransactionType.EXPENSE
     else -> TransactionType.INCOME
 }

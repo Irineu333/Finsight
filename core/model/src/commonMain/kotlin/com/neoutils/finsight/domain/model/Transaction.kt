@@ -1,34 +1,34 @@
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.extension.deriveOperationLabel
+import com.neoutils.finsight.extension.deriveTransactionLabel
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
 
 /**
  * A balanced set of ledger [entries] — what the user calls a transaction.
  *
- * Everything the app used to persist about an operation's nature ([label], its
+ * Everything the app used to persist about an transaction's nature ([label], its
  * direction, whether it targets a card) is **derived** from the account types of
  * its entries. Nothing here is stored as independent state.
  */
-data class Operation(
+data class Transaction(
     val id: Long = 0,
     val title: String?,
     val date: LocalDate,
-    val recurring: OperationRecurring? = null,
+    val recurring: TransactionRecurring? = null,
     val category: Category? = null,
     val sourceAccount: Account? = null,
     val targetCreditCard: CreditCard? = null,
     val targetInvoice: Invoice? = null,
-    val installment: OperationInstallment? = null,
-    // The balanced double-entry legs of this operation, each hydrated with its account.
+    val installment: TransactionInstallment? = null,
+    // The balanced double-entry legs of this transaction, each hydrated with its account.
     val entries: List<Entry> = emptyList(),
 ) {
     val displayTitle
         get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
 
-    /** The operation's nature, derived from the account types of its entries. */
-    val label: OperationLabel get() = entries.deriveOperationLabel()
+    /** The transaction's nature, derived from the account types of its entries. */
+    val label: TransactionLabel get() = entries.deriveTransactionLabel()
 
     /**
      * The legs that hold money (`ASSET`/`LIABILITY`), as opposed to the
@@ -42,7 +42,7 @@ data class Operation(
      */
     val primaryEntry: Entry? get() = monetaryEntries.minByOrNull { it.amount }
 
-    /** The operation's amount, always positive — the sign is a display concern. */
+    /** The transaction's amount, always positive — the sign is a display concern. */
     val amount: Double get() = abs(primaryEntry?.amount ?: 0L) / 100.0
 
     val isCardTarget: Boolean get() = entries.any { it.account.type == AccountType.LIABILITY }

@@ -28,7 +28,7 @@ import kotlin.test.assertEquals
 
 /**
  * Characterizes the dashboard's own per-account balance (DashboardComponentsBuilder
- * `accountsOverview`, the `Σ signedCents / 100` reimplemented outside the use case):
+ * `accountsOverview`, whose per-account sum was reimplemented outside the use case):
  * an all-time balance per account, plus the excluded-account filter. Task 4.5 flips
  * this to the ledger; the numbers must survive.
  */
@@ -154,7 +154,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
-    // 100 − 30 = 70, account 2 = 50 − 20 = 30, matching the legacy Σ signedCents.
+    // 100 − 30 = 70, account 2 = 50 − 20 = 30 — the figures the screen showed before.
     override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()

@@ -201,7 +201,7 @@ class DashboardComponentsBuilder(
             .filter { it.id !in excludedIds }
             .map { account ->
                 // All-time natural balance from the ledger (task 4.5), replacing the
-                // in-builder `Σ signedCents` over the account's legacy legs.
+                // in-builder per-account sum that used to live here.
                 DashboardAccountUi(account = account, balance = entryRepository.balance(account.id))
             }
 

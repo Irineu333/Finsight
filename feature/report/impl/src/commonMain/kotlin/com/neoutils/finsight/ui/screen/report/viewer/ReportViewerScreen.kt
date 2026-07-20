@@ -128,7 +128,7 @@ private fun ReportViewerContent(
         title = stringResource(Res.string.report_viewer_title),
         generatedAtPrefix = stringResource(Res.string.report_output_generated_at),
         summaryBalance = stringResource(Res.string.report_viewer_summary_balance),
-        summaryInitialBalance = stringResource(Res.string.report_viewer_summary_initial_balance),
+        summaryOpeningBalance = stringResource(Res.string.report_viewer_summary_opening_balance),
         summaryIncome = stringResource(Res.string.report_viewer_summary_income),
         summaryExpense = stringResource(Res.string.report_viewer_summary_expense),
         summaryInvoiceExpense = stringResource(Res.string.report_viewer_summary_invoice_expense),

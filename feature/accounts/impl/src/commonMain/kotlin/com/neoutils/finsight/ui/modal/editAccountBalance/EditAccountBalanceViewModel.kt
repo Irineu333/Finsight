@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.*
@@ -27,7 +27,7 @@ class EditAccountBalanceViewModel(
     private val account: Account,
     private val adjustBalanceUseCase: AdjustBalanceUseCase,
     private val adjustFinalBalanceUseCase: AdjustFinalBalanceUseCase,
-    private val adjustInitialBalanceUseCase: AdjustInitialBalanceUseCase,
+    private val adjustOpeningBalanceUseCase: AdjustOpeningBalanceUseCase,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
@@ -110,7 +110,7 @@ class EditAccountBalanceViewModel(
                 account = account,
             )
 
-            EditAccountBalanceModal.Type.INITIAL -> adjustInitialBalanceUseCase(
+            EditAccountBalanceModal.Type.INITIAL -> adjustOpeningBalanceUseCase(
                 targetBalance = targetBalance,
                 targetMonth = targetMonth,
                 account = account,

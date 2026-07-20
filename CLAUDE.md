@@ -112,11 +112,12 @@ markers live in `:core:navigation`, making every route findable by its implement
 - `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
 ## Ledger (double-entry)
-Money is modeled as a **balanced double-entry ledger** (OpenSpec change `balanced-ledger`).
-- **Chart of accounts:** every account, card and category is an `Account` with a `type` ∈ `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/model`). Cards/categories keep their facade entity, linked by `accountId` to their ledger `Account`; system `EQUITY` accounts (reconciliation/initial balance) are seeded by the migration.
-- **Entries:** an operation is a set of `Entry` (signed `Long` cents, debit-positive, `currency`); `Σ = 0` per currency, validated at the single write boundary (`LedgerEntryWriter` in `OperationRepository`) with `LedgerError.Unbalanced`. Reads derive from `Σ entries` via `IEntryRepository` (balance, invoice owed, net worth) — no `signedImpact()`.
-- **Convention:** debit-positive internally; display sign is inverted per `AccountType` (`AccountType.displayBalance`) and the operation label is derived from the accounts' types (`deriveOperationLabel`) — never persisted, either way.
-- **Coexistence:** the ledger currently runs alongside the legacy `Transaction`/`signedImpact` model (double-write); the legacy path is removed only after full device parity verification. Room schema is at **v8** (`MIGRATION_7_8`). The two mechanisms above are the *intended* ones and **have no production consumer yet** (only `LedgerTest`): today `Operation.kind` derives from the legacy legs (`Operation.kt:21-26`), and sign inversion is ad-hoc per `Transaction.Type`/`Category.Type`.
+Money is modeled as a **balanced double-entry ledger**, and that is the only model.
+- **Chart of accounts:** every account, card and category is an `Account` with a `type` from the **closed** set `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/model`). Cards and categories are facades linked to their `Account` by `accountId`; closure lives on the account (`isClosed`), so a facade never keeps its own copy.
+- **Entries:** a `Transaction` is a set of `Entry` (signed `Long` cents, debit-positive, `currency`). `Σ = 0` per currency is validated at the single write boundary (`LedgerEntryWriter`), alongside the invoice-status invariant.
+- **Reads:** every figure — balance, opening balance, invoice owed, category spending, net worth — is `Σ entries`, via `IEntryRepository`. There is no per-type sign rule and no second way to compute a number.
+- **Derivation:** what a transaction *is* comes from the account types of its entries (`deriveTransactionLabel`), and the display sign from `AccountType.displaySign`. Neither is persisted.
+- **Writes:** callers express **intent** (`TransactionIntent`/`TransactionLeg`), not legs. Resolving the counterpart account creates rows on demand, so the translation belongs to the writer, not to a pure mapper.
 
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.

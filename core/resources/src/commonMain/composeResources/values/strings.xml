@@ -91,7 +91,7 @@
     <string name="report_viewer_summary_income">Receitas</string>
     <string name="report_viewer_summary_expense">Despesas</string>
     <string name="report_viewer_summary_balance">Saldo do Período</string>
-    <string name="report_viewer_summary_initial_balance">Saldo Inicial</string>
+    <string name="report_viewer_summary_opening_balance">Saldo Inicial</string>
     <string name="report_viewer_summary_invoice_total">Aberta</string>
     <string name="report_viewer_summary_invoice_expense">Saída</string>
     <string name="report_viewer_summary_advance_payment">Pago</string>
@@ -195,7 +195,7 @@
     <!-- Accounts Screen -->
     <string name="accounts_title">Contas</string>
     <string name="accounts_default">Padrão</string>
-    <string name="accounts_initial_balance">Saldo Inicial</string>
+    <string name="accounts_opening_balance">Saldo Inicial</string>
     <string name="accounts_income">Receitas</string>
     <string name="accounts_expenses">Despesas</string>
     <string name="accounts_adjustments">Ajustes</string>
@@ -407,7 +407,7 @@
     <string name="edit_transaction_expense">Despesa</string>
     <string name="edit_transaction_income">Receita</string>
 
-    <!-- View Operation Modal -->
+    <!-- View Transaction Modal -->
     <string name="view_transaction_type_income">Receita</string>
     <string name="view_transaction_type_expense">Despesa</string>
     <string name="view_transaction_type_adjustment">Ajuste</string>
@@ -471,7 +471,7 @@
     <string name="balance_card_pending_income">Receitas Pendentes</string>
     <string name="balance_card_pending_expense">Despesas Pendentes</string>
 
-    <string name="summary_card_initial_balance">Saldo Inicial</string>
+    <string name="summary_card_opening_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>
     <string name="summary_card_outgoing">Saídas</string>
     <string name="summary_card_invoices">Faturas</string>

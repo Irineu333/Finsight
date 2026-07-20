@@ -12,10 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.close_account_confirm
+import com.neoutils.finsight.resources.close_credit_card_blocked
 import com.neoutils.finsight.resources.close_credit_card_message
 import com.neoutils.finsight.resources.close_credit_card_title
 import org.jetbrains.compose.resources.stringResource
@@ -34,6 +38,9 @@ class CloseCreditCardModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val viewModel = koinViewModel<CloseCreditCardViewModel> { parametersOf(creditCard) }
+        val balance by viewModel.balance.collectAsState()
+        val formatter = LocalCurrencyFormatter.current
+        val blocked = balance != null && balance != 0.0
 
 
         Column(
@@ -51,7 +58,12 @@ class CloseCreditCardModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.close_credit_card_message),
+                text = if (blocked) {
+                    // A card balance is a debt, so it reads positive to the user.
+                    stringResource(Res.string.close_credit_card_blocked, formatter.format(-(balance ?: 0.0)))
+                } else {
+                    stringResource(Res.string.close_credit_card_message)
+                },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -62,6 +74,7 @@ class CloseCreditCardModal(
                 onClick = {
                     viewModel.closeCreditCard()
                 },
+                enabled = balance == 0.0,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(

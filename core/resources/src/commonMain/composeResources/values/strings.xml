@@ -12,6 +12,7 @@
     <string name="account_error_not_found">Conta não encontrada.</string>
     <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Encerre-a para preservar o histórico.</string>
     <string name="account_error_no_transactions">Esta conta não tem transações. Exclua-a em vez de encerrá-la.</string>
+    <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de encerrá-la.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -332,9 +333,11 @@
     <string name="close_account_title">Encerrar Conta</string>
     <string name="close_account_confirm">Encerrar</string>
     <string name="close_account_message">Esta conta tem movimentação, então ela é encerrada em vez de excluída: o histórico é preservado e ela deixa de aparecer nas listas.</string>
+    <string name="close_account_blocked">Esta conta ainda tem saldo de %1$s. Transfira, gaste ou ajuste o saldo antes de encerrá-la — assim fica registrado para onde o dinheiro foi.</string>
     <string name="close_account_message_with_balance">Esta conta tem movimentação e saldo diferente de zero. Ela é encerrada em vez de excluída: o histórico é preservado, ela deixa de aparecer nas listas, e um lançamento de baixa registra o saldo restante.</string>
     <string name="close_credit_card_title">Encerrar Cartão</string>
     <string name="close_credit_card_message">Este cartão tem movimentação, então ele é encerrado em vez de excluído: as faturas e transações são preservadas e ele deixa de aparecer nas listas.</string>
+    <string name="close_credit_card_blocked">Este cartão ainda tem %1$s em aberto. Pague a fatura ou ajuste o saldo antes de encerrá-lo.</string>
     <string name="delete_account_message">Tem certeza que deseja excluir esta conta? Se ela já tiver movimentação, o histórico é preservado e a conta apenas deixa de aparecer nas listas. Nenhuma transação é excluída.</string>
     <string name="delete_account_confirm">Excluir</string>
 

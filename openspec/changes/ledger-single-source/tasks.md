@@ -257,6 +257,19 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
+- [x] 8.14 **Encerrar deixa de gerar baixa automática; passa a exigir saldo zero (decisão do usuário, revoga a D13 nesse ponto).** A D13 e a spec `account-lifecycle` prescreviam que encerrar com saldo ≠ 0 gerasse um lançamento de baixa contra reconciliação. O usuário recusou: é "mágica" que pode contrariar a expectativa dele.
+
+  **Ele está certo, e a justificativa da spec não se sustentava.** Ela dizia "o saldo MUST NOT desaparecer sem lançamento" — argumento herdado do problema de **apagar**, onde o dinheiro sumia do patrimônio sem registro. Ao **encerrar**, as entries ficam: nada some. A baixa não registrava uma saída, ela **inventava** uma — e pior, substituía a única informação que só o usuário tem (para onde o dinheiro foi) por uma reconciliação genérica, num lançamento que aparece no histórico dele como se ele o tivesse feito.
+
+  O problema real que a baixa resolvia era o oposto: conta encerrada **com** saldo deixaria dinheiro no patrimônio sem conta visível — um número que não fecha. Exigir saldo zero fecha os dois casos sem inventar nada: o usuário resolve antes, transferindo, gastando ou ajustando, e cada um desses caminhos registra a intenção real.
+
+  - `CloseAccountUseCase` recusa saldo ≠ 0 (`AccountError.HAS_BALANCE`) e **não escreve nada**; a criação da baixa saiu, junto com a dependência de `ITransactionRepository`.
+  - A UI impede antes, dizendo quanto falta resolver e o que fazer — sem ser a salvaguarda.
+  - Teste que prova a recusa **e** que nenhum lançamento é criado.
+  - A spec `account-lifecycle` foi reescrita: o requisito "Encerramento com saldo gera lançamento de baixa" virou "Encerramento exige saldo zero", com o raciocínio acima registrado.
+
+  ⚠️ **A baixa automática permanece na `MIGRATION_7_9`, e é legítima ali por não haver alternativa:** ela reconstrói contas **já apagadas** no v7, cujo dinheiro já havia deixado os livros, sem usuário a quem perguntar. Ali a baixa registra um fato passado; em runtime ela inventaria um. A distinção está escrita na spec.
+
 - [x] 8.13 **Excluir e encerrar como ações separadas, do use case à tela.** Escopo acrescentado pelo usuário, sob três premissas dele: são ações diferentes e pedem use cases diferentes; **todo use case impede o próprio uso incorreto**; e a UI também impede — não como salvaguarda, mas para não induzir expectativa errada.
 
   **Domínio.** `DeleteAccountUseCase` e `CloseAccountUseCase` são pares disjuntos, cada um recusando o caso do outro com erro tipado:

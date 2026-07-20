@@ -62,7 +62,6 @@ val accountsModule = module {
         CloseAccountUseCaseImpl(
             accountDao = get(),
             entryRepository = get(),
-            transactionRepository = get(),
         )
     }
     factory<DeleteAccountUseCase> {
@@ -123,6 +122,7 @@ val accountsModule = module {
         CloseAccountViewModel(
             account = it.get(),
             closeAccountUseCase = get(),
+            entryRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

@@ -12,6 +12,7 @@
     <string name="account_error_not_found">Account not found.</string>
     <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Close it to preserve the history.</string>
     <string name="account_error_no_transactions">This account has no transactions. Delete it instead of closing it.</string>
+    <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before closing the account.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -332,9 +333,11 @@
     <string name="close_account_title">Close Account</string>
     <string name="close_account_confirm">Close</string>
     <string name="close_account_message">This account has movement, so it is closed rather than deleted: its history is preserved and it stops appearing in the lists.</string>
+    <string name="close_account_blocked">This account still has a balance of %1$s. Transfer, spend or adjust it before closing — that way the record shows where the money went.</string>
     <string name="close_account_message_with_balance">This account has movement and a non-zero balance. It is closed rather than deleted: its history is preserved, it stops appearing in the lists, and a write-off entry records the remaining balance.</string>
     <string name="close_credit_card_title">Close Card</string>
     <string name="close_credit_card_message">This card has movement, so it is closed rather than deleted: its invoices and transactions are preserved and it stops appearing in the lists.</string>
+    <string name="close_credit_card_blocked">This card still has %1$s outstanding. Pay the invoice or adjust the balance before closing it.</string>
     <string name="delete_account_message">Are you sure you want to delete this account? If it already has movement, its history is preserved and the account simply stops appearing in the lists. No transaction is deleted.</string>
     <string name="delete_account_confirm">Delete</string>
 

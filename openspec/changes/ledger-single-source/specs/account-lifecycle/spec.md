@@ -29,24 +29,22 @@ Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lan
 - **WHEN** um lançamento de uma conta encerrada é exibido
 - **THEN** ele mantém o seu rótulo e a sua editabilidade, derivados normalmente das suas entries, sem tratamento especial por a conta estar encerrada
 
-### Requirement: Encerramento com saldo gera lançamento de baixa
-Encerrar uma conta cujo saldo não seja zero SHALL registrar um lançamento de encerramento balanceado que zera esse saldo, tendo como contrapartida a conta `EQUITY` de reconciliação — a mesma usada pelos ajustes de saldo, por encerrar zerando um saldo ser uma reconciliação. O saldo MUST NOT desaparecer sem lançamento: a saída do dinheiro do patrimônio SHALL ser um lançamento **explícito, datado e balanceado**, recuperável do razão.
+### Requirement: Encerramento exige saldo zero
+Encerrar uma conta cujo saldo não seja zero SHALL ser recusado, com erro tipado. O sistema MUST NOT gerar lançamento algum para zerar o saldo por conta própria: um lançamento que o usuário não pediu aparece no histórico dele como se ele o tivesse feito, e substitui a informação que só ele tem — para onde o dinheiro foi — por uma reconciliação genérica.
 
-Esta capability MUST NOT exigir que o lançamento de baixa seja **visualmente distinguível** de um ajuste de saldo: com a contrapartida de reconciliação, as duas operações têm a mesma forma (`{monetária, EQUITY:Reconciliação}`) e a derivação de rótulo — total e sem tratamento especial, conforme `balanced-ledger` — produz `ADJUSTMENT` para ambas. A fusão MUST NOT ser desfeita por um ramo condicional nas leituras, nem por identidade de conta. Ela também MUST NOT confundir a idempotência do ajuste de saldo com uma baixa: como uma conta encerrada MUST NOT ser oferecida na seleção, um ajuste jamais alcança uma conta que possua baixa, e a colisão é inalcançável por construção — a exclusão SHALL residir no estado de encerramento do plano de contas, e MUST NOT depender de um marcador no próprio lançamento.
+O usuário SHALL resolver o saldo antes, pelos meios que já existem: transferir para outra conta, registrar a despesa, ou ajustar o saldo. Cada um desses caminhos registra a intenção real; a baixa automática registrava apenas que havia um saldo incômodo.
 
-O patrimônio líquido após o encerramento SHALL ser idêntico ao que seria se a conta tivesse sido apagada, já que o saldo encerrado é zero. Contas encerradas SHALL continuar entrando nas leituras pelo mesmo mecanismo das demais, sem ramo condicional.
+Isto MUST NOT ser confundido com o problema que o encerramento resolve. Apagar uma conta com saldo fazia o dinheiro sumir do patrimônio sem registro; encerrar preserva as entries, então nada some. Exigir saldo zero fecha também o caso oposto — uma conta encerrada **com** saldo deixaria, no patrimônio, dinheiro que não aparece em conta visível alguma.
 
-#### Scenario: Encerrar conta com saldo
-- **WHEN** o usuário remove uma conta com saldo diferente de zero
-- **THEN** o sistema registra um lançamento de encerramento que debita ou credita a conta pelo seu saldo contra a conta `EQUITY` de reconciliação, somando zero, e o saldo da conta passa a ser zero
+⚠️ A migração `v7 → v9` é o único lugar onde uma baixa automática permanece legítima, e por não haver alternativa: ela reconstrói contas **já apagadas** no v7, cujo dinheiro já havia deixado os livros, sem usuário a quem perguntar. Ali a baixa registra um fato passado; em runtime ela inventaria um.
 
-#### Scenario: Saldo da conta encerrada é zero
-- **WHEN** uma conta com saldo é encerrada
-- **THEN** a soma das entries dessa conta passa a ser zero, e a diferença aparece como lançamento de baixa datado contra a conta de reconciliação
+#### Scenario: Encerrar conta com saldo é recusado
+- **WHEN** o usuário tenta encerrar uma conta cujo saldo é diferente de zero
+- **THEN** o sistema recusa a operação com erro tipado, não escreve nada, e a interface explica que o saldo precisa ser resolvido antes
 
-#### Scenario: Encerrar conta zerada não gera lançamento
+#### Scenario: Encerrar conta zerada
 - **WHEN** o usuário remove uma conta cujo saldo já é zero mas que possui lançamentos
-- **THEN** a conta é encerrada sem lançamento de baixa, por não haver saldo a zerar
+- **THEN** a conta é encerrada, sem lançamento algum, e o histórico permanece
 
 ### Requirement: Integridade referencial do plano de contas
 O sistema MUST NOT permitir que uma conta referenciada por qualquer `Entry` seja removida do plano de contas. Toda `Entry` SHALL referenciar uma conta existente, encerrada ou não. Uma tentativa de remover conta com lançamentos SHALL ser convertida em encerramento antes de alcançar o banco. Nenhuma violação de integridade do banco SHALL alcançar a interface: hoje ela alcança, porque `DeleteAccountUseCase` envolve a chamada num `either { }`, que captura *raises* do Arrow mas **não** exceções — a `SQLiteException` atravessa o `either` e o `viewModelScope` sem handler, e o `onLeft` de crashlytics nunca roda.

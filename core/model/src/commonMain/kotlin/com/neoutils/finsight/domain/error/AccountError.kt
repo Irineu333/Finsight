@@ -3,6 +3,7 @@ package com.neoutils.finsight.domain.error
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_empty_name
+import com.neoutils.finsight.resources.account_error_has_balance
 import com.neoutils.finsight.resources.account_error_has_transactions
 import com.neoutils.finsight.resources.account_error_no_transactions
 import com.neoutils.finsight.resources.account_error_not_found
@@ -25,6 +26,13 @@ enum class AccountError(val message: String) {
      * has nothing to preserve, so closing it would only hide it beyond reach.
      */
     NO_TRANSACTIONS(message = "Cannot close an account that has no transactions"),
+
+    /**
+     * Closing does not invent a transaction to zero the balance: that would put a
+     * movement the user never made into their history, in place of the one fact
+     * only they have — where the money actually went.
+     */
+    HAS_BALANCE(message = "Cannot close an account whose balance is not zero"),
 }
 
 fun AccountError.toUiText() = when (this) {
@@ -34,4 +42,5 @@ fun AccountError.toUiText() = when (this) {
     AccountError.CANNOT_DELETE_DEFAULT -> UiText.Raw(AccountError.CANNOT_DELETE_DEFAULT.message)
     AccountError.HAS_TRANSACTIONS -> UiText.Res(Res.string.account_error_has_transactions)
     AccountError.NO_TRANSACTIONS -> UiText.Res(Res.string.account_error_no_transactions)
+    AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
 }

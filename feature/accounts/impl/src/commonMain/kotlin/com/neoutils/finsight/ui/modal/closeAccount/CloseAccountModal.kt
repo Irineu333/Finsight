@@ -17,10 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.close_account_confirm
+import com.neoutils.finsight.resources.close_account_blocked
 import com.neoutils.finsight.resources.close_account_message
 import com.neoutils.finsight.resources.close_account_title
 import org.jetbrains.compose.resources.stringResource
@@ -42,6 +46,12 @@ class CloseAccountModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val viewModel = koinViewModel<CloseAccountViewModel> { parametersOf(account) }
+        val balance by viewModel.balance.collectAsState()
+        val formatter = LocalCurrencyFormatter.current
+
+        // The UI stops the user before the attempt, so it never promises something
+        // the use case will refuse. The use case is still the safeguard.
+        val blocked = balance != null && balance != 0.0
 
         Column(
             modifier = Modifier
@@ -58,7 +68,11 @@ class CloseAccountModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.close_account_message),
+                text = if (blocked) {
+                    stringResource(Res.string.close_account_blocked, formatter.format(balance ?: 0.0))
+                } else {
+                    stringResource(Res.string.close_account_message)
+                },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -69,6 +83,7 @@ class CloseAccountModal(
                 onClick = {
                     viewModel.closeAccount()
                 },
+                enabled = balance == 0.0,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(

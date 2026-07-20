@@ -131,6 +131,7 @@ val creditCardsModule = module {
         CloseCreditCardViewModel(
             creditCard = it.get(),
             closeCreditCardUseCase = get(),
+            entryRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

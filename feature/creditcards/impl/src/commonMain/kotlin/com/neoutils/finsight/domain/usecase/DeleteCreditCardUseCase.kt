@@ -2,33 +2,26 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import arrow.core.left
 import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.repository.IEntryRepository
 
 /**
  * Removes a card that never moved, facade and ledger account together.
  *
- * A card with movement is refused, not quietly closed — see [CloseCreditCardUseCase].
+ * A card with movement is refused — see [CloseCreditCardUseCase].
  */
 class DeleteCreditCardUseCase(
     private val creditCardRepository: ICreditCardRepository,
-    private val accountRepository: IAccountRepository,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val entryRepository: IEntryRepository,
 ) {
-    suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> = catch {
-        accountRepository.getAccountById(creditCard.accountId)
-    }.flatMap { account ->
-        if (account == null) return@flatMap AccountException(AccountError.NOT_FOUND).left()
-
-        // The account guards the movement rule; the facade only goes once it did.
-        deleteAccountUseCase(account).flatMap {
-            catch { creditCardRepository.delete(creditCard) }
+    suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> {
+        if (entryRepository.hasEntries(creditCard.accountId)) {
+            return AccountException(AccountError.HAS_TRANSACTIONS).left()
         }
+        return catch { creditCardRepository.delete(creditCard) }
     }
 }

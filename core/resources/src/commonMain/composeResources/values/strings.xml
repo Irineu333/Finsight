@@ -43,7 +43,7 @@
     <string name="ledger_error_paid_invoice">Esta fatura já foi paga e não pode mais ser alterada.</string>
     <string name="ledger_error_closed_invoice">Esta fatura está fechada. Só o pagamento dela pode ser registrado.</string>
     <string name="ledger_error_closed_account">Esta conta foi encerrada e não aceita novos lançamentos.</string>
-    <string name="transaction_error_generic">Não foi possível salvar a transação.</string>
+    <string name="transaction_error_generic">Algo deu errado ao salvar a transação. Tente de novo em instantes.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>
@@ -208,8 +208,7 @@
     <string name="accounts_balance">Saldo</string>
     <string name="retire_action_delete">Excluir</string>
     <string name="retire_action_close">Encerrar</string>
-    <string name="retire_action_error_generic">Não foi possível concluir a ação.</string>
-    <string name="error_modal_title">Não foi possível concluir</string>
+    <string name="retire_action_error_generic">Algo deu errado ao salvar. Tente de novo em instantes.</string>
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>

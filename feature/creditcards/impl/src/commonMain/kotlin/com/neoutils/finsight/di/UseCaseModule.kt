@@ -135,8 +135,7 @@ val useCaseModules = module {
     factory {
         DeleteCreditCardUseCase(
             creditCardRepository = get(),
-            accountRepository = get(),
-            deleteAccountUseCase = get(),
+            entryRepository = get(),
         )
     }
 

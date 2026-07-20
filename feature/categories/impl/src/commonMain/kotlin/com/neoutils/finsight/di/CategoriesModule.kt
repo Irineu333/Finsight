@@ -66,8 +66,7 @@ val categoriesModule = module {
     factory {
         DeleteCategoryUseCase(
             categoryRepository = get(),
-            accountRepository = get(),
-            deleteAccountUseCase = get(),
+            entryRepository = get(),
         )
     }
 

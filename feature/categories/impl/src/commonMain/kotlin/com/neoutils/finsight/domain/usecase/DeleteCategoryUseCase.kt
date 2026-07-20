@@ -2,34 +2,28 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
 import arrow.core.left
 import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.repository.IEntryRepository
 
 /**
  * Removes a category that was never used, facade and ledger account together.
  *
- * A category with movement is refused — see [CloseCategoryUseCase]. Before this
- * existed the ViewModel called the repository directly, with no `Either`, no
- * crashlytics, and an analytics event logged even on failure.
+ * A category with movement is refused — see [CloseCategoryUseCase]. Removing the
+ * pair is the repository's job, because the order is a persistence constraint:
+ * the facade references the account, so the account cannot go first.
  */
 class DeleteCategoryUseCase(
     private val categoryRepository: ICategoryRepository,
-    private val accountRepository: IAccountRepository,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val entryRepository: IEntryRepository,
 ) {
-    suspend operator fun invoke(category: Category): Either<Throwable, Unit> = catch {
-        accountRepository.getAccountById(category.accountId)
-    }.flatMap { account ->
-        if (account == null) return@flatMap AccountException(AccountError.NOT_FOUND).left()
-
-        deleteAccountUseCase(account).flatMap {
-            catch { categoryRepository.delete(category) }
+    suspend operator fun invoke(category: Category): Either<Throwable, Unit> {
+        if (entryRepository.hasEntries(category.accountId)) {
+            return AccountException(AccountError.HAS_TRANSACTIONS).left()
         }
+        return catch { categoryRepository.delete(category) }
     }
 }

@@ -257,6 +257,16 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
+- [x] 8.16 **Excluir categoria sem transação nenhuma continuava falhando — e o erro genérico era o sintoma.** O usuário voltou dizendo que não conseguia excluir categoria vazia, com a mensagem genérica "não foi possível concluir a ação".
+
+  **A mensagem ser genérica era a pista:** `toUiMessage` só reconhece `AccountException`; qualquer outra coisa cai no `else`. O que estava sendo lançado era `SQLiteException: FOREIGN KEY constraint failed`. `DeleteCategoryUseCase` chamava `DeleteAccountUseCase`, que apagava a **conta** enquanto a linha da **categoria** ainda a referenciava (`categories.accountId`, `NO_ACTION`). A ordem estava invertida.
+
+  ⚠️ **A auditoria de fidelidade tinha apontado exatamente isto** ("o caminho DELETED apaga a conta antes da fachada, com FK `NO_ACTION`, e não abrange transação"), classificado como *betrayal latente*. Eu reconheci no relatório e **não corrigi**. Sexta reincidência do padrão — e a primeira em que o defeito já estava escrito, com endereço, num documento que eu mesmo produzi.
+
+  **Correção:** a remoção do par passa a ser do repositório da fachada, simétrica ao `insert` que já criava os dois numa transação — fachada primeiro, conta depois, tudo num `immediateTransaction`. Os use cases voltam a só guardar a precondição. Teste que fica vermelho se a ordem for invertida (com FK real, em Room in-memory).
+
+  **A modal de erro foi refeita**, com as três críticas do usuário procedendo: título que repetia a mensagem (removido — a razão *é* o conteúdo), ícone desalinhado (a coluna agora centraliza, com o ícone num container circular do `errorContainer`), e mensagens genéricas que não diziam nada (reescritas para dizer o que fazer). A modal que recusou continua aberta atrás, de propósito.
+
 - [x] 8.15 **Bug de runtime achado pelo usuário: excluir e encerrar categoria não funcionavam.** Nem uma nem outra, e o modal não fechava nem mostrava erro. Dois defeitos meus, um de desenho e um de propagação.
 
   **Desenho.** Apliquei a regra de saldo zero da 8.14 a **todo** tipo de conta. Uma categoria é conta `INCOME`/`EXPENSE` — conta de **fluxo**, cujo saldo é o acumulado de gastos e nunca é zero depois de usada. Então encerrar categoria usada falhava sempre com `HAS_BALANCE`, e excluir falhava com `HAS_TRANSACTIONS`: nenhum dos dois caminhos existia. A regra vale só para conta **monetária** (`AccountType.isMonetary`), onde saldo ≠ 0 significa dinheiro parado em algum lugar; num fluxo não há o que resolver. Corrigido e coberto por teste.

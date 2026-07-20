@@ -77,7 +77,13 @@ class CreditCardRepository(
         }
     }
 
+    /** Facade then account, in one transaction — see `CategoryRepository.delete`. */
     override suspend fun delete(creditCard: CreditCard) {
-        dao.delete(mapper.toEntity(creditCard))
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                dao.delete(mapper.toEntity(creditCard))
+                accountDao.getAccountById(creditCard.accountId)?.let { accountDao.delete(it) }
+            }
+        }
     }
 }

@@ -67,4 +67,18 @@ class CategoryAccountEagerCreationTest {
         val account = db.accountDao().getAccountById(stored.accountId)
         assertEquals("Groceries", account?.name)
     }
+
+    @Test
+    fun `deleting a category removes its account too, facade first`() = runTest {
+        // `categories.accountId` references the account with NO_ACTION, so removing
+        // the account first raises FOREIGN KEY constraint failed — which is exactly
+        // what reached the user as a generic "could not complete".
+        repository.insert(category("Food", Category.Type.EXPENSE))
+        val stored = db.categoryDao().getAllCategories().single()
+
+        repository.delete(CategoryMapper().toDomain(stored))
+
+        assertEquals(0, db.categoryDao().getAllCategories().size)
+        assertEquals(null, db.accountDao().getAccountById(stored.accountId))
+    }
 }

@@ -40,7 +40,7 @@ class LedgerEntryWriter(
      */
     fun validate(legs: List<TransactionLeg>) {
         if (legs.size < 2) return
-        val total = legs.sumOf { it.signedCents() }
+        val total = legs.sumOf { it.ledgerAmount() }
         if (total != 0L) throw UnbalancedTransactionException(LedgerError.Unbalanced)
     }
 
@@ -57,7 +57,7 @@ class LedgerEntryWriter(
                     EntryEntity(
                         transactionId = transactionId,
                         accountId = realAccountId(leg),
-                        amount = leg.signedCents(),
+                        amount = leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
                         // Only the credit-card (LIABILITY) leg carries the invoice — its
                         // sub-ledger. A payment's account leg also references the card but
@@ -74,7 +74,7 @@ class LedgerEntryWriter(
                     EntryEntity(
                         transactionId = transactionId,
                         accountId = contraAccountId(leg),
-                        amount = -leg.signedCents(),
+                        amount = -leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
                     )
                 )
@@ -161,7 +161,7 @@ class LedgerEntryWriter(
      * the natural (debit-positive) balance of its own account. This is the only
      * place the input vocabulary ([TransactionType]) becomes a ledger sign.
      */
-    private fun TransactionLeg.signedCents(): Long {
+    private fun TransactionLeg.ledgerAmount(): Long {
         val cents = (amount * 100).roundToLong()
         return when (type) {
             TransactionType.EXPENSE -> -cents

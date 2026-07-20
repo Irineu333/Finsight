@@ -19,7 +19,7 @@ import com.neoutils.finsight.resources.report_viewer_summary_advance_payment
 import com.neoutils.finsight.resources.report_viewer_summary_balance
 import com.neoutils.finsight.resources.report_viewer_summary_expense
 import com.neoutils.finsight.resources.report_viewer_summary_income
-import com.neoutils.finsight.resources.report_viewer_summary_initial_balance
+import com.neoutils.finsight.resources.report_viewer_summary_opening_balance
 import com.neoutils.finsight.resources.report_viewer_summary_invoice_expense
 import com.neoutils.finsight.resources.report_viewer_summary_invoice_total
 import com.neoutils.finsight.ui.theme.Expense
@@ -137,7 +137,7 @@ internal fun ReportContextCard(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = stringResource(Res.string.report_viewer_summary_initial_balance),
+                                text = stringResource(Res.string.report_viewer_summary_opening_balance),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )

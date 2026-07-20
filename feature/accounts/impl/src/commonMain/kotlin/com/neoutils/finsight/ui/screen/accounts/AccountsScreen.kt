@@ -207,7 +207,7 @@ private fun AccountsContent(
                                     )
                                 )
                             },
-                            onEditInitialBalance = { account ->
+                            onEditOpeningBalance = { account ->
                                 modalManager.show(
                                     EditAccountBalanceModal(
                                         type = EditAccountBalanceModal.Type.INITIAL,
@@ -301,7 +301,7 @@ private fun AccountPager(
     selectedIndex: Int,
     onSelectAccount: (Int) -> Unit,
     onEditBalance: (Account) -> Unit,
-    onEditInitialBalance: (Account) -> Unit,
+    onEditOpeningBalance: (Account) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -331,7 +331,7 @@ private fun AccountPager(
             variant = AccountCardVariant.Detail(
                 accountUi = accounts[page],
                 onEditBalance = { onEditBalance(domainAccounts[page]) },
-                onEditInitialBalance = { onEditInitialBalance(domainAccounts[page]) },
+                onEditOpeningBalance = { onEditOpeningBalance(domainAccounts[page]) },
             ),
             modifier = Modifier.fillMaxWidth(),
         )

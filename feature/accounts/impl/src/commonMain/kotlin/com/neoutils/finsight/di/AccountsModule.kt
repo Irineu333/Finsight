@@ -7,7 +7,7 @@ import com.neoutils.finsight.database.repository.AccountRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
-import com.neoutils.finsight.domain.usecase.AdjustInitialBalanceUseCase
+import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
 import com.neoutils.finsight.domain.usecase.CloseAccountUseCaseImpl
@@ -72,7 +72,7 @@ val accountsModule = module {
         )
     }
     factory { AdjustFinalBalanceUseCase(adjustBalanceUseCase = get()) }
-    factory { AdjustInitialBalanceUseCase(adjustBalanceUseCase = get()) }
+    factory { AdjustOpeningBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
             transactionRepository = get(),
@@ -119,7 +119,7 @@ val accountsModule = module {
             targetMonth = it.getOrNull() ?: Clock.System.now().toYearMonth(),
             adjustBalanceUseCase = get(),
             adjustFinalBalanceUseCase = get(),
-            adjustInitialBalanceUseCase = get(),
+            adjustOpeningBalanceUseCase = get(),
             calculateBalanceUseCase = get(),
             accountRepository = get(),
             modalManager = get(),

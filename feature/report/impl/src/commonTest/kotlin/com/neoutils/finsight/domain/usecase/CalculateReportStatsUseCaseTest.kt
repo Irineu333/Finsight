@@ -57,7 +57,7 @@ class CalculateReportStatsUseCaseTest {
         op(date, listOf(entry(cardLiability, amount), entry(equityAcc, -amount)))
 
     @Test
-    fun accountPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
+    fun accountPerspectiveIncludesAdjustmentsInPeriodAndOpeningBalance() {
         val account = Account(id = 1, name = "Carteira", type = AccountType.ASSET)
         val otherAccount = Account(id = 2, name = "Conta Secundaria", type = AccountType.ASSET)
 
@@ -83,7 +83,7 @@ class CalculateReportStatsUseCaseTest {
     }
 
     @Test
-    fun creditCardPerspectiveIncludesAdjustmentsInPeriodAndInitialBalance() {
+    fun creditCardPerspectiveIncludesAdjustmentsInPeriodAndOpeningBalance() {
         val cardLiability = Account(id = 200, name = "Visa", type = AccountType.LIABILITY)
         val otherCardLiability = Account(id = 201, name = "Master", type = AccountType.LIABILITY)
 

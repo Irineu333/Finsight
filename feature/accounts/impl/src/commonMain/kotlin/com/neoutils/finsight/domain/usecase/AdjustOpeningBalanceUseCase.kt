@@ -12,7 +12,7 @@ import kotlinx.datetime.minusMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-class AdjustInitialBalanceUseCase(
+class AdjustOpeningBalanceUseCase(
     private val adjustBalanceUseCase: AdjustBalanceUseCase
 ) {
 

@@ -32,7 +32,7 @@ import com.neoutils.finsight.resources.accounts_balance
 import com.neoutils.finsight.resources.accounts_default
 import com.neoutils.finsight.resources.accounts_expenses
 import com.neoutils.finsight.resources.accounts_income
-import com.neoutils.finsight.resources.accounts_initial_balance
+import com.neoutils.finsight.resources.accounts_opening_balance
 import com.neoutils.finsight.resources.accounts_invoices
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
@@ -53,7 +53,7 @@ sealed class AccountCardVariant {
     data class Detail(
         val accountUi: AccountUi,
         val onEditBalance: () -> Unit,
-        val onEditInitialBalance: () -> Unit,
+        val onEditOpeningBalance: () -> Unit,
     ) : AccountCardVariant()
 }
 
@@ -170,11 +170,11 @@ private fun DetailContent(
         }
 
         AccountSummaryRow(
-            label = stringResource(Res.string.accounts_initial_balance),
+            label = stringResource(Res.string.accounts_opening_balance),
             amount = accountUi.openingBalance,
             color = colorScheme.onSurface,
             signDisplay = AccountSignDisplay.SHOW_ONLY_NEGATIVE,
-            onEditClick = variant.onEditInitialBalance,
+            onEditClick = variant.onEditOpeningBalance,
         )
 
         AccountSummaryRow(

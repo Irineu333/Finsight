@@ -62,7 +62,7 @@ class TransactionsViewModelCharacterizationTest {
         Transaction(id = id, title = null, date = date(day), entries = entries)
 
     @Test
-    fun `balance overview characterizes stats, payment and balances`() = runTest(dispatcher) {
+    fun `balance overview characterizes stats payment and balances`() = runTest(dispatcher) {
         val transactions = listOf(
             op(1, day = 5, listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
             op(2, day = 10, listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),

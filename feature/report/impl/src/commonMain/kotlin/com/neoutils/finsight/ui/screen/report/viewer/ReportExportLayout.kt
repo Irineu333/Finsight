@@ -24,7 +24,7 @@ data class ReportExportStrings(
     val title: String,
     val generatedAtPrefix: String,
     val summaryBalance: String,
-    val summaryInitialBalance: String,
+    val summaryOpeningBalance: String,
     val summaryIncome: String,
     val summaryExpense: String,
     val summaryInvoiceExpense: String,
@@ -64,7 +64,7 @@ fun ReportViewerUiState.Content.toReportLayout(
                 tone = s.balance.toTone(),
             ),
             ReportSummaryItem(
-                label = strings.summaryInitialBalance,
+                label = strings.summaryOpeningBalance,
                 value = formatter.format(s.openingBalance),
                 tone = s.openingBalance.toTone(),
             ),

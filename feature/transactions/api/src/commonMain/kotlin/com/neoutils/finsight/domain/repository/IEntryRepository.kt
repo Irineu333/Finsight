@@ -9,7 +9,7 @@ import kotlinx.datetime.YearMonth
 /**
  * Reads derived from the double-entry ledger. Every figure is a sum of entry
  * amounts (debit-positive), so account balance, category spending, invoice owed
- * and net worth all share one mechanism — no `signedImpact()` or per-type sign.
+ * and net worth all share one mechanism — no per-type sign rule anywhere.
  * Values are returned in the major currency unit (reais).
  */
 /**

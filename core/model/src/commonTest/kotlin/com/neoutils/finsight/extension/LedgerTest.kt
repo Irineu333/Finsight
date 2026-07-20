@@ -46,7 +46,7 @@ class LedgerTest {
     // --- EQUITY is evaluated first: both adjustment forms label ADJUSTMENT (task 1.4) ---
 
     @Test
-    fun `balance adjustment of an account derives an adjustment, not a transfer`() {
+    fun `balance adjustment of an account derives an adjustment rather than a transfer`() {
         // {ASSET, EQUITY}: no EXPENSE/INCOME/LIABILITY case matches, so without the
         // EQUITY-first branch it would fall through to TRANSFER.
         val entries = listOf(entry(AccountType.ASSET, 3000), entry(AccountType.EQUITY, -3000))
@@ -54,7 +54,7 @@ class LedgerTest {
     }
 
     @Test
-    fun `balance adjustment of an invoice derives an adjustment, not a payment`() {
+    fun `balance adjustment of an invoice derives an adjustment rather than a payment`() {
         // {LIABILITY, EQUITY}: LIABILITY would be caught first as PAYMENT unless
         // EQUITY is tested before every other case.
         val entries = listOf(entry(AccountType.LIABILITY, -3000), entry(AccountType.EQUITY, 3000))

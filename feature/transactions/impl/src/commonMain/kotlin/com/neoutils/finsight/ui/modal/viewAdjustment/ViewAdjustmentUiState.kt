@@ -29,7 +29,11 @@ sealed interface ViewAdjustmentUiState {
          * A closed or paid invoice is immutable, so the screen stops offering to
          * delete its adjustment. The invariant itself lives at the write boundary;
          * this only keeps the UI from proposing what would be refused.
+         *
+         * An account adjustment has no invoice and is always deletable; a card one
+         * whose invoice did not resolve fails **closed**, so the screen hides the
+         * action rather than offering to delete what it could not verify.
          */
-        val isDeletable = invoice?.status?.isEditable ?: true
+        val isDeletable = if (isCardTarget) invoice?.status?.isEditable == true else true
     }
 }

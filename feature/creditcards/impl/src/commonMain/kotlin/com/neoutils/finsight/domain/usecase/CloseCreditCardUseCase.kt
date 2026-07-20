@@ -8,27 +8,21 @@ import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
 
 /**
- * Removes a card that never moved, facade and ledger account together.
- *
- * A card with movement is refused, not quietly closed — see [CloseCreditCardUseCase].
+ * Retires a card that has movement. The facade row stays — it is what keeps the
+ * card's name readable in the history that references it; only its ledger account
+ * is closed, which is what removes the card from the active lists.
  */
-class DeleteCreditCardUseCase(
-    private val creditCardRepository: ICreditCardRepository,
+class CloseCreditCardUseCase(
     private val accountRepository: IAccountRepository,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val closeAccountUseCase: CloseAccountUseCase,
 ) {
     suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> = catch {
         accountRepository.getAccountById(creditCard.accountId)
     }.flatMap { account ->
         if (account == null) return@flatMap AccountException(AccountError.NOT_FOUND).left()
-
-        // The account guards the movement rule; the facade only goes once it did.
-        deleteAccountUseCase(account).flatMap {
-            catch { creditCardRepository.delete(creditCard) }
-        }
+        closeAccountUseCase(account)
     }
 }

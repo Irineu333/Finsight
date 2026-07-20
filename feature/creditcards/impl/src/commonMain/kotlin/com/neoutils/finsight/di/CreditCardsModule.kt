@@ -130,7 +130,7 @@ val creditCardsModule = module {
     viewModel {
         CloseCreditCardViewModel(
             creditCard = it.get(),
-            deleteCreditCardUseCase = get(),
+            closeCreditCardUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

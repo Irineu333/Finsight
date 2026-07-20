@@ -4,32 +4,21 @@ import arrow.core.Either
 import com.neoutils.finsight.domain.model.Account
 
 /**
- * Retires an account from the chart of accounts, whatever facade it wears.
+ * Retires an account that has movement.
  *
  * The ledger cannot lose an account that entries reference — its history would
- * stop balancing — so an account with movement is **closed**, never deleted: the
- * rows stay, the real type is preserved, and the account only leaves the active
- * listings. An account that never moved has nothing to preserve and is removed.
+ * stop balancing — so an account with movement is closed: the rows stay, the real
+ * type is preserved, and the account only leaves the active listings. Closing
+ * with a balance writes a dated write-off against reconciliation, so the amount
+ * becomes an explicit equity movement instead of quietly leaving net worth.
  *
- * Closing with money still in it writes a dated balanced write-off against the
- * reconciliation account, so the amount becomes an explicit equity movement
- * instead of quietly disappearing from net worth.
+ * Refuses an account with no movement: closing exists *because* deletion is
+ * impossible, so an account that never moved has nothing to preserve and would
+ * only be hidden beyond reach. [DeleteAccountUseCase] is the action for that one.
  *
- * This is the single owner of "retire an account" for accounts, cards and
- * categories alike — the three used to do it three different ways, and two of
- * them left a ledger account with no facade.
+ * This is the single owner of "close an account" for accounts, cards and
+ * categories alike — all three are facades over one chart-of-accounts row.
  */
 interface CloseAccountUseCase {
-    suspend operator fun invoke(account: Account): Either<Throwable, Outcome>
-
-    enum class Outcome {
-        /** Never moved: removed outright. */
-        DELETED,
-
-        /** Had movement: closed, history intact. */
-        CLOSED,
-
-        /** Had movement and a balance: closed, with a write-off to zero it. */
-        CLOSED_WITH_WRITE_OFF,
-    }
+    suspend operator fun invoke(account: Account): Either<Throwable, Unit>
 }

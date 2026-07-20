@@ -6,13 +6,13 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.CloseCreditCardUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class CloseCreditCardViewModel(
     private val creditCard: CreditCard,
-    private val deleteCreditCardUseCase: DeleteCreditCardUseCase,
+    private val closeCreditCardUseCase: CloseCreditCardUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -20,7 +20,7 @@ class CloseCreditCardViewModel(
 
 
     fun closeCreditCard() = viewModelScope.launch {
-        deleteCreditCardUseCase(creditCard)
+        closeCreditCardUseCase(creditCard)
             .onLeft {
                 crashlytics.recordException(it)
             }.onRight {

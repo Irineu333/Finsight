@@ -10,6 +10,8 @@
     <string name="account_error_empty_name">O nome da conta não pode ser vazio.</string>
     <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
     <string name="account_error_not_found">Conta não encontrada.</string>
+    <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Encerre-a para preservar o histórico.</string>
+    <string name="account_error_no_transactions">Esta conta não tem transações. Exclua-a em vez de encerrá-la.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>

@@ -5,11 +5,13 @@ package com.neoutils.finsight.domain.usecase
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.database.dao.AccountDao
+import arrow.core.left
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.TimeZone
@@ -19,18 +21,21 @@ import kotlin.time.ExperimentalTime
 
 class CloseAccountUseCaseImpl(
     private val accountDao: AccountDao,
-    private val accountRepository: IAccountRepository,
     private val entryRepository: IEntryRepository,
     private val transactionRepository: ITransactionRepository,
 ) : CloseAccountUseCase {
 
 
-    override suspend fun invoke(account: Account): Either<Throwable, CloseAccountUseCase.Outcome> = catch {
-        if (accountDao.entryCount(account.id) == 0) {
-            accountRepository.delete(account)
-            return@catch CloseAccountUseCase.Outcome.DELETED
+    override suspend fun invoke(account: Account): Either<Throwable, Unit> {
+        // Closing an account that never moved would hide it with nothing preserved,
+        // and there is no way back. Deleting is the action for that one.
+        if (!entryRepository.hasEntries(account.id)) {
+            return AccountException(AccountError.NO_TRANSACTIONS).left()
         }
+        return close(account)
+    }
 
+    private suspend fun close(account: Account): Either<Throwable, Unit> = catch {
         val balance = entryRepository.balance(account.id)
 
         // The write-off comes first: once the account is closed it is out of the
@@ -52,11 +57,5 @@ class CloseAccountUseCaseImpl(
         }
 
         accountDao.close(account.id)
-
-        if (balance != 0.0) {
-            CloseAccountUseCase.Outcome.CLOSED_WITH_WRITE_OFF
-        } else {
-            CloseAccountUseCase.Outcome.CLOSED
-        }
     }
 }

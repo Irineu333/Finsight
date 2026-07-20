@@ -257,18 +257,24 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
-- [x] 8.13 **Alinhar a UI ao encerramento (pedido do usuário, escopo acrescentado à change).**
+- [x] 8.13 **Excluir e encerrar como ações separadas, do use case à tela.** Escopo acrescentado pelo usuário, sob três premissas dele: são ações diferentes e pedem use cases diferentes; **todo use case impede o próprio uso incorreto**; e a UI também impede — não como salvaguarda, mas para não induzir expectativa errada.
 
-  - **Cada ação tem sua modal.** As telas de contas e cartões oferecem "Excluir" **ou** "Encerrar", e abrem `DeleteAccountModal`/`CloseAccountModal` (e os equivalentes de cartão) — modais dedicadas, cada uma com uma promessa só, em vez de uma que se transforma.
-  - **A regra de apresentação mora num mapper.** `RetireAction` + `retireActionOf(hasMovement)` em `core/ui`: um único dono para "qual ação a tela oferece", consumido por conta e cartão, com teste próprio. O **fato** vem do razão (`IEntryRepository.hasEntries`); o **desfecho** continua sendo do `CloseAccountUseCase`. Se a tela errar a palavra (uma corrida entre montar a tela e confirmar), o use case ainda faz a coisa certa — a UI decide *se* oferece, nunca *qual* é a regra.
-  - **Atalhos somem para o que foi encerrado**, nos dois modais de detalhe, que já divergiam entre si.
-  - **Cartão encerrado exibe o nome, não "Excluído"** — e aqui estava um bug: `TransactionRepository` resolvia categorias e cartões pelas **fachadas**, que a 6b.5 filtra por `isClosed`, então um encerrado resolvia para `null`. **Mesma classe do bug da 8.10**, em dois pontos que eu não varri na ocasião. Corrigido com `*IncludingClosed()`: a fachada serve os seletores, o caminho que renderiza histórico vê tudo. `Category`/`CreditCard` ganham `isClosed`, espelhando `Account`. As strings `view_*_deleted` ficaram órfãs e saíram.
+  **Domínio.** `DeleteAccountUseCase` e `CloseAccountUseCase` são pares disjuntos, cada um recusando o caso do outro com erro tipado:
+  - excluir conta com movimentação → `AccountError.HAS_TRANSACTIONS`. Não é dica para a UI: `entries.accountId` é `NO ACTION`, então remover a linha falharia na FK ou deixaria o histórico órfão.
+  - encerrar conta sem movimentação → `AccountError.NO_TRANSACTIONS`. Encerrar existe *porque* excluir é impossível; encerrar o que nunca se moveu só esconderia a conta sem preservar nada — e, sem reabrir (8.12), fora de alcance.
+  - `DeleteCreditCardUseCase`/`CloseCreditCardUseCase` e `DeleteCategoryUseCase`/`CloseCategoryUseCase` compõem os de conta, cada fachada guardando o seu. O par de conta é o dono único da regra.
 
-  ⚠️ **Uma 1ª versão desta task foi rejeitada pelo usuário, com razão.** Ela expôs `CloseAccountUseCase.outcomeFor(account)` — uma API de *previsão* pendurada num comando — e a modal única trocava de texto conforme a resposta. Dois erros: (a) use case é ação, não consulta, e prever o que ele faria acopla a UI ao procedimento interno dele; (b) pior, `outcomeFor` e `invoke` passaram a **decidir a mesma coisa em dois lugares dentro da classe que é o dono da regra** — a duplicação exata que esta change existe para eliminar, cometida no dono. E a task anterior afirmava que a UI "pergunta à regra em vez de redecidir", o que era falso: ela consumia uma segunda cópia. O trabalho também começava errado, na modal em vez das telas, deixando "Excluir" nas duas listas.
+  **Apresentação.** `RetireAction` + `retireActionOf(hasMovement)` em `core/ui` decide **qual palavra** a tela oferece, com um dono só para conta e cartão e teste próprio. O **fato** vem do razão (`IEntryRepository.hasEntries`); o **desfecho** é do use case. Telas oferecem "Excluir" **ou** "Encerrar" e abrem modais dedicadas — uma promessa por modal.
 
-  ⚠️ **Também registrado:** o teste de regressão da 8.10 (`a card purchase hydrates…`) **nunca entrou no commit** — o script que o inseriu usou `replace` sem asserção, falhou em silêncio, e eu o relatei como existente. A cobertura real vinha do dublê corrigido. Teste recolocado, mais um para conta encerrada.
+  **Também nesta task:** atalhos somem para conta/cartão encerrados nos dois modais de detalhe (que divergiam entre si), e cartão encerrado passa a exibir o nome em vez de "Excluído" — isto último era um bug: o caminho de leitura resolvia categorias e cartões pelas **fachadas**, filtradas por `isClosed` desde a 6b.5, então um encerrado virava `null`. **Mesma classe do bug da 8.10**, em dois pontos que eu não varri na ocasião. Corrigido com `*IncludingClosed()`.
 
-  **Continua aberto:** não há como **reabrir** uma conta encerrada, nem lista de encerradas (ver 8.12).
+  ⚠️ **Duas versões anteriores desta task foram rejeitadas, e o registro fica.**
+  - A 1ª expôs `CloseAccountUseCase.outcomeFor(account)` — API de *previsão* pendurada num comando — e uma modal única que trocava de texto. Além do uso errado de use case, `outcomeFor` e `invoke` passaram a **decidir a mesma coisa em dois lugares dentro da classe dona da regra**: a duplicação exata que esta change existe para eliminar, cometida no dono. E a task afirmava que a UI "pergunta à regra em vez de redecidir" — falso, ela consumia uma segunda cópia.
+  - A 2ª separou a apresentação corretamente, mas manteve `DeleteAccountUseCase` **encerrando em silêncio** quando não podia excluir: um use case fazendo coisa diferente do próprio nome, com a UI como única barreira. É o que a 3ª premissa do usuário corrige.
+
+  ⚠️ **Ainda registrado:** o teste de regressão da 8.10 (`a card purchase hydrates…`) nunca entrou no commit — script com `replace` sem asserção, falha silenciosa, e eu o relatei como existente. Recolocado, mais um para conta encerrada.
+
+  **Continua aberto:** não há como reabrir uma conta encerrada, nem lista de encerradas (8.12).
 
 ## 9. Cobertura do raio legado — varredura mecânica
 

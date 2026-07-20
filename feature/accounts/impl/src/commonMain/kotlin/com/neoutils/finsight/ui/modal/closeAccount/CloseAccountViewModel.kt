@@ -6,13 +6,13 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class CloseAccountViewModel(
     private val account: Account,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val closeAccountUseCase: CloseAccountUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
@@ -20,7 +20,7 @@ class CloseAccountViewModel(
 
 
     fun closeAccount() = viewModelScope.launch {
-        deleteAccountUseCase(account).onRight {
+        closeAccountUseCase(account).onRight {
             analytics.logEvent(DeleteAccount)
             modalManager.dismissAll()
         }.onLeft {

@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
 import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
 import com.neoutils.finsight.domain.usecase.CloseAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
@@ -60,12 +61,16 @@ val accountsModule = module {
     factory<CloseAccountUseCase> {
         CloseAccountUseCaseImpl(
             accountDao = get(),
-            accountRepository = get(),
             entryRepository = get(),
             transactionRepository = get(),
         )
     }
-    factory { DeleteAccountUseCase(closeAccountUseCase = get()) }
+    factory<DeleteAccountUseCase> {
+        DeleteAccountUseCaseImpl(
+            accountRepository = get(),
+            entryRepository = get(),
+        )
+    }
     factory {
         AdjustBalanceUseCase(
             transactionRepository = get(),
@@ -117,7 +122,7 @@ val accountsModule = module {
     viewModel {
         CloseAccountViewModel(
             account = it.get(),
-            deleteAccountUseCase = get(),
+            closeAccountUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

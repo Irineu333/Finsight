@@ -1,5 +1,6 @@
 package com.neoutils.finsight.di
 
+import com.neoutils.finsight.domain.usecase.CloseCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
 import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
@@ -134,6 +135,13 @@ val useCaseModules = module {
     factory {
         DeleteCreditCardUseCase(
             creditCardRepository = get(),
+            accountRepository = get(),
+            deleteAccountUseCase = get(),
+        )
+    }
+
+    factory {
+        CloseCreditCardUseCase(
             accountRepository = get(),
             closeAccountUseCase = get(),
         )

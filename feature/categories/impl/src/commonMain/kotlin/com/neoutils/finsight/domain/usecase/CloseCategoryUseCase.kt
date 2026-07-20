@@ -8,28 +8,21 @@ import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
 
 /**
- * Removes a category that was never used, facade and ledger account together.
- *
- * A category with movement is refused — see [CloseCategoryUseCase]. Before this
- * existed the ViewModel called the repository directly, with no `Either`, no
- * crashlytics, and an analytics event logged even on failure.
+ * Retires a category that has movement. The facade stays so past transactions
+ * keep showing its name; only its ledger account is closed, which is what removes
+ * it from the pickers and from `Budget.categories`.
  */
-class DeleteCategoryUseCase(
-    private val categoryRepository: ICategoryRepository,
+class CloseCategoryUseCase(
     private val accountRepository: IAccountRepository,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val closeAccountUseCase: CloseAccountUseCase,
 ) {
     suspend operator fun invoke(category: Category): Either<Throwable, Unit> = catch {
         accountRepository.getAccountById(category.accountId)
     }.flatMap { account ->
         if (account == null) return@flatMap AccountException(AccountError.NOT_FOUND).left()
-
-        deleteAccountUseCase(account).flatMap {
-            catch { categoryRepository.delete(category) }
-        }
+        closeAccountUseCase(account)
     }
 }

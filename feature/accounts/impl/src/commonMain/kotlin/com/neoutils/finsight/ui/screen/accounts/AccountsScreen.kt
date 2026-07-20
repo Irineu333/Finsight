@@ -57,7 +57,7 @@ import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.model.RetireAction
-import com.neoutils.finsight.ui.modal.closeAccount.CloseAccountModal
+import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
@@ -360,12 +360,12 @@ private fun AccountActions(
         ) {
             OutlinedButton(
                 // Which of the two is offered is a presentation rule (`retireActionOf`);
-                // which one actually happens is the ledger's, in CloseAccountUseCase.
+                // which one actually happens is the ledger's, in ArchiveAccountUseCase.
                 onClick = {
                     modalManager.show(
                         when (retireAction) {
                             RetireAction.DELETE -> DeleteAccountModal(account)
-                            RetireAction.CLOSE -> CloseAccountModal(account)
+                            RetireAction.ARCHIVE -> ArchiveAccountModal(account)
                         }
                     )
                 },

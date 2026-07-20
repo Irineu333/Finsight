@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.closeAccount
+package com.neoutils.finsight.ui.modal.archiveAccount
 
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.AccountException
@@ -12,14 +12,14 @@ import com.neoutils.finsight.domain.analytics.event.DeleteAccount
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
-class CloseAccountViewModel(
+class ArchiveAccountViewModel(
     private val account: Account,
-    private val closeAccountUseCase: CloseAccountUseCase,
+    private val archiveAccountUseCase: ArchiveAccountUseCase,
     private val entryRepository: IEntryRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
@@ -39,8 +39,8 @@ class CloseAccountViewModel(
 
 
 
-    fun closeAccount() = viewModelScope.launch {
-        closeAccountUseCase(account).onRight {
+    fun archiveAccount() = viewModelScope.launch {
+        archiveAccountUseCase(account).onRight {
             analytics.logEvent(DeleteAccount)
             modalManager.dismissAll()
         }.onLeft {

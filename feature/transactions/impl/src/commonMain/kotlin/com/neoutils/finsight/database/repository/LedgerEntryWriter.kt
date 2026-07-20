@@ -101,7 +101,7 @@ class LedgerEntryWriter(
      * A closed account keeps its history; it just receives nothing new.
      */
     private suspend fun Long.orRejectIfClosed(): Long = also { accountId ->
-        if (accountDao.getAccountById(accountId)?.isClosed == true) {
+        if (accountDao.getAccountById(accountId)?.isArchived == true) {
             throw ClosedAccountException(LedgerError.ClosedAccount)
         }
     }

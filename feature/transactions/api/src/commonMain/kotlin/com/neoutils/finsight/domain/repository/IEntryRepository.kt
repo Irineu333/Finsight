@@ -62,7 +62,7 @@ interface IEntryRepository {
 
     /**
      * Whether [accountId] has any movement. The fact behind "can this be removed
-     * or only closed" — the decision itself belongs to `CloseAccountUseCase`.
+     * or only closed" — the decision itself belongs to `ArchiveAccountUseCase`.
      */
     suspend fun hasEntries(accountId: Long): Boolean
 

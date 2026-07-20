@@ -22,6 +22,6 @@ import com.neoutils.finsight.domain.model.Account
  * This is the single owner of "close an account" for accounts, cards and
  * categories alike — all three are facades over one chart-of-accounts row.
  */
-interface CloseAccountUseCase {
+interface ArchiveAccountUseCase {
     suspend operator fun invoke(account: Account): Either<Throwable, Unit>
 }

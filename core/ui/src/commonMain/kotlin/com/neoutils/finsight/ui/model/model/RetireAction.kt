@@ -5,7 +5,7 @@ import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.retire_action_close
+import com.neoutils.finsight.resources.retire_action_archive
 import com.neoutils.finsight.resources.retire_action_delete
 import org.jetbrains.compose.resources.StringResource
 
@@ -24,9 +24,9 @@ enum class RetireAction(
     val icon: ImageVector,
 ) {
     DELETE(label = Res.string.retire_action_delete, icon = Icons.Default.Delete),
-    CLOSE(label = Res.string.retire_action_close, icon = Icons.Default.Archive),
+    ARCHIVE(label = Res.string.retire_action_archive, icon = Icons.Default.Archive),
 }
 
 /** Maps the ledger fact to the action a screen offers. */
 fun retireActionOf(hasMovement: Boolean): RetireAction =
-    if (hasMovement) RetireAction.CLOSE else RetireAction.DELETE
+    if (hasMovement) RetireAction.ARCHIVE else RetireAction.DELETE

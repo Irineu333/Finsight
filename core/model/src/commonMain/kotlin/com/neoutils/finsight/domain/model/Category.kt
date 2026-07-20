@@ -14,7 +14,7 @@ data class Category(
     val accountId: Long = 0,
     // Mirrors the closure of its ledger account (D21); the category keeps no copy
     // of its own. Set only on the reads that render history.
-    val isClosed: Boolean = false,
+    val isArchived: Boolean = false,
 ) {
     enum class Type {
         INCOME,

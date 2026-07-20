@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.closeCategory
+package com.neoutils.finsight.ui.modal.archiveCategory
 
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.AccountException
@@ -11,20 +11,20 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteCategory
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.usecase.CloseCategoryUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
-class CloseCategoryViewModel(
+class ArchiveCategoryViewModel(
     private val category: Category,
-    private val closeCategoryUseCase: CloseCategoryUseCase,
+    private val archiveCategoryUseCase: ArchiveCategoryUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    fun closeCategory() = viewModelScope.launch {
-        closeCategoryUseCase(category).onRight {
+    fun archiveCategory() = viewModelScope.launch {
+        archiveCategoryUseCase(category).onRight {
             analytics.logEvent(DeleteCategory(category))
             modalManager.dismissAll()
         }.onLeft {

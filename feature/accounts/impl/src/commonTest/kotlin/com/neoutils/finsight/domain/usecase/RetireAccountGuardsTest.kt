@@ -64,7 +64,7 @@ class RetireAccountGuardsTest {
     fun `closing an account with a balance is refused, and nothing is written`() = runTest {
         val ledger = FakeEntries(hasEntries = true, balance = 100.0)
         val dao = RecordingAccountDao()
-        val useCase = CloseAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)
+        val useCase = ArchiveAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)
 
         val error = assertIs<AccountException>(useCase(account).leftOrNull())
 
@@ -77,7 +77,7 @@ class RetireAccountGuardsTest {
     @Test
     fun `closing an account with movement and no balance closes it`() = runTest {
         val dao = RecordingAccountDao()
-        val useCase = CloseAccountUseCaseImpl(
+        val useCase = ArchiveAccountUseCaseImpl(
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = true, balance = 0.0),
         )
@@ -93,7 +93,7 @@ class RetireAccountGuardsTest {
         // Refusing here would also fail a harmless race, where the last transaction
         // is removed between opening the screen and confirming.
         val dao = RecordingAccountDao()
-        val useCase = CloseAccountUseCaseImpl(
+        val useCase = ArchiveAccountUseCaseImpl(
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = false, balance = 0.0),
         )
@@ -109,7 +109,7 @@ class RetireAccountGuardsTest {
         // made closing a used category impossible.
         val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
         val dao = RecordingAccountDao()
-        val useCase = CloseAccountUseCaseImpl(
+        val useCase = ArchiveAccountUseCaseImpl(
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = true, balance = 250.0),
         )

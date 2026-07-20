@@ -18,7 +18,7 @@ data class Account(
     // An account with history is closed, never deleted: the entries that reference
     // it stay valid and its real type is preserved. Categories and cards read their
     // own closure from here, through their accountId — one flag, one owner (D21).
-    val isClosed: Boolean = false,
+    val isArchived: Boolean = false,
 ) {
     init {
         if (name.isEmpty()) {

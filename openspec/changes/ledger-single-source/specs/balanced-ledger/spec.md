@@ -77,7 +77,7 @@ A contagem MUST NOT usar o total de entries, já que toda transação balanceada
 
 #### Scenario: Lançamento de baixa não é editável
 - **WHEN** o lançamento de baixa que a migração `v7 → v9` gerou para uma conta apagada no v7 é exibido
-- **THEN** ele não é editável, pelo mesmo gate de rótulo, sem regra nova — encerrar não gera baixa em runtime (`account-lifecycle`), mas a migração gera, e o dado migrado obedece às mesmas regras que o novo
+- **THEN** ele não é editável, pelo mesmo gate de rótulo, sem regra nova — arquivar não gera baixa em runtime (`account-lifecycle`), mas a migração gera, e o dado migrado obedece às mesmas regras que o novo
 
 #### Scenario: Transferência não é editável
 - **WHEN** uma transferência (`ASSET` + `ASSET`) é exibida
@@ -106,7 +106,7 @@ A remoção de uma transação SHALL ser impedida quando ela pertencer a uma fat
 
 O razão é a autoridade sobre toda regra que se possa derivar das entries e dos tipos das suas contas. Nenhum consumidor — feature, tela, ViewModel, componente ou modelo de UI — SHALL reimplementar uma regra derivável do razão. Toda regra dessa natureza SHALL ter **exatamente uma** implementação, no domínio, e os consumidores SHALL consumi-la em vez de reescrevê-la.
 
-São regras deriváveis do razão, entre outras: o rótulo da operação, a direção da perna sob uma perspectiva, a editabilidade, a deletabilidade, o saldo de conta, o saldo de abertura de um período, o saldo devido de uma fatura, a natureza monetária de uma conta, o estado de encerramento de uma conta e qual ação de retirada uma tela oferece para ela. Esta é a forma **geral** da regra que as demais capabilities já declaram caso a caso — derivação de rótulo (nesta capability), cálculo de saldo e saldo de abertura (`ledger-reporting`), tradução domínio→apresentação (`presentation-mapping`), estado de encerramento (`account-lifecycle`). Essas declarações SHALL ser lidas como instâncias desta, e MUST NOT ser tratadas como regras independentes livres para divergir.
+São regras deriváveis do razão, entre outras: o rótulo da operação, a direção da perna sob uma perspectiva, a editabilidade, a deletabilidade, o saldo de conta, o saldo de abertura de um período, o saldo devido de uma fatura, a natureza monetária de uma conta, a sua natureza permanente ou temporária, o estado de arquivamento de uma conta e qual ação de retirada uma tela oferece para ela. Esta é a forma **geral** da regra que as demais capabilities já declaram caso a caso — derivação de rótulo (nesta capability), cálculo de saldo e saldo de abertura (`ledger-reporting`), tradução domínio→apresentação (`presentation-mapping`), estado de arquivamento (`account-lifecycle`). Essas declarações SHALL ser lidas como instâncias desta, e MUST NOT ser tratadas como regras independentes livres para divergir.
 
 A distinção que governa a fronteira: um consumidor MAY decidir **se** aplica uma regra — uma tela pode legitimamente não oferecer uma ação que o domínio permite. Um consumidor MUST NOT decidir **qual é** a regra. Adaptar ao usuário é da camada de apresentação; definir a verdade é do razão.
 

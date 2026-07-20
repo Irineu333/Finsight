@@ -11,12 +11,12 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
  * *renders history* needs both: the facade's name, and whether it still exists as
  * an active choice. The active listings use the filtered queries instead.
  */
-data class CategoryWithClosure(
+data class CategoryWithArchival(
     @Embedded val category: CategoryEntity,
-    val isClosed: Boolean,
+    val isArchived: Boolean,
 )
 
-data class CreditCardWithClosure(
+data class CreditCardWithArchival(
     @Embedded val creditCard: CreditCardEntity,
-    val isClosed: Boolean,
+    val isArchived: Boolean,
 )

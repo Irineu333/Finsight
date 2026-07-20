@@ -326,6 +326,12 @@
 
   **Continua aberto:** não há como reabrir uma conta encerrada, nem lista de encerradas (8.12).
 
+- [x] 8.18 **`isPermanent` no lugar de `isMonetary` para o guarda de saldo, e "encerrar" vira "arquivar" (decisões do usuário).** Surgiram de uma pergunta dele: como apps de partidas dobradas resolvem categorias nunca zerarem o saldo.
+
+  **Não resolvem — a distinção já existe na contabilidade, e eu a tinha reinventado mal.** Contas **permanentes** (reais: `ASSET`, `LIABILITY`, `EQUITY`) têm saldo que representa o que existe agora e atravessa períodos. Contas **temporárias** (nominais: `INCOME`, `EXPENSE`) têm saldo que é total de período, zerado só por lançamento de encerramento de exercício contra o patrimônio — que este app não realiza, como praticamente nenhum app pessoal. O guarda usava `isMonetary` (`ASSET`/`LIABILITY`), que acerta o caso alcançável mas erra o conjunto: `EQUITY` é permanente e ficava de fora. `AccountType.isPermanent` passa a ser o predicado do guarda, com a razão contábil escrita na spec — antes ela dizia "conta de fluxo" sem nomear o motivo, e leria como remendo para destravar categoria, que foi exatamente como surgiu. `isMonetary` permanece onde o sentido é mesmo "perna que carrega dinheiro" (`monetaryEntries`, `primaryEntry`, gate de editabilidade).
+
+  **"Encerrar" → "arquivar"** em domínio, UI, strings, schema e specs. `CloseAccountUseCase` → `ArchiveAccountUseCase` (e os pares de cartão e categoria), `RetireAction.CLOSE` → `ARCHIVE`, `accounts.isClosed` → `isArchived` — seguro renomear a coluna porque a v9 não foi para produção. ⚠️ `Invoice.Status.isClosed`, `isClosedToNewExpenses` e `CloseInvoiceUseCase` são **outro conceito** e ficam: fatura fechada não é fatura arquivada. O rename por regex atingiu `Invoice.Status.isClosed` mesmo assim (o padrão `val isClosed: Boolean` casa nos dois) e foi revertido — é a terceira vez nesta change que um rename mecânico vaza para um homônimo, e a única defesa que funcionou foi compilar e ler o erro.
+
 ## 9. Cobertura do raio legado — varredura mecânica
 
 > **Origem:** cruzamento mecânico de `grep -rl "signedCents|Transaction.Type|Transaction.Target|Operation.Kind|ITransactionRepository|domain.model.Transaction"` (produção, sem `/build/`) contra os nomes citados neste arquivo. Resultado da 1ª execução: **87 arquivos tocam o legado; 44 não eram nomeados por task alguma (51%)**. Seis rodadas de auditoria não pegaram isto — todas revisaram o texto escrito, não o território omitido.

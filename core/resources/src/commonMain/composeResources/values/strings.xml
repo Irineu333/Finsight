@@ -10,8 +10,8 @@
     <string name="account_error_empty_name">O nome da conta não pode ser vazio.</string>
     <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
     <string name="account_error_not_found">Conta não encontrada.</string>
-    <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Encerre-a para preservar o histórico.</string>
-    <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de encerrá-la.</string>
+    <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Arquive-a para preservar o histórico.</string>
+    <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de arquivá-la.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -206,7 +206,7 @@
     <string name="accounts_advance_payments">Adiantamentos</string>
     <string name="accounts_balance">Saldo</string>
     <string name="retire_action_delete">Excluir</string>
-    <string name="retire_action_close">Encerrar</string>
+    <string name="retire_action_archive">Arquivar</string>
     <string name="retire_action_error_generic">Algo deu errado ao salvar. Tente de novo em instantes.</string>
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
@@ -331,14 +331,13 @@
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
-    <string name="close_account_title">Encerrar Conta</string>
-    <string name="close_account_confirm">Encerrar</string>
-    <string name="close_account_message">Esta conta tem movimentação, então ela é encerrada em vez de excluída: o histórico é preservado e ela deixa de aparecer nas listas.</string>
-    <string name="close_account_blocked">Esta conta ainda tem saldo de %1$s. Transfira, gaste ou ajuste o saldo antes de encerrá-la — assim fica registrado para onde o dinheiro foi.</string>
-    <string name="close_account_message_with_balance">Esta conta tem movimentação e saldo diferente de zero. Ela é encerrada em vez de excluída: o histórico é preservado, ela deixa de aparecer nas listas, e um lançamento de baixa registra o saldo restante.</string>
-    <string name="close_credit_card_title">Encerrar Cartão</string>
-    <string name="close_credit_card_message">Este cartão tem movimentação, então ele é encerrado em vez de excluído: as faturas e transações são preservadas e ele deixa de aparecer nas listas.</string>
-    <string name="close_credit_card_blocked">Este cartão ainda tem %1$s em aberto. Pague a fatura ou ajuste o saldo antes de encerrá-lo.</string>
+    <string name="archive_account_title">Arquivar Conta</string>
+    <string name="archive_account_confirm">Arquivar</string>
+    <string name="archive_account_message">Esta conta tem movimentação, então ela é arquivada em vez de excluída: o histórico é preservado e ela deixa de aparecer nas listas.</string>
+    <string name="archive_account_blocked">Esta conta ainda tem saldo de %1$s. Transfira, gaste ou ajuste o saldo antes de arquivá-la — assim fica registrado para onde o dinheiro foi.</string>
+    <string name="archive_credit_card_title">Arquivar Cartão</string>
+    <string name="archive_credit_card_message">Este cartão tem movimentação, então ele é arquivado em vez de excluído: as faturas e transações são preservadas e ele deixa de aparecer nas listas.</string>
+    <string name="archive_credit_card_blocked">Este cartão ainda tem %1$s em aberto. Pague a fatura ou ajuste o saldo antes de arquivá-lo.</string>
     <string name="delete_account_message">Tem certeza que deseja excluir esta conta? Se ela já tiver movimentação, o histórico é preservado e a conta apenas deixa de aparecer nas listas. Nenhuma transação é excluída.</string>
     <string name="delete_account_confirm">Excluir</string>
 
@@ -347,9 +346,9 @@
     <string name="delete_credit_card_confirm">Excluir</string>
 
     <string name="delete_category_title">Excluir Categoria</string>
-    <string name="close_category_title">Encerrar Categoria</string>
-    <string name="close_category_confirm">Encerrar</string>
-    <string name="close_category_message">Esta categoria já foi usada, então ela é encerrada em vez de excluída: as transações mantêm o nome dela, e ela deixa de aparecer nos seletores e nos orçamentos.</string>
+    <string name="archive_category_title">Arquivar Categoria</string>
+    <string name="archive_category_confirm">Arquivar</string>
+    <string name="archive_category_message">Esta categoria já foi usada, então ela é arquivada em vez de excluída: as transações mantêm o nome dela, e ela deixa de aparecer nos seletores e nos orçamentos.</string>
     <string name="delete_category_message">Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas, e os orçamentos que a usam continuam válidos com as demais categorias.</string>
     <string name="delete_category_confirm">Excluir</string>
 

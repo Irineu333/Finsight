@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.closeCategory
+package com.neoutils.finsight.ui.modal.archiveCreditCard
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,29 +12,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Category
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.close_category_confirm
-import com.neoutils.finsight.resources.close_category_message
-import com.neoutils.finsight.resources.close_category_title
+import com.neoutils.finsight.resources.archive_account_confirm
+import com.neoutils.finsight.resources.archive_credit_card_blocked
+import com.neoutils.finsight.resources.archive_credit_card_message
+import com.neoutils.finsight.resources.archive_credit_card_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Retiring a category that has been used. Its facade row stays so past
- * transactions keep showing the name; only its ledger account is closed, which
- * removes it from the pickers and from `Budget.categories`.
+ * Retiring a card that has movement — see `ArchiveAccountModal`; a card is its
+ * `LIABILITY` account wearing a facade, and retires by the same rule.
  */
-class CloseCategoryModal(
-    private val category: Category
+class ArchiveCreditCardModal(
+    private val creditCard: CreditCard
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<CloseCategoryViewModel> { parametersOf(category) }
+        val viewModel = koinViewModel<ArchiveCreditCardViewModel> { parametersOf(creditCard) }
+        val balance by viewModel.balance.collectAsState()
+        val formatter = LocalCurrencyFormatter.current
+        val blocked = balance != null && balance != 0.0
+
 
         Column(
             modifier = Modifier
@@ -43,7 +50,7 @@ class CloseCategoryModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = stringResource(Res.string.close_category_title),
+                text = stringResource(Res.string.archive_credit_card_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface
             )
@@ -51,7 +58,12 @@ class CloseCategoryModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.close_category_message),
+                text = if (blocked) {
+                    // A card balance is a debt, so it reads positive to the user.
+                    stringResource(Res.string.archive_credit_card_blocked, formatter.format(-(balance ?: 0.0)))
+                } else {
+                    stringResource(Res.string.archive_credit_card_message)
+                },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -60,8 +72,9 @@ class CloseCategoryModal(
 
             Button(
                 onClick = {
-                    viewModel.closeCategory()
+                    viewModel.archiveCreditCard()
                 },
+                enabled = balance == 0.0,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -69,7 +82,7 @@ class CloseCategoryModal(
                 )
             ) {
                 Text(
-                    text = stringResource(Res.string.close_category_confirm),
+                    text = stringResource(Res.string.archive_account_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

@@ -9,8 +9,8 @@ import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
@@ -22,7 +22,7 @@ import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.impl.AccountsEntryImpl
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
-import com.neoutils.finsight.ui.modal.closeAccount.CloseAccountViewModel
+import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
@@ -58,8 +58,8 @@ val accountsModule = module {
             setDefaultAccount = get(),
         )
     }
-    factory<CloseAccountUseCase> {
-        CloseAccountUseCaseImpl(
+    factory<ArchiveAccountUseCase> {
+        ArchiveAccountUseCaseImpl(
             accountDao = get(),
             entryRepository = get(),
         )
@@ -119,9 +119,9 @@ val accountsModule = module {
     }
 
     viewModel {
-        CloseAccountViewModel(
+        ArchiveAccountViewModel(
             account = it.get(),
-            closeAccountUseCase = get(),
+            archiveAccountUseCase = get(),
             entryRepository = get(),
             modalManager = get(),
             analytics = get(),

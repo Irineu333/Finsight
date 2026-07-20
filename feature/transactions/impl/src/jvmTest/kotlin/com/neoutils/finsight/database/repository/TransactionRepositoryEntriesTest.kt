@@ -117,10 +117,10 @@ class TransactionRepositoryEntriesTest {
     @Test
     fun `a closed account still hydrates the history that references it`() = runTest {
         // Closure hides an account from the selectors, not from the past.
-        val closed = Account(id = 1, name = "Old wallet", type = AccountType.ASSET, isClosed = true)
+        val closed = Account(id = 1, name = "Old wallet", type = AccountType.ASSET, isArchived = true)
         val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
         db.accountDao().insert(
-            AccountEntity(id = 1, name = "Old wallet", type = AccountEntity.Type.ASSET, isClosed = true),
+            AccountEntity(id = 1, name = "Old wallet", type = AccountEntity.Type.ASSET, isArchived = true),
         )
         db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
 
@@ -137,7 +137,7 @@ class TransactionRepositoryEntriesTest {
         val transaction = repository(listOf(closed, food)).getTransactionById(transactionId)
 
         assertEquals(2, transaction?.entries?.size)
-        assertEquals(true, transaction?.entries?.first { it.account.id == 1L }?.account?.isClosed)
+        assertEquals(true, transaction?.entries?.first { it.account.id == 1L }?.account?.isArchived)
     }
 }
 
@@ -200,7 +200,7 @@ internal object FakeInstallmentRepository : IInstallmentRepository {
  * distinction exists to prevent.
  */
 internal class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
-    private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isClosed }
+    private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isArchived }
     override suspend fun getAllAccounts(): List<Account> = facade
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(facade)
     override suspend fun getAllLedgerAccounts(): List<Account> = accounts

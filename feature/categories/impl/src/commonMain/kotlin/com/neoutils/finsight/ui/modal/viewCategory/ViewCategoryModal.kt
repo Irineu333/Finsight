@@ -29,7 +29,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
 import com.neoutils.finsight.ui.model.RetireAction
-import com.neoutils.finsight.ui.modal.closeCategory.CloseCategoryModal
+import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryModal
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Expense
@@ -173,7 +173,7 @@ class ViewCategoryModal(
                     manager.show(
                         when (content.retireAction) {
                             RetireAction.DELETE -> DeleteCategoryModal(content.category)
-                            RetireAction.CLOSE -> CloseCategoryModal(content.category)
+                            RetireAction.ARCHIVE -> ArchiveCategoryModal(content.category)
                         }
                     )
                 },

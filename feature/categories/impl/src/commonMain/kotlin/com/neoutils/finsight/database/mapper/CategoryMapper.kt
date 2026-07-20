@@ -5,8 +5,8 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 
 class CategoryMapper {
-    fun toDomain(row: com.neoutils.finsight.database.dao.CategoryWithClosure): Category =
-        toDomain(row.category).copy(isClosed = row.isClosed)
+    fun toDomain(row: com.neoutils.finsight.database.dao.CategoryWithArchival): Category =
+        toDomain(row.category).copy(isArchived = row.isArchived)
 
     fun toDomain(
         entity: CategoryEntity

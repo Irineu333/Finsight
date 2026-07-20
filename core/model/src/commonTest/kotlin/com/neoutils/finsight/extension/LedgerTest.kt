@@ -165,4 +165,16 @@ class LedgerTest {
         assertFalse(AccountType.EXPENSE.isMonetary)
         assertFalse(AccountType.EQUITY.isMonetary)
     }
+
+    // --- isPermanent: real vs nominal accounts, which is what decides whether a
+    // --- balance can be stranded by archiving.
+    @Test
+    fun `permanent accounts are the ones whose balance carries across periods`() {
+        assertTrue(AccountType.ASSET.isPermanent)
+        assertTrue(AccountType.LIABILITY.isPermanent)
+        assertTrue(AccountType.EQUITY.isPermanent)
+        // Temporary: their balance is a period total, zeroed only by a closing entry.
+        assertFalse(AccountType.INCOME.isPermanent)
+        assertFalse(AccountType.EXPENSE.isPermanent)
+    }
 }

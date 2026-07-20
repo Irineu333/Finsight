@@ -2,8 +2,8 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CategoryDao
-import com.neoutils.finsight.database.dao.CategoryWithClosure
-import com.neoutils.finsight.database.dao.CreditCardWithClosure
+import com.neoutils.finsight.database.dao.CategoryWithArchival
+import com.neoutils.finsight.database.dao.CreditCardWithArchival
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
@@ -162,7 +162,7 @@ private class FakeAccountDao : AccountDao {
     val accounts = linkedMapOf<Long, AccountEntity>()
     private var seq = 100L
     override suspend fun close(id: Long) {
-        accounts[id]?.let { accounts[id] = it.copy(isClosed = true) }
+        accounts[id]?.let { accounts[id] = it.copy(isArchived = true) }
     }
     override suspend fun entryCount(accountId: Long): Int = 0
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = accounts.values.toList()
@@ -186,8 +186,8 @@ private class FakeAccountDao : AccountDao {
 }
 
 private class FakeCategoryDao : CategoryDao {
-    override suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithClosure> = emptyList()
-    override fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithClosure>> = flowOf(emptyList())
+    override suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival> = emptyList()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>> = flowOf(emptyList())
     val categories = linkedMapOf<Long, CategoryEntity>()
     override suspend fun getCategoryById(id: Long): CategoryEntity? = categories[id]
     override suspend fun update(category: CategoryEntity) { categories[category.id] = category }
@@ -200,8 +200,8 @@ private class FakeCategoryDao : CategoryDao {
 }
 
 private class FakeCreditCardDao : CreditCardDao {
-    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithClosure> = emptyList()
-    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithClosure>> = flowOf(emptyList())
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival> = emptyList()
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>> = flowOf(emptyList())
     val cards = linkedMapOf<Long, CreditCardEntity>()
     override suspend fun getCreditCardById(id: Long): CreditCardEntity? = cards[id]
     override suspend fun update(creditCard: CreditCardEntity) { cards[creditCard.id] = creditCard }

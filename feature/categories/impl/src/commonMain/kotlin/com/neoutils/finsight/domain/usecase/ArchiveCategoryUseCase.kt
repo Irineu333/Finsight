@@ -8,21 +8,21 @@ import com.neoutils.finsight.domain.error.AccountError
 import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
 
 /**
  * Retires a category that has movement. The facade stays so past transactions
  * keep showing its name; only its ledger account is closed, which is what removes
  * it from the pickers and from `Budget.categories`.
  */
-class CloseCategoryUseCase(
+class ArchiveCategoryUseCase(
     private val accountRepository: IAccountRepository,
-    private val closeAccountUseCase: CloseAccountUseCase,
+    private val archiveAccountUseCase: ArchiveAccountUseCase,
 ) {
     suspend operator fun invoke(category: Category): Either<Throwable, Unit> = catch {
         accountRepository.getAccountById(category.accountId)
     }.flatMap { account ->
         if (account == null) return@flatMap AccountException(AccountError.NOT_FOUND).left()
-        closeAccountUseCase(account)
+        archiveAccountUseCase(account)
     }
 }

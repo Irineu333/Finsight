@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 /**
  * Removes a card that never moved, facade and ledger account together.
  *
- * A card with movement is refused — see [CloseCreditCardUseCase].
+ * A card with movement is refused — see [ArchiveCreditCardUseCase].
  */
 class DeleteCreditCardUseCase(
     private val creditCardRepository: ICreditCardRepository,

@@ -12,7 +12,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 /**
  * Removes a category that was never used, facade and ledger account together.
  *
- * A category with movement is refused — see [CloseCategoryUseCase]. Removing the
+ * A category with movement is refused — see [ArchiveCategoryUseCase]. Removing the
  * pair is the repository's job, because the order is a persistence constraint:
  * the facade references the account, so the account cannot go first.
  */

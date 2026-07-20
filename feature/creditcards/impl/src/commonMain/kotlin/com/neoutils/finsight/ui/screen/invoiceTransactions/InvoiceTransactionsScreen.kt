@@ -51,7 +51,7 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.model.RetireAction
-import com.neoutils.finsight.ui.modal.closeCreditCard.CloseCreditCardModal
+import com.neoutils.finsight.ui.modal.archiveCreditCard.ArchiveCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
@@ -199,7 +199,7 @@ private fun InvoiceTransactionsContent(
                                         modalManager.show(
                                             when (uiState.retireAction) {
                                                 RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
-                                                RetireAction.CLOSE -> CloseCreditCardModal(creditCard)
+                                                RetireAction.ARCHIVE -> ArchiveCreditCardModal(creditCard)
                                             }
                                         )
                                     }

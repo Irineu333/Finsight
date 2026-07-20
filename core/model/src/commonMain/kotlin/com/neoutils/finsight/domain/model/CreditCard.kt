@@ -19,7 +19,7 @@ data class CreditCard(
     // Assigned by the store on insert, exactly like [id].
     val accountId: Long = 0,
     // Mirrors the closure of its ledger account (D21).
-    val isClosed: Boolean = false,
+    val isArchived: Boolean = false,
 ) {
     init {
         if (name.isBlank()) {

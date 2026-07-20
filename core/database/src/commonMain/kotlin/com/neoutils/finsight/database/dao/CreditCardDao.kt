@@ -11,19 +11,19 @@ import kotlinx.coroutines.flow.Flow
 // Same rule as categories: a card is closed when its LIABILITY account is (D21).
 private const val OPEN_CREDIT_CARDS =
     "SELECT cc.* FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId " +
-        "WHERE a.isClosed = 0"
+        "WHERE a.isArchived = 0"
 
 // Same as categories: history keeps rendering a card that was later closed.
 private const val ALL_CREDIT_CARDS =
-    "SELECT cc.*, a.isClosed AS isClosed FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId"
+    "SELECT cc.*, a.isArchived AS isArchived FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId"
 
 @Dao
 interface CreditCardDao {
     @Query(ALL_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
-    suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithClosure>
+    suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival>
 
     @Query(ALL_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
-    fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithClosure>>
+    fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>>
 
     @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     fun observeAllCreditCards(): Flow<List<CreditCardEntity>>

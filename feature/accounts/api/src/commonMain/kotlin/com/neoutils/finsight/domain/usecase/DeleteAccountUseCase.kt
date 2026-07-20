@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.model.Account
  *
  * Refuses an account with movement rather than quietly closing it instead: a use
  * case that silently does something other than its name leaves the caller — and
- * the user reading the button — with a wrong expectation. [CloseAccountUseCase]
+ * the user reading the button — with a wrong expectation. [ArchiveAccountUseCase]
  * is the action for that one, and the screens offer it by name.
  */
 interface DeleteAccountUseCase {

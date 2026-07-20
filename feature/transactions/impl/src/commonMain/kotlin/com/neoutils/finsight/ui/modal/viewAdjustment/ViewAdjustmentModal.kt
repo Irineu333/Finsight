@@ -157,7 +157,7 @@ class ViewAdjustmentModal(
                         .fillMaxWidth(),
                     // Closed: the name stays in history, the shortcut goes — the
                     // accounts screen no longer lists it.
-                    onClick = if (account.isClosed) null else {
+                    onClick = if (account.isArchived) null else {
                         {
                             detailController.dismiss()
                             navController.navigate(AccountsRoute(account.id))
@@ -173,7 +173,7 @@ class ViewAdjustmentModal(
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
-                    onClick = if (creditCard.isClosed) null else {
+                    onClick = if (creditCard.isArchived) null else {
                         {
                             detailController.dismiss()
                             navController.navigate(CreditCardsRoute(creditCard.id))

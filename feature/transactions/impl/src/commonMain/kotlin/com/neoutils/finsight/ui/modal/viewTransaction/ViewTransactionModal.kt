@@ -227,7 +227,7 @@ class ViewTransactionModal(
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isClosed) null else {
+                        onClick = if (account.isArchived) null else {
                             {
                                 detailController.dismiss()
                                 navController.navigate(AccountsRoute(account.id))
@@ -243,7 +243,7 @@ class ViewTransactionModal(
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isClosed) null else {
+                        onClick = if (account.isArchived) null else {
                             {
                                 detailController.dismiss()
                                 navController.navigate(AccountsRoute(account.id))
@@ -261,7 +261,7 @@ class ViewTransactionModal(
                         modifier = Modifier.padding(top = 8.dp),
                         // A closed account keeps its name in history but is gone from
                         // the accounts screen, so there is nowhere to send the user.
-                        onClick = if (account.isClosed) null else {
+                        onClick = if (account.isArchived) null else {
                             {
                                 detailController.dismiss()
                                 navController.navigate(AccountsRoute(account.id))
@@ -278,7 +278,7 @@ class ViewTransactionModal(
                     label = stringResource(Res.string.view_transaction_card_label),
                     value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp),
-                    onClick = if (creditCard.isClosed) null else {
+                    onClick = if (creditCard.isArchived) null else {
                         {
                             detailController.dismiss()
                             navController.navigate(CreditCardsRoute(creditCard.id))

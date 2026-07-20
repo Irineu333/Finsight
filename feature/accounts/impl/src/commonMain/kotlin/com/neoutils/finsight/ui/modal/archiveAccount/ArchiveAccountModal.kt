@@ -1,6 +1,11 @@
-package com.neoutils.finsight.ui.modal.closeCreditCard
+package com.neoutils.finsight.ui.modal.archiveAccount
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -14,34 +19,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.close_account_confirm
-import com.neoutils.finsight.resources.close_credit_card_blocked
-import com.neoutils.finsight.resources.close_credit_card_message
-import com.neoutils.finsight.resources.close_credit_card_title
+import com.neoutils.finsight.resources.archive_account_confirm
+import com.neoutils.finsight.resources.archive_account_blocked
+import com.neoutils.finsight.resources.archive_account_message
+import com.neoutils.finsight.resources.archive_account_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 /**
- * Retiring a card that has movement — see `CloseAccountModal`; a card is its
- * `LIABILITY` account wearing a facade, and retires by the same rule.
+ * Retiring an account that has movement. A separate modal from deletion because
+ * it is a different promise to the user: nothing is removed, the history stays,
+ * and the account only leaves the active lists. Which of the two a screen offers
+ * is decided by `retireActionOf`; which one actually happens is decided by the
+ * ledger, in `ArchiveAccountUseCase`.
  */
-class CloseCreditCardModal(
-    private val creditCard: CreditCard
+class ArchiveAccountModal(
+    private val account: Account
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
 
-        val viewModel = koinViewModel<CloseCreditCardViewModel> { parametersOf(creditCard) }
+        val viewModel = koinViewModel<ArchiveAccountViewModel> { parametersOf(account) }
         val balance by viewModel.balance.collectAsState()
         val formatter = LocalCurrencyFormatter.current
-        val blocked = balance != null && balance != 0.0
 
+        // The UI stops the user before the attempt, so it never promises something
+        // the use case will refuse. The use case is still the safeguard.
+        val blocked = balance != null && balance != 0.0
 
         Column(
             modifier = Modifier
@@ -50,7 +60,7 @@ class CloseCreditCardModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = stringResource(Res.string.close_credit_card_title),
+                text = stringResource(Res.string.archive_account_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface
             )
@@ -59,10 +69,9 @@ class CloseCreditCardModal(
 
             Text(
                 text = if (blocked) {
-                    // A card balance is a debt, so it reads positive to the user.
-                    stringResource(Res.string.close_credit_card_blocked, formatter.format(-(balance ?: 0.0)))
+                    stringResource(Res.string.archive_account_blocked, formatter.format(balance ?: 0.0))
                 } else {
-                    stringResource(Res.string.close_credit_card_message)
+                    stringResource(Res.string.archive_account_message)
                 },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
@@ -72,7 +81,7 @@ class CloseCreditCardModal(
 
             Button(
                 onClick = {
-                    viewModel.closeCreditCard()
+                    viewModel.archiveAccount()
                 },
                 enabled = balance == 0.0,
                 modifier = Modifier.fillMaxWidth(),
@@ -82,7 +91,7 @@ class CloseCreditCardModal(
                 )
             ) {
                 Text(
-                    text = stringResource(Res.string.close_account_confirm),
+                    text = stringResource(Res.string.archive_account_confirm),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

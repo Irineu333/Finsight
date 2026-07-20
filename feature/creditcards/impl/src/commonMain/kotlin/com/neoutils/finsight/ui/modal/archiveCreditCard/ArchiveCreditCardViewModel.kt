@@ -1,4 +1,4 @@
-package com.neoutils.finsight.ui.modal.closeCreditCard
+package com.neoutils.finsight.ui.modal.archiveCreditCard
 
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.exception.AccountException
@@ -12,21 +12,21 @@ import com.neoutils.finsight.domain.analytics.event.DeleteCreditCard
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.usecase.CloseCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveCreditCardUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
-class CloseCreditCardViewModel(
+class ArchiveCreditCardViewModel(
     private val creditCard: CreditCard,
-    private val closeCreditCardUseCase: CloseCreditCardUseCase,
+    private val archiveCreditCardUseCase: ArchiveCreditCardUseCase,
     private val entryRepository: IEntryRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    /** The card's outstanding balance — see `CloseAccountViewModel`. */
+    /** The card's outstanding balance — see `ArchiveAccountViewModel`. */
     val balance = MutableStateFlow<Double?>(null)
 
     init {
@@ -35,8 +35,8 @@ class CloseCreditCardViewModel(
 
 
 
-    fun closeCreditCard() = viewModelScope.launch {
-        closeCreditCardUseCase(creditCard)
+    fun archiveCreditCard() = viewModelScope.launch {
+        archiveCreditCardUseCase(creditCard)
             .onLeft {
                 crashlytics.recordException(it)
             }.onRight {

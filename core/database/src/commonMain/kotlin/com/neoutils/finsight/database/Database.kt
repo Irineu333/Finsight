@@ -272,12 +272,12 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         connection.execSQL("DROP TABLE `operations`")
         connection.execSQL("ALTER TABLE `operations_new` RENAME TO `operations`")
 
-        // --- 1. Extend the chart of accounts. `isClosed` is the single closure flag
+        // --- 1. Extend the chart of accounts. `isArchived` is the single closure flag
         //        (design D21): categories and cards read it through their accountId
         //        instead of each keeping a copy. ---
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `type` TEXT NOT NULL DEFAULT 'ASSET'")
         connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `currency` TEXT NOT NULL DEFAULT 'BRL'")
-        connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `isClosed` INTEGER NOT NULL DEFAULT 0")
+        connection.execSQL("ALTER TABLE `accounts` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0")
 
         // --- 2. Facade back-references (category/card -> its ledger account) ---
         connection.execSQL(
@@ -292,7 +292,7 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         // --- 3. Promote categories to INCOME/EXPENSE accounts (ids disjoint via captured offset) ---
         connection.execSQL("CREATE TEMP TABLE `_cat_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
-            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isClosed`) " +
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_cat_base`) + c.`id`, c.`name`, c.`type`, 'BRL', c.`iconKey`, 0, c.`createdAt`, 0 " +
                 "FROM `categories` c"
         )
@@ -301,7 +301,7 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         // --- 4. Promote credit cards to LIABILITY accounts ---
         connection.execSQL("CREATE TEMP TABLE `_cc_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
-            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isClosed`) " +
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_cc_base`) + cc.`id`, cc.`name`, 'LIABILITY', 'BRL', cc.`iconKey`, 0, cc.`createdAt`, 0 " +
                 "FROM `credit_cards` cc"
         )
@@ -314,7 +314,7 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         //        below as itself, closed, instead of losing its identity in a bucket. ---
         connection.execSQL("CREATE TEMP TABLE `_sys` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
-            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isClosed`) VALUES " +
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) VALUES " +
                 "((SELECT base FROM `_sys`) + 1, 'Reconciliação', 'EQUITY', 'BRL', 'wallet', 0, $now, 0), " +
                 "((SELECT base FROM `_sys`) + 2, 'Sem categoria (despesa)', 'EXPENSE', 'BRL', 'default', 0, $now, 0), " +
                 "((SELECT base FROM `_sys`) + 3, 'Sem categoria (receita)', 'INCOME', 'BRL', 'default', 0, $now, 0)"
@@ -327,12 +327,12 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         //        the orphans of a type collapse into one closed account. ---
         connection.execSQL("CREATE TEMP TABLE `_closed` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
-            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isClosed`) " +
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_closed`) + 1, 'Conta encerrada', 'ASSET', 'BRL', 'wallet', 0, $now, 1 " +
                 "WHERE EXISTS (SELECT 1 FROM `transactions` WHERE `target` = 'ACCOUNT' AND `accountId` IS NULL AND `operationId` IS NOT NULL)"
         )
         connection.execSQL(
-            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isClosed`) " +
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_closed`) + 2, 'Cartão encerrado', 'LIABILITY', 'BRL', 'credit_card', 0, $now, 1 " +
                 "WHERE EXISTS (" +
                 "SELECT 1 FROM `transactions` t WHERE t.`target` = 'CREDIT_CARD' AND t.`operationId` IS NOT NULL " +

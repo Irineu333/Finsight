@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -218,6 +219,7 @@ class ViewAdjustmentModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val content = uiState as? ViewAdjustmentUiState.Content ?: return
+        if (!content.isDeletable) return
 
         OutlinedButton(
             onClick = {

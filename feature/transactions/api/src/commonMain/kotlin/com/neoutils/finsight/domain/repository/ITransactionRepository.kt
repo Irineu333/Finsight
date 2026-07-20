@@ -35,5 +35,8 @@ interface ITransactionRepository {
     suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg)
 
     suspend fun deleteTransactionById(id: Long)
+
+    /** Removes several transactions as one unit — see [createTransactions]. */
+    suspend fun deleteTransactionsByIds(ids: List<Long>)
     suspend fun deleteTransactionsByCreditCard(creditCardId: Long)
 }

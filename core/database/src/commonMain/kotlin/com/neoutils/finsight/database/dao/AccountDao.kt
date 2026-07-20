@@ -36,6 +36,10 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE type = 'ASSET' AND isClosed = 0 AND isDefault = 1 LIMIT 1")
     fun observeDefaultAccount(): Flow<AccountEntity?>
 
+    /** The whole chart of accounts, not just the user-facing ASSET facade. */
+    @Query("SELECT * FROM accounts ORDER BY id ASC")
+    suspend fun getAllLedgerAccounts(): List<AccountEntity>
+
     @Query("SELECT COUNT(*) FROM accounts WHERE type = 'ASSET' AND isClosed = 0")
     suspend fun getAccountCount(): Int
 

@@ -6,26 +6,26 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteInstallments
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.repository.IInstallmentRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class DeleteInstallmentViewModel(
     private val installment: Installment,
     private val transactions: List<Transaction>,
-    private val transactionRepository: ITransactionRepository,
-    private val installmentRepository: IInstallmentRepository,
+    private val deleteInstallmentUseCase: DeleteInstallmentUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     fun deleteInstallment() = viewModelScope.launch {
-        transactions.forEach { transaction ->
-            transactionRepository.deleteTransactionById(transaction.id)
+        deleteInstallmentUseCase(installment, transactions).onRight {
+            analytics.logEvent(DeleteInstallments(installment, transactions))
+            modalManager.dismissAll()
+        }.onLeft {
+            crashlytics.recordException(it)
         }
-        installmentRepository.deleteInstallmentById(installment.id)
-        analytics.logEvent(DeleteInstallments(installment, transactions))
-        modalManager.dismissAll()
     }
 }

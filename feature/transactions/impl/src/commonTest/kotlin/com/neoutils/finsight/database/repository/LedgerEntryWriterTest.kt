@@ -160,6 +160,7 @@ private class FakeAccountDao : AccountDao {
         accounts[id]?.let { accounts[id] = it.copy(isClosed = true) }
     }
     override suspend fun entryCount(accountId: Long): Int = 0
+    override suspend fun getAllLedgerAccounts(): List<AccountEntity> = accounts.values.toList()
     override suspend fun insert(account: AccountEntity): Long {
         val id = seq++
         accounts[id] = account.copy(id = id)

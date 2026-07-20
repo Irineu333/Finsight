@@ -5,6 +5,7 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*

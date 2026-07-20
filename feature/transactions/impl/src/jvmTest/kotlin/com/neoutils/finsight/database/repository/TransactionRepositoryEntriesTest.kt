@@ -88,7 +88,7 @@ class TransactionRepositoryEntriesTest {
     }
 }
 
-private object FakeCategoryRepository : ICategoryRepository {
+internal object FakeCategoryRepository : ICategoryRepository {
     override suspend fun getAllCategories(): List<Category> = emptyList()
     override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
@@ -99,7 +99,7 @@ private object FakeCategoryRepository : ICategoryRepository {
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private object FakeCreditCardRepository : ICreditCardRepository {
+internal object FakeCreditCardRepository : ICreditCardRepository {
     override suspend fun getAllCreditCards(): List<CreditCard> = emptyList()
     override fun observeAllCreditCards(): Flow<List<CreditCard>> = flowOf(emptyList())
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
@@ -127,7 +127,7 @@ private object FakeInvoiceRepository : IInvoiceRepository {
     override suspend fun deleteById(id: Long) = throw NotImplementedError()
 }
 
-private object FakeInstallmentRepository : IInstallmentRepository {
+internal object FakeInstallmentRepository : IInstallmentRepository {
     override suspend fun getAllInstallments(): List<Installment> = emptyList()
     override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
     override suspend fun getInstallmentById(id: Long): Installment? = throw NotImplementedError()
@@ -136,7 +136,7 @@ private object FakeInstallmentRepository : IInstallmentRepository {
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }
 
-private class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
+internal class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
     override suspend fun getAllAccounts(): List<Account> = accounts
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()

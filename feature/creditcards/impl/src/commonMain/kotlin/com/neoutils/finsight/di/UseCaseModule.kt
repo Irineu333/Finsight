@@ -1,6 +1,8 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.domain.usecase.DeleteCreditCardUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCase
+import com.neoutils.finsight.domain.usecase.DeleteInstallmentUseCaseImpl
 import com.neoutils.finsight.domain.usecase.ValidateCreditCardNameUseCase
 import com.neoutils.finsight.domain.usecase.AddCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.AdvanceInvoicePaymentUseCase
@@ -119,6 +121,13 @@ val useCaseModules = module {
     factory {
         ValidateCreditCardNameUseCase(
             repository = get(),
+        )
+    }
+
+    factory<DeleteInstallmentUseCase> {
+        DeleteInstallmentUseCaseImpl(
+            transactionRepository = get(),
+            installmentRepository = get(),
         )
     }
 

@@ -297,7 +297,7 @@ class DashboardComponentsBuilder(
             categoryBalances = categoryBalances,
             recurringList = input.recurringList,
             transactions = input.transactions,
-            today = input.today,
+            month = input.targetMonth,
         )
 
         return if (budgetProgress.isNotEmpty()) {

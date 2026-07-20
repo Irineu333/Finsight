@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.modal.viewTransaction
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

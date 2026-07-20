@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.component
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

@@ -39,8 +39,12 @@ class InstallmentUiMapper {
             installmentAmount = installmentAmount,
             remainingAmount = (installment.count - paidCount) * installmentAmount,
             progress = currentNumber.toFloat() / installment.count,
+            // Deleting an installment erases every one of its transactions, so each
+            // invoice must still accept edits (`Invoice.Status.isEditable` — not
+            // `isDeletable`, which is about deleting the invoice itself). An invoice
+            // that could not be resolved cannot be shown to accept it: fail closed.
             isDeletable = sortedTransactions.all {
-                it.targetInvoice?.status?.isEditable != false
+                it.targetInvoice?.status?.isEditable == true
             },
         )
     }

@@ -84,10 +84,10 @@ val creditCardsModule = module {
         DeleteInstallmentViewModel(
             installment = it.get(),
             transactions = it.get(),
-            transactionRepository = get(),
-            installmentRepository = get(),
+            deleteInstallmentUseCase = get(),
             modalManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

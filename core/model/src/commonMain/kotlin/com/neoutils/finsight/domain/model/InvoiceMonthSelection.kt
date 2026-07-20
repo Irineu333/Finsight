@@ -9,6 +9,4 @@ data class InvoiceMonthSelection(
     val isNew = existingInvoice == null
 
     val isClosedToNewExpenses = existingInvoice?.status?.isClosedToNewExpenses == true
-
-    val statusColor get() = existingInvoice?.status?.color
 }

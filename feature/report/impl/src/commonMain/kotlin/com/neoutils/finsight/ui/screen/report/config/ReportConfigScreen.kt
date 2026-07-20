@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.report.config
+import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*

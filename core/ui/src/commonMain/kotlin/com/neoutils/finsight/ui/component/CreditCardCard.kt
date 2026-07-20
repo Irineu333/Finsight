@@ -2,6 +2,7 @@
 
 package com.neoutils.finsight.ui.component
 
+import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

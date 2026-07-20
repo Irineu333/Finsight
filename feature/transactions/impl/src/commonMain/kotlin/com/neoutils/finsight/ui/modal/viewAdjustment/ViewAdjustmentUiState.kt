@@ -24,5 +24,12 @@ sealed interface ViewAdjustmentUiState {
          * ledger already carries it.
          */
         val signedAmount = (transaction.primaryEntry?.amount ?: 0L) / 100.0
+
+        /**
+         * A closed or paid invoice is immutable, so the screen stops offering to
+         * delete its adjustment. The invariant itself lives at the write boundary;
+         * this only keeps the UI from proposing what would be refused.
+         */
+        val isDeletable = invoice?.status?.isEditable ?: true
     }
 }

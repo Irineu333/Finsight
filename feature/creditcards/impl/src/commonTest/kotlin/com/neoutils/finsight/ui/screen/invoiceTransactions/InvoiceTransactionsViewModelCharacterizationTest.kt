@@ -145,6 +145,8 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) = throw NotImplementedError()
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
+
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
     override suspend fun deleteTransactionsByCreditCard(creditCardId: Long) = throw NotImplementedError()
 }

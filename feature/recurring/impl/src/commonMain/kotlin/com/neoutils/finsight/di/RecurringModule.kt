@@ -1,6 +1,7 @@
 package com.neoutils.finsight.di
 
 import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.domain.usecase.DeleteRecurringUseCase
 import com.neoutils.finsight.database.mapper.RecurringOccurrenceMapper
 import com.neoutils.finsight.database.repository.RecurringOccurrenceRepository
 import com.neoutils.finsight.database.repository.RecurringRepository
@@ -44,6 +45,7 @@ val recurringModule = module {
     factory { RecurringOccurrenceMapper() }
 
     factory { GetPendingRecurringUseCase() }
+    factory { DeleteRecurringUseCase(repository = get()) }
     factory { SaveRecurringUseCase(repository = get()) }
     factory { ReactivateRecurringUseCase(repository = get()) }
     factory { StopRecurringUseCase(repository = get()) }
@@ -99,9 +101,10 @@ val recurringModule = module {
     viewModel {
         DeleteRecurringViewModel(
             recurring = it.get(),
-            recurringRepository = get(),
+            deleteRecurringUseCase = get(),
             modalManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
     viewModel {

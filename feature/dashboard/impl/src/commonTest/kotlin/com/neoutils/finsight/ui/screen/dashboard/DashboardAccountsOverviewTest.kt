@@ -2,7 +2,12 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.LimitType
+import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.model.TransactionRecurring
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -146,6 +151,48 @@ class DashboardAccountsOverviewTest {
         val stats = component as DashboardComponent.CreditCardBalanceStats
         assertEquals(25.0, stats.payment)
         assertEquals(60.0, stats.expense)
+    }
+
+    /**
+     * The budgets widget must read the recurring confirmation of the month on screen,
+     * not of the current one: browsing March in July used to size a `PERCENTAGE` limit
+     * from July's confirmation, because the builder passed `today` instead of `targetMonth`.
+     */
+    @Test
+    fun `a percentage budget uses the confirmation of the month on screen`() = runTest {
+        val salary = Recurring(
+            id = 7, type = TransactionType.INCOME, amount = 1000.0, title = "Salary",
+            dayOfMonth = 5, category = null, account = null, creditCard = null, createdAt = 0L,
+        )
+        val marchConfirmation = Transaction(
+            id = 1, title = "Salary", date = LocalDate(2026, 3, 5),
+            recurring = TransactionRecurring(instance = salary, cycleNumber = 1),
+            entries = listOf(
+                Entry(account = accountA, amount = -200_000),
+                Entry(account = Account(id = 3, name = "Salary", type = AccountType.INCOME), amount = 200_000),
+            ),
+        )
+        val budget = Budget(
+            id = 1, title = "Half the salary", categories = emptyList(), iconKey = "shopping",
+            amount = 0.0, limitType = LimitType.PERCENTAGE, percentage = 50.0,
+            recurringId = salary.id, createdAt = 0L,
+        )
+
+        val component = builder().build(
+            key = DashboardComponentType.BUDGETS.key,
+            input = input(emptyList()).copy(
+                budgets = listOf(budget),
+                recurringList = listOf(salary),
+                transactions = listOf(marchConfirmation),
+                today = LocalDate(2026, 7, 19),
+                targetMonth = YearMonth(2026, 3),
+            ),
+            context = DashboardBuilderContext(pendingRecurring = emptyList()),
+            config = emptyMap(),
+        )
+
+        val budgets = component as DashboardComponent.Budgets
+        assertEquals(1000.0, budgets.budgetProgress.single().budget.amount)
     }
 }
 

@@ -6,7 +6,7 @@ import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
 
 /**
- * A flat, display-ready view of an transaction for a list item. Carries no domain
+ * A flat, display-ready view of a transaction for a list item. Carries no domain
  * graph — only resolved presentation values and the transaction id. Both display
  * axes are derived by the mapper (see `Transaction.toTransactionUi`): [label] is the
  * transaction's nature (color/title/icon), [direction] is the leg's direction under

@@ -5,7 +5,7 @@ package com.neoutils.finsight.domain.model
  *
  * [amount] is signed and expressed in the currency's minor unit (e.g. cents),
  * following the debit-positive convention: a positive amount debits the account,
- * a negative amount credits it. For every currency present in an transaction, the
+ * a negative amount credits it. For every currency present in a transaction, the
  * sum of its entries' amounts is exactly zero.
  */
 data class Entry(

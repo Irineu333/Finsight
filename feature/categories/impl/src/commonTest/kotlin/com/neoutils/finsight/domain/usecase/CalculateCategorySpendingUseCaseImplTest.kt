@@ -15,7 +15,7 @@ private val MONTH = YearMonth(2026, 1)
 
 class CalculateCategorySpendingUseCaseImplTest {
 
-    private fun category(id: Long, type: Category.Type, accountId: Long?) = Category(
+    private fun category(id: Long, type: Category.Type, accountId: Long) = Category(
         id = id,
         name = "cat$id",
         icon = CategoryLazyIcon("icon"),
@@ -59,9 +59,9 @@ class CalculateCategorySpendingUseCaseImplTest {
     }
 
     @Test
-    fun `categories with no ledger account or zero balance are excluded`() = runTest {
+    fun `categories with a zero balance are excluded`() = runTest {
         val posted = category(1, Category.Type.EXPENSE, accountId = 10)
-        val neverPosted = category(2, Category.Type.EXPENSE, accountId = null)
+        val neverPosted = category(2, Category.Type.EXPENSE, accountId = 11)
         val zero = category(3, Category.Type.EXPENSE, accountId = 12)
         val useCase = CalculateCategorySpendingUseCaseImpl(
             categoryRepository = FakeCategoryRepository(listOf(posted, neverPosted, zero)),

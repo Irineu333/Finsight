@@ -9,11 +9,11 @@ import com.neoutils.finsight.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 // A category is closed when *its* ledger account is (design D21) — it keeps no
-// copy of the flag. LEFT JOIN, because a category that never moved money has no
-// account yet, and "never used" is not "closed".
+// copy of the flag. Every category has an account, created with it, so this is a
+// plain join.
 private const val OPEN_CATEGORIES =
-    "SELECT c.* FROM categories c LEFT JOIN accounts a ON a.id = c.accountId " +
-        "WHERE COALESCE(a.isClosed, 0) = 0"
+    "SELECT c.* FROM categories c JOIN accounts a ON a.id = c.accountId " +
+        "WHERE a.isClosed = 0"
 
 @Dao
 interface CategoryDao {

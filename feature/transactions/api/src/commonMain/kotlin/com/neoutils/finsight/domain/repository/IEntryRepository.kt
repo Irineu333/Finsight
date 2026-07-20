@@ -41,10 +41,10 @@ data class CardMonthFlows(
 
 interface IEntryRepository {
 
-    /** The entries (legs) of an transaction, each hydrated with its account. */
+    /** The entries (legs) of a transaction, each hydrated with its account. */
     suspend fun getEntriesByTransaction(transactionId: Long): List<Entry>
 
-    /** Observes the entries (legs) of an transaction, each hydrated with its account. */
+    /** Observes the entries (legs) of a transaction, each hydrated with its account. */
     fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>>
 
     /**

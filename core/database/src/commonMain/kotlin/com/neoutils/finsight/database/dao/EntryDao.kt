@@ -81,12 +81,12 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 
-    /** Entries of an transaction, each hydrated with its account — a complete leg. */
+    /** Entries of a transaction, each hydrated with its account — a complete leg. */
     @Transaction
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<EntryWithAccount>
 
-    /** Observes the entries of an transaction, each hydrated with its account. */
+    /** Observes the entries of a transaction, each hydrated with its account. */
     @Transaction
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<EntryWithAccount>>

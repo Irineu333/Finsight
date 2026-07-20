@@ -28,7 +28,7 @@ class CalculateBudgetProgressUseCaseTest {
     private val useCase = CalculateBudgetProgressUseCase()
     private val month = YearMonth(2026, 3)
 
-    private fun category(id: Long, accountId: Long?) = Category(
+    private fun category(id: Long, accountId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
         type = Category.Type.EXPENSE, createdAt = 0L, accountId = accountId,
     )
@@ -57,9 +57,9 @@ class CalculateBudgetProgressUseCaseTest {
     }
 
     @Test
-    fun `categories never posted to contribute nothing`() {
+    fun `categories with no movement contribute nothing`() {
         val budgetWithUnposted = budget.copy(
-            categories = listOf(category(1, accountId = 10), category(3, accountId = null)),
+            categories = listOf(category(1, accountId = 10), category(3, accountId = 12)),
         )
 
         val progress = useCase(

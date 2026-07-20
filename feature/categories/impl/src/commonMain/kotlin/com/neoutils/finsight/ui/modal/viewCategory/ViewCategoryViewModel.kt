@@ -47,14 +47,9 @@ class ViewCategoryViewModel(
         // Σ entries of the category's chart account in the month, read from the ledger.
         // The natural balance is debit-positive; the ledger's own display convention
         // turns it into the positive figure a category is expected to read as.
-        val accountId = category.accountId
         val displaySign = category.type.accountType.displaySign
-        val totalAmount = accountId?.let {
-            entryRepository.balanceInMonth(yearMonth, it) * displaySign
-        } ?: 0.0
-        val transactionCount = accountId?.let {
-            entryRepository.entryCountInMonth(yearMonth, it)
-        } ?: 0
+        val totalAmount = entryRepository.balanceInMonth(yearMonth, category.accountId) * displaySign
+        val transactionCount = entryRepository.entryCountInMonth(yearMonth, category.accountId)
         ViewCategoryUiState.Content(
             category = category,
             selectedYearMonth = yearMonth,

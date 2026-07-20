@@ -14,7 +14,7 @@ import kotlin.test.assertNull
 /**
  * Fixes the invariant left after the D6 fallback dissolved (D21): a
  * [TransactionPerspective] is an account id — a card enters the same way, through
- * its `accountId` — and it decides which leg of an transaction the screen reads.
+ * its `accountId` — and it decides which leg of a transaction the screen reads.
  * The same transfer read from its two accounts yields opposite directions; an
  * account with no leg yields no item at all.
  */

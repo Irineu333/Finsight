@@ -18,14 +18,15 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import kotlin.math.roundToLong
 
 /**
- * The single write-boundary that turns the legs of an transaction into balanced
+ * The single write-boundary that turns the user's intent into balanced
  * double-entry [EntryEntity] rows.
  *
- * It ensures the chart-of-accounts row for each category and card exists
- * (creating it on demand, keeping the facade projection consistent), synthesizes
- * the contra leg for single-leg transactions, and enforces the `Σ = 0` per-currency
- * invariant — throwing [UnbalancedTransactionException] and writing nothing on
- * failure.
+ * It resolves each leg to its chart-of-accounts row, synthesizes the contra leg
+ * for a single-leg intent, and enforces the `Σ = 0` per-currency invariant —
+ * throwing [UnbalancedTransactionException] and writing nothing on failure.
+ *
+ * Only *system* accounts are still created on demand: category and card accounts
+ * are created with their facade, so nothing here has to guess whether one exists.
  */
 class LedgerEntryWriter(
     private val entryDao: EntryDao,
@@ -98,7 +99,7 @@ class LedgerEntryWriter(
             leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
 
         TransactionTarget.CREDIT_CARD ->
-            ensureCardAccount(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
+            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
     }
 
     private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {
@@ -106,48 +107,27 @@ class LedgerEntryWriter(
             ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
 
         TransactionType.EXPENSE ->
-            leg.category?.let { ensureCategoryAccount(it) }
+            leg.category?.let { categoryAccountId(it) }
                 ?: ensureSystemAccount(SystemAccount.UNCATEGORIZED_EXPENSE, AccountEntity.Type.EXPENSE)
 
         TransactionType.INCOME ->
-            leg.category?.let { ensureCategoryAccount(it) }
+            leg.category?.let { categoryAccountId(it) }
                 ?: ensureSystemAccount(SystemAccount.UNCATEGORIZED_INCOME, AccountEntity.Type.INCOME)
     }
 
-    private suspend fun ensureCategoryAccount(category: Category): Long {
-        val entity = categoryDao.getCategoryById(category.id)
+    /**
+     * The category's account, looked up — never created. Categories and cards are
+     * created together with their account (see `CategoryRepository`), so by the
+     * time anything is spent there the row exists. This is the difference between
+     * a facade that *has* an account and one that might.
+     */
+    private suspend fun categoryAccountId(category: Category): Long =
+        categoryDao.getCategoryById(category.id)?.accountId
             ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
-        entity.accountId?.let { return it }
-        val accountId = accountDao.insert(
-            AccountEntity(
-                name = category.name,
-                type = when (category.type) {
-                    Category.Type.INCOME -> AccountEntity.Type.INCOME
-                    Category.Type.EXPENSE -> AccountEntity.Type.EXPENSE
-                },
-                currency = BASE_CURRENCY,
-                iconKey = entity.iconKey,
-            )
-        )
-        categoryDao.update(entity.copy(accountId = accountId))
-        return accountId
-    }
 
-    private suspend fun ensureCardAccount(creditCard: CreditCard): Long {
-        val entity = creditCardDao.getCreditCardById(creditCard.id)
+    private suspend fun cardAccountId(creditCard: CreditCard): Long =
+        creditCardDao.getCreditCardById(creditCard.id)?.accountId
             ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
-        entity.accountId?.let { return it }
-        val accountId = accountDao.insert(
-            AccountEntity(
-                name = creditCard.name,
-                type = AccountEntity.Type.LIABILITY,
-                currency = BASE_CURRENCY,
-                iconKey = entity.iconKey,
-            )
-        )
-        creditCardDao.update(entity.copy(accountId = accountId))
-        return accountId
-    }
 
     private suspend fun ensureSystemAccount(name: String, type: AccountEntity.Type): Long {
         accountDao.getByTypeAndName(type, name)?.let { return it.id }

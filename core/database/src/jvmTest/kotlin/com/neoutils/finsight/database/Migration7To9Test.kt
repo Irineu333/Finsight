@@ -141,6 +141,24 @@ class Migration7To9Test {
     }
 
     @Test
+    fun `given v7 when migrated then every facade carries a NOT NULL account`() {
+        MIGRATION_7_9.migrate(connection)
+
+        // The whole point of eager creation: a category or card can never exist
+        // without its chart-of-accounts row, so no reader has to handle the absence.
+        assertEquals(
+            1L,
+            scalar("SELECT COUNT(*) FROM pragma_table_info('categories') WHERE name = 'accountId' AND \"notnull\" = 1"),
+        )
+        assertEquals(
+            1L,
+            scalar("SELECT COUNT(*) FROM pragma_table_info('credit_cards') WHERE name = 'accountId' AND \"notnull\" = 1"),
+        )
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM categories WHERE accountId IS NULL"))
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM credit_cards WHERE accountId IS NULL"))
+    }
+
+    @Test
     fun `given v7 when migrated then entries table and indices are created`() {
         MIGRATION_7_9.migrate(connection)
 

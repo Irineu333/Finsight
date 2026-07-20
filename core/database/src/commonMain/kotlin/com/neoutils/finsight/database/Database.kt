@@ -471,10 +471,45 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
                 "ON `recurring_occurrences` (`recurringId`, `cycleNumber`)"
         )
 
-        // A facade's `accountId` stays nullable: a category or card that never moved
-        // money has no ledger account yet, and the reads below treat that as "open"
-        // rather than requiring a row to exist before it is needed.
+        // --- 13. Every facade now has an account, so the column becomes NOT NULL.
+        //         Without it a category created later could exist with no account, and
+        //         every reader would have to special-case the absence. ---
+        connection.execSQL(
+            "CREATE TABLE `categories_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`type` TEXT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`accountId` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION)"
+        )
+        connection.execSQL(
+            "INSERT INTO `categories_new` (`id`, `name`, `iconKey`, `type`, `createdAt`, `accountId`) " +
+                "SELECT `id`, `name`, `iconKey`, `type`, `createdAt`, `accountId` FROM `categories`"
+        )
+        connection.execSQL("DROP TABLE `categories`")
+        connection.execSQL("ALTER TABLE `categories_new` RENAME TO `categories`")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_categories_accountId` ON `categories` (`accountId`)")
+
+        connection.execSQL(
+            "CREATE TABLE `credit_cards_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, " +
+                "`limit` REAL NOT NULL, " +
+                "`closingDay` INTEGER NOT NULL, " +
+                "`dueDay` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`accountId` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION)"
+        )
+        connection.execSQL(
+            "INSERT INTO `credit_cards_new` (`id`, `name`, `limit`, `closingDay`, `dueDay`, `iconKey`, `createdAt`, `accountId`) " +
+                "SELECT `id`, `name`, `limit`, `closingDay`, `dueDay`, `iconKey`, `createdAt`, `accountId` FROM `credit_cards`"
+        )
+        connection.execSQL("DROP TABLE `credit_cards`")
+        connection.execSQL("ALTER TABLE `credit_cards_new` RENAME TO `credit_cards`")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_credit_cards_accountId` ON `credit_cards` (`accountId`)")
 
         // --- 12. `budgets.categoryId` was a write-only copy of the first category,

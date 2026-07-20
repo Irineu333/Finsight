@@ -7,7 +7,7 @@ import kotlin.math.abs
 /**
  * A balanced set of ledger [entries] — what the user calls a transaction.
  *
- * Everything the app used to persist about an transaction's nature ([label], its
+ * Everything the app used to persist about a transaction's nature ([label], its
  * direction, whether it targets a card) is **derived** from the account types of
  * its entries. Nothing here is stored as independent state.
  */

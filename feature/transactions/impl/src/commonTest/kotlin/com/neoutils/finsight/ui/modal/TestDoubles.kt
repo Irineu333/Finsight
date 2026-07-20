@@ -50,7 +50,7 @@ class FakeTransactionRepository : ITransactionRepository {
 }
 
 /**
- * An transaction as the ledger holds it: the money leg on an asset account plus the
+ * A transaction as the ledger holds it: the money leg on an asset account plus the
  * counterpart leg that explains it — an EQUITY reconciliation for an adjustment.
  */
 fun transaction(

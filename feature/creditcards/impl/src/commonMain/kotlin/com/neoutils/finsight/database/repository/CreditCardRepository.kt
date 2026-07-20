@@ -1,14 +1,22 @@
 package com.neoutils.finsight.database.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.mapper.CreditCardMapper
+import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class CreditCardRepository(
+    private val database: AppDatabase,
     private val dao: CreditCardDao,
+    private val accountDao: AccountDao,
     private val mapper: CreditCardMapper
 ) : ICreditCardRepository {
 
@@ -32,12 +40,35 @@ class CreditCardRepository(
         }
     }
 
+    /** The card and its `LIABILITY` account are one creation — see `CategoryRepository`. */
     override suspend fun insert(creditCard: CreditCard): Long {
-        return dao.insert(mapper.toEntity(creditCard))
+        return database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                val accountId = accountDao.insert(
+                    AccountEntity(
+                        name = creditCard.name,
+                        type = AccountEntity.Type.LIABILITY,
+                        currency = BASE_CURRENCY,
+                        iconKey = creditCard.iconKey,
+                        createdAt = creditCard.createdAt,
+                    )
+                )
+                dao.insert(mapper.toEntity(creditCard).copy(accountId = accountId))
+            }
+        }
     }
 
     override suspend fun update(creditCard: CreditCard) {
-        dao.update(mapper.toEntity(creditCard))
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                dao.update(mapper.toEntity(creditCard))
+                accountDao.getAccountById(creditCard.accountId)?.let { account ->
+                    accountDao.update(
+                        account.copy(name = creditCard.name, iconKey = creditCard.iconKey)
+                    )
+                }
+            }
+        }
     }
 
     override suspend fun delete(creditCard: CreditCard) {

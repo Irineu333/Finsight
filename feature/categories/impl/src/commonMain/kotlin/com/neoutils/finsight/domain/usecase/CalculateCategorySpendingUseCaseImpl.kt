@@ -20,7 +20,7 @@ internal suspend fun categoryTotals(
     entryRepository: IEntryRepository,
 ): List<CategorySpending> {
     val amounts = categories.mapNotNull { category ->
-        val accountId = category.accountId ?: return@mapNotNull null
+        val accountId = category.accountId
         val natural = entryRepository.balanceInMonth(forYearMonth, accountId)
         val amount = natural * category.type.accountType.displaySign
         if (amount == 0.0) null else category to amount

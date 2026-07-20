@@ -23,11 +23,10 @@ class DeleteCreditCardUseCase(
     private val closeAccountUseCase: CloseAccountUseCase,
 ) {
     suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> = catch {
-        creditCard.accountId?.let { accountRepository.getAccountById(it) }
+        requireNotNull(accountRepository.getAccountById(creditCard.accountId)) {
+            "Credit card ${creditCard.id} has no chart-of-accounts row"
+        }
     }.flatMap { account ->
-        // No ledger account means the card never moved money.
-        if (account == null) return@flatMap catch { creditCardRepository.delete(creditCard) }
-
         closeAccountUseCase(account).flatMap { outcome ->
             catch {
                 if (outcome == CloseAccountUseCase.Outcome.DELETED) {

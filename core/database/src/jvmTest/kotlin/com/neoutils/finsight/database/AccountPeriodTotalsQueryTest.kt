@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 /**
  * Validates the ledger aggregates that back the account screen (EntryDao
  * `accountPeriodTotals` and `entryCountInMonth`): income/expense/adjustment/
- * invoice-payment classified by an transaction's counter-legs, and the per-category
+ * invoice-payment classified by a transaction's counter-legs, and the per-category
  * entry count. Keep the SQL in sync with the DAO.
  */
 class AccountPeriodTotalsQueryTest {

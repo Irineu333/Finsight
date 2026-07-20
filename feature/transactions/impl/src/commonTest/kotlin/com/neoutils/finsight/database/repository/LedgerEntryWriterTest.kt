@@ -10,6 +10,7 @@ import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
+import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
@@ -113,6 +114,23 @@ class LedgerEntryWriterTest {
     }
 
     @Test
+    fun `given an archived category when written then the write is rejected`() = runTest {
+        // Closure is an account-level invariant: the category leg is a leg like any
+        // other, so editing an old transaction must not post to a closed category.
+        accountDao.accounts[10L] = AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL", isArchived = true)
+        categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
+        val expense = TransactionLeg(
+            type = TransactionType.EXPENSE,
+            amount = 50.0,
+            account = assetAccount(1),
+            category = Category(id = 1, name = "Food", icon = CategoryLazyIcon("food"), type = Category.Type.EXPENSE, createdAt = 0),
+        )
+
+        assertFailsWith<ClosedAccountException> { writer.writeEntries(transactionId = 1, legs = listOf(expense)) }
+        assertTrue(entryDao.inserted.isEmpty())
+    }
+
+    @Test
     fun `given an unbalanced multi-leg transaction when validated then it is rejected`() {
         val a = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
         val b = TransactionLeg(type = TransactionType.INCOME, amount = 80.0, account = assetAccount(2))
@@ -165,6 +183,9 @@ private class FakeAccountDao : AccountDao {
         accounts[id]?.let { accounts[id] = it.copy(isArchived = true) }
     }
     override suspend fun entryCount(accountId: Long): Int = 0
+    override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> =
+        accounts.values.filter { it.type == AccountEntity.Type.ASSET }
+
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = accounts.values.toList()
     override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(accounts.values.toList())
     override suspend fun insert(account: AccountEntity): Long {

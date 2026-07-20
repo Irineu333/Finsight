@@ -36,9 +36,18 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE type = 'ASSET' AND isClosed = 0 AND isDefault = 1 LIMIT 1")
     fun observeDefaultAccount(): Flow<AccountEntity?>
 
-    /** The whole chart of accounts, not just the user-facing ASSET facade. */
+    /**
+     * The whole chart of accounts — every type, closed included.
+     *
+     * Hydrating a ledger entry needs this, not the ASSET facade above: a card
+     * purchase has no asset leg at all, and an entry on an account missing from the
+     * map is silently dropped.
+     */
     @Query("SELECT * FROM accounts ORDER BY id ASC")
     suspend fun getAllLedgerAccounts(): List<AccountEntity>
+
+    @Query("SELECT * FROM accounts ORDER BY id ASC")
+    fun observeAllLedgerAccounts(): Flow<List<AccountEntity>>
 
     @Query("SELECT COUNT(*) FROM accounts WHERE type = 'ASSET' AND isClosed = 0")
     suspend fun getAccountCount(): Int

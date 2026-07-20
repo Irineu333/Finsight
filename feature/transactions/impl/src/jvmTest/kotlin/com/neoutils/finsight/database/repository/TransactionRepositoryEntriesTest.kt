@@ -136,9 +136,18 @@ internal object FakeInstallmentRepository : IInstallmentRepository {
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }
 
+/**
+ * Mirrors the real split: [getAllAccounts] is the user-facing facade and shows
+ * only open `ASSET` rows, exactly like `AccountDao`; the ledger reads see the
+ * whole chart. A fake returning everything from both would hide the very bug this
+ * distinction exists to prevent.
+ */
 internal class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
-    override suspend fun getAllAccounts(): List<Account> = accounts
-    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(accounts)
+    private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isClosed }
+    override suspend fun getAllAccounts(): List<Account> = facade
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(facade)
+    override suspend fun getAllLedgerAccounts(): List<Account> = accounts
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
     override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
     override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()

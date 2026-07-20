@@ -57,7 +57,9 @@ class TransactionRepository(
     private val creditCardsFlow = creditCardRepository.observeAllCreditCards().map { it.associateBy { card -> card.id } }
     private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
     private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
-    private val accountsFlow = accountRepository.observeAllAccounts().map { it.associateBy { account -> account.id } }
+    // The whole chart of accounts, not the ASSET facade: an entry whose account is
+    // missing from this map is dropped, and a card purchase has no asset leg.
+    private val accountsFlow = accountRepository.observeAllLedgerAccounts().map { it.associateBy { account -> account.id } }
 
     private val recurringFlow = flowCombine(
         recurringDao.observeAll(),
@@ -158,7 +160,7 @@ class TransactionRepository(
     private suspend fun lookups(): Lookups {
         val categories = categoryRepository.getAllCategories().associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
-        val accounts = accountRepository.getAllAccounts().associateBy { it.id }
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
         return Lookups(
             categories = categories,
             creditCards = creditCards,

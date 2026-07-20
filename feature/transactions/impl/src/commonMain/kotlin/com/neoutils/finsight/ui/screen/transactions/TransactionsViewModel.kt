@@ -48,7 +48,10 @@ class TransactionsViewModel(
 
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
-        categoryRepository.observeAllCategories(),
+        // The list shows the history of archived categories, so the filter must be
+        // able to narrow to one — including closed. This is a filter over existing
+        // data, not a selector for a new transaction (which stays open-only).
+        categoryRepository.observeAllCategoriesIncludingClosed(),
         selectedYearMonth,
         filters
     ) { transactions, categories, yearMonth, filters ->

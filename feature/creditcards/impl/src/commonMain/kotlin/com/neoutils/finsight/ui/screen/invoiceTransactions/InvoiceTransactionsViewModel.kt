@@ -98,6 +98,7 @@ class InvoiceTransactionsViewModel(
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
+            isArchived = creditCard.isArchived,
             retireAction = retireActionOf(entryRepository.hasEntries(creditCard.accountId)),
             invoices = invoices.map { invoice ->
                 val flows = flowsByInvoiceId.getValue(invoice.id)

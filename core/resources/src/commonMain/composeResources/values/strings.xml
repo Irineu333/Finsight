@@ -48,6 +48,8 @@
     <string name="ledger_error_closed_removal_account">Esta conta está arquivada. Apagar esta transação devolveria saldo a ela, e uma conta arquivada não pode ser acertada.</string>
     <string name="ledger_error_closed_removal_credit_card">Este cartão está arquivado. Apagar esta transação devolveria saldo a ele, e um cartão arquivado não pode ser acertado.</string>
     <string name="transaction_error_generic">Algo deu errado ao salvar a transação. Tente de novo em instantes.</string>
+    <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
+    <string name="ledger_action_error_generic">Algo deu errado. Tente de novo em instantes.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>

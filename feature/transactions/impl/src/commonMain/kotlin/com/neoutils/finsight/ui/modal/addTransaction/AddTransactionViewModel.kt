@@ -16,7 +16,6 @@ import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments

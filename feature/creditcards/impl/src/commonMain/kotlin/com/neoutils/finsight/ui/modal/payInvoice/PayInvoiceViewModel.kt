@@ -2,6 +2,10 @@ package com.neoutils.finsight.ui.modal.payInvoice
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
@@ -10,7 +14,10 @@ import com.neoutils.finsight.domain.analytics.event.PayInvoice
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.ledger_action_error_generic
 import com.neoutils.finsight.ui.component.ModalManager
+import com.neoutils.finsight.util.UiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -79,9 +86,17 @@ class PayInvoiceViewModel(
             )
         }.onLeft {
             crashlytics.recordException(it)
+            modalManager.showError(it.toUiMessage())
         }.onRight {
             analytics.logEvent(PayInvoice)
             modalManager.dismissAll()
         }
+    }
+
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is ClosedAccountException -> error.toUiText()
+        is InvoiceLockedException -> error.toUiText()
+        is UnbalancedTransactionException -> error.toUiText()
+        else -> UiText.Res(Res.string.ledger_action_error_generic)
     }
 }

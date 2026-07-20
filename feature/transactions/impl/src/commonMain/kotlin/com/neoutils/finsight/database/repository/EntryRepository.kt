@@ -2,7 +2,6 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.EntryWithAccount
-import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.domain.model.AccountType

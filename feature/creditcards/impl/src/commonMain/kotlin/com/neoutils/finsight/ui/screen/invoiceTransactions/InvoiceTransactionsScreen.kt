@@ -228,7 +228,9 @@ private fun InvoiceTransactionsContent(
                     onSelectInvoice = { index ->
                         onAction(InvoiceTransactionsAction.SelectInvoice(index))
                     },
-                    onEditInvoice = { invoice ->
+                    // No balance adjustment on an archived card: it would write to the
+                    // ledger and the writer refuses it anyway.
+                    onEditInvoice = if (uiState.isArchived) null else { invoice ->
                         modalManager.show(
                             EditInvoiceBalanceModal(
                                 initialInvoice = invoice
@@ -239,17 +241,20 @@ private fun InvoiceTransactionsContent(
                 )
             }
 
-            uiState.invoices.getOrNull(uiState.selectedInvoiceIndex)?.let { selectedInvoice ->
-                item(
-                    key = "invoice_actions"
-                ) {
-                    InvoiceActions(
-                        summary = selectedInvoice,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .fillMaxWidth()
-                            .animateContentSize()
-                    )
+            // An archived card takes no write action; the screen stays read-only history.
+            if (!uiState.isArchived) {
+                uiState.invoices.getOrNull(uiState.selectedInvoiceIndex)?.let { selectedInvoice ->
+                    item(
+                        key = "invoice_actions"
+                    ) {
+                        InvoiceActions(
+                            summary = selectedInvoice,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth()
+                                .animateContentSize()
+                        )
+                    }
                 }
             }
 
@@ -315,7 +320,7 @@ private fun InvoicePager(
     invoices: List<InvoiceTransactionsUiState.InvoiceSummary>,
     selectedIndex: Int,
     onSelectInvoice: (Int) -> Unit,
-    onEditInvoice: (invoice: Invoice) -> Unit,
+    onEditInvoice: ((invoice: Invoice) -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(

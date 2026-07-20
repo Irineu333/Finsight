@@ -5,8 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.AdjustAccountBalance
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.error.ClosedAccountException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.error.toUiText
+import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.ledger_action_error_generic
+import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
@@ -116,11 +123,26 @@ class EditAccountBalanceViewModel(
                 account = account,
             )
         }.onLeft {
-            crashlytics.recordException(it)
-            modalManager.dismiss()
+            when (it) {
+                // No change to make: the target equals the current balance. Nothing
+                // failed, so close quietly — not a false success, there was nothing.
+                is AccountNotAdjustedException -> modalManager.dismiss()
+                // A genuine refusal (e.g. the account was archived mid-flight) must
+                // say why and keep the sheet open, not close as if it worked.
+                else -> {
+                    crashlytics.recordException(it)
+                    modalManager.showError(it.toUiMessage())
+                }
+            }
         }.onRight {
             analytics.logEvent(AdjustAccountBalance)
             modalManager.dismiss()
         }
+    }
+
+    private fun Throwable.toUiMessage(): UiText = when (this) {
+        is ClosedAccountException -> error.toUiText()
+        is UnbalancedTransactionException -> error.toUiText()
+        else -> UiText.Res(Res.string.ledger_action_error_generic)
     }
 }

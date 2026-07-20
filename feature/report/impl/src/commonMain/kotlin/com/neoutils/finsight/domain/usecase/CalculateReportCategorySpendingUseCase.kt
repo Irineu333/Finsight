@@ -30,7 +30,9 @@ class CalculateReportCategorySpendingUseCase(
         // its asset accounts (all, when none selected) or the card's ledger account.
         val siblingAccountIds = when (perspective) {
             is ReportPerspective.AccountPerspective ->
-                perspective.accountIds.ifEmpty { accountRepository.getAllAccounts().map { it.id } }
+                // Include closed, mirroring the stats use case: the "all accounts"
+                // fallback must not silently drop an archived account's spending.
+                perspective.accountIds.ifEmpty { accountRepository.getAllAccountsIncludingClosed().map { it.id } }
             is ReportPerspective.CreditCardPerspective ->
                 listOfNotNull(creditCardRepository.getCreditCardById(perspective.creditCardId)?.accountId)
         }

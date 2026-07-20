@@ -75,7 +75,6 @@ import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.util.stringUiText
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth

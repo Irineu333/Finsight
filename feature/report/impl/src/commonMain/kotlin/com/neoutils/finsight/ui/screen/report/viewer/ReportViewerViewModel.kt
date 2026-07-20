@@ -6,7 +6,6 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType

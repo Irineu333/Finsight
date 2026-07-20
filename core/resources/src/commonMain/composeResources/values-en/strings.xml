@@ -12,6 +12,7 @@
     <string name="account_error_not_found">Account not found.</string>
     <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Archive it to preserve the history.</string>
     <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before archiving the account.</string>
+    <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or stop them before deleting.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -46,6 +47,8 @@
     <string name="ledger_error_closed_removal_account">This account is archived. Deleting this transaction would give it a balance back, and an archived account cannot be settled.</string>
     <string name="ledger_error_closed_removal_credit_card">This card is archived. Deleting this transaction would give it a balance back, and an archived card cannot be settled.</string>
     <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
+    <!-- Neutral fallback for ledger operations (save/adjust/pay/delete) when no typed reason applies. -->
+    <string name="ledger_action_error_generic">Something went wrong. Try again in a moment.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>
@@ -630,6 +633,7 @@
     <!-- Recurring status -->
     <string name="recurring_status_active">Active</string>
     <string name="recurring_status_inactive">Inactive</string>
+    <string name="recurring_status_needs_source">Needs attention</string>
 
     <!-- View Recurring Modal -->
     <string name="view_recurring_type_label">Type</string>

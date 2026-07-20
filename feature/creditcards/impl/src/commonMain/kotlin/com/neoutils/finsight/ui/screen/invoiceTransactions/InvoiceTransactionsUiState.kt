@@ -15,6 +15,11 @@ import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
+    // An archived card is read-only history: this screen still shows its invoices and
+    // transactions, but offers no write action (close/pay/advance/adjust). Deciding
+    // whether to offer the action is the screen's job; the ledger already refuses the
+    // ones that would write, and closing an invoice — which does not — is refused here.
+    val isArchived: Boolean = false,
     // Which retire action this screen may offer for the card — the same rule the
     // cards screen uses, so the two cannot drift.
     val retireAction: RetireAction = RetireAction.DELETE,

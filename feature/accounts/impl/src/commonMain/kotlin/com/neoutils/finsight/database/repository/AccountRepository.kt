@@ -22,6 +22,12 @@ class AccountRepository(
         return dao.getAllAccounts().map { mapper.toDomain(it) }
     }
 
+    override suspend fun getAllLedgerAccounts(): List<Account> =
+        dao.getAllLedgerAccounts().map { mapper.toDomain(it) }
+
+    override fun observeAllLedgerAccounts(): Flow<List<Account>> =
+        dao.observeAllLedgerAccounts().map { entities -> entities.map { mapper.toDomain(it) } }
+
     override suspend fun getAccountById(accountId: Long): Account? {
         return dao.getAccountById(accountId)?.let { mapper.toDomain(it) }
     }

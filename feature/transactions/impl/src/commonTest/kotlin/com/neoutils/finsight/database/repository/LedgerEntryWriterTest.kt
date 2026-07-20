@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -161,6 +162,7 @@ private class FakeAccountDao : AccountDao {
     }
     override suspend fun entryCount(accountId: Long): Int = 0
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = accounts.values.toList()
+    override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(accounts.values.toList())
     override suspend fun insert(account: AccountEntity): Long {
         val id = seq++
         accounts[id] = account.copy(id = id)

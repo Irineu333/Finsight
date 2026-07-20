@@ -348,18 +348,27 @@ class ViewTransactionModal(
                 .padding(horizontal = 24.dp)
                 .padding(top = 16.dp, bottom = 24.dp)
         ) {
-            content.invoice?.let { invoice ->
-                if (invoice.status.isEditable) {
-                    EditAndDelete(content)
-                } else {
-                    Text(
-                        text = stringResource(Res.string.view_transaction_closed_invoice_message),
-                        fontSize = 14.sp,
-                        color = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            } ?: run {
+            val lockedMessage = when {
+                // A closed invoice locks both actions; its message wins because it is
+                // the more specific reason (the transaction may also sit on an
+                // archived card, but the invoice is what the user acts on).
+                content.invoice?.status?.isEditable == false ->
+                    Res.string.view_transaction_closed_invoice_message
+                // Frozen by an archived account or card: both edit and delete are
+                // hidden, so without this the actions area would be blank.
+                !content.isChangeable ->
+                    Res.string.view_transaction_archived_message
+                else -> null
+            }
+
+            if (lockedMessage != null) {
+                Text(
+                    text = stringResource(lockedMessage),
+                    fontSize = 14.sp,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
                 EditAndDelete(content)
             }
         }

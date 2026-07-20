@@ -63,7 +63,7 @@ sealed interface ViewTransactionUiState {
          * Declared before the two gates below: property initializers run in
          * declaration order, so reading it from above would read `false`.
          */
-        private val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
+        val isChangeable: Boolean = transaction.entries.closedLegBlockingChange() == null
 
         /**
          * Derived edit gate, gate by gate (design D2): not an adjustment, exactly

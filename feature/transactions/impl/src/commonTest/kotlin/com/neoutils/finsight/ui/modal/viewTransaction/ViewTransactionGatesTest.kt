@@ -23,9 +23,11 @@ class ViewTransactionGatesTest {
 
     private val date = LocalDate(2026, 1, 1)
 
-    private fun account(type: AccountType) = Account(name = type.name, type = type)
+    private fun account(type: AccountType, isArchived: Boolean = false) =
+        Account(name = type.name, type = type, isArchived = isArchived)
 
-    private fun entry(type: AccountType, amount: Long) = Entry(account = account(type), amount = amount)
+    private fun entry(type: AccountType, amount: Long, isArchived: Boolean = false) =
+        Entry(account = account(type, isArchived), amount = amount)
 
     private fun content(
         entries: List<Entry>,
@@ -82,6 +84,39 @@ class ViewTransactionGatesTest {
         )
         assertEquals(TransactionLabel.PAYMENT, content.label)
         assertFalse(content.isEditable)
+    }
+
+    @Test
+    fun expenseInArchivedAccountIsFrozen_changeGate() {
+        // A monetary leg on an archived account freezes both actions: editing or
+        // deleting would reopen a balance the archive required to be zero.
+        val content = content(
+            entries = listOf(entry(AccountType.ASSET, -10_000, isArchived = true), entry(AccountType.EXPENSE, 10_000)),
+        )
+        assertFalse(content.isChangeable)
+        assertFalse(content.isEditable)
+        assertFalse(content.isRemovable)
+    }
+
+    @Test
+    fun purchaseOnArchivedCardIsFrozen_changeGate() {
+        val content = content(
+            entries = listOf(entry(AccountType.LIABILITY, -10_000, isArchived = true), entry(AccountType.EXPENSE, 10_000)),
+        )
+        assertFalse(content.isChangeable)
+        assertFalse(content.isRemovable)
+    }
+
+    @Test
+    fun expenseInArchivedCategoryStaysChangeable() {
+        // A category is not monetary — archiving one strands nothing — so it freezes
+        // neither action. Only the account/card facades gate here.
+        val content = content(
+            entries = listOf(entry(AccountType.ASSET, -10_000), entry(AccountType.EXPENSE, 10_000, isArchived = true)),
+        )
+        assertTrue(content.isChangeable)
+        assertTrue(content.isEditable)
+        assertTrue(content.isRemovable)
     }
 
     @Test

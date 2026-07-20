@@ -442,6 +442,7 @@
     <string name="view_transaction_installment_label">Installment</string>
     <string name="view_transaction_recurring_label">Recurring</string>
     <string name="view_transaction_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
+    <string name="view_transaction_archived_message">This transaction belongs to an archived account or card and cannot be edited or deleted.</string>
     <string name="view_transaction_delete">Delete</string>
     <string name="view_transaction_edit">Edit</string>
 

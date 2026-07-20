@@ -444,6 +444,7 @@
     <string name="view_transaction_installment_label">Parcela</string>
     <string name="view_transaction_recurring_label">Recorrência</string>
     <string name="view_transaction_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
+    <string name="view_transaction_archived_message">Esta transação pertence a uma conta ou cartão arquivado e não pode ser editada ou excluída.</string>
     <string name="view_transaction_delete">Excluir</string>
     <string name="view_transaction_edit">Editar</string>
 

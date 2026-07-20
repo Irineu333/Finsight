@@ -92,6 +92,8 @@ class CalculateCategorySpendingUseCaseImplTest {
 
 private class FakeCategoryRepository(private val categories: List<Category>) : ICategoryRepository {
     override suspend fun getAllCategories(): List<Category> = categories
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = categories.firstOrNull { it.id == id }

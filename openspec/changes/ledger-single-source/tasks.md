@@ -257,6 +257,18 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
+- [x] 8.13 **Alinhar a UI ao encerramento (pedido do usuário, escopo acrescentado à change).** A 8.12 registrou a lacuna e a deixou aberta; o usuário decidiu fechá-la aqui. Três itens, e o terceiro revelou um bug.
+
+  - **Botões dizem o que fazem.** `CloseAccountUseCase.outcomeFor(account)` expõe o que o `invoke` faria, sem fazer — a tela **nomeia** a ação em vez de redecidir qual é (regra de derivação). Conta e cartão com movimentação mostram "Encerrar", com mensagem que explica o histórico preservado e, quando há saldo, o lançamento de baixa; sem movimentação seguem "Excluir".
+  - **Atalhos somem para o que foi encerrado.** Nos dois modais de detalhe (`ViewTransactionModal` e `ViewAdjustmentModal`, que já divergiam entre si), a linha de conta e a de cartão deixam de navegar quando a entidade está encerrada — a tela de destino não a lista mais.
+  - **Cartão encerrado passa a exibir o nome, não "Excluído"** — e aqui estava o bug: `TransactionRepository` resolvia categorias e cartões pelas **fachadas**, que a 6b.5 passou a filtrar por `isClosed`. Um cartão ou categoria encerrado resolvia para `null`, e a UI mostrava "Excluído" para algo que não foi excluído. **É a mesma classe do bug da 8.10** (hidratação pela fachada em vez do plano de contas), em outros dois pontos que eu não varri na ocasião. Corrigido com `getAll*IncludingClosed()`/`observeAll*IncludingClosed()`: a fachada continua servindo os seletores, e o caminho que renderiza histórico vê tudo. `Category`/`CreditCard` ganham `isClosed`, espelhando `Account`. As strings `view_*_deleted` ficaram órfãs e saíram.
+
+  ⚠️ **Registro de um erro de método:** a 8.10 afirma ter corrigido "a hidratação". Corrigiu a de **contas** — e eu não verifiquei se categorias e cartões tinham o mesmo problema, embora tivessem, pela mesma causa. Terceira ocorrência do mesmo padrão nesta change: corrigir a instância e não varrer a classe.
+
+  ⚠️ **Também registrado:** o teste de regressão da 8.10 (`a card purchase hydrates…`) **nunca entrou no commit** — o script que o inseriu usou `replace` sem asserção e falhou em silêncio, e eu relatei o teste como existente. A cobertura real vinha do dublê corrigido, que fez o teste pré-existente pegar o caso. Teste recolocado aqui, mais um para conta encerrada.
+
+  **Continua aberto:** não há como **reabrir** uma conta encerrada, nem lista de encerradas. A 8.12 já registrava; este trabalho não fecha.
+
 ## 9. Cobertura do raio legado — varredura mecânica
 
 > **Origem:** cruzamento mecânico de `grep -rl "signedCents|Transaction.Type|Transaction.Target|Operation.Kind|ITransactionRepository|domain.model.Transaction"` (produção, sem `/build/`) contra os nomes citados neste arquivo. Resultado da 1ª execução: **87 arquivos tocam o legado; 44 não eram nomeados por task alguma (51%)**. Seis rodadas de auditoria não pegaram isto — todas revisaram o texto escrito, não o território omitido.

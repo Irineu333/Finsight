@@ -119,6 +119,8 @@ val creditCardsModule = module {
         DeleteCreditCardViewModel(
             creditCard = it.get(),
             deleteCreditCardUseCase = get(),
+            closeAccountUseCase = get(),
+            accountRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

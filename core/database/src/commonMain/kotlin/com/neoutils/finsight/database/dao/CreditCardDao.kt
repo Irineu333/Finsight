@@ -13,8 +13,18 @@ private const val OPEN_CREDIT_CARDS =
     "SELECT cc.* FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId " +
         "WHERE a.isClosed = 0"
 
+// Same as categories: history keeps rendering a card that was later closed.
+private const val ALL_CREDIT_CARDS =
+    "SELECT cc.*, a.isClosed AS isClosed FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId"
+
 @Dao
 interface CreditCardDao {
+    @Query(ALL_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
+    suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithClosure>
+
+    @Query(ALL_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
+    fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithClosure>>
+
     @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     fun observeAllCreditCards(): Flow<List<CreditCardEntity>>
 

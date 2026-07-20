@@ -29,6 +29,12 @@ class CategoryRepository(
         return dao.getAllCategories().map { mapper.toDomain(it) }
     }
 
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> =
+        dao.getAllCategoriesIncludingClosed().map { mapper.toDomain(it) }
+
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> =
+        dao.observeAllCategoriesIncludingClosed().map { rows -> rows.map { mapper.toDomain(it) } }
+
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> {
         return dao.observeCategoriesByType(
             mapper.toEntity(type)

@@ -116,6 +116,8 @@ private class FakeCategoryRepository : ICategoryRepository {
     override fun observeAllCategories(): Flow<List<Category>> = MutableStateFlow(emptyList())
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
     override suspend fun insert(category: Category) = throw NotImplementedError()

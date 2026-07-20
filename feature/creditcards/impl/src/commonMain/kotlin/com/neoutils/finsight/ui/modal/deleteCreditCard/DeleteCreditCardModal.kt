@@ -15,6 +15,12 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.resources.Res
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
+import com.neoutils.finsight.resources.close_account_confirm
+import com.neoutils.finsight.resources.close_credit_card_message
+import com.neoutils.finsight.resources.close_credit_card_title
 import com.neoutils.finsight.resources.delete_credit_card_confirm
 import com.neoutils.finsight.resources.delete_credit_card_message
 import com.neoutils.finsight.resources.delete_credit_card_title
@@ -30,6 +36,10 @@ class DeleteCreditCardModal(
     override fun ColumnScope.BottomSheetContent() {
 
         val viewModel = koinViewModel<DeleteCreditCardViewModel> { parametersOf(creditCard) }
+        val outcome by viewModel.outcome.collectAsState()
+
+        // A card with movement is closed, not removed — same rule as an account.
+        val willClose = outcome != null && outcome != CloseAccountUseCase.Outcome.DELETED
 
         Column(
             modifier = Modifier
@@ -38,7 +48,9 @@ class DeleteCreditCardModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = stringResource(Res.string.delete_credit_card_title),
+                text = stringResource(
+                    if (willClose) Res.string.close_credit_card_title else Res.string.delete_credit_card_title
+                ),
                 style = MaterialTheme.typography.headlineSmall,
                 color = colorScheme.onSurface
             )
@@ -46,7 +58,11 @@ class DeleteCreditCardModal(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(Res.string.delete_credit_card_message, creditCard.name),
+                text = if (willClose) {
+                    stringResource(Res.string.close_credit_card_message)
+                } else {
+                    stringResource(Res.string.delete_credit_card_message, creditCard.name)
+                },
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant
             )
@@ -64,7 +80,9 @@ class DeleteCreditCardModal(
                 )
             ) {
                 Text(
-                    text = stringResource(Res.string.delete_credit_card_confirm),
+                    text = stringResource(
+                        if (willClose) Res.string.close_account_confirm else Res.string.delete_credit_card_confirm
+                    ),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

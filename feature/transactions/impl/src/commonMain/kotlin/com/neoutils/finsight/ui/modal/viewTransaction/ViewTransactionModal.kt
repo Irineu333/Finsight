@@ -225,9 +225,13 @@ class ViewTransactionModal(
                         label = stringResource(Res.string.view_transaction_source_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            detailController.dismiss()
-                            navController.navigate(AccountsRoute(account.id))
+                        // A closed account keeps its name in history but is gone from
+                        // the accounts screen, so there is nowhere to send the user.
+                        onClick = if (account.isClosed) null else {
+                            {
+                                detailController.dismiss()
+                                navController.navigate(AccountsRoute(account.id))
+                            }
                         }
                     )
                 }
@@ -237,9 +241,13 @@ class ViewTransactionModal(
                         label = stringResource(Res.string.view_transaction_destination_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            detailController.dismiss()
-                            navController.navigate(AccountsRoute(account.id))
+                        // A closed account keeps its name in history but is gone from
+                        // the accounts screen, so there is nowhere to send the user.
+                        onClick = if (account.isClosed) null else {
+                            {
+                                detailController.dismiss()
+                                navController.navigate(AccountsRoute(account.id))
+                            }
                         }
                     )
                 }
@@ -251,36 +259,32 @@ class ViewTransactionModal(
                         label = stringResource(Res.string.view_transaction_account_label),
                         value = account.name,
                         modifier = Modifier.padding(top = 8.dp),
-                        onClick = {
-                            detailController.dismiss()
-                            navController.navigate(AccountsRoute(account.id))
+                        // A closed account keeps its name in history but is gone from
+                        // the accounts screen, so there is nowhere to send the user.
+                        onClick = if (account.isClosed) null else {
+                            {
+                                detailController.dismiss()
+                                navController.navigate(AccountsRoute(account.id))
+                            }
                         }
                     )
                 }
             }
 
-            val deletedLabel = stringResource(Res.string.view_transaction_deleted)
+            // A closed card still resolves, so history shows its name — same as an
+            // account. Only the shortcut goes, since the cards screen no longer lists it.
             uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_card_label),
                     value = creditCard.name,
                     modifier = Modifier.padding(top = 8.dp),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(
-                            CreditCardsRoute(creditCard.id)
-                        )
+                    onClick = if (creditCard.isClosed) null else {
+                        {
+                            detailController.dismiss()
+                            navController.navigate(CreditCardsRoute(creditCard.id))
+                        }
                     }
                 )
-            } ?: run {
-                if (uiState.isCardTarget) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_transaction_card_label),
-                        value = deletedLabel,
-                        valueColor = colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
             }
 
             uiState.invoice?.let { invoice ->

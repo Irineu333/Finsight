@@ -18,6 +18,8 @@ data class CreditCard(
     // The chart-of-accounts LIABILITY row this card projects onto.
     // Assigned by the store on insert, exactly like [id].
     val accountId: Long = 0,
+    // Mirrors the closure of its ledger account (D21).
+    val isClosed: Boolean = false,
 ) {
     init {
         if (name.isBlank()) {

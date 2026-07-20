@@ -328,6 +328,12 @@
     <string name="delete_transaction_confirm">Excluir</string>
 
     <string name="delete_account_title">Excluir Conta</string>
+    <string name="close_account_title">Encerrar Conta</string>
+    <string name="close_account_confirm">Encerrar</string>
+    <string name="close_account_message">Esta conta tem movimentação, então ela é encerrada em vez de excluída: o histórico é preservado e ela deixa de aparecer nas listas.</string>
+    <string name="close_account_message_with_balance">Esta conta tem movimentação e saldo diferente de zero. Ela é encerrada em vez de excluída: o histórico é preservado, ela deixa de aparecer nas listas, e um lançamento de baixa registra o saldo restante.</string>
+    <string name="close_credit_card_title">Encerrar Cartão</string>
+    <string name="close_credit_card_message">Este cartão tem movimentação, então ele é encerrado em vez de excluído: as faturas e transações são preservadas e ele deixa de aparecer nas listas.</string>
     <string name="delete_account_message">Tem certeza que deseja excluir esta conta? Se ela já tiver movimentação, o histórico é preservado e a conta apenas deixa de aparecer nas listas. Nenhuma transação é excluída.</string>
     <string name="delete_account_confirm">Excluir</string>
 
@@ -425,7 +431,6 @@
     <string name="view_transaction_invoice_label">Fatura</string>
     <string name="view_transaction_installment_label">Parcela</string>
     <string name="view_transaction_recurring_label">Recorrência</string>
-    <string name="view_transaction_deleted">Excluído</string>
     <string name="view_transaction_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
     <string name="view_transaction_delete">Excluir</string>
     <string name="view_transaction_edit">Editar</string>
@@ -440,7 +445,6 @@
     <string name="view_adjustment_account_label">Conta</string>
     <string name="view_adjustment_card_label">Cartão</string>
     <string name="view_adjustment_credit_card_label">Cartão de Crédito</string>
-    <string name="view_adjustment_deleted">Excluído</string>
     <string name="view_adjustment_delete_label">Excluir Ajuste</string>
 
     <!-- View Category Modal -->

@@ -107,6 +107,7 @@ val accountsModule = module {
         DeleteAccountViewModel(
             account = it.get(),
             deleteAccountUseCase = get(),
+            closeAccountUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

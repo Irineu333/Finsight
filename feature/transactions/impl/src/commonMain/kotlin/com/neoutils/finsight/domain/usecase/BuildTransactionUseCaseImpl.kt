@@ -9,7 +9,9 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.exception.BuildTransactionException
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.DateFormats
@@ -28,9 +30,7 @@ class BuildTransactionUseCaseImpl(
 
     override suspend operator fun invoke(
         form: TransactionForm,
-        id: Long,
-        operationId: Long?,
-    ): Either<Throwable, Transaction> = either {
+    ): Either<Throwable, OperationIntent> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)
         }
@@ -59,21 +59,22 @@ class BuildTransactionUseCaseImpl(
                 BuildTransactionException(BuildTransactionError.AccountRequired)
             }
 
-            return@either Transaction(
-                id = id,
-                operationId = operationId,
-                type = form.type,
-                amount = form.amount.moneyToDouble(),
+            return@either OperationIntent(
                 title = form.title,
                 date = date,
                 category = form.category,
-                account = form.account,
-                creditCard = null,
-                invoice = null,
+                legs = listOf(
+                    OperationLeg(
+                        type = form.type,
+                        amount = form.amount.moneyToDouble(),
+                        account = form.account,
+                        category = form.category,
+                    )
+                ),
             )
         }
 
-        ensure(form.type == Transaction.Type.EXPENSE) {
+        ensure(form.type == TransactionType.EXPENSE) {
             BuildTransactionException(BuildTransactionError.CreditCardExpenseOnly)
         }
 
@@ -95,16 +96,19 @@ class BuildTransactionUseCaseImpl(
             BuildTransactionException(BuildTransactionError.ClosedInvoice)
         }
 
-        Transaction(
-            id = id,
-            operationId = operationId,
-            type = form.type,
-            amount = form.amount.moneyToDouble(),
+        OperationIntent(
             title = form.title,
             date = date,
             category = form.category,
-            creditCard = form.creditCard,
-            invoice = invoice,
+            legs = listOf(
+                OperationLeg(
+                    type = form.type,
+                    amount = form.amount.moneyToDouble(),
+                    creditCard = form.creditCard,
+                    invoice = invoice,
+                    category = form.category,
+                )
+            ),
         )
     }
 }

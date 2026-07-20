@@ -69,8 +69,8 @@ interface EntryDao {
     @Delete
     suspend fun delete(entry: EntryEntity)
 
-    @Query("DELETE FROM entries WHERE operationId = :operationId")
-    suspend fun deleteByOperationId(operationId: Long)
+    @Query("DELETE FROM entries WHERE transactionId = :transactionId")
+    suspend fun deleteByOperationId(transactionId: Long)
 
     @Query("SELECT * FROM entries ORDER BY id ASC")
     suspend fun getAll(): List<EntryEntity>
@@ -78,18 +78,18 @@ interface EntryDao {
     @Query("SELECT * FROM entries ORDER BY id ASC")
     fun observeAll(): Flow<List<EntryEntity>>
 
-    @Query("SELECT * FROM entries WHERE operationId = :operationId ORDER BY id ASC")
-    suspend fun getByOperationId(operationId: Long): List<EntryEntity>
+    @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
+    suspend fun getByOperationId(transactionId: Long): List<EntryEntity>
 
     /** Entries of an operation, each hydrated with its account — a complete leg. */
     @Transaction
-    @Query("SELECT * FROM entries WHERE operationId = :operationId ORDER BY id ASC")
-    suspend fun getEntriesWithAccountByOperationId(operationId: Long): List<EntryWithAccount>
+    @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
+    suspend fun getEntriesWithAccountByOperationId(transactionId: Long): List<EntryWithAccount>
 
     /** Observes the entries of an operation, each hydrated with its account. */
     @Transaction
-    @Query("SELECT * FROM entries WHERE operationId = :operationId ORDER BY id ASC")
-    fun observeEntriesWithAccountByOperationId(operationId: Long): Flow<List<EntryWithAccount>>
+    @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
+    fun observeEntriesWithAccountByOperationId(transactionId: Long): Flow<List<EntryWithAccount>>
 
     @Query("SELECT * FROM entries WHERE accountId = :accountId ORDER BY id ASC")
     fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>>
@@ -106,7 +106,7 @@ interface EntryDao {
     /** Natural balance of an account up to and including the given month (yyyy-MM). */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
-            "JOIN operations o ON o.id = e.operationId " +
+            "JOIN transactions o ON o.id = e.transactionId " +
             "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) <= :yearMonth"
     )
     suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long
@@ -114,7 +114,7 @@ interface EntryDao {
     /** Combined natural balance of every ASSET account up to and including the month. */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
-            "JOIN operations o ON o.id = e.operationId " +
+            "JOIN transactions o ON o.id = e.transactionId " +
             "JOIN accounts a ON a.id = e.accountId " +
             "WHERE a.type = 'ASSET' AND substr(o.date, 1, 7) <= :yearMonth"
     )
@@ -123,7 +123,7 @@ interface EntryDao {
     /** Natural balance of an account within a single month (yyyy-MM) — used for category spending. */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
-            "JOIN operations o ON o.id = e.operationId " +
+            "JOIN transactions o ON o.id = e.transactionId " +
             "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth"
     )
     suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long
@@ -145,10 +145,10 @@ interface EntryDao {
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 1 THEN -amount ELSE 0 END), 0) AS invoicePayment
         FROM (
           SELECT e.amount AS amount,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.operationId = e.operationId AND a.type = 'EQUITY') AS eq,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.operationId = e.operationId AND a.type = 'LIABILITY') AS li
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'LIABILITY') AS li
           FROM entries e
-          JOIN operations o ON o.id = e.operationId
+          JOIN transactions o ON o.id = e.transactionId
           WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth
         )
         """
@@ -170,7 +170,7 @@ interface EntryDao {
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
           SELECT e.amount AS amount,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.operationId = e.operationId AND a.type = 'EQUITY') AS eq
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
           FROM entries e
           WHERE e.invoiceId = :invoiceId
         )
@@ -189,10 +189,10 @@ interface EntryDao {
           COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment
         FROM (
           SELECT e.amount AS amount,
-            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.operationId = e.operationId AND a2.type = 'EQUITY') AS eq
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq
           FROM entries e
           JOIN accounts a ON a.id = e.accountId
-          JOIN operations o ON o.id = e.operationId
+          JOIN transactions o ON o.id = e.transactionId
           WHERE a.type = 'LIABILITY' AND substr(o.date, 1, 7) = :yearMonth
         )
         """
@@ -202,7 +202,7 @@ interface EntryDao {
     /** Number of entries on a category (chart) account within a month (yyyy-MM). */
     @Query(
         "SELECT COUNT(*) FROM entries e " +
-            "JOIN operations o ON o.id = e.operationId " +
+            "JOIN transactions o ON o.id = e.transactionId " +
             "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth"
     )
     suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int
@@ -225,10 +225,10 @@ interface EntryDao {
         """
         SELECT e.accountId AS accountId, COALESCE(SUM(e.amount), 0) AS total
         FROM entries e
-        JOIN operations o ON o.id = e.operationId
+        JOIN transactions o ON o.id = e.transactionId
         JOIN accounts a ON a.id = e.accountId
         WHERE a.type = :categoryType AND o.date BETWEEN :start AND :end
-          AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId = o.id AND s.accountId IN (:siblingAccountIds))
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = o.id AND s.accountId IN (:siblingAccountIds))
         GROUP BY e.accountId
         """
     )
@@ -249,7 +249,7 @@ interface EntryDao {
         FROM entries e
         JOIN accounts a ON a.id = e.accountId
         WHERE a.type = :categoryType
-          AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId = e.operationId AND s.invoiceId IN (:invoiceIds))
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.invoiceId IN (:invoiceIds))
         GROUP BY e.accountId
         """
     )

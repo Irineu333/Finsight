@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.model
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -20,7 +21,7 @@ class TransactionPerspectiveTest {
     private val date = LocalDate(2026, 1, 1)
 
     private fun leg(account: Account) = Transaction(
-        type = Transaction.Type.EXPENSE,
+        type = TransactionType.EXPENSE,
         amount = 100.0,
         title = null,
         date = date,

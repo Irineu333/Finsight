@@ -12,7 +12,6 @@ import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
-import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
@@ -24,7 +23,6 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.entity.InstallmentEntity
-import com.neoutils.finsight.database.entity.OperationEntity
 import com.neoutils.finsight.database.entity.RecurringEntity
 import com.neoutils.finsight.database.entity.RecurringOccurrenceEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
@@ -37,14 +35,13 @@ import com.neoutils.finsight.database.entity.TransactionEntity
         InvoiceEntity::class,
         AccountEntity::class,
         InstallmentEntity::class,
-        OperationEntity::class,
         BudgetEntity::class,
         BudgetCategoryEntity::class,
         RecurringEntity::class,
         RecurringOccurrenceEntity::class,
         EntryEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -56,7 +53,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun invoiceDao(): InvoiceDao
     abstract fun accountDao(): AccountDao
     abstract fun installmentDao(): InstallmentDao
-    abstract fun operationDao(): OperationDao
     abstract fun budgetDao(): BudgetDao
     abstract fun recurringDao(): RecurringDao
     abstract fun recurringOccurrenceDao(): RecurringOccurrenceDao

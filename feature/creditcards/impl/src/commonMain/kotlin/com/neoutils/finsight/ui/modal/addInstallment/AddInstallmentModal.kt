@@ -26,7 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.resources.*
@@ -78,12 +79,12 @@ class AddInstallmentModal : ModalBottomSheet() {
         val form by remember {
             derivedStateOf {
                 TransactionForm.from(
-                    type = Transaction.Type.EXPENSE,
+                    type = TransactionType.EXPENSE,
                     amount = amount.text.toString(),
                     title = title.text.toString(),
                     date = date.text.toString(),
                     category = selectedCategory,
-                    target = Transaction.Target.CREDIT_CARD,
+                    target = TransactionTarget.CREDIT_CARD,
                     creditCard = uiState.selectedCreditCard,
                     invoiceDueMonth = uiState.invoiceSelection?.dueMonth,
                     account = null,

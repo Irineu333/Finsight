@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.modal
 
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +54,7 @@ class FakeOperationRepository : IOperationRepository {
 fun operation(
     id: Long = 1L,
     amount: Double = 100.0,
-    type: Transaction.Type = Transaction.Type.EXPENSE,
+    type: TransactionType = TransactionType.EXPENSE,
 ): Operation = Operation(
     id = id,
     title = "Op $id",

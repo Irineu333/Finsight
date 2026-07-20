@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.util.UiText
 import kotlin.time.ExperimentalTime
 import kotlinx.datetime.LocalDate
@@ -18,7 +18,7 @@ data class InvoiceTransactionsUiState(
     val operations: Map<LocalDate, List<Operation>> = emptyMap(),
     val categories: List<Category> = emptyList(),
     val selectedCategory: Category? = null,
-    val selectedType: Transaction.Type? = null,
+    val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
 ) {

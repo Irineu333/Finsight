@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ViewOperationViewModel(
-    operationId: Long,
+    transactionId: Long,
     private val perspective: TransactionPerspective? = null,
     operationRepository: IOperationRepository,
     private val crashlytics: Crashlytics,
@@ -24,9 +24,9 @@ class ViewOperationViewModel(
     private val _events = Channel<ViewOperationEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    val uiState = operationRepository.observeOperationById(operationId)
+    val uiState = operationRepository.observeOperationById(transactionId)
         .interceptAbsence(
-            onMissing = { crashlytics.recordException(DetailNotFoundException("Operation", operationId)) },
+            onMissing = { crashlytics.recordException(DetailNotFoundException("Operation", transactionId)) },
             onDisappeared = { _events.send(ViewOperationEvent.Dismiss) },
         )
         .map { operation ->

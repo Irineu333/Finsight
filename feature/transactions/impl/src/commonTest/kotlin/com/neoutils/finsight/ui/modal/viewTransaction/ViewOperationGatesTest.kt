@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.OperationInstallment
 import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -31,7 +32,7 @@ class ViewOperationGatesTest {
     private fun entry(type: AccountType, amount: Long) = Entry(account = account(type), amount = amount)
 
     private val accountLeg = Transaction(
-        type = Transaction.Type.EXPENSE,
+        type = TransactionType.EXPENSE,
         amount = 100.0,
         title = null,
         date = date,
@@ -39,7 +40,7 @@ class ViewOperationGatesTest {
     )
 
     private val cardLeg = Transaction(
-        type = Transaction.Type.EXPENSE,
+        type = TransactionType.EXPENSE,
         amount = 100.0,
         title = null,
         date = date,

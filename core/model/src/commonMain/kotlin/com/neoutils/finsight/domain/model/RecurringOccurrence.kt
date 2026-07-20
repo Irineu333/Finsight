@@ -9,7 +9,7 @@ data class RecurringOccurrence(
     val cycleNumber: Int,
     val yearMonth: YearMonth,
     val status: Status,
-    val operationId: Long? = null,
+    val transactionId: Long? = null,
     val effectiveDate: LocalDate,
     val handledAt: Long,
 ) {

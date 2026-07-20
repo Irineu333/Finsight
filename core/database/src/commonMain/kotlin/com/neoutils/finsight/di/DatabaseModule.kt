@@ -8,7 +8,6 @@ import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.dao.InvoiceDao
 import com.neoutils.finsight.database.dao.InstallmentDao
-import com.neoutils.finsight.database.dao.OperationDao
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
@@ -21,7 +20,6 @@ val databaseModule = module {
 
     single<AppDatabase> { getRoomDatabase(builder = get()) }
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
-    single<OperationDao> { get<AppDatabase>().operationDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single<CreditCardDao> { get<AppDatabase>().creditCardDao() }
     single<InvoiceDao> { get<AppDatabase>().invoiceDao() }

@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class ReportViewerViewModel(
     private val params: ReportViewerParams,
@@ -75,29 +79,31 @@ class ReportViewerViewModel(
         invoicesFlow,
     ) { operations, accounts, creditCards, invoices ->
         val invoiceIds = invoices.map { it.id }.toSet()
-        val invoiceTransactions = operations
-            .flatMap { it.transactions }
-            .filter { it.invoice?.id in invoiceIds && it.target == Transaction.Target.CREDIT_CARD }
 
         val stats = if (invoices.isNotEmpty()) {
-            val expense = invoiceTransactions
-                .filter { it.type == Transaction.Type.EXPENSE }
-                .sumOf { it.amount }
-            val advancePayment = invoiceTransactions
-                .filter { it.type == Transaction.Type.INCOME && it.isInvoicePayment }
-                .sumOf { it.amount }
-            val adjustment = invoiceTransactions
-                .filter { it.type == Transaction.Type.ADJUSTMENT }
-                .sumOf { it.amount }
-            val total = invoices.sumOf { entryRepository.invoiceOwed(it.id) }
+            val invoiceLegs = operations.flatMap { operation ->
+                operation.entries
+                    .filter { it.invoiceId in invoiceIds && it.account.type == AccountType.LIABILITY }
+                    .map { entry ->
+                        InvoiceLeg(
+                            label = operation.label,
+                            direction = deriveTransactionType(entry.amount, operation.entries),
+                            cents = abs(entry.amount),
+                        )
+                    }
+            }
+            fun sum(predicate: (InvoiceLeg) -> Boolean) =
+                invoiceLegs.filter(predicate).sumOf { it.cents } / 100.0
 
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
-                expense = expense,
-                advancePayment = advancePayment,
-                adjustment = adjustment,
-                total = total,
+                expense = sum { it.direction.isExpense },
+                // Money into the card settles it only when the counter-leg is an asset,
+                // which is exactly what the ledger already labels a PAYMENT.
+                advancePayment = sum { it.direction.isIncome && it.label == OperationLabel.PAYMENT },
+                adjustment = sum { it.direction.isAdjustment },
+                total = invoices.sumOf { entryRepository.invoiceOwed(it.id) },
             )
         } else {
             val scope = when (perspective) {
@@ -142,13 +148,13 @@ class ReportViewerViewModel(
             !params.includeSpendingByCategory -> null
             invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
                 invoiceIds = invoiceIds.toList(),
-                transactionType = Transaction.Type.EXPENSE,
+                transactionType = TransactionType.EXPENSE,
             )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
-                transactionType = Transaction.Type.EXPENSE,
+                transactionType = TransactionType.EXPENSE,
             )
         }
 
@@ -156,13 +162,13 @@ class ReportViewerViewModel(
             !params.includeIncomeByCategory -> null
             invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
                 invoiceIds = invoiceIds.toList(),
-                transactionType = Transaction.Type.INCOME,
+                transactionType = TransactionType.INCOME,
             )
             else -> calculateReportCategorySpendingUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
-                transactionType = Transaction.Type.INCOME,
+                transactionType = TransactionType.INCOME,
             )
         }
 
@@ -170,7 +176,7 @@ class ReportViewerViewModel(
             val filteredOps = if (invoices.isNotEmpty()) {
                 operations.filter { op ->
                     op.targetInvoice?.id in invoiceIds ||
-                            op.transactions.any { tx -> tx.invoice?.id in invoiceIds }
+                            op.entries.any { it.invoiceId in invoiceIds }
                 }
             } else {
                 operations
@@ -178,16 +184,18 @@ class ReportViewerViewModel(
                     .filter { op ->
                         when (perspective) {
                             is ReportPerspective.AccountPerspective -> {
-                                op.transactions.any {
-                                    it.target == Transaction.Target.ACCOUNT &&
-                                            (perspective.accountIds.isEmpty() || it.account?.id in perspective.accountIds)
+                                op.entries.any {
+                                    it.account.type == AccountType.ASSET &&
+                                            (perspective.accountIds.isEmpty() || it.account.id in perspective.accountIds)
                                 }
                             }
 
                             is ReportPerspective.CreditCardPerspective -> {
-                                op.transactions.any {
-                                    it.target == Transaction.Target.CREDIT_CARD &&
-                                            it.creditCard?.id == perspective.creditCardId
+                                val cardAccountId = creditCards
+                                    .find { it.id == perspective.creditCardId }?.accountId
+                                op.entries.any {
+                                    it.account.type == AccountType.LIABILITY &&
+                                            it.account.id == cardAccountId
                                 }
                             }
                         }
@@ -243,3 +251,10 @@ class ReportViewerViewModel(
     }
 }
 
+
+/** A card leg of an invoice, reduced to the three axes the invoice stats aggregate on. */
+private data class InvoiceLeg(
+    val label: OperationLabel,
+    val direction: TransactionType,
+    val cents: Long,
+)

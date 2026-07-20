@@ -21,16 +21,16 @@ class EntryRepository(
     private val entryDao: EntryDao,
 ) : IEntryRepository {
 
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> =
-        entryDao.getEntriesWithAccountByOperationId(operationId).map { it.toDomain() }
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> =
+        entryDao.getEntriesWithAccountByOperationId(transactionId).map { it.toDomain() }
 
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> =
-        entryDao.observeEntriesWithAccountByOperationId(operationId)
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> =
+        entryDao.observeEntriesWithAccountByOperationId(transactionId)
             .map { rows -> rows.map { it.toDomain() } }
 
     private fun EntryWithAccount.toDomain() = Entry(
         id = entry.id,
-        operationId = entry.operationId,
+        transactionId = entry.transactionId,
         account = Account(
             id = account.id,
             name = account.name,

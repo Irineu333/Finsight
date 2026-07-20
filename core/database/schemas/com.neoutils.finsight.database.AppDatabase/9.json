@@ -1,34 +1,17 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 8,
-    "identityHash": "2394a5799af0e50f5cc0001268ecedd6",
+    "version": 9,
+    "identityHash": "55f24106b54583480f03d1c79fd34dbe",
     "entities": [
       {
         "tableName": "transactions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, `type` TEXT NOT NULL, `amount` REAL NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `target` TEXT NOT NULL, `creditCardId` INTEGER, `invoiceId` INTEGER, `accountId` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`creditCardId`) REFERENCES `credit_cards`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`operationId`) REFERENCES `operations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "operationId",
-            "columnName": "operationId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "type",
-            "columnName": "type",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "amount",
-            "columnName": "amount",
-            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -48,24 +31,23 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "target",
-            "columnName": "target",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "creditCardId",
-            "columnName": "creditCardId",
+            "fieldPath": "recurringId",
+            "columnName": "recurringId",
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "invoiceId",
-            "columnName": "invoiceId",
+            "fieldPath": "recurringCycle",
+            "columnName": "recurringCycle",
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "accountId",
-            "columnName": "accountId",
+            "fieldPath": "installmentId",
+            "columnName": "installmentId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "installmentNumber",
+            "columnName": "installmentNumber",
             "affinity": "INTEGER"
           }
         ],
@@ -86,40 +68,31 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
           },
           {
-            "name": "index_transactions_creditCardId",
+            "name": "index_transactions_installmentId",
             "unique": false,
             "columnNames": [
-              "creditCardId"
+              "installmentId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_creditCardId` ON `${TABLE_NAME}` (`creditCardId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_installmentId` ON `${TABLE_NAME}` (`installmentId`)"
           },
           {
-            "name": "index_transactions_invoiceId",
+            "name": "index_transactions_recurringId",
             "unique": false,
             "columnNames": [
-              "invoiceId"
+              "recurringId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_invoiceId` ON `${TABLE_NAME}` (`invoiceId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_recurringId` ON `${TABLE_NAME}` (`recurringId`)"
           },
           {
-            "name": "index_transactions_accountId",
+            "name": "index_transactions_recurringCycle",
             "unique": false,
             "columnNames": [
-              "accountId"
+              "recurringCycle"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_accountId` ON `${TABLE_NAME}` (`accountId`)"
-          },
-          {
-            "name": "index_transactions_operationId",
-            "unique": false,
-            "columnNames": [
-              "operationId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_operationId` ON `${TABLE_NAME}` (`operationId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_recurringCycle` ON `${TABLE_NAME}` (`recurringCycle`)"
           }
         ],
         "foreignKeys": [
@@ -135,44 +108,22 @@
             ]
           },
           {
-            "table": "credit_cards",
+            "table": "installments",
             "onDelete": "SET NULL",
             "onUpdate": "NO ACTION",
             "columns": [
-              "creditCardId"
+              "installmentId"
             ],
             "referencedColumns": [
               "id"
             ]
           },
           {
-            "table": "invoices",
+            "table": "recurring",
             "onDelete": "SET NULL",
             "onUpdate": "NO ACTION",
             "columns": [
-              "invoiceId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "accounts",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "accountId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "operations",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "operationId"
+              "recurringId"
             ],
             "referencedColumns": [
               "id"
@@ -459,7 +410,7 @@
       },
       {
         "tableName": "accounts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL, `currency` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `isDefault` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `type` TEXT NOT NULL, `currency` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `isDefault` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `isClosed` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -502,6 +453,12 @@
             "columnName": "createdAt",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isClosed",
+            "columnName": "isClosed",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -540,133 +497,6 @@
             "id"
           ]
         }
-      },
-      {
-        "tableName": "operations",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "title",
-            "columnName": "title",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "date",
-            "columnName": "date",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "categoryId",
-            "columnName": "categoryId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "recurringId",
-            "columnName": "recurringId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "recurringCycle",
-            "columnName": "recurringCycle",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "installmentId",
-            "columnName": "installmentId",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "installmentNumber",
-            "columnName": "installmentNumber",
-            "affinity": "INTEGER"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        },
-        "indices": [
-          {
-            "name": "index_operations_categoryId",
-            "unique": false,
-            "columnNames": [
-              "categoryId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
-          },
-          {
-            "name": "index_operations_installmentId",
-            "unique": false,
-            "columnNames": [
-              "installmentId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_installmentId` ON `${TABLE_NAME}` (`installmentId`)"
-          },
-          {
-            "name": "index_operations_recurringId",
-            "unique": false,
-            "columnNames": [
-              "recurringId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_recurringId` ON `${TABLE_NAME}` (`recurringId`)"
-          },
-          {
-            "name": "index_operations_recurringCycle",
-            "unique": false,
-            "columnNames": [
-              "recurringCycle"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_operations_recurringCycle` ON `${TABLE_NAME}` (`recurringCycle`)"
-          }
-        ],
-        "foreignKeys": [
-          {
-            "table": "categories",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "categoryId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "installments",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "installmentId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "recurring",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "recurringId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
-        ]
       },
       {
         "tableName": "budgets",
@@ -971,7 +801,7 @@
       },
       {
         "tableName": "recurring_occurrences",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recurringId` INTEGER NOT NULL, `cycleNumber` INTEGER NOT NULL, `yearMonth` TEXT NOT NULL, `status` TEXT NOT NULL, `operationId` INTEGER, `effectiveDate` TEXT NOT NULL, `handledAt` INTEGER NOT NULL, FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`operationId`) REFERENCES `operations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recurringId` INTEGER NOT NULL, `cycleNumber` INTEGER NOT NULL, `yearMonth` TEXT NOT NULL, `status` TEXT NOT NULL, `transactionId` INTEGER, `effectiveDate` TEXT NOT NULL, `handledAt` INTEGER NOT NULL, FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1004,8 +834,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "operationId",
-            "columnName": "operationId",
+            "fieldPath": "transactionId",
+            "columnName": "transactionId",
             "affinity": "INTEGER"
           },
           {
@@ -1038,13 +868,13 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_recurring_occurrences_recurringId` ON `${TABLE_NAME}` (`recurringId`)"
           },
           {
-            "name": "index_recurring_occurrences_operationId",
+            "name": "index_recurring_occurrences_transactionId",
             "unique": true,
             "columnNames": [
-              "operationId"
+              "transactionId"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_recurring_occurrences_operationId` ON `${TABLE_NAME}` (`operationId`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_recurring_occurrences_transactionId` ON `${TABLE_NAME}` (`transactionId`)"
           },
           {
             "name": "index_recurring_occurrences_recurringId_yearMonth",
@@ -1080,11 +910,11 @@
             ]
           },
           {
-            "table": "operations",
+            "table": "transactions",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "operationId"
+              "transactionId"
             ],
             "referencedColumns": [
               "id"
@@ -1094,7 +924,7 @@
       },
       {
         "tableName": "entries",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER NOT NULL, `accountId` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `invoiceId` INTEGER, FOREIGN KEY(`operationId`) REFERENCES `operations`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `transactionId` INTEGER NOT NULL, `accountId` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `invoiceId` INTEGER, FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`invoiceId`) REFERENCES `invoices`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1103,8 +933,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "operationId",
-            "columnName": "operationId",
+            "fieldPath": "transactionId",
+            "columnName": "transactionId",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1140,13 +970,13 @@
         },
         "indices": [
           {
-            "name": "index_entries_operationId",
+            "name": "index_entries_transactionId",
             "unique": false,
             "columnNames": [
-              "operationId"
+              "transactionId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_entries_operationId` ON `${TABLE_NAME}` (`operationId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_entries_transactionId` ON `${TABLE_NAME}` (`transactionId`)"
           },
           {
             "name": "index_entries_accountId",
@@ -1169,11 +999,11 @@
         ],
         "foreignKeys": [
           {
-            "table": "operations",
+            "table": "transactions",
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "operationId"
+              "transactionId"
             ],
             "referencedColumns": [
               "id"
@@ -1206,7 +1036,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '2394a5799af0e50f5cc0001268ecedd6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '55f24106b54583480f03d1c79fd34dbe')"
     ]
   }
 }

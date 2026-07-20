@@ -23,17 +23,17 @@ class EntryCategoryQueryTest {
         connection = BundledSQLiteDriver().open(":memory:")
         connection.execSQL("CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT, type TEXT)")
         connection.execSQL("CREATE TABLE operations (id INTEGER PRIMARY KEY, date TEXT)")
-        connection.execSQL("CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, operationId INTEGER, accountId INTEGER, amount INTEGER, invoiceId INTEGER)")
+        connection.execSQL("CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, transactionId INTEGER, accountId INTEGER, amount INTEGER, invoiceId INTEGER)")
 
         // A(1) asset, card X account(2) liability, Food(10) expense category account.
         connection.execSQL("INSERT INTO accounts (id,name,type) VALUES (1,'A','ASSET'),(2,'CardX','LIABILITY'),(10,'Food','EXPENSE')")
 
         // op1: Food expense 50 paid from account A -> entries Food +5000 / A -5000
         connection.execSQL("INSERT INTO operations (id,date) VALUES (1,'2026-01-10')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (1,10,5000,NULL),(1,1,-5000,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (1,10,5000,NULL),(1,1,-5000,NULL)")
         // op2: Food expense 30 on card X, invoice 1 -> Food +3000 / CardX -3000 (card leg tags invoice 1)
         connection.execSQL("INSERT INTO operations (id,date) VALUES (2,'2026-01-15')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (2,10,3000,NULL),(2,2,-3000,1)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (2,10,3000,NULL),(2,2,-3000,1)")
     }
 
     @AfterTest
@@ -43,9 +43,9 @@ class EntryCategoryQueryTest {
     private fun categoryTotal(categoryType: String, siblingIds: String): Long {
         val stmt = connection.prepare(
             "SELECT COALESCE(SUM(e.amount),0) FROM entries e " +
-                "JOIN operations o ON o.id=e.operationId JOIN accounts a ON a.id=e.accountId " +
+                "JOIN operations o ON o.id=e.transactionId JOIN accounts a ON a.id=e.accountId " +
                 "WHERE a.type='$categoryType' AND o.date BETWEEN '2026-01-01' AND '2026-01-31' " +
-                "AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId=o.id AND s.accountId IN ($siblingIds))"
+                "AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId=o.id AND s.accountId IN ($siblingIds))"
         )
         stmt.step()
         val total = stmt.getLong(0)
@@ -74,7 +74,7 @@ class EntryCategoryQueryTest {
     // Mirrors EntryDao.balanceInMonth (the dashboard category-spending query).
     private fun monthTotal(accountId: Long, yearMonth: String): Long {
         val stmt = connection.prepare(
-            "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN operations o ON o.id=e.operationId " +
+            "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN operations o ON o.id=e.transactionId " +
                 "WHERE e.accountId=$accountId AND substr(o.date,1,7)='$yearMonth'"
         )
         stmt.step()
@@ -95,7 +95,7 @@ class EntryCategoryQueryTest {
         val stmt = connection.prepare(
             "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN accounts a ON a.id=e.accountId " +
                 "WHERE a.type='$categoryType' " +
-                "AND EXISTS (SELECT 1 FROM entries s WHERE s.operationId=e.operationId AND s.invoiceId IN ($invoiceIds))"
+                "AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId=e.transactionId AND s.invoiceId IN ($invoiceIds))"
         )
         stmt.step()
         val total = stmt.getLong(0)

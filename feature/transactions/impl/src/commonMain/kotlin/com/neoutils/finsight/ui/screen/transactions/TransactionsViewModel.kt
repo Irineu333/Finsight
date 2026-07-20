@@ -6,7 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -24,9 +27,9 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 class TransactionsViewModel(
-    private val filterType: Transaction.Type?,
+    private val filterType: TransactionType?,
     private val category: Category?,
-    private val filterTarget: Transaction.Target?,
+    private val filterTarget: TransactionTarget?,
     private val operationRepository: IOperationRepository,
     private val categoryRepository: ICategoryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
@@ -49,9 +52,11 @@ class TransactionsViewModel(
         selectedYearMonth,
         filters
     ) { operations, categories, yearMonth, filters ->
-        val operationsForStats = operations
-            .filterNot { it.kind == Operation.Kind.TRANSFER }
-            .filterNot { it.kind == Operation.Kind.PAYMENT }
+        // Transfers and card payments move money between the user's own accounts;
+        // neither is income or expense. Derived from the ledger, never persisted.
+        val operationsForStats = operations.filterNot {
+            it.label == OperationLabel.TRANSFER || it.label == OperationLabel.PAYMENT
+        }
 
         val stats = calculateTransactionStatsUseCase(
             operations = operationsForStats,
@@ -64,7 +69,7 @@ class TransactionsViewModel(
                 expense = stats.expense,
                 adjustment = stats.adjustment,
                 payment = operations
-                    .filter { it.kind == Operation.Kind.PAYMENT }
+                    .filter { it.label == OperationLabel.PAYMENT }
                     .filter { it.date.yearMonth == yearMonth }
                     .sumOf { it.amount },
                 // Opening/final balances from the ledger (task 4.11): Σ entries of all
@@ -144,17 +149,17 @@ private fun List<Operation>.filterInstallment(installmentOnly: Boolean): List<Op
 
 private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
-    return filter { it.category?.id == category.id || it.primaryTransaction.category?.id == category.id }
+    return filter { it.category?.id == category.id }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<Operation>.filter(type: TransactionType?): List<Operation> {
     if (type == null) return this
     return filter { operation ->
-        operation.type == type
+        operation.primaryEntry?.let { deriveTransactionType(it.amount, operation.entries) } == type
     }
 }
 
-private fun List<Operation>.filter(target: Transaction.Target?): List<Operation> {
+private fun List<Operation>.filter(target: TransactionTarget?): List<Operation> {
     if (target == null) return this
-    return filter { operation -> operation.transactions.any { it.target == target } }
+    return filter { operation -> operation.isCardTarget == target.isCreditCard }
 }

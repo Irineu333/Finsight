@@ -5,7 +5,8 @@ package com.neoutils.finsight.domain.model.form
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.dayMonthYear
@@ -19,12 +20,12 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 data class TransactionForm(
-    val type: Transaction.Type,
+    val type: TransactionType,
     val amount: String,
     val title: String?,
     val date: String,
     val category: Category?,
-    val target: Transaction.Target,
+    val target: TransactionTarget,
     val creditCard: CreditCard?,
     val invoiceDueMonth: YearMonth?,
     val account: Account?,
@@ -44,7 +45,7 @@ data class TransactionForm(
 
         if (target.isAccount) return account != null
 
-        if (type != Transaction.Type.EXPENSE) return false
+        if (type != TransactionType.EXPENSE) return false
         if (creditCard == null) return false
 
         return true
@@ -52,19 +53,19 @@ data class TransactionForm(
 
     companion object {
         fun from(
-            type: Transaction.Type,
+            type: TransactionType,
             amount: String,
             title: String?,
             date: String,
             category: Category?,
-            target: Transaction.Target,
+            target: TransactionTarget,
             creditCard: CreditCard?,
             invoiceDueMonth: YearMonth?,
             account: Account?,
             installments: Int = 1
         ): TransactionForm {
 
-            val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
+            val target = target.takeIf { type.isExpense } ?: TransactionTarget.ACCOUNT
             val category = category?.takeIf { it.type.isAccept(type) }
             val creditCard = creditCard?.takeIf { target.isCreditCard }
             val account = account?.takeIf { target.isAccount }

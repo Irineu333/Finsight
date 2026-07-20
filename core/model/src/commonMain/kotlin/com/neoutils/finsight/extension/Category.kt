@@ -2,9 +2,9 @@ package com.neoutils.finsight.extension
 
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 
-fun Category.Type.isAccept(type: Transaction.Type): Boolean {
+fun Category.Type.isAccept(type: TransactionType): Boolean {
     return when (this) {
         Category.Type.EXPENSE -> type.isExpense
         Category.Type.INCOME -> type.isIncome

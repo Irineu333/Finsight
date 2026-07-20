@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class Migration7To8Test {
+class Migration7To9Test {
 
     private lateinit var connection: SQLiteConnection
 
@@ -54,7 +54,7 @@ class Migration7To8Test {
         )
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `transactions` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, " +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `transactionId` INTEGER, " +
                 "`type` TEXT NOT NULL, `amount` REAL NOT NULL, `title` TEXT, `date` TEXT NOT NULL, " +
                 "`categoryId` INTEGER, `target` TEXT NOT NULL DEFAULT 'ACCOUNT', " +
                 "`creditCardId` INTEGER, `invoiceId` INTEGER, `accountId` INTEGER" +
@@ -67,16 +67,16 @@ class Migration7To8Test {
 
         // op1: expense 50 from A, category Food (single leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (1,'TRANSACTION','2024-01-10')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (1,'EXPENSE',50.0,'2024-01-10',1,'ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (1,'EXPENSE',50.0,'2024-01-10',1,'ACCOUNT',1)")
 
         // op2: transfer 100 A->B (two legs, already balanced)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (2,'TRANSFER','2024-01-11')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'EXPENSE',100.0,'2024-01-11','ACCOUNT',1)")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'INCOME',100.0,'2024-01-11','ACCOUNT',2)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'EXPENSE',100.0,'2024-01-11','ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'INCOME',100.0,'2024-01-11','ACCOUNT',2)")
 
         // op3: adjustment +30 on A (single leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (3,'TRANSACTION','2024-01-12')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (3,'ADJUSTMENT',30.0,'2024-01-12','ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (3,'ADJUSTMENT',30.0,'2024-01-12','ACCOUNT',1)")
 
         // Card-payment scenario on account C(3): purchase 100 then pay 40 (invoice 1).
         connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (3,'C','wallet',0,1000)")
@@ -84,19 +84,19 @@ class Migration7To8Test {
         connection.execSQL("INSERT INTO `invoices` (`id`) VALUES (1)")
         // op4: card purchase 100 (single card leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (4,'TRANSACTION','2024-02-01')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
         // op5: payment 40 — account leg (also carries the card ref, like the real use case) + card leg
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (5,'PAYMENT','2024-02-05')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
 
         // Orphaned legs from deleted account/card (FK SET_NULL): accountId/creditCardId is NULL.
         // op6: expense 20 whose account was deleted (target ACCOUNT, accountId NULL), category Food.
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (6,'TRANSACTION','2024-03-01')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (6,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (6,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)")
         // op7: card purchase 15 whose card was deleted (target CREDIT_CARD, creditCardId NULL), category Food.
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (7,'TRANSACTION','2024-03-02')")
-        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`creditCardId`) VALUES (7,'EXPENSE',15.0,'2024-03-02',1,'CREDIT_CARD',NULL)")
+        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`creditCardId`) VALUES (7,'EXPENSE',15.0,'2024-03-02',1,'CREDIT_CARD',NULL)")
     }
 
     @AfterTest
@@ -114,7 +114,7 @@ class Migration7To8Test {
 
     @Test
     fun `given v7 when migrated then entries table and indices are created`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         assertTrue(connection.tableExists("entries"))
         assertTrue(connection.indexExists("index_entries_operationId"))
@@ -123,7 +123,7 @@ class Migration7To8Test {
 
     @Test
     fun `given v7 when migrated then accounts gains type and currency columns`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         val columns = connection.getColumns("accounts")
         assertTrue("type" in columns)
@@ -132,7 +132,7 @@ class Migration7To8Test {
 
     @Test
     fun `given a category when migrated then it is promoted to an EXPENSE account and linked`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         val accountId = scalar("SELECT `accountId` FROM `categories` WHERE `id` = 1")
         assertTrue(accountId > 0, "category should be linked to a promoted account")
@@ -144,12 +144,12 @@ class Migration7To8Test {
 
     @Test
     fun `given legacy operations when migrated then every operation sums to zero`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         // Number of operations whose entries do NOT sum to zero must be zero.
         val unbalanced = scalar(
             "SELECT COUNT(*) FROM (" +
-                "SELECT `operationId`, SUM(`amount`) AS s FROM `entries` GROUP BY `operationId` HAVING s <> 0" +
+                "SELECT `transactionId`, SUM(`amount`) AS s FROM `entries` GROUP BY `transactionId` HAVING s <> 0" +
                 ")"
         )
         assertEquals(0L, unbalanced)
@@ -157,7 +157,7 @@ class Migration7To8Test {
 
     @Test
     fun `given legacy transactions when migrated then account balance is preserved in cents`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         // Legacy signed balance of A = -50 (expense) - 100 (transfer out) + 30 (adjustment) = -120.00 -> -12000 cents.
         val balanceA = scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries` WHERE `accountId` = 1")
@@ -170,14 +170,14 @@ class Migration7To8Test {
 
     @Test
     fun `given the whole ledger when migrated then it sums to zero`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         assertEquals(0L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries`"))
     }
 
     @Test
     fun `given a card purchase and payment when migrated then invoice owed is abated and the payer is debited`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         // Owed = Σ entries tagged with the invoice: only the card legs (purchase -10000,
         // payment +4000). The payment's account leg must NOT be tagged, or it cancels out.
@@ -193,7 +193,7 @@ class Migration7To8Test {
 
     @Test
     fun `given orphaned legs from a deleted account or card when migrated then it does not crash and routes them to removed-account`() {
-        MIGRATION_7_8.migrate(connection) // must not throw on NULL accountId/creditCardId
+        MIGRATION_7_9.migrate(connection) // must not throw on NULL accountId/creditCardId
 
         // No entry has a null account — a single null would have aborted the whole upgrade.
         assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` IS NULL"))
@@ -211,7 +211,7 @@ class Migration7To8Test {
 
     @Test
     fun `given an adjustment when migrated then its contra is the reconciliation equity account`() {
-        MIGRATION_7_8.migrate(connection)
+        MIGRATION_7_9.migrate(connection)
 
         // op3 has two entries: +3000 on A and -3000 on the reconciliation EQUITY account.
         val reconciliationSum = scalar(

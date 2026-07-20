@@ -27,7 +27,6 @@ import org.koin.dsl.module
 val useCaseModules = module {
     factory {
         AdjustInvoiceUseCase(
-            repository = get(),
             operationRepository = get(),
             calculateInvoiceUseCase = get(),
         )

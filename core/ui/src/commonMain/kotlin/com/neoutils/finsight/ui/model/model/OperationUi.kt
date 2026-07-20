@@ -1,7 +1,7 @@
 package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.OperationLabel
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
 
@@ -15,7 +15,7 @@ import kotlinx.datetime.LocalDate
 data class OperationUi(
     val id: Long,
     val label: OperationLabel,
-    val direction: Transaction.Type,
+    val direction: TransactionType,
     val title: String,
     val amount: Double,
     val date: LocalDate,

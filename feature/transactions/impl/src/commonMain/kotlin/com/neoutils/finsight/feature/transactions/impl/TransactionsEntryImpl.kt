@@ -10,7 +10,7 @@ import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
 
 internal class TransactionsEntryImpl : TransactionsEntry {
     override fun addTransactionModal(): Modal = AddTransactionModal()
-    override fun viewOperationModal(operationId: Long, perspective: TransactionPerspective?): AdaptiveModal =
-        ViewOperationModal(operationId, perspective)
-    override fun viewAdjustmentModal(operationId: Long): AdaptiveModal = ViewAdjustmentModal(operationId)
+    override fun viewOperationModal(transactionId: Long, perspective: TransactionPerspective?): AdaptiveModal =
+        ViewOperationModal(transactionId, perspective)
+    override fun viewAdjustmentModal(transactionId: Long): AdaptiveModal = ViewAdjustmentModal(transactionId)
 }

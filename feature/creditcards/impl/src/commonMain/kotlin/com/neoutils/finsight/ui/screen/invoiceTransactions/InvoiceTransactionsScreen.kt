@@ -39,12 +39,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
-import org.koin.compose.koinInject
 import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.ui.component.OperationCard
 import com.neoutils.finsight.ui.model.toOperationUi
@@ -284,8 +283,8 @@ private fun InvoiceTransactionsContent(
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (operation.type) {
-                                Transaction.Type.ADJUSTMENT -> {
+                            when (operationUi.direction) {
+                                TransactionType.ADJUSTMENT -> {
                                     detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
                                 }
 
@@ -781,16 +780,16 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (InvoiceTransactionsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor =
         when (selectedType) {
-            Transaction.Type.EXPENSE -> ExpenseColor
-            Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.INCOME -> BillPaymentColor
+            TransactionType.EXPENSE -> ExpenseColor
+            TransactionType.ADJUSTMENT -> AdjustmentColor
+            TransactionType.INCOME -> BillPaymentColor
             else -> null
         }
 
@@ -800,9 +799,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.invoice_transactions_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.invoice_transactions_filter_type_adjustment)
-                    Transaction.Type.INCOME -> stringResource(Res.string.invoice_transactions_filter_type_payment)
+                    TransactionType.EXPENSE -> stringResource(Res.string.invoice_transactions_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.invoice_transactions_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.invoice_transactions_filter_type_payment)
                     else -> stringResource(Res.string.invoice_transactions_filter_type)
                 }
             )
@@ -834,9 +833,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to stringResource(Res.string.invoice_transactions_filter_type_expense),
-            Transaction.Type.ADJUSTMENT to stringResource(Res.string.invoice_transactions_filter_type_adjustment),
-            Transaction.Type.INCOME to stringResource(Res.string.invoice_transactions_filter_type_payment),
+            TransactionType.EXPENSE to stringResource(Res.string.invoice_transactions_filter_type_expense),
+            TransactionType.ADJUSTMENT to stringResource(Res.string.invoice_transactions_filter_type_adjustment),
+            TransactionType.INCOME to stringResource(Res.string.invoice_transactions_filter_type_payment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.screen.accounts
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.OperationUi
 import kotlinx.datetime.LocalDate
@@ -26,7 +26,7 @@ sealed class AccountsUiState {
         val operations: Map<LocalDate, List<OperationUi>>,
         val categories: List<Category>,
         val selectedCategory: Category? = null,
-        val selectedType: Transaction.Type? = null,
+        val selectedType: TransactionType? = null,
         val showRecurringOnly: Boolean = false,
         override val selectedMonth: YearMonth,
     ) : AccountsUiState()

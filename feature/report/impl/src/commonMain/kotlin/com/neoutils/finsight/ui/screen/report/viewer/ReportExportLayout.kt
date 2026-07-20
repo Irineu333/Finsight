@@ -1,8 +1,10 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
+import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.ui.model.toOperationUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
 import com.neoutils.finsight.domain.model.ReportLayout
@@ -135,12 +137,14 @@ fun ReportViewerUiState.Content.toReportLayout(
                     groups = transactions.map { (date, operations) ->
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
-                            items = operations.map { operation ->
-                                TransactionItem(
-                                    title = operation.exportTitle(strings),
-                                    amount = operation.exportAmount(formatter),
-                                    tone = operation.exportTone(),
-                                )
+                            items = operations.mapNotNull { operation ->
+                                operation.toOperationUi()?.let { ui ->
+                                    TransactionItem(
+                                        title = ui.exportTitle(strings),
+                                        amount = ui.exportAmount(formatter),
+                                        tone = ui.exportTone(),
+                                    )
+                                }
                             },
                         )
                     },
@@ -168,35 +172,35 @@ fun ReportViewerUiState.Content.toReportLayout(
     )
 }
 
-private fun Operation.exportTitle(strings: ReportExportStrings): String {
+private fun OperationUi.exportTitle(strings: ReportExportStrings): String {
     return when {
-        kind == Operation.Kind.PAYMENT -> strings.operationPayment
-        kind == Operation.Kind.TRANSFER -> strings.operationTransfer
-        type == Transaction.Type.ADJUSTMENT && target.isAccount -> strings.operationBalanceAdjustment
-        type == Transaction.Type.ADJUSTMENT && target.isCreditCard -> strings.operationInvoiceAdjustment
-        else -> label
+        label == OperationLabel.PAYMENT -> strings.operationPayment
+        label == OperationLabel.TRANSFER -> strings.operationTransfer
+        label == OperationLabel.ADJUSTMENT && !isCardTarget -> strings.operationBalanceAdjustment
+        label == OperationLabel.ADJUSTMENT && isCardTarget -> strings.operationInvoiceAdjustment
+        else -> title
     }
 }
 
-private fun Operation.exportAmount(formatter: CurrencyFormatter): String {
-    return when (type) {
-        Transaction.Type.ADJUSTMENT -> formatter.formatWithSign(amount)
-        Transaction.Type.EXPENSE -> {
-            if (kind == Operation.Kind.TRANSFER) {
+private fun OperationUi.exportAmount(formatter: CurrencyFormatter): String {
+    return when (direction) {
+        TransactionType.ADJUSTMENT -> formatter.formatWithSign(amount)
+        TransactionType.EXPENSE -> {
+            if (label == OperationLabel.TRANSFER) {
                 "-${formatter.format(amount)}"
             } else {
                 formatter.format(amount)
             }
         }
-        Transaction.Type.INCOME -> formatter.format(amount)
+        TransactionType.INCOME -> formatter.format(amount)
     }
 }
 
-private fun Operation.exportTone(): ReportTone {
+private fun OperationUi.exportTone(): ReportTone {
     return when {
-        kind == Operation.Kind.TRANSFER -> ReportTone.NEUTRAL
-        type == Transaction.Type.INCOME -> ReportTone.POSITIVE
-        type == Transaction.Type.EXPENSE -> ReportTone.NEGATIVE
+        label == OperationLabel.TRANSFER -> ReportTone.NEUTRAL
+        direction == TransactionType.INCOME -> ReportTone.POSITIVE
+        direction == TransactionType.EXPENSE -> ReportTone.NEGATIVE
         amount >= 0 -> ReportTone.POSITIVE
         else -> ReportTone.NEGATIVE
     }

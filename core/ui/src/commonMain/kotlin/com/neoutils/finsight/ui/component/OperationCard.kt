@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.OperationLabel
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.operation_card_balance_adjustment
@@ -134,8 +134,8 @@ fun OperationCard(
 
             Text(
                 text = when (operation.direction) {
-                    Transaction.Type.ADJUSTMENT -> formatter.formatWithSign(operation.amount)
-                    Transaction.Type.EXPENSE -> if (operation.label == OperationLabel.TRANSFER) {
+                    TransactionType.ADJUSTMENT -> formatter.formatWithSign(operation.amount)
+                    TransactionType.EXPENSE -> if (operation.label == OperationLabel.TRANSFER) {
                         "-${formatter.format(operation.amount)}"
                     } else {
                         formatter.format(operation.amount)
@@ -172,16 +172,16 @@ private fun OperationUi.icon() = when {
     label == OperationLabel.PAYMENT -> Icons.Default.Payment
     label == OperationLabel.TRANSFER -> Icons.Default.SwapHoriz
     else -> when (direction) {
-        Transaction.Type.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
-        Transaction.Type.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
-        Transaction.Type.ADJUSTMENT -> Icons.Default.Tune
+        TransactionType.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+        TransactionType.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+        TransactionType.ADJUSTMENT -> Icons.Default.Tune
     }
 }
 
 private fun OperationUi.color(): Color = when {
     label == OperationLabel.PAYMENT -> InvoicePayment
     label == OperationLabel.TRANSFER -> Info
-    direction == Transaction.Type.INCOME -> Income
-    direction == Transaction.Type.EXPENSE -> Expense
+    direction == TransactionType.INCOME -> Income
+    direction == TransactionType.EXPENSE -> Expense
     else -> Adjustment
 }

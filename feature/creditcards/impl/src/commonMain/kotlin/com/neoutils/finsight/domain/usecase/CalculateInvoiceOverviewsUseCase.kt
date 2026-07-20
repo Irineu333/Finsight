@@ -8,7 +8,7 @@ import kotlinx.datetime.YearMonth
  * Invoice overviews derived from the ledger (task 4.11): each invoice's
  * expense/advance-payment/adjustment come from its LIABILITY-leg entries
  * ([IEntryRepository.invoiceFlows]) and the owed total from [IEntryRepository.invoiceOwed],
- * replacing the leg-based sums by `Transaction.Type`/`Target`.
+ * replacing the leg-based sums by `TransactionType`/`Target`.
  */
 class CalculateInvoiceOverviewsUseCase(
     private val entryRepository: IEntryRepository,

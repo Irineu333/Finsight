@@ -5,9 +5,10 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.deriveOperationLabel
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
@@ -38,7 +39,6 @@ data class DashboardComponentsInput(
 )
 
 data class DashboardBuilderContext(
-    val allTransactions: List<Transaction>,
     val pendingRecurring: List<Recurring>,
 )
 
@@ -104,7 +104,6 @@ class DashboardComponentsBuilder(
 
     fun createContext(input: DashboardComponentsInput): DashboardBuilderContext {
         return DashboardBuilderContext(
-            allTransactions = input.operations.flatMap { it.transactions },
             pendingRecurring = getPendingRecurringUseCase(
                 recurringList = input.recurringList,
                 occurrences = input.occurrences,
@@ -126,8 +125,11 @@ class DashboardComponentsBuilder(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.ConcreteBalanceStats? {
-        val operationsForStats = input.operations
-            .filterNot { it.kind == Operation.Kind.TRANSFER || it.kind == Operation.Kind.PAYMENT }
+        // Transfers and card payments move money between the user's own accounts:
+        // they are not income or expense. Derived from the ledger, never persisted.
+        val operationsForStats = input.operations.filterNot { operation ->
+            operation.entries.deriveOperationLabel() in setOf(OperationLabel.TRANSFER, OperationLabel.PAYMENT)
+        }
 
         val stats = calculateTransactionStatsUseCase(
             operations = operationsForStats,

@@ -11,9 +11,10 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.ReportDocument
 import com.neoutils.finsight.domain.model.ReportLayout
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -59,14 +60,11 @@ class ReportViewerViewModelCharacterizationTest {
     private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
     private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
 
-    private fun accountLeg(type: Transaction.Type, amount: Double, month: Int, day: Int) = Transaction(
-        type = type, amount = amount, title = null, date = LocalDate(2026, month, day), account = account,
-    )
+    private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
+        Operation(id = id, title = null, date = date, entries = entries)
 
-    private fun op(id: Long, leg: Transaction, entries: List<Entry> = emptyList()) =
-        Operation(id = id, title = null, date = leg.date, transactions = listOf(leg), entries = entries)
-
-    private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = (amount * 100).toLong())
+    private fun entry(acc: Account, amount: Double, invoiceId: Long? = null) =
+        Entry(account = acc, amount = (amount * 100).toLong(), invoiceId = invoiceId)
 
     // The account-perspective stats now read the ledger legs (task 4.6). Each operation
     // carries its balanced entries; the report figures derive from those.
@@ -76,9 +74,9 @@ class ReportViewerViewModelCharacterizationTest {
     @Test
     fun `account perspective forwards the report stats`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, accountLeg(Transaction.Type.INCOME, 100.0, month = 3, day = 5), accountEntries(incomeAcc, 100.0, -100.0)),
-            op(2, accountLeg(Transaction.Type.EXPENSE, 30.0, month = 3, day = 10), accountEntries(expenseAcc, -30.0, 30.0)),
-            op(3, accountLeg(Transaction.Type.EXPENSE, 20.0, month = 2, day = 10), accountEntries(expenseAcc, -20.0, 20.0)), // prior → opening
+            op(1, LocalDate(2026, 3, 5), accountEntries(incomeAcc, 100.0, -100.0)),
+            op(2, LocalDate(2026, 3, 10), accountEntries(expenseAcc, -30.0, 30.0)),
+            op(3, LocalDate(2026, 2, 10), accountEntries(expenseAcc, -20.0, 20.0)), // prior → opening
         )
         val fakes = Fakes()
         val vm = ReportViewerViewModel(
@@ -121,20 +119,30 @@ class ReportViewerViewModelCharacterizationTest {
 
     @Test
     fun `credit card perspective sums the card legs and reads owed from the ledger`() = runTest(dispatcher) {
-        val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
+        val cardLiability = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
+        val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
+        val paymentSource = Account(id = 103, name = "checking", type = AccountType.ASSET)
+        val card = CreditCard(
+            id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15,
+            accountId = cardLiability.id,
+        )
         val invoice = Invoice(
             id = 1, creditCard = card,
             openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),
             status = Invoice.Status.OPEN,
         )
-        fun cardLeg(type: Transaction.Type, amount: Double) = Transaction(
-            type = type, amount = amount, title = null, date = LocalDate(2026, 3, 10), creditCard = card, invoice = invoice,
+        val date = LocalDate(2026, 3, 10)
+        // The card leg carries the invoice id; the counter-leg's account type is what
+        // makes the operation an expense, an adjustment or a payment.
+        fun cardOp(id: Long, cardAmount: Double, counter: Account) = op(
+            id, date,
+            listOf(entry(cardLiability, cardAmount, invoiceId = invoice.id), entry(counter, -cardAmount)),
         )
         val operations = listOf(
-            op(1, cardLeg(Transaction.Type.EXPENSE, 60.0)),
-            op(2, cardLeg(Transaction.Type.EXPENSE, 40.0)),
-            op(3, cardLeg(Transaction.Type.ADJUSTMENT, 10.0)),
-            op(4, cardLeg(Transaction.Type.INCOME, 30.0)), // advance payment
+            cardOp(1, -60.0, expenseAcc),
+            cardOp(2, -40.0, expenseAcc),
+            cardOp(3, 10.0, equityAcc),
+            cardOp(4, 30.0, paymentSource), // advance payment
         )
         val fakes = Fakes()
         val vm = ReportViewerViewModel(
@@ -184,8 +192,8 @@ private class Fakes {
         override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
         override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
         override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-        override suspend fun createOperation(title: String?, date: LocalDate, categoryId: Long?, recurringId: Long?, recurringCycle: Int?, installmentId: Long?, installmentNumber: Int?, transactions: List<Transaction>): Operation = throw NotImplementedError()
-        override suspend fun updateOperation(id: Long, transaction: Transaction) = throw NotImplementedError()
+        override suspend fun createOperation(intent: OperationIntent): Operation = throw NotImplementedError()
+        override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) = throw NotImplementedError()
         override suspend fun deleteOperationById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
     }
@@ -243,8 +251,8 @@ private class Fakes {
     }
 
     fun entryRepository(owed: Map<Long, Double> = emptyMap()) = object : IEntryRepository {
-        override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

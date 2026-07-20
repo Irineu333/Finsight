@@ -15,7 +15,7 @@ class RecurringOccurrenceMapper {
                 RecurringOccurrenceEntity.Status.CONFIRMED -> RecurringOccurrence.Status.CONFIRMED
                 RecurringOccurrenceEntity.Status.SKIPPED -> RecurringOccurrence.Status.SKIPPED
             },
-            operationId = entity.operationId,
+            transactionId = entity.transactionId,
             effectiveDate = entity.effectiveDate,
             handledAt = entity.handledAt,
         )
@@ -30,7 +30,7 @@ class RecurringOccurrenceMapper {
                 RecurringOccurrence.Status.CONFIRMED -> RecurringOccurrenceEntity.Status.CONFIRMED
                 RecurringOccurrence.Status.SKIPPED -> RecurringOccurrenceEntity.Status.SKIPPED
             },
-            operationId = domain.operationId,
+            transactionId = domain.transactionId,
             effectiveDate = domain.effectiveDate,
             handledAt = domain.handledAt,
         )

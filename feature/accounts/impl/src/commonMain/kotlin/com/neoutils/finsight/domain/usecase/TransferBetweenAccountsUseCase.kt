@@ -10,7 +10,9 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.TransferError
 import com.neoutils.finsight.domain.error.TransferException
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import kotlinx.datetime.LocalDate
@@ -56,25 +58,22 @@ class TransferBetweenAccountsUseCase(
 
         catch {
             operationRepository.createOperation(
-                title = null,
-                date = date,
-                categoryId = null,
-                transactions = listOf(
-                    Transaction(
-                        type = Transaction.Type.EXPENSE,
-                        amount = amount,
-                        title = null,
-                        date = date,
-                        account = sourceAccount,
+                OperationIntent(
+                    title = null,
+                    date = date,
+                    legs = listOf(
+                        OperationLeg(
+                            type = TransactionType.EXPENSE,
+                            amount = amount,
+                            account = sourceAccount,
+                        ),
+                        OperationLeg(
+                            type = TransactionType.INCOME,
+                            amount = amount,
+                            account = destinationAccount,
+                        ),
                     ),
-                    Transaction(
-                        type = Transaction.Type.INCOME,
-                        amount = amount,
-                        title = null,
-                        date = date,
-                        account = destinationAccount,
-                    ),
-                ),
+                )
             )
         }.mapLeft {
             TransferException(TransferError.Unknown)

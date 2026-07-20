@@ -42,10 +42,10 @@ data class CardMonthFlows(
 interface IEntryRepository {
 
     /** The entries (legs) of an operation, each hydrated with its account. */
-    suspend fun getEntriesByOperation(operationId: Long): List<Entry>
+    suspend fun getEntriesByOperation(transactionId: Long): List<Entry>
 
     /** Observes the entries (legs) of an operation, each hydrated with its account. */
-    fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>>
+    fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>>
 
     /**
      * Natural balance of [accountId] (or of all ASSET accounts when null) up to

@@ -6,9 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
-import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.accountType
+import com.neoutils.finsight.extension.displaySign
 import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.channels.Channel
@@ -44,10 +45,10 @@ class ViewCategoryViewModel(
     ) { category, yearMonth ->
         category ?: return@combine ViewCategoryUiState.Error
         // Σ entries of the category's chart account in the month, read from the ledger.
-        // The natural balance is debit-positive; a category reads as a positive figure
-        // once converted to its display sign (EXPENSE +1, INCOME -1).
+        // The natural balance is debit-positive; the ledger's own display convention
+        // turns it into the positive figure a category is expected to read as.
         val accountId = category.accountId
-        val displaySign = if (category.type == Category.Type.INCOME) -1.0 else 1.0
+        val displaySign = category.type.accountType.displaySign
         val totalAmount = accountId?.let {
             entryRepository.balanceInMonth(yearMonth, it) * displaySign
         } ?: 0.0

@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -51,7 +52,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         status = Invoice.Status.OPEN,
     )
 
-    private fun cardLeg(type: Transaction.Type, amount: Double) = Transaction(
+    private fun cardLeg(type: TransactionType, amount: Double) = Transaction(
         type = type, amount = amount, title = null, date = LocalDate(2026, 3, 10), creditCard = card, invoice = invoice,
     )
 
@@ -60,10 +61,10 @@ class InvoiceTransactionsViewModelCharacterizationTest {
     @Test
     fun `invoice summary characterizes the card leg sums and owed total`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, cardLeg(Transaction.Type.EXPENSE, 60.0)),
-            op(2, cardLeg(Transaction.Type.EXPENSE, 40.0)),
-            op(3, cardLeg(Transaction.Type.ADJUSTMENT, 10.0)),
-            op(4, cardLeg(Transaction.Type.INCOME, 30.0)), // advance payment
+            op(1, cardLeg(TransactionType.EXPENSE, 60.0)),
+            op(2, cardLeg(TransactionType.EXPENSE, 40.0)),
+            op(3, cardLeg(TransactionType.ADJUSTMENT, 10.0)),
+            op(4, cardLeg(TransactionType.INCOME, 30.0)), // advance payment
         )
         val vm = InvoiceTransactionsViewModel(
             creditCardId = 1,
@@ -149,8 +150,8 @@ private class FakeEntryRepository(
     override suspend fun invoiceOwed(invoiceId: Long): Double = owedByInvoiceId[invoiceId] ?: 0.0
     override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows =
         flowsByInvoiceId[invoiceId] ?: com.neoutils.finsight.domain.repository.InvoiceFlows(0.0, 0.0, 0.0)
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

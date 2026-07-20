@@ -4,7 +4,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 
 data class AddTransactionUiState(
     val incomeCategories: List<Category> = emptyList(),
@@ -15,7 +15,7 @@ data class AddTransactionUiState(
     val accounts: List<Account> = emptyList(),
     val selectedAccount: Account? = null,
 ) {
-    val targets = listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
+    val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 
     val isInvoiceBlocked = invoiceSelection?.isBlocked == true
 }

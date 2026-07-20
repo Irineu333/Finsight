@@ -15,6 +15,9 @@ import com.neoutils.finsight.domain.analytics.event.SkipRecurring
 import com.neoutils.finsight.domain.usecase.ConfirmRecurringUseCase
 import com.neoutils.finsight.domain.usecase.SkipRecurringUseCase
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.retire_action_error_generic
+import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,15 +43,21 @@ class ConfirmRecurringViewModel(
 ) : ViewModel() {
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    private val initialTarget = if (recurring.creditCard != null) {
+
+    // Only an *open* account or card can be pre-selected. An archived one is still
+    // shown on the recurring itself (that is its history), but the ledger refuses
+    // to post to it, so here it leaves the selection empty and the user picks.
+    private val initialAccount = recurring.account?.takeIf { !it.isArchived }
+    private val initialCreditCard = recurring.creditCard?.takeIf { !it.isArchived }
+    private val initialTarget = if (initialCreditCard != null) {
         TransactionTarget.CREDIT_CARD
     } else {
         TransactionTarget.ACCOUNT
     }
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)
-    private val selectedAccount = MutableStateFlow(recurring.account)
-    private val selectedCreditCard = MutableStateFlow(recurring.creditCard)
+    private val selectedAccount = MutableStateFlow(initialAccount)
+    private val selectedCreditCard = MutableStateFlow(initialCreditCard)
     private val selectedInvoice = MutableStateFlow<Invoice?>(null)
     private val invoices = MutableStateFlow<List<Invoice>>(emptyList())
 
@@ -78,14 +87,15 @@ class ConfirmRecurringViewModel(
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
     ) { date, target, account, creditCard, invoice, invoiceList, accounts, creditCards ->
-        val defaultAccount = account ?: accounts.firstOrNull { it.isDefault } ?: accounts.firstOrNull()
-
+        // No fallback to the default account: substituting where the money moves
+        // through is not a detail the app gets to decide in silence. With nothing
+        // selected the modal keeps Confirm disabled until the user says where.
         ConfirmRecurringUiState(
             recurring = recurring,
             confirmDate = date,
             selectedTarget = target,
             accounts = accounts,
-            selectedAccount = defaultAccount,
+            selectedAccount = account,
             creditCards = creditCards,
             selectedCreditCard = creditCard,
             invoices = invoiceList,
@@ -98,8 +108,8 @@ class ConfirmRecurringViewModel(
             recurring = recurring,
             confirmDate = targetDate.takeIf { it <= currentDate } ?: currentDate,
             selectedTarget = initialTarget,
-            selectedAccount = recurring.account,
-            selectedCreditCard = recurring.creditCard,
+            selectedAccount = initialAccount,
+            selectedCreditCard = initialCreditCard,
         ),
     )
 
@@ -143,6 +153,7 @@ class ConfirmRecurringViewModel(
             invoice = if (uiState.value.selectedTarget.isCreditCard) uiState.value.selectedInvoice else null,
         ).onLeft {
             crashlytics.recordException(it)
+            modalManager.showError(UiText.Res(Res.string.retire_action_error_generic))
         }.onRight {
             analytics.logEvent(ConfirmRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()
@@ -156,6 +167,7 @@ class ConfirmRecurringViewModel(
             date = date,
         ).onLeft {
             crashlytics.recordException(it)
+            modalManager.showError(UiText.Res(Res.string.retire_action_error_generic))
         }.onRight {
             analytics.logEvent(SkipRecurring(recurring, uiState.value.selectedTarget))
             modalManager.dismiss()

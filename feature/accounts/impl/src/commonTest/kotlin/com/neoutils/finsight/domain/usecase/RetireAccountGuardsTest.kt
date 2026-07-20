@@ -9,7 +9,9 @@ import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.InvoiceFlows
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +40,7 @@ class RetireAccountGuardsTest {
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = true),
+            recurringRepository = FakeRecurring(),
         )
 
         val error = assertIs<AccountException>(useCase(account).leftOrNull())
@@ -52,6 +55,7 @@ class RetireAccountGuardsTest {
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = false),
+            recurringRepository = FakeRecurring(),
         )
 
         val error = assertIs<AccountException>(useCase(account.copy(isDefault = true)).leftOrNull())
@@ -124,11 +128,39 @@ class RetireAccountGuardsTest {
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
             entryRepository = FakeEntries(hasEntries = false),
+            recurringRepository = FakeRecurring(),
         )
 
         assertTrue(useCase(account).isRight())
         assertEquals(listOf(account.id), repository.deleted)
     }
+
+    @Test
+    fun `deleting an account a recurring still points at is refused`() = runTest {
+        // The FK is SET_NULL: without the guard the row would go and the template
+        // would survive pointing at nothing.
+        val repository = RecordingAccountRepository()
+        val useCase = DeleteAccountUseCaseImpl(
+            accountRepository = repository,
+            entryRepository = FakeEntries(hasEntries = false),
+            recurringRepository = FakeRecurring(hasRecurring = true),
+        )
+
+        val error = assertIs<AccountException>(useCase(account).leftOrNull())
+
+        assertEquals(AccountError.HAS_RECURRING, error.error)
+        assertTrue(repository.deleted.isEmpty(), "nothing may be removed")
+    }
+}
+
+private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurringRepository {
+    override suspend fun hasRecurringForAccount(accountId: Long) = hasRecurring
+    override suspend fun hasRecurringForCreditCard(creditCardId: Long) = hasRecurring
+    override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
+    override fun observeRecurringById(id: Long): Flow<Recurring?> = flowOf(null)
+    override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun update(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }
 
 private class RecordingAccountRepository : IAccountRepository {
@@ -136,6 +168,8 @@ private class RecordingAccountRepository : IAccountRepository {
     override suspend fun delete(account: Account) { deleted += account.id }
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<Account> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
     override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
@@ -183,6 +217,8 @@ private class RecordingAccountDao : AccountDao {
     override suspend fun entryCount(accountId: Long): Int = throw NotImplementedError()
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<AccountEntity> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> = emptyList()
+    override fun observeAllAccountsIncludingClosed(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = emptyList()
     override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAccountById(id: Long): AccountEntity? = throw NotImplementedError()

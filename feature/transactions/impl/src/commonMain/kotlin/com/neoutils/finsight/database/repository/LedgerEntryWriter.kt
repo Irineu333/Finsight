@@ -134,8 +134,8 @@ class LedgerEntryWriter(
      * a facade that *has* an account and one that might.
      */
     private suspend fun categoryAccountId(category: Category): Long =
-        categoryDao.getCategoryById(category.id)?.accountId
-            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
+        (categoryDao.getCategoryById(category.id)?.accountId
+            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)).orRejectIfClosed()
 
     private suspend fun cardAccountId(creditCard: CreditCard): Long =
         creditCardDao.getCreditCardById(creditCard.id)?.accountId

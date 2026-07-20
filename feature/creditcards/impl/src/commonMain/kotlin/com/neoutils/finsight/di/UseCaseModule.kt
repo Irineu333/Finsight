@@ -136,6 +136,7 @@ val useCaseModules = module {
         DeleteCreditCardUseCase(
             creditCardRepository = get(),
             entryRepository = get(),
+            recurringRepository = get(),
         )
     }
 

@@ -203,6 +203,8 @@ internal class FakeAccountRepository(private val accounts: List<Account>) : IAcc
     private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isArchived }
     override suspend fun getAllAccounts(): List<Account> = facade
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(facade)
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = facade
+    override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = flowOf(facade)
     override suspend fun getAllLedgerAccounts(): List<Account> = accounts
     override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(accounts)
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()

@@ -44,6 +44,8 @@ class ViewRecurringViewModelTest {
         private val byId = MutableSharedFlow<Recurring?>(replay = 1)
         fun emit(recurring: Recurring?) { byId.tryEmit(recurring) }
         override fun observeRecurringById(id: Long): Flow<Recurring?> = byId
+        override suspend fun hasRecurringForAccount(accountId: Long) = false
+        override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
         override fun observeAllRecurring(): Flow<List<Recurring>> = throw NotImplementedError()
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()

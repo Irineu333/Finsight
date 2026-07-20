@@ -17,6 +17,7 @@ kotlin {
 
             implementation(projects.feature.creditcards.api)
             implementation(projects.feature.transactions.api)
+            implementation(projects.feature.recurring.api)
             implementation(projects.feature.categories.api)
             implementation(projects.feature.accounts.api)
 

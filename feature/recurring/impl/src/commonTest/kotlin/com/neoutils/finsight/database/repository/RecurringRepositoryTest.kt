@@ -27,6 +27,8 @@ class RecurringRepositoryTest {
         override suspend fun getAll(): List<RecurringEntity> = throw NotImplementedError()
         override suspend fun insert(entity: RecurringEntity): Long = throw NotImplementedError()
         override suspend fun update(entity: RecurringEntity) = throw NotImplementedError()
+        override suspend fun countByAccount(accountId: Long): Int = throw NotImplementedError()
+        override suspend fun countByCreditCard(creditCardId: Long): Int = throw NotImplementedError()
         override suspend fun delete(entity: RecurringEntity) = throw NotImplementedError()
     }
 
@@ -46,6 +48,8 @@ class RecurringRepositoryTest {
     private val accountRepository = object : IAccountRepository {
         override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAllAccounts(): List<Account> = throw NotImplementedError()
+        override suspend fun getAllAccountsIncludingClosed(): List<Account> = throw NotImplementedError()
+        override fun observeAllAccountsIncludingClosed(): Flow<List<Account>> = observeAllAccounts()
         override suspend fun getAllLedgerAccounts(): List<Account> = throw NotImplementedError()
         override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()

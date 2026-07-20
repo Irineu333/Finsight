@@ -203,9 +203,13 @@ class ViewRecurringModal(
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_account_label),
                         value = account.name,
-                        onClick = {
-                            detailController.dismiss()
-                            navController.navigate(AccountsRoute(account.id))
+                        // A closed account keeps its name in history but is gone from
+                        // the accounts screen, so there is nowhere to send the user.
+                        onClick = if (account.isArchived) null else {
+                            {
+                                detailController.dismiss()
+                                navController.navigate(AccountsRoute(account.id))
+                            }
                         }
                     )
                 }
@@ -215,11 +219,15 @@ class ViewRecurringModal(
                     DetailRow(
                         label = stringResource(Res.string.view_recurring_credit_card_label),
                         value = creditCard.name,
-                        onClick = {
-                            detailController.dismiss()
-                            navController.navigate(
-                                CreditCardsRoute(creditCard.id)
-                            )
+                        // Same as an account: the closed card still resolves, so its
+                        // name stays; only the shortcut goes.
+                        onClick = if (creditCard.isArchived) null else {
+                            {
+                                detailController.dismiss()
+                                navController.navigate(
+                                    CreditCardsRoute(creditCard.id)
+                                )
+                            }
                         }
                     )
                 }

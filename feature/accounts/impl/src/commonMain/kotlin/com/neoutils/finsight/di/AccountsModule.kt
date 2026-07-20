@@ -68,6 +68,7 @@ val accountsModule = module {
         DeleteAccountUseCaseImpl(
             accountRepository = get(),
             entryRepository = get(),
+            recurringRepository = get(),
         )
     }
     factory {

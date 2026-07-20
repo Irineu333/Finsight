@@ -89,6 +89,8 @@ class ViewBudgetViewModelTest {
     private class FakeRecurringRepository : IRecurringRepository {
         override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
         override fun observeRecurringById(id: Long): Flow<Recurring?> = throw NotImplementedError()
+        override suspend fun hasRecurringForAccount(accountId: Long) = false
+        override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
         override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
         override suspend fun update(recurring: Recurring) = throw NotImplementedError()
         override suspend fun delete(recurring: Recurring) = throw NotImplementedError()

@@ -12,6 +12,8 @@
     <string name="account_error_not_found">Conta não encontrada.</string>
     <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Arquive-a para preservar o histórico.</string>
     <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de arquivá-la.</string>
+    <!-- Neutral wording: the same guard refuses deleting an account and a card. -->
+    <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou encerre-as antes de excluir.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -626,6 +628,7 @@
     <!-- Recurring status -->
     <string name="recurring_status_active">Ativa</string>
     <string name="recurring_status_inactive">Inativa</string>
+    <string name="recurring_status_needs_source">Precisa de atenção</string>
 
     <!-- View Recurring Modal -->
     <string name="view_recurring_type_label">Tipo</string>

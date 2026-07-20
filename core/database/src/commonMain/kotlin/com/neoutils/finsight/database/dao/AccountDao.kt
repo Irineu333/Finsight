@@ -20,6 +20,17 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE type = 'ASSET' AND isArchived = 0 ORDER BY createdAt ASC")
     suspend fun getAllAccounts(): List<AccountEntity>
 
+    /**
+     * The account facade, closed ones included. Name uniqueness needs it: a closed
+     * account keeps its name, and a homonym created after it would be
+     * indistinguishable from it wherever history is rendered.
+     */
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' ORDER BY createdAt ASC")
+    suspend fun getAllAccountsIncludingClosed(): List<AccountEntity>
+
+    @Query("SELECT * FROM accounts WHERE type = 'ASSET' ORDER BY createdAt ASC")
+    fun observeAllAccountsIncludingClosed(): Flow<List<AccountEntity>>
+
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getAccountById(id: Long): AccountEntity?
 

@@ -36,13 +36,13 @@ class ArchiveCreditCardViewModel(
 
 
     fun archiveCreditCard() = viewModelScope.launch {
-        archiveCreditCardUseCase(creditCard)
-            .onLeft {
-                crashlytics.recordException(it)
-            }.onRight {
-                analytics.logEvent(DeleteCreditCard)
-            }
-        modalManager.dismissAll()
+        archiveCreditCardUseCase(creditCard).onRight {
+            analytics.logEvent(DeleteCreditCard)
+            modalManager.dismissAll()
+        }.onLeft {
+            crashlytics.recordException(it)
+            modalManager.showError(it.toUiMessage())
+        }
     }
 
     /**

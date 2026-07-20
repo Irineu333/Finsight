@@ -47,6 +47,7 @@ import com.neoutils.finsight.resources.recurring_filter_status_active
 import com.neoutils.finsight.resources.recurring_filter_status_all
 import com.neoutils.finsight.resources.recurring_filter_status_inactive
 import com.neoutils.finsight.resources.recurring_status_inactive
+import com.neoutils.finsight.resources.recurring_status_needs_source
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
@@ -430,6 +431,16 @@ private fun RecurringCard(
                         )
                     }
 
+                    // The template outlives the account it pointed at, so it stays
+                    // here and stays the user's — but it says so, instead of failing
+                    // only at the moment they try to confirm it.
+                    if (!recurring.hasUsableSource) {
+                        RecurringBadge(
+                            label = stringResource(Res.string.recurring_status_needs_source),
+                            color = Warning,
+                        )
+                    }
+
                     RecurringBadge(label = typeLabel, color = typeColor)
                 }
             }
@@ -474,6 +485,13 @@ private fun RecurringCard(
 
                 val creditCard = recurring.creditCard
                 val account = recurring.account
+                // An archived source keeps its name — that is the history — but reads
+                // muted, the same way an archived category does (see `displayColor`).
+                val sourceColor = if (recurring.hasUsableSource) {
+                    colorScheme.onSurfaceVariant
+                } else {
+                    colorScheme.outline
+                }
                 when {
                     creditCard != null -> Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -482,13 +500,13 @@ private fun RecurringCard(
                         Icon(
                             imageVector = Icons.Default.CreditCard,
                             contentDescription = null,
-                            tint = colorScheme.onSurfaceVariant,
+                            tint = sourceColor,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = creditCard.name,
                             fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
+                            color = sourceColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -501,13 +519,13 @@ private fun RecurringCard(
                         Icon(
                             imageVector = Icons.Default.AccountBalance,
                             contentDescription = null,
-                            tint = colorScheme.onSurfaceVariant,
+                            tint = sourceColor,
                             modifier = Modifier.size(16.dp),
                         )
                         Text(
                             text = account.name,
                             fontSize = 14.sp,
-                            color = colorScheme.onSurfaceVariant,
+                            color = sourceColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

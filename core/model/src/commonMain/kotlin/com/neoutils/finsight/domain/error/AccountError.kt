@@ -4,6 +4,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_empty_name
 import com.neoutils.finsight.resources.account_error_has_balance
+import com.neoutils.finsight.resources.account_error_has_recurring
 import com.neoutils.finsight.resources.account_error_has_transactions
 import com.neoutils.finsight.resources.account_error_not_found
 import com.neoutils.finsight.util.UiText
@@ -26,6 +27,13 @@ enum class AccountError(val message: String) {
      * only they have — where the money actually went.
      */
     HAS_BALANCE(message = "Cannot close an account whose balance is not zero"),
+
+    /**
+     * The recurring FKs are SET_NULL: deleting would strip the link instead of
+     * failing, leaving a template with nothing to post through. Refused here so
+     * the orphan is never created, rather than remedied afterwards.
+     */
+    HAS_RECURRING(message = "Cannot delete an account a recurring transaction still uses"),
 }
 
 fun AccountError.toUiText() = when (this) {
@@ -35,4 +43,5 @@ fun AccountError.toUiText() = when (this) {
     AccountError.CANNOT_DELETE_DEFAULT -> UiText.Raw(AccountError.CANNOT_DELETE_DEFAULT.message)
     AccountError.HAS_TRANSACTIONS -> UiText.Res(Res.string.account_error_has_transactions)
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
+    AccountError.HAS_RECURRING -> UiText.Res(Res.string.account_error_has_recurring)
 }

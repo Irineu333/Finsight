@@ -443,3 +443,42 @@
 
 - [x] 9h.1 ⚠️ **O portão anterior era vácuo** — dava zero **antes de qualquer trabalho**. O matcher casava por *basename* em prosa solta, e produzia 8 falsos positivos, dois deles por **substring** (`TransactionsScreen` ⊂ `InvoiceTransactionsScreen`; `AddInstallmentUseCase` ⊂ `AddInstallmentUseCaseImpl`) e três em que a única menção era uma decisão de produto ou uma instrução de "**não tocar**". Eu declarei o matcher falível e o promovi a definição de pronto assim mesmo. **Portão novo:** a varredura casa pelo **path completo**, e só conta como coberto se a task o citar num **item de trabalho** — não em prosa, não numa decisão, não numa ressalva de "não tocar". O conjunto de padrões ganha **`domain.model.Operation` nu** (não só `Operation.Kind`), sem o qual `event/Installments.kt` fica invisível (9i.7). ⚠️ **Executado na 8ª rodada, o portão novo dava 1, não 0** — pegou `DeleteTransactionViewModel` (9i.6). É a primeira ferramenta destes artefatos que acha o próprio autor errado.
 - [x] 9h.2 Antes de qualquer afirmação de "morto"/"inalcançável"/"coberto"/"única cópia" em artefato, grepar os callers e **listá-los ali** (regra de método, `design.md`). As afirmações que sobreviveram erradas por seis rodadas são exatamente as que não listam callers.
+
+## 10. Auditoria de excluir/arquivar — conta, cartão, categoria
+
+> Varredura dos casos de borda de **excluir** e **arquivar** nas três entidades, feita depois
+> da §9. Confirmado primeiro o que **não** quebrou: `entries.accountId` é `NO_ACTION`
+> (`EntryEntity:27`), os três delete use cases barram por `hasEntries`, e as fachadas saem
+> junto com o `Account` na mesma transação. **O razão não desbalanceia por exclusão.** Os
+> achados são de guarda incompleta, erro engolido e assimetria entre as três — não de `Σ≠0`.
+
+### 10a. Assimetrias entre as três entidades
+
+- [x] 10a.1 **Cartão engolia o erro e fingia sucesso.** `DeleteCreditCardViewModel:27-35` e `ArchiveCreditCardViewModel:38-46` tinham o `dismissAll()` **fora** da cadeia do `Either`: a sheet fechava em erro e em sucesso, e o `toUiMessage()` (`:42-45`) era **código morto** — nenhum `showError`. Conta (`DeleteAccountViewModel:28-34`) e categoria (`DeleteCategoryViewModel:26-33`) já faziam o oposto. Falha silenciosa em app de finanças é o pior modo de falha; alinhado aos outros dois.
+- [x] 10a.2 **Categoria arquivada aceitava escrita.** `LedgerEntryWriter.orRejectIfClosed()` cobria só `realAccountId` (`:109-115`); `contraAccountId` → `categoryAccountId` (`:136`) escapava. O KDoc de `:98-102` **já declarava** a invariante como "checada onde toda perna de toda escrita passa" — metade das pernas não passava. Editar o valor de uma transação antiga gravava entries novos numa categoria arquivada. Teste em `LedgerEntryWriterTest`. ⚠️ **Efeito colateral aceito:** editar transação de categoria arquivada agora falha. É a invariante valendo; se incomodar, a saída é a tela oferecer trocar a categoria — **não** relaxar a invariante.
+- [x] 10a.3 **Nome único ignorava arquivados, nas três.** Os três `Validate*NameUseCase` varriam listas que o DAO já filtra por `isArchived = 0` (`CategoryDao:9-11`, `AccountDao:20-21`, `CreditCardDao:11-12`), então dava para criar homônimo de um arquivado. Arquivar preserva o nome e o histórico continua renderizando — dois "Mercado" lado a lado, um deles cinza, não é um nome. Trocados para as versões *including closed*; contas ganharam `getAllAccountsIncludingClosed()`.
+- [x] 10a.4 **Atalho de navegação para conta/cartão arquivado na recorrência.** `ViewRecurringModal:200-231` navegava para `AccountsRoute`/`CreditCardsRoute` de item arquivado — telas que não o listam. `ViewTransactionModal:225-285` **já tinha resolvido** o mesmo caso (`onClick = if (isArchived) null else {...}`); a recorrência não seguiu. Mesma forma aplicada, mesmo comentário.
+
+### 10b. Recorrência órfã — o desenho, e o que a auditoria errou
+
+> ⚠️ **A 1ª auditoria errou o mecanismo.** Alegou que a recorrência "sumia da lista" por
+> `INNER JOIN` e que confirmar "falhava silenciosamente". Não há JOIN: `RecurringDao` é
+> `SELECT * FROM recurring` puro e o repositório usa `map`, não `mapNotNull`. **O usuário
+> derrubou o achado testando.** O que existia era pior e tinha outra causa — abaixo.
+>
+> **Princípio:** a recorrência é um **template de intenção**. Se ela é confirmável é
+> **derivável** do estado das contas que referencia — não precisa de flag persistida, como
+> `deriveTransactionLabel`. E nunca substituir em silêncio.
+>
+> **Assimetria com razão de domínio:** categoria nula é **legítima** (`UNCATEGORIZED_EXPENSE`
+> é conta de sistema — "sem categoria" é estado válido do razão). Conta ou cartão nulo **não
+> é**: não existe "alguma conta" com significado, e conta-vs-cartão é a natureza do
+> lançamento, não um detalhe.
+
+- [x] 10b.1 **Hidratação usava as listas só-ativas.** `RecurringRepository:26-42` montava os mapas com `observeAllCategories()`/`observeAllAccounts()`/`observeAllCreditCards()`. Consequência: **arquivar** — não excluir — já fazia o vínculo sumir da tela **com o FK intacto**. Era isto que o usuário via. Trocado para as três lookups *including closed*; precisou de `observeAllAccountsIncludingClosed()` novo.
+- [x] 10b.2 **Dois fallbacks silenciosos no confirmar.** `ConfirmRecurringViewModel:80` fazia `account ?: conta padrão ?: primeira` — a recorrência era postada **em outra conta**, sem aviso. E `:43-47` calculava `initialTarget = ACCOUNT` quando `creditCard == null`, então **recorrência de fatura virava lançamento em conta** — a troca de semântica mais grave das três. Ambos mortos; a pré-seleção passa a filtrar arquivados (`initialAccount`/`initialCreditCard`). Como o modal já desabilitava Confirmar com seleção nula, o efeito sai de graça: fonte inválida → botão desabilitado até o usuário escolher.
+- [x] 10b.3 **Regra derivada, dono único.** `Recurring.hasUsableSource` (`core/model`), não persistida. Consumida pela tela: badge "Precisa de atenção" e nome da fonte em `outline` quando arquivada, seguindo `Category.displayColor`. Os dois `onLeft` mudos de confirmar/pular ganharam `showError`.
+- [x] 10b.4 **Guarda na exclusão, para o órfão não nascer.** As três FKs de `RecurringEntity:14-33` são `SET_NULL`: excluir **stripa o vínculo em vez de falhar**. Como recorrência nunca confirmada não gera entry, `hasEntries` é `false` e a exclusão passava. `AccountError.HAS_RECURRING` + `RecurringDao.countByAccount/countByCreditCard`; `DeleteAccountUseCaseImpl` e `DeleteCreditCardUseCase` recusam no mesmo lugar do `hasEntries`. Teste em `RetireAccountGuardsTest`.
+  - **Julgamento (decisão do usuário):** recorrência quebrada **continua ativa** com estado visível, em vez de auto-pausar. Auto-pausar é mais limpo, mas é outra mudança de estado sem o usuário pedir — o mesmo pecado, de outra cor.
+  - **Aceito:** a guarda conta recorrências **inativas** também (ainda referenciam a conta e podem ser reativadas), então uma recorrência esquecida bloqueia a exclusão.
+  - **Aceito:** a string é **neutra** ("Há recorrências que dependem disto...") porque a mesma `AccountError` serve conta e cartão — `DeleteCreditCardUseCase` já usava `AccountError.HAS_TRANSACTIONS` antes. Texto por entidade pediria um `CreditCardError` próprio.

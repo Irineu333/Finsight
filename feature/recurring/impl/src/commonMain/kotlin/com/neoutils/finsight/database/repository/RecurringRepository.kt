@@ -20,12 +20,18 @@ class RecurringRepository(
     private val creditCardRepository: ICreditCardRepository,
 ) : IRecurringRepository {
 
+    /**
+     * Hydrated from the *including closed* lookups, not the active facades: a
+     * recurring on an archived account still knows its account, and hiding that
+     * would read as if the link had been erased. The closure travels with the
+     * model, so consumers can render it as retired and refuse to post to it.
+     */
     override fun observeAllRecurring(): Flow<List<Recurring>> {
         return combine(
             dao.observeAll(),
-            categoryRepository.observeAllCategories(),
-            accountRepository.observeAllAccounts(),
-            creditCardRepository.observeAllCreditCards(),
+            categoryRepository.observeAllCategoriesIncludingClosed(),
+            accountRepository.observeAllAccountsIncludingClosed(),
+            creditCardRepository.observeAllCreditCardsIncludingClosed(),
         ) { entities, categories, accounts, creditCards ->
             val categoryMap = categories.associateBy { it.id }
             val accountMap = accounts.associateBy { it.id }
@@ -48,6 +54,12 @@ class RecurringRepository(
             // consumers when the target actually changed.
             .distinctUntilChanged()
     }
+
+    override suspend fun hasRecurringForAccount(accountId: Long) =
+        dao.countByAccount(accountId) > 0
+
+    override suspend fun hasRecurringForCreditCard(creditCardId: Long) =
+        dao.countByCreditCard(creditCardId) > 0
 
     override suspend fun insert(recurring: Recurring) {
         dao.insert(mapper.toEntity(recurring))

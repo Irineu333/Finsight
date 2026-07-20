@@ -23,7 +23,6 @@ class BudgetMapper {
     fun toEntity(domain: Budget): BudgetEntity {
         return BudgetEntity(
             id = domain.id,
-            categoryId = domain.categories.firstOrNull()?.id ?: 0,
             iconCategoryId = domain.categories.firstOrNull()?.id ?: 0,
             iconKey = domain.iconKey,
             title = domain.title,

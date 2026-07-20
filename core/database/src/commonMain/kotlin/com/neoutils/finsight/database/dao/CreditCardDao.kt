@@ -8,12 +8,17 @@ import androidx.room.Update
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import kotlinx.coroutines.flow.Flow
 
+// Same rule as categories: a card is closed when its LIABILITY account is (D21).
+private const val OPEN_CREDIT_CARDS =
+    "SELECT cc.* FROM credit_cards cc LEFT JOIN accounts a ON a.id = cc.accountId " +
+        "WHERE COALESCE(a.isClosed, 0) = 0"
+
 @Dao
 interface CreditCardDao {
-    @Query("SELECT * FROM credit_cards ORDER BY createdAt ASC")
+    @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     fun observeAllCreditCards(): Flow<List<CreditCardEntity>>
 
-    @Query("SELECT * FROM credit_cards ORDER BY createdAt ASC")
+    @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     suspend fun getAllCreditCardsList(): List<CreditCardEntity>
 
     @Query("SELECT * FROM credit_cards WHERE id = :id")

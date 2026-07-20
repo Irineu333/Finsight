@@ -14,7 +14,11 @@ data class Account(
     val currency: String = BASE_CURRENCY,
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    // An account with history is closed, never deleted: the entries that reference
+    // it stay valid and its real type is preserved. Categories and cards read their
+    // own closure from here, through their accountId — one flag, one owner (D21).
+    val isClosed: Boolean = false,
 ) {
     init {
         if (name.isEmpty()) {

@@ -156,6 +156,10 @@ private class FakeEntryDao : EntryDao {
 private class FakeAccountDao : AccountDao {
     val accounts = linkedMapOf<Long, AccountEntity>()
     private var seq = 100L
+    override suspend fun close(id: Long) {
+        accounts[id]?.let { accounts[id] = it.copy(isClosed = true) }
+    }
+    override suspend fun entryCount(accountId: Long): Int = 0
     override suspend fun insert(account: AccountEntity): Long {
         val id = seq++
         accounts[id] = account.copy(id = id)

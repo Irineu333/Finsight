@@ -45,6 +45,21 @@ class Migration7To9Test {
         connection.execSQL("CREATE TABLE IF NOT EXISTS `invoices` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
         connection.execSQL("CREATE TABLE IF NOT EXISTS `installments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
         connection.execSQL("CREATE TABLE IF NOT EXISTS `recurring` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
+        // The migration rebuilds `budgets` to drop its write-only `categoryId`.
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `budgets` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`categoryId` INTEGER NOT NULL, " +
+                "`iconCategoryId` INTEGER NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`title` TEXT NOT NULL, " +
+                "`amount` REAL NOT NULL, " +
+                "`period` TEXT NOT NULL, " +
+                "`limitType` TEXT NOT NULL DEFAULT 'FIXED', " +
+                "`percentage` REAL, " +
+                "`recurringId` INTEGER, " +
+                "`createdAt` INTEGER NOT NULL)"
+        )
 
         connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `operations` (" +
@@ -53,8 +68,14 @@ class Migration7To9Test {
                 "`recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER)"
         )
         connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recurring_occurrences` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recurringId` INTEGER NOT NULL, " +
+                "`cycleNumber` INTEGER NOT NULL, `yearMonth` TEXT NOT NULL, `status` TEXT NOT NULL, " +
+                "`operationId` INTEGER, `effectiveDate` TEXT NOT NULL, `handledAt` INTEGER NOT NULL)"
+        )
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `transactions` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `transactionId` INTEGER, " +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, " +
                 "`type` TEXT NOT NULL, `amount` REAL NOT NULL, `title` TEXT, `date` TEXT NOT NULL, " +
                 "`categoryId` INTEGER, `target` TEXT NOT NULL DEFAULT 'ACCOUNT', " +
                 "`creditCardId` INTEGER, `invoiceId` INTEGER, `accountId` INTEGER" +
@@ -67,16 +88,16 @@ class Migration7To9Test {
 
         // op1: expense 50 from A, category Food (single leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (1,'TRANSACTION','2024-01-10')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (1,'EXPENSE',50.0,'2024-01-10',1,'ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (1,'EXPENSE',50.0,'2024-01-10',1,'ACCOUNT',1)")
 
         // op2: transfer 100 A->B (two legs, already balanced)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (2,'TRANSFER','2024-01-11')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'EXPENSE',100.0,'2024-01-11','ACCOUNT',1)")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'INCOME',100.0,'2024-01-11','ACCOUNT',2)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'EXPENSE',100.0,'2024-01-11','ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (2,'INCOME',100.0,'2024-01-11','ACCOUNT',2)")
 
         // op3: adjustment +30 on A (single leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (3,'TRANSACTION','2024-01-12')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (3,'ADJUSTMENT',30.0,'2024-01-12','ACCOUNT',1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (3,'ADJUSTMENT',30.0,'2024-01-12','ACCOUNT',1)")
 
         // Card-payment scenario on account C(3): purchase 100 then pay 40 (invoice 1).
         connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (3,'C','wallet',0,1000)")
@@ -84,19 +105,19 @@ class Migration7To9Test {
         connection.execSQL("INSERT INTO `invoices` (`id`) VALUES (1)")
         // op4: card purchase 100 (single card leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (4,'TRANSACTION','2024-02-01')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
         // op5: payment 40 — account leg (also carries the card ref, like the real use case) + card leg
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (5,'PAYMENT','2024-02-05')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
 
         // Orphaned legs from deleted account/card (FK SET_NULL): accountId/creditCardId is NULL.
         // op6: expense 20 whose account was deleted (target ACCOUNT, accountId NULL), category Food.
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (6,'TRANSACTION','2024-03-01')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (6,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (6,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)")
         // op7: card purchase 15 whose card was deleted (target CREDIT_CARD, creditCardId NULL), category Food.
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (7,'TRANSACTION','2024-03-02')")
-        connection.execSQL("INSERT INTO `transactions` (`transactionId`,`type`,`amount`,`date`,`categoryId`,`target`,`creditCardId`) VALUES (7,'EXPENSE',15.0,'2024-03-02',1,'CREDIT_CARD',NULL)")
+        connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`creditCardId`) VALUES (7,'EXPENSE',15.0,'2024-03-02',1,'CREDIT_CARD',NULL)")
     }
 
     @AfterTest
@@ -112,13 +133,40 @@ class Migration7To9Test {
         return value
     }
 
+    private fun text(sql: String): String? {
+        val stmt = connection.prepare(sql)
+        val value = if (stmt.step()) stmt.getText(0) else null
+        stmt.close()
+        return value
+    }
+
     @Test
     fun `given v7 when migrated then entries table and indices are created`() {
         MIGRATION_7_9.migrate(connection)
 
         assertTrue(connection.tableExists("entries"))
-        assertTrue(connection.indexExists("index_entries_operationId"))
+        assertTrue(connection.indexExists("index_entries_transactionId"))
         assertTrue(connection.indexExists("index_entries_accountId"))
+
+        // The index must be attached to `entries` itself, not merely exist by name.
+        assertEquals(
+            1L,
+            scalar("SELECT COUNT(*) FROM pragma_index_list('entries') WHERE name = 'index_entries_transactionId'"),
+        )
+    }
+
+    @Test
+    fun `given v7 when migrated then the legacy leg table is gone and entries point at transactions`() {
+        MIGRATION_7_9.migrate(connection)
+
+        // `operations` took the legacy table's name; the leg table no longer exists.
+        assertTrue(connection.tableExists("transactions"))
+        assertTrue("kind" !in connection.getColumns("transactions"))
+
+        assertEquals(
+            "transactions",
+            text("SELECT \"table\" FROM pragma_foreign_key_list('entries') WHERE \"from\" = 'transactionId'"),
+        )
     }
 
     @Test
@@ -192,32 +240,48 @@ class Migration7To9Test {
     }
 
     @Test
-    fun `given orphaned legs from a deleted account or card when migrated then it does not crash and routes them to removed-account`() {
+    fun `given orphaned legs from a deleted account or card when migrated then they become closed accounts`() {
         MIGRATION_7_9.migrate(connection) // must not throw on NULL accountId/creditCardId
 
         // No entry has a null account — a single null would have aborted the whole upgrade.
         assertEquals(0L, scalar("SELECT COUNT(*) FROM `entries` WHERE `accountId` IS NULL"))
 
-        // The two orphaned legs (-2000 and -1500) land on the seeded 'Conta removida' EQUITY account.
-        val removed = scalar(
-            "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e JOIN `accounts` a ON a.`id` = e.`accountId` " +
-                "WHERE a.`type` = 'EQUITY' AND a.`name` = 'Conta removida'"
-        )
-        assertEquals(-3500L, removed)
+        // The orphan of a deleted account is reconstructed as a closed ASSET account,
+        // the orphan of a deleted card as a closed LIABILITY one.
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Conta encerrada' AND `type` = 'ASSET' AND `isClosed` = 1"))
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Cartão encerrado' AND `type` = 'LIABILITY' AND `isClosed` = 1"))
+
+        // Each is zeroed by its write-off, so the money of a deleted account no longer
+        // sits in net worth: -2000 and -1500 offset by the 'Encerramento' operations.
+        assertEquals(0L, scalar(closedBalance("Conta encerrada")))
+        assertEquals(0L, scalar(closedBalance("Cartão encerrado")))
+
+        // The write-off is dated at the account's last movement, not at migration time.
+        assertEquals("2024-03-01", text(writeOffDate("Conta encerrada")))
+        assertEquals("2024-03-02", text(writeOffDate("Cartão encerrado")))
 
         // The whole ledger still sums to zero (orphan legs balanced by their category contra).
         assertEquals(0L, scalar("SELECT COALESCE(SUM(`amount`), 0) FROM `entries`"))
     }
 
+    private fun closedBalance(name: String) =
+        "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e JOIN `accounts` a ON a.`id` = e.`accountId` WHERE a.`name` = '$name'"
+
+    private fun writeOffDate(name: String) =
+        "SELECT t.`date` FROM `transactions` t JOIN `entries` e ON e.`transactionId` = t.`id` " +
+            "JOIN `accounts` a ON a.`id` = e.`accountId` WHERE a.`name` = '$name' AND t.`title` = 'Encerramento'"
+
     @Test
     fun `given an adjustment when migrated then its contra is the reconciliation equity account`() {
+        // Scoped to op3: reconciliation is also the counter-leg of the closed-account
+        // write-offs, so a global sum would no longer characterize the adjustment alone.
         MIGRATION_7_9.migrate(connection)
 
         // op3 has two entries: +3000 on A and -3000 on the reconciliation EQUITY account.
         val reconciliationSum = scalar(
             "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e " +
                 "JOIN `accounts` a ON a.`id` = e.`accountId` " +
-                "WHERE a.`type` = 'EQUITY' AND a.`name` = 'Reconciliação'"
+                "WHERE e.`transactionId` = 3 AND a.`type` = 'EQUITY' AND a.`name` = 'Reconciliação'"
         )
         assertEquals(-3000L, reconciliationSum)
     }

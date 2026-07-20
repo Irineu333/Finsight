@@ -30,16 +30,3 @@ val Category.displayColor: Color
         type == Category.Type.EXPENSE -> Expense
         else -> colorScheme.onSurface
     }
-
-/**
- * The tint for a category icon drawn *inside a transaction*.
- *
- * The transaction keeps its own colour — it is still an expense or an income, and
- * archiving the category does not change what happened. Only the category's own
- * mark reads muted, so the icon says "this category is out of circulation"
- * without recolouring the movement around it.
- */
-@Composable
-@ReadOnlyComposable
-fun categoryTint(default: Color, isCategoryArchived: Boolean): Color =
-    if (isCategoryArchived) colorScheme.onSurfaceVariant else default

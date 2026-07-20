@@ -257,6 +257,14 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
+- [x] 8.15 **Bug de runtime achado pelo usuário: excluir e encerrar categoria não funcionavam.** Nem uma nem outra, e o modal não fechava nem mostrava erro. Dois defeitos meus, um de desenho e um de propagação.
+
+  **Desenho.** Apliquei a regra de saldo zero da 8.14 a **todo** tipo de conta. Uma categoria é conta `INCOME`/`EXPENSE` — conta de **fluxo**, cujo saldo é o acumulado de gastos e nunca é zero depois de usada. Então encerrar categoria usada falhava sempre com `HAS_BALANCE`, e excluir falhava com `HAS_TRANSACTIONS`: nenhum dos dois caminhos existia. A regra vale só para conta **monetária** (`AccountType.isMonetary`), onde saldo ≠ 0 significa dinheiro parado em algum lugar; num fluxo não há o que resolver. Corrigido e coberto por teste.
+
+  **Propagação.** O erro morria em `crashlytics.recordException` e a folha simplesmente não fechava — o mesmo defeito que a 8.8 registra ter corrigido **para os modais de transação**, e que eu não levei para os outros. Quinta reincidência do padrão "corrigi a instância, não varri a classe".
+
+  Desta vez a correção é estrutural em vez de por modal: `ModalManager` ganhou um canal de erro e o `ModalManagerHost` um snackbar. Qualquer modal chama `modalManager.showError(uiText)` e o usuário vê — sem canal de eventos por ViewModel, e sem que um modal esquecido volte a ficar mudo. As seis ViewModels de excluir/encerrar passam por ele.
+
 - [x] 8.14 **Encerrar deixa de gerar baixa automática; passa a exigir saldo zero (decisão do usuário, revoga a D13 nesse ponto).** A D13 e a spec `account-lifecycle` prescreviam que encerrar com saldo ≠ 0 gerasse um lançamento de baixa contra reconciliação. O usuário recusou: é "mágica" que pode contrariar a expectativa dele.
 
   **Ele está certo, e a justificativa da spec não se sustentava.** Ela dizia "o saldo MUST NOT desaparecer sem lançamento" — argumento herdado do problema de **apagar**, onde o dinheiro sumia do patrimônio sem registro. Ao **encerrar**, as entries ficam: nada some. A baixa não registrava uma saída, ela **inventava** uma — e pior, substituía a única informação que só o usuário tem (para onde o dinheiro foi) por uma reconciliação genérica, num lançamento que aparece no histórico dele como se ele o tivesse feito.

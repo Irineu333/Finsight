@@ -101,6 +101,22 @@ class RetireAccountGuardsTest {
     }
 
     @Test
+    fun `closing a used category ignores its balance`() = runTest {
+        // A category is an EXPENSE account: its balance is accumulated spending, not
+        // money sitting anywhere, and it is never zero once used. Requiring zero here
+        // made closing a used category impossible.
+        val category = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        val dao = RecordingAccountDao()
+        val useCase = CloseAccountUseCaseImpl(
+            accountDao = dao,
+            entryRepository = FakeEntries(hasEntries = true, balance = 250.0),
+        )
+
+        assertTrue(useCase(category).isRight())
+        assertEquals(listOf(category.id), dao.closed)
+    }
+
+    @Test
     fun `deleting an account that never moved removes it`() = runTest {
         val repository = RecordingAccountRepository()
         val useCase = DeleteAccountUseCaseImpl(

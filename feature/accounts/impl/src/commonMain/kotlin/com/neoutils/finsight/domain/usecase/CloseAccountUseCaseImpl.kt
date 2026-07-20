@@ -21,11 +21,16 @@ class CloseAccountUseCaseImpl(
             return AccountException(AccountError.NO_TRANSACTIONS).left()
         }
 
-        // Closing does not invent a write-off to zero the balance. That would put a
-        // movement the user never made into their history, and replace the one fact
-        // only they have — where the money went — with a generic reconciliation.
-        // They resolve it first, by transferring, spending or adjusting.
-        if (entryRepository.balance(account.id) != 0.0) {
+        // Only a *monetary* account can hold money that closing would strand, and
+        // closing does not invent a write-off to zero it: that would put a movement
+        // the user never made into their history, replacing the one fact only they
+        // have — where the money went — with a generic reconciliation. They resolve
+        // it first, by transferring, spending or adjusting.
+        //
+        // A category is an INCOME/EXPENSE account: its balance is accumulated flow,
+        // not money sitting anywhere, and it is never zero once used. Requiring zero
+        // there would make closing a used category impossible.
+        if (account.type.isMonetary && entryRepository.balance(account.id) != 0.0) {
             return AccountException(AccountError.HAS_BALANCE).left()
         }
 

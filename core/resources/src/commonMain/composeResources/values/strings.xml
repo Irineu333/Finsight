@@ -208,6 +208,7 @@
     <string name="accounts_balance">Saldo</string>
     <string name="retire_action_delete">Excluir</string>
     <string name="retire_action_close">Encerrar</string>
+    <string name="retire_action_error_generic">Não foi possível concluir a ação.</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <string name="accounts_filter_category">Categoria</string>

@@ -90,6 +90,7 @@ class AccountsViewModel(
                 expense = flows.expense,
                 adjustment = flows.adjustment,
                 invoicePayment = flows.invoicePayment,
+                hasMovement = entryRepository.hasEntries(account.id),
             )
         }
     }

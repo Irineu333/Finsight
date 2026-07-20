@@ -22,12 +22,6 @@ import com.neoutils.finsight.domain.model.Account
 interface CloseAccountUseCase {
     suspend operator fun invoke(account: Account): Either<Throwable, Outcome>
 
-    /**
-     * What [invoke] would do, without doing it — so a screen can name the action
-     * ("excluir" vs "encerrar") by asking the rule instead of re-deriving it.
-     */
-    suspend fun outcomeFor(account: Account): Outcome
-
     enum class Outcome {
         /** Never moved: removed outright. */
         DELETED,

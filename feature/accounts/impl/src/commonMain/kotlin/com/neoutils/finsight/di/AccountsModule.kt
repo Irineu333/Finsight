@@ -21,6 +21,7 @@ import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.impl.AccountsEntryImpl
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
+import com.neoutils.finsight.ui.modal.closeAccount.CloseAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
@@ -107,7 +108,16 @@ val accountsModule = module {
         DeleteAccountViewModel(
             account = it.get(),
             deleteAccountUseCase = get(),
-            closeAccountUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        CloseAccountViewModel(
+            account = it.get(),
+            deleteAccountUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

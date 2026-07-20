@@ -51,6 +51,7 @@ private class FakeReadEntryDao(
     override suspend fun getAll(): List<EntryEntity> = throw NotImplementedError()
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
     override fun observeEntryCount(): Flow<Long> = flowOf(0)
+    override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = throw NotImplementedError()
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()

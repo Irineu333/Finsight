@@ -55,6 +55,8 @@ class EntryRepository(
 
     override fun observeLedgerChanges(): Flow<Unit> = entryDao.observeEntryCount().map { }
 
+    override suspend fun hasEntries(accountId: Long): Boolean = entryDao.hasEntries(accountId)
+
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double {
         val cents = if (accountId == null) {
             entryDao.assetsBalanceUpToMonth(target.toString())

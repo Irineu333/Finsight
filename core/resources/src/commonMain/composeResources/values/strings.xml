@@ -181,6 +181,7 @@
     <string name="credit_cards_empty">Sem cartões de crédito</string>
     <string name="credit_cards_create">Criar cartão</string>
     <string name="credit_cards_delete">Excluir</string>
+    <string name="credit_cards_close">Encerrar</string>
     <string name="credit_cards_edit">Editar</string>
     <string name="credit_cards_advance_payment">Antecipar Pagamento</string>
     <string name="credit_cards_close_invoice">Fechar Fatura</string>
@@ -205,6 +206,7 @@
     <string name="accounts_advance_payments">Adiantamentos</string>
     <string name="accounts_balance">Saldo</string>
     <string name="accounts_delete">Excluir</string>
+    <string name="accounts_close">Encerrar</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <string name="accounts_filter_category">Categoria</string>

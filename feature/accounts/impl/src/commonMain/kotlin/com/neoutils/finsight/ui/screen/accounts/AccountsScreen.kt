@@ -56,6 +56,9 @@ import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
+import androidx.compose.material.icons.filled.Archive
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.closeAccount.CloseAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsModal
@@ -64,6 +67,7 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.accounts_close
 import com.neoutils.finsight.resources.accounts_delete
 import com.neoutils.finsight.resources.accounts_edit
 import com.neoutils.finsight.resources.accounts_filter_category
@@ -226,6 +230,7 @@ private fun AccountsContent(
                     ) {
                         AccountActions(
                             account = uiState.domainAccounts[uiState.selectedAccountIndex],
+                            retireAction = uiState.accounts[uiState.selectedAccountIndex].retireAction,
                             canTransfer = uiState.accounts.size > 1,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -342,6 +347,7 @@ private fun AccountPager(
 @Composable
 private fun AccountActions(
     account: Account,
+    retireAction: RetireAction,
     canTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -356,8 +362,15 @@ private fun AccountActions(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
+                // Which of the two is offered is a presentation rule (`retireActionOf`);
+                // which one actually happens is the ledger's, in CloseAccountUseCase.
                 onClick = {
-                    modalManager.show(DeleteAccountModal(account))
+                    modalManager.show(
+                        when (retireAction) {
+                            RetireAction.DELETE -> DeleteAccountModal(account)
+                            RetireAction.CLOSE -> CloseAccountModal(account)
+                        }
+                    )
                 },
                 enabled = !account.isDefault,
                 modifier = Modifier.weight(1f),
@@ -378,13 +391,21 @@ private fun AccountActions(
                 contentPadding = PaddingValues(12.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    imageVector = when (retireAction) {
+                        RetireAction.DELETE -> Icons.Default.Delete
+                        RetireAction.CLOSE -> Icons.Default.Archive
+                    },
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.accounts_delete),
+                    text = stringResource(
+                        when (retireAction) {
+                            RetireAction.DELETE -> Res.string.accounts_delete
+                            RetireAction.CLOSE -> Res.string.accounts_close
+                        }
+                    ),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

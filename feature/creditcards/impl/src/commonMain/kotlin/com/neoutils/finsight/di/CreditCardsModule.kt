@@ -13,6 +13,7 @@ import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentViewModel
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceViewModel
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormViewModel
+import com.neoutils.finsight.ui.modal.closeCreditCard.CloseCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardViewModel
 import com.neoutils.finsight.ui.modal.deleteFutureInvoice.DeleteFutureInvoiceViewModel
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewModel
@@ -56,6 +57,7 @@ val creditCardsModule = module {
 
     viewModel {
         CreditCardsViewModel(
+            entryRepository = get(),
             initialCreditCardId = it.getOrNull(),
             creditCardRepository = get(),
             transactionRepository = get(),
@@ -119,8 +121,16 @@ val creditCardsModule = module {
         DeleteCreditCardViewModel(
             creditCard = it.get(),
             deleteCreditCardUseCase = get(),
-            closeAccountUseCase = get(),
-            accountRepository = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        CloseCreditCardViewModel(
+            creditCard = it.get(),
+            deleteCreditCardUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

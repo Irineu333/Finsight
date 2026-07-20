@@ -181,6 +181,7 @@
     <string name="credit_cards_empty">No credit cards</string>
     <string name="credit_cards_create">Create card</string>
     <string name="credit_cards_delete">Delete</string>
+    <string name="credit_cards_close">Close</string>
     <string name="credit_cards_edit">Edit</string>
     <string name="credit_cards_advance_payment">Advance Payment</string>
     <string name="credit_cards_close_invoice">Close Invoice</string>
@@ -205,6 +206,7 @@
     <string name="accounts_advance_payments">Advance Payments</string>
     <string name="accounts_balance">Balance</string>
     <string name="accounts_delete">Delete</string>
+    <string name="accounts_close">Close</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
     <string name="accounts_filter_category">Category</string>

@@ -44,6 +44,8 @@ import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.closeCreditCard.CloseCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
@@ -359,8 +361,14 @@ private fun CardActions(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
+                // Presentation picks the wording; the ledger picks the outcome.
                 onClick = {
-                    modalManager.show(DeleteCreditCardModal(creditCard))
+                    modalManager.show(
+                        when (creditCardUi.retireAction) {
+                            RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
+                            RetireAction.CLOSE -> CloseCreditCardModal(creditCard)
+                        }
+                    )
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -379,7 +387,12 @@ private fun CardActions(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(Res.string.credit_cards_delete),
+                    text = stringResource(
+                        when (creditCardUi.retireAction) {
+                            RetireAction.DELETE -> Res.string.credit_cards_delete
+                            RetireAction.CLOSE -> Res.string.credit_cards_close
+                        }
+                    ),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

@@ -159,6 +159,7 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()

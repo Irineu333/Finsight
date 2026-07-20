@@ -60,6 +60,12 @@ interface IEntryRepository {
      */
     suspend fun balanceUpTo(target: YearMonth, accountId: Long? = null): Double
 
+    /**
+     * Whether [accountId] has any movement. The fact behind "can this be removed
+     * or only closed" — the decision itself belongs to `CloseAccountUseCase`.
+     */
+    suspend fun hasEntries(accountId: Long): Boolean
+
     /** All-time natural balance of [accountId], across every date. */
     suspend fun balance(accountId: Long): Double
 

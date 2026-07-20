@@ -76,6 +76,7 @@ class ViewCategoryViewModelTest {
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+        override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = counts[accountId] ?: 0
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

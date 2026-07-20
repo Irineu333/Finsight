@@ -24,11 +24,6 @@ class CloseAccountUseCaseImpl(
     private val transactionRepository: ITransactionRepository,
 ) : CloseAccountUseCase {
 
-    override suspend fun outcomeFor(account: Account): CloseAccountUseCase.Outcome = when {
-        accountDao.entryCount(account.id) == 0 -> CloseAccountUseCase.Outcome.DELETED
-        entryRepository.balance(account.id) != 0.0 -> CloseAccountUseCase.Outcome.CLOSED_WITH_WRITE_OFF
-        else -> CloseAccountUseCase.Outcome.CLOSED
-    }
 
     override suspend fun invoke(account: Account): Either<Throwable, CloseAccountUseCase.Outcome> = catch {
         if (accountDao.entryCount(account.id) == 0) {

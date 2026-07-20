@@ -31,6 +31,7 @@ import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -202,6 +203,8 @@ private class Fakes {
     fun accountRepository(accounts: List<Account>) = object : IAccountRepository {
         override fun observeAllAccounts(): Flow<List<Account>> = MutableStateFlow(accounts)
         override suspend fun getAllAccounts(): List<Account> = accounts
+        override suspend fun getAllLedgerAccounts(): List<Account> = accounts
+        override fun observeAllLedgerAccounts(): Flow<List<Account>> = MutableStateFlow(accounts)
         override suspend fun getAccountById(accountId: Long): Account? = accounts.firstOrNull { it.id == accountId }
         override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
@@ -254,6 +257,7 @@ private class Fakes {
     fun entryRepository(owed: Map<Long, Double> = emptyMap()) = object : IEntryRepository {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

@@ -48,6 +48,13 @@ interface IEntryRepository {
     fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>>
 
     /**
+     * Emits whenever the ledger changes. A screen whose numbers come from the SQL
+     * aggregates below has nothing else to observe — the aggregates are `suspend`,
+     * so without this its balances stay frozen while the ledger moves underneath.
+     */
+    fun observeLedgerChanges(): Flow<Unit>
+
+    /**
      * Natural balance of [accountId] (or of all ASSET accounts when null) up to
      * and including [target].
      */

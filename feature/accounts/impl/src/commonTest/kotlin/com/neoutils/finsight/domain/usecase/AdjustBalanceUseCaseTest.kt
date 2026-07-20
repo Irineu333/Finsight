@@ -91,6 +91,9 @@ class FakeOperationRepository(private val ledger: LedgerStore) : IOperationRepos
         )
     }
 
+    override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> =
+        intents.map { createOperation(it) }
+
     override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) {
         ledger.dateByOperation[id] = date
         ledger.write(id, listOf(leg))

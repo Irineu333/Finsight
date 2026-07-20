@@ -88,14 +88,6 @@ class BuildTransactionUseCaseImpl(
 
         val invoice = getOrCreateInvoiceForMonthUseCase(creditCard, invoiceDueMonth).bind()
 
-        ensure(!invoice.status.isClosed) {
-            BuildTransactionException(BuildTransactionError.ClosedInvoice)
-        }
-
-        ensure(!invoice.status.isPaid) {
-            BuildTransactionException(BuildTransactionError.ClosedInvoice)
-        }
-
         OperationIntent(
             title = form.title,
             date = date,

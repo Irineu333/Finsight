@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
@@ -41,16 +41,14 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an expense when written then two entries sum to zero`() = runTest {
         categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
-        val expense = Transaction(
+        val expense = OperationLeg(
             type = TransactionType.EXPENSE,
             amount = 50.0,
-            title = null,
-            date = DATE,
             account = assetAccount(1),
             category = Category(id = 1, name = "Food", icon = CategoryLazyIcon("food"), type = Category.Type.EXPENSE, createdAt = 0),
         )
 
-        writer.writeEntries(transactionId = 1, transactions = listOf(expense))
+        writer.writeEntries(transactionId = 1, legs = listOf(expense))
 
         assertEquals(2, entryDao.inserted.size)
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
@@ -60,11 +58,11 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given a transfer when written then both legs balance without synthesis`() = runTest {
-        val out = Transaction(type = TransactionType.EXPENSE, amount = 100.0, title = null, date = DATE, account = assetAccount(1))
-        val income = Transaction(type = TransactionType.INCOME, amount = 100.0, title = null, date = DATE, account = assetAccount(2))
+        val out = OperationLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
+        val income = OperationLeg(type = TransactionType.INCOME, amount = 100.0, account = assetAccount(2))
 
         writer.validate(listOf(out, income))
-        writer.writeEntries(transactionId = 2, transactions = listOf(out, income))
+        writer.writeEntries(transactionId = 2, legs = listOf(out, income))
 
         assertEquals(2, entryDao.inserted.size)
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
@@ -74,9 +72,9 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an adjustment when written then contra is a created reconciliation equity account`() = runTest {
-        val adjustment = Transaction(type = TransactionType.ADJUSTMENT, amount = 30.0, title = null, date = DATE, account = assetAccount(1))
+        val adjustment = OperationLeg(type = TransactionType.ADJUSTMENT, amount = 30.0, account = assetAccount(1))
 
-        writer.writeEntries(transactionId = 3, transactions = listOf(adjustment))
+        writer.writeEntries(transactionId = 3, legs = listOf(adjustment))
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val reconciliation = accountDao.accounts.values.first { it.type == AccountEntity.Type.EQUITY }
@@ -97,10 +95,10 @@ class LedgerEntryWriterTest {
             status = Invoice.Status.CLOSED,
         )
         // The paying leg carries account + card + invoice (as the real use case builds it).
-        val accountLeg = Transaction(type = TransactionType.EXPENSE, amount = 50.0, title = null, date = DATE, account = assetAccount(1), creditCard = card, invoice = invoice)
-        val cardLeg = Transaction(type = TransactionType.INCOME, amount = 50.0, title = null, date = DATE, creditCard = card, invoice = invoice)
+        val accountLeg = OperationLeg(type = TransactionType.EXPENSE, amount = 50.0, account = assetAccount(1), creditCard = card, invoice = invoice)
+        val cardLeg = OperationLeg(type = TransactionType.INCOME, amount = 50.0, creditCard = card, invoice = invoice)
 
-        writer.writeEntries(transactionId = 4, transactions = listOf(accountLeg, cardLeg))
+        writer.writeEntries(transactionId = 4, legs = listOf(accountLeg, cardLeg))
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val bankEntry = entryDao.inserted.first { it.accountId == 1L }
@@ -113,8 +111,8 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an unbalanced multi-leg operation when validated then it is rejected`() {
-        val a = Transaction(type = TransactionType.EXPENSE, amount = 100.0, title = null, date = DATE, account = assetAccount(1))
-        val b = Transaction(type = TransactionType.INCOME, amount = 80.0, title = null, date = DATE, account = assetAccount(2))
+        val a = OperationLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
+        val b = OperationLeg(type = TransactionType.INCOME, amount = 80.0, account = assetAccount(2))
 
         assertFailsWith<UnbalancedOperationException> { writer.validate(listOf(a, b)) }
     }

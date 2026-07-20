@@ -75,6 +75,7 @@ class ViewBudgetViewModelTest {
         override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
         override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
         override suspend fun createOperation(intent: OperationIntent): Operation = throw NotImplementedError()
+        override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> = throw NotImplementedError()
         override suspend fun updateOperation(
             id: Long,
             title: String?,

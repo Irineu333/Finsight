@@ -37,6 +37,8 @@
     <string name="transfer_error_future_date">A data da transferência não pode ser futura.</string>
     <string name="transfer_error_unknown">Não foi possível concluir a transferência.</string>
     <string name="ledger_error_unbalanced">A operação não está balanceada (as pernas não somam zero).</string>
+    <string name="ledger_error_paid_invoice">Esta fatura já foi paga e não pode mais ser alterada.</string>
+    <string name="ledger_error_closed_invoice">Esta fatura está fechada. Só o pagamento dela pode ser registrado.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Parcelamento deve ter pelo menos 2 parcelas.</string>

@@ -77,7 +77,7 @@ class AddInstallmentUseCaseImpl(
         repeat(installments) { index ->
             val invoice = invoices.find { it.dueMonth == dueMonth }
 
-            if (invoice != null && invoice.status.isBlocked) {
+            if (invoice != null && invoice.status.isClosedToNewExpenses) {
                 return InstallmentException(
                     InstallmentError.BlockedInvoice(
                         installment = index + 1,

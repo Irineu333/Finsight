@@ -13,14 +13,13 @@ import kotlin.test.assertEquals
 class ComposeAppCommonTest {
 
     @Test
-    fun operationLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
+    fun operationDisplayTitleFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val operation = Operation(
             title = null,
             date = LocalDate(2026, 3, 3),
-            transactions = emptyList(),
         )
 
-        assertEquals("Untitled", operation.label)
+        assertEquals("Untitled", operation.displayTitle)
     }
 
     @Test

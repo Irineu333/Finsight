@@ -12,6 +12,8 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -20,6 +22,7 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -194,9 +197,47 @@ class OperationRepository(
         return entity.toDomain(lookups())
     }
 
+    /**
+     * The invoice-status invariant, enforced at the single write boundary next to
+     * `Σ = 0` (design D23) so no screen or use case has to remember it:
+     *
+     *  - `PAID` — settled history: nothing may touch it.
+     *  - `CLOSED` — takes no new spending, but must still accept the payment that
+     *    settles it, which is the whole point of closing.
+     *  - anything else — free.
+     *
+     * `CLOSED` and `PAID` behave differently here, which is why `isClosedToNewExpenses` (which
+     * fuses them) is not the predicate: it happens to be right only for creating
+     * an expense, where the two coincide.
+     */
+    private suspend fun ensureInvoiceAccepts(legs: List<OperationLeg>) {
+        val invoiceIds = legs.mapNotNull { it.invoice?.id }.toSet()
+        if (invoiceIds.isEmpty()) return
+
+        val isPayment = legs.deriveIntentLabel() == OperationLabel.PAYMENT
+
+        invoiceIds.forEach { invoiceId ->
+            val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
+            when {
+                status.isPaid -> throw InvoiceLockedException(LedgerError.PaidInvoice)
+                status.isClosed && !isPayment -> throw InvoiceLockedException(LedgerError.ClosedInvoice)
+            }
+        }
+    }
+
+    /**
+     * A payment is the one intent that pays a card from an account: an account leg
+     * and a card leg on the same operation. Derived, like every other label.
+     */
+    private fun List<OperationLeg>.deriveIntentLabel(): OperationLabel = when {
+        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard } -> OperationLabel.PAYMENT
+        else -> OperationLabel.EXPENSE
+    }
+
     override suspend fun createOperation(intent: OperationIntent): Operation {
         // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
         ledgerEntryWriter.validate(intent.legs)
+        ensureInvoiceAccepts(intent.legs)
 
         // The operation row and its ledger legs are written in a single transaction,
         // so a mid-way failure (missing facade row, cancellation, DB error) rolls back
@@ -215,7 +256,10 @@ class OperationRepository(
     }
 
     override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> {
-        intents.forEach { ledgerEntryWriter.validate(it.legs) }
+        intents.forEach {
+            ledgerEntryWriter.validate(it.legs)
+            ensureInvoiceAccepts(it.legs)
+        }
 
         val ids = database.useWriterConnection { connection ->
             connection.immediateTransaction {
@@ -232,6 +276,8 @@ class OperationRepository(
     }
 
     override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) {
+        ensureInvoiceAccepts(listOf(leg))
+
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
         // failure never leaves the operation with its old legs deleted and no new ones.
         database.useWriterConnection { connection ->
@@ -248,6 +294,17 @@ class OperationRepository(
     }
 
     override suspend fun deleteOperationById(id: Long) {
+        // Removing an operation is a change to its invoice too, so it passes the
+        // same gate — a paid invoice cannot lose a purchase behind the user's back.
+        transactionDao.getById(id)?.let {
+            val invoiceIds = entryDao.getByOperationId(id).mapNotNull { entry -> entry.invoiceId }.toSet()
+            invoiceIds.forEach { invoiceId ->
+                val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
+                if (status.isPaid) throw InvoiceLockedException(LedgerError.PaidInvoice)
+                if (status.isClosed) throw InvoiceLockedException(LedgerError.ClosedInvoice)
+            }
+        }
+
         // The installment bookkeeping and the row removal are one transaction: a
         // failure between them would leave the installment's count and total
         // describing operations that no longer exist.

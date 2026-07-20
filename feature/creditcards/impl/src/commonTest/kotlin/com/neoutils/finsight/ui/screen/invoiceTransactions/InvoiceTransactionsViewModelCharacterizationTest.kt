@@ -8,8 +8,10 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -52,19 +54,33 @@ class InvoiceTransactionsViewModelCharacterizationTest {
         status = Invoice.Status.OPEN,
     )
 
-    private fun cardLeg(type: TransactionType, amount: Double) = Transaction(
-        type = type, amount = amount, title = null, date = LocalDate(2026, 3, 10), creditCard = card, invoice = invoice,
-    )
+    private val cardAccount = Account(id = 10, name = "Card", type = AccountType.LIABILITY)
+    private val contraAccount = Account(id = 20, name = "Contra", type = AccountType.EXPENSE)
 
-    private fun op(id: Long, leg: Transaction) = Operation(id = id, title = null, date = leg.date, transactions = listOf(leg))
+    /** The card's LIABILITY leg — the only one carrying the invoice — plus its contra leg. */
+    private fun op(id: Long, type: TransactionType, amount: Double): Operation {
+        val cents = (amount * 100).toLong()
+        val signed = if (type == TransactionType.EXPENSE) -cents else cents
+        return Operation(
+            id = id,
+            title = null,
+            date = LocalDate(2026, 3, 10),
+            targetCreditCard = card,
+            targetInvoice = invoice,
+            entries = listOf(
+                Entry(transactionId = id, account = cardAccount, amount = signed, invoiceId = invoice.id),
+                Entry(transactionId = id, account = contraAccount, amount = -signed),
+            ),
+        )
+    }
 
     @Test
     fun `invoice summary characterizes the card leg sums and owed total`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, cardLeg(TransactionType.EXPENSE, 60.0)),
-            op(2, cardLeg(TransactionType.EXPENSE, 40.0)),
-            op(3, cardLeg(TransactionType.ADJUSTMENT, 10.0)),
-            op(4, cardLeg(TransactionType.INCOME, 30.0)), // advance payment
+            op(1, TransactionType.EXPENSE, 60.0),
+            op(2, TransactionType.EXPENSE, 40.0),
+            op(3, TransactionType.ADJUSTMENT, 10.0),
+            op(4, TransactionType.INCOME, 30.0), // advance payment
         )
         val vm = InvoiceTransactionsViewModel(
             creditCardId = 1,
@@ -126,8 +142,9 @@ private class FakeOperationRepository(private val operations: List<Operation>) :
     override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
     override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
     override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-    override suspend fun createOperation(title: String?, date: LocalDate, categoryId: Long?, recurringId: Long?, recurringCycle: Int?, installmentId: Long?, installmentNumber: Int?, transactions: List<Transaction>): Operation = throw NotImplementedError()
-    override suspend fun updateOperation(id: Long, transaction: Transaction) = throw NotImplementedError()
+    override suspend fun createOperation(intent: OperationIntent): Operation = throw NotImplementedError()
+    override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> = throw NotImplementedError()
+    override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) = throw NotImplementedError()
     override suspend fun deleteOperationById(id: Long) = throw NotImplementedError()
     override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
 }

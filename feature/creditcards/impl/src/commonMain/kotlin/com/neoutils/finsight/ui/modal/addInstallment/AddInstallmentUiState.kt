@@ -10,5 +10,5 @@ data class AddInstallmentUiState(
     val selectedCreditCard: CreditCard? = null,
     val invoiceSelection: InvoiceMonthSelection? = null,
 ) {
-    val isInvoiceBlocked = invoiceSelection?.isBlocked == true
+    val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
 }

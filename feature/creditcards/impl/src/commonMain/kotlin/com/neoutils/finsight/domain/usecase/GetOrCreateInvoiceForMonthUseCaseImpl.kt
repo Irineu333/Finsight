@@ -28,7 +28,7 @@ class GetOrCreateInvoiceForMonthUseCaseImpl(
         val existingInvoice = invoices.find { it.dueMonth == targetDueMonth }
 
         if (existingInvoice != null) {
-            ensure(!existingInvoice.status.isBlocked) {
+            ensure(!existingInvoice.status.isClosedToNewExpenses) {
                 InvoiceException(
                     InvoiceError.BlockedInvoice(
                         status = existingInvoice.status,

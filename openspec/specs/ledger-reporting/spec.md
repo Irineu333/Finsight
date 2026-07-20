@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A derivação de toda leitura de dinheiro — saldo de conta, saldo devido de fatura, gasto por categoria e patrimônio líquido — a partir de um mecanismo único: `Σ entries` da conta. Substitui `signedImpact()`, o cálculo invertido ad-hoc de fatura e o tratamento especial de ajuste. Consome o razão (`balanced-ledger`) sobre o plano de contas (`chart-of-accounts`).
+Toda leitura de dinheiro — saldo de conta, saldo de abertura do período, saldo devido de fatura, gasto por categoria e patrimônio líquido — deriva de um mecanismo único: `Σ entries` da conta. Não há regra de sinal específica por tipo de lançamento, nem cálculo alternativo por tela: o sinal de exibição vem do `AccountType`, e cada agregado tem um só dono. Consome o razão (`balanced-ledger`) sobre o plano de contas (`chart-of-accounts`).
 
 ## Requirements
 

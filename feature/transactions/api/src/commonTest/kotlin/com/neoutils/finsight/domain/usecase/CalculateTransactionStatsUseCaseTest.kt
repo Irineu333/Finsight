@@ -29,7 +29,7 @@ class CalculateTransactionStatsUseCaseTest {
     private fun cents(amount: Double) = (amount * 100).toLong()
     private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = cents(amount))
     private fun op(date: LocalDate, entries: List<Entry>) =
-        Operation(title = null, date = date, transactions = emptyList(), entries = entries)
+        Operation(title = null, date = date, entries = entries)
 
     @Test
     fun `monthly stats classify the asset legs by direction`() {

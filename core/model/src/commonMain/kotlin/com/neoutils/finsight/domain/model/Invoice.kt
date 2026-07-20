@@ -69,7 +69,12 @@ data class Invoice(
         val isRetroactive: Boolean
             get() = this == RETROACTIVE
 
-        val isBlocked: Boolean
+        /**
+         * Closed to new spending. `CLOSED` and `PAID` coincide here and only here:
+         * a closed invoice still accepts the payment that settles it, and a paid one
+         * accepts nothing — the distinction lives at the write boundary (design D23).
+         */
+        val isClosedToNewExpenses: Boolean
             get() = this == CLOSED || this == PAID
 
         val isEditable: Boolean

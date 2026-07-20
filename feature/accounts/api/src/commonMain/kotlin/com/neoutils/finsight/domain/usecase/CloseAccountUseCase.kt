@@ -12,9 +12,12 @@ import com.neoutils.finsight.domain.model.Account
  * with a balance writes a dated write-off against reconciliation, so the amount
  * becomes an explicit equity movement instead of quietly leaving net worth.
  *
- * Refuses an account with no movement: closing exists *because* deletion is
- * impossible, so an account that never moved has nothing to preserve and would
- * only be hidden beyond reach. [DeleteAccountUseCase] is the action for that one.
+ * Closing an account with no movement is **allowed**: it violates nothing, it
+ * just is not the action a screen would offer — `retireActionOf` sends that case
+ * to [DeleteAccountUseCase] instead. The domain refuses what would be *invalid*,
+ * not what is merely inappropriate; refusing here would also fail a harmless
+ * race, where the last transaction is removed between opening the screen and
+ * confirming.
  *
  * This is the single owner of "close an account" for accounts, cards and
  * categories alike — all three are facades over one chart-of-accounts row.

@@ -11,7 +11,6 @@
     <string name="account_error_already_exist">An account with this name already exists.</string>
     <string name="account_error_not_found">Account not found.</string>
     <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Close it to preserve the history.</string>
-    <string name="account_error_no_transactions">This account has no transactions. Delete it instead of closing it.</string>
     <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before closing the account.</string>
 
     <!-- Category errors -->

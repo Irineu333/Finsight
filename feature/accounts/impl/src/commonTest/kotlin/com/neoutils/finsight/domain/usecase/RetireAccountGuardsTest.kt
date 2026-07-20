@@ -87,17 +87,19 @@ class RetireAccountGuardsTest {
     }
 
     @Test
-    fun `closing an account that never moved is refused`() = runTest {
+    fun `closing an account that never moved is allowed`() = runTest {
+        // Not the action a screen offers — `retireActionOf` sends this case to
+        // deletion — but nothing about it is invalid, so the domain does not refuse.
+        // Refusing here would also fail a harmless race, where the last transaction
+        // is removed between opening the screen and confirming.
         val dao = RecordingAccountDao()
         val useCase = CloseAccountUseCaseImpl(
             accountDao = dao,
             entryRepository = FakeEntries(hasEntries = false, balance = 0.0),
         )
 
-        val error = assertIs<AccountException>(useCase(account).leftOrNull())
-
-        assertEquals(AccountError.NO_TRANSACTIONS, error.error)
-        assertTrue(dao.closed.isEmpty())
+        assertTrue(useCase(account).isRight())
+        assertEquals(listOf(account.id), dao.closed)
     }
 
     @Test

@@ -11,7 +11,6 @@
     <string name="account_error_already_exist">Já existe uma conta com esse nome.</string>
     <string name="account_error_not_found">Conta não encontrada.</string>
     <string name="account_error_has_transactions">Esta conta tem transações e não pode ser excluída. Encerre-a para preservar o histórico.</string>
-    <string name="account_error_no_transactions">Esta conta não tem transações. Exclua-a em vez de encerrá-la.</string>
     <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de encerrá-la.</string>
 
     <!-- Category errors -->

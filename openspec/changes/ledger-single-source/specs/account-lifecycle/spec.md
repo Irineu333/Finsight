@@ -3,7 +3,9 @@
 ### Requirement: Conta com lançamentos é encerrada, nunca apagada
 Uma conta, cartão ou categoria que possua qualquer lançamento MUST NOT ser removida do plano de contas. O sistema SHALL encerrá-la: a conta permanece no plano de contas, com o seu tipo real preservado, marcada como encerrada, e os seus lançamentos históricos permanecem intactos e atribuídos a ela. Uma conta sem nenhum lançamento MAY ser removida, por não haver história a preservar.
 
-Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas. O estado de encerramento SHALL residir **exclusivamente no plano de contas**, e as fachadas de categoria e cartão SHALL consumi-lo da sua respectiva conta pelo vínculo que já possuem — MUST NOT existir cópia desse estado nas fachadas. Toda categoria e todo cartão SHALL possuir conta no plano de contas desde a sua criação, de modo que a consulta não dependa de tratamento para vínculo ausente. Apagar e encerrar SHALL ser **ações distintas**, com use cases distintos, e cada uma SHALL recusar o caso da outra com erro tipado: apagar conta com lançamentos é recusado, e não convertido em encerramento silencioso. Um use case que faz coisa diferente do seu nome deixa quem o chama — e o usuário lendo o botão — com expectativa errada.
+Uma conta encerrada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas. O estado de encerramento SHALL residir **exclusivamente no plano de contas**, e as fachadas de categoria e cartão SHALL consumi-lo da sua respectiva conta pelo vínculo que já possuem — MUST NOT existir cópia desse estado nas fachadas. Toda categoria e todo cartão SHALL possuir conta no plano de contas desde a sua criação, de modo que a consulta não dependa de tratamento para vínculo ausente. Apagar e encerrar SHALL ser **ações distintas**, com use cases distintos, e cada uma SHALL recusar o que seria **inválido**: apagar conta com lançamentos é recusado, e não convertido em encerramento silencioso. Um use case que faz coisa diferente do seu nome deixa quem o chama — e o usuário lendo o botão — com expectativa errada.
+
+O domínio SHALL recusar apenas o que violaria uma invariante, e MUST NOT recusar o que é meramente inapropriado. Encerrar uma conta sem lançamentos, por exemplo, SHALL ser permitido: não quebra nada, apenas não é a ação que uma tela ofereceria. Recusá-la faria o domínio impor uma preferência de apresentação, e faria falhar uma corrida inofensiva — o último lançamento removido entre a tela abrir e o usuário confirmar.
 
 A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que será recusada. Ela não é a salvaguarda: o desfecho é decidido pelo domínio, e a interface que errar por uma corrida ainda encontra a recusa. Qual das duas oferecer é decisão de **apresentação**, derivada do fato "a conta possui lançamentos", e SHALL ter um dono único, consumido por conta, cartão e categoria — duas telas derivando essa apresentação em separado é o que as fez divergir em rótulo e ícone.
 
@@ -19,9 +21,9 @@ A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que
 - **WHEN** o usuário apaga uma conta que não possui nenhum lançamento
 - **THEN** a conta é removida do plano de contas, por não haver história a preservar
 
-#### Scenario: Encerrar conta sem lançamentos é recusado
-- **WHEN** o usuário tenta encerrar uma conta que não possui lançamentos
-- **THEN** o sistema recusa com erro tipado, por encerrar existir apenas onde apagar é impossível
+#### Scenario: Encerrar conta sem lançamentos é permitido
+- **WHEN** o encerramento de uma conta sem lançamentos é solicitado ao domínio
+- **THEN** a conta é encerrada, por nada nisso ser inválido — ainda que a interface ofereça apagar nesse caso, e não encerrar
 
 #### Scenario: A interface oferece a ação que vai acontecer
 - **WHEN** uma conta, cartão ou categoria é exibida com a ação de retirá-la

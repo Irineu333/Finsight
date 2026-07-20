@@ -15,12 +15,6 @@ class CloseAccountUseCaseImpl(
 ) : CloseAccountUseCase {
 
     override suspend fun invoke(account: Account): Either<Throwable, Unit> {
-        // Closing an account that never moved would hide it with nothing preserved,
-        // and there is no way back. Deleting is the action for that one.
-        if (!entryRepository.hasEntries(account.id)) {
-            return AccountException(AccountError.NO_TRANSACTIONS).left()
-        }
-
         // Only a *monetary* account can hold money that closing would strand, and
         // closing does not invent a write-off to zero it: that would put a movement
         // the user never made into their history, replacing the one fact only they

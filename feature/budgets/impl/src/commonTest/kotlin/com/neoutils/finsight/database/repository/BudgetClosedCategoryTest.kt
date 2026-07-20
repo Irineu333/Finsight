@@ -9,17 +9,23 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * A closed category is filtered out by READ, never by write: `CategoryDao` excludes it,
- * so it simply stops appearing in `Budget.categories`. Nothing is destroyed and reopening
- * the category restores it on its own. What must hold is that the *budget* survives —
- * including the one whose only category was closed, which stays visible at zero progress.
+ * A budgeted category that is later archived is **kept**, not filtered out — the same
+ * decision as the recurring hydration (§10b.1). The budget resolves a stored reference,
+ * so it reads from the include-closed list: the archived category stays in
+ * `Budget.categories`, its name still renders, and its spending still counts. The
+ * *form's* selector reads the open-only list, so an archived category is simply not
+ * offered for a new budget.
+ *
+ * The open-only hydration this replaced fed three silent failures: the category vanished
+ * from the budget, its spending fell out of the progress figure, and the next edit —
+ * reseeded from the hydrated list — deleted its `budget_categories` row for good.
  */
 class BudgetClosedCategoryTest {
 
@@ -39,25 +45,41 @@ class BudgetClosedCategoryTest {
         amount = 200.0, period = "MONTHLY", createdAt = 0L,
     )
 
+    /** Mutable, so an edit round-trip (delete + reinsert links) can be observed. */
     private class FakeBudgetDao(
-        private val budgets: List<BudgetEntity>,
-        private val links: List<BudgetCategoryEntity>,
+        budgets: List<BudgetEntity>,
+        links: List<BudgetCategoryEntity>,
     ) : BudgetDao {
-        override fun observeAll(): Flow<List<BudgetEntity>> = flowOf(budgets)
-        override fun observeAllBudgetCategories(): Flow<List<BudgetCategoryEntity>> = flowOf(links)
-        override suspend fun insert(budget: BudgetEntity): Long = throw NotImplementedError()
-        override suspend fun insertBudgetCategory(entity: BudgetCategoryEntity) = throw NotImplementedError()
-        override suspend fun deleteBudgetCategories(budgetId: Long) = throw NotImplementedError()
-        override suspend fun update(budget: BudgetEntity) = throw NotImplementedError()
+        private val budgetsFlow = MutableStateFlow(budgets)
+        private val linksFlow = MutableStateFlow(links)
+
+        override fun observeAll(): Flow<List<BudgetEntity>> = budgetsFlow
+        override fun observeAllBudgetCategories(): Flow<List<BudgetCategoryEntity>> = linksFlow
+        override suspend fun insert(budget: BudgetEntity): Long = budget.id
+        override suspend fun insertBudgetCategory(entity: BudgetCategoryEntity) {
+            linksFlow.value = linksFlow.value + entity
+        }
+        override suspend fun deleteBudgetCategories(budgetId: Long) {
+            linksFlow.value = linksFlow.value.filterNot { it.budgetId == budgetId }
+        }
+        override suspend fun update(budget: BudgetEntity) {
+            budgetsFlow.value = budgetsFlow.value.map { if (it.id == budget.id) budget else it }
+        }
         override suspend fun delete(budget: BudgetEntity) = throw NotImplementedError()
     }
 
-    /** Mirrors `CategoryDao`, which already excludes categories whose ledger account is closed. */
-    private class FakeCategoryRepository(private val live: List<Category>) : ICategoryRepository {
-        override fun observeAllCategories(): Flow<List<Category>> = flowOf(live)
-        override suspend fun getAllCategories(): List<Category> = live
-        override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
-        override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
+    /**
+     * Mirrors `CategoryDao`: the open-only stream excludes archived categories, the
+     * include-closed stream keeps them. The gap between the two is exactly the bug.
+     */
+    private class FakeCategoryRepository(
+        private val open: List<Category>,
+        private val all: List<Category>,
+    ) : ICategoryRepository {
+        override fun observeAllCategories(): Flow<List<Category>> = MutableStateFlow(open)
+        override suspend fun getAllCategories(): List<Category> = open
+        override suspend fun getAllCategoriesIncludingClosed(): List<Category> = all
+        override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = MutableStateFlow(all)
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
@@ -69,57 +91,83 @@ class BudgetClosedCategoryTest {
     private fun repository(
         budgets: List<BudgetEntity>,
         links: List<BudgetCategoryEntity>,
-        liveCategories: List<Category>,
+        open: List<Category>,
+        all: List<Category>,
     ) = BudgetRepository(
         dao = FakeBudgetDao(budgets, links),
         mapper = mapper,
-        categoryRepository = FakeCategoryRepository(liveCategories),
+        categoryRepository = FakeCategoryRepository(open, all),
     )
 
     @Test
-    fun `a multi-category budget keeps only its live categories and counts only their spending`() = runTest {
+    fun `a multi-category budget keeps its archived category and counts its spending`() = runTest {
         val repository = repository(
             budgets = listOf(budgetEntity(id = 1)),
             links = listOf(
                 BudgetCategoryEntity(budgetId = 1, categoryId = food.id),
                 BudgetCategoryEntity(budgetId = 1, categoryId = transport.id),
             ),
-            liveCategories = listOf(food),
+            open = listOf(food),               // transport archived
+            all = listOf(food, transport),
+        )
+
+        val budget = repository.observeAllBudgets().first().single()
+
+        assertEquals(listOf(food, transport), budget.categories)
+
+        // Both accounts carry entries; the archived category spends like any other.
+        val progress = useCase(
+            budgets = listOf(budget),
+            categoryBalances = mapOf(10L to 30.0, 11L to 70.0),
+        ).single()
+
+        assertEquals(100.0, progress.spent)
+    }
+
+    @Test
+    fun `a budget whose only category was archived stays visible and still counts it`() = runTest {
+        val repository = repository(
+            budgets = listOf(budgetEntity(id = 1)),
+            links = listOf(BudgetCategoryEntity(budgetId = 1, categoryId = food.id)),
+            open = emptyList(),
+            all = listOf(food),
         )
 
         val budget = repository.observeAllBudgets().first().single()
 
         assertEquals(listOf(food), budget.categories)
 
-        // Transport's account (11) still carries entries; a closed category must not spend.
         val progress = useCase(
             budgets = listOf(budget),
-            categoryBalances = mapOf(10L to 30.0, 11L to 70.0),
+            categoryBalances = mapOf(10L to 30.0),
         ).single()
 
         assertEquals(30.0, progress.spent)
     }
 
     @Test
-    fun `a budget whose only category was closed stays visible with zero progress`() = runTest {
+    fun `editing a budget preserves an archived category's link`() = runTest {
+        // The data-loss path the read tests never touched: `update` deletes every link
+        // and reinserts `budget.categories`. Only because hydration now keeps the
+        // archived category does it survive the round-trip. With the open-only list its
+        // link would be gone and reopening the category would not bring it back.
         val repository = repository(
             budgets = listOf(budgetEntity(id = 1)),
-            links = listOf(BudgetCategoryEntity(budgetId = 1, categoryId = food.id)),
-            liveCategories = emptyList(),
+            links = listOf(
+                BudgetCategoryEntity(budgetId = 1, categoryId = food.id),
+                BudgetCategoryEntity(budgetId = 1, categoryId = transport.id),
+            ),
+            open = listOf(food),               // transport archived
+            all = listOf(food, transport),
         )
 
-        val budget = repository.observeAllBudgets().first().single()
+        val loaded = repository.observeAllBudgets().first().single()
+        // A plain title edit that does not touch the category selection.
+        repository.update(loaded.copy(title = "Renamed"))
 
-        assertEquals(emptyList(), budget.categories)
-
-        val progress = useCase(
-            budgets = listOf(budget),
-            categoryBalances = mapOf(10L to 30.0),
-        ).single()
-
-        assertEquals(0.0, progress.spent)
-        assertEquals(0f, progress.progress)
-        assertEquals(200.0, progress.remaining)
+        val reloaded = repository.observeAllBudgets().first().single()
+        assertEquals("Renamed", reloaded.title)
+        assertEquals(listOf(food, transport), reloaded.categories)
     }
 
     @Test
@@ -127,7 +175,8 @@ class BudgetClosedCategoryTest {
         val repository = repository(
             budgets = listOf(budgetEntity(id = 1)),
             links = emptyList(),
-            liveCategories = emptyList(),
+            open = emptyList(),
+            all = emptyList(),
         )
 
         val budget = repository.observeAllBudgets().first().single()

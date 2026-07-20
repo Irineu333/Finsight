@@ -106,7 +106,11 @@ class BudgetFormViewModel(
             ?: budget?.recurringId?.let { id -> incomeRecurrings.find { it.id == id } }
 
         BudgetFormUiState(
-            availableCategories = categories.filter { it.id !in budgetedCategoryIds },
+            availableCategories = offeredCategories(
+                open = categories,
+                selected = fields.selectedCategories,
+                otherBudgetCategoryIds = budgetedCategoryIds,
+            ),
             selectedCategories = fields.selectedCategories,
             selectedIcon = fields.selectedIcon,
             title = fields.title,
@@ -231,4 +235,24 @@ class BudgetFormViewModel(
             modalManager.dismissAll()
         }
     }
+}
+
+/**
+ * The categories the form offers in its dropdown.
+ *
+ * The open ones, minus any already claimed by another budget (a category belongs to
+ * at most one), **plus** the ones this budget already holds that are no longer open.
+ * A category archived after it was added is absent from [open], so without this it
+ * would show in the field but could never be unchecked. It is not offered fresh — it
+ * appears only because it is already selected — and once removed it is gone, since an
+ * archived category is never in [open] to be picked again.
+ */
+internal fun offeredCategories(
+    open: List<Category>,
+    selected: List<Category>,
+    otherBudgetCategoryIds: Set<Long>,
+): List<Category> {
+    val offered = open.filterNot { it.id in otherBudgetCategoryIds }
+    val selectedArchived = selected.filterNot { s -> offered.any { it.id == s.id } }
+    return offered + selectedArchived
 }

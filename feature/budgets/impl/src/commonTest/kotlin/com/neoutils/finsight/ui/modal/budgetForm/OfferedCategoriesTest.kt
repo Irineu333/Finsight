@@ -21,7 +21,7 @@ class OfferedCategoriesTest {
     private val archived = category(3, isArchived = true)
 
     @Test
-    fun `open categories are offered, minus those held by other budgets`() {
+    fun `open categories are offered minus those held by other budgets`() {
         val offered = offeredCategories(
             open = listOf(food, transport),
             selected = emptyList(),

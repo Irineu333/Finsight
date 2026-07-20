@@ -35,7 +35,7 @@ class RetireAccountGuardsTest {
     private val account = Account(id = 1, name = "Wallet", type = AccountType.ASSET)
 
     @Test
-    fun `deleting an account with transactions is refused, not silently closed`() = runTest {
+    fun `deleting an account with transactions is refused and not silently closed`() = runTest {
         val repository = RecordingAccountRepository()
         val useCase = DeleteAccountUseCaseImpl(
             accountRepository = repository,
@@ -65,7 +65,7 @@ class RetireAccountGuardsTest {
     }
 
     @Test
-    fun `closing an account with a balance is refused, and nothing is written`() = runTest {
+    fun `closing an account with a balance is refused and nothing is written`() = runTest {
         val ledger = FakeEntries(hasEntries = true, balance = 100.0)
         val dao = RecordingAccountDao()
         val useCase = ArchiveAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)

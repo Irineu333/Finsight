@@ -12,13 +12,13 @@ import kotlin.test.assertEquals
 class RetireActionTest {
 
     @Test
-    fun `movement makes it a closure, its absence a deletion`() {
+    fun `movement makes it a closure and its absence a deletion`() {
         assertEquals(RetireAction.ARCHIVE, retireActionOf(hasMovement = true))
         assertEquals(RetireAction.DELETE, retireActionOf(hasMovement = false))
     }
 
     @Test
-    fun `the ui models expose the same rule, so the two screens cannot drift`() {
+    fun `the ui models expose the same rule so the two screens cannot drift`() {
         val moved = AccountUi(
             id = 1, openingBalance = 0.0, balance = 0.0, income = 0.0,
             expense = 0.0, adjustment = 0.0, invoicePayment = 0.0, hasMovement = true,

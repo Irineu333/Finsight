@@ -152,7 +152,7 @@ class ViewCategoryViewModelTest {
     }
 
     @Test
-    fun `the total refreshes when the ledger moves, without the category changing`() = runTest(dispatcher) {
+    fun `the total refreshes when the ledger moves without the category changing`() = runTest(dispatcher) {
         // The figures are SQL aggregates, so nothing about the category row changes
         // when a transaction is written. Without a ledger signal the screen kept
         // showing the old total while the ledger had already moved.

@@ -79,7 +79,7 @@ fun InvoiceMonthNavigator(
                 }
             }
         },
-        colors = if (selection.isBlocked) {
+        colors = if (selection.isClosedToNewExpenses) {
             OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = colorScheme.error.copy(alpha = 0.5f),
                 focusedBorderColor = colorScheme.error

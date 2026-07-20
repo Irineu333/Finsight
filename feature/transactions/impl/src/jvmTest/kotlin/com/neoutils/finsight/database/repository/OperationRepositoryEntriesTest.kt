@@ -6,10 +6,8 @@ import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
-import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
-import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
@@ -48,7 +46,6 @@ class OperationRepositoryEntriesTest {
     private fun repository(accounts: List<Account>) = OperationRepository(
         database = db,
         transactionDao = db.transactionDao(),
-        transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
         recurringDao = db.recurringDao(),
         categoryRepository = FakeCategoryRepository,
@@ -58,7 +55,6 @@ class OperationRepositoryEntriesTest {
         accountRepository = FakeAccountRepository(accounts),
         operationMapper = OperationMapper(),
         recurringMapper = RecurringMapper(),
-        transactionMapper = TransactionMapper(),
         ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
     )
 
@@ -71,13 +67,6 @@ class OperationRepositoryEntriesTest {
 
         val transactionId = db.transactionDao().insert(
             TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
-        )
-        // A legacy leg is required, or the mapper drops the operation.
-        db.transactionDao().insert(
-            TransactionEntity(
-                transactionId = transactionId, type = TransactionEntity.Type.EXPENSE, amount = 50.0,
-                title = null, date = LocalDate(2026, 3, 10), accountId = 1,
-            ),
         )
         db.entryDao().insertAll(
             listOf(

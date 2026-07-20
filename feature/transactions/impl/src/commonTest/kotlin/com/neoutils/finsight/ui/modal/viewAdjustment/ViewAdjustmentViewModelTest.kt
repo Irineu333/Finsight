@@ -49,7 +49,7 @@ class ViewAdjustmentViewModelTest {
         vm.uiState.test {
             assertEquals(ViewAdjustmentUiState.Loading, awaitItem())
             repository.emit(operation(id = 1L, amount = 42.0, type = TransactionType.ADJUSTMENT))
-            assertEquals(42.0, assertIs<ViewAdjustmentUiState.Content>(awaitItem()).transaction.amount)
+            assertEquals(42.0, assertIs<ViewAdjustmentUiState.Content>(awaitItem()).signedAmount)
         }
     }
 

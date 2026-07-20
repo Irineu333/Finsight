@@ -2,9 +2,10 @@ package com.neoutils.finsight.ui.model
 
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationLabel
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Transaction
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,43 +13,44 @@ import kotlin.test.assertNull
 
 /**
  * Fixes the invariant left after the D6 fallback dissolved (D21): a
- * [TransactionPerspective] is a plain data class always constructible from an
- * account id — there is no nullable fallback — and it resolves the leg of that
- * account. A card enters the same way, through its `accountId`.
+ * [TransactionPerspective] is an account id — a card enters the same way, through
+ * its `accountId` — and it decides which leg of an operation the screen reads.
+ * The same transfer read from its two accounts yields opposite directions; an
+ * account with no leg yields no item at all.
  */
 class TransactionPerspectiveTest {
 
-    private val date = LocalDate(2026, 1, 1)
+    private val source = Account(id = 1L, name = "Source", type = AccountType.ASSET)
+    private val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
 
-    private fun leg(account: Account) = Transaction(
-        type = TransactionType.EXPENSE,
-        amount = 100.0,
-        title = null,
-        date = date,
-        account = account,
-    )
-
-    private fun operation(vararg legs: Transaction) = Operation(
+    private val transfer = Operation(
         id = 1L,
         title = "Op",
-        date = date,
-        transactions = legs.toList(),
+        date = LocalDate(2026, 1, 1),
+        entries = listOf(
+            Entry(account = source, amount = -10_000),
+            Entry(account = destination, amount = 10_000),
+        ),
     )
 
-    @Test
-    fun resolvesLegOfItsAccount() {
-        val source = Account(id = 1L, name = "Source", type = AccountType.ASSET)
-        val destination = Account(id = 2L, name = "Destination", type = AccountType.ASSET)
-        val operation = operation(leg(source), leg(destination))
+    private fun uiFrom(accountId: Long) = transfer.toOperationUi(TransactionPerspective(accountId).accountId)
 
-        assertEquals(source.id, TransactionPerspective(accountId = 1L).resolve(operation)?.account?.id)
-        assertEquals(destination.id, TransactionPerspective(accountId = 2L).resolve(operation)?.account?.id)
+    @Test
+    fun perspectiveSelectsTheLegOfItsAccount() {
+        val outgoing = uiFrom(source.id)
+        val incoming = uiFrom(destination.id)
+
+        assertEquals(TransactionType.EXPENSE, outgoing?.direction)
+        assertEquals(TransactionType.INCOME, incoming?.direction)
+        assertEquals(100.0, outgoing?.amount)
+        assertEquals(100.0, incoming?.amount)
+        // The operation's nature does not depend on who is looking.
+        assertEquals(OperationLabel.TRANSFER, outgoing?.label)
+        assertEquals(OperationLabel.TRANSFER, incoming?.label)
     }
 
     @Test
-    fun resolvesNullWhenNoLegMatches() {
-        val operation = operation(leg(Account(id = 1L, name = "Source", type = AccountType.ASSET)))
-
-        assertNull(TransactionPerspective(accountId = 99L).resolve(operation))
+    fun perspectiveWithoutALegYieldsNoItem() {
+        assertNull(uiFrom(accountId = 99L))
     }
 }

@@ -6,11 +6,9 @@ import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -29,7 +27,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
-import kotlinx.datetime.plusMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -39,7 +36,7 @@ import kotlin.time.ExperimentalTime
 
 /**
  * Characterizes the balance overview of [TransactionsViewModel] (sites :55,56,70,72):
- * income/expense/adjustment via the stats use case, the PAYMENT-kind month sum, and
+ * income/expense/adjustment via the stats use case, the PAYMENT-label month sum, and
  * the opening/final balances. Task 4.11 flips these to the ledger; the numbers must
  * survive.
  */
@@ -52,38 +49,26 @@ class TransactionsViewModelCharacterizationTest {
 
     private val month = Clock.System.now().toYearMonth()
     private val account = Account(id = 1, name = "A", type = AccountType.ASSET)
-    private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
-    private val invoice = Invoice(
-        id = 1, creditCard = card,
-        openingMonth = month, closingMonth = month.plusMonth(), dueMonth = month.plusMonth().plusMonth(),
-        status = Invoice.Status.OPEN,
-    )
-
-    private fun date(day: Int) = LocalDate(month.year, month.month, day)
-
-    private fun accountLeg(type: TransactionType, amount: Double, day: Int, invoice: Invoice? = null) =
-        Transaction(type = type, amount = amount, title = null, date = date(day), account = account, invoice = invoice)
-
-    private fun cardLeg(type: TransactionType, amount: Double, day: Int) =
-        Transaction(type = type, amount = amount, title = null, date = date(day), creditCard = card, invoice = invoice)
-
+    private val cardAcc = Account(id = 200, name = "Card", type = AccountType.LIABILITY)
     private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
     private val expenseAcc = Account(id = 101, name = "expense", type = AccountType.EXPENSE)
     private val equityAcc = Account(id = 102, name = "reconciliation", type = AccountType.EQUITY)
 
+    private fun date(day: Int) = LocalDate(month.year, month.month, day)
+
     private fun entry(acc: Account, amount: Double) = Entry(account = acc, amount = (amount * 100).toLong())
 
-    private fun op(id: Long, vararg legs: Transaction, entries: List<Entry> = emptyList()) =
-        Operation(id = id, title = null, date = legs.first().date, transactions = legs.toList(), entries = entries)
+    private fun op(id: Long, day: Int, entries: List<Entry>) =
+        Operation(id = id, title = null, date = date(day), entries = entries)
 
     @Test
     fun `balance overview characterizes stats, payment and balances`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, accountLeg(TransactionType.INCOME, 100.0, day = 5), entries = listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
-            op(2, accountLeg(TransactionType.EXPENSE, 30.0, day = 10), entries = listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
-            op(3, accountLeg(TransactionType.ADJUSTMENT, 40.0, day = 15), entries = listOf(entry(account, 40.0), entry(equityAcc, -40.0))),
-            // Payment: account leg + card leg → kind PAYMENT, excluded from stats, counted in payment.
-            op(4, accountLeg(TransactionType.EXPENSE, 80.0, day = 20, invoice = invoice), cardLeg(TransactionType.INCOME, 80.0, day = 20)),
+            op(1, day = 5, listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
+            op(2, day = 10, listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
+            op(3, day = 15, listOf(entry(account, 40.0), entry(equityAcc, -40.0))),
+            // ASSET out + LIABILITY in → label PAYMENT: excluded from stats, counted in payment.
+            op(4, day = 20, listOf(entry(account, -80.0), entry(cardAcc, 80.0))),
         )
 
         val vm = TransactionsViewModel(
@@ -118,8 +103,9 @@ private class FakeOperationRepository(operations: List<Operation>) : IOperationR
     override fun observeOperationById(id: Long): Flow<Operation?> = throw NotImplementedError()
     override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
     override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-    override suspend fun createOperation(title: String?, date: LocalDate, categoryId: Long?, recurringId: Long?, recurringCycle: Int?, installmentId: Long?, installmentNumber: Int?, transactions: List<Transaction>): Operation = throw NotImplementedError()
-    override suspend fun updateOperation(id: Long, transaction: Transaction) = throw NotImplementedError()
+    override suspend fun createOperation(intent: OperationIntent): Operation = throw NotImplementedError()
+    override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> = throw NotImplementedError()
+    override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) = throw NotImplementedError()
     override suspend fun deleteOperationById(id: Long) = throw NotImplementedError()
     override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
 }

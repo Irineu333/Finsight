@@ -2,7 +2,7 @@
 
 ## Purpose
 
-O plano de contas unificado: toda conta, cartão e categoria é uma `Account` com um `type` contábil (`ASSET`/`LIABILITY`/`INCOME`/`EXPENSE`/`EQUITY`). Define a fachada de "categoria" e "cartão" como projeções sobre esse plano, e as contas de sistema usadas como contrapartida de ajustes. É a base sobre a qual o razão (`balanced-ledger`) registra entries e da qual as leituras (`ledger-reporting`) derivam.
+O plano de contas unificado: toda conta, cartão e categoria é uma `Account` com um `type` do conjunto **fechado** `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}`. Define "categoria" e "cartão" como fachadas projetadas sobre esse plano, ligadas à sua conta, e a conta de sistema usada como contrapartida de ajustes e baixas. É a base sobre a qual o razão (`balanced-ledger`) registra entries e da qual as leituras (`ledger-reporting`) derivam.
 
 ## Requirements
 

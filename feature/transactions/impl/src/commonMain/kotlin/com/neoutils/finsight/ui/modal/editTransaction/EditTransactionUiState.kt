@@ -17,5 +17,5 @@ data class EditTransactionUiState(
 ) {
     val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 
-    val isInvoiceBlocked = invoiceSelection?.isBlocked == true
+    val isInvoiceBlocked = invoiceSelection?.isClosedToNewExpenses == true
 }

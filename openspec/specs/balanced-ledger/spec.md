@@ -2,7 +2,7 @@
 
 ## Purpose
 
-O razão de partidas dobradas: operações como conjuntos de entries assinadas com moeda, a invariante `Σ = 0` por moeda validada num único ponto de escrita, a convenção débito-positivo interna, e a derivação do rótulo da operação a partir dos tipos de conta em vez de estado persistido. Constrói sobre o plano de contas (`chart-of-accounts`) e é a fonte da qual `ledger-reporting` deriva toda leitura de dinheiro.
+O razão de partidas dobradas: uma transação é um conjunto de entries assinadas com moeda, sujeitas à invariante `Σ = 0` por moeda, validada num único ponto de escrita. Internamente o sinal é débito-positivo; a natureza da transação e a direção de cada perna são **derivadas** dos tipos de conta, nunca persistidas. Nenhuma feature reimplementa regra derivável daqui. Constrói sobre o plano de contas (`chart-of-accounts`) e é a fonte da qual `ledger-reporting` deriva toda leitura de dinheiro.
 
 ## Requirements
 

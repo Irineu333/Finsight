@@ -50,7 +50,7 @@ class ViewOperationViewModelTest {
             assertEquals(ViewOperationUiState.Loading, awaitItem())
             repository.emit(operation(id = 1L, amount = 100.0))
             val content = assertIs<ViewOperationUiState.Content>(awaitItem())
-            assertEquals(100.0, content.transaction.amount)
+            assertEquals(100.0, content.amount)
         }
     }
 
@@ -62,9 +62,9 @@ class ViewOperationViewModelTest {
         vm.uiState.test {
             assertEquals(ViewOperationUiState.Loading, awaitItem())
             repository.emit(operation(id = 1L, amount = 100.0))
-            assertEquals(100.0, assertIs<ViewOperationUiState.Content>(awaitItem()).transaction.amount)
+            assertEquals(100.0, assertIs<ViewOperationUiState.Content>(awaitItem()).amount)
             repository.emit(operation(id = 1L, amount = 250.0))
-            assertEquals(250.0, assertIs<ViewOperationUiState.Content>(awaitItem()).transaction.amount)
+            assertEquals(250.0, assertIs<ViewOperationUiState.Content>(awaitItem()).amount)
         }
     }
 

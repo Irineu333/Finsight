@@ -25,14 +25,18 @@ class ValidateCreditCardNameUseCase(
         return name.right()
     }
 
+    /**
+     * Uniqueness spans closed cards too: closing keeps the name, and history still
+     * renders it. Two "Nubank" side by side, one of them grey, is not a name.
+     */
     private suspend fun hasDuplicateName(
         name: String,
         ignoreId: Long?
     ): Boolean {
         // TODO: improve this
-        return repository.getAllCreditCards().any { creditCards ->
-            creditCards.name.equals(name.trim(), ignoreCase = true) &&
-                    creditCards.id != ignoreId
+        return repository.getAllCreditCardsIncludingClosed().any { creditCard ->
+            creditCard.name.equals(name.trim(), ignoreCase = true) &&
+                    creditCard.id != ignoreId
         }
     }
 }

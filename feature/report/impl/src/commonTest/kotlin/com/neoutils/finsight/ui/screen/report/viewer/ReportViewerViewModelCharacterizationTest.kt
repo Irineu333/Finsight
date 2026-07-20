@@ -203,6 +203,7 @@ private class Fakes {
     fun accountRepository(accounts: List<Account>) = object : IAccountRepository {
         override fun observeAllAccounts(): Flow<List<Account>> = MutableStateFlow(accounts)
         override suspend fun getAllAccounts(): List<Account> = accounts
+        override suspend fun getAllAccountsIncludingClosed(): List<Account> = accounts
         override suspend fun getAllLedgerAccounts(): List<Account> = accounts
         override fun observeAllLedgerAccounts(): Flow<List<Account>> = MutableStateFlow(accounts)
         override suspend fun getAccountById(accountId: Long): Account? = accounts.firstOrNull { it.id == accountId }

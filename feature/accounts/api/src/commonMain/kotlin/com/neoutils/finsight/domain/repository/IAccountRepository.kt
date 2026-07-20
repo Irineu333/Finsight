@@ -8,6 +8,13 @@ interface IAccountRepository {
     suspend fun getAllAccounts(): List<Account>
 
     /**
+     * Every account, closed ones included. Name uniqueness needs it: a closed
+     * account keeps its name, and a homonym created after it would be
+     * indistinguishable from it wherever history is rendered.
+     */
+    suspend fun getAllAccountsIncludingClosed(): List<Account>
+
+    /**
      * The whole chart of accounts, as opposed to the user-facing account facade
      * above. Reading the ledger needs it: a category or card leg lives on an
      * `EXPENSE`/`LIABILITY` account that the facade deliberately hides.

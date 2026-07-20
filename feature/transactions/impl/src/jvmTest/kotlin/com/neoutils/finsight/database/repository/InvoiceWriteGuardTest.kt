@@ -251,6 +251,8 @@ private class LedgerAccountRepository(private val db: AppDatabase) : IAccountRep
     }
 
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = getAllAccounts()
+
     override suspend fun getAllLedgerAccounts(): List<Account> = getAllAccounts()
     override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()

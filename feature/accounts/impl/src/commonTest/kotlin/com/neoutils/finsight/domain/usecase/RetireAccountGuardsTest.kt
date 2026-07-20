@@ -136,6 +136,7 @@ private class RecordingAccountRepository : IAccountRepository {
     override suspend fun delete(account: Account) { deleted += account.id }
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<Account> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()
     override suspend fun getAllLedgerAccounts(): List<Account> = emptyList()
     override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
@@ -183,6 +184,7 @@ private class RecordingAccountDao : AccountDao {
     override suspend fun entryCount(accountId: Long): Int = throw NotImplementedError()
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<AccountEntity> = emptyList()
+    override suspend fun getAllAccountsIncludingClosed(): List<AccountEntity> = emptyList()
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = emptyList()
     override fun observeAllLedgerAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAccountById(id: Long): AccountEntity? = throw NotImplementedError()

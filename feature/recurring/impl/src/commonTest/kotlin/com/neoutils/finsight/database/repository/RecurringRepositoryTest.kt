@@ -46,6 +46,7 @@ class RecurringRepositoryTest {
     private val accountRepository = object : IAccountRepository {
         override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAllAccounts(): List<Account> = throw NotImplementedError()
+        override suspend fun getAllAccountsIncludingClosed(): List<Account> = throw NotImplementedError()
         override suspend fun getAllLedgerAccounts(): List<Account> = throw NotImplementedError()
         override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()

@@ -197,7 +197,6 @@ private class Fakes {
         override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()
-        override suspend fun deleteTransactionsByCreditCard(creditCardId: Long) = throw NotImplementedError()
     }
 
     fun accountRepository(accounts: List<Account>) = object : IAccountRepository {

@@ -201,6 +201,18 @@
 
 - [x] 8.6 **Reescrever o `## Purpose` das specs `balanced-ledger`, `chart-of-accounts` e `ledger-reporting`** ao arquivar. **Nenhum delta jamais tocou um `Purpose`** (verificado: `grep -rln "## Purpose" changes/archive/*/specs/` → zero), porque delta opera sobre `### Requirement`. Consequência: os requisitos falam a língua nova e o `Purpose` fica com a velha, **e a 8.2 falha por construção** — `openspec/specs/` é vivo, não é "histórico/arquivo". Hoje: `balanced-ledger:5` diz "**operações** como conjuntos de entries… o rótulo da **operação**" (vocabulário que a §7 abole) e `ledger-reporting:5` diz "Substitui **`signedImpact()`**…" — que a 8.2 grepa e que já nem existe no código. Corrigir os três, e o `ledger-reporting:5` também no **registro**: um `Purpose` que descreve o que *substitui* narra uma transição, não um propósito — é a mesma doença da seção `## Ledger` do `CLAUDE.md` (8.7), no artefato ao lado.
 - [x] 8.7 **Reescrever a seção `## Ledger` do `CLAUDE.md` para só invariantes.** Ela **não pode** ser reescrita antes de §6/§7 aterrissarem: hoje a coexistência *é* a verdade, e um `CLAUDE.md` que descreva o estado final estaria mentindo até lá. Ao fim da change, sai tudo o que é **estado datado** e fica só o que é **invariante**. Saem: o nome da change (`balanced-ledger`), a versão de schema e o nome da migração (`v8`/`MIGRATION_7_8`), o bullet **Coexistence** inteiro, `signedImpact`, a conta de sistema de saldo inicial (D8) e o vocabulário `operation` (§7). Ficam: plano de contas com o conjunto **fechado** de `AccountType`, `Entry` com Σ=0 por moeda validado na fronteira única de escrita, leitura por `Σ entries`, débito-positivo, derivação em vez de persistência. ⚠️ **O diagnóstico que originou esta task:** de cinco bullets, um já era falso e quatro morrem com a change — o que envelhece não é o assunto, é o **registro** (nome de change, versão, "currently"). A `Derivation rule` foi para **Conventions**, que é o registro que não envelhece; a instância do razão é normativa na spec `balanced-ledger` e o `CLAUDE.md` **não** deve repeti-la.
+- [x] 8.12 **Divergência entre a regra de encerramento e o que a UI promete, levantada pelo usuário.** A pergunta era simples — "não se exclui conta ou cartão com transações, certo? por que a UI diz *excluir* nos dois casos?" — e expôs duas coisas distintas.
+
+  **O botão dizer "excluir" é deliberado e fica** (6b.5): o usuário não deve precisar aprender vocabulário contábil, e do lado dele a coisa some da tela. Encerrar-vs-remover é decisão do razão, não dele.
+
+  **Mas duas mensagens estavam erradas, e uma era mentira que esta change criou:**
+  - `delete_credit_card_message` prometia que "as faturas e transações associadas **também serão excluídas**". Era verdade na main, onde `DeleteCreditCardUseCase` chamava `deleteTransactionOperationsByCreditCard`. A 6b.3 removeu esse comportamento e **não tocou a string** — passou a prometer destruição de histórico que não acontece mais. A 6b.10 mandava corrigir a string de **categoria**; corrigi só ela e não olhei as irmãs. É a mesma propagação incompleta que as auditorias já tinham nomeado.
+  - `delete_account_message` dizia só que as transações sobrevivem, sem dizer que a **conta** também sobrevive, encerrada.
+
+  Ambas reescritas, nos dois idiomas, dizendo o que de fato acontece.
+
+  ⚠️ **Lacuna real, não fechada:** `Account.isClosed` é escrito e **nunca lido por nenhuma UI** — verificado (`grep isClosed` em `feature/*/impl` e `core/ui` só encontra `Invoice.Status.isClosed`, que é outra coisa). Não há selo de "encerrada", não há lista de encerradas, e **não há como reabrir**. Do ponto de vista do usuário, encerrar é indistinguível de apagar e é irreversível. Isso contradiz a 6b.8, que justifica filtrar por leitura dizendo que "um eventual reabrir volta a funcionar sozinho" — o mecanismo suporta, a interface não oferece. É trabalho de UI fora do escopo desta change, mas fica registrado como consequência dela, não como acaso.
+
 - [x] 8.11 **Bug de runtime achado pelo usuário: ajuste de saldo não refletia em tempo real na tela de contas.**
 
   **Causa, e é consequência direta da §4.** Os agregados do razão (`balanceUpTo`, `accountFlows`, `balanceInMonth`, `entryCountInMonth`) são `suspend` — leitura única, não fluxo. Ao virar os leitores para eles, uma tela que antes recalculava somando a lista de transações observada passou a depender de nada que mudasse quando o razão muda. `AccountsViewModel.accountsWithDomain` combinava só `accounts` + `selectedMonth`: um ajuste não altera a tabela `accounts` nem o mês, então o `combine` nunca reexecutava e os cards ficavam com o número velho. A lista de transações da mesma tela atualizava, porque essa sim vem de um `Flow` — o que torna o sintoma confuso: parte da tela viva, parte congelada.
@@ -244,6 +256,81 @@
   **Cobertura que não foi transferida por inteiro:**
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
+
+- [x] 8.17 **Sincronizar as specs com o que a §8.13–8.16 mudou (pergunta do usuário).** Quatro afirmações da `account-lifecycle` tinham deixado de ser verdade, três delas por mudanças que eu mesmo fiz e não propaguei — o mesmo padrão, agora no artefato normativo em vez do código.
+
+  - *"O usuário MUST NOT precisar distinguir apagar de encerrar: a ação continua sendo uma só"* — **revogado pelo usuário na 8.13**. Apagar e encerrar são ações distintas, com use cases distintos, cada uma recusando o caso da outra. A spec passa a exigir isso, e a exigir que a interface ofereça a ação certa pelo nome sem ser a salvaguarda.
+  - *"Uma tentativa de remover conta com lançamentos SHALL ser convertida em encerramento"* — **falso desde a 8.13**: é recusada, não convertida.
+  - *"Encerrar conta cujo saldo não seja zero SHALL ser recusado"*, sem qualificação — **falso desde a 8.15**: vale só para conta **monetária**. Categoria é conta de fluxo, cujo saldo nunca volta a zero; exigir zero ali tornava impossível encerrar categoria alguma, que foi exatamente o bug reportado.
+
+  ⚠️ **Correção posterior (usuário):** eu também fizera o domínio **recusar** encerrar conta sem lançamentos. O usuário apontou que isso deveria ser permitido no domínio, ainda que a interface não ofereça — e está certo: eu confundi "não é a ação apropriada" com "é inválido". A premissa dele era que o use case impede o **uso incorreto**, e o exemplo era apagar conta com transações, que quebra integridade referencial. Encerrar conta vazia não quebra nada; recusá-la era o domínio impondo preferência de apresentação, e usando um guarda para compensar a falta do "reabrir". Guarda e erro `NO_TRANSACTIONS` removidos; a spec passa a dizer que o domínio recusa só o que violaria invariante. Some também a falha numa corrida inofensiva — o último lançamento removido entre a tela abrir e o usuário confirmar.
+  - O requisito de integridade trazia um diagnóstico datado ("hoje ela alcança, porque...") de um defeito já corrigido, e não dizia nada sobre **ordem** de remoção — a lacuna por onde entrou o bug da 8.16. Agora exige remoção atômica da fachada com a sua conta, na ordem que a referência impõe.
+
+  Acrescentados os cenários que faltavam: apagar com lançamentos recusado, encerrar sem lançamentos recusado, encerrar categoria usada independe do saldo, fachada e conta removidas juntas na ordem certa, fachada encerrada continua nomeada no histórico, e a interface oferece a ação que vai acontecer.
+
+  Na `balanced-ledger`: o cenário do lançamento de baixa continua válido, mas a origem mudou — a baixa só existe no dado **migrado**, não em runtime; e a lista de regras deriváveis ganhou "qual ação de retirada uma tela oferece".
+
+- [x] 8.16 **Excluir categoria sem transação nenhuma continuava falhando — e o erro genérico era o sintoma.** O usuário voltou dizendo que não conseguia excluir categoria vazia, com a mensagem genérica "não foi possível concluir a ação".
+
+  **A mensagem ser genérica era a pista:** `toUiMessage` só reconhece `AccountException`; qualquer outra coisa cai no `else`. O que estava sendo lançado era `SQLiteException: FOREIGN KEY constraint failed`. `DeleteCategoryUseCase` chamava `DeleteAccountUseCase`, que apagava a **conta** enquanto a linha da **categoria** ainda a referenciava (`categories.accountId`, `NO_ACTION`). A ordem estava invertida.
+
+  ⚠️ **A auditoria de fidelidade tinha apontado exatamente isto** ("o caminho DELETED apaga a conta antes da fachada, com FK `NO_ACTION`, e não abrange transação"), classificado como *betrayal latente*. Eu reconheci no relatório e **não corrigi**. Sexta reincidência do padrão — e a primeira em que o defeito já estava escrito, com endereço, num documento que eu mesmo produzi.
+
+  **Correção:** a remoção do par passa a ser do repositório da fachada, simétrica ao `insert` que já criava os dois numa transação — fachada primeiro, conta depois, tudo num `immediateTransaction`. Os use cases voltam a só guardar a precondição. Teste que fica vermelho se a ordem for invertida (com FK real, em Room in-memory).
+
+  **A modal de erro foi refeita**, com as três críticas do usuário procedendo: título que repetia a mensagem (removido — a razão *é* o conteúdo), ícone desalinhado (a coluna agora centraliza, com o ícone num container circular do `errorContainer`), e mensagens genéricas que não diziam nada (reescritas para dizer o que fazer). A modal que recusou continua aberta atrás, de propósito.
+
+- [x] 8.15 **Bug de runtime achado pelo usuário: excluir e encerrar categoria não funcionavam.** Nem uma nem outra, e o modal não fechava nem mostrava erro. Dois defeitos meus, um de desenho e um de propagação.
+
+  **Desenho.** Apliquei a regra de saldo zero da 8.14 a **todo** tipo de conta. Uma categoria é conta `INCOME`/`EXPENSE` — conta de **fluxo**, cujo saldo é o acumulado de gastos e nunca é zero depois de usada. Então encerrar categoria usada falhava sempre com `HAS_BALANCE`, e excluir falhava com `HAS_TRANSACTIONS`: nenhum dos dois caminhos existia. A regra vale só para conta **monetária** (`AccountType.isMonetary`), onde saldo ≠ 0 significa dinheiro parado em algum lugar; num fluxo não há o que resolver. Corrigido e coberto por teste.
+
+  **Propagação.** O erro morria em `crashlytics.recordException` e a folha simplesmente não fechava — o mesmo defeito que a 8.8 registra ter corrigido **para os modais de transação**, e que eu não levei para os outros. Quinta reincidência do padrão "corrigi a instância, não varri a classe".
+
+  Desta vez a correção é estrutural em vez de por modal: `ModalManager.showError(uiText)` abre uma **modal de erro** (`ErrorModal`) sobre a que falhou. Qualquer modal chama um método e o usuário vê — sem canal de eventos por ViewModel, e sem que um modal esquecido volte a ficar mudo. A modal que recusou fica aberta atrás de propósito: os motivos são acionáveis (um saldo a resolver, uma categoria em uso), então fechar o erro devolve o usuário à ação.
+
+  **Escolha de forma (usuário):** modal de erro, não snackbar. Uma 1ª versão usava snackbar. Ao trocar, os **oito** modais do app convergiram para o mesmo mecanismo — inclusive `AddInstallmentModal` e `TransferBetweenAccountsModal`, que já traziam da main um canal de eventos e um snackbar próprios. Os quatro `*Event.kt` que existiam só para carregar `ShowError` foram removidos. ⚠️ Esses dois últimos são **anteriores a esta change**: converti para o app não ficar com dois padrões de erro, mas é mudança fora do escopo original e pode ser revertida sem prejuízo ao resto.
+
+- [x] 8.14 **Encerrar deixa de gerar baixa automática; passa a exigir saldo zero (decisão do usuário, revoga a D13 nesse ponto).** A D13 e a spec `account-lifecycle` prescreviam que encerrar com saldo ≠ 0 gerasse um lançamento de baixa contra reconciliação. O usuário recusou: é "mágica" que pode contrariar a expectativa dele.
+
+  **Ele está certo, e a justificativa da spec não se sustentava.** Ela dizia "o saldo MUST NOT desaparecer sem lançamento" — argumento herdado do problema de **apagar**, onde o dinheiro sumia do patrimônio sem registro. Ao **encerrar**, as entries ficam: nada some. A baixa não registrava uma saída, ela **inventava** uma — e pior, substituía a única informação que só o usuário tem (para onde o dinheiro foi) por uma reconciliação genérica, num lançamento que aparece no histórico dele como se ele o tivesse feito.
+
+  O problema real que a baixa resolvia era o oposto: conta encerrada **com** saldo deixaria dinheiro no patrimônio sem conta visível — um número que não fecha. Exigir saldo zero fecha os dois casos sem inventar nada: o usuário resolve antes, transferindo, gastando ou ajustando, e cada um desses caminhos registra a intenção real.
+
+  - `CloseAccountUseCase` recusa saldo ≠ 0 (`AccountError.HAS_BALANCE`) e **não escreve nada**; a criação da baixa saiu, junto com a dependência de `ITransactionRepository`.
+  - A UI impede antes, dizendo quanto falta resolver e o que fazer — sem ser a salvaguarda.
+  - Teste que prova a recusa **e** que nenhum lançamento é criado.
+  - A spec `account-lifecycle` foi reescrita: o requisito "Encerramento com saldo gera lançamento de baixa" virou "Encerramento exige saldo zero", com o raciocínio acima registrado.
+
+  ⚠️ **A baixa automática permanece na `MIGRATION_7_9`, e é legítima ali por não haver alternativa:** ela reconstrói contas **já apagadas** no v7, cujo dinheiro já havia deixado os livros, sem usuário a quem perguntar. Ali a baixa registra um fato passado; em runtime ela inventaria um. A distinção está escrita na spec.
+
+- [x] 8.13 **Excluir e encerrar como ações separadas, do use case à tela.** Escopo acrescentado pelo usuário, sob três premissas dele: são ações diferentes e pedem use cases diferentes; **todo use case impede o próprio uso incorreto**; e a UI também impede — não como salvaguarda, mas para não induzir expectativa errada.
+
+  **Domínio.** `DeleteAccountUseCase` e `CloseAccountUseCase` são pares disjuntos, cada um recusando o caso do outro com erro tipado:
+  - excluir conta com movimentação → `AccountError.HAS_TRANSACTIONS`. Não é dica para a UI: `entries.accountId` é `NO ACTION`, então remover a linha falharia na FK ou deixaria o histórico órfão.
+  - encerrar conta sem movimentação → `AccountError.NO_TRANSACTIONS`. Encerrar existe *porque* excluir é impossível; encerrar o que nunca se moveu só esconderia a conta sem preservar nada — e, sem reabrir (8.12), fora de alcance.
+  - `DeleteCreditCardUseCase`/`CloseCreditCardUseCase` e `DeleteCategoryUseCase`/`CloseCategoryUseCase` compõem os de conta, cada fachada guardando o seu. O par de conta é o dono único da regra.
+
+  **Apresentação.** `RetireAction` + `retireActionOf(hasMovement)` em `core/ui` decide **qual palavra** a tela oferece, com um dono só para conta e cartão e teste próprio. O **fato** vem do razão (`IEntryRepository.hasEntries`); o **desfecho** é do use case. Telas oferecem "Excluir" **ou** "Encerrar" e abrem modais dedicadas — uma promessa por modal.
+
+  **Também nesta task:** atalhos somem para conta/cartão encerrados nos dois modais de detalhe (que divergiam entre si), e cartão encerrado passa a exibir o nome em vez de "Excluído" — isto último era um bug: o caminho de leitura resolvia categorias e cartões pelas **fachadas**, filtradas por `isClosed` desde a 6b.5, então um encerrado virava `null`. **Mesma classe do bug da 8.10**, em dois pontos que eu não varri na ocasião. Corrigido com `*IncludingClosed()`.
+
+  ⚠️ **Duas versões anteriores desta task foram rejeitadas, e o registro fica.**
+  - A 1ª expôs `CloseAccountUseCase.outcomeFor(account)` — API de *previsão* pendurada num comando — e uma modal única que trocava de texto. Além do uso errado de use case, `outcomeFor` e `invoke` passaram a **decidir a mesma coisa em dois lugares dentro da classe dona da regra**: a duplicação exata que esta change existe para eliminar, cometida no dono. E a task afirmava que a UI "pergunta à regra em vez de redecidir" — falso, ela consumia uma segunda cópia.
+  - A 2ª separou a apresentação corretamente, mas manteve `DeleteAccountUseCase` **encerrando em silêncio** quando não podia excluir: um use case fazendo coisa diferente do próprio nome, com a UI como única barreira. É o que a 3ª premissa do usuário corrige.
+
+  ⚠️ **Ainda registrado:** o teste de regressão da 8.10 (`a card purchase hydrates…`) nunca entrou no commit — script com `replace` sem asserção, falha silenciosa, e eu o relatei como existente. Recolocado, mais um para conta encerrada.
+
+  ⚠️ **Uma 3ª correção, também apontada pelo usuário: ícone de encerrar diferente entre conta e cartão.** A causa não era o ícone: cada tela rederivava a apresentação da mesma ação, com o seu próprio `when` e o seu próprio par de strings. Divergir era questão de tempo. `RetireAction` passou a carregar o **rótulo e o ícone**, e as telas só o consomem — as strings por feature (`accounts_delete`, `credit_cards_delete`, `view_category_delete`, `invoice_transactions_delete_card`) saíram.
+
+  Ao varrer, apareceram **dois pontos que eu não tinha atualizado e que o guarda estrito quebrou**: `InvoiceTransactionsScreen:196` e `ViewCategoryModal:172` abriam a modal de excluir incondicionalmente, então excluir cartão ou categoria **com** movimentação passava a falhar. A categoria ganhou o par que faltava (`CloseCategoryUseCase`/`CloseCategoryModal`), fechando as três fachadas no mesmo desenho. **Quarta reincidência do mesmo padrão nesta change: corrigir a instância e não varrer a classe.**
+
+  **Continua aberto:** não há como reabrir uma conta encerrada, nem lista de encerradas (8.12).
+
+- [x] 8.18 **`isPermanent` no lugar de `isMonetary` para o guarda de saldo, e "encerrar" vira "arquivar" (decisões do usuário).** Surgiram de uma pergunta dele: como apps de partidas dobradas resolvem categorias nunca zerarem o saldo.
+
+  **Não resolvem — a distinção já existe na contabilidade, e eu a tinha reinventado mal.** Contas **permanentes** (reais: `ASSET`, `LIABILITY`, `EQUITY`) têm saldo que representa o que existe agora e atravessa períodos. Contas **temporárias** (nominais: `INCOME`, `EXPENSE`) têm saldo que é total de período, zerado só por lançamento de encerramento de exercício contra o patrimônio — que este app não realiza, como praticamente nenhum app pessoal. O guarda usava `isMonetary` (`ASSET`/`LIABILITY`), que acerta o caso alcançável mas erra o conjunto: `EQUITY` é permanente e ficava de fora. `AccountType.isPermanent` passa a ser o predicado do guarda, com a razão contábil escrita na spec — antes ela dizia "conta de fluxo" sem nomear o motivo, e leria como remendo para destravar categoria, que foi exatamente como surgiu. `isMonetary` permanece onde o sentido é mesmo "perna que carrega dinheiro" (`monetaryEntries`, `primaryEntry`, gate de editabilidade).
+
+  **"Encerrar" → "arquivar"** em domínio, UI, strings, schema e specs. `CloseAccountUseCase` → `ArchiveAccountUseCase` (e os pares de cartão e categoria), `RetireAction.CLOSE` → `ARCHIVE`, `accounts.isClosed` → `isArchived` — seguro renomear a coluna porque a v9 não foi para produção. ⚠️ `Invoice.Status.isClosed`, `isClosedToNewExpenses` e `CloseInvoiceUseCase` são **outro conceito** e ficam: fatura fechada não é fatura arquivada. O rename por regex atingiu `Invoice.Status.isClosed` mesmo assim (o padrão `val isClosed: Boolean` casa nos dois) e foi revertido — é a terceira vez nesta change que um rename mecânico vaza para um homônimo, e a única defesa que funcionou foi compilar e ler o erro.
 
 ## 9. Cobertura do raio legado — varredura mecânica
 

@@ -12,6 +12,9 @@ data class Category(
     // Assigned by the store on insert, exactly like [id]: a persisted category
     // always has its account.
     val accountId: Long = 0,
+    // Mirrors the closure of its ledger account (D21); the category keeps no copy
+    // of its own. Set only on the reads that render history.
+    val isArchived: Boolean = false,
 ) {
     enum class Type {
         INCOME,

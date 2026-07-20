@@ -218,6 +218,8 @@ private class Fakes {
     fun creditCardRepository(cards: List<CreditCard> = emptyList()) = object : ICreditCardRepository {
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = MutableStateFlow(cards)
         override suspend fun getAllCreditCards(): List<CreditCard> = cards
+        override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = getAllCreditCards()
+        override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = cards.firstOrNull { it.id == creditCardId }
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
@@ -247,6 +249,8 @@ private class Fakes {
         override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
         override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
+        override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+        override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override suspend fun insert(category: Category) = throw NotImplementedError()
@@ -259,6 +263,7 @@ private class Fakes {
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()

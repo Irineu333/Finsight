@@ -53,8 +53,9 @@ class TransactionRepository(
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
 
-    private val categoriesFlow = categoryRepository.observeAllCategories().map { it.associateBy { category -> category.id } }
-    private val creditCardsFlow = creditCardRepository.observeAllCreditCards().map { it.associateBy { card -> card.id } }
+    // Resolving a historical reference, not offering a choice: closed included.
+    private val categoriesFlow = categoryRepository.observeAllCategoriesIncludingClosed().map { it.associateBy { category -> category.id } }
+    private val creditCardsFlow = creditCardRepository.observeAllCreditCardsIncludingClosed().map { it.associateBy { card -> card.id } }
     private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
     private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
     // The whole chart of accounts, not the ASSET facade: an entry whose account is
@@ -158,8 +159,8 @@ class TransactionRepository(
     )
 
     private suspend fun lookups(): Lookups {
-        val categories = categoryRepository.getAllCategories().associateBy { it.id }
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
+        val categories = categoryRepository.getAllCategoriesIncludingClosed().associateBy { it.id }
+        val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
         val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
         return Lookups(
             categories = categories,

@@ -86,10 +86,65 @@ class TransactionRepositoryEntriesTest {
         assertEquals(AccountType.EXPENSE, expenseLeg.account.type)
         assertEquals(transactionId, assetLeg.transactionId)
     }
+
+    @Test
+    fun `a card purchase hydrates even though it has no asset leg`() = runTest {
+        // LIABILITY (the card) + EXPENSE (the category). Neither is an account the
+        // user sees, so hydrating from the ASSET facade dropped both entries, the
+        // mapper returned null, and `createTransaction` threw on `!!` — the modal
+        // simply never closed, while the invoice grew from the rows already written.
+        val card = Account(id = 2, name = "Card", type = AccountType.LIABILITY)
+        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
+
+        val transactionId = db.transactionDao().insert(
+            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
+        )
+        db.entryDao().insertAll(
+            listOf(
+                EntryEntity(transactionId = transactionId, accountId = 2, amount = -5000),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000),
+            ),
+        )
+
+        val transaction = repository(listOf(card, food)).getTransactionById(transactionId)
+
+        assertEquals(2, transaction?.entries?.size)
+        assertEquals(setOf(2L, 10L), transaction?.entries?.map { it.account.id }?.toSet())
+    }
+
+    @Test
+    fun `a closed account still hydrates the history that references it`() = runTest {
+        // Closure hides an account from the selectors, not from the past.
+        val closed = Account(id = 1, name = "Old wallet", type = AccountType.ASSET, isArchived = true)
+        val food = Account(id = 10, name = "Food", type = AccountType.EXPENSE)
+        db.accountDao().insert(
+            AccountEntity(id = 1, name = "Old wallet", type = AccountEntity.Type.ASSET, isArchived = true),
+        )
+        db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
+
+        val transactionId = db.transactionDao().insert(
+            TransactionEntity(title = "Old", date = LocalDate(2026, 1, 5), categoryId = null),
+        )
+        db.entryDao().insertAll(
+            listOf(
+                EntryEntity(transactionId = transactionId, accountId = 1, amount = -1000),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 1000),
+            ),
+        )
+
+        val transaction = repository(listOf(closed, food)).getTransactionById(transactionId)
+
+        assertEquals(2, transaction?.entries?.size)
+        assertEquals(true, transaction?.entries?.first { it.account.id == 1L }?.account?.isArchived)
+    }
 }
 
 internal object FakeCategoryRepository : ICategoryRepository {
     override suspend fun getAllCategories(): List<Category> = emptyList()
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
@@ -101,6 +156,8 @@ internal object FakeCategoryRepository : ICategoryRepository {
 
 internal object FakeCreditCardRepository : ICreditCardRepository {
     override suspend fun getAllCreditCards(): List<CreditCard> = emptyList()
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = getAllCreditCards()
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
     override fun observeAllCreditCards(): Flow<List<CreditCard>> = flowOf(emptyList())
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
     override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
@@ -143,7 +200,7 @@ internal object FakeInstallmentRepository : IInstallmentRepository {
  * distinction exists to prevent.
  */
 internal class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {
-    private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isClosed }
+    private val facade = accounts.filter { it.type == AccountType.ASSET && !it.isArchived }
     override suspend fun getAllAccounts(): List<Account> = facade
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(facade)
     override suspend fun getAllLedgerAccounts(): List<Account> = accounts

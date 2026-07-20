@@ -13,10 +13,21 @@ import kotlinx.coroutines.flow.Flow
 // plain join.
 private const val OPEN_CATEGORIES =
     "SELECT c.* FROM categories c JOIN accounts a ON a.id = c.accountId " +
-        "WHERE a.isClosed = 0"
+        "WHERE a.isArchived = 0"
+
+// Rendering history needs the closed ones too: a transaction on a category that
+// was later closed must still show its name.
+private const val ALL_CATEGORIES =
+    "SELECT c.*, a.isArchived AS isArchived FROM categories c JOIN accounts a ON a.id = c.accountId"
 
 @Dao
 interface CategoryDao {
+    @Query(ALL_CATEGORIES + " ORDER BY c.createdAt ASC")
+    suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival>
+
+    @Query(ALL_CATEGORIES + " ORDER BY c.createdAt ASC")
+    fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>>
+
     @Query(OPEN_CATEGORIES + " ORDER BY c.createdAt ASC")
     fun observeAllCategories(): Flow<List<CategoryEntity>>
 

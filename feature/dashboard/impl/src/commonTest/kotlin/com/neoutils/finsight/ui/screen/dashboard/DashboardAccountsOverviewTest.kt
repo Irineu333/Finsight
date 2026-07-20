@@ -205,6 +205,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
     // 100 − 30 = 70, account 2 = 50 − 20 = 30 — the figures the screen showed before.
     override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
+    override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()

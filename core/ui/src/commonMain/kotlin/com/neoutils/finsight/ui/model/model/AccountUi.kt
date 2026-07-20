@@ -14,4 +14,9 @@ data class AccountUi(
     val expense: Double,
     val adjustment: Double,
     val invoicePayment: Double,
-)
+    // Whether the account has any ledger movement. The ledger decides whether it
+    // can be removed; this is only the fact the screen needs to name the action.
+    val hasMovement: Boolean = false,
+) {
+    val retireAction: RetireAction get() = retireActionOf(hasMovement)
+}

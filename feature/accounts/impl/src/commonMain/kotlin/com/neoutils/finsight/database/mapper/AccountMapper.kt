@@ -14,7 +14,7 @@ class AccountMapper {
             iconKey = entity.iconKey,
             isDefault = entity.isDefault,
             createdAt = entity.createdAt,
-            isClosed = entity.isClosed,
+            isArchived = entity.isArchived,
         )
     }
 
@@ -27,7 +27,7 @@ class AccountMapper {
             iconKey = domain.iconKey,
             isDefault = domain.isDefault,
             createdAt = domain.createdAt,
-            isClosed = domain.isClosed,
+            isArchived = domain.isArchived,
         )
     }
 

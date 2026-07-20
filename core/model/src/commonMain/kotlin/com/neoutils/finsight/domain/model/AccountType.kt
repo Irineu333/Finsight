@@ -26,4 +26,17 @@ enum class AccountType {
      * their debit/credit direction rather than by whether they carry a balance.
      */
     val isMonetary: Boolean get() = this == ASSET || this == LIABILITY
+
+    /**
+     * A *permanent* (real) account, in the accounting sense: its balance is what
+     * exists right now and carries across periods. `INCOME` and `EXPENSE` are
+     * *temporary* (nominal) — their balance is a period total, zeroed only by a
+     * period-closing entry into equity, which this app does not perform.
+     *
+     * The distinction is what decides whether a balance can be *stranded*: money
+     * sits in a permanent account, so archiving one that still holds some would
+     * leave it in net worth with nothing visible to explain it. A temporary
+     * account holds nothing — its balance is a total of things that already moved.
+     */
+    val isPermanent: Boolean get() = this == ASSET || this == LIABILITY || this == EQUITY
 }

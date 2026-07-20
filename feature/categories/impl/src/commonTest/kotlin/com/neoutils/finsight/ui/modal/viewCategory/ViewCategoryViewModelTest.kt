@@ -55,6 +55,8 @@ class ViewCategoryViewModelTest {
         override fun observeCategoryById(id: Long): Flow<Category?> = byId
         override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
+        override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+        override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override suspend fun insert(category: Category) = throw NotImplementedError()
@@ -74,6 +76,7 @@ class ViewCategoryViewModelTest {
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+        override suspend fun hasEntries(accountId: Long): Boolean = false
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = counts[accountId] ?: 0
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

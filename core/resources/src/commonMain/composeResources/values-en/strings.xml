@@ -10,6 +10,8 @@
     <string name="account_error_empty_name">Account name cannot be empty.</string>
     <string name="account_error_already_exist">An account with this name already exists.</string>
     <string name="account_error_not_found">Account not found.</string>
+    <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Archive it to preserve the history.</string>
+    <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before archiving the account.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -40,7 +42,7 @@
     <string name="ledger_error_paid_invoice">This invoice has been paid and can no longer be changed.</string>
     <string name="ledger_error_closed_invoice">This invoice is closed. Only its payment can be recorded.</string>
     <string name="ledger_error_closed_account">This account has been closed and takes no new entries.</string>
-    <string name="transaction_error_generic">The transaction could not be saved.</string>
+    <string name="transaction_error_generic">Something went wrong while saving the transaction. Try again in a moment.</string>
 
     <!-- Installment errors -->
     <string name="installment_error_min_installments">Installment must have at least 2 installments.</string>
@@ -180,7 +182,6 @@
     <string name="credit_cards_title">Credit Cards</string>
     <string name="credit_cards_empty">No credit cards</string>
     <string name="credit_cards_create">Create card</string>
-    <string name="credit_cards_delete">Delete</string>
     <string name="credit_cards_edit">Edit</string>
     <string name="credit_cards_advance_payment">Advance Payment</string>
     <string name="credit_cards_close_invoice">Close Invoice</string>
@@ -204,7 +205,10 @@
     <string name="accounts_invoices">Invoices</string>
     <string name="accounts_advance_payments">Advance Payments</string>
     <string name="accounts_balance">Balance</string>
-    <string name="accounts_delete">Delete</string>
+    <string name="retire_action_delete">Delete</string>
+    <string name="retire_action_archive">Archive</string>
+    <string name="retire_action_error_generic">Something went wrong while saving. Try again in a moment.</string>
+    <string name="error_modal_dismiss">Got it</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
     <string name="accounts_filter_category">Category</string>
@@ -236,7 +240,6 @@
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Edit Card</string>
-    <string name="invoice_transactions_delete_card">Delete Card</string>
     <string name="invoice_transactions_expenses">Expenses</string>
     <string name="invoice_transactions_advance_payments">Advance Payments</string>
     <string name="invoice_transactions_adjustments">Adjustments</string>
@@ -328,14 +331,24 @@
     <string name="delete_transaction_confirm">Delete</string>
 
     <string name="delete_account_title">Delete Account</string>
-    <string name="delete_account_message">Are you sure you want to delete this account? Associated transactions will not be deleted.</string>
+    <string name="archive_account_title">Archive Account</string>
+    <string name="archive_account_confirm">Archive</string>
+    <string name="archive_account_message">This account has movement, so it is archived rather than deleted: its history is preserved and it stops appearing in the lists.</string>
+    <string name="archive_account_blocked">This account still has a balance of %1$s. Transfer, spend or adjust it before archiving — that way the record shows where the money went.</string>
+    <string name="archive_credit_card_title">Archive Card</string>
+    <string name="archive_credit_card_message">This card has movement, so it is archived rather than deleted: its invoices and transactions are preserved and it stops appearing in the lists.</string>
+    <string name="archive_credit_card_blocked">This card still has %1$s outstanding. Pay the invoice or adjust the balance before archiving it.</string>
+    <string name="delete_account_message">Are you sure you want to delete this account? If it already has movement, its history is preserved and the account simply stops appearing in the lists. No transaction is deleted.</string>
     <string name="delete_account_confirm">Delete</string>
 
     <string name="delete_credit_card_title">Delete Card</string>
-    <string name="delete_credit_card_message">Are you sure you want to delete the card \"%1$s\"? Associated invoices and transactions will also be deleted.</string>
+    <string name="delete_credit_card_message">Are you sure you want to delete the card \"%1$s\"? If it already has movement, its invoices and transactions are preserved and the card simply stops appearing in the lists.</string>
     <string name="delete_credit_card_confirm">Delete</string>
 
     <string name="delete_category_title">Delete Category</string>
+    <string name="archive_category_title">Archive Category</string>
+    <string name="archive_category_confirm">Archive</string>
+    <string name="archive_category_message">This category has been used, so it is archived rather than deleted: its transactions keep showing its name, and it stops appearing in the pickers and in budgets.</string>
     <string name="delete_category_message">Are you sure you want to delete this category? Associated transactions will not be deleted.</string>
     <string name="delete_category_confirm">Delete</string>
 
@@ -425,7 +438,6 @@
     <string name="view_transaction_invoice_label">Invoice</string>
     <string name="view_transaction_installment_label">Installment</string>
     <string name="view_transaction_recurring_label">Recurring</string>
-    <string name="view_transaction_deleted">Deleted</string>
     <string name="view_transaction_closed_invoice_message">This transaction belongs to a closed invoice and cannot be edited or deleted.</string>
     <string name="view_transaction_delete">Delete</string>
     <string name="view_transaction_edit">Edit</string>
@@ -440,7 +452,6 @@
     <string name="view_adjustment_account_label">Account</string>
     <string name="view_adjustment_card_label">Card</string>
     <string name="view_adjustment_credit_card_label">Credit Card</string>
-    <string name="view_adjustment_deleted">Deleted</string>
     <string name="view_adjustment_delete_label">Delete Adjustment</string>
 
     <!-- View Category Modal -->
@@ -449,7 +460,6 @@
     <string name="view_category_total_received">Total Received</string>
     <string name="view_category_total_spent">Total Spent</string>
     <string name="view_category_transactions_month">Transactions this Month</string>
-    <string name="view_category_delete">Delete</string>
     <string name="view_category_edit">Edit</string>
 
     <!-- View Budget Modal -->

@@ -9,11 +9,9 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
 import com.neoutils.finsight.ui.component.ModalManager
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -30,8 +28,6 @@ class TransferBetweenAccountsViewModel(
     private val selectedSourceAccount = MutableStateFlow(initialSourceAccount)
     private val selectedDestinationAccount = MutableStateFlow<Account?>(null)
 
-    private val _events = Channel<TransferBetweenAccountsEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
 
     val uiState = combine(
         accountRepository.observeAllAccounts(),
@@ -95,11 +91,7 @@ class TransferBetweenAccountsViewModel(
             date = date,
         ).onLeft {
             crashlytics.recordException(it)
-            _events.send(
-                TransferBetweenAccountsEvent.ShowError(
-                    it.error.toUiText()
-                )
-            )
+            modalManager.showError(it.error.toUiText())
         }.onRight {
             analytics.logEvent(TransferBetweenAccounts)
             modalManager.dismiss()

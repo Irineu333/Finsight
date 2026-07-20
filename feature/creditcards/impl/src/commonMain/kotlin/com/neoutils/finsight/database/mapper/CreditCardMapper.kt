@@ -4,6 +4,9 @@ import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.domain.model.CreditCard
 
 class CreditCardMapper {
+    fun toDomain(row: com.neoutils.finsight.database.dao.CreditCardWithArchival): CreditCard =
+        toDomain(row.creditCard).copy(isArchived = row.isArchived)
+
     fun toDomain(entity: CreditCardEntity): CreditCard {
         return CreditCard(
             id = entity.id,

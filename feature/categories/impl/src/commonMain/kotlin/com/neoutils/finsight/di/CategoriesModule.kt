@@ -12,7 +12,9 @@ import com.neoutils.finsight.domain.usecase.ValidateCategoryNameUseCase
 import com.neoutils.finsight.feature.categories.api.CategoriesEntry
 import com.neoutils.finsight.feature.categories.impl.CategoriesEntryImpl
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
+import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCategoryUseCase
+import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
 import com.neoutils.finsight.ui.screen.categories.CategoriesViewModel
@@ -64,8 +66,14 @@ val categoriesModule = module {
     factory {
         DeleteCategoryUseCase(
             categoryRepository = get(),
+            entryRepository = get(),
+        )
+    }
+
+    factory {
+        ArchiveCategoryUseCase(
             accountRepository = get(),
-            closeAccountUseCase = get(),
+            archiveAccountUseCase = get(),
         )
     }
 
@@ -73,6 +81,16 @@ val categoriesModule = module {
         DeleteCategoryViewModel(
             category = it.get(),
             deleteCategoryUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        ArchiveCategoryViewModel(
+            category = it.get(),
+            archiveCategoryUseCase = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

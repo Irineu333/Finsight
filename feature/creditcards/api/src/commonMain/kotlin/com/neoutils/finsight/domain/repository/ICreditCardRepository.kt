@@ -6,6 +6,11 @@ import kotlinx.coroutines.flow.Flow
 interface ICreditCardRepository {
     fun observeAllCreditCards(): Flow<List<CreditCard>>
     suspend fun getAllCreditCards(): List<CreditCard>
+
+    /** Every card, closed ones included — see [ICategoryRepository] for the why. */
+    suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard>
+
+    fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>>
     suspend fun getCreditCardById(creditCardId: Long): CreditCard?
     fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?>
     suspend fun insert(creditCard: CreditCard): Long

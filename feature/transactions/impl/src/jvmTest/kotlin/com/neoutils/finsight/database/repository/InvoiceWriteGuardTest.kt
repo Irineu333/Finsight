@@ -246,7 +246,7 @@ private class LedgerAccountRepository(private val db: AppDatabase) : IAccountRep
             iconKey = it.iconKey,
             isDefault = it.isDefault,
             createdAt = it.createdAt,
-            isClosed = it.isClosed,
+            isArchived = it.isArchived,
         )
     }
 

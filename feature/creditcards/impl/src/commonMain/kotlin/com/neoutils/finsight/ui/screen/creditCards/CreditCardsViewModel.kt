@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 class CreditCardsViewModel(
+    private val entryRepository: IEntryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -105,7 +107,8 @@ class CreditCardsViewModel(
                     creditCard = creditCard,
                     invoiceUi = invoice?.let {
                         invoiceUiMapper.toUi(invoice = invoice)
-                    }
+                    },
+                    hasMovement = entryRepository.hasEntries(creditCard.accountId),
                 )
             },
             selectedCardIndex = index,

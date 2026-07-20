@@ -29,6 +29,12 @@ class CategoryRepository(
         return dao.getAllCategories().map { mapper.toDomain(it) }
     }
 
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> =
+        dao.getAllCategoriesIncludingClosed().map { mapper.toDomain(it) }
+
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> =
+        dao.observeAllCategoriesIncludingClosed().map { rows -> rows.map { mapper.toDomain(it) } }
+
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> {
         return dao.observeCategoriesByType(
             mapper.toEntity(type)
@@ -89,7 +95,22 @@ class CategoryRepository(
         createdAt = createdAt,
     )
 
+    /**
+     * Removes the facade **and** its ledger account, in that order and as one unit.
+     * The account cannot go first: `categories.accountId` is `NO ACTION`, so the row
+     * still pointing at it makes the delete fail on the foreign key.
+     */
+    /**
+     * Removes the facade **and** its ledger account, in that order and in one
+     * transaction. The order matters: `categories.accountId` references the account
+     * with `NO_ACTION`, so removing the account first violates the key.
+     */
     override suspend fun delete(category: Category) {
-        dao.delete(mapper.toEntity(category))
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                dao.delete(mapper.toEntity(category))
+                accountDao.getAccountById(category.accountId)?.let { accountDao.delete(it) }
+            }
+        }
     }
 }

@@ -30,6 +30,12 @@ class CreditCardRepository(
         return dao.getAllCreditCardsList().map { mapper.toDomain(it) }
     }
 
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> =
+        dao.getAllCreditCardsIncludingClosed().map { mapper.toDomain(it) }
+
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> =
+        dao.observeAllCreditCardsIncludingClosed().map { rows -> rows.map { mapper.toDomain(it) } }
+
     override suspend fun getCreditCardById(creditCardId: Long): CreditCard? {
         return dao.getCreditCardById(creditCardId)?.let { mapper.toDomain(it) }
     }
@@ -71,7 +77,13 @@ class CreditCardRepository(
         }
     }
 
+    /** Facade then account, in one transaction — see `CategoryRepository.delete`. */
     override suspend fun delete(creditCard: CreditCard) {
-        dao.delete(mapper.toEntity(creditCard))
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                dao.delete(mapper.toEntity(creditCard))
+                accountDao.getAccountById(creditCard.accountId)?.let { accountDao.delete(it) }
+            }
+        }
     }
 }

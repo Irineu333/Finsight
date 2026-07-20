@@ -2,6 +2,8 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CategoryDao
+import com.neoutils.finsight.database.dao.CategoryWithArchival
+import com.neoutils.finsight.database.dao.CreditCardWithArchival
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
@@ -128,6 +130,7 @@ private class FakeEntryDao : EntryDao {
     override suspend fun getAll(): List<EntryEntity> = inserted
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
     override fun observeEntryCount(): Flow<Long> = flowOf(0)
+    override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = inserted.filter { it.transactionId == transactionId }
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
@@ -159,7 +162,7 @@ private class FakeAccountDao : AccountDao {
     val accounts = linkedMapOf<Long, AccountEntity>()
     private var seq = 100L
     override suspend fun close(id: Long) {
-        accounts[id]?.let { accounts[id] = it.copy(isClosed = true) }
+        accounts[id]?.let { accounts[id] = it.copy(isArchived = true) }
     }
     override suspend fun entryCount(accountId: Long): Int = 0
     override suspend fun getAllLedgerAccounts(): List<AccountEntity> = accounts.values.toList()
@@ -183,6 +186,8 @@ private class FakeAccountDao : AccountDao {
 }
 
 private class FakeCategoryDao : CategoryDao {
+    override suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival> = emptyList()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>> = flowOf(emptyList())
     val categories = linkedMapOf<Long, CategoryEntity>()
     override suspend fun getCategoryById(id: Long): CategoryEntity? = categories[id]
     override suspend fun update(category: CategoryEntity) { categories[category.id] = category }
@@ -195,6 +200,8 @@ private class FakeCategoryDao : CategoryDao {
 }
 
 private class FakeCreditCardDao : CreditCardDao {
+    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival> = emptyList()
+    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>> = flowOf(emptyList())
     val cards = linkedMapOf<Long, CreditCardEntity>()
     override suspend fun getCreditCardById(id: Long): CreditCardEntity? = cards[id]
     override suspend fun update(creditCard: CreditCardEntity) { cards[creditCard.id] = creditCard }

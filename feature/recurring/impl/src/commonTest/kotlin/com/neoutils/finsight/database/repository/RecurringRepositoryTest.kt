@@ -33,6 +33,8 @@ class RecurringRepositoryTest {
     private val categoryRepository = object : ICategoryRepository {
         override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
         override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
+        override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+        override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
@@ -44,6 +46,8 @@ class RecurringRepositoryTest {
     private val accountRepository = object : IAccountRepository {
         override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAllAccounts(): List<Account> = throw NotImplementedError()
+        override suspend fun getAllLedgerAccounts(): List<Account> = throw NotImplementedError()
+        override fun observeAllLedgerAccounts(): Flow<List<Account>> = flowOf(emptyList())
         override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
         override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
         override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
@@ -57,6 +61,8 @@ class RecurringRepositoryTest {
     private val creditCardRepository = object : ICreditCardRepository {
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = flowOf(emptyList())
         override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
+        override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = getAllCreditCards()
+        override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = observeAllCreditCards()
         override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = throw NotImplementedError()
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()

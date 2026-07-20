@@ -206,8 +206,8 @@ class Migration7To9Test {
 
         // The orphan of a deleted account is reconstructed as a closed ASSET account,
         // the orphan of a deleted card as a closed LIABILITY one.
-        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Conta encerrada' AND `type` = 'ASSET' AND `isClosed` = 1"))
-        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Cartão encerrado' AND `type` = 'LIABILITY' AND `isClosed` = 1"))
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Conta encerrada' AND `type` = 'ASSET' AND `isArchived` = 1"))
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM `accounts` WHERE `name` = 'Cartão encerrado' AND `type` = 'LIABILITY' AND `isArchived` = 1"))
 
         // Each is zeroed by its write-off, so the money of a deleted account no longer
         // sits in net worth: -2000 and -1500 offset by the 'Encerramento' operations.

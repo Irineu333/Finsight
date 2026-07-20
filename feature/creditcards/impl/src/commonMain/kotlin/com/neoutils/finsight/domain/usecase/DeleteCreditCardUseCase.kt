@@ -2,37 +2,26 @@ package com.neoutils.finsight.domain.usecase
 
 import arrow.core.Either
 import arrow.core.Either.Companion.catch
-import arrow.core.flatMap
+import arrow.core.left
+import com.neoutils.finsight.domain.error.AccountError
+import com.neoutils.finsight.domain.exception.AccountException
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
+import com.neoutils.finsight.domain.repository.IEntryRepository
 
 /**
- * What the user calls "delete a card". The card's ledger account is retired by
- * the one mechanism that retires any account, so a card now behaves exactly like
- * a plain account: with movement it is closed, without it is removed.
+ * Removes a card that never moved, facade and ledger account together.
  *
- * It used to bulk-delete the card's purchases while preserving its payments, in
- * two steps without a transaction — leaving a `LIABILITY` account alive with no
- * facade and the invoice history half gone.
+ * A card with movement is refused — see [ArchiveCreditCardUseCase].
  */
 class DeleteCreditCardUseCase(
     private val creditCardRepository: ICreditCardRepository,
-    private val accountRepository: IAccountRepository,
-    private val closeAccountUseCase: CloseAccountUseCase,
+    private val entryRepository: IEntryRepository,
 ) {
-    suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> = catch {
-        requireNotNull(accountRepository.getAccountById(creditCard.accountId)) {
-            "Credit card ${creditCard.id} has no chart-of-accounts row"
+    suspend operator fun invoke(creditCard: CreditCard): Either<Throwable, Unit> {
+        if (entryRepository.hasEntries(creditCard.accountId)) {
+            return AccountException(AccountError.HAS_TRANSACTIONS).left()
         }
-    }.flatMap { account ->
-        closeAccountUseCase(account).flatMap { outcome ->
-            catch {
-                if (outcome == CloseAccountUseCase.Outcome.DELETED) {
-                    creditCardRepository.delete(creditCard)
-                }
-            }
-        }
+        return catch { creditCardRepository.delete(creditCard) }
     }
 }

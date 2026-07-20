@@ -9,8 +9,6 @@ import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
 import com.neoutils.finsight.util.UiText
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
@@ -47,8 +45,6 @@ class AddTransactionViewModel(
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
-    private val _events = Channel<AddTransactionEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
 
 
     private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
@@ -141,7 +137,7 @@ class AddTransactionViewModel(
                 }
             }.onLeft {
                 crashlytics.recordException(it)
-                _events.send(AddTransactionEvent.ShowError(it.toUiMessage()))
+                modalManager.showError(it.toUiMessage())
             }.onRight {
                 analytics.logEvent(CreateTransaction(form))
                 modalManager.dismiss()

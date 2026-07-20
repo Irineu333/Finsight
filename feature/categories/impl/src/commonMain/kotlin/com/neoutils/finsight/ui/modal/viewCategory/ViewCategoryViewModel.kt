@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.displaySign
 import com.neoutils.finsight.extension.interceptAbsence
@@ -55,6 +56,7 @@ class ViewCategoryViewModel(
         val transactionCount = entryRepository.entryCountInMonth(yearMonth, category.accountId)
         ViewCategoryUiState.Content(
             category = category,
+            retireAction = retireActionOf(entryRepository.hasEntries(category.accountId)),
             selectedYearMonth = yearMonth,
             totalAmount = totalAmount,
             transactionCount = transactionCount,

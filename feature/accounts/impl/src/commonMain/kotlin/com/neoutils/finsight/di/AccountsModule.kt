@@ -9,9 +9,10 @@ import com.neoutils.finsight.domain.usecase.AdjustBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustFinalBalanceUseCase
 import com.neoutils.finsight.domain.usecase.AdjustOpeningBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CreateAccountUseCase
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCase
-import com.neoutils.finsight.domain.usecase.CloseAccountUseCaseImpl
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCase
+import com.neoutils.finsight.domain.usecase.ArchiveAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteAccountUseCase
+import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
@@ -21,6 +22,7 @@ import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.feature.accounts.api.AccountsEntry
 import com.neoutils.finsight.feature.accounts.impl.AccountsEntryImpl
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormViewModel
+import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
@@ -56,15 +58,18 @@ val accountsModule = module {
             setDefaultAccount = get(),
         )
     }
-    factory<CloseAccountUseCase> {
-        CloseAccountUseCaseImpl(
+    factory<ArchiveAccountUseCase> {
+        ArchiveAccountUseCaseImpl(
             accountDao = get(),
-            accountRepository = get(),
             entryRepository = get(),
-            transactionRepository = get(),
         )
     }
-    factory { DeleteAccountUseCase(closeAccountUseCase = get()) }
+    factory<DeleteAccountUseCase> {
+        DeleteAccountUseCaseImpl(
+            accountRepository = get(),
+            entryRepository = get(),
+        )
+    }
     factory {
         AdjustBalanceUseCase(
             transactionRepository = get(),
@@ -107,6 +112,17 @@ val accountsModule = module {
         DeleteAccountViewModel(
             account = it.get(),
             deleteAccountUseCase = get(),
+            modalManager = get(),
+            analytics = get(),
+            crashlytics = get(),
+        )
+    }
+
+    viewModel {
+        ArchiveAccountViewModel(
+            account = it.get(),
+            archiveAccountUseCase = get(),
+            entryRepository = get(),
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),

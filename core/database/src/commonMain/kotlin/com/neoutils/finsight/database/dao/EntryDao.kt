@@ -87,6 +87,10 @@ interface EntryDao {
     @Query("SELECT COUNT(*) FROM entries")
     fun observeEntryCount(): Flow<Long>
 
+    /** Whether an account has any movement at all — cheaper than counting it. */
+    @Query("SELECT EXISTS(SELECT 1 FROM entries WHERE accountId = :accountId)")
+    suspend fun hasEntries(accountId: Long): Boolean
+
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 

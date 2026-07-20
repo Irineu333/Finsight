@@ -92,6 +92,8 @@ class CalculateCategorySpendingUseCaseImplTest {
 
 private class FakeCategoryRepository(private val categories: List<Category>) : ICategoryRepository {
     override suspend fun getAllCategories(): List<Category> = categories
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
     override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = categories.firstOrNull { it.id == id }
@@ -106,6 +108,7 @@ private class FakeEntryRepository(private val balances: Map<Long, Double>) : IEn
     override fun observeEntriesByTransaction(transactionId: Long): kotlinx.coroutines.flow.Flow<List<com.neoutils.finsight.domain.model.Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
     override suspend fun accountFlows(month: YearMonth, accountId: Long): com.neoutils.finsight.domain.repository.AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()

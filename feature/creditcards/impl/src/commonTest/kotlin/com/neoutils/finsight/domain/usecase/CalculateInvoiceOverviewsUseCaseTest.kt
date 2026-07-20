@@ -67,6 +67,7 @@ private class FakeInvoiceOverviewEntryRepository(
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()

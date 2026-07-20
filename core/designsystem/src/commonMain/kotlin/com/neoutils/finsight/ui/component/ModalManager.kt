@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.neoutils.finsight.util.UiText
 import org.koin.compose.koinInject
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -24,6 +25,18 @@ val LocalModalManager = compositionLocalOf<ModalManager> { error("No ModalManage
 class ModalManager {
 
     private var modalState = mutableStateListOf<Modal>()
+
+    /**
+     * Surfaces why an action was refused, as a modal over the one that tried it.
+     *
+     * A modal action that fails used to record the exception and stop there: the
+     * sheet simply did not close and the user was told nothing. Solving that per
+     * modal meant plumbing in every ViewModel, and the ones that were missed stayed
+     * silent — so it lives here, where every modal already is.
+     */
+    fun showError(message: UiText) {
+        show(ErrorModal(message))
+    }
 
     fun show(modal: Modal) {
         modalState.add(modal)

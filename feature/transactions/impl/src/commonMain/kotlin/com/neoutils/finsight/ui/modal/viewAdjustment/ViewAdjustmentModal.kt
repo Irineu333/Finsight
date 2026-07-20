@@ -155,14 +155,17 @@ class ViewAdjustmentModal(
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(AccountsRoute(account.id))
+                    // Closed: the name stays in history, the shortcut goes — the
+                    // accounts screen no longer lists it.
+                    onClick = if (account.isArchived) null else {
+                        {
+                            detailController.dismiss()
+                            navController.navigate(AccountsRoute(account.id))
+                        }
                     }
                 )
             }
 
-            val deletedLabel = stringResource(Res.string.view_adjustment_deleted)
             uiState.creditCard?.let { creditCard ->
                 DetailRow(
                     label = stringResource(Res.string.view_adjustment_card_label),
@@ -170,24 +173,13 @@ class ViewAdjustmentModal(
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .fillMaxWidth(),
-                    onClick = {
-                        detailController.dismiss()
-                        navController.navigate(
-                            CreditCardsRoute(creditCard.id)
-                        )
+                    onClick = if (creditCard.isArchived) null else {
+                        {
+                            detailController.dismiss()
+                            navController.navigate(CreditCardsRoute(creditCard.id))
+                        }
                     }
                 )
-            } ?: run {
-                if (uiState.isCardTarget) {
-                    DetailRow(
-                        label = stringResource(Res.string.view_adjustment_card_label),
-                        value = deletedLabel,
-                        valueColor = colorScheme.error,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth()
-                    )
-                }
             }
 
             uiState.invoice?.let { invoice ->

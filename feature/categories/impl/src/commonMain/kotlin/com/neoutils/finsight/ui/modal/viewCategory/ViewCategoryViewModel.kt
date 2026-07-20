@@ -42,7 +42,10 @@ class ViewCategoryViewModel(
                 onDisappeared = { _events.send(ViewCategoryEvent.Dismiss) },
             ),
         selectedYearMonth,
-    ) { category, yearMonth ->
+        // Same reason as the accounts screen: the totals below are SQL aggregates,
+        // so the ledger has to say when it moved.
+        entryRepository.observeLedgerChanges(),
+    ) { category, yearMonth, _ ->
         category ?: return@combine ViewCategoryUiState.Error
         // Σ entries of the category's chart account in the month, read from the ledger.
         // The natural balance is debit-positive; the ledger's own display convention

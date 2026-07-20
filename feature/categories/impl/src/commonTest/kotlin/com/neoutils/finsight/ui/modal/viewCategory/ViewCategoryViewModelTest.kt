@@ -17,6 +17,7 @@ import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -66,14 +67,17 @@ class ViewCategoryViewModelTest {
     // (EntryDao, covered by EntryRepository/DB tests); here we only pin the numbers the
     // ViewModel surfaces for the account it reads.
     private class FakeEntryRepository(
-        private val balances: Map<Long, Double> = emptyMap(),
-        private val counts: Map<Long, Int> = emptyMap(),
+        var balances: Map<Long, Double> = emptyMap(),
+        var counts: Map<Long, Int> = emptyMap(),
     ) : IEntryRepository {
+        /** Stands in for Room's invalidation: emit after moving the ledger. */
+        val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = counts[accountId] ?: 0
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override fun observeLedgerChanges(): Flow<Unit> = ledger
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
@@ -141,6 +145,30 @@ class ViewCategoryViewModelTest {
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
             assertEquals(42.5, content.totalAmount)
             assertEquals(2, content.transactionCount)
+        }
+    }
+
+    @Test
+    fun `the total refreshes when the ledger moves, without the category changing`() = runTest(dispatcher) {
+        // The figures are SQL aggregates, so nothing about the category row changes
+        // when a transaction is written. Without a ledger signal the screen kept
+        // showing the old total while the ledger had already moved.
+        val repository = FakeCategoryRepository()
+        val entries = FakeEntryRepository(balances = mapOf(10L to 42.5), counts = mapOf(10L to 2))
+        val vm = viewModel(categoryRepository = repository, entryRepository = entries)
+
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, name = "Food", accountId = 10L))
+            assertEquals(42.5, assertIs<ViewCategoryUiState.Content>(awaitItem()).totalAmount)
+
+            entries.balances = mapOf(10L to 60.0)
+            entries.counts = mapOf(10L to 3)
+            entries.ledger.emit(Unit)
+
+            val refreshed = assertIs<ViewCategoryUiState.Content>(awaitItem())
+            assertEquals(60.0, refreshed.totalAmount)
+            assertEquals(3, refreshed.transactionCount)
         }
     }
 

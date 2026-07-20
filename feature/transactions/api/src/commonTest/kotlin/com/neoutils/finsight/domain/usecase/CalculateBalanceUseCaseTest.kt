@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.repository.CardMonthFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.InvoiceFlows
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
@@ -25,6 +26,7 @@ class CalculateBalanceUseCaseTest {
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = byAccount.getValue(accountId)
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()

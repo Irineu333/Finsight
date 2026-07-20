@@ -78,6 +78,15 @@ interface EntryDao {
     @Query("SELECT * FROM entries ORDER BY id ASC")
     fun observeAll(): Flow<List<EntryEntity>>
 
+    /**
+     * A cheap invalidation signal for readers that derive their figures from SQL
+     * aggregates instead of from the entry rows. Room re-runs a `Flow` query on
+     * every write to the table, so the value itself is irrelevant — what matters is
+     * that it emits whenever the ledger changed.
+     */
+    @Query("SELECT COUNT(*) FROM entries")
+    fun observeEntryCount(): Flow<Long>
+
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 

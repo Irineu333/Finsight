@@ -72,7 +72,11 @@ class AccountsViewModel(
     private val accountsWithDomain = combine(
         accounts,
         selectedMonth,
-    ) { accounts, month ->
+        // The figures below are SQL aggregates, not flows: without a ledger signal
+        // this only recomputed when the account list or the month changed, so a
+        // balance adjustment left the cards showing the old number.
+        entryRepository.observeLedgerChanges(),
+    ) { accounts, month, _ ->
         // Derived entirely from the ledger (task 4.4): opening = Σ entries up to the
         // previous month; balance = Σ entries up to the month; the month's flows come
         // from the per-account aggregate (task 2.4). No summing of legs in memory.

@@ -3,6 +3,7 @@ package com.neoutils.finsight.database.repository
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.YearMonth
 import kotlin.test.Test
@@ -49,6 +50,7 @@ private class FakeReadEntryDao(
     override suspend fun deleteByTransactionId(transactionId: Long) = throw NotImplementedError()
     override suspend fun getAll(): List<EntryEntity> = throw NotImplementedError()
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
+    override fun observeEntryCount(): Flow<Long> = flowOf(0)
     override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = throw NotImplementedError()
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()

@@ -257,6 +257,17 @@
   - `AccountUiCharacterizationTest` foi apagado em `7e983491` e o registro diz que ele "cede a prova numérica ao `AccountPeriodTotalsQueryTest`". São 4 das 6 asserções: as duas de **saldo** (`openingBalance`, `balance`) não têm contrapartida ali, e `EntryDao.balanceUpToMonth` não tinha teste em nível nenhum. Corrigido com `BalanceUpToMonthQueryTest`, que cobre o corte de mês, o zero antes de qualquer movimento, a conta sem entries e o total de ASSET.
   - Task 5.7 diz que `InvoiceTransactionsUiState:39` "sai". Ela continua lá, agora consumindo `status.isEditable` em vez de reenumerar. O ponto (nenhuma reimplementação) está cumprido; a letra da task não.
 
+- [x] 8.17 **Sincronizar as specs com o que a §8.13–8.16 mudou (pergunta do usuário).** Quatro afirmações da `account-lifecycle` tinham deixado de ser verdade, três delas por mudanças que eu mesmo fiz e não propaguei — o mesmo padrão, agora no artefato normativo em vez do código.
+
+  - *"O usuário MUST NOT precisar distinguir apagar de encerrar: a ação continua sendo uma só"* — **revogado pelo usuário na 8.13**. Apagar e encerrar são ações distintas, com use cases distintos, cada uma recusando o caso da outra. A spec passa a exigir isso, e a exigir que a interface ofereça a ação certa pelo nome sem ser a salvaguarda.
+  - *"Uma tentativa de remover conta com lançamentos SHALL ser convertida em encerramento"* — **falso desde a 8.13**: é recusada, não convertida.
+  - *"Encerrar conta cujo saldo não seja zero SHALL ser recusado"*, sem qualificação — **falso desde a 8.15**: vale só para conta **monetária**. Categoria é conta de fluxo, cujo saldo nunca volta a zero; exigir zero ali tornava impossível encerrar categoria alguma, que foi exatamente o bug reportado.
+  - O requisito de integridade trazia um diagnóstico datado ("hoje ela alcança, porque...") de um defeito já corrigido, e não dizia nada sobre **ordem** de remoção — a lacuna por onde entrou o bug da 8.16. Agora exige remoção atômica da fachada com a sua conta, na ordem que a referência impõe.
+
+  Acrescentados os cenários que faltavam: apagar com lançamentos recusado, encerrar sem lançamentos recusado, encerrar categoria usada independe do saldo, fachada e conta removidas juntas na ordem certa, fachada encerrada continua nomeada no histórico, e a interface oferece a ação que vai acontecer.
+
+  Na `balanced-ledger`: o cenário do lançamento de baixa continua válido, mas a origem mudou — a baixa só existe no dado **migrado**, não em runtime; e a lista de regras deriváveis ganhou "qual ação de retirada uma tela oferece".
+
 - [x] 8.16 **Excluir categoria sem transação nenhuma continuava falhando — e o erro genérico era o sintoma.** O usuário voltou dizendo que não conseguia excluir categoria vazia, com a mensagem genérica "não foi possível concluir a ação".
 
   **A mensagem ser genérica era a pista:** `toUiMessage` só reconhece `AccountException`; qualquer outra coisa cai no `else`. O que estava sendo lançado era `SQLiteException: FOREIGN KEY constraint failed`. `DeleteCategoryUseCase` chamava `DeleteAccountUseCase`, que apagava a **conta** enquanto a linha da **categoria** ainda a referenciava (`categories.accountId`, `NO_ACTION`). A ordem estava invertida.

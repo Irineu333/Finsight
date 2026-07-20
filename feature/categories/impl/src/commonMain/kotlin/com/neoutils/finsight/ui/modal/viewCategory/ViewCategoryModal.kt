@@ -28,13 +28,14 @@ import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.closeCategory.CloseCategoryModal
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
 import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormModal
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.ui.theme.Info
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.view_category_delete
 import com.neoutils.finsight.resources.view_category_edit
 import com.neoutils.finsight.resources.view_category_total_received
 import com.neoutils.finsight.resources.view_category_total_spent
@@ -169,7 +170,12 @@ class ViewCategoryModal(
         ) {
             OutlinedButton(
                 onClick = {
-                    manager.show(DeleteCategoryModal(content.category))
+                    manager.show(
+                        when (content.retireAction) {
+                            RetireAction.DELETE -> DeleteCategoryModal(content.category)
+                            RetireAction.CLOSE -> CloseCategoryModal(content.category)
+                        }
+                    )
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
@@ -182,13 +188,13 @@ class ViewCategoryModal(
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    imageVector = content.retireAction.icon,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = stringResource(Res.string.view_category_delete),
+                    text = stringResource(content.retireAction.label),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

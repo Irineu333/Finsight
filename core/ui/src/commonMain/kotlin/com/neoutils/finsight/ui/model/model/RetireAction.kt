@@ -1,18 +1,30 @@
 package com.neoutils.finsight.ui.model
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.retire_action_close
+import com.neoutils.finsight.resources.retire_action_delete
+import org.jetbrains.compose.resources.StringResource
+
 /**
- * How a screen should offer retiring an account, a card or a category.
+ * How a screen offers retiring an account, a card or a category.
  *
- * The *outcome* is the ledger's decision and belongs to `CloseAccountUseCase`:
- * an account with movement cannot be removed without breaking the entries that
- * reference it. What a screen may decide is how to **name** and present that —
- * "excluir" promises removal, and promising it for something that will be closed
- * is what made the modals lie. This is that presentation rule, in one place, for
- * accounts and cards alike.
+ * The *outcome* is the ledger's decision and belongs to the use cases: an account
+ * with movement cannot be removed without breaking the entries that reference it,
+ * and each use case refuses the other's case. What a screen decides is how to
+ * **name and show** the action — and it carries its own label and icon precisely
+ * so that no screen re-derives them. Two screens deriving the same presentation
+ * separately is what let accounts and cards drift to different icons.
  */
-enum class RetireAction {
-    DELETE,
-    CLOSE,
+enum class RetireAction(
+    val label: StringResource,
+    val icon: ImageVector,
+) {
+    DELETE(label = Res.string.retire_action_delete, icon = Icons.Default.Delete),
+    CLOSE(label = Res.string.retire_action_close, icon = Icons.Default.Archive),
 }
 
 /** Maps the ledger fact to the action a screen offers. */

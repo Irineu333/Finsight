@@ -2,6 +2,8 @@
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
+import com.neoutils.finsight.ui.model.RetireAction
+
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -13,6 +15,9 @@ import kotlinx.datetime.YearMonth
 
 data class InvoiceTransactionsUiState(
     val creditCardName: String = "",
+    // Which retire action this screen may offer for the card — the same rule the
+    // cards screen uses, so the two cannot drift.
+    val retireAction: RetireAction = RetireAction.DELETE,
     val invoices: List<InvoiceSummary> = emptyList(),
     val selectedInvoiceIndex: Int = 0,
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),

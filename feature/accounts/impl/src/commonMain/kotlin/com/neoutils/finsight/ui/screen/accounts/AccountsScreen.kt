@@ -56,7 +56,6 @@ import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
-import androidx.compose.material.icons.filled.Archive
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.closeAccount.CloseAccountModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
@@ -67,8 +66,6 @@ import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.accounts_close
-import com.neoutils.finsight.resources.accounts_delete
 import com.neoutils.finsight.resources.accounts_edit
 import com.neoutils.finsight.resources.accounts_filter_category
 import com.neoutils.finsight.resources.accounts_filter_category_all
@@ -391,21 +388,13 @@ private fun AccountActions(
                 contentPadding = PaddingValues(12.dp),
             ) {
                 Icon(
-                    imageVector = when (retireAction) {
-                        RetireAction.DELETE -> Icons.Default.Delete
-                        RetireAction.CLOSE -> Icons.Default.Archive
-                    },
+                    imageVector = retireAction.icon,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(
-                        when (retireAction) {
-                            RetireAction.DELETE -> Res.string.accounts_delete
-                            RetireAction.CLOSE -> Res.string.accounts_close
-                        }
-                    ),
+                    text = stringResource(retireAction.label),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

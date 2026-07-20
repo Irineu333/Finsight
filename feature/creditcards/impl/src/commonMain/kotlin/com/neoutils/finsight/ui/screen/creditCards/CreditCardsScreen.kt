@@ -381,18 +381,13 @@ private fun CardActions(
                 contentPadding = PaddingValues(12.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    imageVector = creditCardUi.retireAction.icon,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(
-                        when (creditCardUi.retireAction) {
-                            RetireAction.DELETE -> Res.string.credit_cards_delete
-                            RetireAction.CLOSE -> Res.string.credit_cards_close
-                        }
-                    ),
+                    text = stringResource(creditCardUi.retireAction.label),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )

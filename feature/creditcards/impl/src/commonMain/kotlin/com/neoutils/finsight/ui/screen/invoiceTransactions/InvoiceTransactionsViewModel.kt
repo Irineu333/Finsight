@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.util.UiText
@@ -97,6 +98,7 @@ class InvoiceTransactionsViewModel(
 
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
+            retireAction = retireActionOf(entryRepository.hasEntries(creditCard.accountId)),
             invoices = invoices.map { invoice ->
                 val flows = flowsByInvoiceId.getValue(invoice.id)
                 val expense = flows.expense

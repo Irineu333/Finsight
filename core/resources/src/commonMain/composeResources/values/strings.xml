@@ -182,8 +182,6 @@
     <string name="credit_cards_title">Cartões de Crédito</string>
     <string name="credit_cards_empty">Sem cartões de crédito</string>
     <string name="credit_cards_create">Criar cartão</string>
-    <string name="credit_cards_delete">Excluir</string>
-    <string name="credit_cards_close">Encerrar</string>
     <string name="credit_cards_edit">Editar</string>
     <string name="credit_cards_advance_payment">Antecipar Pagamento</string>
     <string name="credit_cards_close_invoice">Fechar Fatura</string>
@@ -207,8 +205,8 @@
     <string name="accounts_invoices">Faturas</string>
     <string name="accounts_advance_payments">Adiantamentos</string>
     <string name="accounts_balance">Saldo</string>
-    <string name="accounts_delete">Excluir</string>
-    <string name="accounts_close">Encerrar</string>
+    <string name="retire_action_delete">Excluir</string>
+    <string name="retire_action_close">Encerrar</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
     <string name="accounts_filter_category">Categoria</string>
@@ -240,7 +238,6 @@
 
     <!-- Invoice Transactions Screen -->
     <string name="invoice_transactions_edit_card">Editar Cartão</string>
-    <string name="invoice_transactions_delete_card">Excluir Cartão</string>
     <string name="invoice_transactions_expenses">Gastos</string>
     <string name="invoice_transactions_advance_payments">Adiantamentos</string>
     <string name="invoice_transactions_adjustments">Ajustes</string>
@@ -346,6 +343,9 @@
     <string name="delete_credit_card_confirm">Excluir</string>
 
     <string name="delete_category_title">Excluir Categoria</string>
+    <string name="close_category_title">Encerrar Categoria</string>
+    <string name="close_category_confirm">Encerrar</string>
+    <string name="close_category_message">Esta categoria já foi usada, então ela é encerrada em vez de excluída: as transações mantêm o nome dela, e ela deixa de aparecer nos seletores e nos orçamentos.</string>
     <string name="delete_category_message">Tem certeza que deseja excluir esta categoria? As transações associadas não serão excluídas, e os orçamentos que a usam continuam válidos com as demais categorias.</string>
     <string name="delete_category_confirm">Excluir</string>
 
@@ -457,7 +457,6 @@
     <string name="view_category_total_received">Total Recebido</string>
     <string name="view_category_total_spent">Total Gasto</string>
     <string name="view_category_transactions_month">Transações no Mês</string>
-    <string name="view_category_delete">Excluir</string>
     <string name="view_category_edit">Editar</string>
 
     <!-- View Budget Modal -->

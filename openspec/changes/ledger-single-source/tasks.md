@@ -274,6 +274,10 @@
 
   ⚠️ **Ainda registrado:** o teste de regressão da 8.10 (`a card purchase hydrates…`) nunca entrou no commit — script com `replace` sem asserção, falha silenciosa, e eu o relatei como existente. Recolocado, mais um para conta encerrada.
 
+  ⚠️ **Uma 3ª correção, também apontada pelo usuário: ícone de encerrar diferente entre conta e cartão.** A causa não era o ícone: cada tela rederivava a apresentação da mesma ação, com o seu próprio `when` e o seu próprio par de strings. Divergir era questão de tempo. `RetireAction` passou a carregar o **rótulo e o ícone**, e as telas só o consomem — as strings por feature (`accounts_delete`, `credit_cards_delete`, `view_category_delete`, `invoice_transactions_delete_card`) saíram.
+
+  Ao varrer, apareceram **dois pontos que eu não tinha atualizado e que o guarda estrito quebrou**: `InvoiceTransactionsScreen:196` e `ViewCategoryModal:172` abriam a modal de excluir incondicionalmente, então excluir cartão ou categoria **com** movimentação passava a falhar. A categoria ganhou o par que faltava (`CloseCategoryUseCase`/`CloseCategoryModal`), fechando as três fachadas no mesmo desenho. **Quarta reincidência do mesmo padrão nesta change: corrigir a instância e não varrer a classe.**
+
   **Continua aberto:** não há como reabrir uma conta encerrada, nem lista de encerradas (8.12).
 
 ## 9. Cobertura do raio legado — varredura mecânica

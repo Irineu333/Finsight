@@ -50,6 +50,8 @@ import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
+import com.neoutils.finsight.ui.model.RetireAction
+import com.neoutils.finsight.ui.modal.closeCreditCard.CloseCreditCardModal
 import com.neoutils.finsight.ui.modal.deleteCreditCard.DeleteCreditCardModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceModal
@@ -69,7 +71,6 @@ import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.resources.invoice_transactions_adjustments
 import com.neoutils.finsight.resources.invoice_transactions_close_invoice
-import com.neoutils.finsight.resources.invoice_transactions_delete_card
 import com.neoutils.finsight.resources.invoice_transactions_delete_invoice
 import com.neoutils.finsight.resources.invoice_transactions_edit_card
 import com.neoutils.finsight.resources.invoice_transactions_expenses
@@ -183,17 +184,24 @@ private fun InvoiceTransactionsContent(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.invoice_transactions_delete_card)) },
+                                    text = { Text(stringResource(uiState.retireAction.label)) },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Default.Delete,
+                                            imageVector = uiState.retireAction.icon,
                                             contentDescription = null,
                                             tint = Expense
                                         )
                                     },
+                                    // This entry used to open the delete modal whatever
+                                    // the card was, which the strict guard now refuses.
                                     onClick = {
                                         menuExpanded = false
-                                        modalManager.show(DeleteCreditCardModal(creditCard))
+                                        modalManager.show(
+                                            when (uiState.retireAction) {
+                                                RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
+                                                RetireAction.CLOSE -> CloseCreditCardModal(creditCard)
+                                            }
+                                        )
                                     }
                                 )
                             }

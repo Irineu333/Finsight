@@ -23,7 +23,7 @@ class InvoiceAndCardQueryTest {
         connection = BundledSQLiteDriver().open(":memory:")
         connection.execSQL("CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT, type TEXT)")
         connection.execSQL("CREATE TABLE operations (id INTEGER PRIMARY KEY, date TEXT)")
-        connection.execSQL("CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, operationId INTEGER, accountId INTEGER, amount INTEGER, invoiceId INTEGER)")
+        connection.execSQL("CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, transactionId INTEGER, accountId INTEGER, amount INTEGER, invoiceId INTEGER)")
 
         // Card(2) liability; Bank(1) asset; Food(10) expense; Recon(30) equity.
         connection.execSQL(
@@ -33,19 +33,19 @@ class InvoiceAndCardQueryTest {
 
         // opA: card expense 60 -> Card -6000 (inv 1) / Food +6000
         connection.execSQL("INSERT INTO operations (id,date) VALUES (1,'2026-03-05')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (1,2,-6000,1),(1,10,6000,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (1,2,-6000,1),(1,10,6000,NULL)")
         // opB: card expense 40 -> Card -4000 (inv 1) / Food +4000
         connection.execSQL("INSERT INTO operations (id,date) VALUES (2,'2026-03-08')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (2,2,-4000,1),(2,10,4000,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (2,2,-4000,1),(2,10,4000,NULL)")
         // opC: advance payment 30 -> Card +3000 (inv 1) / Bank -3000
         connection.execSQL("INSERT INTO operations (id,date) VALUES (3,'2026-03-10')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (3,2,3000,1),(3,1,-3000,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (3,2,3000,1),(3,1,-3000,NULL)")
         // opD: card adjustment +10 -> Card +1000 (inv 1) / Recon -1000 (EQUITY leg)
         connection.execSQL("INSERT INTO operations (id,date) VALUES (4,'2026-03-12')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (4,2,1000,1),(4,30,-1000,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (4,2,1000,1),(4,30,-1000,NULL)")
         // opE: card expense 99 next month -> excluded from March card totals; other invoice (2)
         connection.execSQL("INSERT INTO operations (id,date) VALUES (5,'2026-04-03')")
-        connection.execSQL("INSERT INTO entries (operationId,accountId,amount,invoiceId) VALUES (5,2,-9900,2),(5,10,9900,NULL)")
+        connection.execSQL("INSERT INTO entries (transactionId,accountId,amount,invoiceId) VALUES (5,2,-9900,2),(5,10,9900,NULL)")
     }
 
     @AfterTest
@@ -63,7 +63,7 @@ class InvoiceAndCardQueryTest {
               COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
             FROM (
               SELECT e.amount AS amount,
-                EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.operationId = e.operationId AND a.type = 'EQUITY') AS eq
+                EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
               FROM entries e
               WHERE e.invoiceId = $invoiceId
             )
@@ -86,10 +86,10 @@ class InvoiceAndCardQueryTest {
               COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment
             FROM (
               SELECT e.amount AS amount,
-                EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.operationId = e.operationId AND a2.type = 'EQUITY') AS eq
+                EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq
               FROM entries e
               JOIN accounts a ON a.id = e.accountId
-              JOIN operations o ON o.id = e.operationId
+              JOIN operations o ON o.id = e.transactionId
               WHERE a.type = 'LIABILITY' AND substr(o.date, 1, 7) = '$yearMonth'
             )
             """

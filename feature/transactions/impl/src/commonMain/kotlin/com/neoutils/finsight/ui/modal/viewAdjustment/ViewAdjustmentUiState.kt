@@ -11,6 +11,18 @@ sealed interface ViewAdjustmentUiState {
     data class Content(
         val operation: Operation,
     ) : ViewAdjustmentUiState {
-        val transaction = operation.primaryTransaction
+        val isCardTarget = operation.isCardTarget
+        val title = operation.title
+        val date = operation.date
+        val account = operation.sourceAccount
+        val creditCard = operation.targetCreditCard
+        val invoice = operation.targetInvoice
+
+        /**
+         * An adjustment is the one operation whose sign the user must see: it says
+         * which way the balance was corrected. Read off the money leg, where the
+         * ledger already carries it.
+         */
+        val signedAmount = (operation.primaryEntry?.amount ?: 0L) / 100.0
     }
 }

@@ -5,7 +5,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
-import com.neoutils.finsight.database.entity.OperationEntity
+import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.OperationMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
@@ -47,7 +47,7 @@ class OperationRepositoryEntriesTest {
 
     private fun repository(accounts: List<Account>) = OperationRepository(
         database = db,
-        operationDao = db.operationDao(),
+        transactionDao = db.transactionDao(),
         transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
         recurringDao = db.recurringDao(),
@@ -69,24 +69,24 @@ class OperationRepositoryEntriesTest {
         db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
         db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
 
-        val operationId = db.operationDao().insert(
-            OperationEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
+        val transactionId = db.transactionDao().insert(
+            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
         )
         // A legacy leg is required, or the mapper drops the operation.
         db.transactionDao().insert(
             TransactionEntity(
-                operationId = operationId, type = TransactionEntity.Type.EXPENSE, amount = 50.0,
+                transactionId = transactionId, type = TransactionEntity.Type.EXPENSE, amount = 50.0,
                 title = null, date = LocalDate(2026, 3, 10), accountId = 1,
             ),
         )
         db.entryDao().insertAll(
             listOf(
-                EntryEntity(operationId = operationId, accountId = 1, amount = -5000),
-                EntryEntity(operationId = operationId, accountId = 10, amount = 5000),
+                EntryEntity(transactionId = transactionId, accountId = 1, amount = -5000),
+                EntryEntity(transactionId = transactionId, accountId = 10, amount = 5000),
             ),
         )
 
-        val operation = repository(listOf(asset, expense)).getOperationById(operationId)!!
+        val operation = repository(listOf(asset, expense)).getOperationById(transactionId)!!
 
         assertEquals(2, operation.entries.size, "both ledger legs are carried onto the operation")
         val assetLeg = operation.entries.first { it.account.id == 1L }
@@ -95,7 +95,7 @@ class OperationRepositoryEntriesTest {
         assertEquals(AccountType.ASSET, assetLeg.account.type)
         assertEquals(5000, expenseLeg.amount)
         assertEquals(AccountType.EXPENSE, expenseLeg.account.type)
-        assertEquals(operationId, assetLeg.operationId)
+        assertEquals(transactionId, assetLeg.transactionId)
     }
 }
 

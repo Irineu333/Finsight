@@ -5,15 +5,16 @@ import arrow.core.Either.Companion.catch
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IOperationRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
+import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 
 class AdjustInvoiceUseCase(
-    private val repository: ITransactionRepository,
     private val operationRepository: IOperationRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
 ) {
@@ -28,60 +29,61 @@ class AdjustInvoiceUseCase(
 
         ensure(target != currentInvoice) { InvoiceNotAdjustedException() }
 
-        val existingAdjustment = catch {
-            repository.getTransactionsBy(
-                type = Transaction.Type.ADJUSTMENT,
-                target = Transaction.Target.CREDIT_CARD,
-                invoiceId = invoice.id,
-                date = adjustmentDate
-            ).firstOrNull()
-        }.bind()
-
-        val difference = target - currentInvoice
-
         catch {
-            if (existingAdjustment == null) {
+
+            // Idempotency over the ledger: the existing adjustment is the operation on
+            // this date carrying this invoice and an EQUITY (reconciliation)
+            // counter-leg — the ledger shape of "an invoice adjustment".
+            val existingOperation = operationRepository
+                .observeOperationsBy(date = adjustmentDate, invoiceId = invoice.id)
+                .first()
+                .firstOrNull { operation ->
+                    operation.entries.any { it.account.type == AccountType.EQUITY }
+                }
+
+            val difference = target - currentInvoice
+
+            if (existingOperation == null) {
                 operationRepository.createOperation(
-                    title = null,
-                    date = adjustmentDate,
-                    categoryId = null,
-                    transactions = listOf(
-                        Transaction(
-                            title = null,
-                            type = Transaction.Type.ADJUSTMENT,
-                            amount = -difference,
-                            date = adjustmentDate,
-                            creditCard = invoice.creditCard,
-                            invoice = invoice
-                        )
-                    ),
+                    OperationIntent(
+                        title = null,
+                        date = adjustmentDate,
+                        legs = listOf(
+                            OperationLeg(
+                                type = TransactionType.ADJUSTMENT,
+                                amount = -difference,
+                                creditCard = invoice.creditCard,
+                                invoice = invoice,
+                            )
+                        ),
+                    )
                 )
                 return@catch
             }
 
-            val newAmount = existingAdjustment.amount - difference
+            // The adjustment's current size is read back from its own ledger leg, so a
+            // re-adjustment can never accumulate onto a stale value (D17).
+            val currentAdjustment = existingOperation.entries
+                .filter { it.invoiceId == invoice.id }
+                .sumOf { it.amount } / 100.0
+            val newAmount = currentAdjustment - difference
 
             if (newAmount == 0.0) {
-                val operationId = existingAdjustment.operationId
-                if (operationId != null) {
-                    operationRepository.deleteOperationById(operationId)
-                } else {
-                    repository.delete(existingAdjustment)
-                }
+                operationRepository.deleteOperationById(existingOperation.id)
                 return@catch
             }
 
-            // Both models must be updated: the legacy leg AND the ledger entries.
-            // Updating only the legacy row (as before) left the ledger — which
-            // `invoiceOwed` already reads — permanently stale (D17).
-            val updated = existingAdjustment.copy(amount = newAmount)
-            repository.update(updated)
-            existingAdjustment.operationId?.let { operationId ->
-                operationRepository.updateOperation(
-                    id = operationId,
-                    transaction = updated
-                )
-            }
+            operationRepository.updateOperation(
+                id = existingOperation.id,
+                title = existingOperation.title,
+                date = existingOperation.date,
+                leg = OperationLeg(
+                    type = TransactionType.ADJUSTMENT,
+                    amount = newAmount,
+                    creditCard = invoice.creditCard,
+                    invoice = invoice,
+                ),
+            )
         }.bind()
     }
 }

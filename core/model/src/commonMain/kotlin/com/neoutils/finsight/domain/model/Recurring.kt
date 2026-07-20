@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.model
 
 data class Recurring(
     val id: Long = 0,
-    val type: Transaction.Type,
+    val type: TransactionType,
     val amount: Double,
     val title: String?,
     val dayOfMonth: Int,

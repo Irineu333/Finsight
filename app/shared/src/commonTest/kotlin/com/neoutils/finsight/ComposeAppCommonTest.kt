@@ -3,7 +3,7 @@ package com.neoutils.finsight
 import com.neoutils.finsight.domain.model.Operation
 import com.neoutils.finsight.domain.model.OperationRecurring
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
@@ -26,7 +26,7 @@ class ComposeAppCommonTest {
     @Test
     fun recurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,
@@ -42,7 +42,7 @@ class ComposeAppCommonTest {
     @Test
     fun operationRecurringLabelFallsBackToCategoryWhenTitleIsMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,
@@ -63,7 +63,7 @@ class ComposeAppCommonTest {
     @Test
     fun operationRecurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
         val recurring = Recurring(
-            type = Transaction.Type.EXPENSE,
+            type = TransactionType.EXPENSE,
             amount = 10.0,
             title = null,
             dayOfMonth = 3,

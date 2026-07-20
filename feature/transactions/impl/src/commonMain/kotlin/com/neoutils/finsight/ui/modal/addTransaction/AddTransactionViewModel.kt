@@ -124,12 +124,7 @@ class AddTransactionViewModel(
         buildTransactionUseCase(form)
             .flatMap {
                 catch {
-                    operationRepository.createOperation(
-                        title = it.title,
-                        date = it.date,
-                        categoryId = it.category?.id,
-                        transactions = listOf(it),
-                    )
+                    operationRepository.createOperation(it)
                 }
             }.onLeft {
                 crashlytics.recordException(it)

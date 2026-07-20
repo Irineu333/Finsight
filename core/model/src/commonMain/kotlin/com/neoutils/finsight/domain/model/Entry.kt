@@ -10,7 +10,7 @@ package com.neoutils.finsight.domain.model
  */
 data class Entry(
     val id: Long = 0,
-    val operationId: Long? = null,
+    val transactionId: Long? = null,
     val account: Account,
     val amount: Long,
     val currency: String = BASE_CURRENCY,

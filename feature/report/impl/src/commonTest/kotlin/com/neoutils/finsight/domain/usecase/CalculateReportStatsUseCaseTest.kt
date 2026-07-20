@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
  * Characterizes [CalculateReportStatsUseCase] over the ledger (tasks 4.6/4.7): each
  * operation carries its hydrated [Entry] legs, direction is derived from the sign of
  * the scope's leg plus the presence of an EQUITY counter-leg, and internal transfers
- * are detected from the ASSET legs — no `Transaction.Type`/`Target`/`Operation.Kind`.
+ * are detected from the ASSET legs — no `TransactionType`/`Target`/`Operation.Kind`.
  * The figures are the same the legacy leg-based form produced. Operations that the old
  * test bundled two unrelated legs into (an income and an adjustment on one card) are
  * modelled here as the separate ledger events they really are; the aggregate is equal.
@@ -30,7 +30,7 @@ class CalculateReportStatsUseCaseTest {
     private fun cents(amount: Double) = (amount * 100).roundToLong()
 
     private fun op(date: LocalDate, entries: List<Entry>) =
-        Operation(title = null, date = date, transactions = emptyList(), entries = entries)
+        Operation(title = null, date = date, entries = entries)
 
     private fun entry(account: Account, amount: Double) = Entry(account = account, amount = cents(amount))
 

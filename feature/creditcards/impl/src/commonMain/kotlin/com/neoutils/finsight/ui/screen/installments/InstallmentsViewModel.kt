@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.screen.installments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
@@ -21,7 +21,7 @@ class InstallmentsViewModel(
 
     private val selectedInstallmentIndex = MutableStateFlow(0)
     private val selectedCategory = MutableStateFlow<Category?>(null)
-    private val selectedType = MutableStateFlow<Transaction.Type?>(null)
+    private val selectedType = MutableStateFlow<TransactionType?>(null)
     private val selectedFilter = MutableStateFlow(InstallmentFilter.ACTIVE)
 
     private val allInstallmentsUi = combine(

@@ -15,9 +15,9 @@ import androidx.room.PrimaryKey
     tableName = "entries",
     foreignKeys = [
         ForeignKey(
-            entity = OperationEntity::class,
+            entity = TransactionEntity::class,
             parentColumns = ["id"],
-            childColumns = ["operationId"],
+            childColumns = ["transactionId"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
@@ -34,7 +34,7 @@ import androidx.room.PrimaryKey
         ),
     ],
     indices = [
-        Index(value = ["operationId"]),
+        Index(value = ["transactionId"]),
         Index(value = ["accountId"]),
         Index(value = ["invoiceId"]),
     ]
@@ -42,7 +42,7 @@ import androidx.room.PrimaryKey
 data class EntryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val operationId: Long,
+    val transactionId: Long,
     val accountId: Long,
     val amount: Long,
     val currency: String = "BRL",

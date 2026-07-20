@@ -57,7 +57,6 @@ val accountsModule = module {
     factory { DeleteAccountUseCase(repository = get()) }
     factory {
         AdjustBalanceUseCase(
-            repository = get(),
             operationRepository = get(),
             calculateBalanceUseCase = get(),
         )

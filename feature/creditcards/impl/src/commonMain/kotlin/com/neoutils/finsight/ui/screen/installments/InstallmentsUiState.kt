@@ -3,7 +3,8 @@ package com.neoutils.finsight.ui.screen.installments
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.TransactionType
 import kotlinx.datetime.LocalDate
 
 enum class InstallmentFilter {
@@ -26,7 +27,7 @@ sealed class InstallmentsUiState {
         val installments: List<InstallmentWithOperationsUi>,
         val selectedInstallmentIndex: Int,
         val selectedCategory: Category?,
-        val selectedType: Transaction.Type?,
+        val selectedType: TransactionType?,
         override val selectedFilter: InstallmentFilter,
         val categories: List<Category>,
     ) : InstallmentsUiState() {
@@ -39,7 +40,7 @@ sealed class InstallmentsUiState {
                 val operations = selectedInstallment?.operations.orEmpty()
                 return operations.filter { operation ->
                     (selectedCategory == null || operation.category?.id == selectedCategory.id) &&
-                            (selectedType == null || operation.type == selectedType)
+                            (selectedType == null || operation.primaryEntry?.let { deriveTransactionType(it.amount, operation.entries) } == selectedType)
                 }
             }
     }

@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.usecase
 
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.deriveTransactionType
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.yearMonth
@@ -30,9 +30,9 @@ class CalculateTransactionStatsUseCase {
                     .filter { it.account.type == AccountType.ASSET }
                     .forEach { entry ->
                         when (deriveTransactionType(entry.amount, operation.entries)) {
-                            Transaction.Type.INCOME -> income += entry.amount
-                            Transaction.Type.EXPENSE -> expense += -entry.amount
-                            Transaction.Type.ADJUSTMENT -> adjustment += entry.amount
+                            TransactionType.INCOME -> income += entry.amount
+                            TransactionType.EXPENSE -> expense += -entry.amount
+                            TransactionType.ADJUSTMENT -> adjustment += entry.amount
                         }
                     }
             }

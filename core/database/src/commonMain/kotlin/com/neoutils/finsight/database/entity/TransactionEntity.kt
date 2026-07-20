@@ -16,60 +16,33 @@ import kotlinx.datetime.LocalDate
             onDelete = ForeignKey.SET_NULL
         ),
         ForeignKey(
-            entity = CreditCardEntity::class,
+            entity = InstallmentEntity::class,
             parentColumns = ["id"],
-            childColumns = ["creditCardId"],
+            childColumns = ["installmentId"],
             onDelete = ForeignKey.SET_NULL
         ),
         ForeignKey(
-            entity = InvoiceEntity::class,
+            entity = RecurringEntity::class,
             parentColumns = ["id"],
-            childColumns = ["invoiceId"],
+            childColumns = ["recurringId"],
             onDelete = ForeignKey.SET_NULL
         ),
-        ForeignKey(
-            entity = AccountEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["accountId"],
-            onDelete = ForeignKey.SET_NULL
-        ),
-        ForeignKey(
-            entity = OperationEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["operationId"],
-            onDelete = ForeignKey.CASCADE
-        )
     ],
     indices = [
         Index(value = ["categoryId"]),
-        Index(value = ["creditCardId"]),
-        Index(value = ["invoiceId"]),
-        Index(value = ["accountId"]),
-        Index(value = ["operationId"]),
+        Index(value = ["installmentId"]),
+        Index(value = ["recurringId"]),
+        Index(value = ["recurringCycle"]),
     ]
 )
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val operationId: Long? = null,
-    val type: Type,
-    val amount: Double,
     val title: String?,
     val date: LocalDate,
     val categoryId: Long? = null,
-    val target: Target = Target.ACCOUNT,
-    val creditCardId: Long? = null,
-    val invoiceId: Long? = null,
-    val accountId: Long? = null,
-) {
-    enum class Type {
-        EXPENSE,
-        INCOME,
-        ADJUSTMENT
-    }
-
-    enum class Target {
-        ACCOUNT,
-        CREDIT_CARD
-    }
-}
+    val recurringId: Long? = null,
+    val recurringCycle: Int? = null,
+    val installmentId: Long? = null,
+    val installmentNumber: Int? = null,
+)

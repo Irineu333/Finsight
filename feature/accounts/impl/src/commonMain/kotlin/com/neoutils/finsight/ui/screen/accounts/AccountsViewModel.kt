@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -173,7 +173,7 @@ class AccountsViewModel(
 
 private data class AccountsFilters(
     val category: Category?,
-    val type: Transaction.Type?,
+    val type: TransactionType?,
     val recurringOnly: Boolean,
 )
 
@@ -184,7 +184,7 @@ private fun List<OperationUi>.filter(category: Category?): List<OperationUi> {
     }
 }
 
-private fun List<OperationUi>.filter(type: Transaction.Type?): List<OperationUi> {
+private fun List<OperationUi>.filter(type: TransactionType?): List<OperationUi> {
     if (type == null) return this
     return filter { operation -> operation.direction == type }
 }

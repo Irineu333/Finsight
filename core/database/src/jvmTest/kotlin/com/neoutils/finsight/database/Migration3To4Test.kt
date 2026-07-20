@@ -189,7 +189,7 @@ class Migration3To4Test {
         assertTrue("cycleNumber" in columns)
         assertTrue("yearMonth" in columns)
         assertTrue("status" in columns)
-        assertTrue("operationId" in columns)
+        assertTrue("transactionId" in columns)
         assertTrue("effectiveDate" in columns)
         assertTrue("handledAt" in columns)
     }
@@ -205,7 +205,7 @@ class Migration3To4Test {
         MIGRATION_3_4.migrate(connection)
 
         val stmt = connection.prepare(
-            "SELECT `status`, `operationId`, `yearMonth` FROM `recurring_occurrences`"
+            "SELECT `status`, `transactionId`, `yearMonth` FROM `recurring_occurrences`"
         )
         assertTrue(stmt.step(), "Expected at least one recurring_occurrence row")
         assertEquals("SKIPPED", stmt.getText(0))

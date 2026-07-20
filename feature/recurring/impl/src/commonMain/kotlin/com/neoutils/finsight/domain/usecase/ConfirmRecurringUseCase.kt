@@ -10,9 +10,11 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.extension.monthsUntil
@@ -32,10 +34,10 @@ class ConfirmRecurringUseCase(
         recurring: Recurring,
         date: LocalDate,
         amount: Double = recurring.amount,
-        target: Transaction.Target = if (recurring.creditCard != null) {
-            Transaction.Target.CREDIT_CARD
+        target: TransactionTarget = if (recurring.creditCard != null) {
+            TransactionTarget.CREDIT_CARD
         } else {
-            Transaction.Target.ACCOUNT
+            TransactionTarget.ACCOUNT
         },
         account: Account? = recurring.account,
         creditCard: CreditCard? = recurring.creditCard,
@@ -62,41 +64,41 @@ class ConfirmRecurringUseCase(
                         .getOrElse { throw it }
 
                 operationRepository.createOperation(
-                    title = recurring.title,
-                    date = date,
-                    categoryId = recurring.category?.id,
-                    recurringId = recurring.id,
-                    recurringCycle = cycleNumber,
-                    transactions = listOf(
-                        Transaction(
-                            type = recurring.type,
-                            amount = amount,
-                            title = recurring.title,
-                            date = date,
-                            category = recurring.category,
-                            creditCard = targetCreditCard,
-                            invoice = invoice,
-                        )
-                    ),
+                    OperationIntent(
+                        title = recurring.title,
+                        date = date,
+                        category = recurring.category,
+                        recurringId = recurring.id,
+                        recurringCycle = cycleNumber,
+                        legs = listOf(
+                            OperationLeg(
+                                type = recurring.type,
+                                amount = amount,
+                                category = recurring.category,
+                                creditCard = targetCreditCard,
+                                invoice = invoice,
+                            )
+                        ),
+                    )
                 )
             } else {
                 val sourceAccount = account ?: recurring.account
                 operationRepository.createOperation(
-                    title = recurring.title,
-                    date = date,
-                    categoryId = recurring.category?.id,
-                    recurringId = recurring.id,
-                    recurringCycle = cycleNumber,
-                    transactions = listOf(
-                        Transaction(
-                            type = recurring.type,
-                            amount = amount,
-                            title = recurring.title,
-                            date = date,
-                            category = recurring.category,
-                            account = sourceAccount,
-                        )
-                    ),
+                    OperationIntent(
+                        title = recurring.title,
+                        date = date,
+                        category = recurring.category,
+                        recurringId = recurring.id,
+                        recurringCycle = cycleNumber,
+                        legs = listOf(
+                            OperationLeg(
+                                type = recurring.type,
+                                amount = amount,
+                                category = recurring.category,
+                                account = sourceAccount,
+                            )
+                        ),
+                    )
                 )
             }
         }.flatMap { operation ->
@@ -107,7 +109,7 @@ class ConfirmRecurringUseCase(
                         cycleNumber = cycleNumber,
                         yearMonth = yearMonth,
                         status = RecurringOccurrence.Status.CONFIRMED,
-                        operationId = operation.id,
+                        transactionId = operation.id,
                         effectiveDate = date,
                         handledAt = Clock.System.now().toEpochMilliseconds(),
                     )

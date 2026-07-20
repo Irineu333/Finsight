@@ -31,7 +31,7 @@ class InstallmentUiMapper {
             installment = installment,
             operations = sortedOperations,
             latestOperationDate = sortedOperations.maxOf { it.date },
-            title = firstOperation.label,
+            title = firstOperation.displayTitle,
             categoryName = firstOperation.category?.name?.uppercase(),
             category = firstOperation.category,
             isActive = isActive,

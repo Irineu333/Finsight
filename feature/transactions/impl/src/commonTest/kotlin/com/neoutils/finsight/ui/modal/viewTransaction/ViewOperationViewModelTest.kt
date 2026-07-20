@@ -35,7 +35,7 @@ class ViewOperationViewModelTest {
         repository: FakeOperationRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
     ) = ViewOperationViewModel(
-        operationId = 1L,
+        transactionId = 1L,
         perspective = null,
         operationRepository = repository,
         crashlytics = crashlytics,

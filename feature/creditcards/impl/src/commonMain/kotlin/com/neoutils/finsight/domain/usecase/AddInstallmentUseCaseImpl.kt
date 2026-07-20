@@ -12,7 +12,6 @@ import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -32,7 +31,7 @@ class AddInstallmentUseCaseImpl(
     override suspend operator fun invoke(
         form: TransactionForm,
         installments: Int,
-    ): Either<Throwable, List<Transaction>> {
+    ): Either<Throwable, List<Operation>> {
 
         return either {
 
@@ -118,34 +117,36 @@ class AddInstallmentUseCaseImpl(
     private suspend fun registerTransactions(
         form: TransactionForm,
         invoices: List<Invoice>,
-    ): Either<Throwable, List<Transaction>> {
+    ): Either<Throwable, List<Operation>> {
         return either {
             val base = buildTransactionUseCase(form).bind()
 
             val installmentId = installmentRepository.createInstallment(
                 count = invoices.size,
-                totalAmount = base.amount,
+                totalAmount = base.legs.first().amount,
             )
 
-            val transactions = invoices.mapIndexed { index, invoice ->
+            val baseLeg = base.legs.first()
+            val intents = invoices.mapIndexed { index, invoice ->
                 base.copy(
-                    amount = base.amount / invoices.size,
                     date = base.date.plus(index, DateTimeUnit.MONTH),
-                    invoice = invoice,
+                    installmentId = installmentId,
+                    installmentNumber = index + 1,
+                    legs = listOf(
+                        baseLeg.copy(
+                            amount = baseLeg.amount / invoices.size,
+                            invoice = invoice,
+                        )
+                    ),
                 )
             }
 
+            // One decision by the user, one unit of work: a partial fan-out would
+            // leave the installment describing money that was never recorded.
             catch {
-                transactions.mapIndexed { index, transaction ->
-                    operationRepository.createOperation(
-                        title = transaction.title,
-                        date = transaction.date,
-                        categoryId = transaction.category?.id,
-                        installmentId = installmentId,
-                        installmentNumber = index + 1,
-                        transactions = listOf(transaction),
-                    ).primaryTransaction
-                }
+                operationRepository.createOperations(intents)
+            }.onLeft {
+                installmentRepository.deleteInstallmentById(installmentId)
             }.bind()
         }
     }

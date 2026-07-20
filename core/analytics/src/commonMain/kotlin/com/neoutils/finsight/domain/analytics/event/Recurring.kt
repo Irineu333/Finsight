@@ -2,7 +2,7 @@ package com.neoutils.finsight.domain.analytics.event
 
 import com.neoutils.finsight.domain.analytics.Event
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.form.RecurringForm
 
 class CreateRecurring(params: Map<String, String>) : Event("create_recurring", params) {
@@ -36,7 +36,7 @@ class DeleteRecurring(params: Map<String, String>) : Event("delete_recurring", p
 }
 
 class ConfirmRecurring(params: Map<String, String>) : Event("confirm_recurring", params) {
-    constructor(recurring: Recurring, target: Transaction.Target) : this(
+    constructor(recurring: Recurring, target: TransactionTarget) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())
             put("target", target.name.lowercase())
@@ -46,7 +46,7 @@ class ConfirmRecurring(params: Map<String, String>) : Event("confirm_recurring",
 }
 
 class SkipRecurring(params: Map<String, String>) : Event("skip_recurring", params) {
-    constructor(recurring: Recurring, target: Transaction.Target) : this(
+    constructor(recurring: Recurring, target: TransactionTarget) : this(
         buildMap {
             put("type", recurring.type.name.lowercase())
             put("target", target.name.lowercase())

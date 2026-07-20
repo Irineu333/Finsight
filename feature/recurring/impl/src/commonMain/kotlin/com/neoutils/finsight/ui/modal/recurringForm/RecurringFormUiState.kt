@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.recurringForm
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 
 data class RecurringFormUiState(
     val accounts: List<Account> = emptyList(),
@@ -13,5 +13,5 @@ data class RecurringFormUiState(
     val incomeCategories: List<Category> = emptyList(),
     val expenseCategories: List<Category> = emptyList(),
 ) {
-    val targets = listOf(Transaction.Target.ACCOUNT, Transaction.Target.CREDIT_CARD)
+    val targets = listOf(TransactionTarget.ACCOUNT, TransactionTarget.CREDIT_CARD)
 }

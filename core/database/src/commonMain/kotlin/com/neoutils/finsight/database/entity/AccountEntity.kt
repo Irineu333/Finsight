@@ -15,7 +15,11 @@ data class AccountEntity(
     val currency: String = "BRL",
     val iconKey: String = "wallet",
     val isDefault: Boolean = false,
-    val createdAt: Long = Clock.System.now().toEpochMilliseconds()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    // The single closure flag of the whole app: a category or a card is closed
+    // when *its* account is (design D21). Closed accounts keep their history and
+    // their real type; they are only hidden from the active selectors.
+    val isClosed: Boolean = false,
 ) {
     enum class Type {
         ASSET,

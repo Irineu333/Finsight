@@ -17,15 +17,15 @@ import kotlinx.datetime.YearMonth
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = OperationEntity::class,
+            entity = TransactionEntity::class,
             parentColumns = ["id"],
-            childColumns = ["operationId"],
+            childColumns = ["transactionId"],
             onDelete = ForeignKey.CASCADE,
         ),
     ],
     indices = [
         Index(value = ["recurringId"]),
-        Index(value = ["operationId"], unique = true),
+        Index(value = ["transactionId"], unique = true),
         Index(value = ["recurringId", "yearMonth"], unique = true),
         Index(value = ["recurringId", "cycleNumber"], unique = true),
     ],
@@ -37,7 +37,7 @@ data class RecurringOccurrenceEntity(
     val cycleNumber: Int,
     val yearMonth: YearMonth,
     val status: Status,
-    val operationId: Long? = null,
+    val transactionId: Long? = null,
     val effectiveDate: LocalDate,
     val handledAt: Long,
 ) {

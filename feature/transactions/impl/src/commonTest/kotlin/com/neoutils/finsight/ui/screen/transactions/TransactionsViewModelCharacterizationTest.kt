@@ -9,6 +9,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -60,10 +61,10 @@ class TransactionsViewModelCharacterizationTest {
 
     private fun date(day: Int) = LocalDate(month.year, month.month, day)
 
-    private fun accountLeg(type: Transaction.Type, amount: Double, day: Int, invoice: Invoice? = null) =
+    private fun accountLeg(type: TransactionType, amount: Double, day: Int, invoice: Invoice? = null) =
         Transaction(type = type, amount = amount, title = null, date = date(day), account = account, invoice = invoice)
 
-    private fun cardLeg(type: Transaction.Type, amount: Double, day: Int) =
+    private fun cardLeg(type: TransactionType, amount: Double, day: Int) =
         Transaction(type = type, amount = amount, title = null, date = date(day), creditCard = card, invoice = invoice)
 
     private val incomeAcc = Account(id = 100, name = "income", type = AccountType.INCOME)
@@ -78,11 +79,11 @@ class TransactionsViewModelCharacterizationTest {
     @Test
     fun `balance overview characterizes stats, payment and balances`() = runTest(dispatcher) {
         val operations = listOf(
-            op(1, accountLeg(Transaction.Type.INCOME, 100.0, day = 5), entries = listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
-            op(2, accountLeg(Transaction.Type.EXPENSE, 30.0, day = 10), entries = listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
-            op(3, accountLeg(Transaction.Type.ADJUSTMENT, 40.0, day = 15), entries = listOf(entry(account, 40.0), entry(equityAcc, -40.0))),
+            op(1, accountLeg(TransactionType.INCOME, 100.0, day = 5), entries = listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
+            op(2, accountLeg(TransactionType.EXPENSE, 30.0, day = 10), entries = listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
+            op(3, accountLeg(TransactionType.ADJUSTMENT, 40.0, day = 15), entries = listOf(entry(account, 40.0), entry(equityAcc, -40.0))),
             // Payment: account leg + card leg → kind PAYMENT, excluded from stats, counted in payment.
-            op(4, accountLeg(Transaction.Type.EXPENSE, 80.0, day = 20, invoice = invoice), cardLeg(Transaction.Type.INCOME, 80.0, day = 20)),
+            op(4, accountLeg(TransactionType.EXPENSE, 80.0, day = 20, invoice = invoice), cardLeg(TransactionType.INCOME, 80.0, day = 20)),
         )
 
         val vm = TransactionsViewModel(
@@ -136,8 +137,8 @@ private class FakeCategoryRepository : ICategoryRepository {
 
 private class LedgerBalance(private val month: YearMonth, private val balance: Double) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = if (target == month) balance else 0.0
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
@@ -151,8 +152,8 @@ private class LedgerBalance(private val month: YearMonth, private val balance: D
 }
 
 private object ThrowingEntryRepository : IEntryRepository {
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

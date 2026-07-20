@@ -61,8 +61,8 @@ private class FakeInvoiceOverviewEntryRepository(
 ) : IEntryRepository {
     override suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows = flows.getValue(invoiceId)
     override suspend fun invoiceOwed(invoiceId: Long): Double = owed.getValue(invoiceId)
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()

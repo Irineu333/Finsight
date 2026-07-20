@@ -11,7 +11,9 @@ import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
 import kotlinx.datetime.LocalDate
@@ -45,31 +47,25 @@ class PayInvoicePaymentUseCase(
         }
 
         operationRepository.createOperation(
-            title = null,
-            date = date,
-            categoryId = null,
-            transactions = listOf(
-                Transaction(
-                    category = null,
-                    title = null,
-                    type = Transaction.Type.EXPENSE,
-                    amount = currentBillAmount,
-                    date = date,
-                    creditCard = invoice.creditCard,
-                    invoice = invoice,
-                    account = account,
+            OperationIntent(
+                title = null,
+                date = date,
+                legs = listOf(
+                    OperationLeg(
+                        type = TransactionType.EXPENSE,
+                        amount = currentBillAmount,
+                        creditCard = invoice.creditCard,
+                        invoice = invoice,
+                        account = account,
+                    ),
+                    OperationLeg(
+                        type = TransactionType.INCOME,
+                        amount = currentBillAmount,
+                        creditCard = invoice.creditCard,
+                        invoice = invoice,
+                    ),
                 ),
-                Transaction(
-                    category = null,
-                    title = null,
-                    type = Transaction.Type.INCOME,
-                    amount = currentBillAmount,
-                    date = date,
-                    creditCard = invoice.creditCard,
-                    invoice = invoice,
-                    account = null,
-                ),
-            ),
+            )
         )
 
         payInvoiceUseCase(

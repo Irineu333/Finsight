@@ -3,12 +3,13 @@ package com.neoutils.finsight.domain.model.form
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.extension.moneyToDouble
 
 data class RecurringForm(
-    val type: Transaction.Type,
+    val type: TransactionType,
     val amount: String,
     val title: String,
     val dayOfMonth: String,
@@ -28,17 +29,17 @@ data class RecurringForm(
 
     companion object {
         fun from(
-            type: Transaction.Type,
+            type: TransactionType,
             amount: String,
             title: String,
             dayOfMonth: String,
             category: Category?,
-            target: Transaction.Target,
+            target: TransactionTarget,
             account: Account?,
             creditCard: CreditCard?,
         ): RecurringForm {
             
-            val target = target.takeIf { type.isExpense } ?: Transaction.Target.ACCOUNT
+            val target = target.takeIf { type.isExpense } ?: TransactionTarget.ACCOUNT
 
             return RecurringForm(
                 type = type,

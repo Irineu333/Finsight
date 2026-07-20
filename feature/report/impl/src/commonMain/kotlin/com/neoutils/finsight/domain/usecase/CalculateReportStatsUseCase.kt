@@ -3,7 +3,8 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.deriveTransactionType
 import kotlinx.datetime.LocalDate
 
@@ -23,7 +24,7 @@ sealed interface ReportLedgerScope {
 /**
  * Report figures derived entirely from the ledger (tasks 4.6/4.7): each operation's
  * hydrated [Entry] legs, classified by [deriveTransactionType] and by account type —
- * no `Transaction.Type`, `Transaction.Target` or `Operation.Kind`. `income`/`expense`
+ * no `TransactionType`, `TransactionTarget` or `Operation.Kind`. `income`/`expense`
  * are the magnitudes of the scope's income/expense legs in the period; `balance` is
  * their signed sum (adjustments included, signed); `openingBalance` is the signed sum
  * of the scope's legs before the period. Internal transfers — operations whose ASSET
@@ -57,9 +58,9 @@ class CalculateReportStatsUseCase {
                 operation.scopeEntries().forEach { entry ->
                     balance += entry.amount
                     when (deriveTransactionType(entry.amount, operation.entries)) {
-                        Transaction.Type.INCOME -> income += entry.amount
-                        Transaction.Type.EXPENSE -> expense += -entry.amount
-                        Transaction.Type.ADJUSTMENT -> Unit
+                        TransactionType.INCOME -> income += entry.amount
+                        TransactionType.EXPENSE -> expense += -entry.amount
+                        TransactionType.ADJUSTMENT -> Unit
                     }
                 }
             }

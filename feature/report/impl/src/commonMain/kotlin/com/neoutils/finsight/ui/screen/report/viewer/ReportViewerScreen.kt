@@ -294,7 +294,7 @@ private fun ReportViewerContent(
                                             .padding(horizontal = 16.dp),
                                         onClick = {
                                             when {
-                                                operation.type.isAdjustment -> detailController.show(
+                                                operationUi.direction.isAdjustment -> detailController.show(
                                                     transactionsEntry.viewAdjustmentModal(operation.id)
                                                 )
 

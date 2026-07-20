@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
@@ -238,8 +238,8 @@ private fun CreditCardsContent(
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
-                                    when (operation.type) {
-                                        Transaction.Type.ADJUSTMENT -> {
+                                    when (operationUi.direction) {
+                                        TransactionType.ADJUSTMENT -> {
                                             detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
                                         }
 
@@ -653,16 +653,16 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (CreditCardsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor =
         when (selectedType) {
-            Transaction.Type.EXPENSE -> ExpenseColor
-            Transaction.Type.ADJUSTMENT -> AdjustmentColor
-            Transaction.Type.INCOME -> BillPaymentColor
+            TransactionType.EXPENSE -> ExpenseColor
+            TransactionType.ADJUSTMENT -> AdjustmentColor
+            TransactionType.INCOME -> BillPaymentColor
             else -> null
         }
 
@@ -672,9 +672,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.credit_cards_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.credit_cards_filter_type_adjustment)
-                    Transaction.Type.INCOME -> stringResource(Res.string.credit_cards_filter_type_payment)
+                    TransactionType.EXPENSE -> stringResource(Res.string.credit_cards_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.credit_cards_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.credit_cards_filter_type_payment)
                     else -> stringResource(Res.string.credit_cards_filter_type)
                 }
             )
@@ -706,9 +706,9 @@ private fun TypeFilterChip(
         )
 
         listOf(
-            Transaction.Type.EXPENSE to stringResource(Res.string.credit_cards_filter_type_expense),
-            Transaction.Type.ADJUSTMENT to stringResource(Res.string.credit_cards_filter_type_adjustment),
-            Transaction.Type.INCOME to stringResource(Res.string.credit_cards_filter_type_payment),
+            TransactionType.EXPENSE to stringResource(Res.string.credit_cards_filter_type_expense),
+            TransactionType.ADJUSTMENT to stringResource(Res.string.credit_cards_filter_type_adjustment),
+            TransactionType.INCOME to stringResource(Res.string.credit_cards_filter_type_payment),
         ).forEach { (type, label) ->
             DropdownMenuItem(
                 text = { Text(label) },

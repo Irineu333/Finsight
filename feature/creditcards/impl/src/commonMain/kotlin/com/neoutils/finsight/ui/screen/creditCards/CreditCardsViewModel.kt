@@ -4,9 +4,11 @@ package com.neoutils.finsight.ui.screen.creditCards
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -150,7 +152,7 @@ class CreditCardsViewModel(
 
 private data class CreditCardsFilters(
     val category: Category?,
-    val type: Transaction.Type?,
+    val type: TransactionType?,
     val recurringOnly: Boolean,
     val installmentOnly: Boolean,
 )
@@ -158,13 +160,19 @@ private data class CreditCardsFilters(
 private fun List<Operation>.filter(category: Category?): List<Operation> {
     if (category == null) return this
     return filter { operation ->
-        operation.category?.id == category.id || operation.primaryTransaction.category?.id == category.id
+        operation.category?.id == category.id
     }
 }
 
-private fun List<Operation>.filter(type: Transaction.Type?): List<Operation> {
+private fun List<Operation>.filter(type: TransactionType?): List<Operation> {
     if (type == null) return this
-    return filter { operation -> operation.creditCardType == type }
+    // The card's own leg is what this screen shows, so the filter reads its
+    // direction — a payment credits the card, a purchase debits it.
+    return filter { operation ->
+        operation.entries
+            .firstOrNull { it.account.type == AccountType.LIABILITY }
+            ?.let { deriveTransactionType(it.amount, operation.entries) } == type
+    }
 }
 
 private fun List<Operation>.filter(recurringOnly: Boolean): List<Operation> {

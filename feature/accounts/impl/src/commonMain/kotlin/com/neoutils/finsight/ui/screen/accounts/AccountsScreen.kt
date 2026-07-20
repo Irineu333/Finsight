@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
@@ -271,7 +271,7 @@ private fun AccountsContent(
                                 .animateItem(),
                             onClick = {
                                 when (operationUi.direction) {
-                                    Transaction.Type.ADJUSTMENT -> {
+                                    TransactionType.ADJUSTMENT -> {
                                         detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
                                     }
 
@@ -614,15 +614,15 @@ private fun CategoryFilterChip(
 
 @Composable
 private fun TypeFilterChip(
-    selectedType: Transaction.Type?,
+    selectedType: TransactionType?,
     onAction: (AccountsAction) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val chipColor = selectedType?.let { type ->
         when (type) {
-            Transaction.Type.INCOME -> IncomeColor
-            Transaction.Type.EXPENSE -> ExpenseColor
+            TransactionType.INCOME -> IncomeColor
+            TransactionType.EXPENSE -> ExpenseColor
             else -> null
         }
     }
@@ -633,9 +633,9 @@ private fun TypeFilterChip(
         label = {
             Text(
                 when (selectedType) {
-                    Transaction.Type.INCOME -> stringResource(Res.string.accounts_filter_type_income)
-                    Transaction.Type.EXPENSE -> stringResource(Res.string.accounts_filter_type_expense)
-                    Transaction.Type.ADJUSTMENT -> stringResource(Res.string.accounts_filter_type_adjustment)
+                    TransactionType.INCOME -> stringResource(Res.string.accounts_filter_type_income)
+                    TransactionType.EXPENSE -> stringResource(Res.string.accounts_filter_type_expense)
+                    TransactionType.ADJUSTMENT -> stringResource(Res.string.accounts_filter_type_adjustment)
                     null -> stringResource(Res.string.accounts_filter_type)
                 }
             )
@@ -670,7 +670,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_income)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.INCOME))
+                onAction(AccountsAction.SelectType(TransactionType.INCOME))
                 expanded = false
             }
         )
@@ -678,7 +678,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_expense)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.EXPENSE))
+                onAction(AccountsAction.SelectType(TransactionType.EXPENSE))
                 expanded = false
             }
         )
@@ -686,7 +686,7 @@ private fun TypeFilterChip(
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.accounts_filter_type_adjustment)) },
             onClick = {
-                onAction(AccountsAction.SelectType(Transaction.Type.ADJUSTMENT))
+                onAction(AccountsAction.SelectType(TransactionType.ADJUSTMENT))
                 expanded = false
             }
         )

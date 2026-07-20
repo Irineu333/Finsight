@@ -10,6 +10,8 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.OperationIntent
+import com.neoutils.finsight.domain.model.OperationLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
@@ -72,17 +74,13 @@ class ViewBudgetViewModelTest {
         ): Flow<List<Operation>> = throw NotImplementedError()
         override suspend fun getAllOperations(): List<Operation> = throw NotImplementedError()
         override suspend fun getOperationById(id: Long): Operation? = throw NotImplementedError()
-        override suspend fun createOperation(
+        override suspend fun createOperation(intent: OperationIntent): Operation = throw NotImplementedError()
+        override suspend fun updateOperation(
+            id: Long,
             title: String?,
             date: LocalDate,
-            categoryId: Long?,
-            recurringId: Long?,
-            recurringCycle: Int?,
-            installmentId: Long?,
-            installmentNumber: Int?,
-            transactions: List<com.neoutils.finsight.domain.model.Transaction>,
-        ): Operation = throw NotImplementedError()
-        override suspend fun updateOperation(id: Long, transaction: com.neoutils.finsight.domain.model.Transaction) = throw NotImplementedError()
+            leg: OperationLeg,
+        ) = throw NotImplementedError()
         override suspend fun deleteOperationById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) = throw NotImplementedError()
     }
@@ -106,8 +104,8 @@ class ViewBudgetViewModelTest {
 
     private class FakeEntryRepository : IEntryRepository {
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = 0.0
-        override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()

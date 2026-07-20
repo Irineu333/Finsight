@@ -4,7 +4,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.feature.transactions.api.TransactionTargetNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionTypeNavType
 import com.neoutils.finsight.feature.transactions.api.TransactionsRoute
@@ -23,8 +24,8 @@ fun NavGraphBuilder.transactionsGraph() {
     ) {
         composable<TransactionsRoute>(
             typeMap = mapOf(
-                typeOf<Transaction.Type?>() to TransactionTypeNavType(),
-                typeOf<Transaction.Target?>() to TransactionTargetNavType(),
+                typeOf<TransactionType?>() to TransactionTypeNavType(),
+                typeOf<TransactionTarget?>() to TransactionTargetNavType(),
             )
         ) { backStackEntry ->
             AnimatedVisibilityScopeProvider {

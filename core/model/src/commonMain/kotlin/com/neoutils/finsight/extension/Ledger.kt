@@ -3,8 +3,7 @@ package com.neoutils.finsight.extension
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.OperationLabel
-import com.neoutils.finsight.domain.model.Transaction
-import kotlin.math.roundToLong
+import com.neoutils.finsight.domain.model.TransactionType
 
 /**
  * The natural (debit-positive) balance of an account: the sum of the signed
@@ -51,30 +50,14 @@ fun List<Entry>.isBalanced(): Boolean =
     groupBy { it.currency }.all { (_, entries) -> entries.sumOf { it.amount } == 0L }
 
 /**
- * The signed amount, in cents, that a legacy [Transaction] contributes to the
- * natural (debit-positive) balance of its own account. This is the bridge from
- * the legacy `Double`/`Type` model to the ledger: it equals `signedImpact * 100`
- * and holds for both `ASSET` and the `LIABILITY` card leg. Removed with the
- * legacy model in the final cleanup.
- */
-fun Transaction.signedCents(): Long {
-    val cents = (amount * 100).roundToLong()
-    return when (type) {
-        Transaction.Type.EXPENSE -> -cents
-        Transaction.Type.INCOME -> cents
-        Transaction.Type.ADJUSTMENT -> cents
-    }
-}
-
-/**
- * Derives a money leg's [Transaction.Type] from the ledger, so it need not be
+ * Derives a money leg's [TransactionType] from the ledger, so it need not be
  * persisted. The user's intent is recoverable from the operation's contra leg:
  * an `EQUITY` counter-leg means a balance adjustment; otherwise the sign of the
  * leg's own entry gives the direction (money out = expense, money in = income).
  * Holds for both the `ASSET` account leg and the `LIABILITY` card leg.
  */
-fun deriveTransactionType(legAmountCents: Long, operationEntries: List<Entry>): Transaction.Type = when {
-    operationEntries.any { it.account.type == AccountType.EQUITY } -> Transaction.Type.ADJUSTMENT
-    legAmountCents < 0 -> Transaction.Type.EXPENSE
-    else -> Transaction.Type.INCOME
+fun deriveTransactionType(legAmountCents: Long, operationEntries: List<Entry>): TransactionType = when {
+    operationEntries.any { it.account.type == AccountType.EQUITY } -> TransactionType.ADJUSTMENT
+    legAmountCents < 0 -> TransactionType.EXPENSE
+    else -> TransactionType.INCOME
 }

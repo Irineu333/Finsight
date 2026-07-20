@@ -23,7 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.form.RecurringForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.extension.isAccept
@@ -57,13 +58,13 @@ class RecurringFormModal(
 
     private val initialCreditCard
         get() = if (recurring?.creditCard != null) {
-            Transaction.Target.CREDIT_CARD
+            TransactionTarget.CREDIT_CARD
         } else {
-            Transaction.Target.ACCOUNT
+            TransactionTarget.ACCOUNT
         }
 
     private val initialType
-        get() = recurring?.type ?: Transaction.Type.EXPENSE
+        get() = recurring?.type ?: TransactionType.EXPENSE
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
@@ -191,8 +192,8 @@ class RecurringFormModal(
             CategorySelector(
                 selectedCategory = selectedCategory,
                 categories = when (type) {
-                    Transaction.Type.INCOME -> uiState.incomeCategories
-                    Transaction.Type.EXPENSE -> uiState.expenseCategories
+                    TransactionType.INCOME -> uiState.incomeCategories
+                    TransactionType.EXPENSE -> uiState.expenseCategories
                     else -> emptyList()
                 },
                 onCategorySelected = { selectedCategory = it },
@@ -249,17 +250,17 @@ class RecurringFormModal(
 
     @Composable
     private fun TypeToggle(
-        selectedType: Transaction.Type,
-        onTypeSelected: (Transaction.Type) -> Unit,
+        selectedType: TransactionType,
+        onTypeSelected: (TransactionType) -> Unit,
     ) = Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Button(
-            onClick = { onTypeSelected(Transaction.Type.EXPENSE) },
+            onClick = { onTypeSelected(TransactionType.EXPENSE) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.EXPENSE -> ButtonDefaults.buttonColors(
+                TransactionType.EXPENSE -> ButtonDefaults.buttonColors(
                     containerColor = Expense,
                     contentColor = Color.White,
                 )
@@ -279,10 +280,10 @@ class RecurringFormModal(
         }
 
         Button(
-            onClick = { onTypeSelected(Transaction.Type.INCOME) },
+            onClick = { onTypeSelected(TransactionType.INCOME) },
             modifier = Modifier.weight(1f),
             colors = when (selectedType) {
-                Transaction.Type.INCOME -> ButtonDefaults.buttonColors(
+                TransactionType.INCOME -> ButtonDefaults.buttonColors(
                     containerColor = Income,
                     contentColor = Color.White,
                 )

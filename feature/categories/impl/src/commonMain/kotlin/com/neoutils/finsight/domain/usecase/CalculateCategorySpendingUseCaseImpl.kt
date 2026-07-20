@@ -4,24 +4,25 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.accountType
+import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.YearMonth
 
 /**
  * Per-category totals from the ledger: the amount is `Σ entries` of the category's
- * chart-of-accounts row in the month. [displaySign] converts the natural balance to
- * a positive figure (EXPENSE accounts are debit-natured → +spent; INCOME accounts
- * are credit-natured → negate to read +received). Categories with no ledger account
- * yet (never posted to) contribute nothing.
+ * chart-of-accounts row in the month, converted to the ledger's display sign so that
+ * both an expense and an income category read as a positive figure. Categories with no
+ * ledger account yet (never posted to) contribute nothing.
  */
 internal suspend fun categoryTotals(
     categories: List<Category>,
     forYearMonth: YearMonth,
     entryRepository: IEntryRepository,
-    displaySign: Double,
 ): List<CategorySpending> {
     val amounts = categories.mapNotNull { category ->
         val accountId = category.accountId ?: return@mapNotNull null
-        val amount = entryRepository.balanceInMonth(forYearMonth, accountId) * displaySign
+        val natural = entryRepository.balanceInMonth(forYearMonth, accountId)
+        val amount = natural * category.type.accountType.displaySign
         if (amount == 0.0) null else category to amount
     }
     val total = amounts.sumOf { it.second }
@@ -45,7 +46,6 @@ class CalculateCategorySpendingUseCaseImpl(
             categories = categoryRepository.getAllCategories().filter { it.type.isExpense },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
-            displaySign = 1.0,
         )
 }
 
@@ -58,6 +58,5 @@ class CalculateCategoryIncomeUseCaseImpl(
             categories = categoryRepository.getAllCategories().filter { it.type.isIncome },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
-            displaySign = -1.0,
         )
 }

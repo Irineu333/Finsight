@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 
 class ViewAdjustmentViewModel(
-    operationId: Long,
+    transactionId: Long,
     operationRepository: IOperationRepository,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -21,9 +21,9 @@ class ViewAdjustmentViewModel(
     private val _events = Channel<ViewAdjustmentEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    val uiState = operationRepository.observeOperationById(operationId)
+    val uiState = operationRepository.observeOperationById(transactionId)
         .interceptAbsence(
-            onMissing = { crashlytics.recordException(DetailNotFoundException("Operation", operationId)) },
+            onMissing = { crashlytics.recordException(DetailNotFoundException("Operation", transactionId)) },
             onDisappeared = { _events.send(ViewAdjustmentEvent.Dismiss) },
         )
         .map { operation ->

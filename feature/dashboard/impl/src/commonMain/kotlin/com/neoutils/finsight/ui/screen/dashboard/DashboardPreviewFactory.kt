@@ -194,7 +194,7 @@ class DashboardPreviewFactory(
                     recurringList = listOf(
                         Recurring(
                             id = 1,
-                            type = Transaction.Type.EXPENSE,
+                            type = TransactionType.EXPENSE,
                             amount = 49.90,
                             title = getString(Res.string.preview_transaction_netflix),
                             dayOfMonth = 15,
@@ -211,7 +211,7 @@ class DashboardPreviewFactory(
                         ),
                         Recurring(
                             id = 2,
-                            type = Transaction.Type.INCOME,
+                            type = TransactionType.INCOME,
                             amount = 3500.0,
                             title = getString(Res.string.preview_category_salary),
                             dayOfMonth = 5,
@@ -239,6 +239,33 @@ class DashboardPreviewFactory(
         }
 
         DashboardComponentType.RECENTS.key -> {
+            val mainAccount = Account(
+                id = 1,
+                name = getString(Res.string.preview_account_main),
+                iconKey = "wallet",
+                isDefault = true,
+                createdAt = 0,
+            )
+            val foodCategory = Category(
+                id = 1,
+                name = getString(Res.string.preview_category_food),
+                icon = CategoryLazyIcon("shopping"),
+                type = Category.Type.EXPENSE,
+                createdAt = 0,
+            )
+            val foodAccount = Account(
+                id = 101,
+                name = foodCategory.name,
+                type = AccountType.EXPENSE,
+                createdAt = 0,
+            )
+            val salaryAccount = Account(
+                id = 102,
+                name = getString(Res.string.preview_category_salary),
+                type = AccountType.INCOME,
+                createdAt = 0,
+            )
+
             DashboardComponentVariant.Recents.Preview(
                 component = DashboardComponent.Recents(
                     operations = listOf(
@@ -246,112 +273,32 @@ class DashboardPreviewFactory(
                             id = 1,
                             title = getString(Res.string.preview_transaction_supermarket),
                             date = LocalDate(2026, 3, 20),
-                            category = Category(
-                                id = 1,
-                                name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
-                            ),
-                            sourceAccount = Account(
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
-                            ),
-                            transactions = listOf(
-                                Transaction(
-                                    id = 1,
-                                    type = Transaction.Type.EXPENSE,
-                                    amount = 156.80,
-                                    title = getString(Res.string.preview_transaction_supermarket),
-                                    date = LocalDate(2026, 3, 20),
-                                    category = Category(
-                                        id = 1,
-                                        name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
-                                        type = Category.Type.EXPENSE,
-                                        createdAt = 0,
-                                    ),
-                                    account = Account(
-                                        id = 1,
-                                        name = getString(Res.string.preview_account_main),
-                                        iconKey = "wallet",
-                                        isDefault = true,
-                                        createdAt = 0,
-                                    ),
-                                ),
+                            category = foodCategory,
+                            sourceAccount = mainAccount,
+                            entries = listOf(
+                                Entry(id = 1, account = mainAccount, amount = -15680),
+                                Entry(id = 2, account = foodAccount, amount = 15680),
                             ),
                         ),
                         Operation(
                             id = 2,
                             title = getString(Res.string.preview_category_salary),
                             date = LocalDate(2026, 3, 5),
-                            sourceAccount = Account(
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
-                            ),
-                            transactions = listOf(
-                                Transaction(
-                                    id = 2,
-                                    type = Transaction.Type.INCOME,
-                                    amount = 3500.0,
-                                    title = getString(Res.string.preview_category_salary),
-                                    date = LocalDate(2026, 3, 5),
-                                    account = Account(
-                                        id = 1,
-                                        name = getString(Res.string.preview_account_main),
-                                        iconKey = "wallet",
-                                        isDefault = true,
-                                        createdAt = 0,
-                                    ),
-                                ),
+                            sourceAccount = mainAccount,
+                            entries = listOf(
+                                Entry(id = 3, account = mainAccount, amount = 350000),
+                                Entry(id = 4, account = salaryAccount, amount = -350000),
                             ),
                         ),
                         Operation(
                             id = 3,
                             title = getString(Res.string.preview_transaction_spotify),
                             date = LocalDate(2026, 3, 1),
-                            category = Category(
-                                id = 1,
-                                name = getString(Res.string.preview_category_food),
-                                icon = CategoryLazyIcon("shopping"),
-                                type = Category.Type.EXPENSE,
-                                createdAt = 0,
-                            ),
-                            sourceAccount = Account(
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
-                            ),
-                            transactions = listOf(
-                                Transaction(
-                                    id = 3,
-                                    type = Transaction.Type.EXPENSE,
-                                    amount = 21.90,
-                                    title = getString(Res.string.preview_transaction_spotify),
-                                    date = LocalDate(2026, 3, 1),
-                                    category = Category(
-                                        id = 1,
-                                        name = getString(Res.string.preview_category_food),
-                                        icon = CategoryLazyIcon("shopping"),
-                                        type = Category.Type.EXPENSE,
-                                        createdAt = 0,
-                                    ),
-                                    account = Account(
-                                        id = 1,
-                                        name = getString(Res.string.preview_account_main),
-                                        iconKey = "wallet",
-                                        isDefault = true,
-                                        createdAt = 0,
-                                    ),
-                                ),
+                            category = foodCategory,
+                            sourceAccount = mainAccount,
+                            entries = listOf(
+                                Entry(id = 5, account = mainAccount, amount = -2190),
+                                Entry(id = 6, account = foodAccount, amount = 2190),
                             ),
                         ),
                     ),

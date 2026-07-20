@@ -4,11 +4,12 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.ReportPerspective
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.LocalDate
 
 class CalculateReportCategorySpendingUseCase(
@@ -22,7 +23,7 @@ class CalculateReportCategorySpendingUseCase(
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
-        transactionType: Transaction.Type = Transaction.Type.EXPENSE,
+        transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         val categoryType = accountType(transactionType)
         // The perspective is expressed as the sibling legs an operation must have:
@@ -44,7 +45,7 @@ class CalculateReportCategorySpendingUseCase(
     /** Invoice-scoped report: category totals across a set of card invoices. */
     suspend fun forInvoices(
         invoiceIds: List<Long>,
-        transactionType: Transaction.Type = Transaction.Type.EXPENSE,
+        transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         if (invoiceIds.isEmpty()) return emptyList()
         return build(
@@ -53,15 +54,14 @@ class CalculateReportCategorySpendingUseCase(
         )
     }
 
-    private fun accountType(transactionType: Transaction.Type) =
+    private fun accountType(transactionType: TransactionType) =
         if (transactionType.isIncome) AccountType.INCOME else AccountType.EXPENSE
 
     private suspend fun build(
         totals: Map<Long, Double>,
-        transactionType: Transaction.Type,
+        transactionType: TransactionType,
     ): List<CategorySpending> {
-        // INCOME accounts are credit-natured (negative); flip to read positive.
-        val displaySign = if (transactionType.isIncome) -1.0 else 1.0
+        val displaySign = accountType(transactionType).displaySign
         val categoriesByAccount: Map<Long, Category> = categoryRepository.getAllCategories()
             .mapNotNull { category -> category.accountId?.let { it to category } }
             .toMap()

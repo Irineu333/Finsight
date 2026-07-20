@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Recurring
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
@@ -41,9 +41,9 @@ class ConfirmRecurringViewModel(
 
     private val currentDate get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     private val initialTarget = if (recurring.creditCard != null) {
-        Transaction.Target.CREDIT_CARD
+        TransactionTarget.CREDIT_CARD
     } else {
-        Transaction.Target.ACCOUNT
+        TransactionTarget.ACCOUNT
     }
     private val confirmDate = MutableStateFlow(targetDate.takeIf { it <= currentDate } ?: currentDate)
     private val selectedTarget = MutableStateFlow(initialTarget)

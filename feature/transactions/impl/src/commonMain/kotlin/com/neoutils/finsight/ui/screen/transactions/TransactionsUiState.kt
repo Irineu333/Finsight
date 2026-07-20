@@ -6,7 +6,8 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.ui.model.InvoiceOverview
 import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.toYearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -22,8 +23,8 @@ data class TransactionsUiState(
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,
     val categories: List<Category> = listOf(),
-    val selectedType: Transaction.Type? = null,
-    val selectedTarget: Transaction.Target? = null,
+    val selectedType: TransactionType? = null,
+    val selectedTarget: TransactionTarget? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
 ) {

@@ -4,13 +4,13 @@ import androidx.navigation.NavType
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import androidx.savedstate.write
-import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionType
 
-class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = true) {
+class TransactionTypeNavType : NavType<TransactionType?>(isNullableAllowed = true) {
     override fun put(
         bundle: SavedState,
         key: String,
-        value: Transaction.Type?
+        value: TransactionType?
     ) {
         bundle.write {
             if (value != null) {
@@ -22,11 +22,11 @@ class TransactionTypeNavType : NavType<Transaction.Type?>(isNullableAllowed = tr
     override fun get(
         bundle: SavedState,
         key: String
-    ): Transaction.Type? {
-        return bundle.read { getStringOrNull(key)?.let(Transaction.Type::valueOf) }
+    ): TransactionType? {
+        return bundle.read { getStringOrNull(key)?.let(TransactionType::valueOf) }
     }
 
-    override fun parseValue(value: String): Transaction.Type? {
-        return if (value == "null") null else Transaction.Type.valueOf(value)
+    override fun parseValue(value: String): TransactionType? {
+        return if (value == "null") null else TransactionType.valueOf(value)
     }
 }

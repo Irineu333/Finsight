@@ -5,6 +5,8 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.TransactionTarget
+import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IOperationRepository
@@ -66,12 +68,12 @@ class LedgerBackedStores {
     private var nextTransactionId = 0L
 
     fun create(transactions: List<Transaction>): Long {
-        val operationId = ++nextOperationId
+        val transactionId = ++nextOperationId
         transactions.forEach { transaction ->
-            legacyTransactions += transaction.copy(id = ++nextTransactionId, operationId = operationId)
+            legacyTransactions += transaction.copy(id = ++nextTransactionId, transactionId = transactionId)
         }
-        ledgerAmountByOperation[operationId] = transactions.sumOf { it.amount }
-        return operationId
+        ledgerAmountByOperation[transactionId] = transactions.sumOf { it.amount }
+        return transactionId
     }
 }
 
@@ -86,12 +88,12 @@ class FakeOperationRepository(private val stores: LedgerBackedStores) : IOperati
         installmentNumber: Int?,
         transactions: List<Transaction>,
     ): Operation {
-        val operationId = stores.create(transactions)
+        val transactionId = stores.create(transactions)
         return Operation(
-            id = operationId,
+            id = transactionId,
             title = title,
             date = date,
-            transactions = transactions.map { it.copy(operationId = operationId) },
+            transactions = transactions.map { it.copy(transactionId = transactionId) },
         )
     }
 
@@ -102,7 +104,7 @@ class FakeOperationRepository(private val stores: LedgerBackedStores) : IOperati
 
     override suspend fun deleteOperationById(id: Long) {
         stores.ledgerAmountByOperation.remove(id)
-        stores.legacyTransactions.removeAll { it.operationId == id }
+        stores.legacyTransactions.removeAll { it.transactionId == id }
     }
 
     override fun observeAllOperations(): Flow<List<Operation>> = throw NotImplementedError()
@@ -125,8 +127,8 @@ class FakeTransactionRepository(private val stores: LedgerBackedStores) : ITrans
     }
 
     override suspend fun getTransactionsBy(
-        type: Transaction.Type?,
-        target: Transaction.Target?,
+        type: TransactionType?,
+        target: TransactionTarget?,
         date: LocalDate?,
         invoiceId: Long?,
         accountId: Long?,
@@ -143,12 +145,12 @@ class FakeTransactionRepository(private val stores: LedgerBackedStores) : ITrans
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getTransactionBy(id: Long): Transaction? = throw NotImplementedError()
-    override fun observeTransactionsBy(type: Transaction.Type?, target: Transaction.Target?, date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
+    override fun observeTransactionsBy(type: TransactionType?, target: TransactionTarget?, date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
 }
 
 class FakeEntryRepository(private val stores: LedgerBackedStores) : IEntryRepository {
-    override suspend fun getEntriesByOperation(operationId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByOperation(operationId: Long): Flow<List<Entry>> = throw NotImplementedError()
+    override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
+    override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
 
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double =
         stores.ledgerAmountByOperation.values.sum()

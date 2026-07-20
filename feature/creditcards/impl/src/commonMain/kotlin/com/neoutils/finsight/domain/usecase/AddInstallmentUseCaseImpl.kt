@@ -11,17 +11,17 @@ import com.neoutils.finsight.domain.error.InstallmentError
 import com.neoutils.finsight.domain.exception.InstallmentException
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.plus
 
 class AddInstallmentUseCaseImpl(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val installmentRepository: IInstallmentRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
@@ -31,7 +31,7 @@ class AddInstallmentUseCaseImpl(
     override suspend operator fun invoke(
         form: TransactionForm,
         installments: Int,
-    ): Either<Throwable, List<Operation>> {
+    ): Either<Throwable, List<Transaction>> {
 
         return either {
 
@@ -117,7 +117,7 @@ class AddInstallmentUseCaseImpl(
     private suspend fun registerTransactions(
         form: TransactionForm,
         invoices: List<Invoice>,
-    ): Either<Throwable, List<Operation>> {
+    ): Either<Throwable, List<Transaction>> {
         return either {
             val base = buildTransactionUseCase(form).bind()
 
@@ -144,7 +144,7 @@ class AddInstallmentUseCaseImpl(
             // One decision by the user, one unit of work: a partial fan-out would
             // leave the installment describing money that was never recorded.
             catch {
-                operationRepository.createOperations(intents)
+                transactionRepository.createTransactions(intents)
             }.onLeft {
                 installmentRepository.deleteInstallmentById(installmentId)
             }.bind()

@@ -40,7 +40,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.*
 import com.neoutils.finsight.ui.model.CreditCardUi
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.modal.advancePayment.AdvancePaymentModal
 import com.neoutils.finsight.ui.modal.closeInvoice.CloseInvoiceModal
 import com.neoutils.finsight.ui.modal.creditCardForm.CreditCardFormModal
@@ -211,7 +211,7 @@ private fun CreditCardsContent(
                         )
                     }
 
-                    uiState.operations.forEach { (date, operations) ->
+                    uiState.transactions.forEach { (date, transactions) ->
                         item(
                             key = "date_title_$date"
                         ) {
@@ -227,24 +227,24 @@ private fun CreditCardsContent(
                         }
 
                         items(
-                            items = operations,
+                            items = transactions,
                             key = { it.id }
-                        ) { operation ->
-                            operation.toOperationUi()?.let { operationUi ->
-                            OperationCard(
-                                operation = operationUi,
+                        ) { transaction ->
+                            transaction.toTransactionUi()?.let { transactionUi ->
+                            TransactionCard(
+                                transaction = transactionUi,
                                 modifier = Modifier
                                     .padding(horizontal = 16.dp)
                                     .fillMaxWidth()
                                     .animateItem(),
                                 onClick = {
-                                    when (operationUi.direction) {
+                                    when (transactionUi.direction) {
                                         TransactionType.ADJUSTMENT -> {
-                                            detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
+                                            detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
                                         }
 
                                         else -> {
-                                            detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                                            detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                                         }
                                     }
                                 }

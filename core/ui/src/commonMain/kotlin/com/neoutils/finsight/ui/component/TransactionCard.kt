@@ -23,29 +23,29 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.operation_card_balance_adjustment
-import com.neoutils.finsight.resources.operation_card_invoice_adjustment
-import com.neoutils.finsight.resources.operation_card_payment
-import com.neoutils.finsight.resources.operation_card_transfer
-import com.neoutils.finsight.ui.model.OperationUi
+import com.neoutils.finsight.resources.transaction_card_balance_adjustment
+import com.neoutils.finsight.resources.transaction_card_invoice_adjustment
+import com.neoutils.finsight.resources.transaction_card_payment
+import com.neoutils.finsight.resources.transaction_card_transfer
+import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.ui.theme.*
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun OperationCard(
-    operation: OperationUi,
+fun TransactionCard(
+    transaction: TransactionUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     amountDecoration: TextDecoration = TextDecoration.None,
 ) {
     val formatter = LocalCurrencyFormatter.current
-    val color = operation.color()
+    val color = transaction.color()
 
     Card(
         onClick = onClick,
@@ -73,7 +73,7 @@ fun OperationCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        val categoryIcon = operation.categoryIcon
+                        val categoryIcon = transaction.categoryIcon
                         if (categoryIcon != null) {
                             Icon(
                                 painter = categoryIcon(),
@@ -83,7 +83,7 @@ fun OperationCard(
                             )
                         } else {
                             Icon(
-                                imageVector = operation.icon(),
+                                imageVector = transaction.icon(),
                                 contentDescription = null,
                                 tint = color,
                                 modifier = Modifier.size(24.dp)
@@ -92,7 +92,7 @@ fun OperationCard(
                     }
                 }
 
-                if (operation.isCardTarget) {
+                if (transaction.isCardTarget) {
                     Surface(
                         color = colorScheme.surfaceVariant,
                         shape = CircleShape,
@@ -110,37 +110,37 @@ fun OperationCard(
                 }
             }
 
-            val paymentLabel = stringResource(Res.string.operation_card_payment)
-            val transferLabel = stringResource(Res.string.operation_card_transfer)
-            val balanceAdjustLabel = stringResource(Res.string.operation_card_balance_adjustment)
-            val invoiceAdjustLabel = stringResource(Res.string.operation_card_invoice_adjustment)
+            val paymentLabel = stringResource(Res.string.transaction_card_payment)
+            val transferLabel = stringResource(Res.string.transaction_card_transfer)
+            val balanceAdjustLabel = stringResource(Res.string.transaction_card_balance_adjustment)
+            val invoiceAdjustLabel = stringResource(Res.string.transaction_card_invoice_adjustment)
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = operation.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
+                    text = transaction.displayTitle(paymentLabel, transferLabel, balanceAdjustLabel, invoiceAdjustLabel),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = dayMonthYear.format(operation.date),
+                    text = dayMonthYear.format(transaction.date),
                     fontSize = 14.sp,
                     color = colorScheme.onSurfaceVariant
                 )
             }
 
             Text(
-                text = when (operation.direction) {
-                    TransactionType.ADJUSTMENT -> formatter.formatWithSign(operation.amount)
-                    TransactionType.EXPENSE -> if (operation.label == OperationLabel.TRANSFER) {
-                        "-${formatter.format(operation.amount)}"
+                text = when (transaction.direction) {
+                    TransactionType.ADJUSTMENT -> formatter.formatWithSign(transaction.amount)
+                    TransactionType.EXPENSE -> if (transaction.label == TransactionLabel.TRANSFER) {
+                        "-${formatter.format(transaction.amount)}"
                     } else {
-                        formatter.format(operation.amount)
+                        formatter.format(transaction.amount)
                     }
-                    else -> formatter.format(operation.amount)
+                    else -> formatter.format(transaction.amount)
                 },
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -151,26 +151,26 @@ fun OperationCard(
     }
 }
 
-private fun OperationUi.displayTitle(
+private fun TransactionUi.displayTitle(
     paymentLabel: String,
     transferLabel: String,
     balanceAdjustLabel: String,
     invoiceAdjustLabel: String,
 ): String {
     val baseTitle = when {
-        label == OperationLabel.PAYMENT -> paymentLabel
-        label == OperationLabel.TRANSFER -> transferLabel
-        label == OperationLabel.ADJUSTMENT && !isCardTarget -> balanceAdjustLabel
-        label == OperationLabel.ADJUSTMENT && isCardTarget -> invoiceAdjustLabel
+        label == TransactionLabel.PAYMENT -> paymentLabel
+        label == TransactionLabel.TRANSFER -> transferLabel
+        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> balanceAdjustLabel
+        label == TransactionLabel.ADJUSTMENT && isCardTarget -> invoiceAdjustLabel
         else -> title
     }
 
     return installmentLabel?.let { "$baseTitle • $it" } ?: baseTitle
 }
 
-private fun OperationUi.icon() = when {
-    label == OperationLabel.PAYMENT -> Icons.Default.Payment
-    label == OperationLabel.TRANSFER -> Icons.Default.SwapHoriz
+private fun TransactionUi.icon() = when {
+    label == TransactionLabel.PAYMENT -> Icons.Default.Payment
+    label == TransactionLabel.TRANSFER -> Icons.Default.SwapHoriz
     else -> when (direction) {
         TransactionType.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
         TransactionType.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
@@ -178,9 +178,9 @@ private fun OperationUi.icon() = when {
     }
 }
 
-private fun OperationUi.color(): Color = when {
-    label == OperationLabel.PAYMENT -> InvoicePayment
-    label == OperationLabel.TRANSFER -> Info
+private fun TransactionUi.color(): Color = when {
+    label == TransactionLabel.PAYMENT -> InvoicePayment
+    label == TransactionLabel.TRANSFER -> Info
     direction == TransactionType.INCOME -> Income
     direction == TransactionType.EXPENSE -> Expense
     else -> Adjustment

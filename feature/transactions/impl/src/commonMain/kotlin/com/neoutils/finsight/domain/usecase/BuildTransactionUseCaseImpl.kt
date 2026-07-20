@@ -10,8 +10,8 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.exception.BuildTransactionException
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.DateFormats
@@ -30,7 +30,7 @@ class BuildTransactionUseCaseImpl(
 
     override suspend operator fun invoke(
         form: TransactionForm,
-    ): Either<Throwable, OperationIntent> = either {
+    ): Either<Throwable, TransactionIntent> = either {
         ensure(form.amount.isNotEmpty()) {
             BuildTransactionException(BuildTransactionError.AmountRequired)
         }
@@ -59,12 +59,12 @@ class BuildTransactionUseCaseImpl(
                 BuildTransactionException(BuildTransactionError.AccountRequired)
             }
 
-            return@either OperationIntent(
+            return@either TransactionIntent(
                 title = form.title,
                 date = date,
                 category = form.category,
                 legs = listOf(
-                    OperationLeg(
+                    TransactionLeg(
                         type = form.type,
                         amount = form.amount.moneyToDouble(),
                         account = form.account,
@@ -88,12 +88,12 @@ class BuildTransactionUseCaseImpl(
 
         val invoice = getOrCreateInvoiceForMonthUseCase(creditCard, invoiceDueMonth).bind()
 
-        OperationIntent(
+        TransactionIntent(
             title = form.title,
             date = date,
             category = form.category,
             legs = listOf(
-                OperationLeg(
+                TransactionLeg(
                     type = form.type,
                     amount = form.amount.moneyToDouble(),
                     creditCard = form.creditCard,

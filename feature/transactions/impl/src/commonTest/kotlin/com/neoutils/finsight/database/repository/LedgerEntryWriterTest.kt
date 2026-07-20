@@ -8,13 +8,13 @@ import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
-import com.neoutils.finsight.domain.error.UnbalancedOperationException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.YearMonth
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +41,7 @@ class LedgerEntryWriterTest {
     @Test
     fun `given an expense when written then two entries sum to zero`() = runTest {
         categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
-        val expense = OperationLeg(
+        val expense = TransactionLeg(
             type = TransactionType.EXPENSE,
             amount = 50.0,
             account = assetAccount(1),
@@ -58,8 +58,8 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given a transfer when written then both legs balance without synthesis`() = runTest {
-        val out = OperationLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
-        val income = OperationLeg(type = TransactionType.INCOME, amount = 100.0, account = assetAccount(2))
+        val out = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
+        val income = TransactionLeg(type = TransactionType.INCOME, amount = 100.0, account = assetAccount(2))
 
         writer.validate(listOf(out, income))
         writer.writeEntries(transactionId = 2, legs = listOf(out, income))
@@ -72,7 +72,7 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an adjustment when written then contra is a created reconciliation equity account`() = runTest {
-        val adjustment = OperationLeg(type = TransactionType.ADJUSTMENT, amount = 30.0, account = assetAccount(1))
+        val adjustment = TransactionLeg(type = TransactionType.ADJUSTMENT, amount = 30.0, account = assetAccount(1))
 
         writer.writeEntries(transactionId = 3, legs = listOf(adjustment))
 
@@ -95,8 +95,8 @@ class LedgerEntryWriterTest {
             status = Invoice.Status.CLOSED,
         )
         // The paying leg carries account + card + invoice (as the real use case builds it).
-        val accountLeg = OperationLeg(type = TransactionType.EXPENSE, amount = 50.0, account = assetAccount(1), creditCard = card, invoice = invoice)
-        val cardLeg = OperationLeg(type = TransactionType.INCOME, amount = 50.0, creditCard = card, invoice = invoice)
+        val accountLeg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, account = assetAccount(1), creditCard = card, invoice = invoice)
+        val cardLeg = TransactionLeg(type = TransactionType.INCOME, amount = 50.0, creditCard = card, invoice = invoice)
 
         writer.writeEntries(transactionId = 4, legs = listOf(accountLeg, cardLeg))
 
@@ -110,11 +110,11 @@ class LedgerEntryWriterTest {
     }
 
     @Test
-    fun `given an unbalanced multi-leg operation when validated then it is rejected`() {
-        val a = OperationLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
-        val b = OperationLeg(type = TransactionType.INCOME, amount = 80.0, account = assetAccount(2))
+    fun `given an unbalanced multi-leg transaction when validated then it is rejected`() {
+        val a = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
+        val b = TransactionLeg(type = TransactionType.INCOME, amount = 80.0, account = assetAccount(2))
 
-        assertFailsWith<UnbalancedOperationException> { writer.validate(listOf(a, b)) }
+        assertFailsWith<UnbalancedTransactionException> { writer.validate(listOf(a, b)) }
     }
 }
 
@@ -123,12 +123,12 @@ private class FakeEntryDao : EntryDao {
     override suspend fun insert(entry: EntryEntity): Long { inserted += entry; return inserted.size.toLong() }
     override suspend fun insertAll(entries: List<EntryEntity>): List<Long> { inserted += entries; return entries.indices.map { it.toLong() } }
     override suspend fun delete(entry: EntryEntity) = Unit
-    override suspend fun deleteByOperationId(transactionId: Long) { inserted.removeAll { it.transactionId == transactionId } }
+    override suspend fun deleteByTransactionId(transactionId: Long) { inserted.removeAll { it.transactionId == transactionId } }
     override suspend fun getAll(): List<EntryEntity> = inserted
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
-    override suspend fun getByOperationId(transactionId: Long): List<EntryEntity> = inserted.filter { it.transactionId == transactionId }
-    override suspend fun getEntriesWithAccountByOperationId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
-    override fun observeEntriesWithAccountByOperationId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
+    override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = inserted.filter { it.transactionId == transactionId }
+    override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
+    override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
     override suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int = throw NotImplementedError()
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()

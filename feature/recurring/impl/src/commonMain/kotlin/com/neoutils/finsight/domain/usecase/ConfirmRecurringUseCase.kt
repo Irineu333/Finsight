@@ -9,13 +9,13 @@ import arrow.core.getOrElse
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
 import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
 import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.toYearMonth
@@ -26,7 +26,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class ConfirmRecurringUseCase(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase,
 ) {
@@ -42,7 +42,7 @@ class ConfirmRecurringUseCase(
         account: Account? = recurring.account,
         creditCard: CreditCard? = recurring.creditCard,
         invoice: Invoice? = null,
-    ): Either<Throwable, Operation> {
+    ): Either<Throwable, Transaction> {
         val yearMonth = date.yearMonth
         val cycleNumber = Instant
             .fromEpochMilliseconds(recurring.createdAt)
@@ -63,15 +63,15 @@ class ConfirmRecurringUseCase(
                     ?: getOrCreateInvoiceForMonthUseCase(targetCreditCard, yearMonth)
                         .getOrElse { throw it }
 
-                operationRepository.createOperation(
-                    OperationIntent(
+                transactionRepository.createTransaction(
+                    TransactionIntent(
                         title = recurring.title,
                         date = date,
                         category = recurring.category,
                         recurringId = recurring.id,
                         recurringCycle = cycleNumber,
                         legs = listOf(
-                            OperationLeg(
+                            TransactionLeg(
                                 type = recurring.type,
                                 amount = amount,
                                 category = recurring.category,
@@ -83,15 +83,15 @@ class ConfirmRecurringUseCase(
                 )
             } else {
                 val sourceAccount = account ?: recurring.account
-                operationRepository.createOperation(
-                    OperationIntent(
+                transactionRepository.createTransaction(
+                    TransactionIntent(
                         title = recurring.title,
                         date = date,
                         category = recurring.category,
                         recurringId = recurring.id,
                         recurringCycle = cycleNumber,
                         legs = listOf(
-                            OperationLeg(
+                            TransactionLeg(
                                 type = recurring.type,
                                 amount = amount,
                                 category = recurring.category,
@@ -101,7 +101,7 @@ class ConfirmRecurringUseCase(
                     )
                 )
             }
-        }.flatMap { operation ->
+        }.flatMap { transaction ->
             catch {
                 recurringOccurrenceRepository.save(
                     RecurringOccurrence(
@@ -109,12 +109,12 @@ class ConfirmRecurringUseCase(
                         cycleNumber = cycleNumber,
                         yearMonth = yearMonth,
                         status = RecurringOccurrence.Status.CONFIRMED,
-                        transactionId = operation.id,
+                        transactionId = transaction.id,
                         effectiveDate = date,
                         handledAt = Clock.System.now().toEpochMilliseconds(),
                     )
                 )
-                operation
+                transaction
             }
         }
     }

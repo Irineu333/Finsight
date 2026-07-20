@@ -3,7 +3,7 @@ package com.neoutils.finsight.extension
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,30 +17,30 @@ class LedgerTest {
     private fun entry(type: AccountType, amount: Long, accountId: Long = type.ordinal.toLong()) =
         Entry(account = account(accountId, type), amount = amount)
 
-    // --- deriveOperationLabel (task 1.5: label from account types) ---
+    // --- deriveTransactionLabel (task 1.5: label from account types) ---
 
     @Test
     fun `asset and expense legs derive an expense`() {
         val entries = listOf(entry(AccountType.ASSET, -5000), entry(AccountType.EXPENSE, 5000))
-        assertEquals(OperationLabel.EXPENSE, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.EXPENSE, entries.deriveTransactionLabel())
     }
 
     @Test
     fun `income and asset legs derive an income`() {
         val entries = listOf(entry(AccountType.ASSET, 5000), entry(AccountType.INCOME, -5000))
-        assertEquals(OperationLabel.INCOME, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.INCOME, entries.deriveTransactionLabel())
     }
 
     @Test
     fun `two asset legs derive a transfer`() {
         val entries = listOf(entry(AccountType.ASSET, -10000, 1), entry(AccountType.ASSET, 10000, 2))
-        assertEquals(OperationLabel.TRANSFER, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.TRANSFER, entries.deriveTransactionLabel())
     }
 
     @Test
     fun `asset and liability legs derive a payment`() {
         val entries = listOf(entry(AccountType.ASSET, -5000), entry(AccountType.LIABILITY, 5000))
-        assertEquals(OperationLabel.PAYMENT, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.PAYMENT, entries.deriveTransactionLabel())
     }
 
     // --- EQUITY is evaluated first: both adjustment forms label ADJUSTMENT (task 1.4) ---
@@ -50,7 +50,7 @@ class LedgerTest {
         // {ASSET, EQUITY}: no EXPENSE/INCOME/LIABILITY case matches, so without the
         // EQUITY-first branch it would fall through to TRANSFER.
         val entries = listOf(entry(AccountType.ASSET, 3000), entry(AccountType.EQUITY, -3000))
-        assertEquals(OperationLabel.ADJUSTMENT, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.ADJUSTMENT, entries.deriveTransactionLabel())
     }
 
     @Test
@@ -58,7 +58,7 @@ class LedgerTest {
         // {LIABILITY, EQUITY}: LIABILITY would be caught first as PAYMENT unless
         // EQUITY is tested before every other case.
         val entries = listOf(entry(AccountType.LIABILITY, -3000), entry(AccountType.EQUITY, 3000))
-        assertEquals(OperationLabel.ADJUSTMENT, entries.deriveOperationLabel())
+        assertEquals(TransactionLabel.ADJUSTMENT, entries.deriveTransactionLabel())
     }
 
     // --- isBalanced (Σ = 0 per currency) ---

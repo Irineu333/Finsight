@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 
 class InstallmentsViewModel(
     installmentRepository: IInstallmentRepository,
-    operationRepository: IOperationRepository,
+    transactionRepository: ITransactionRepository,
     private val installmentUiMapper: InstallmentUiMapper,
 ) : ViewModel() {
 
@@ -26,9 +26,9 @@ class InstallmentsViewModel(
 
     private val allInstallmentsUi = combine(
         installmentRepository.observeAllInstallments(),
-        operationRepository.observeAllOperations(),
-    ) { installments, operations ->
-        val operationsByInstallmentId = operations
+        transactionRepository.observeAllTransactions(),
+    ) { installments, transactions ->
+        val transactionsByInstallmentId = transactions
             .filter { it.installment != null }
             .groupBy { checkNotNull(it.installment).id }
 
@@ -36,12 +36,12 @@ class InstallmentsViewModel(
             .mapNotNull { installment ->
                 installmentUiMapper.toUi(
                     installment = installment,
-                    operations = operationsByInstallmentId[installment.id].orEmpty(),
+                    transactions = transactionsByInstallmentId[installment.id].orEmpty(),
                 )
             }
             .sortedWith(
-                compareByDescending<InstallmentWithOperationsUi> {
-                    it.latestOperationDate
+                compareByDescending<InstallmentWithTransactionsUi> {
+                    it.latestTransactionDate
                 }.thenByDescending { it.installment.id }
             )
     }
@@ -67,10 +67,10 @@ class InstallmentsViewModel(
             .coerceAtLeast(0)
             .coerceAtMost(filtered.size - 1)
 
-        val selectedOperations = filtered.getOrNull(safeSelectedIndex)
-            ?.operations.orEmpty()
+        val selectedTransactions = filtered.getOrNull(safeSelectedIndex)
+            ?.transactions.orEmpty()
 
-        val categories = selectedOperations
+        val categories = selectedTransactions
             .mapNotNull { it.category }
             .distinctBy { it.id }
 

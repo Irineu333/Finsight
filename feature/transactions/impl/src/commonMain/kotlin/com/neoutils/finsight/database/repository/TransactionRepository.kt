@@ -10,7 +10,7 @@ import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
-import com.neoutils.finsight.database.mapper.OperationMapper
+import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
@@ -20,17 +20,17 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLabel
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLabel
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
-class OperationRepository(
+class TransactionRepository(
     private val database: AppDatabase,
     private val transactionDao: TransactionDao,
     private val entryDao: EntryDao,
@@ -49,10 +49,10 @@ class OperationRepository(
     private val invoiceRepository: IInvoiceRepository,
     private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
-    private val operationMapper: OperationMapper,
+    private val transactionMapper: TransactionMapper,
     private val recurringMapper: RecurringMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
-) : IOperationRepository {
+) : ITransactionRepository {
 
     private val categoriesFlow = categoryRepository.observeAllCategories().map { it.associateBy { category -> category.id } }
     private val creditCardsFlow = creditCardRepository.observeAllCreditCards().map { it.associateBy { card -> card.id } }
@@ -90,7 +90,7 @@ class OperationRepository(
             }
         }
 
-    private fun Flow<List<TransactionEntity>>.mapToDomain(): Flow<List<Operation>> = combine(
+    private fun Flow<List<TransactionEntity>>.mapToDomain(): Flow<List<Transaction>> = combine(
         this,
         categoriesFlow,
         creditCardsFlow,
@@ -99,45 +99,45 @@ class OperationRepository(
         accountsFlow,
         recurringFlow,
         entryDao.observeAll(),
-    ) { operations, categories, creditCards, invoices, installments, accounts, recurring, entries ->
-        val entriesByOperationId = entries.groupBy { it.transactionId }
-        operations.mapNotNull { operation ->
-            operationMapper.toDomain(
-                entity = operation,
+    ) { transactions, categories, creditCards, invoices, installments, accounts, recurring, entries ->
+        val entriesByTransactionId = entries.groupBy { it.transactionId }
+        transactions.mapNotNull { transaction ->
+            transactionMapper.toDomain(
+                entity = transaction,
                 categories = categories,
                 creditCards = creditCards,
                 invoices = invoices,
                 installments = installments,
                 recurring = recurring,
-                entries = entriesByOperationId[operation.id].orEmpty().toDomainEntries(accounts),
+                entries = entriesByTransactionId[transaction.id].orEmpty().toDomainEntries(accounts),
             )
         }
     }
 
-    override fun observeAllOperations(): Flow<List<Operation>> =
+    override fun observeAllTransactions(): Flow<List<Transaction>> =
         transactionDao.observeAll().mapToDomain()
 
-    override fun observeOperationsBy(
+    override fun observeTransactionsBy(
         date: LocalDate?,
         invoiceId: Long?,
         creditCardId: Long?,
         accountId: Long?,
-    ): Flow<List<Operation>> = transactionDao.observeBy(
+    ): Flow<List<Transaction>> = transactionDao.observeBy(
         date = date,
         invoiceId = invoiceId,
         creditCardId = creditCardId,
         accountId = accountId,
     ).mapToDomain()
 
-    override fun observeOperationById(id: Long): Flow<Operation?> {
-        return observeAllOperations()
-            .map { operations -> operations.firstOrNull { it.id == id } }
-            // Derived from the full list, so it re-runs on any operation/lookup change; only notify
+    override fun observeTransactionById(id: Long): Flow<Transaction?> {
+        return observeAllTransactions()
+            .map { transactions -> transactions.firstOrNull { it.id == id } }
+            // Derived from the full list, so it re-runs on any transaction/lookup change; only notify
             // consumers when the target actually changed.
             .distinctUntilChanged()
     }
 
-    private fun OperationIntent.toEntity() = TransactionEntity(
+    private fun TransactionIntent.toEntity() = TransactionEntity(
         title = title,
         date = date,
         categoryId = category?.id,
@@ -177,22 +177,22 @@ class OperationRepository(
         )
     }
 
-    private suspend fun TransactionEntity.toDomain(lookups: Lookups): Operation? = operationMapper.toDomain(
+    private suspend fun TransactionEntity.toDomain(lookups: Lookups): Transaction? = transactionMapper.toDomain(
         entity = this,
         categories = lookups.categories,
         creditCards = lookups.creditCards,
         invoices = lookups.invoices,
         installments = lookups.installments,
         recurring = lookups.recurring,
-        entries = entryDao.getByOperationId(id).toDomainEntries(lookups.accounts),
+        entries = entryDao.getByTransactionId(id).toDomainEntries(lookups.accounts),
     )
 
-    override suspend fun getAllOperations(): List<Operation> {
+    override suspend fun getAllTransactions(): List<Transaction> {
         val lookups = lookups()
         return transactionDao.getAll().mapNotNull { it.toDomain(lookups) }
     }
 
-    override suspend fun getOperationById(id: Long): Operation? {
+    override suspend fun getTransactionById(id: Long): Transaction? {
         val entity = transactionDao.getById(id) ?: return null
         return entity.toDomain(lookups())
     }
@@ -210,11 +210,11 @@ class OperationRepository(
      * fuses them) is not the predicate: it happens to be right only for creating
      * an expense, where the two coincide.
      */
-    private suspend fun ensureInvoiceAccepts(legs: List<OperationLeg>) {
+    private suspend fun ensureInvoiceAccepts(legs: List<TransactionLeg>) {
         val invoiceIds = legs.mapNotNull { it.invoice?.id }.toSet()
         if (invoiceIds.isEmpty()) return
 
-        val isPayment = legs.deriveIntentLabel() == OperationLabel.PAYMENT
+        val isPayment = legs.deriveIntentLabel() == TransactionLabel.PAYMENT
 
         invoiceIds.forEach { invoiceId ->
             val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
@@ -227,21 +227,21 @@ class OperationRepository(
 
     /**
      * A payment is the one intent that pays a card from an account: an account leg
-     * and a card leg on the same operation. Derived, like every other label.
+     * and a card leg on the same transaction. Derived, like every other label.
      */
-    private fun List<OperationLeg>.deriveIntentLabel(): OperationLabel = when {
-        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard } -> OperationLabel.PAYMENT
-        else -> OperationLabel.EXPENSE
+    private fun List<TransactionLeg>.deriveIntentLabel(): TransactionLabel = when {
+        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard } -> TransactionLabel.PAYMENT
+        else -> TransactionLabel.EXPENSE
     }
 
-    override suspend fun createOperation(intent: OperationIntent): Operation {
+    override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
         ledgerEntryWriter.validate(intent.legs)
         ensureInvoiceAccepts(intent.legs)
 
-        // The operation row and its ledger legs are written in a single transaction,
+        // The transaction row and its ledger legs are written in a single transaction,
         // so a mid-way failure (missing facade row, cancellation, DB error) rolls back
-        // everything, never leaving an operation without its entries.
+        // everything, never leaving an transaction without its entries.
         val transactionId = database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val transactionId = transactionDao.insert(intent.toEntity())
@@ -252,10 +252,10 @@ class OperationRepository(
             }
         }
 
-        return getOperationById(transactionId)!!
+        return getTransactionById(transactionId)!!
     }
 
-    override suspend fun createOperations(intents: List<OperationIntent>): List<Operation> {
+    override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> {
         intents.forEach {
             ledgerEntryWriter.validate(it.legs)
             ensureInvoiceAccepts(it.legs)
@@ -264,9 +264,9 @@ class OperationRepository(
         val ids = database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 intents.map { intent ->
-                    val operationId = transactionDao.insert(intent.toEntity())
-                    ledgerEntryWriter.writeEntries(operationId, intent.legs)
-                    operationId
+                    val transactionId = transactionDao.insert(intent.toEntity())
+                    ledgerEntryWriter.writeEntries(transactionId, intent.legs)
+                    transactionId
                 }
             }
         }
@@ -275,11 +275,11 @@ class OperationRepository(
         return ids.mapNotNull { transactionDao.getById(it)?.toDomain(lookups) }
     }
 
-    override suspend fun updateOperation(id: Long, title: String?, date: LocalDate, leg: OperationLeg) {
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {
         ensureInvoiceAccepts(listOf(leg))
 
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
-        // failure never leaves the operation with its old legs deleted and no new ones.
+        // failure never leaves the transaction with its old legs deleted and no new ones.
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 transactionDao.update(
@@ -293,11 +293,11 @@ class OperationRepository(
         }
     }
 
-    override suspend fun deleteOperationById(id: Long) {
-        // Removing an operation is a change to its invoice too, so it passes the
+    override suspend fun deleteTransactionById(id: Long) {
+        // Removing an transaction is a change to its invoice too, so it passes the
         // same gate — a paid invoice cannot lose a purchase behind the user's back.
         transactionDao.getById(id)?.let {
-            val invoiceIds = entryDao.getByOperationId(id).mapNotNull { entry -> entry.invoiceId }.toSet()
+            val invoiceIds = entryDao.getByTransactionId(id).mapNotNull { entry -> entry.invoiceId }.toSet()
             invoiceIds.forEach { invoiceId ->
                 val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
                 if (status.isPaid) throw InvoiceLockedException(LedgerError.PaidInvoice)
@@ -307,19 +307,19 @@ class OperationRepository(
 
         // The installment bookkeeping and the row removal are one transaction: a
         // failure between them would leave the installment's count and total
-        // describing operations that no longer exist.
+        // describing transactions that no longer exist.
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val operation = transactionDao.getById(id)
-                val installmentId = operation?.installmentId
+                val transaction = transactionDao.getById(id)
+                val installmentId = transaction?.installmentId
 
                 if (installmentId == null) {
                     transactionDao.deleteById(id)
                     return@immediateTransaction
                 }
 
-                // The operation's own share of the installment, from the ledger.
-                val operationAmount = entryDao.getByOperationId(id)
+                // The transaction's own share of the installment, from the ledger.
+                val transactionAmount = entryDao.getByTransactionId(id)
                     .filter { it.amount < 0 }
                     .sumOf { -it.amount } / 100.0
                 val remainingCount = transactionDao.countByInstallmentId(installmentId) - 1
@@ -334,7 +334,7 @@ class OperationRepository(
                         installmentRepository.updateInstallment(
                             id = installmentId,
                             count = remainingCount,
-                            totalAmount = installment.totalAmount - operationAmount,
+                            totalAmount = installment.totalAmount - transactionAmount,
                         )
                     }
                 }
@@ -342,7 +342,7 @@ class OperationRepository(
         }
     }
 
-    override suspend fun deleteTransactionOperationsByCreditCard(creditCardId: Long) {
+    override suspend fun deleteTransactionsByCreditCard(creditCardId: Long) {
         transactionDao.deleteTransactionsByCreditCardId(creditCardId)
     }
 }

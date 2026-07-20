@@ -192,7 +192,7 @@ class ViewAdjustmentModal(
             uiState.invoice?.let { invoice ->
                 val creditCardId = uiState.creditCard?.id
                 DetailRow(
-                    label = stringResource(Res.string.view_operation_invoice_label),
+                    label = stringResource(Res.string.view_transaction_invoice_label),
                     value = invoice.toLabel(),
                     valueColor = invoice.status.color,
                     modifier = Modifier
@@ -221,7 +221,7 @@ class ViewAdjustmentModal(
 
         OutlinedButton(
             onClick = {
-                manager.show(DeleteTransactionModal(content.operation))
+                manager.show(DeleteTransactionModal(content.transaction))
             },
             modifier = Modifier
                 .fillMaxWidth()

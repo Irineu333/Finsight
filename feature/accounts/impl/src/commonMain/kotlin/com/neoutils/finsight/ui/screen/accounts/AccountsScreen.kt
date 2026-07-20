@@ -54,7 +54,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
-import com.neoutils.finsight.ui.component.OperationCard
+import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountModal
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceModal
@@ -244,7 +244,7 @@ private fun AccountsContent(
                             .animateItem()
                     )
                 }
-                uiState.operations.forEach { (date, operations) ->
+                uiState.transactions.forEach { (date, transactions) ->
                     item(
                         key = "date_title_$date"
                     ) {
@@ -260,25 +260,25 @@ private fun AccountsContent(
                     }
 
                     items(
-                        items = operations,
+                        items = transactions,
                         key = { it.id }
-                    ) { operationUi ->
-                        OperationCard(
-                            operation = operationUi,
+                    ) { transactionUi ->
+                        TransactionCard(
+                            transaction = transactionUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
                             onClick = {
-                                when (operationUi.direction) {
+                                when (transactionUi.direction) {
                                     TransactionType.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(operationUi.id))
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
                                     }
 
                                     else -> {
                                         detailController.show(
-                                            transactionsEntry.viewOperationModal(
-                                                operationUi.id,
+                                            transactionsEntry.viewTransactionModal(
+                                                transactionUi.id,
                                                 uiState.selectedAccountId?.let { TransactionPerspective(it) },
                                             )
                                         )

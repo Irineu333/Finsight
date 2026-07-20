@@ -1,11 +1,11 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.database.mapper.OperationMapper
+import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.repository.EntryRepository
 import com.neoutils.finsight.database.repository.LedgerEntryWriter
-import com.neoutils.finsight.database.repository.OperationRepository
+import com.neoutils.finsight.database.repository.TransactionRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -16,14 +16,14 @@ import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentViewModel
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationViewModel
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionViewModel
 import com.neoutils.finsight.ui.screen.transactions.TransactionsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionsModule = module {
-    single<IOperationRepository> {
-        OperationRepository(
+    single<ITransactionRepository> {
+        TransactionRepository(
             database = get(),
             transactionDao = get(),
             entryDao = get(),
@@ -33,7 +33,7 @@ val transactionsModule = module {
             invoiceRepository = get(),
             installmentRepository = get(),
             accountRepository = get(),
-            operationMapper = get(),
+            transactionMapper = get(),
             recurringMapper = get(),
             ledgerEntryWriter = get(),
         )
@@ -47,7 +47,7 @@ val transactionsModule = module {
             creditCardDao = get(),
         )
     }
-    factory { OperationMapper() }
+    factory { TransactionMapper() }
 
     factory { CalculateTransactionStatsUseCase() }
     factory { CalculateBalanceUseCase(entryRepository = get()) }
@@ -62,15 +62,15 @@ val transactionsModule = module {
     viewModel {
         ViewAdjustmentViewModel(
             transactionId = it.get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             crashlytics = get(),
         )
     }
     viewModel {
-        ViewOperationViewModel(
+        ViewTransactionViewModel(
             transactionId = it.get(),
             perspective = it.getOrNull(),
-            operationRepository = get(),
+            transactionRepository = get(),
             crashlytics = get(),
         )
     }
@@ -79,7 +79,7 @@ val transactionsModule = module {
             filterType = getOrNull(),
             category = getOrNull(),
             filterTarget = getOrNull(),
-            operationRepository = get(),
+            transactionRepository = get(),
             categoryRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
@@ -90,7 +90,7 @@ val transactionsModule = module {
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             accountRepository = get(),
             buildTransactionUseCase = get(),
             addInstallmentUseCase = get(),
@@ -101,8 +101,8 @@ val transactionsModule = module {
     }
     viewModel {
         EditTransactionViewModel(
-            operation = it.get(),
-            operationRepository = get(),
+            transaction = it.get(),
+            transactionRepository = get(),
             categoryRepository = get(),
             creditCardRepository = get(),
             invoiceRepository = get(),
@@ -115,8 +115,8 @@ val transactionsModule = module {
     }
     viewModel {
         DeleteTransactionViewModel(
-            operation = it.get(),
-            operationRepository = get(),
+            transaction = it.get(),
+            transactionRepository = get(),
             modalManager = get(),
             analytics = get(),
         )

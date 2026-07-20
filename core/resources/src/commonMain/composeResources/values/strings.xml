@@ -408,25 +408,25 @@
     <string name="edit_transaction_income">Receita</string>
 
     <!-- View Operation Modal -->
-    <string name="view_operation_type_income">Receita</string>
-    <string name="view_operation_type_expense">Despesa</string>
-    <string name="view_operation_type_adjustment">Ajuste</string>
-    <string name="view_operation_amount_label">Valor</string>
-    <string name="view_operation_date_label">Data</string>
-    <string name="view_operation_origin_label">Origem</string>
-    <string name="view_operation_origin_account">Conta</string>
-    <string name="view_operation_origin_credit_card">Cartão de Crédito</string>
-    <string name="view_operation_source_account_label">Conta origem</string>
-    <string name="view_operation_destination_account_label">Conta destino</string>
-    <string name="view_operation_account_label">Conta</string>
-    <string name="view_operation_card_label">Cartão</string>
-    <string name="view_operation_invoice_label">Fatura</string>
-    <string name="view_operation_installment_label">Parcela</string>
-    <string name="view_operation_recurring_label">Recorrência</string>
-    <string name="view_operation_deleted">Excluído</string>
-    <string name="view_operation_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
-    <string name="view_operation_delete">Excluir</string>
-    <string name="view_operation_edit">Editar</string>
+    <string name="view_transaction_type_income">Receita</string>
+    <string name="view_transaction_type_expense">Despesa</string>
+    <string name="view_transaction_type_adjustment">Ajuste</string>
+    <string name="view_transaction_amount_label">Valor</string>
+    <string name="view_transaction_date_label">Data</string>
+    <string name="view_transaction_origin_label">Origem</string>
+    <string name="view_transaction_origin_account">Conta</string>
+    <string name="view_transaction_origin_credit_card">Cartão de Crédito</string>
+    <string name="view_transaction_source_account_label">Conta origem</string>
+    <string name="view_transaction_destination_account_label">Conta destino</string>
+    <string name="view_transaction_account_label">Conta</string>
+    <string name="view_transaction_card_label">Cartão</string>
+    <string name="view_transaction_invoice_label">Fatura</string>
+    <string name="view_transaction_installment_label">Parcela</string>
+    <string name="view_transaction_recurring_label">Recorrência</string>
+    <string name="view_transaction_deleted">Excluído</string>
+    <string name="view_transaction_closed_invoice_message">Esta transação pertence a uma fatura fechada e não pode ser editada ou excluída.</string>
+    <string name="view_transaction_delete">Excluir</string>
+    <string name="view_transaction_edit">Editar</string>
 
     <!-- View Adjustment Modal -->
     <string name="view_adjustment_type_label">Ajuste</string>
@@ -480,10 +480,10 @@
     <string name="summary_card_final_balance">Saldo Final</string>
     <string name="summary_card_see_invoices">Ver faturas</string>
 
-    <string name="operation_card_transfer">Transferência</string>
-    <string name="operation_card_payment">Pagamento de Fatura</string>
-    <string name="operation_card_balance_adjustment">Ajuste de Saldo</string>
-    <string name="operation_card_invoice_adjustment">Ajuste de Fatura</string>
+    <string name="transaction_card_transfer">Transferência</string>
+    <string name="transaction_card_payment">Pagamento de Fatura</string>
+    <string name="transaction_card_balance_adjustment">Ajuste de Saldo</string>
+    <string name="transaction_card_invoice_adjustment">Ajuste de Fatura</string>
 
     <string name="target_selector_account">Conta</string>
     <string name="target_selector_credit_card">Cartão de Crédito</string>
@@ -723,7 +723,7 @@
     <string name="detail_pane_close">Fechar</string>
     <string name="detail_pane_error_title">Não foi possível carregar</string>
     <string name="detail_pane_error">O item não foi encontrado ou não pôde ser carregado.</string>
-    <string name="view_operation_title">Operação</string>
+    <string name="view_transaction_title">Operação</string>
     <string name="view_adjustment_title">Ajuste</string>
     <string name="view_category_title">Categoria</string>
     <string name="view_budget_title">Orçamento</string>

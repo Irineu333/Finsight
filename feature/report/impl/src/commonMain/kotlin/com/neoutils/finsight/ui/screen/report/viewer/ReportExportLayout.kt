@@ -1,10 +1,10 @@
 package com.neoutils.finsight.ui.screen.report.viewer
 
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.CurrencyFormatter
-import com.neoutils.finsight.ui.model.OperationUi
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.model.TransactionUi
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.domain.model.CategoryItem
 import com.neoutils.finsight.domain.model.ReportContext
 import com.neoutils.finsight.domain.model.ReportLayout
@@ -33,10 +33,10 @@ data class ReportExportStrings(
     val sectionSpendingByCategory: String,
     val sectionIncomeByCategory: String,
     val sectionTransactions: String,
-    val operationTransfer: String,
-    val operationPayment: String,
-    val operationBalanceAdjustment: String,
-    val operationInvoiceAdjustment: String,
+    val transactionTransfer: String,
+    val transactionPayment: String,
+    val transactionBalanceAdjustment: String,
+    val transactionInvoiceAdjustment: String,
     val columnCategory: String,
     val columnTransaction: String,
     val columnAmount: String,
@@ -134,11 +134,11 @@ fun ReportViewerUiState.Content.toReportLayout(
             add(
                 ReportLayoutSection.Transactions(
                     title = strings.sectionTransactions,
-                    groups = transactions.map { (date, operations) ->
+                    groups = transactions.map { (date, transactions) ->
                         TransactionGroup(
                             dateLabel = dateFormats.formatRelativeDate(date),
-                            items = operations.mapNotNull { operation ->
-                                operation.toOperationUi()?.let { ui ->
+                            items = transactions.mapNotNull { transaction ->
+                                transaction.toTransactionUi()?.let { ui ->
                                     TransactionItem(
                                         title = ui.exportTitle(strings),
                                         amount = ui.exportAmount(formatter),
@@ -172,21 +172,21 @@ fun ReportViewerUiState.Content.toReportLayout(
     )
 }
 
-private fun OperationUi.exportTitle(strings: ReportExportStrings): String {
+private fun TransactionUi.exportTitle(strings: ReportExportStrings): String {
     return when {
-        label == OperationLabel.PAYMENT -> strings.operationPayment
-        label == OperationLabel.TRANSFER -> strings.operationTransfer
-        label == OperationLabel.ADJUSTMENT && !isCardTarget -> strings.operationBalanceAdjustment
-        label == OperationLabel.ADJUSTMENT && isCardTarget -> strings.operationInvoiceAdjustment
+        label == TransactionLabel.PAYMENT -> strings.transactionPayment
+        label == TransactionLabel.TRANSFER -> strings.transactionTransfer
+        label == TransactionLabel.ADJUSTMENT && !isCardTarget -> strings.transactionBalanceAdjustment
+        label == TransactionLabel.ADJUSTMENT && isCardTarget -> strings.transactionInvoiceAdjustment
         else -> title
     }
 }
 
-private fun OperationUi.exportAmount(formatter: CurrencyFormatter): String {
+private fun TransactionUi.exportAmount(formatter: CurrencyFormatter): String {
     return when (direction) {
         TransactionType.ADJUSTMENT -> formatter.formatWithSign(amount)
         TransactionType.EXPENSE -> {
-            if (label == OperationLabel.TRANSFER) {
+            if (label == TransactionLabel.TRANSFER) {
                 "-${formatter.format(amount)}"
             } else {
                 formatter.format(amount)
@@ -196,9 +196,9 @@ private fun OperationUi.exportAmount(formatter: CurrencyFormatter): String {
     }
 }
 
-private fun OperationUi.exportTone(): ReportTone {
+private fun TransactionUi.exportTone(): ReportTone {
     return when {
-        label == OperationLabel.TRANSFER -> ReportTone.NEUTRAL
+        label == TransactionLabel.TRANSFER -> ReportTone.NEUTRAL
         direction == TransactionType.INCOME -> ReportTone.POSITIVE
         direction == TransactionType.EXPENSE -> ReportTone.NEGATIVE
         amount >= 0 -> ReportTone.POSITIVE

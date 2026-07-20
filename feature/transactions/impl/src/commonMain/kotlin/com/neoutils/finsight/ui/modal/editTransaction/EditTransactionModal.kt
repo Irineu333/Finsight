@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
@@ -54,12 +54,12 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class EditTransactionModal(
-    private val operation: Operation,
+    private val transaction: Transaction,
 ) : ModalBottomSheet() {
 
     @Composable
     override fun ColumnScope.BottomSheetContent() {
-        val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(operation) }
+        val viewModel = koinViewModel<EditTransactionViewModel> { parametersOf(transaction) }
 
         val manager = LocalModalManager.current
         val categoriesEntry = koinInject<CategoriesEntry>()
@@ -71,23 +71,23 @@ class EditTransactionModal(
         // ledger: the money leg's direction, and whether that leg is the card's.
         var type by remember {
             mutableStateOf(
-                operation.primaryEntry
-                    ?.let { deriveTransactionType(it.amount, operation.entries) }
+                transaction.primaryEntry
+                    ?.let { deriveTransactionType(it.amount, transaction.entries) }
                     ?: TransactionType.EXPENSE
             )
         }
         var target by remember {
             mutableStateOf(
-                if (operation.isCardTarget) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
+                if (transaction.isCardTarget) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
             )
         }
 
         val currencyFormatter = LocalCurrencyFormatter.current
-        val amount = rememberTextFieldState(currencyFormatter.format(operation.amount))
-        val title = rememberTextFieldState(operation.title.orEmpty())
-        val date = rememberTextFieldState(dayMonthYear.format(operation.date))
+        val amount = rememberTextFieldState(currencyFormatter.format(transaction.amount))
+        val title = rememberTextFieldState(transaction.title.orEmpty())
+        val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember { mutableStateOf(operation.category) }
+        var selectedCategory by remember { mutableStateOf(transaction.category) }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf {

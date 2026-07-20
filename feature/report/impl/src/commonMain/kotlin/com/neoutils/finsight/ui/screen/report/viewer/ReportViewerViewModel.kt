@@ -7,7 +7,7 @@ import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CategorySpending
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.deriveTransactionType
@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
 import com.neoutils.finsight.domain.usecase.ReportLedgerScope
@@ -38,7 +38,7 @@ import kotlin.math.abs
 
 class ReportViewerViewModel(
     private val params: ReportViewerParams,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -73,21 +73,21 @@ class ReportViewerViewModel(
     val events = _events.receiveAsFlow()
 
     val uiState = combine(
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
-    ) { operations, accounts, creditCards, invoices ->
+    ) { transactions, accounts, creditCards, invoices ->
         val invoiceIds = invoices.map { it.id }.toSet()
 
         val stats = if (invoices.isNotEmpty()) {
-            val invoiceLegs = operations.flatMap { operation ->
-                operation.entries
+            val invoiceLegs = transactions.flatMap { transaction ->
+                transaction.entries
                     .filter { it.invoiceId in invoiceIds && it.account.type == AccountType.LIABILITY }
                     .map { entry ->
                         InvoiceLeg(
-                            label = operation.label,
-                            direction = deriveTransactionType(entry.amount, operation.entries),
+                            label = transaction.label,
+                            direction = deriveTransactionType(entry.amount, transaction.entries),
                             cents = abs(entry.amount),
                         )
                     }
@@ -101,7 +101,7 @@ class ReportViewerViewModel(
                 expense = sum { it.direction.isExpense },
                 // Money into the card settles it only when the counter-leg is an asset,
                 // which is exactly what the ledger already labels a PAYMENT.
-                advancePayment = sum { it.direction.isIncome && it.label == OperationLabel.PAYMENT },
+                advancePayment = sum { it.direction.isIncome && it.label == TransactionLabel.PAYMENT },
                 adjustment = sum { it.direction.isAdjustment },
                 total = invoices.sumOf { entryRepository.invoiceOwed(it.id) },
             )
@@ -116,7 +116,7 @@ class ReportViewerViewModel(
                     )
             }
             val reportStats = calculateReportStatsUseCase(
-                operations = operations,
+                transactions = transactions,
                 scope = scope,
                 startDate = startDate,
                 endDate = endDate,
@@ -174,12 +174,12 @@ class ReportViewerViewModel(
 
         val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
-                operations.filter { op ->
+                transactions.filter { op ->
                     op.targetInvoice?.id in invoiceIds ||
                             op.entries.any { it.invoiceId in invoiceIds }
                 }
             } else {
-                operations
+                transactions
                     .filter { it.date in startDate..endDate }
                     .filter { op ->
                         when (perspective) {
@@ -254,7 +254,7 @@ class ReportViewerViewModel(
 
 /** A card leg of an invoice, reduced to the three axes the invoice stats aggregate on. */
 private data class InvoiceLeg(
-    val label: OperationLabel,
+    val label: TransactionLabel,
     val direction: TransactionType,
     val cents: Long,
 )

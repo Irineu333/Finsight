@@ -1,45 +1,45 @@
 package com.neoutils.finsight.ui.mapper
 
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
-import com.neoutils.finsight.ui.screen.installments.InstallmentWithOperationsUi
+import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.screen.installments.InstallmentWithTransactionsUi
 
 class InstallmentUiMapper {
 
     fun toUi(
         installment: Installment,
-        operations: List<Operation>,
-    ): InstallmentWithOperationsUi? {
-        val sortedOperations = operations.sortedBy { it.installment?.number ?: Int.MAX_VALUE }
+        transactions: List<Transaction>,
+    ): InstallmentWithTransactionsUi? {
+        val sortedTransactions = transactions.sortedBy { it.installment?.number ?: Int.MAX_VALUE }
 
-        if (sortedOperations.isEmpty()) return null
+        if (sortedTransactions.isEmpty()) return null
 
-        val firstOperation = sortedOperations.first()
-        val openOperation = sortedOperations.firstOrNull {
+        val firstTransaction = sortedTransactions.first()
+        val openTransaction = sortedTransactions.firstOrNull {
             it.targetInvoice?.status?.isOpen == true
         }
-        val currentNumber = openOperation?.installment?.number
-            ?: sortedOperations.last().installment?.number
+        val currentNumber = openTransaction?.installment?.number
+            ?: sortedTransactions.last().installment?.number
             ?: installment.count
         val installmentAmount = installment.totalAmount / installment.count
-        val paidCount = sortedOperations.count {
+        val paidCount = sortedTransactions.count {
             it.targetInvoice?.status?.isPaid == true
         }
         val isActive = paidCount < installment.count
 
-        return InstallmentWithOperationsUi(
+        return InstallmentWithTransactionsUi(
             installment = installment,
-            operations = sortedOperations,
-            latestOperationDate = sortedOperations.maxOf { it.date },
-            title = firstOperation.displayTitle,
-            categoryName = firstOperation.category?.name?.uppercase(),
-            category = firstOperation.category,
+            transactions = sortedTransactions,
+            latestTransactionDate = sortedTransactions.maxOf { it.date },
+            title = firstTransaction.displayTitle,
+            categoryName = firstTransaction.category?.name?.uppercase(),
+            category = firstTransaction.category,
             isActive = isActive,
             currentNumber = currentNumber,
             installmentAmount = installmentAmount,
             remainingAmount = (installment.count - paidCount) * installmentAmount,
             progress = currentNumber.toFloat() / installment.count,
-            isDeletable = sortedOperations.all {
+            isDeletable = sortedTransactions.all {
                 it.targetInvoice?.status?.isEditable != false
             },
         )

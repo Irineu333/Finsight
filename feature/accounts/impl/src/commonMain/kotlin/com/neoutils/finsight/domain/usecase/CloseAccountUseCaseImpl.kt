@@ -6,12 +6,12 @@ import arrow.core.Either
 import arrow.core.Either.Companion.catch
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -21,7 +21,7 @@ class CloseAccountUseCaseImpl(
     private val accountDao: AccountDao,
     private val accountRepository: IAccountRepository,
     private val entryRepository: IEntryRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
 ) : CloseAccountUseCase {
 
     override suspend fun invoke(account: Account): Either<Throwable, CloseAccountUseCase.Outcome> = catch {
@@ -35,12 +35,12 @@ class CloseAccountUseCaseImpl(
         // The write-off comes first: once the account is closed it is out of the
         // active listings, and a failure here would strand the money unrecorded.
         if (balance != 0.0) {
-            operationRepository.createOperation(
-                OperationIntent(
+            transactionRepository.createTransaction(
+                TransactionIntent(
                     title = null,
                     date = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
                     legs = listOf(
-                        OperationLeg(
+                        TransactionLeg(
                             type = TransactionType.ADJUSTMENT,
                             amount = -balance,
                             account = account,

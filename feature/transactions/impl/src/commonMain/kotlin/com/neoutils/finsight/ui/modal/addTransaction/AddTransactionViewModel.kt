@@ -9,7 +9,7 @@ import arrow.core.flatMap
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.form.TransactionForm
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.CreateInstallments
@@ -29,7 +29,7 @@ class AddTransactionViewModel(
     private val categoryRepository: ICategoryRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val accountRepository: IAccountRepository,
     private val buildTransactionUseCase: BuildTransactionUseCase,
     private val addInstallmentUseCase: AddInstallmentUseCase,
@@ -124,7 +124,7 @@ class AddTransactionViewModel(
         buildTransactionUseCase(form)
             .flatMap {
                 catch {
-                    operationRepository.createOperation(it)
+                    transactionRepository.createTransaction(it)
                 }
             }.onLeft {
                 crashlytics.recordException(it)

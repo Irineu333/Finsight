@@ -268,8 +268,8 @@ class DashboardPreviewFactory(
 
             DashboardComponentVariant.Recents.Preview(
                 component = DashboardComponent.Recents(
-                    operations = listOf(
-                        Operation(
+                    transactions = listOf(
+                        Transaction(
                             id = 1,
                             title = getString(Res.string.preview_transaction_supermarket),
                             date = LocalDate(2026, 3, 20),
@@ -280,7 +280,7 @@ class DashboardPreviewFactory(
                                 Entry(id = 2, account = foodAccount, amount = 15680),
                             ),
                         ),
-                        Operation(
+                        Transaction(
                             id = 2,
                             title = getString(Res.string.preview_category_salary),
                             date = LocalDate(2026, 3, 5),
@@ -290,7 +290,7 @@ class DashboardPreviewFactory(
                                 Entry(id = 4, account = salaryAccount, amount = -350000),
                             ),
                         ),
-                        Operation(
+                        Transaction(
                             id = 3,
                             title = getString(Res.string.preview_transaction_spotify),
                             date = LocalDate(2026, 3, 1),

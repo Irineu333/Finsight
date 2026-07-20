@@ -25,11 +25,11 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.MonthSelector
-import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.component.SummaryCard
 import com.neoutils.finsight.ui.modal.viewAdjustment.ViewAdjustmentModal
-import com.neoutils.finsight.ui.modal.viewTransaction.ViewOperationModal
+import com.neoutils.finsight.ui.modal.viewTransaction.ViewTransactionModal
 import com.neoutils.finsight.util.LocalDateFormats
 import kotlinx.datetime.format.FormatStringsInDatetimeFormats
 import org.jetbrains.compose.resources.stringResource
@@ -113,7 +113,7 @@ private fun TransactionsContent(
                 )
             }
 
-            uiState.operations.forEach { (date, operations) ->
+            uiState.transactions.forEach { (date, transactions) ->
                 item(
                     key = "date_title_$date"
                 ) {
@@ -129,24 +129,24 @@ private fun TransactionsContent(
                 }
 
                 items(
-                    items = operations,
+                    items = transactions,
                     key = { it.id }
-                ) { operation ->
-                    operation.toOperationUi()?.let { operationUi ->
-                    OperationCard(
-                        operation = operationUi,
+                ) { transaction ->
+                    transaction.toTransactionUi()?.let { transactionUi ->
+                    TransactionCard(
+                        transaction = transactionUi,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .fillMaxWidth()
                             .animateItem(),
                         onClick = {
-                            when (operationUi.direction) {
+                            when (transactionUi.direction) {
                                 TransactionType.ADJUSTMENT -> {
-                                    detailController.show(ViewAdjustmentModal(operation.id))
+                                    detailController.show(ViewAdjustmentModal(transaction.id))
                                 }
 
                                 else -> {
-                                    detailController.show(ViewOperationModal(operation.id))
+                                    detailController.show(ViewTransactionModal(transaction.id))
                                 }
                             }
                         }

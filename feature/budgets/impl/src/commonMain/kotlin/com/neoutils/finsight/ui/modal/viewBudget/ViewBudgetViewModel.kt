@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.balancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
@@ -25,7 +25,7 @@ import kotlin.time.Clock
 class ViewBudgetViewModel(
     private val budgetId: Long,
     budgetRepository: IBudgetRepository,
-    operationRepository: IOperationRepository,
+    transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
     private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
@@ -37,9 +37,9 @@ class ViewBudgetViewModel(
 
     val uiState = combine(
         budgetRepository.observeAllBudgets(),
-        operationRepository.observeAllOperations(),
+        transactionRepository.observeAllTransactions(),
         recurringRepository.observeAllRecurring(),
-    ) { budgets, operations, recurringList ->
+    ) { budgets, transactions, recurringList ->
         val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
         val categoryBalances = entryRepository.balancesInMonth(
             month = month,
@@ -49,7 +49,7 @@ class ViewBudgetViewModel(
             budgets = budgets,
             categoryBalances = categoryBalances,
             recurringList = recurringList,
-            operations = operations,
+            transactions = transactions,
         ).firstOrNull { it.budget.id == budgetId }
     }
         .interceptAbsence(

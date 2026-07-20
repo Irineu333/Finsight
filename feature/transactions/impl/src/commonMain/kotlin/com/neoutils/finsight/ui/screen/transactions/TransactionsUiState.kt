@@ -5,7 +5,7 @@ package com.neoutils.finsight.ui.screen.transactions
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.ui.model.InvoiceOverview
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.toYearMonth
@@ -18,7 +18,7 @@ private val currentMonth
     get() = Clock.System.now().toYearMonth()
 
 data class TransactionsUiState(
-    val operations: Map<LocalDate, List<Operation>> = emptyMap(),
+    val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val balanceOverview: BalanceOverview = BalanceOverview(),
     val selectedYearMonth: YearMonth = Clock.System.now().toYearMonth(),
     val selectedCategory: Category? = null,

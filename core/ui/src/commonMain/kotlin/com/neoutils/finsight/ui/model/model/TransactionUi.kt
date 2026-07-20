@@ -1,20 +1,20 @@
 package com.neoutils.finsight.ui.model
 
-import com.neoutils.finsight.domain.model.OperationLabel
+import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.LocalDate
 
 /**
- * A flat, display-ready view of an operation for a list item. Carries no domain
- * graph — only resolved presentation values and the operation id. Both display
- * axes are derived by the mapper (see `Operation.toOperationUi`): [label] is the
- * operation's nature (color/title/icon), [direction] is the leg's direction under
+ * A flat, display-ready view of an transaction for a list item. Carries no domain
+ * graph — only resolved presentation values and the transaction id. Both display
+ * axes are derived by the mapper (see `Transaction.toTransactionUi`): [label] is the
+ * transaction's nature (color/title/icon), [direction] is the leg's direction under
  * the current perspective (the type text and the list filter).
  */
-data class OperationUi(
+data class TransactionUi(
     val id: Long,
-    val label: OperationLabel,
+    val label: TransactionLabel,
     val direction: TransactionType,
     val title: String,
     val amount: Double,

@@ -71,8 +71,8 @@ import com.neoutils.finsight.ui.component.CreditCardCard
 import com.neoutils.finsight.ui.component.CreditCardCardVariant
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
-import com.neoutils.finsight.ui.component.OperationCard
-import com.neoutils.finsight.ui.model.toOperationUi
+import com.neoutils.finsight.ui.component.TransactionCard
+import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.theme.Expense
 import com.neoutils.finsight.ui.theme.Income
 import com.neoutils.finsight.util.stringUiText
@@ -266,11 +266,11 @@ private fun DashboardRecentsSection(
                     .padding(horizontal = 16.dp),
             )
         }
-        component.operations.forEachIndexed { index, operation ->
-            val isLastWithFade = component.hasMore && index == component.operations.lastIndex
-            val operationUi = operation.toOperationUi() ?: return@forEachIndexed
-            OperationCard(
-                operation = operationUi,
+        component.transactions.forEachIndexed { index, transaction ->
+            val isLastWithFade = component.hasMore && index == component.transactions.lastIndex
+            val transactionUi = transaction.toTransactionUi() ?: return@forEachIndexed
+            TransactionCard(
+                transaction = transactionUi,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -295,8 +295,8 @@ private fun DashboardRecentsSection(
                     if (variant is DashboardComponentVariant.Recents.Viewing) {
                         when {
                             isLastWithFade -> openTransactions(null, null)
-                            operationUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(operation.id))
-                            else -> detailController.show(transactionsEntry.viewOperationModal(operation.id))
+                            transactionUi.direction.isAdjustment -> detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
+                            else -> detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
                         }
                     }
                 },

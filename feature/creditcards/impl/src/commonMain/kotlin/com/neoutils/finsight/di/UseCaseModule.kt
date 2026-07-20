@@ -27,7 +27,7 @@ import org.koin.dsl.module
 val useCaseModules = module {
     factory {
         AdjustInvoiceUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             calculateInvoiceUseCase = get(),
         )
     }
@@ -60,7 +60,7 @@ val useCaseModules = module {
 
     factory {
         PayInvoicePaymentUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
             payInvoiceUseCase = get(),
@@ -69,7 +69,7 @@ val useCaseModules = module {
 
     factory {
         AdvanceInvoicePaymentUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             invoiceRepository = get(),
             calculateInvoiceUseCase = get(),
         )
@@ -133,13 +133,13 @@ val useCaseModules = module {
     factory {
         DeleteFutureInvoiceUseCase(
             invoiceRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
         )
     }
 
     factory<AddInstallmentUseCase> {
         AddInstallmentUseCaseImpl(
-            operationRepository = get(),
+            transactionRepository = get(),
             installmentRepository = get(),
             invoiceRepository = get(),
             buildTransactionUseCase = get(),

@@ -3,7 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.LimitType
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -23,14 +23,14 @@ class CalculateBudgetProgressUseCase {
         budgets: List<Budget>,
         categoryBalances: Map<Long, Double>,
         recurringList: List<Recurring> = emptyList(),
-        operations: List<Operation> = emptyList(),
+        transactions: List<Transaction> = emptyList(),
         today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
     ): List<BudgetProgress> {
         return budgets.map { budget ->
             val limit = when (budget.limitType) {
                 LimitType.FIXED -> budget.amount
                 LimitType.PERCENTAGE -> {
-                    val confirmedAmount = operations
+                    val confirmedAmount = transactions
                         .filter { it.recurring?.id == budget.recurringId }
                         .filter { it.date.yearMonth == today.yearMonth }
                         .firstOrNull()

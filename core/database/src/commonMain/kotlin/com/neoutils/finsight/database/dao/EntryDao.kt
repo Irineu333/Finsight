@@ -17,13 +17,13 @@ data class CategoryAccountTotal(val accountId: Long, val total: Long)
 
 /**
  * The per-account, per-period money flows (cents) an account screen shows, derived
- * from the ledger and classified by the operation's counter-legs — the ledger
+ * from the ledger and classified by the transaction's counter-legs — the ledger
  * equivalent of the legacy `AccountUi` sums:
- *  - [income]/[expense]: operations with neither an EQUITY nor a LIABILITY leg,
+ *  - [income]/[expense]: transactions with neither an EQUITY nor a LIABILITY leg,
  *    split by the sign of the account's own entry (this includes a transfer's two
  *    legs, exactly as the legacy leg types EXPENSE/INCOME did);
- *  - [adjustment]: operations with an EQUITY counter-leg, kept signed;
- *  - [invoicePayment]: operations with a LIABILITY counter-leg (a card payment).
+ *  - [adjustment]: transactions with an EQUITY counter-leg, kept signed;
+ *  - [invoicePayment]: transactions with a LIABILITY counter-leg (a card payment).
  * All are positive magnitudes except [adjustment], which is signed.
  */
 data class AccountPeriodTotals(
@@ -70,7 +70,7 @@ interface EntryDao {
     suspend fun delete(entry: EntryEntity)
 
     @Query("DELETE FROM entries WHERE transactionId = :transactionId")
-    suspend fun deleteByOperationId(transactionId: Long)
+    suspend fun deleteByTransactionId(transactionId: Long)
 
     @Query("SELECT * FROM entries ORDER BY id ASC")
     suspend fun getAll(): List<EntryEntity>
@@ -79,17 +79,17 @@ interface EntryDao {
     fun observeAll(): Flow<List<EntryEntity>>
 
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
-    suspend fun getByOperationId(transactionId: Long): List<EntryEntity>
+    suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 
-    /** Entries of an operation, each hydrated with its account — a complete leg. */
+    /** Entries of an transaction, each hydrated with its account — a complete leg. */
     @Transaction
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
-    suspend fun getEntriesWithAccountByOperationId(transactionId: Long): List<EntryWithAccount>
+    suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<EntryWithAccount>
 
-    /** Observes the entries of an operation, each hydrated with its account. */
+    /** Observes the entries of an transaction, each hydrated with its account. */
     @Transaction
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
-    fun observeEntriesWithAccountByOperationId(transactionId: Long): Flow<List<EntryWithAccount>>
+    fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<EntryWithAccount>>
 
     @Query("SELECT * FROM entries WHERE accountId = :accountId ORDER BY id ASC")
     fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>>
@@ -134,7 +134,7 @@ interface EntryDao {
 
     /**
      * The account's income/expense/adjustment/invoice-payment flows within a month
-     * (yyyy-MM), classified by each operation's counter-legs. See [AccountPeriodTotals].
+     * (yyyy-MM), classified by each transaction's counter-legs. See [AccountPeriodTotals].
      */
     @Query(
         """
@@ -158,7 +158,7 @@ interface EntryDao {
     /**
      * The expense/advance-payment/adjustment breakdown of a card invoice, from its
      * LIABILITY-leg entries (the only entries carrying an [invoiceId]), classified by
-     * sign and by whether the operation also has an EQUITY counter-leg. See
+     * sign and by whether the transaction also has an EQUITY counter-leg. See
      * [InvoicePeriodTotals]. All are positive magnitudes except [adjustment], which is
      * signed.
      */
@@ -216,7 +216,7 @@ interface EntryDao {
     suspend fun netWorthCents(): Long
 
     /**
-     * Per-category totals in a date range, scoped by perspective: only operations
+     * Per-category totals in a date range, scoped by perspective: only transactions
      * that also have a leg on one of [siblingAccountIds] (the perspective's asset
      * accounts, or the card's liability account) are counted. This is category
      * spending/income "seen from" those accounts.
@@ -240,7 +240,7 @@ interface EntryDao {
     ): List<CategoryAccountTotal>
 
     /**
-     * Per-category totals scoped to a set of invoices: category legs of operations
+     * Per-category totals scoped to a set of invoices: category legs of transactions
      * that also have a leg tagged with one of [invoiceIds] (the card sub-ledger).
      */
     @Query(

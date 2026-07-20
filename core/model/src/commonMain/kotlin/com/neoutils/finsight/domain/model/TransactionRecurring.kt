@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.model
 
-data class OperationRecurring(
+data class TransactionRecurring(
     val instance: Recurring,
     val cycleNumber: Int,
 ) {

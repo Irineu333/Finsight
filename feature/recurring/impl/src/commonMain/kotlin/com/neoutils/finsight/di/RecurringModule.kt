@@ -49,7 +49,7 @@ val recurringModule = module {
     factory { StopRecurringUseCase(repository = get()) }
     factory {
         ConfirmRecurringUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             recurringOccurrenceRepository = get(),
             getOrCreateInvoiceForMonthUseCase = get(),
         )

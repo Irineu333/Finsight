@@ -23,8 +23,8 @@ class CalculateBalanceUseCaseTest {
 
     private class FakeEntryRepository(private val byAccount: Map<Long?, Double>) : IEntryRepository {
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = byAccount.getValue(accountId)
-        override suspend fun getEntriesByOperation(transactionId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByOperation(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
+        override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
+        override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()

@@ -7,24 +7,24 @@ import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.LedgerError
-import com.neoutils.finsight.domain.error.UnbalancedOperationException
+import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.SystemAccount
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionLeg
 import kotlin.math.roundToLong
 
 /**
- * The single write-boundary that turns the legs of an operation into balanced
+ * The single write-boundary that turns the legs of an transaction into balanced
  * double-entry [EntryEntity] rows.
  *
  * It ensures the chart-of-accounts row for each category and card exists
  * (creating it on demand, keeping the facade projection consistent), synthesizes
- * the contra leg for single-leg operations, and enforces the `Σ = 0` per-currency
- * invariant — throwing [UnbalancedOperationException] and writing nothing on
+ * the contra leg for single-leg transactions, and enforces the `Σ = 0` per-currency
+ * invariant — throwing [UnbalancedTransactionException] and writing nothing on
  * failure.
  */
 class LedgerEntryWriter(
@@ -36,21 +36,21 @@ class LedgerEntryWriter(
 
     /**
      * Validates the balance invariant on the raw legs before any row is written,
-     * so an unbalanced multi-leg operation is rejected without side effects.
+     * so an unbalanced multi-leg transaction is rejected without side effects.
      */
-    fun validate(legs: List<OperationLeg>) {
+    fun validate(legs: List<TransactionLeg>) {
         if (legs.size < 2) return
         val total = legs.sumOf { it.signedCents() }
-        if (total != 0L) throw UnbalancedOperationException(LedgerError.Unbalanced)
+        if (total != 0L) throw UnbalancedTransactionException(LedgerError.Unbalanced)
     }
 
     /** Rebuilds the entries of [transactionId] from its (edited) legs. */
-    suspend fun rewriteEntries(transactionId: Long, legs: List<OperationLeg>) {
-        entryDao.deleteByOperationId(transactionId)
+    suspend fun rewriteEntries(transactionId: Long, legs: List<TransactionLeg>) {
+        entryDao.deleteByTransactionId(transactionId)
         writeEntries(transactionId, legs)
     }
 
-    suspend fun writeEntries(transactionId: Long, legs: List<OperationLeg>) {
+    suspend fun writeEntries(transactionId: Long, legs: List<TransactionLeg>) {
         val entries = buildList {
             legs.forEach { leg ->
                 add(
@@ -67,7 +67,7 @@ class LedgerEntryWriter(
                     )
                 )
             }
-            // Single-leg operations need a synthesized contra leg to balance.
+            // Single-leg transactions need a synthesized contra leg to balance.
             if (legs.size == 1) {
                 val leg = legs.first()
                 add(
@@ -87,21 +87,21 @@ class LedgerEntryWriter(
             .groupBy { it.currency }
             .all { (_, group) -> group.sumOf { it.amount } == 0L }
         if (!balancedPerCurrency) {
-            throw UnbalancedOperationException(LedgerError.Unbalanced)
+            throw UnbalancedTransactionException(LedgerError.Unbalanced)
         }
 
         entryDao.insertAll(entries)
     }
 
-    private suspend fun realAccountId(leg: OperationLeg): Long = when (leg.target) {
+    private suspend fun realAccountId(leg: TransactionLeg): Long = when (leg.target) {
         TransactionTarget.ACCOUNT ->
-            leg.account?.id ?: throw UnbalancedOperationException(LedgerError.Unbalanced)
+            leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
 
         TransactionTarget.CREDIT_CARD ->
-            ensureCardAccount(leg.creditCard ?: throw UnbalancedOperationException(LedgerError.Unbalanced))
+            ensureCardAccount(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
     }
 
-    private suspend fun contraAccountId(leg: OperationLeg): Long = when (leg.type) {
+    private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {
         TransactionType.ADJUSTMENT ->
             ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
 
@@ -116,7 +116,7 @@ class LedgerEntryWriter(
 
     private suspend fun ensureCategoryAccount(category: Category): Long {
         val entity = categoryDao.getCategoryById(category.id)
-            ?: throw UnbalancedOperationException(LedgerError.Unbalanced)
+            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
         entity.accountId?.let { return it }
         val accountId = accountDao.insert(
             AccountEntity(
@@ -135,7 +135,7 @@ class LedgerEntryWriter(
 
     private suspend fun ensureCardAccount(creditCard: CreditCard): Long {
         val entity = creditCardDao.getCreditCardById(creditCard.id)
-            ?: throw UnbalancedOperationException(LedgerError.Unbalanced)
+            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
         entity.accountId?.let { return it }
         val accountId = accountDao.insert(
             AccountEntity(
@@ -161,7 +161,7 @@ class LedgerEntryWriter(
      * the natural (debit-positive) balance of its own account. This is the only
      * place the input vocabulary ([TransactionType]) becomes a ledger sign.
      */
-    private fun OperationLeg.signedCents(): Long {
+    private fun TransactionLeg.signedCents(): Long {
         val cents = (amount * 100).roundToLong()
         return when (type) {
             TransactionType.EXPENSE -> -cents

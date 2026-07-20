@@ -2,7 +2,7 @@ package com.neoutils.finsight.ui.screen.installments
 
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.TransactionType
 import kotlinx.datetime.LocalDate
@@ -24,7 +24,7 @@ sealed class InstallmentsUiState {
     ) : InstallmentsUiState()
 
     data class Content(
-        val installments: List<InstallmentWithOperationsUi>,
+        val installments: List<InstallmentWithTransactionsUi>,
         val selectedInstallmentIndex: Int,
         val selectedCategory: Category?,
         val selectedType: TransactionType?,
@@ -32,24 +32,24 @@ sealed class InstallmentsUiState {
         val categories: List<Category>,
     ) : InstallmentsUiState() {
 
-        val selectedInstallment: InstallmentWithOperationsUi?
+        val selectedInstallment: InstallmentWithTransactionsUi?
             get() = installments.getOrNull(selectedInstallmentIndex)
 
-        val filteredOperations: List<Operation>
+        val filteredTransactions: List<Transaction>
             get() {
-                val operations = selectedInstallment?.operations.orEmpty()
-                return operations.filter { operation ->
-                    (selectedCategory == null || operation.category?.id == selectedCategory.id) &&
-                            (selectedType == null || operation.primaryEntry?.let { deriveTransactionType(it.amount, operation.entries) } == selectedType)
+                val transactions = selectedInstallment?.transactions.orEmpty()
+                return transactions.filter { transaction ->
+                    (selectedCategory == null || transaction.category?.id == selectedCategory.id) &&
+                            (selectedType == null || transaction.primaryEntry?.let { deriveTransactionType(it.amount, transaction.entries) } == selectedType)
                 }
             }
     }
 }
 
-data class InstallmentWithOperationsUi(
+data class InstallmentWithTransactionsUi(
     val installment: Installment,
-    val operations: List<Operation>,
-    val latestOperationDate: LocalDate,
+    val transactions: List<Transaction>,
+    val latestTransactionDate: LocalDate,
     val title: String,
     val categoryName: String?,
     val category: Category?,

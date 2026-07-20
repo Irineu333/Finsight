@@ -10,12 +10,12 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Operation
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.domain.model.OperationIntent
-import com.neoutils.finsight.domain.model.OperationLeg
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
-import com.neoutils.finsight.domain.repository.IOperationRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -26,7 +26,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class AdvanceInvoicePaymentUseCase(
-    private val operationRepository: IOperationRepository,
+    private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase
 ) {
@@ -35,7 +35,7 @@ class AdvanceInvoicePaymentUseCase(
         amount: Double,
         date: LocalDate,
         account: Account,
-    ): Either<Throwable, Operation> = either {
+    ): Either<Throwable, Transaction> = either {
         ensure(amount > 0) {
             InvoiceException(InvoiceError.NegativeAmount)
         }
@@ -65,19 +65,19 @@ class AdvanceInvoicePaymentUseCase(
         }
         
         catch {
-            operationRepository.createOperation(
-                OperationIntent(
+            transactionRepository.createTransaction(
+                TransactionIntent(
                     title = null,
                     date = date,
                     legs = listOf(
-                        OperationLeg(
+                        TransactionLeg(
                             type = TransactionType.EXPENSE,
                             amount = amount,
                             creditCard = invoice.creditCard,
                             invoice = invoice,
                             account = account,
                         ),
-                        OperationLeg(
+                        TransactionLeg(
                             type = TransactionType.INCOME,
                             amount = amount,
                             creditCard = invoice.creditCard,

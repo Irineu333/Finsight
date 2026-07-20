@@ -61,13 +61,13 @@ val accountsModule = module {
             accountDao = get(),
             accountRepository = get(),
             entryRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
         )
     }
     factory { DeleteAccountUseCase(closeAccountUseCase = get()) }
     factory {
         AdjustBalanceUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             calculateBalanceUseCase = get(),
         )
     }
@@ -75,7 +75,7 @@ val accountsModule = module {
     factory { AdjustInitialBalanceUseCase(adjustBalanceUseCase = get()) }
     factory {
         TransferBetweenAccountsUseCase(
-            operationRepository = get(),
+            transactionRepository = get(),
             accountRepository = get(),
         )
     }
@@ -85,7 +85,7 @@ val accountsModule = module {
     viewModel {
         AccountsViewModel(
             accountRepository = get(),
-            operationRepository = get(),
+            transactionRepository = get(),
             categoryRepository = get(),
             entryRepository = get(),
             initialAccountId = it.getOrNull(),

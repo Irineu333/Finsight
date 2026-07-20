@@ -17,70 +17,7 @@ class Migration7To9Test {
     fun setup() {
         connection = BundledSQLiteDriver().open(":memory:")
 
-        // v7 accounts (no type/currency yet)
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `accounts` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`name` TEXT NOT NULL, `iconKey` TEXT NOT NULL DEFAULT 'wallet', " +
-                "`isDefault` INTEGER NOT NULL DEFAULT 0, `createdAt` INTEGER NOT NULL" +
-                ")"
-        )
-        // v7 categories (no accountId yet)
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `categories` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`name` TEXT NOT NULL, `iconKey` TEXT NOT NULL, " +
-                "`type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL" +
-                ")"
-        )
-        // v7 credit_cards (no accountId yet)
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `credit_cards` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`name` TEXT NOT NULL, `limit` REAL NOT NULL, `closingDay` INTEGER NOT NULL, " +
-                "`dueDay` INTEGER NOT NULL, `iconKey` TEXT NOT NULL DEFAULT 'card', `createdAt` INTEGER NOT NULL" +
-                ")"
-        )
-        // FK-target tables present in the real v7 schema.
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `invoices` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `installments` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
-        connection.execSQL("CREATE TABLE IF NOT EXISTS `recurring` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)")
-        // The migration rebuilds `budgets` to drop its write-only `categoryId`.
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `budgets` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`categoryId` INTEGER NOT NULL, " +
-                "`iconCategoryId` INTEGER NOT NULL, " +
-                "`iconKey` TEXT NOT NULL, " +
-                "`title` TEXT NOT NULL, " +
-                "`amount` REAL NOT NULL, " +
-                "`period` TEXT NOT NULL, " +
-                "`limitType` TEXT NOT NULL DEFAULT 'FIXED', " +
-                "`percentage` REAL, " +
-                "`recurringId` INTEGER, " +
-                "`createdAt` INTEGER NOT NULL)"
-        )
-
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `operations` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `kind` TEXT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, " +
-                "`categoryId` INTEGER, `sourceAccountId` INTEGER, `targetCreditCardId` INTEGER, `targetInvoiceId` INTEGER, " +
-                "`recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER)"
-        )
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `recurring_occurrences` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `recurringId` INTEGER NOT NULL, " +
-                "`cycleNumber` INTEGER NOT NULL, `yearMonth` TEXT NOT NULL, `status` TEXT NOT NULL, " +
-                "`operationId` INTEGER, `effectiveDate` TEXT NOT NULL, `handledAt` INTEGER NOT NULL)"
-        )
-        connection.execSQL(
-            "CREATE TABLE IF NOT EXISTS `transactions` (" +
-                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operationId` INTEGER, " +
-                "`type` TEXT NOT NULL, `amount` REAL NOT NULL, `title` TEXT, `date` TEXT NOT NULL, " +
-                "`categoryId` INTEGER, `target` TEXT NOT NULL DEFAULT 'ACCOUNT', " +
-                "`creditCardId` INTEGER, `invoiceId` INTEGER, `accountId` INTEGER" +
-                ")"
-        )
+        V7_SCHEMA.forEach(connection::execSQL)
 
         // Sample data: accounts A(1), B(2); category Food(1, EXPENSE)
         connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (1,'A','wallet',1,1000),(2,'B','wallet',0,1000)")
@@ -102,7 +39,10 @@ class Migration7To9Test {
         // Card-payment scenario on account C(3): purchase 100 then pay 40 (invoice 1).
         connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (3,'C','wallet',0,1000)")
         connection.execSQL("INSERT INTO `credit_cards` (`id`,`name`,`limit`,`closingDay`,`dueDay`,`iconKey`,`createdAt`) VALUES (1,'Card',1000.0,10,20,'card',1000)")
-        connection.execSQL("INSERT INTO `invoices` (`id`) VALUES (1)")
+        connection.execSQL(
+            "INSERT INTO `invoices` (`id`,`creditCardId`,`openingMonth`,`closingMonth`,`dueMonth`,`status`,`createdAt`) " +
+                "VALUES (1,1,'2024-01','2024-02','2024-02','OPEN',1000)"
+        )
         // op4: card purchase 100 (single card leg)
         connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (4,'TRANSACTION','2024-02-01')")
         connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (4,'EXPENSE',100.0,'2024-02-01','CREDIT_CARD',1,1)")
@@ -303,4 +243,131 @@ class Migration7To9Test {
         )
         assertEquals(-3000L, reconciliationSum)
     }
+
+    // --- The v7 states the fixture above does not produce. Each is inserted on top
+    // --- of it, so the assertions below also prove the base data is unaffected.
+
+    @Test
+    fun `given a leg with no operation when migrated then its money is preserved`() {
+        // `transactions.operationId` has been nullable since v1 and no migration ever
+        // backfilled it. Discarding such a leg would erase 99.00 from the balance with
+        // no error and no trace.
+        connection.execSQL(
+            "INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) " +
+                "VALUES (NULL,'EXPENSE',99.0,'2024-04-01',1,'ACCOUNT',1)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        // Account A: −5000 −10000 +3000 (base fixture) −9900 = −21900.
+        assertEquals(-21900L, scalar("SELECT COALESCE(SUM(amount),0) FROM entries WHERE accountId = 1"))
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE transactionId IS NULL"))
+        assertEquals(0L, wholeLedgerSum())
+    }
+
+    @Test
+    fun `given a multi-leg operation that does not balance when migrated then the residual is reconciled`() {
+        // v7 never enforced Σ = 0 on a multi-leg operation, and the migration copies the
+        // legs verbatim. An unequal pair would land as permanent corruption that no
+        // reader can detect and the write boundary never sees.
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (8,'TRANSFER','2024-04-02')")
+        connection.execSQL(
+            "INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) " +
+                "VALUES (8,'EXPENSE',10.0,'2024-04-02','ACCOUNT',1)"
+        )
+        connection.execSQL(
+            "INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) " +
+                "VALUES (8,'INCOME',7.0,'2024-04-02','ACCOUNT',2)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(0L, scalar("SELECT COALESCE(SUM(amount),0) FROM entries WHERE transactionId = 8"))
+        // The 3.00 that did not balance is an explicit equity movement, not a silent hole.
+        assertEquals(
+            300L,
+            scalar(
+                "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN accounts a ON a.id = e.accountId " +
+                    "WHERE e.transactionId = 8 AND a.name = 'Reconciliação'"
+            ),
+        )
+        assertEquals(0L, wholeLedgerSum())
+    }
+
+    @Test
+    fun `given an uncategorized leg when migrated then it lands in the uncategorized bucket`() {
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (9,'TRANSACTION','2024-04-03')")
+        connection.execSQL(
+            "INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) " +
+                "VALUES (9,'EXPENSE',12.0,'2024-04-03',NULL,'ACCOUNT',1)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(
+            1200L,
+            scalar(
+                "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN accounts a ON a.id = e.accountId " +
+                    "WHERE e.transactionId = 9 AND a.name = 'Sem categoria (despesa)'"
+            ),
+        )
+        assertEquals(0L, wholeLedgerSum())
+    }
+
+    @Test
+    fun `given an operation with no legs when migrated then it produces no entries`() {
+        connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (10,'TRANSACTION','2024-04-04')")
+
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE transactionId = 10"))
+        assertEquals(0L, wholeLedgerSum())
+    }
+
+    @Test
+    fun `given the write-off ids when migrated then the next insert does not collide`() {
+        MIGRATION_7_9.migrate(connection)
+
+        val maxBefore = scalar("SELECT COALESCE(MAX(id),0) FROM transactions")
+        connection.execSQL("INSERT INTO `transactions` (`title`,`date`) VALUES ('after','2024-05-01')")
+
+        assertEquals(maxBefore + 1, scalar("SELECT COALESCE(MAX(id),0) FROM transactions"))
+    }
+
+    @Test
+    fun `given recurring occurrences when migrated then they point at the transaction`() {
+        connection.execSQL(
+            "INSERT INTO `recurring_occurrences` (`id`,`recurringId`,`cycleNumber`,`yearMonth`,`status`,`operationId`,`effectiveDate`,`handledAt`) " +
+                "VALUES (1,1,1,'2024-01','CONFIRMED',1,'2024-01-10',1000)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(1L, scalar("SELECT transactionId FROM recurring_occurrences WHERE id = 1"))
+    }
+
+    @Test
+    fun `given budgets when migrated then rows survive without the write-only categoryId`() {
+        connection.execSQL(
+            "INSERT INTO `budgets` (`id`,`categoryId`,`iconCategoryId`,`iconKey`,`title`,`amount`,`period`,`limitType`,`createdAt`) " +
+                "VALUES (1,1,1,'food','Comida',500.0,'MONTHLY','FIXED',1000)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_table_info('budgets') WHERE name = 'categoryId'"))
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM budgets WHERE id = 1"))
+        assertEquals(1L, scalar("SELECT iconCategoryId FROM budgets WHERE id = 1"))
+    }
+
+    @Test
+    fun `given the migrated database then its integrity and foreign keys hold`() {
+        MIGRATION_7_9.migrate(connection)
+
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_foreign_key_check"))
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE accountId NOT IN (SELECT id FROM accounts)"))
+    }
+
+    /** Σ of the whole ledger, which must be zero for every currency at all times. */
+    private fun wholeLedgerSum(): Long = scalar("SELECT COALESCE(SUM(amount),0) FROM entries")
 }

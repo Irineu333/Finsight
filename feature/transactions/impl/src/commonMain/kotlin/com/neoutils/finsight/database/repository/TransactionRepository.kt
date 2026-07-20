@@ -310,34 +310,50 @@ class TransactionRepository(
         // describing transactions that no longer exist.
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val transaction = transactionDao.getById(id)
-                val installmentId = transaction?.installmentId
+                removeRow(id)
+            }
+        }
+    }
 
-                if (installmentId == null) {
-                    transactionDao.deleteById(id)
-                    return@immediateTransaction
-                }
+    /**
+     * The row removal itself, assuming the caller already holds the writer
+     * transaction — so a bulk delete stays one unit instead of N.
+     */
+    private suspend fun removeRow(id: Long) {
+        val transaction = transactionDao.getById(id)
+        val installmentId = transaction?.installmentId
 
-                // The transaction's own share of the installment, from the ledger.
-                val transactionAmount = entryDao.getByTransactionId(id)
-                    .filter { it.amount < 0 }
-                    .sumOf { -it.amount } / 100.0
-                val remainingCount = transactionDao.countByInstallmentId(installmentId) - 1
+        if (installmentId == null) {
+            transactionDao.deleteById(id)
+            return
+        }
 
-                transactionDao.deleteById(id)
+        // The transaction's own share of the installment, from the ledger.
+        val transactionAmount = entryDao.getByTransactionId(id)
+            .filter { it.amount < 0 }
+            .sumOf { -it.amount } / 100.0
+        val remainingCount = transactionDao.countByInstallmentId(installmentId) - 1
 
-                if (remainingCount <= 0) {
-                    installmentRepository.deleteInstallmentById(installmentId)
-                } else {
-                    val installment = installmentRepository.getInstallmentById(installmentId)
-                    if (installment != null) {
-                        installmentRepository.updateInstallment(
-                            id = installmentId,
-                            count = remainingCount,
-                            totalAmount = installment.totalAmount - transactionAmount,
-                        )
-                    }
-                }
+        transactionDao.deleteById(id)
+
+        if (remainingCount <= 0) {
+            installmentRepository.deleteInstallmentById(installmentId)
+        } else {
+            val installment = installmentRepository.getInstallmentById(installmentId)
+            if (installment != null) {
+                installmentRepository.updateInstallment(
+                    id = installmentId,
+                    count = remainingCount,
+                    totalAmount = installment.totalAmount - transactionAmount,
+                )
+            }
+        }
+    }
+
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) {
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                ids.forEach { removeRow(it) }
             }
         }
     }

@@ -1,0 +1,216 @@
+package com.neoutils.finsight.database.repository
+
+import androidx.room.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neoutils.finsight.database.AppDatabase
+import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.entity.CreditCardEntity
+import com.neoutils.finsight.database.entity.InvoiceEntity
+import com.neoutils.finsight.database.mapper.RecurringMapper
+import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.LedgerError
+import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.TransactionLeg
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.YearMonth
+import kotlin.test.AfterTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+
+/**
+ * The invoice-status invariant at the single write boundary (design D23).
+ *
+ * `CLOSED` and `PAID` are deliberately *not* the same gate: a closed invoice must
+ * still accept the payment that settles it, which is the whole point of closing.
+ * A design that fused them would pass every test here but the third.
+ */
+class InvoiceWriteGuardTest {
+
+    private val db = Room.inMemoryDatabaseBuilder<AppDatabase>()
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()
+
+    @AfterTest fun tearDown() = db.close()
+
+    private val card = CreditCard(
+        id = 1,
+        name = "Card",
+        limit = 1000.0,
+        closingDay = 10,
+        dueDay = 20,
+        accountId = 2,
+    )
+
+    private val payer = Account(id = 1, name = "Checking", type = AccountType.ASSET)
+
+    private fun invoice(status: Invoice.Status) = Invoice(
+        id = 1,
+        creditCard = card,
+        openingMonth = YearMonth(2026, 2),
+        closingMonth = YearMonth(2026, 3),
+        dueMonth = YearMonth(2026, 3),
+        status = status,
+    )
+
+    private suspend fun repository(status: Invoice.Status): TransactionRepository {
+        db.accountDao().insert(AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET))
+        db.accountDao().insert(AccountEntity(id = 2, name = "Card", type = AccountEntity.Type.LIABILITY))
+        db.creditCardDao().insert(
+            CreditCardEntity(id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 2)
+        )
+        db.invoiceDao().insert(
+            InvoiceEntity(
+                id = 1,
+                creditCardId = 1,
+                openingMonth = YearMonth(2026, 2),
+                closingMonth = YearMonth(2026, 3),
+                dueMonth = YearMonth(2026, 3),
+                status = InvoiceEntity.Status.OPEN,
+            )
+        )
+        return TransactionRepository(
+            database = db,
+            transactionDao = db.transactionDao(),
+            entryDao = db.entryDao(),
+            recurringDao = db.recurringDao(),
+            categoryRepository = FakeCategoryRepository,
+            creditCardRepository = FakeCreditCardRepository,
+            invoiceRepository = SingleInvoiceRepository(invoice(status)),
+            installmentRepository = FakeInstallmentRepository,
+            accountRepository = LedgerAccountRepository(db),
+            transactionMapper = TransactionMapper(),
+            recurringMapper = RecurringMapper(),
+            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
+        )
+    }
+
+    private fun purchase() = TransactionIntent(
+        title = "Groceries",
+        date = LocalDate(2026, 3, 5),
+        legs = listOf(
+            TransactionLeg(
+                type = TransactionType.EXPENSE,
+                amount = 50.0,
+                creditCard = card,
+                invoice = invoice(Invoice.Status.OPEN),
+            )
+        ),
+    )
+
+    private fun payment() = TransactionIntent(
+        title = null,
+        date = LocalDate(2026, 3, 15),
+        legs = listOf(
+            TransactionLeg(
+                type = TransactionType.EXPENSE,
+                amount = 50.0,
+                account = payer,
+                creditCard = card,
+                invoice = invoice(Invoice.Status.CLOSED),
+            ),
+            TransactionLeg(
+                type = TransactionType.INCOME,
+                amount = 50.0,
+                creditCard = card,
+                invoice = invoice(Invoice.Status.CLOSED),
+            ),
+        ),
+    )
+
+    @Test
+    fun `an open invoice accepts a new expense`() = runTest {
+        val transaction = repository(Invoice.Status.OPEN).createTransaction(purchase())
+        assertEquals(2, transaction.entries.size)
+    }
+
+    @Test
+    fun `a closed invoice refuses a new expense`() = runTest {
+        val error = assertFailsWith<InvoiceLockedException> {
+            repository(Invoice.Status.CLOSED).createTransaction(purchase())
+        }
+        assertEquals(LedgerError.ClosedInvoice, error.error)
+    }
+
+    @Test
+    fun `a closed invoice accepts the payment that settles it`() = runTest {
+        val transaction = repository(Invoice.Status.CLOSED).createTransaction(payment())
+        assertEquals(2, transaction.entries.size)
+    }
+
+    @Test
+    fun `a paid invoice refuses a new expense`() = runTest {
+        val error = assertFailsWith<InvoiceLockedException> {
+            repository(Invoice.Status.PAID).createTransaction(purchase())
+        }
+        assertEquals(LedgerError.PaidInvoice, error.error)
+    }
+
+    @Test
+    fun `a paid invoice refuses even its own payment`() = runTest {
+        val error = assertFailsWith<InvoiceLockedException> {
+            repository(Invoice.Status.PAID).createTransaction(payment())
+        }
+        assertEquals(LedgerError.PaidInvoice, error.error)
+    }
+}
+
+/**
+ * Reads the accounts back from the ledger, so entries created on accounts the
+ * writer synthesized (the card's, the uncategorized bucket) still hydrate.
+ */
+private class LedgerAccountRepository(private val db: AppDatabase) : IAccountRepository {
+    override suspend fun getAllAccounts(): List<Account> = db.accountDao().getAllLedgerAccounts().map {
+        Account(
+            id = it.id,
+            name = it.name,
+            type = AccountType.valueOf(it.type.name),
+            currency = it.currency,
+            iconKey = it.iconKey,
+            isDefault = it.isDefault,
+            createdAt = it.createdAt,
+            isClosed = it.isClosed,
+        )
+    }
+
+    override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
+    override suspend fun getAccountById(accountId: Long): Account? = throw NotImplementedError()
+    override fun observeAccountById(accountId: Long): Flow<Account?> = throw NotImplementedError()
+    override suspend fun getDefaultAccount(): Account? = throw NotImplementedError()
+    override fun observeDefaultAccount(): Flow<Account?> = throw NotImplementedError()
+    override suspend fun getAccountCount(): Int = throw NotImplementedError()
+    override suspend fun insert(account: Account): Long = throw NotImplementedError()
+    override suspend fun update(account: Account) = throw NotImplementedError()
+    override suspend fun delete(account: Account) = throw NotImplementedError()
+}
+
+private class SingleInvoiceRepository(private val invoice: Invoice) : IInvoiceRepository {
+    override suspend fun getAllInvoices(): List<Invoice> = listOf(invoice)
+    override fun observeAllInvoices(): Flow<List<Invoice>> = flowOf(listOf(invoice))
+    override suspend fun getInvoiceById(id: Long): Invoice? = invoice.takeIf { it.id == id }
+    override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
+    override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> = throw NotImplementedError()
+    override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
+    override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
+    override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
+    override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+    override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+    override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
+    override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+    override suspend fun update(invoice: Invoice) = throw NotImplementedError()
+    override suspend fun deleteById(id: Long) = throw NotImplementedError()
+}

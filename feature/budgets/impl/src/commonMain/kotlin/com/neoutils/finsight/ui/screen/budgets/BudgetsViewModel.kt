@@ -16,10 +16,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -39,12 +35,6 @@ class BudgetsViewModel(
         recurringRepository.observeAllRecurring(),
         selectedMonth,
     ) { budgets, transactions, recurringList, selectedMonth ->
-        val systemToday = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val today = if (selectedMonth == systemToday.yearMonth) {
-            systemToday
-        } else {
-            LocalDate(selectedMonth.year, selectedMonth.month, 1)
-        }
         val categoryBalances = entryRepository.balancesInMonth(
             month = selectedMonth,
             accountIds = budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
@@ -54,7 +44,7 @@ class BudgetsViewModel(
             categoryBalances = categoryBalances,
             recurringList = recurringList,
             transactions = transactions,
-            today = today,
+            month = selectedMonth,
         )
         if (budgetProgress.isEmpty()) {
             BudgetsUiState.Empty(selectedMonth = selectedMonth)

@@ -9,6 +9,8 @@ import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
+import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
+import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
@@ -48,6 +50,7 @@ val transactionsModule = module {
         )
     }
     factory { TransactionMapper() }
+    factory<DeleteTransactionUseCase> { DeleteTransactionUseCaseImpl(transactionRepository = get()) }
 
     factory { CalculateTransactionStatsUseCase() }
     factory { CalculateBalanceUseCase(entryRepository = get()) }
@@ -116,9 +119,10 @@ val transactionsModule = module {
     viewModel {
         DeleteTransactionViewModel(
             transaction = it.get(),
-            transactionRepository = get(),
+            deleteTransactionUseCase = get(),
             modalManager = get(),
             analytics = get(),
+            crashlytics = get(),
         )
     }
 }

@@ -99,6 +99,8 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
         ledger.write(id, listOf(leg))
     }
 
+    override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
+
     override suspend fun deleteTransactionById(id: Long) {
         ledger.entriesByTransaction.remove(id)
         ledger.dateByTransaction.remove(id)

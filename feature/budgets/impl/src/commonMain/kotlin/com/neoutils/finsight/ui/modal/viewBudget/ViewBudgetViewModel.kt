@@ -50,6 +50,7 @@ class ViewBudgetViewModel(
             categoryBalances = categoryBalances,
             recurringList = recurringList,
             transactions = transactions,
+            month = month,
         ).firstOrNull { it.budget.id == budgetId }
     }
         .interceptAbsence(

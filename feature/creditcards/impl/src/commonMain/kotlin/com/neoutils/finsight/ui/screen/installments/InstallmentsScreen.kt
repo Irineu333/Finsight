@@ -407,7 +407,7 @@ private fun EmptyInstallmentsState(
 
 @Composable
 private fun InstallmentPager(
-    installments: List<InstallmentWithTransactionsUi>,
+    installments: List<InstallmentUi>,
     selectedIndex: Int,
     onSelectInstallment: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -446,7 +446,7 @@ private fun InstallmentPager(
 
 @Composable
 private fun InstallmentSummaryCard(
-    ui: InstallmentWithTransactionsUi,
+    ui: InstallmentUi,
     modifier: Modifier = Modifier,
 ) {
     val formatter = LocalCurrencyFormatter.current

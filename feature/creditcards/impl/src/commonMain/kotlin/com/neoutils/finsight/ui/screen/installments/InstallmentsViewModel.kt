@@ -23,7 +23,7 @@ class InstallmentsViewModel(
 ) : ViewModel() {
 
     private data class InstallmentWithDomain(
-        val ui: InstallmentWithTransactionsUi,
+        val ui: InstallmentUi,
         val installment: Installment,
         val transactions: List<Transaction>,
     )

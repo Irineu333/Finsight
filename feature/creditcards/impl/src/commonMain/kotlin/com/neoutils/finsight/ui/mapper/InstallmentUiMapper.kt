@@ -5,14 +5,14 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.installments.InstallmentTransactionUi
-import com.neoutils.finsight.ui.screen.installments.InstallmentWithTransactionsUi
+import com.neoutils.finsight.ui.screen.installments.InstallmentUi
 
 class InstallmentUiMapper {
 
     fun toUi(
         installment: Installment,
         transactions: List<Transaction>,
-    ): InstallmentWithTransactionsUi? {
+    ): InstallmentUi? {
         val sortedTransactions = transactions.sortedBy { it.installment?.number ?: Int.MAX_VALUE }
 
         if (sortedTransactions.isEmpty()) return null
@@ -31,7 +31,7 @@ class InstallmentUiMapper {
         }
         val isActive = paidCount < installment.count
 
-        return InstallmentWithTransactionsUi(
+        return InstallmentUi(
             installmentId = installment.id,
             latestTransactionDate = sortedTransactions.maxOf { it.date },
             title = firstTransaction.displayTitle,

@@ -25,7 +25,7 @@ sealed class InstallmentsUiState {
     ) : InstallmentsUiState()
 
     data class Content(
-        val installments: List<InstallmentWithTransactionsUi>,
+        val installments: List<InstallmentUi>,
         val selectedInstallmentIndex: Int,
         // Already filtered and mapped by the ViewModel — the state holds no
         // transaction graph and derives nothing on read (`presentation-mapping`).
@@ -41,7 +41,7 @@ sealed class InstallmentsUiState {
         val categories: List<Category>,
     ) : InstallmentsUiState() {
 
-        val selectedInstallment: InstallmentWithTransactionsUi?
+        val selectedInstallment: InstallmentUi?
             get() = installments.getOrNull(selectedInstallmentIndex)
     }
 }
@@ -52,7 +52,7 @@ sealed class InstallmentsUiState {
  * reduced to what drawing it needs (icon, name, and the two facts
  * `categoryDisplayColor` depends on).
  */
-data class InstallmentWithTransactionsUi(
+data class InstallmentUi(
     val installmentId: Long,
     val latestTransactionDate: LocalDate,
     val title: String,

@@ -391,6 +391,7 @@
     <string name="reopen_invoice_description">A fatura voltará ao status \"Aberta\" e você poderá adicionar novas transações.</string>
     <string name="reopen_invoice_cancel">Cancelar</string>
     <string name="reopen_invoice_confirm">Reabrir</string>
+    <string name="invoice_error_cannot_reopen">Só a última fatura fechada pode ser reaberta.</string>
 
     <!-- Advance Payment Modal -->
     <string name="advance_payment_title">Antecipar Pagamento</string>

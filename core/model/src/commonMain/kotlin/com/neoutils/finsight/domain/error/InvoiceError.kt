@@ -1,6 +1,10 @@
 package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.invoice_error_cannot_reopen
+import com.neoutils.finsight.resources.ledger_action_error_generic
+import com.neoutils.finsight.util.UiText
 
 sealed class InvoiceError(val message: String) {
 
@@ -44,3 +48,13 @@ sealed class InvoiceError(val message: String) {
 }
 
 class InvoiceException(val error: InvoiceError) : Exception(error.message)
+
+/**
+ * Only errors a user action can actually surface get their own message; the rest are
+ * internal invariants that never reach a screen and fall back to the neutral generic.
+ * Reopen is the first invoice flow to show its refusal instead of failing silently.
+ */
+fun InvoiceError.toUiText(): UiText = when (this) {
+    InvoiceError.CannotReopenInvoice -> UiText.Res(Res.string.invoice_error_cannot_reopen)
+    else -> UiText.Res(Res.string.ledger_action_error_generic)
+}

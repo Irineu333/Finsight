@@ -390,6 +390,7 @@
     <string name="reopen_invoice_description">The invoice will return to \"Open\" status and you can add new transactions.</string>
     <string name="reopen_invoice_cancel">Cancel</string>
     <string name="reopen_invoice_confirm">Reopen</string>
+    <string name="invoice_error_cannot_reopen">Only the latest closed invoice can be reopened.</string>
 
     <!-- Advance Payment Modal -->
     <string name="advance_payment_title">Advance Payment</string>

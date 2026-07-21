@@ -606,6 +606,23 @@
 >   2ª OPEN). A 4b.8 (que dizia ter estreitado o use case para `CLOSED`) nunca aterrissou; substituída
 >   por esta guarda. **Consequência aceita e registrada:** a identidade retroativa não sobrevive ao
 >   fechamento, e reabrir torna o ciclo passado o corrente até o usuário re-fechar.
+>
+>   ⚠️ **Feedback da recusa (pedido do usuário).** A guarda recusava em silêncio — `InvoiceError`
+>   nunca teve `toUiText` e `ReopenInvoiceViewModel` só gravava no crashlytics. Adicionado
+>   `InvoiceError.toUiText()` em `core/model` (dono único "erro de fatura → mensagem", no molde de
+>   `AccountError`), mapeando `CannotReopenInvoice` para string dedicada (`invoice_error_cannot_reopen`,
+>   pt/en) e o resto para o genérico neutro; o ViewModel passa a `modalManager.showError(...)` no
+>   `onLeft`, no padrão da 8.15 (a folha recusada fica aberta atrás). É a primeira família de erro de
+>   fatura a mostrar a recusa em vez de falhar mudo.
+>
+>   ⚠️ **Caso estranho em aberto (levantado pelo usuário): `[retroativa, retroativa, open]`.** Reabrir
+>   a 1ª (fechada → `CLOSED`) é **recusado** pela guarda — a sucessora em `openingMonth == closingMonth`
+>   é a 2ª retroativa, não a `OPEN` corrente, então reabrir criaria duas OPEN. Bloqueio **correto** (na
+>   main criaria as duas OPEN em silêncio). O estado é alcançável porque `CreateRetroactiveInvoiceUseCase`
+>   (inalterado desde a main) só barra colisão de `dueMonth` — **pré-existente**. Como *tratar* esse
+>   estado (impedir múltiplas retroativas? esconder o botão quando a reabertura não é válida?) segue
+>   **em aberto, sob decisão do usuário** — o comportamento atual é seguro (recusa + feedback), não
+>   corrompe.
 > - **10e.8 — Parcelamento (numeração X/N e rateio de centavos).** (a) Excluir 1 parcela
 >   do meio decrementa `count` sem renumerar → "12/11", progresso >100%. O decremento já
 >   estava na main (`OperationRepository:298`, `remainingCount = countByInstallmentId - 1`,

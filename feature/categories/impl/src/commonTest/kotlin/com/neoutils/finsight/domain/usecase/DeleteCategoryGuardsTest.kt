@@ -142,4 +142,5 @@ private class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
         categoryType: AccountType,
         invoiceIds: List<Long>,
     ): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }

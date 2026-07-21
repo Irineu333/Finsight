@@ -17,7 +17,6 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
-import com.neoutils.finsight.domain.usecase.ReportLedgerScope
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
@@ -105,18 +104,8 @@ class ReportViewerViewModel(
                 total = invoices.sumOf { entryRepository.invoiceOwed(it.id) },
             )
         } else {
-            val scope = when (perspective) {
-                is ReportPerspective.AccountPerspective ->
-                    ReportLedgerScope.Accounts(perspective.accountIds.toSet())
-
-                is ReportPerspective.CreditCardPerspective ->
-                    ReportLedgerScope.Card(
-                        liabilityAccountId = creditCards.find { it.id == perspective.creditCardId }?.accountId,
-                    )
-            }
             val reportStats = calculateReportStatsUseCase(
-                transactions = transactions,
-                scope = scope,
+                perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
             )

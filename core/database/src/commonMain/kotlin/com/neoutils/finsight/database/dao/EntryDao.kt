@@ -50,6 +50,20 @@ data class CardMonthTotals(
     val payment: Long,
 )
 
+/**
+ * The report figures for an account/card scope over a period, all in cents. [income]/
+ * [expense] are positive magnitudes of the scope legs classified by counter-leg;
+ * [balance] is their signed sum within the period (adjustments included); [openingBalance]
+ * is the signed sum of the scope legs before the period. Internal transfers — a
+ * transaction whose ASSET legs all fall inside the scope — are excluded on both sides.
+ */
+data class ReportStatsTotals(
+    val income: Long,
+    val expense: Long,
+    val balance: Long,
+    val openingBalance: Long,
+)
+
 /** An [EntryEntity] with its referenced [AccountEntity] resolved — a complete leg. */
 data class EntryWithAccount(
     @Embedded val entry: EntryEntity,
@@ -251,6 +265,50 @@ interface EntryDao {
         end: LocalDate,
         siblingAccountIds: List<Long>,
     ): List<CategoryAccountTotal>
+
+    /**
+     * The income/expense/balance/opening-balance a report shows for an account or card
+     * scope over [startDate]..[endDate], derived from the ledger. [scopeIds] are the
+     * accounts the report is "seen from" — the perspective's ASSET accounts, or a card's
+     * single LIABILITY account. Each figure sums the scope legs; income/expense are
+     * classified by the transaction's counter-legs (an EQUITY counter-leg is an
+     * adjustment, so it lands in [balance] but not in income/expense). Internal
+     * transfers — a transaction with two or more ASSET legs all inside [scopeIds] —
+     * are excluded from both the period and the opening balance, exactly as the account
+     * screen ignores moving money between the user's own accounts. See [ReportStatsTotals].
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN inPeriod = 1 AND eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN inPeriod = 1 AND eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
+          COALESCE(SUM(CASE WHEN inPeriod = 1 THEN amount ELSE 0 END), 0) AS balance,
+          COALESCE(SUM(CASE WHEN inPeriod = 0 THEN amount ELSE 0 END), 0) AS openingBalance
+        FROM (
+          SELECT e.amount AS amount,
+            CASE WHEN o.date >= :startDate THEN 1 ELSE 0 END AS inPeriod,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId
+                   WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
+          FROM entries e
+          JOIN transactions o ON o.id = e.transactionId
+          WHERE e.accountId IN (:scopeIds)
+            AND o.date <= :endDate
+            AND NOT (
+              (SELECT COUNT(DISTINCT x.accountId) FROM entries x JOIN accounts a ON a.id = x.accountId
+               WHERE x.transactionId = e.transactionId AND a.type = 'ASSET') >= 2
+              AND NOT EXISTS (
+                SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId
+                WHERE x.transactionId = e.transactionId AND a.type = 'ASSET' AND x.accountId NOT IN (:scopeIds)
+              )
+            )
+        )
+        """
+    )
+    suspend fun reportStats(
+        scopeIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ReportStatsTotals
 
     /**
      * Per-category totals scoped to a set of invoices: category legs of transactions

@@ -210,6 +210,7 @@ private class FakeEntries(
         categoryType: AccountType,
         invoiceIds: List<Long>,
     ): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }
 
 private class RecordingAccountDao : AccountDao {

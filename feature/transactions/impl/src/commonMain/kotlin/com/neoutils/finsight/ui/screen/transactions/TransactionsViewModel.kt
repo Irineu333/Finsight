@@ -11,6 +11,7 @@ import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
@@ -32,6 +33,7 @@ class TransactionsViewModel(
     private val filterTarget: TransactionTarget?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val entryRepository: IEntryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
 ) : ViewModel() {
@@ -71,10 +73,10 @@ class TransactionsViewModel(
                 income = stats.income,
                 expense = stats.expense,
                 adjustment = stats.adjustment,
-                payment = transactions
-                    .filter { it.label == TransactionLabel.PAYMENT }
-                    .filter { it.date.yearMonth == yearMonth }
-                    .sumOf { it.amount },
+                // Month-wide card payments from the ledger (D12), not summed from the
+                // loaded list. Reactive because observeAllTransactions() above re-runs
+                // this block on every ledger write, and on month change.
+                payment = entryRepository.cardMonthFlows(yearMonth).payment,
                 // Opening/final balances from the ledger (task 4.11): Σ entries of all
                 // ASSET accounts up to the previous / selected month.
                 openingBalance = calculateBalanceUseCase(target = yearMonth.minusMonth()),

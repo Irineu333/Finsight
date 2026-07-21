@@ -72,13 +72,15 @@ class TransactionsViewModelCharacterizationTest {
             op(4, day = 20, listOf(entry(account, -80.0), entry(cardAcc, 80.0))),
         )
 
+        // Ledger opening/final balance: 0 up to the previous month, 30 up to the month
+        // (Σ the account's signed legs 100 − 30 + 40 − 80). Month-wide card payment = 80.
+        val ledger = LedgerBalance(month = month, balance = 30.0, payment = 80.0)
         val vm = TransactionsViewModel(
             filterType = null, category = null, filterTarget = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
-            // Ledger opening/final balance: 0 up to the previous month, 30 up to the month
-            // (Σ the account's signed legs 100 − 30 + 40 − 80).
-            calculateBalanceUseCase = CalculateBalanceUseCase(LedgerBalance(month = month, balance = 30.0)),
+            entryRepository = ledger,
+            calculateBalanceUseCase = CalculateBalanceUseCase(ledger),
             calculateTransactionStatsUseCase = CalculateTransactionStatsUseCase(),
         )
 
@@ -89,7 +91,7 @@ class TransactionsViewModelCharacterizationTest {
             assertEquals(100.0, overview.income)
             assertEquals(30.0, overview.expense)
             assertEquals(40.0, overview.adjustment)
-            assertEquals(80.0, overview.payment, "Σ amount of PAYMENT-kind transactions in the month")
+            assertEquals(80.0, overview.payment, "month-wide card payment from the ledger")
             assertEquals(0.0, overview.openingBalance)
             assertEquals(30.0, overview.finalBalance, "Σ signed account legs up to the month")
             cancelAndIgnoreRemainingEvents()
@@ -125,7 +127,11 @@ private class FakeCategoryRepository : ICategoryRepository {
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }
 
-private class LedgerBalance(private val month: YearMonth, private val balance: Double) : IEntryRepository {
+private class LedgerBalance(
+    private val month: YearMonth,
+    private val balance: Double,
+    private val payment: Double = 0.0,
+) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = if (target == month) balance else 0.0
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
@@ -137,10 +143,12 @@ private class LedgerBalance(private val month: YearMonth, private val balance: D
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
     override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
     override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
-    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
+    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows =
+        com.neoutils.finsight.domain.repository.CardMonthFlows(expense = 0.0, payment = if (month == this.month) payment else 0.0)
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }
 
 private object ThrowingEntryRepository : IEntryRepository {
@@ -159,4 +167,5 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }

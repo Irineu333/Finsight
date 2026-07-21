@@ -39,6 +39,18 @@ data class CardMonthFlows(
     val payment: Double,
 )
 
+/**
+ * The report figures (reais) for an account/card scope over a period, derived from the
+ * ledger. [income]/[expense] are positive magnitudes; [balance] is signed and includes
+ * adjustments; [openingBalance] is the signed scope balance before the period.
+ */
+data class ReportStats(
+    val income: Double,
+    val expense: Double,
+    val balance: Double,
+    val openingBalance: Double,
+)
+
 interface IEntryRepository {
 
     /** The entries (legs) of a transaction, each hydrated with its account. */
@@ -107,6 +119,19 @@ interface IEntryRepository {
         categoryType: AccountType,
         invoiceIds: List<Long>,
     ): Map<Long, Double>
+
+    /**
+     * The income/expense/balance/opening-balance a report shows for an account or card
+     * scope, over [startDate]..[endDate], derived from the ledger. [scopeAccountIds] are
+     * the accounts the report is seen from (a perspective's ASSET accounts, or a card's
+     * LIABILITY account); internal transfers among them are excluded. Empty scope yields
+     * zeros — the caller resolves "all accounts" before calling.
+     */
+    suspend fun reportStats(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ReportStats
 }
 
 /**

@@ -72,4 +72,5 @@ private class FakeReadEntryDao(
         categoryType: String,
         invoiceIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
+    override suspend fun reportStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ReportStatsTotals = throw NotImplementedError()
 }

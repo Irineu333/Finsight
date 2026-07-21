@@ -22,6 +22,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.repository.ReportStats
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
@@ -46,9 +47,10 @@ import kotlin.test.assertEquals
 
 /**
  * Characterizes the account-perspective stats of [ReportViewerViewModel] (sites
- * :84,87,90): it forwards [CalculateReportStatsUseCase] (itself characterized by
- * CalculateReportStatsUseCaseTest). Task 4.11 keeps the numbers; this pins the
- * ViewModel wiring.
+ * :84,87,90): it forwards [CalculateReportStatsUseCase], whose figures now come from
+ * the ledger aggregate (`IEntryRepository.reportStats`, its semantics pinned by
+ * ReportStatsQueryTest). This pins the ViewModel wiring — that the use case's
+ * [ReportStats] surface as `Stats.Account`.
  */
 class ReportViewerViewModelCharacterizationTest {
 
@@ -94,7 +96,13 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(listOf(account)),
             creditCardRepository = fakes.creditCardRepository(),
             invoiceRepository = fakes.invoiceRepository(),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(),
+            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+                entryRepository = fakes.entryRepository(
+                    stats = ReportStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
+                ),
+                accountRepository = fakes.accountRepository(listOf(account)),
+                creditCardRepository = fakes.creditCardRepository(),
+            ),
             calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
                 entryRepository = fakes.entryRepository(),
                 categoryRepository = fakes.categoryRepository,
@@ -161,7 +169,11 @@ class ReportViewerViewModelCharacterizationTest {
             accountRepository = fakes.accountRepository(emptyList()),
             creditCardRepository = fakes.creditCardRepository(listOf(card)),
             invoiceRepository = fakes.invoiceRepository(listOf(invoice)),
-            calculateReportStatsUseCase = CalculateReportStatsUseCase(),
+            calculateReportStatsUseCase = CalculateReportStatsUseCase(
+                entryRepository = fakes.entryRepository(),
+                accountRepository = fakes.accountRepository(emptyList()),
+                creditCardRepository = fakes.creditCardRepository(listOf(card)),
+            ),
             calculateReportCategorySpendingUseCase = CalculateReportCategorySpendingUseCase(
                 entryRepository = fakes.entryRepository(),
                 categoryRepository = fakes.categoryRepository,
@@ -260,7 +272,10 @@ private class Fakes {
         override suspend fun delete(category: Category) = throw NotImplementedError()
     }
 
-    fun entryRepository(owed: Map<Long, Double> = emptyMap()) = object : IEntryRepository {
+    fun entryRepository(
+        owed: Map<Long, Double> = emptyMap(),
+        stats: ReportStats = ReportStats(0.0, 0.0, 0.0, 0.0),
+    ) = object : IEntryRepository {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
@@ -276,6 +291,7 @@ private class Fakes {
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
         override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+        override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ReportStats = stats
     }
 
     val renderer = object : ReportDocumentRenderer {

@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.CardMonthFlows
 import com.neoutils.finsight.domain.repository.InvoiceFlows
+import com.neoutils.finsight.domain.repository.ReportStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -129,5 +130,20 @@ class EntryRepository(
         return entryDao
             .categoryTotalsForInvoices(categoryType.name, invoiceIds)
             .associate { it.accountId to it.total / CENTS_PER_UNIT }
+    }
+
+    override suspend fun reportStats(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): ReportStats {
+        if (scopeAccountIds.isEmpty()) return ReportStats(0.0, 0.0, 0.0, 0.0)
+        val totals = entryDao.reportStats(scopeAccountIds, startDate, endDate)
+        return ReportStats(
+            income = totals.income / CENTS_PER_UNIT,
+            expense = totals.expense / CENTS_PER_UNIT,
+            balance = totals.balance / CENTS_PER_UNIT,
+            openingBalance = totals.openingBalance / CENTS_PER_UNIT,
+        )
     }
 }

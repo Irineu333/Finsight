@@ -1,98 +1,43 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionTarget
-import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.extension.deriveTransactionType
+import com.neoutils.finsight.domain.model.ReportPerspective
+import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.ReportStats
 import kotlinx.datetime.LocalDate
 
 /**
- * The ledger scope a report is computed over. Resolved by the caller from a
- * `ReportPerspective`, because the perspective speaks in facades (a credit-card id)
- * while the ledger speaks in accounts (that card's LIABILITY account).
+ * Report figures derived entirely from the ledger, via a single SQL aggregate
+ * ([IEntryRepository.reportStats]) rather than by summing a loaded transaction list in
+ * memory. This use case only resolves the perspective into the ledger accounts the
+ * report is "seen from" — a perspective's ASSET accounts (all of them, including
+ * archived, when none are selected, so an archived account's history is not silently
+ * dropped) or a card's single LIABILITY account — mirroring
+ * [CalculateReportCategorySpendingUseCase]. `income`/`expense` are the period's
+ * income/expense magnitudes; `balance` their signed sum (adjustments included);
+ * `openingBalance` the signed scope balance before the period. Internal transfers among
+ * the scope's accounts are excluded, exactly as before.
  */
-sealed interface ReportLedgerScope {
-    /** An account perspective. Empty [accountIds] means every ASSET account. */
-    data class Accounts(val accountIds: Set<Long>) : ReportLedgerScope
-
-    /** A single card, addressed by its LIABILITY ledger account (null when the card has none yet). */
-    data class Card(val liabilityAccountId: Long?) : ReportLedgerScope
-}
-
-/**
- * Report figures derived entirely from the ledger (tasks 4.6/4.7): each transaction's
- * hydrated [Entry] legs, classified by [deriveTransactionType] and by account type —
- * no `TransactionType`, `TransactionTarget` or `Transaction.Kind`. `income`/`expense`
- * are the magnitudes of the scope's income/expense legs in the period; `balance` is
- * their signed sum (adjustments included, signed); `openingBalance` is the signed sum
- * of the scope's legs before the period. Internal transfers — transactions whose ASSET
- * legs all fall inside an account scope — are excluded, exactly as before.
- */
-class CalculateReportStatsUseCase {
-    operator fun invoke(
-        transactions: List<Transaction>,
-        scope: ReportLedgerScope,
+class CalculateReportStatsUseCase(
+    private val entryRepository: IEntryRepository,
+    private val accountRepository: IAccountRepository,
+    private val creditCardRepository: ICreditCardRepository,
+) {
+    suspend operator fun invoke(
+        perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
     ): ReportStats {
-        fun Transaction.scopeEntries(): List<Entry> = entries.filter { it.inScope(scope) }
-
-        fun Transaction.isInternalTransfer(): Boolean {
-            if (scope !is ReportLedgerScope.Accounts) return false
-            val assetIds = entries
-                .filter { it.account.type == AccountType.ASSET }
-                .map { it.account.id }
-                .toSet()
-            if (assetIds.size < 2) return false
-            return scope.accountIds.isEmpty() || assetIds.all { it in scope.accountIds }
-        }
-
-        var income = 0L
-        var expense = 0L
-        var balance = 0L
-        transactions
-            .filter { it.date in startDate..endDate && !it.isInternalTransfer() }
-            .forEach { transaction ->
-                transaction.scopeEntries().forEach { entry ->
-                    balance += entry.amount
-                    when (deriveTransactionType(entry.amount, transaction.entries)) {
-                        TransactionType.INCOME -> income += entry.amount
-                        TransactionType.EXPENSE -> expense += -entry.amount
-                        TransactionType.ADJUSTMENT -> Unit
-                    }
+        val scopeAccountIds = when (perspective) {
+            is ReportPerspective.AccountPerspective ->
+                perspective.accountIds.ifEmpty {
+                    accountRepository.getAllAccountsIncludingClosed().map { it.id }
                 }
-            }
 
-        var openingBalance = 0L
-        transactions
-            .filter { it.date < startDate && !it.isInternalTransfer() }
-            .forEach { transaction ->
-                transaction.scopeEntries().forEach { entry -> openingBalance += entry.amount }
-            }
-
-        return ReportStats(
-            income = income / 100.0,
-            expense = expense / 100.0,
-            balance = balance / 100.0,
-            openingBalance = openingBalance / 100.0,
-        )
+            is ReportPerspective.CreditCardPerspective ->
+                listOfNotNull(creditCardRepository.getCreditCardById(perspective.creditCardId)?.accountId)
+        }
+        return entryRepository.reportStats(scopeAccountIds, startDate, endDate)
     }
-
-    data class ReportStats(
-        val income: Double,
-        val expense: Double,
-        val balance: Double,
-        val openingBalance: Double,
-    )
-}
-
-private fun Entry.inScope(scope: ReportLedgerScope): Boolean = when (scope) {
-    is ReportLedgerScope.Accounts ->
-        account.type == AccountType.ASSET &&
-            (scope.accountIds.isEmpty() || account.id in scope.accountIds)
-
-    is ReportLedgerScope.Card ->
-        account.type == AccountType.LIABILITY && account.id == scope.liabilityAccountId
 }

@@ -84,6 +84,7 @@ val transactionsModule = module {
             filterTarget = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
+            entryRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
         )

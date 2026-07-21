@@ -32,6 +32,7 @@ fun Transaction.toTransactionUi(accountId: Long? = null): TransactionUi? {
         date = date,
         categoryId = category?.id,
         categoryIcon = category?.icon,
+        isCategoryArchived = category?.isArchived == true,
         isCardTarget = entries.any { it.account.type == AccountType.LIABILITY },
         isRecurring = recurring != null,
         installmentLabel = installment?.label,

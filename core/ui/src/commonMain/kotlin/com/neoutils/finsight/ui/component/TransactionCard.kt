@@ -46,6 +46,13 @@ fun TransactionCard(
 ) {
     val formatter = LocalCurrencyFormatter.current
     val color = transaction.color()
+    // The transaction keeps its own colour; only its category icon reads muted when
+    // the category is archived — present in the history, out of circulation.
+    val iconColor = if (transaction.categoryIcon != null && transaction.isCategoryArchived) {
+        colorScheme.onSurfaceVariant
+    } else {
+        color
+    }
 
     Card(
         onClick = onClick,
@@ -65,7 +72,7 @@ fun TransactionCard(
         ) {
             Box {
                 Surface(
-                    color = color.copy(alpha = 0.2f),
+                    color = iconColor.copy(alpha = 0.2f),
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.size(48.dp)
                 ) {
@@ -78,14 +85,14 @@ fun TransactionCard(
                             Icon(
                                 painter = categoryIcon(),
                                 contentDescription = null,
-                                tint = color,
+                                tint = iconColor,
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {
                             Icon(
                                 imageVector = transaction.icon(),
                                 contentDescription = null,
-                                tint = color,
+                                tint = iconColor,
                                 modifier = Modifier.size(24.dp)
                             )
                         }

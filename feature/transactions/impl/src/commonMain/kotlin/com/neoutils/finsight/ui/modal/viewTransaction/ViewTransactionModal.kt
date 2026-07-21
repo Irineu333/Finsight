@@ -114,8 +114,15 @@ class ViewTransactionModal(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box {
+                    // The transaction keeps its own colour; only the category icon reads
+                    // muted when the category is archived, as elsewhere (`displayColor`).
+                    val iconColor = if (uiState.category?.isArchived == true) {
+                        colorScheme.onSurfaceVariant
+                    } else {
+                        uiState.transactionColor()
+                    }
                     Surface(
-                        color = uiState.transactionColor().copy(alpha = 0.2f),
+                        color = iconColor.copy(alpha = 0.2f),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.size(64.dp),
                     ) {
@@ -123,7 +130,7 @@ class ViewTransactionModal(
                             Icon(
                                 painter = category.icon(),
                                 contentDescription = null,
-                                tint = uiState.transactionColor(),
+                                tint = iconColor,
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(16.dp)

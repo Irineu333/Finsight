@@ -21,6 +21,9 @@ data class TransactionUi(
     val date: LocalDate,
     val categoryId: Long?,
     val categoryIcon: CategoryLazyIcon?,
+    // An archived category still labels its history, but its icon reads muted — the
+    // same rule as `Category.displayColor`. Carried flat because the DTO has no domain.
+    val isCategoryArchived: Boolean = false,
     val isCardTarget: Boolean,
     val isRecurring: Boolean,
     val installmentLabel: String?,

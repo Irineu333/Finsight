@@ -104,6 +104,8 @@ val categoriesModule = module {
             categoryId = it.get(),
             categoryRepository = get(),
             entryRepository = get(),
+            recurringRepository = get(),
+            budgetRepository = get(),
             crashlytics = get(),
         )
     }

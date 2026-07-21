@@ -9,9 +9,14 @@ import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Budget
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.coroutines.Dispatchers
@@ -116,12 +121,36 @@ class ViewCategoryViewModelTest {
         categoryRepository: FakeCategoryRepository,
         crashlytics: FakeCrashlytics = FakeCrashlytics(),
         entryRepository: FakeEntryRepository = FakeEntryRepository(),
+        recurringRepository: IRecurringRepository = FakeRecurringRepository(),
+        budgetRepository: IBudgetRepository = FakeBudgetRepository(),
     ) = ViewCategoryViewModel(
         categoryId = 1L,
         categoryRepository = categoryRepository,
         entryRepository = entryRepository,
+        recurringRepository = recurringRepository,
+        budgetRepository = budgetRepository,
         crashlytics = crashlytics,
     )
+
+    private class FakeRecurringRepository(private val has: Boolean = false) : IRecurringRepository {
+        override suspend fun hasRecurringForCategory(categoryId: Long) = has
+        override suspend fun hasRecurringForAccount(accountId: Long) = false
+        override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
+        override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
+        override fun observeRecurringById(id: Long): Flow<Recurring?> = flowOf(null)
+        override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+        override suspend fun update(recurring: Recurring) = throw NotImplementedError()
+        override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
+    }
+
+    private class FakeBudgetRepository(private val has: Boolean = false) : IBudgetRepository {
+        override suspend fun hasBudgetForCategory(categoryId: Long) = has
+        override fun observeAllBudgets(): Flow<List<Budget>> = flowOf(emptyList())
+        override suspend fun getAllBudgets(): List<Budget> = emptyList()
+        override suspend fun insert(budget: Budget) = throw NotImplementedError()
+        override suspend fun update(budget: Budget) = throw NotImplementedError()
+        override suspend fun delete(budget: Budget) = throw NotImplementedError()
+    }
 
     // The ViewModel starts on the current month (Clock.System.now()).
     private val currentMonth = Clock.System.now().toYearMonth()
@@ -148,6 +177,41 @@ class ViewCategoryViewModelTest {
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
             assertEquals(42.5, content.totalAmount)
             assertEquals(2, content.transactionCount)
+        }
+    }
+
+    @Test
+    fun `an unused category with no dependents offers delete`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository)
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, name = "Food", accountId = 10L))
+            assertEquals(RetireAction.DELETE, assertIs<ViewCategoryUiState.Content>(awaitItem()).retireAction)
+        }
+    }
+
+    @Test
+    fun `a category still in a budget offers archive instead of delete`() = runTest(dispatcher) {
+        // Deleting it would be refused (budget CASCADE), so the screen must offer the
+        // action that actually works.
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository, budgetRepository = FakeBudgetRepository(has = true))
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, name = "Food", accountId = 10L))
+            assertEquals(RetireAction.ARCHIVE, assertIs<ViewCategoryUiState.Content>(awaitItem()).retireAction)
+        }
+    }
+
+    @Test
+    fun `a category a recurring points at offers archive instead of delete`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository, recurringRepository = FakeRecurringRepository(has = true))
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, name = "Food", accountId = 10L))
+            assertEquals(RetireAction.ARCHIVE, assertIs<ViewCategoryUiState.Content>(awaitItem()).retireAction)
         }
     }
 

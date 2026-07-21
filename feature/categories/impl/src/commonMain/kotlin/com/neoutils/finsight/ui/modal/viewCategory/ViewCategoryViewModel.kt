@@ -6,8 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.displaySign
@@ -28,6 +30,8 @@ class ViewCategoryViewModel(
     categoryId: Long,
     categoryRepository: ICategoryRepository,
     private val entryRepository: IEntryRepository,
+    private val recurringRepository: IRecurringRepository,
+    private val budgetRepository: IBudgetRepository,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -54,9 +58,15 @@ class ViewCategoryViewModel(
         val displaySign = category.type.accountType.displaySign
         val totalAmount = entryRepository.balanceInMonth(yearMonth, category.accountId) * displaySign
         val transactionCount = entryRepository.entryCountInMonth(yearMonth, category.accountId)
+        // Deleting is refused when the category has movement OR a budget/recurring
+        // still points at it (DeleteCategoryUseCase), so those cases offer archiving
+        // instead — the category is kept, and its dependents keep pointing at it.
+        val mustPreserve = entryRepository.hasEntries(category.accountId) ||
+            budgetRepository.hasBudgetForCategory(category.id) ||
+            recurringRepository.hasRecurringForCategory(category.id)
         ViewCategoryUiState.Content(
             category = category,
-            retireAction = retireActionOf(entryRepository.hasEntries(category.accountId)),
+            retireAction = retireActionOf(mustPreserve),
             selectedYearMonth = yearMonth,
             totalAmount = totalAmount,
             transactionCount = transactionCount,

@@ -13,8 +13,8 @@ class RetireActionTest {
 
     @Test
     fun `movement makes it a closure and its absence a deletion`() {
-        assertEquals(RetireAction.ARCHIVE, retireActionOf(hasMovement = true))
-        assertEquals(RetireAction.DELETE, retireActionOf(hasMovement = false))
+        assertEquals(RetireAction.ARCHIVE, retireActionOf(mustPreserve = true))
+        assertEquals(RetireAction.DELETE, retireActionOf(mustPreserve = false))
     }
 
     @Test

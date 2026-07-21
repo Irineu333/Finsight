@@ -27,6 +27,14 @@ enum class RetireAction(
     ARCHIVE(label = Res.string.retire_action_archive, icon = Icons.Default.Archive),
 }
 
-/** Maps the ledger fact to the action a screen offers. */
-fun retireActionOf(hasMovement: Boolean): RetireAction =
-    if (hasMovement) RetireAction.ARCHIVE else RetireAction.DELETE
+/**
+ * Maps "can this be deleted?" to the action a screen offers: something that must be
+ * preserved is archived, everything else is deleted.
+ *
+ * For an account or card that means movement (entries referencing it). For a
+ * category it is broader — a budget or a recurring still pointing at it also blocks
+ * deletion (`DeleteCategoryUseCase`), so those must archive too, or the screen would
+ * offer a delete the use case refuses.
+ */
+fun retireActionOf(mustPreserve: Boolean): RetireAction =
+    if (mustPreserve) RetireAction.ARCHIVE else RetireAction.DELETE

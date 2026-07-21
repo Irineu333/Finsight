@@ -29,6 +29,7 @@ class RecurringRepositoryTest {
         override suspend fun update(entity: RecurringEntity) = throw NotImplementedError()
         override suspend fun countByAccount(accountId: Long): Int = throw NotImplementedError()
         override suspend fun countByCreditCard(creditCardId: Long): Int = throw NotImplementedError()
+        override suspend fun countByCategory(categoryId: Long): Int = throw NotImplementedError()
         override suspend fun delete(entity: RecurringEntity) = throw NotImplementedError()
     }
 

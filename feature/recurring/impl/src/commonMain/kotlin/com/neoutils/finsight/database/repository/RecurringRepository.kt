@@ -61,6 +61,9 @@ class RecurringRepository(
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) =
         dao.countByCreditCard(creditCardId) > 0
 
+    override suspend fun hasRecurringForCategory(categoryId: Long) =
+        dao.countByCategory(categoryId) > 0
+
     override suspend fun insert(recurring: Recurring) {
         dao.insert(mapper.toEntity(recurring))
     }

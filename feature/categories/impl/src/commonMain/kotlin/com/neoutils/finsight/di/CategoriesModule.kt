@@ -67,6 +67,8 @@ val categoriesModule = module {
         DeleteCategoryUseCase(
             categoryRepository = get(),
             entryRepository = get(),
+            recurringRepository = get(),
+            budgetRepository = get(),
         )
     }
 

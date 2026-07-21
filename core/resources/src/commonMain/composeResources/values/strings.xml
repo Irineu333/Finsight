@@ -14,6 +14,7 @@
     <string name="account_error_has_balance">Esta conta ainda tem saldo. Transfira, gaste ou ajuste o saldo antes de arquivá-la.</string>
     <!-- Neutral wording: the same guard refuses deleting an account and a card. -->
     <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou encerre-as antes de excluir.</string>
+    <string name="account_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>

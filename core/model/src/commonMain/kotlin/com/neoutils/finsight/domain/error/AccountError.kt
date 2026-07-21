@@ -4,6 +4,7 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.account_error_already_exist
 import com.neoutils.finsight.resources.account_error_empty_name
 import com.neoutils.finsight.resources.account_error_has_balance
+import com.neoutils.finsight.resources.account_error_has_budget
 import com.neoutils.finsight.resources.account_error_has_recurring
 import com.neoutils.finsight.resources.account_error_has_transactions
 import com.neoutils.finsight.resources.account_error_not_found
@@ -34,6 +35,12 @@ enum class AccountError(val message: String) {
      * the orphan is never created, rather than remedied afterwards.
      */
     HAS_RECURRING(message = "Cannot delete an account a recurring transaction still uses"),
+
+    /**
+     * `budget_categories.categoryId` is CASCADE: deleting a budgeted category would
+     * strip it from the budget silently. Refused so the loss is never created.
+     */
+    HAS_BUDGET(message = "Cannot delete a category a budget still uses"),
 }
 
 fun AccountError.toUiText() = when (this) {
@@ -44,4 +51,5 @@ fun AccountError.toUiText() = when (this) {
     AccountError.HAS_TRANSACTIONS -> UiText.Res(Res.string.account_error_has_transactions)
     AccountError.HAS_BALANCE -> UiText.Res(Res.string.account_error_has_balance)
     AccountError.HAS_RECURRING -> UiText.Res(Res.string.account_error_has_recurring)
+    AccountError.HAS_BUDGET -> UiText.Res(Res.string.account_error_has_budget)
 }

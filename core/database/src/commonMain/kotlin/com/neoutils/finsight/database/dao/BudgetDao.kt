@@ -26,6 +26,9 @@ interface BudgetDao {
     @Query("DELETE FROM budget_categories WHERE budgetId = :budgetId")
     suspend fun deleteBudgetCategories(budgetId: Long)
 
+    @Query("SELECT COUNT(*) FROM budget_categories WHERE categoryId = :categoryId")
+    suspend fun countByCategory(categoryId: Long): Int
+
     @Update
     suspend fun update(budget: BudgetEntity)
 

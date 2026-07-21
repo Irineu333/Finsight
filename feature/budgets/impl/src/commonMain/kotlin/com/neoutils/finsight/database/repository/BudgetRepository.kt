@@ -62,4 +62,9 @@ class BudgetRepository(
     override suspend fun delete(budget: Budget) {
         dao.delete(mapper.toEntity(budget))
     }
+
+    // `budget_categories.categoryId` is CASCADE: deleting the category would strip
+    // it from every budget silently. The delete use case refuses instead.
+    override suspend fun hasBudgetForCategory(categoryId: Long): Boolean =
+        dao.countByCategory(categoryId) > 0
 }

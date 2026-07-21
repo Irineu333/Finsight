@@ -9,4 +9,5 @@ interface IBudgetRepository {
     suspend fun insert(budget: Budget)
     suspend fun update(budget: Budget)
     suspend fun delete(budget: Budget)
+    suspend fun hasBudgetForCategory(categoryId: Long): Boolean
 }

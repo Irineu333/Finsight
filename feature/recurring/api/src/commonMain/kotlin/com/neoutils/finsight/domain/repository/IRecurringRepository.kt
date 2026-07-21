@@ -14,6 +14,7 @@ interface IRecurringRepository {
      */
     suspend fun hasRecurringForAccount(accountId: Long): Boolean
     suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean
+    suspend fun hasRecurringForCategory(categoryId: Long): Boolean
     suspend fun insert(recurring: Recurring)
     suspend fun update(recurring: Recurring)
     suspend fun delete(recurring: Recurring)

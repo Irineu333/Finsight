@@ -156,6 +156,7 @@ class RetireAccountGuardsTest {
 private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurringRepository {
     override suspend fun hasRecurringForAccount(accountId: Long) = hasRecurring
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) = hasRecurring
+    override suspend fun hasRecurringForCategory(categoryId: Long) = hasRecurring
     override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
     override fun observeRecurringById(id: Long): Flow<Recurring?> = flowOf(null)
     override suspend fun insert(recurring: Recurring) = throw NotImplementedError()

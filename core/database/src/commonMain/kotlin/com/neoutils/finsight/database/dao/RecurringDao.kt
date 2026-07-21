@@ -26,6 +26,9 @@ interface RecurringDao {
     @Query("SELECT COUNT(*) FROM recurring WHERE creditCardId = :creditCardId")
     suspend fun countByCreditCard(creditCardId: Long): Int
 
+    @Query("SELECT COUNT(*) FROM recurring WHERE categoryId = :categoryId")
+    suspend fun countByCategory(categoryId: Long): Int
+
     @Insert
     suspend fun insert(entity: RecurringEntity): Long
 

@@ -13,6 +13,7 @@
     <string name="account_error_has_transactions">This account has transactions and cannot be deleted. Archive it to preserve the history.</string>
     <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before archiving the account.</string>
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or stop them before deleting.</string>
+    <string name="account_error_has_budget">This category is in a budget. Remove it from the budget before deleting.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>

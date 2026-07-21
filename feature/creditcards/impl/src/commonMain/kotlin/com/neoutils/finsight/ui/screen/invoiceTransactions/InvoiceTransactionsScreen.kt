@@ -556,30 +556,32 @@ private fun InvoiceActions(
             }
         }
 
-        if (summary.canReopen) {
-            OutlinedButton(
-                onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFFFFA726)
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(Res.string.invoice_transactions_reopen_invoice),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
+        if (summary.status.isClosed) {
+            if (summary.canReopen) {
+                OutlinedButton(
+                    onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFFFA726)
+                    ),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                        brush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFFA726).copy(alpha = 0.5f))
+                    ),
+                    contentPadding = PaddingValues(12.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(Res.string.invoice_transactions_reopen_invoice),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
 
             Button(

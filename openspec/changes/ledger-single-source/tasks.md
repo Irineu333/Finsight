@@ -535,7 +535,15 @@
 - [x] 10d.6 **Modal de recorrência não sinalizava fonte inutilizável.** A lista já mostra o badge "Precisa de atenção" (`!hasUsableSource`), mas `ViewRecurringModal`/`ReactivateRecurringModal` só sinalizavam pela ausência do atalho — invisível. Mesma string, mesma cor (`Warning`), no modal. No reativar, avisa antes que reativar não restaura a fonte arquivada.
 - [x] 10d.7 **Imports órfãos.** Sete imports mortos em arquivos tocados pela série (report, transactions, accounts, dashboard) removidos. `AccountTypeMapper` já era fonte única, sem cópias inline (confirmado pela higiene).
 
-> **Latentes/sem ação (verificados inofensivos hoje):** multi-moeda inerte (writer fixa BRL, sem UI de moeda por conta — vira bug só se habilitarem sem tocar o writer); **desarquivar não existe** (`AccountDao` só tem `close()`; comentário "single flag away" é aspiracional); `closedLegBlockingChange` usa `isPermanent` (inclui EQUITY) mas EQUITY nunca é arquivável e espelha de propósito a pré-condição de `ArchiveAccountUseCase`; `TransferBetweenAccountsUseCase`/`ConfirmRecurringUseCase` fallbacks — defesa-em-profundidade inalcançável pela UI; TODO pré-existente em `Validate*NameUseCase` (commit 975ef2be1, anterior à série).
+> **Latentes/sem ação (verificados inofensivos hoje):** multi-moeda inerte (writer fixa BRL, sem UI de moeda por conta — vira bug só se habilitarem sem tocar o writer); `closedLegBlockingChange` usa `isPermanent` (inclui EQUITY) mas EQUITY nunca é arquivável e espelha de propósito a pré-condição de `ArchiveAccountUseCase`; `TransferBetweenAccountsUseCase`/`ConfirmRecurringUseCase` fallbacks — defesa-em-profundidade inalcançável pela UI; TODO pré-existente em `Validate*NameUseCase` (commit 975ef2be1, anterior à série).
+>
+> **Escopo — desarquivar é FORA do escopo desta change (decisão do usuário).** Não é um
+> gap latente, é uma fronteira deliberada. **Arquivar** entrou *só* porque o razão força:
+> não se pode perder uma conta que entries referenciam, então encerra-se em vez de apagar
+> (§6b). **Desarquivar** não tem essa força motriz — é feature à parte, exatamente como
+> arquivar seria se o razão não a impusesse. `AccountDao` tem só `close()`; o comentário
+> "reopening is a single flag away" descreve a facilidade *técnica*, não uma intenção
+> desta change. Nada aqui depende de reabrir, e nenhum dos achados acima muda esse limite.
 
 ### 10e. Caça de bugs multiagente — cinco caçadores adversariais
 

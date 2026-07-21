@@ -18,9 +18,11 @@ import kotlin.test.assertTrue
 /**
  * A retroactive invoice with a balance now reaches CLOSED (CloseInvoiceUseCase), so
  * the UI offers to reopen it — a path unreachable on main, where a retroactive invoice
- * always went straight to PAID. Reopening it as OPEN would leave two OPEN invoices on
- * the card and erase RETROACTIVE. Reopening must instead restore RETROACTIVE, and must
- * never produce a second OPEN by any path.
+ * always went straight to PAID. Closing overwrites RETROACTIVE with CLOSED and nothing
+ * persists the origin, so reopen cannot tell a formerly-retroactive invoice from any
+ * other closed one and treats them alike (accepted decision): it reopens as OPEN and
+ * demotes the current cycle to FUTURE. The one invariant reopen must never break is
+ * two OPEN invoices on the same card.
  */
 class ReopenInvoiceUseCaseTest {
 
@@ -48,36 +50,21 @@ class ReopenInvoiceUseCaseTest {
     )
 
     @Test
-    fun `reopening a retroactive invoice restores RETROACTIVE and never creates a second OPEN`() = runTest {
-        val retroactive = invoice(1, YearMonth(2026, 1), Invoice.Status.CLOSED)
-            .copy(status = Invoice.Status.RETROACTIVE, closedAt = LocalDate(2026, 2, 5))
-        val current = invoice(2, YearMonth(2026, 3), Invoice.Status.OPEN)
-        val repo = FakeInvoiceStore(retroactive, current)
+    fun `reopening a formerly-retroactive closed invoice reopens as OPEN with a single OPEN left`() = runTest {
+        // A retroactive invoice for a past cycle, closed with a balance: status is now
+        // CLOSED, indistinguishable from any other closed invoice. Its closingMonth
+        // aligns with the current cycle's openingMonth.
+        val pastCycle = invoice(1, YearMonth(2026, 1), Invoice.Status.CLOSED)
+        val current = invoice(2, YearMonth(2026, 2), Invoice.Status.OPEN)
+        val repo = FakeInvoiceStore(pastCycle, current)
 
-        val result = ReopenInvoiceUseCase(repo)(retroactive.id)
-
-        val reopened = result.getOrNull()
-        assertEquals(Invoice.Status.RETROACTIVE, reopened?.status)
-        assertNull(reopened?.closedAt)
-        // The current cycle is untouched: still exactly one OPEN on the card.
-        assertEquals(
-            listOf(Invoice.Status.RETROACTIVE, Invoice.Status.OPEN),
-            repo.all().map { it.status },
-        )
-        assertEquals(1, repo.all().count { it.status == Invoice.Status.OPEN })
-    }
-
-    @Test
-    fun `reopening the latest closed invoice demotes its open successor`() = runTest {
-        val closed = invoice(1, YearMonth(2026, 1), Invoice.Status.CLOSED)
-        val successor = invoice(2, YearMonth(2026, 2), Invoice.Status.OPEN)
-        val repo = FakeInvoiceStore(closed, successor)
-
-        val reopened = ReopenInvoiceUseCase(repo)(closed.id).getOrNull()
+        val reopened = ReopenInvoiceUseCase(repo)(pastCycle.id).getOrNull()
 
         assertEquals(Invoice.Status.OPEN, reopened?.status)
         assertNull(reopened?.closedAt)
-        assertEquals(Invoice.Status.FUTURE, repo.byId(successor.id)?.status)
+        // Accepted behavior: the current cycle steps back to FUTURE, so the card is
+        // left with exactly one OPEN invoice — never two.
+        assertEquals(Invoice.Status.FUTURE, repo.byId(current.id)?.status)
         assertEquals(1, repo.all().count { it.status == Invoice.Status.OPEN })
     }
 

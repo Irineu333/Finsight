@@ -30,26 +30,12 @@ class ReopenInvoiceUseCase(
             InvoiceException(InvoiceError.CannotReopenPaidInvoice)
         }
 
-        // A retroactive invoice belongs to a past cycle and never owned the current
-        // OPEN one — closing it opens no successor (CloseInvoiceUseCase). Reopening it
-        // must restore RETROACTIVE, not OPEN: turning it OPEN would leave two OPEN
-        // invoices on the card and erase the RETROACTIVE status the cycle depends on.
-        // Reachable only since a retroactive invoice with a balance now reaches CLOSED
-        // instead of going straight to PAID.
-        if (invoice.status.isRetroactive) {
-            return@either invoice.copy(
-                status = Invoice.Status.RETROACTIVE,
-                closedAt = null,
-                paidAt = null,
-            ).also {
-                invoiceRepository.update(it)
-            }
-        }
-
-        // A closed invoice is reopened by demoting the successor that closing it opened
-        // (openingMonth == this.closingMonth) back to FUTURE. That successor must be the
-        // current OPEN one; if it is not, this is a mid-chain invoice and reopening it
-        // would leave two OPEN invoices on the card — refuse.
+        // Reopening any closed invoice — including one that was retroactive, whose
+        // RETROACTIVE status closing already overwrote with CLOSED and which nothing
+        // persists — demotes back to FUTURE the successor that would otherwise stay
+        // OPEN alongside it (openingMonth == this.closingMonth). That successor must be
+        // the current OPEN one; if it is absent or not OPEN, reopening would leave two
+        // OPEN invoices on the card — refuse.
         val successor = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
             .find { existing -> existing.openingMonth == invoice.closingMonth }
 

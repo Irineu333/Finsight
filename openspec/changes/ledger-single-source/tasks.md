@@ -577,21 +577,35 @@
 > refactor. Ficam registrados para uma change própria; esta não os toca.
 >
 > - **10e.7 — `ReopenInvoiceUseCase` (2ª fatura OPEN + status RETROACTIVE apagado).**
->   ⚠️ **RECLASSIFICADO e CORRIGIDO (achado do usuário). A atribuição "100% pré-existente"
->   estava errada — verificou o arquivo errado.** O `ReopenInvoiceUseCase.kt` de fato está
+>   ⚠️ **RECLASSIFICADO e CORRIGIDO (achado do usuário, em duas rodadas). A atribuição "100%
+>   pré-existente" estava errada — verificou o arquivo errado.** O `ReopenInvoiceUseCase.kt` está
 >   inalterado desde a main, mas *alcançabilidade não é propriedade de um arquivo*. Na main,
->   `CloseInvoiceUseCase` marcava toda fatura **retroativa** como `PAID` ao fechar (early
->   return incondicional), e `PAID` não reabre — **reabrir retroativa era inalcançável**. Esta
->   change (9j.1) passou a rotear retroativa **com saldo** para `CLOSED` (`CloseInvoiceUseCase:64`),
->   e a UI oferece reabrir para todo `isClosed` — abrindo a porta ao bug. **Regressão desta
->   change**, não pré-existente: efeito colateral de correção não varrido, exatamente o padrão
->   que este arquivo cataloga. **Fix (§10c/decisão do usuário):** reabrir retroativa restaura
->   `RETROACTIVE` (não `OPEN`), sem tocar o ciclo corrente; reabrir `CLOSED` só rebaixa a
->   sucessora se ela for a `OPEN` corrente, senão recusa (`InvoiceError.CannotReopenInvoice`) —
->   **nunca duas OPEN**. Teste `ReopenInvoiceUseCaseTest` (5 casos), vermelho sem o fix nos dois
->   caminhos. **Nota:** o sub-caso "mid-chain de fatura normal" *é* pré-existente (reabrir existe
->   na main para `CLOSED`), mas a guarda o fecha de graça. A 4b.8 (que dizia ter estreitado o use
->   case para `CLOSED`) nunca aterrissou; substituída por esta guarda de invariante.
+>   `CloseInvoiceUseCase` marcava toda fatura **retroativa** como `PAID` ao fechar (early return
+>   incondicional), e `PAID` não reabre — **reabrir retroativa era inalcançável**. Esta change
+>   (9j.1) passou a rotear retroativa **com saldo** para `CLOSED` (`CloseInvoiceUseCase:64,71`),
+>   e a UI oferece reabrir para todo `isClosed` — abrindo a porta. **Regressão desta change.**
+>
+>   ⚠️ **Um 1º fix meu não pegou — e o teste dele era falso.** Eu roteei reabrir por
+>   `if (invoice.status.isRetroactive)` para restaurar `RETROACTIVE`. Mas fechar **já sobrescreveu**
+>   `RETROACTIVE` por `CLOSED` (`CloseInvoiceUseCase:71`) e **nada persiste a origem** — o ramo é
+>   código morto, nunca dispara. O teste passou verde porque construía uma `Invoice` com
+>   `status = RETROACTIVE` e mandava reabrir — estado que a UI nunca oferece (o botão gateia
+>   `isClosed`). **Dublê mais permissivo que a produção, a 7ª reincidência do padrão nesta change.**
+>
+>   **Pergunta do usuário que fechou o desenho:** *como identificar com segurança que uma fatura
+>   agora `CLOSED` era retroativa?* Resposta verificada: **não dá** — `InvoiceEntity` só tem a coluna
+>   `status`, `CLOSED` apagou `RETROACTIVE`, e o sinal estrutural ("sem sucessora em
+>   `openingMonth == closingMonth`") **colide** com uma fatura normal recém-fechada exatamente no
+>   caso alcançável. A informação se perde no fechamento.
+>
+>   **Decisão do usuário: aceitar reabrir como OPEN.** Reabrir uma retroativa fechada = reabrir
+>   qualquer `CLOSED`: vira `OPEN` e a fatura corrente recua para `FUTURE`. A guarda garante o único
+>   invariante que importa — **nunca duas OPEN**: só rebaixa a sucessora se ela for a `OPEN` corrente,
+>   senão recusa (`InvoiceError.CannotReopenInvoice`). O ramo morto de retroativa saiu. Teste
+>   `ReopenInvoiceUseCaseTest` (4 casos); o de mid-chain fica **vermelho contra a main** (que cria a
+>   2ª OPEN). A 4b.8 (que dizia ter estreitado o use case para `CLOSED`) nunca aterrissou; substituída
+>   por esta guarda. **Consequência aceita e registrada:** a identidade retroativa não sobrevive ao
+>   fechamento, e reabrir torna o ciclo passado o corrente até o usuário re-fechar.
 > - **10e.8 — Parcelamento (numeração X/N e rateio de centavos).** (a) Excluir 1 parcela
 >   do meio decrementa `count` sem renumerar → "12/11", progresso >100%. O decremento já
 >   estava na main (`OperationRepository:298`, `remainingCount = countByInstallmentId - 1`,

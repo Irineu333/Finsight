@@ -41,7 +41,7 @@ Somado a isso, o vocabulário está invertido: `Transaction` nomeia a **perna** 
 ## Capabilities
 
 ### New Capabilities
-- `account-lifecycle`: contas com lançamentos são encerradas, nunca apagadas — o tipo real é preservado, o histórico permanece, e encerrar com saldo gera lançamento de baixa contra `EQUITY`, tornando explícito o dinheiro que hoje evapora do patrimônio sem registro.
+- `account-lifecycle`: contas com lançamentos são encerradas, nunca apagadas — o tipo real é preservado, o histórico permanece, e encerrar uma conta **permanente** com saldo é **recusado** (o usuário resolve o saldo antes — transferir, gastar ou ajustar — em vez de o sistema inventar uma baixa que ele não pediu). *(A proposta original gerava a baixa automática; a decisão 8.14 a reverteu — ver `specs/account-lifecycle` e tasks §8.14.)*
 - `presentation-mapping`: modelos de UI como DTOs planos sem grafo de domínio, e mappers como o único lugar onde domínio vira apresentação (resolução de perspectiva, derivação de rótulo, inversão de sinal, formatação de valor).
 
 ### Modified Capabilities

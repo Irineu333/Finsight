@@ -8,9 +8,13 @@ import com.neoutils.finsight.domain.model.Account
  *
  * The ledger cannot lose an account that entries reference — its history would
  * stop balancing — so an account with movement is closed: the rows stay, the real
- * type is preserved, and the account only leaves the active listings. Closing
- * with a balance writes a dated write-off against reconciliation, so the amount
- * becomes an explicit equity movement instead of quietly leaving net worth.
+ * type is preserved, and the account only leaves the active listings. Closing a
+ * **permanent** account (ASSET/LIABILITY/EQUITY) with a non-zero balance is
+ * **refused** (`AccountError.HAS_BALANCE`): archiving does not invent a write-off
+ * to zero it — that would put a movement the user never made into their history —
+ * so they resolve it first, by transferring, spending or adjusting. A category is
+ * a *temporary* account and archives at any balance: its balance is a period
+ * total, not money sitting anywhere. (Decision 8.14 reversed the earlier write-off.)
  *
  * Closing an account with no movement is **allowed**: it violates nothing, it
  * just is not the action a screen would offer — `retireActionOf` sends that case

@@ -564,7 +564,22 @@
 
 - [x] 10e.6 **`DeleteCategoryUseCase` sem guardas de orçamento/recorrência — PERDA DE DADO.** A única guarda era `hasEntries`. Uma categoria sem movimento mas num orçamento passava, e o CASCADE de `budget_categories` a removia do orçamento **em silêncio**; referenciada por recorrência, o SET_NULL de `recurring.categoryId` a anulava. Conta e cartão já recusavam (10a/10b.4); categoria — o único dos três `delete` que nasceu nesta change — não replicou a guarda. Adicionadas: `AccountError.HAS_BUDGET` (string nova, pt/en) + `IBudgetRepository.hasBudgetForCategory` (`BudgetDao.countByCategory`); reuso de `AccountError.HAS_RECURRING` + `IRecurringRepository.hasRecurringForCategory` (`RecurringDao.countByCategory`). `feature:categories:impl` ganhou deps de `recurring:api`/`budgets:api`. Teste em `DeleteCategoryGuardsTest` (quatro casos). Mesmo padrão que o usuário aprovou na 10b.4.
   - **Oferta de arquivamento (decisão do usuário):** como a categoria sem movimento passava a ter a exclusão recusada por orçamento/recorrência, `ViewCategoryViewModel` passa a oferecer **arquivar** nesses casos — `retireAction = retireActionOf(hasEntries || hasBudget || hasRecurring)`. O parâmetro de `retireActionOf` foi generalizado de `hasMovement` para `mustPreserve` (conta/cartão seguem passando movimento; categoria passa o OR). Casos novos em `ViewCategoryViewModelTest`.
-- [ ] 10e.7 **`ReopenInvoiceUseCase` — 2ª fatura OPEN e status RETROACTIVE apagado (documentado, decisão do usuário: não corrigir agora).** Reabrir uma fatura retroativa fechada, ou uma do meio de uma cadeia de fechamentos, não encontra a sucessora a rebaixar (`find { OPEN && openingMonth == closingMonth }`) → deixa **duas OPEN no mesmo cartão** → compras novas caem em fatura arbitrária (`getOpenInvoice` usa LIMIT 1). E `copy(status = OPEN)` é incondicional, apagando `RETROACTIVE` → ao fechar de novo, `CloseInvoiceUseCase` abre sucessora no passado. Preservar o status é simples; a invariante "≤1 OPEN por cartão" é redesenho. Pode ser pré-existente ao refactor.
-- [ ] 10e.8 **Parcelamento — numeração e rateio (documentado, decisão do usuário: não corrigir agora; provavelmente pré-existente).** (a) Excluir 1 parcela do meio decrementa `count` mas não renumera as restantes → exibe "12/11" e progresso >100% (`removeRow` + `InstallmentUiMapper`). (b) Rateio `total/n` em Double sem absorver o resto na última parcela → R$100 em 3x lança R$99,99 mas `installment.totalAmount` guarda R$100 (`AddInstallmentUseCaseImpl`); Σ=0 preservado, é inconsistência de exibição.
+> **Fora do escopo desta change — bugs PRÉ-EXISTENTES (decisão do usuário).** Confirmado
+> por git contra a base (`main` = 5f2fa697): a lógica com o defeito já existia antes do
+> refactor. Ficam registrados para uma change própria; esta não os toca.
+>
+> - **10e.7 — `ReopenInvoiceUseCase` (2ª fatura OPEN + status RETROACTIVE apagado).** O
+>   arquivo está **inalterado desde a main** (`git diff main HEAD` vazio) — bug 100%
+>   pré-existente. Reabrir retroativa fechada, ou uma do meio de uma cadeia, não acha a
+>   sucessora a rebaixar (`find { OPEN && openingMonth == closingMonth }`) → **duas OPEN no
+>   mesmo cartão** → compra nova cai em fatura arbitrária (`getOpenInvoice` = LIMIT 1); e
+>   `copy(status = OPEN)` incondicional apaga `RETROACTIVE`. Não introduzido aqui.
+> - **10e.8 — Parcelamento (numeração X/N e rateio de centavos).** (a) Excluir 1 parcela
+>   do meio decrementa `count` sem renumerar → "12/11", progresso >100%. O decremento já
+>   estava na main (`OperationRepository:298`, `remainingCount = countByInstallmentId - 1`,
+>   hoje renomeado para `TransactionRepository`). (b) Rateio `total/count` em Double sem
+>   absorver o resto na última parcela → R$100 em 3x lança R$99,99 mas `totalAmount` guarda
+>   R$100; a divisão `total/count` já existia na main (`InstallmentUiMapper:24`). Σ=0
+>   preservado — inconsistência de exibição, pré-existente ao refactor.
 
 > **Menores/aceitos (documentado):** `CloseInvoiceUseCase` descarta o `Either` de `openInvoiceUseCase` (fecha com sucesso mesmo se abrir a sucessora falhar); guarda de exclusão de conta/cartão conta recorrências **inativas** (aceito na 10b.4); ações de fatura em cartão arquivado sem guarda de domínio (inserção de fatura FUTURE antes da escrita pode deixar linha órfã — protegido só pelo seletor de UI; ver 10d.5); `DeleteInstallmentUseCaseImpl` chama `deleteInstallmentById` redundante com `removeRow`; `getCreditCardById` devolve `isArchived=false` (query plana). Refutado: `ConfirmRecurringUseCase` **não** duplica transação (upsert por índice único `(recurringId, yearMonth)`).

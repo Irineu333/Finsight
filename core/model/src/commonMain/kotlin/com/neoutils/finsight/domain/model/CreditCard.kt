@@ -16,7 +16,8 @@ data class CreditCard(
     val iconKey: String = "card",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     // The chart-of-accounts LIABILITY row this card projects onto.
-    val accountId: Long? = null,
+    // Assigned by the store on insert, exactly like [id].
+    val accountId: Long = 0,
 ) {
     init {
         if (name.isBlank()) {

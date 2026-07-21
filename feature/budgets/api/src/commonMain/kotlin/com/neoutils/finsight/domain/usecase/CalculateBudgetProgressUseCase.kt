@@ -45,7 +45,7 @@ class CalculateBudgetProgressUseCase {
             }
             val spent = budget.categories
                 .filter { it.type.isExpense }
-                .sumOf { category -> category.accountId?.let { categoryBalances[it] } ?: 0.0 }
+                .sumOf { category -> categoryBalances[category.accountId] ?: 0.0 }
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
                 recurringList.find { it.id == budget.recurringId }
             } else null

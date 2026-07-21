@@ -241,7 +241,7 @@ class TransactionRepository(
 
         // The transaction row and its ledger legs are written in a single transaction,
         // so a mid-way failure (missing facade row, cancellation, DB error) rolls back
-        // everything, never leaving an transaction without its entries.
+        // everything, never leaving a transaction without its entries.
         val transactionId = database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 val transactionId = transactionDao.insert(intent.toEntity())
@@ -294,7 +294,7 @@ class TransactionRepository(
     }
 
     override suspend fun deleteTransactionById(id: Long) {
-        // Removing an transaction is a change to its invoice too, so it passes the
+        // Removing a transaction is a change to its invoice too, so it passes the
         // same gate — a paid invoice cannot lose a purchase behind the user's back.
         transactionDao.getById(id)?.let {
             val invoiceIds = entryDao.getByTransactionId(id).mapNotNull { entry -> entry.invoiceId }.toSet()

@@ -16,7 +16,7 @@ import kotlin.time.ExperimentalTime
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["accountId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.NO_ACTION
         ),
     ],
     indices = [
@@ -30,7 +30,9 @@ data class CategoryEntity(
     val iconKey: String,
     val type: Type,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
-    val accountId: Long? = null,
+    // The category's own row in the chart of accounts. Created with the category
+    // itself, so it always exists: a facade with no account cannot be spent from.
+    val accountId: Long = 0,
 ) {
     enum class Type {
         INCOME,

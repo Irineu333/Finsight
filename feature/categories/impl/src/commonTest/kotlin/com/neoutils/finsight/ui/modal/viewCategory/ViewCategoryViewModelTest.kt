@@ -95,7 +95,7 @@ class ViewCategoryViewModelTest {
     private fun category(
         id: Long = 1L,
         name: String = "Food",
-        accountId: Long? = 10L,
+        accountId: Long = 10L,
     ) = Category(
         id = id,
         name = name,
@@ -151,7 +151,7 @@ class ViewCategoryViewModelTest {
 
         vm.uiState.test {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
-            repository.emit(category(id = 1L, accountId = null))
+            repository.emit(category(id = 1L, accountId = 11))
             val content = assertIs<ViewCategoryUiState.Content>(awaitItem())
             assertEquals(0.0, content.totalAmount)
             assertEquals(0, content.transactionCount)

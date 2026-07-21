@@ -26,7 +26,7 @@ class CalculateReportCategorySpendingUseCase(
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
         val categoryType = accountType(transactionType)
-        // The perspective is expressed as the sibling legs an transaction must have:
+        // The perspective is expressed as the sibling legs a transaction must have:
         // its asset accounts (all, when none selected) or the card's ledger account.
         val siblingAccountIds = when (perspective) {
             is ReportPerspective.AccountPerspective ->
@@ -63,8 +63,7 @@ class CalculateReportCategorySpendingUseCase(
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
         val categoriesByAccount: Map<Long, Category> = categoryRepository.getAllCategories()
-            .mapNotNull { category -> category.accountId?.let { it to category } }
-            .toMap()
+            .associateBy { it.accountId }
 
         val amounts = totals.mapNotNull { (accountId, natural) ->
             val category = categoriesByAccount[accountId] ?: return@mapNotNull null

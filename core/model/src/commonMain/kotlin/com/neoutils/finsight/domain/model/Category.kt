@@ -9,7 +9,9 @@ data class Category(
     val type: Type,
     val createdAt: Long,
     // The chart-of-accounts row (INCOME/EXPENSE) this category projects onto.
-    val accountId: Long? = null,
+    // Assigned by the store on insert, exactly like [id]: a persisted category
+    // always has its account.
+    val accountId: Long = 0,
 ) {
     enum class Type {
         INCOME,

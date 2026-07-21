@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 // Same rule as categories: a card is closed when its LIABILITY account is (D21).
 private const val OPEN_CREDIT_CARDS =
-    "SELECT cc.* FROM credit_cards cc LEFT JOIN accounts a ON a.id = cc.accountId " +
-        "WHERE COALESCE(a.isClosed, 0) = 0"
+    "SELECT cc.* FROM credit_cards cc JOIN accounts a ON a.id = cc.accountId " +
+        "WHERE a.isClosed = 0"
 
 @Dao
 interface CreditCardDao {

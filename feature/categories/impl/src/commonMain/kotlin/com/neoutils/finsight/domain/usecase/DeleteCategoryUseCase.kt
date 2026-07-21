@@ -23,13 +23,14 @@ class DeleteCategoryUseCase(
     private val closeAccountUseCase: CloseAccountUseCase,
 ) {
     suspend operator fun invoke(category: Category): Either<Throwable, Unit> = catch {
-        category.accountId?.let { accountRepository.getAccountById(it) }
+        requireNotNull(accountRepository.getAccountById(category.accountId)) {
+            "Category ${category.id} has no chart-of-accounts row"
+        }
     }.flatMap { account ->
-        // No ledger account means the category was never used.
-        if (account == null) return@flatMap catch { categoryRepository.delete(category) }
-
         closeAccountUseCase(account).flatMap { outcome ->
             catch {
+                // The facade only goes when its account did: an account with history
+                // is closed, and a closed category keeps its own row.
                 if (outcome == CloseAccountUseCase.Outcome.DELETED) {
                     categoryRepository.delete(category)
                 }

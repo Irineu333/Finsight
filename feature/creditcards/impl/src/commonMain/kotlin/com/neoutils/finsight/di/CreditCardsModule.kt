@@ -33,7 +33,9 @@ val creditCardsModule = module {
 
     single<ICreditCardRepository> {
         CreditCardRepository(
+            database = get(),
             dao = get<AppDatabase>().creditCardDao(),
+            accountDao = get(),
             mapper = get(),
         )
     }

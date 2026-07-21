@@ -22,7 +22,9 @@ import org.koin.dsl.module
 val categoriesModule = module {
     single<ICategoryRepository> {
         CategoryRepository(
+            database = get(),
             dao = get(),
+            accountDao = get(),
             mapper = get(),
         )
     }

@@ -16,7 +16,7 @@ import kotlin.time.ExperimentalTime
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["accountId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.NO_ACTION
         ),
     ],
     indices = [
@@ -31,5 +31,6 @@ data class CreditCardEntity(
     val dueDay: Int,
     val iconKey: String = "card",
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
-    val accountId: Long? = null,
+    // The card's LIABILITY row in the chart of accounts, created with the card.
+    val accountId: Long = 0,
 )

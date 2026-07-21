@@ -331,7 +331,9 @@ private fun AccountPager(
         pageSpacing = 8.dp,
     ) { page ->
         AccountCard(
-            account = domainAccounts[page],
+            iconKey = domainAccounts[page].iconKey,
+            name = domainAccounts[page].name,
+            isDefault = domainAccounts[page].isDefault,
             variant = AccountCardVariant.Detail(
                 accountUi = accounts[page],
                 onEditBalance = { onEditBalance(domainAccounts[page]) },

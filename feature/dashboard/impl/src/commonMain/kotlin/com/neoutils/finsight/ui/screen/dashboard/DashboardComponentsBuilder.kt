@@ -202,7 +202,13 @@ class DashboardComponentsBuilder(
             .map { account ->
                 // All-time natural balance from the ledger (task 4.5), replacing the
                 // in-builder per-account sum that used to live here.
-                DashboardAccountUi(account = account, balance = entryRepository.balance(account.id))
+                DashboardAccountUi(
+                    id = account.id,
+                    iconKey = account.iconKey,
+                    name = account.name,
+                    isDefault = account.isDefault,
+                    balance = entryRepository.balance(account.id),
+                )
             }
 
         return if (accountsUi.isNotEmpty() && !(hideSingleAccount && accountsUi.size == 1)) {
@@ -229,19 +235,26 @@ class DashboardComponentsBuilder(
             .filter { it.id !in excludedIds }
             .map { creditCard ->
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
-                CreditCardUi(
-                    creditCard = creditCard,
+                val ui = CreditCardUi(
+                    cardId = creditCard.id,
+                    iconKey = creditCard.iconKey,
+                    name = creditCard.name,
+                    closingDay = creditCard.closingDay,
+                    dueDay = creditCard.dueDay,
+                    limit = creditCard.limit,
                     // The dashboard shows a summary and offers no reopen action, so it
                     // has no need of the sibling list `canReopen` would derive from.
                     invoiceUi = invoice?.let {
                         invoiceUiMapper.toUi(invoice = it, cardInvoices = listOfNotNull(it))
                     },
                 )
+                ui to invoice
             }
 
         return when {
             creditCardsWithBills.isNotEmpty() -> DashboardComponent.CreditCardsPager.Content(
-                creditCards = creditCardsWithBills,
+                creditCards = creditCardsWithBills.map { it.first },
+                domainInvoices = creditCardsWithBills.map { it.second },
             )
 
             showEmptyState -> DashboardComponent.CreditCardsPager.Empty

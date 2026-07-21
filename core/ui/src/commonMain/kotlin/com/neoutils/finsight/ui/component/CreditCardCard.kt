@@ -2,7 +2,6 @@
 
 package com.neoutils.finsight.ui.component
 
-import com.neoutils.finsight.ui.extension.color
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,10 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
-import com.neoutils.finsight.extension.toUiText
 import com.neoutils.finsight.resources.*
 import com.neoutils.finsight.ui.model.InvoiceUi
 import com.neoutils.finsight.util.AppIcon
@@ -44,7 +40,7 @@ sealed class CreditCardCardVariant {
 
     data class Listing(
         val onClick: (() -> Unit)? = null,
-        val onEditInvoice: ((Invoice) -> Unit)? = null,
+        val onEditInvoice: ((invoiceId: Long) -> Unit)? = null,
     ) : CreditCardCardVariant()
 
     data object Selection : CreditCardCardVariant()
@@ -52,7 +48,12 @@ sealed class CreditCardCardVariant {
 
 @Composable
 fun CreditCardCard(
-    creditCard: CreditCard,
+    cardId: Long,
+    iconKey: String,
+    name: String,
+    closingDay: Int,
+    dueDay: Int,
+    limit: Double,
     variant: CreditCardCardVariant,
     modifier: Modifier = Modifier,
     invoiceUi: InvoiceUi? = null,
@@ -64,7 +65,7 @@ fun CreditCardCard(
     val sharedModifier = sharedTransitionScope?.run {
         animatedVisibilityScope?.let {
             Modifier.sharedElement(
-                sharedContentState = rememberSharedContentState(key = "credit_card_${creditCard.id}"),
+                sharedContentState = rememberSharedContentState(key = "credit_card_$cardId"),
                 animatedVisibilityScope = it,
             )
         }
@@ -97,13 +98,13 @@ fun CreditCardCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Icon(
-                        imageVector = AppIcon.fromKey(creditCard.iconKey).icon,
+                        imageVector = AppIcon.fromKey(iconKey).icon,
                         contentDescription = null,
                         tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp),
                     )
                     Text(
-                        text = creditCard.name,
+                        text = name,
                         fontSize = 14.sp,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -113,13 +114,13 @@ fun CreditCardCard(
                     invoiceUi?.let {
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = it.status.color.copy(alpha = 0.15f),
-                                contentColor = it.status.color,
+                                containerColor = it.statusColor.copy(alpha = 0.15f),
+                                contentColor = it.statusColor,
                             ),
                             shape = RoundedCornerShape(4.dp),
                         ) {
                             Text(
-                                text = stringResource(it.status.toUiText()),
+                                text = stringResource(it.statusLabel),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -143,7 +144,7 @@ fun CreditCardCard(
                             color = colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = stringResource(Res.string.credit_card_ui_day, creditCard.closingDay),
+                            text = stringResource(Res.string.credit_card_ui_day, closingDay),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -158,7 +159,7 @@ fun CreditCardCard(
                             color = colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = stringResource(Res.string.credit_card_ui_day, creditCard.dueDay),
+                            text = stringResource(Res.string.credit_card_ui_day, dueDay),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -173,15 +174,15 @@ fun CreditCardCard(
                         // the same gate the Listing variant applies; the write boundary
                         // would refuse it anyway.
                         invoiceUi
-                            ?.takeIf { it.status.isEditable }
+                            ?.takeIf { it.isEditable }
                             ?.let { { variant.onEditAmount() } }
                     }
 
                     is CreditCardCardVariant.Listing -> {
                         invoiceUi
-                            ?.takeIf { it.status.isEditable }
+                            ?.takeIf { it.isEditable }
                             ?.let { inv ->
-                                variant.onEditInvoice?.let { { it(inv.invoice) } }
+                                variant.onEditInvoice?.let { { it(inv.id) } }
                             }
                     }
                 }
@@ -245,14 +246,14 @@ fun CreditCardCard(
                         Row {
                             Text(
                                 text = invoiceUi?.availableLimit?.let { formatter.format(it) }
-                                    ?: formatter.format(creditCard.limit),
+                                    ?: formatter.format(limit),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = colorScheme.onSurface,
                                 modifier = Modifier.alignByBaseline(),
                             )
                             Text(
-                                text = " / ${formatter.format(creditCard.limit)}",
+                                text = " / ${formatter.format(limit)}",
                                 fontSize = 14.sp,
                                 color = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.alignByBaseline(),
@@ -265,8 +266,8 @@ fun CreditCardCard(
                             val closesOnLabel = stringResource(Res.string.credit_card_ui_closes_on)
                             val dueOnLabel = stringResource(Res.string.credit_card_ui_due_on)
                             val dateInfo = when {
-                                invoiceUi.status.isOpen -> closesOnLabel to invoiceUi.closingDate
-                                invoiceUi.status.isClosed || invoiceUi.status.isRetroactive -> dueOnLabel to invoiceUi.dueDate
+                                invoiceUi.isOpen -> closesOnLabel to invoiceUi.closingDate
+                                invoiceUi.isClosed || invoiceUi.isRetroactive -> dueOnLabel to invoiceUi.dueDate
                                 else -> null
                             }
                             dateInfo?.let { (label, date) ->
@@ -305,8 +306,8 @@ fun CreditCardCard(
 
                 if (variant is CreditCardCardVariant.Dashboard) {
                     val canCloseInvoice = invoiceUi?.isClosable == true
-                    val canPayInvoice = invoiceUi?.status?.isClosed == true
-                    val canAdvanceInvoice = invoiceUi?.status?.isOpen == true
+                    val canPayInvoice = invoiceUi?.isClosed == true
+                    val canAdvanceInvoice = invoiceUi?.isOpen == true
 
                     if (canCloseInvoice || canPayInvoice || canAdvanceInvoice) {
                         Column(

@@ -90,8 +90,8 @@ class DashboardAccountsOverviewTest {
             accounts = listOf(accountA, accountB),
             config = mapOf(AccountsOverviewConfig.HIDE_SINGLE_ACCOUNT to "false"),
         )
-        assertEquals(70.0, accounts.first { it.account.id == 1L }.balance)
-        assertEquals(30.0, accounts.first { it.account.id == 2L }.balance)
+        assertEquals(70.0, accounts.first { it.id == 1L }.balance)
+        assertEquals(30.0, accounts.first { it.id == 2L }.balance)
     }
 
     @Test
@@ -103,7 +103,7 @@ class DashboardAccountsOverviewTest {
                 AccountsOverviewConfig.EXCLUDED_ACCOUNT_IDS to "2",
             ),
         )
-        assertEquals(listOf(1L), accounts.map { it.account.id })
+        assertEquals(listOf(1L), accounts.map { it.id })
     }
 
     // --- dashboard month stats (task 3.11: sites :156,157 and :181,186) ---

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.dashboard
 
 import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.CategorySpending
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.feature.shell.api.NavDestination
@@ -49,6 +50,9 @@ sealed interface DashboardComponent {
 
         data class Content(
             val creditCards: List<CreditCardUi>,
+            // Domain invoices kept alongside the flat cards so the dashboard can open the
+            // domain-taking pay/advance/edit-balance modals; aligned by index.
+            val domainInvoices: List<Invoice?>,
         ) : CreditCardsPager
 
         data object Empty : CreditCardsPager

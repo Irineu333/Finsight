@@ -1,10 +1,18 @@
+@file:OptIn(ExperimentalTime::class)
+
 package com.neoutils.finsight.ui.mapper
 
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
+import com.neoutils.finsight.extension.toUiText
+import com.neoutils.finsight.ui.extension.color
 import com.neoutils.finsight.ui.model.InvoiceUi
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class InvoiceUiMapperImpl(
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
@@ -14,38 +22,31 @@ class InvoiceUiMapperImpl(
         invoice: Invoice,
         cardInvoices: List<Invoice>,
     ): InvoiceUi {
-
-        val outstandingDebt = calculateInvoiceUseCase(
-            invoiceId = invoice.id,
-        ).coerceAtLeast(0.0)
-
+        val outstandingDebt = calculateInvoiceUseCase(invoiceId = invoice.id).coerceAtLeast(0.0)
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
+        val hasProgress = outstandingDebt > 0 && limit.usage != 0.0
+        val status = invoice.status
+        val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-        val canReopen = invoice.isReopenable(cardInvoices)
-
-        if (outstandingDebt > 0 && limit.usage != 0.0) {
-            return InvoiceUi(
-                invoice = invoice,
-                amount = outstandingDebt,
-                totalUnpaidAmount = limit.totalUnpaidAmount,
-                availableLimit = limit.available,
-                usagePercentage = limit.usage,
-                showProgress = true,
-                closingDate = invoice.closingDate,
-                canReopen = canReopen,
-            )
-        }
-
+        // The status is decomposed into flat facts here, so no UI model or component
+        // re-derives an invoice rule — they consume what the domain already decided.
         return InvoiceUi(
-            invoice = invoice,
+            id = invoice.id,
             amount = outstandingDebt,
             totalUnpaidAmount = limit.totalUnpaidAmount,
             availableLimit = limit.available,
-            usagePercentage = 0.0,
-            showProgress = false,
+            usagePercentage = if (hasProgress) limit.usage else 0.0,
+            showProgress = hasProgress,
             closingDate = invoice.closingDate,
-            canReopen = canReopen,
+            dueDate = invoice.dueDate,
+            isClosable = invoice.isClosableOn(currentDate),
+            canReopen = invoice.isReopenable(cardInvoices),
+            isOpen = status.isOpen,
+            isClosed = status.isClosed,
+            isRetroactive = status.isRetroactive,
+            isEditable = status.isEditable,
+            statusColor = status.color,
+            statusLabel = status.toUiText(),
         )
     }
 }
-

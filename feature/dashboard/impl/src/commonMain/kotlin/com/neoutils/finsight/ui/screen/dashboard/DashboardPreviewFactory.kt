@@ -52,22 +52,17 @@ class DashboardPreviewFactory(
                 component = DashboardComponent.AccountsOverview(
                     accounts = listOf(
                         DashboardAccountUi(
-                            account = Account(
-                                id = 1,
-                                name = getString(Res.string.preview_account_main),
-                                iconKey = "wallet",
-                                isDefault = true,
-                                createdAt = 0,
-                            ),
-                            balance = 2500.0
+                            id = 1,
+                            iconKey = "wallet",
+                            name = getString(Res.string.preview_account_main),
+                            isDefault = true,
+                            balance = 2500.0,
                         ),
                         DashboardAccountUi(
-                            account = Account(
-                                id = 2,
-                                name = getString(Res.string.preview_account_savings),
-                                iconKey = "piggy_bank",
-                                createdAt = 0
-                            ),
+                            id = 2,
+                            iconKey = "piggy_bank",
+                            name = getString(Res.string.preview_account_savings),
+                            isDefault = false,
                             balance = 1200.0,
                         ),
                     ),
@@ -81,18 +76,16 @@ class DashboardPreviewFactory(
                 component = DashboardComponent.CreditCardsPager.Content(
                     creditCards = listOf(
                         CreditCardUi(
-                            creditCard = CreditCard(
-                                id = 1,
-                                name = getString(Res.string.preview_card_nubank),
-                                limit = 5000.0,
-                                closingDay = 5,
-                                dueDay = 12,
-                                iconKey = "card",
-                                createdAt = 0,
-                            ),
+                            cardId = 1,
+                            iconKey = "card",
+                            name = getString(Res.string.preview_card_nubank),
+                            closingDay = 5,
+                            dueDay = 12,
+                            limit = 5000.0,
                             invoiceUi = null,
                         ),
                     ),
+                    domainInvoices = listOf(null),
                 ),
                 config = mapOf(DashboardComponentConfig.SHOW_HEADER to "false"),
             )

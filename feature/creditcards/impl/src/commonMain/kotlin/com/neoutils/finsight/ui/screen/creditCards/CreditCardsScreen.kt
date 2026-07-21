@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.resources.*
@@ -174,16 +175,14 @@ private fun CreditCardsContent(
                             onCardClick = { creditCardUi ->
                                 navController.navigate(
                                     InvoiceTransactionsRoute(
-                                        creditCardUi.creditCard.id
+                                        creditCardUi.cardId
                                     )
                                 )
                             },
-                            onEditInvoice = { invoice ->
-                                modalManager.show(
-                                    EditInvoiceBalanceModal(
-                                        initialInvoice = invoice
-                                    )
-                                )
+                            onEditInvoice = { invoiceId ->
+                                uiState.domainInvoices.filterNotNull()
+                                    .find { it.id == invoiceId }
+                                    ?.let { modalManager.show(EditInvoiceBalanceModal(initialInvoice = it)) }
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -194,6 +193,8 @@ private fun CreditCardsContent(
                     ) {
                         CardActions(
                             creditCardUi = uiState.creditCards[uiState.selectedCardIndex],
+                            creditCard = uiState.domainCards[uiState.selectedCardIndex],
+                            invoice = uiState.domainInvoices[uiState.selectedCardIndex],
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
@@ -301,7 +302,7 @@ private fun CreditCardPager(
     selectedIndex: Int,
     onSelectCard: (Int) -> Unit,
     onCardClick: (CreditCardUi) -> Unit,
-    onEditInvoice: (invoice: Invoice) -> Unit,
+    onEditInvoice: (invoiceId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pagerState = rememberPagerState(
@@ -332,7 +333,12 @@ private fun CreditCardPager(
         pageSpacing = 8.dp,
     ) { page ->
         CreditCardCard(
-            creditCard = creditCards[page].creditCard,
+            cardId = creditCards[page].cardId,
+            iconKey = creditCards[page].iconKey,
+            name = creditCards[page].name,
+            closingDay = creditCards[page].closingDay,
+            dueDay = creditCards[page].dueDay,
+            limit = creditCards[page].limit,
             invoiceUi = creditCards[page].invoiceUi,
             modifier = Modifier.fillMaxWidth(),
             variant = CreditCardCardVariant.Listing(
@@ -346,10 +352,11 @@ private fun CreditCardPager(
 @Composable
 private fun CardActions(
     creditCardUi: CreditCardUi,
+    creditCard: CreditCard,
+    invoice: Invoice?,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
-    val creditCard = creditCardUi.creditCard
     val invoiceUi = creditCardUi.invoiceUi
 
     Column(
@@ -421,14 +428,14 @@ private fun CardActions(
             }
         }
 
-        invoiceUi?.let { invoice ->
-            if (invoice.status.isOpen) {
+        if (invoiceUi != null && invoice != null) {
+            if (invoiceUi.isOpen) {
                 OutlinedButton(
                     onClick = {
                         modalManager.show(
                             AdvancePaymentModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount,
+                                invoice = invoice,
+                                currentBillAmount = invoiceUi.amount,
                             )
                         )
                     },
@@ -456,10 +463,10 @@ private fun CardActions(
                 }
             }
 
-            if (invoice.isClosable) {
+            if (invoiceUi.isClosable) {
                 OutlinedButton(
                     onClick = {
-                        modalManager.show(CloseInvoiceModal(invoice.id, invoice.closingDate))
+                        modalManager.show(CloseInvoiceModal(invoiceUi.id, invoiceUi.closingDate))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -485,11 +492,11 @@ private fun CardActions(
                 }
             }
 
-            if (invoice.status.isClosed) {
-                if (invoice.canReopen) {
+            if (invoiceUi.isClosed) {
+                if (invoiceUi.canReopen) {
                     OutlinedButton(
                         onClick = {
-                            modalManager.show(ReopenInvoiceModal(invoice.id))
+                            modalManager.show(ReopenInvoiceModal(invoiceUi.id))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -519,8 +526,8 @@ private fun CardActions(
                     onClick = {
                         modalManager.show(
                             PayInvoiceModal(
-                                invoice = invoice.invoice,
-                                currentBillAmount = invoice.amount
+                                invoice = invoice,
+                                currentBillAmount = invoiceUi.amount
                             )
                         )
                     },

@@ -501,16 +501,23 @@ private fun DashboardCreditCardsSection(
                     modifier = Modifier.fillMaxWidth(),
                 ) { page ->
                     val creditCardUi = component.creditCards[page]
+                    val bill = creditCardUi.invoiceUi
+                    val domainInvoice = component.domainInvoices[page]
 
                     CreditCardCard(
-                        creditCard = creditCardUi.creditCard,
+                        cardId = creditCardUi.cardId,
+                        iconKey = creditCardUi.iconKey,
+                        name = creditCardUi.name,
+                        closingDay = creditCardUi.closingDay,
+                        dueDay = creditCardUi.dueDay,
+                        limit = creditCardUi.limit,
                         invoiceUi = creditCardUi.invoiceUi,
                         modifier = Modifier.fillMaxWidth(),
                         variant = CreditCardCardVariant.Dashboard(
                             onClick = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
                                     navController.navigate(
-                                        CreditCardsRoute(creditCardId = creditCardUi.creditCard.id)
+                                        CreditCardsRoute(creditCardId = creditCardUi.cardId)
                                     )
                                 }
                             },
@@ -523,26 +530,26 @@ private fun DashboardCreditCardsSection(
                             },
                             onPayInvoice = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
+                                    if (domainInvoice != null && bill != null) {
                                         modalManager.show(
-                                            creditCardsEntry.payInvoiceModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            creditCardsEntry.payInvoiceModal(invoice = domainInvoice, currentBillAmount = bill.amount)
                                         )
                                     }
                                 }
                             },
                             onAdvancePayment = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
+                                    if (domainInvoice != null && bill != null) {
                                         modalManager.show(
-                                            creditCardsEntry.advancePaymentModal(invoice = it.invoice, currentBillAmount = it.amount)
+                                            creditCardsEntry.advancePaymentModal(invoice = domainInvoice, currentBillAmount = bill.amount)
                                         )
                                     }
                                 }
                             },
                             onEditAmount = {
                                 if (variant is DashboardComponentVariant.CreditCardsPager.Viewing) {
-                                    creditCardUi.invoiceUi?.let {
-                                        modalManager.show(creditCardsEntry.editInvoiceBalanceModal(it.invoice))
+                                    domainInvoice?.let {
+                                        modalManager.show(creditCardsEntry.editInvoiceBalanceModal(it))
                                     }
                                 }
                             },
@@ -841,16 +848,18 @@ private fun DashboardAccountsRow(
             modifier = Modifier.fillMaxWidth(),
         ) {
             items(
-                items = component.accounts.sortedByDescending { it.account.isDefault },
-                key = { accountUi -> accountUi.account.id },
+                items = component.accounts.sortedByDescending { it.isDefault },
+                key = { accountUi -> accountUi.id },
             ) { accountUi ->
                 AccountCard(
-                    account = accountUi.account,
+                    iconKey = accountUi.iconKey,
+                    name = accountUi.name,
+                    isDefault = accountUi.isDefault,
                     variant = AccountCardVariant.Dashboard(
                         balance = accountUi.balance,
                         onClick = {
                             if (variant is DashboardComponentVariant.AccountsOverview.Viewing) {
-                                navController.navigate(AccountsRoute(accountId = accountUi.account.id))
+                                navController.navigate(AccountsRoute(accountId = accountUi.id))
                             }
                         },
                     ),

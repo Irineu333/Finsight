@@ -101,18 +101,28 @@ class CreditCardsViewModel(
             .sortedByDescending { it.date }
             .groupBy { it.date }
 
+        val cards = creditCards.map { creditCard ->
+            val cardInvoices = invoices[creditCard.id].orEmpty()
+            val invoice = cardInvoices.currentUnpaid()
+            val ui = CreditCardUi(
+                cardId = creditCard.id,
+                iconKey = creditCard.iconKey,
+                name = creditCard.name,
+                closingDay = creditCard.closingDay,
+                dueDay = creditCard.dueDay,
+                limit = creditCard.limit,
+                invoiceUi = invoice?.let {
+                    invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
+                },
+                hasMovement = entryRepository.hasEntries(creditCard.accountId),
+            )
+            Triple(creditCard, invoice, ui)
+        }
+
         CreditCardsUiState.Content(
-            creditCards = creditCards.map { creditCard ->
-                val cardInvoices = invoices[creditCard.id].orEmpty()
-                val invoice = cardInvoices.currentUnpaid()
-                CreditCardUi(
-                    creditCard = creditCard,
-                    invoiceUi = invoice?.let {
-                        invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
-                    },
-                    hasMovement = entryRepository.hasEntries(creditCard.accountId),
-                )
-            },
+            creditCards = cards.map { it.third },
+            domainCards = cards.map { it.first },
+            domainInvoices = cards.map { it.second },
             selectedCardIndex = index,
             transactions = filteredTransactions,
             categories = categories,

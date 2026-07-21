@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -59,7 +58,9 @@ sealed class AccountCardVariant {
 
 @Composable
 fun AccountCard(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant,
     modifier: Modifier = Modifier,
 ) {
@@ -93,12 +94,16 @@ fun AccountCard(
     ) {
         if (isDetail) {
             DetailContent(
-                account = account,
+                iconKey = iconKey,
+                name = name,
+                isDefault = isDefault,
                 variant = variant as AccountCardVariant.Detail,
             )
         } else {
             CompactContent(
-                account = account,
+                iconKey = iconKey,
+                name = name,
+                isDefault = isDefault,
                 variant = variant,
             )
         }
@@ -107,7 +112,9 @@ fun AccountCard(
 
 @Composable
 private fun DetailContent(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant.Detail,
 ) {
     val accountUi = variant.accountUi
@@ -136,7 +143,7 @@ private fun DetailContent(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = AppIcon.fromKey(account.iconKey).icon,
+                            imageVector = AppIcon.fromKey(iconKey).icon,
                             contentDescription = null,
                             tint = colorScheme.primary,
                             modifier = Modifier.size(20.dp),
@@ -144,7 +151,7 @@ private fun DetailContent(
                     }
                 }
                 Text(
-                    text = account.name,
+                    text = name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface,
@@ -153,7 +160,7 @@ private fun DetailContent(
                 )
             }
 
-            if (account.isDefault) {
+            if (isDefault) {
                 Surface(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
@@ -224,7 +231,9 @@ private fun DetailContent(
 
 @Composable
 private fun CompactContent(
-    account: Account,
+    iconKey: String,
+    name: String,
+    isDefault: Boolean,
     variant: AccountCardVariant,
 ) {
     val formatter = LocalCurrencyFormatter.current
@@ -240,13 +249,13 @@ private fun CompactContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = AppIcon.fromKey(account.iconKey).icon,
+                imageVector = AppIcon.fromKey(iconKey).icon,
                 contentDescription = null,
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
 
-            if (account.isDefault) {
+            if (isDefault) {
                 Surface(
                     color = colorScheme.primary.copy(alpha = 0.12f),
                     contentColor = colorScheme.primary,
@@ -266,7 +275,7 @@ private fun CompactContent(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = account.name,
+                text = name,
                 style = MaterialTheme.typography.labelMedium,
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,

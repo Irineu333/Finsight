@@ -591,3 +591,18 @@
 >   preservado — inconsistência de exibição, pré-existente ao refactor.
 
 > **Menores/aceitos (documentado):** `CloseInvoiceUseCase` descarta o `Either` de `openInvoiceUseCase` (fecha com sucesso mesmo se abrir a sucessora falhar); guarda de exclusão de conta/cartão conta recorrências **inativas** (aceito na 10b.4); ações de fatura em cartão arquivado sem guarda de domínio (inserção de fatura FUTURE antes da escrita pode deixar linha órfã — protegido só pelo seletor de UI; ver 10d.5); `DeleteInstallmentUseCaseImpl` chama `deleteInstallmentById` redundante com `removeRow`; `getCreditCardById` devolve `isArchived=false` (query plana). Refutado: `ConfirmRecurringUseCase` **não** duplica transação (upsert por índice único `(recurringId, yearMonth)`).
+
+#### 10f. Auditoria de atribuição à change (INTRODUZIDO / LATENTE-ATIVADO / LATENTE-NOVO)
+
+> Agente focado em separar o que a change **introduziu ou ativou** do pré-existente,
+> com atribuição por git contra a `main` (5f2fa69). Varreu o núcleo que a change
+> reescreveu — `LedgerEntryWriter`, `EntryRepository`/`EntryDao` (os 11 leitores
+> agregados, sinais um a um), `Ledger.kt`, mappers/perspectiva, criação eager, migração
+> v9, a matriz §10. **Resultado: nenhum bug NOVO (introduzido ou latente-ativado) além
+> do já catalogado.** Confirmados sólidos os pontos de risco que a change poderia ter
+> ativado (hidratação lê o plano de contas inteiro → contra-leg EQUITY nunca dropada;
+> `getTransactionById!!` seguro pois `writeEntries` sempre grava ≥1 leg; ajuste em fatura
+> CLOSED barrado pelo boundary e não oferecido pela UI; idempotência de ajuste lê o razão
+> de volta, não acumula).
+
+- [x] 10f.1 **LATENTE-NOVO documentado — `updateTransaction` assume transação de 1 leg monetária.** `updateTransaction(id, title, date, leg: TransactionLeg)` recebe **uma** leg e `rewriteEntries` apaga todas as entries e reconstrói a partir dela (+ contra sintetizada). É correto só para 1 leg monetária (despesa/receita); transferência (2 ASSET) e pagamento (ASSET+LIABILITY) têm duas, e roteá-las por aqui **descartaria a 2ª em silêncio** (perda-de-dado). Hoje é seguro: `ViewTransactionUiState.isEditable` exige `monetaryEntries.size == 1`, então essas transações não são editáveis, e é o único caminho que chama `updateTransaction`. Não é bug presente — é invariante que a change assume mas não garante estruturalmente. Marca durável adicionada no KDoc de `ITransactionRepository.updateTransaction` para quem um dia habilitar edição de transferência/pagamento.

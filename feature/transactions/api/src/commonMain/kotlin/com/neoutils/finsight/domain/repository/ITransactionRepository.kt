@@ -31,7 +31,17 @@ interface ITransactionRepository {
      */
     suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction>
 
-    /** Rewrites the transaction's row and its ledger legs from the edited [leg]. */
+    /**
+     * Rewrites the transaction's row and its ledger legs from the edited [leg].
+     *
+     * ⚠️ Takes a **single** leg: the rewrite deletes every old entry and rebuilds
+     * from this one (plus a synthesized contra leg). That is only correct for a
+     * transaction with exactly one monetary leg — an expense or an income — which is
+     * why editing is offered only when `ViewTransactionUiState.isEditable` holds
+     * (`monetaryEntries.size == 1`, not an adjustment, no installment). A transfer or
+     * a card payment has two monetary legs; routing one through here would drop the
+     * second silently. Any future support for editing those must change this shape.
+     */
     suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg)
 
     suspend fun deleteTransactionById(id: Long)

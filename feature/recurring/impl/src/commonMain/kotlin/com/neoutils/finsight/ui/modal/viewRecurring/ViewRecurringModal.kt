@@ -36,7 +36,6 @@ import com.neoutils.finsight.resources.recurring_income
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_status_active
 import com.neoutils.finsight.resources.recurring_status_inactive
-import com.neoutils.finsight.resources.recurring_status_needs_source
 import com.neoutils.finsight.resources.view_recurring_account_label
 import com.neoutils.finsight.resources.view_recurring_amount_label
 import com.neoutils.finsight.resources.view_recurring_category_label
@@ -161,20 +160,6 @@ class ViewRecurringModal(
                     style = MaterialTheme.typography.headlineSmall,
                     color = colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
-                )
-            }
-
-            // The template outlives the account it pointed at. The list already says
-            // so with a badge; the modal said it only by the absence of the source
-            // shortcut, which is invisible as a signal. Same words, same colour.
-            if (!recurring.hasUsableSource) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(Res.string.recurring_status_needs_source),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Warning,
-                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 

@@ -634,7 +634,6 @@
     <!-- Recurring status -->
     <string name="recurring_status_active">Ativa</string>
     <string name="recurring_status_inactive">Inativa</string>
-    <string name="recurring_status_needs_source">Precisa de atenção</string>
 
     <!-- View Recurring Modal -->
     <string name="view_recurring_type_label">Tipo</string>

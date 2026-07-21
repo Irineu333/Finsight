@@ -633,7 +633,6 @@
     <!-- Recurring status -->
     <string name="recurring_status_active">Active</string>
     <string name="recurring_status_inactive">Inactive</string>
-    <string name="recurring_status_needs_source">Needs attention</string>
 
     <!-- View Recurring Modal -->
     <string name="view_recurring_type_label">Type</string>

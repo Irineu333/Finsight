@@ -27,6 +27,14 @@ sealed interface ViewAdjustmentUiState {
         val signedAmount = (transaction.primaryEntry?.amount ?: 0L) / 100.0
 
         /**
+         * Whether the ledger lets this adjustment be touched at all: false when it
+         * sits on an archived account or card, because deleting it would reopen a
+         * balance the archive required to be zero. The screen says so instead of
+         * only hiding the action.
+         */
+        val isChangeable = transaction.entries.closedLegBlockingChange() == null
+
+        /**
          * A closed or paid invoice is immutable, so the screen stops offering to
          * delete its adjustment. The invariant itself lives at the write boundary;
          * this only keeps the UI from proposing what would be refused.
@@ -39,7 +47,7 @@ sealed interface ViewAdjustmentUiState {
          * account — an adjustment is exactly the kind of transaction that zeroed
          * one before it was archived.
          */
-        val isDeletable = transaction.entries.closedLegBlockingChange() == null &&
+        val isDeletable = isChangeable &&
             if (isCardTarget) invoice?.status?.isEditable == true else true
     }
 }

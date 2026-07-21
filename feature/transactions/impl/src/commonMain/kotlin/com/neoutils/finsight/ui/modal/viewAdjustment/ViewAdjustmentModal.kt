@@ -211,6 +211,21 @@ class ViewAdjustmentModal(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val content = uiState as? ViewAdjustmentUiState.Content ?: return
+
+        // Frozen by an archived account or card: say why, the same footer the
+        // transaction modal shows, instead of leaving the area blank.
+        if (!content.isChangeable) {
+            Text(
+                text = stringResource(Res.string.view_transaction_archived_message),
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 24.dp)
+            )
+            return
+        }
         if (!content.isDeletable) return
 
         OutlinedButton(

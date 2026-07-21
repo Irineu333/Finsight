@@ -22,10 +22,8 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.reactivate_recurring_confirm
 import com.neoutils.finsight.resources.reactivate_recurring_message
 import com.neoutils.finsight.resources.reactivate_recurring_title
-import com.neoutils.finsight.resources.recurring_status_needs_source
 import com.neoutils.finsight.ui.component.ModalBottomSheet
 import com.neoutils.finsight.ui.theme.Income
-import com.neoutils.finsight.ui.theme.Warning
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -58,19 +56,6 @@ class ReactivateRecurringModal(
                 fontSize = 16.sp,
                 color = colorScheme.onSurfaceVariant,
             )
-
-            // Reactivating does not restore an archived source: the recurring will
-            // still need one before it can be confirmed. Say so up front.
-            if (!recurring.hasUsableSource) {
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = stringResource(Res.string.recurring_status_needs_source),
-                    fontSize = 14.sp,
-                    color = Warning,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

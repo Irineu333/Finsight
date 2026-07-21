@@ -47,7 +47,6 @@ import com.neoutils.finsight.resources.recurring_filter_status_active
 import com.neoutils.finsight.resources.recurring_filter_status_all
 import com.neoutils.finsight.resources.recurring_filter_status_inactive
 import com.neoutils.finsight.resources.recurring_status_inactive
-import com.neoutils.finsight.resources.recurring_status_needs_source
 import com.neoutils.finsight.resources.recurring_screen_create
 import com.neoutils.finsight.resources.recurring_screen_day
 import com.neoutils.finsight.resources.recurring_screen_empty
@@ -427,16 +426,6 @@ private fun RecurringCard(
                     if (!recurring.isActive) {
                         RecurringBadge(
                             label = stringResource(Res.string.recurring_status_inactive),
-                            color = Warning,
-                        )
-                    }
-
-                    // The template outlives the account it pointed at, so it stays
-                    // here and stays the user's — but it says so, instead of failing
-                    // only at the moment they try to confirm it.
-                    if (!recurring.hasUsableSource) {
-                        RecurringBadge(
-                            label = stringResource(Res.string.recurring_status_needs_source),
                             color = Warning,
                         )
                     }

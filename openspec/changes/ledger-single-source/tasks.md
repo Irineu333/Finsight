@@ -615,14 +615,27 @@
 >   `onLeft`, no padrão da 8.15 (a folha recusada fica aberta atrás). É a primeira família de erro de
 >   fatura a mostrar a recusa em vez de falhar mudo.
 >
->   ⚠️ **Caso estranho em aberto (levantado pelo usuário): `[retroativa, retroativa, open]`.** Reabrir
->   a 1ª (fechada → `CLOSED`) é **recusado** pela guarda — a sucessora em `openingMonth == closingMonth`
->   é a 2ª retroativa, não a `OPEN` corrente, então reabrir criaria duas OPEN. Bloqueio **correto** (na
->   main criaria as duas OPEN em silêncio). O estado é alcançável porque `CreateRetroactiveInvoiceUseCase`
->   (inalterado desde a main) só barra colisão de `dueMonth` — **pré-existente**. Como *tratar* esse
->   estado (impedir múltiplas retroativas? esconder o botão quando a reabertura não é válida?) segue
->   **em aberto, sob decisão do usuário** — o comportamento atual é seguro (recusa + feedback), não
->   corrompe.
+>   ⚠️ **Caso estranho: `[retroativa, retroativa, open]`.** Reabrir a 1ª (fechada → `CLOSED`) é
+>   **recusado** pela guarda — a sucessora em `openingMonth == closingMonth` é a 2ª retroativa, não a
+>   `OPEN` corrente, então reabrir criaria duas OPEN. Bloqueio **correto** (na main criaria as duas OPEN
+>   em silêncio). O estado é alcançável porque `CreateRetroactiveInvoiceUseCase` (inalterado desde a
+>   main) só barra colisão de `dueMonth` — **pré-existente**.
+>
+>   ⚠️ **Considerou-se um "caminho 1" (reabrir rebobina tudo posterior para `FUTURE`) e foi rejeitado**
+>   (análise + decisão do usuário): é razão-seguro e a compra continua caindo pela `dueMonth`, mas
+>   **quebra ao cruzar uma fatura `PAID`** — o pagamento é uma transação real no razão (`EXPENSE` na conta
+>   + `INCOME` no `LIABILITY`, via `PayInvoicePaymentUseCase`); rebaixá-la a `FUTURE` mantendo a transação
+>   produz a divergência status-vs-razão que esta change existe para eliminar, e revertê-la apagaria um
+>   lançamento real do usuário. A fronteira certa é o **pagamento**, não o status.
+>
+>   ⚠️ **Decisão do usuário: manter a recusa de domínio E esconder o botão na UI.** A regra "só a última
+>   fechada reabre" virou dono único no domínio — `Invoice.isReopenable(cardInvoices)` (`core/model`),
+>   com `reopenSuccessor` compartilhado pelo `ReopenInvoiceUseCase` (enforcement) e pelas telas
+>   (apresentação). `InvoiceUi.canReopen` e `InvoiceTransactionsUiState.InvoiceSummary.canReopen` derivam
+>   dela; `CreditCardsScreen`/`InvoiceTransactionsScreen` gateiam o botão por `canReopen` em vez de
+>   `status.isClosed`. O `InvoiceUiMapper.toUi` passou a receber a lista do cartão; `CreditCardsViewModel`
+>   trocou `associateBy` por `groupBy` (preservando a fatura exibida = a não-paga mais antiga) para ter as
+>   irmãs. Testes: `InvoiceReopenableTest` (5 casos, `core/model`) + os casos de use case já existentes.
 > - **10e.8 — Parcelamento (numeração X/N e rateio de centavos).** (a) Excluir 1 parcela
 >   do meio decrementa `count` sem renumerar → "12/11", progresso >100%. O decremento já
 >   estava na main (`OperationRepository:298`, `remainingCount = countByInstallmentId - 1`,

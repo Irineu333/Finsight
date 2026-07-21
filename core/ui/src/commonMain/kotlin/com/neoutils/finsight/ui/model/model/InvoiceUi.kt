@@ -19,6 +19,7 @@ data class InvoiceUi(
     val showProgress: Boolean,
     val invoice: Invoice,
     val closingDate: LocalDate,
+    val canReopen: Boolean = false,
 ) {
     val id = invoice.id
     val creditCard = invoice.creditCard

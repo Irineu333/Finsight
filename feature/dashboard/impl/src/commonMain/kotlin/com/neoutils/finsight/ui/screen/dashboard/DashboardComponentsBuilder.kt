@@ -231,7 +231,11 @@ class DashboardComponentsBuilder(
                 val invoice = input.invoicesByCreditCardId[creditCard.id]
                 CreditCardUi(
                     creditCard = creditCard,
-                    invoiceUi = invoice?.let { invoiceUiMapper.toUi(invoice = it) },
+                    // The dashboard shows a summary and offers no reopen action, so it
+                    // has no need of the sibling list `canReopen` would derive from.
+                    invoiceUi = invoice?.let {
+                        invoiceUiMapper.toUi(invoice = it, cardInvoices = listOfNotNull(it))
+                    },
                 )
             }
 

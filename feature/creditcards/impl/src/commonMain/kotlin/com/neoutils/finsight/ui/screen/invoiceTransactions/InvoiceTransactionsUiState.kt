@@ -42,6 +42,7 @@ data class InvoiceTransactionsUiState(
         val nextDateLabel: UiText?,
         val closingDate: LocalDate,
         val isClosable: Boolean,
+        val canReopen: Boolean = false,
     ) {
         val invoiceId = invoice.id
         val status = invoice.status

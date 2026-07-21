@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
@@ -64,14 +65,14 @@ class CreditCardsViewModel(
     private val invoicesFlow = invoiceRepository
         .observeUnpaidInvoices()
         .map { invoices ->
-            invoices.associateBy { it.creditCard.id }
+            invoices.groupBy { it.creditCard.id }
         }
 
     private val transactionsFlow = combine(
         selectedCard,
         invoicesFlow,
     ) { selectedCard, invoices ->
-        invoices[selectedCard?.id]
+        invoices[selectedCard?.id]?.currentUnpaid()
     }.flatMapLatest { invoice ->
         if (invoice != null) {
             transactionRepository.observeTransactionsBy(invoiceId = invoice.id)
@@ -102,11 +103,12 @@ class CreditCardsViewModel(
 
         CreditCardsUiState.Content(
             creditCards = creditCards.map { creditCard ->
-                val invoice = invoices[creditCard.id]
+                val cardInvoices = invoices[creditCard.id].orEmpty()
+                val invoice = cardInvoices.currentUnpaid()
                 CreditCardUi(
                     creditCard = creditCard,
                     invoiceUi = invoice?.let {
-                        invoiceUiMapper.toUi(invoice = invoice)
+                        invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
                     },
                     hasMovement = entryRepository.hasEntries(creditCard.accountId),
                 )
@@ -124,6 +126,10 @@ class CreditCardsViewModel(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CreditCardsUiState.Loading,
     )
+
+    // The card surfaces its oldest unpaid invoice — the bill most in need of attention.
+    // Mirrors the previous associateBy over the DESC-ordered unpaid list (last wins).
+    private fun List<Invoice>.currentUnpaid(): Invoice? = minByOrNull { it.openingMonth }
 
     fun onAction(action: CreditCardsAction) = viewModelScope.launch {
         when (action) {

@@ -142,6 +142,7 @@ class InvoiceTransactionsViewModel(
                     nextDateLabel = nextDateLabel,
                     closingDate = invoice.closingDate,
                     isClosable = invoice.isClosableOn(currentDate),
+                    canReopen = invoice.isReopenable(invoices),
                 )
             },
             selectedInvoiceIndex = index,

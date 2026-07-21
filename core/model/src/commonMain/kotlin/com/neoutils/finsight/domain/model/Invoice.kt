@@ -94,3 +94,22 @@ data class Invoice(
     }
 }
 
+/**
+ * The invoice that closing this one opened, at `openingMonth == this.closingMonth`.
+ * Reopening demotes it back to `FUTURE`, so it is the pivot of the reopen rule.
+ */
+fun Invoice.reopenSuccessor(cardInvoices: List<Invoice>): Invoice? =
+    cardInvoices.find { it.openingMonth == closingMonth }
+
+/**
+ * Reopening is valid only for the latest closed invoice — the one whose successor is
+ * the current `OPEN` one. Any earlier closed (or formerly-retroactive) invoice has a
+ * later cycle already active or settled after it, so reopening would leave two `OPEN`
+ * invoices on the card. `ReopenInvoiceUseCase` enforces this; the screens read it to
+ * not offer what the domain refuses, instead of re-deciding the rule themselves.
+ */
+fun Invoice.isReopenable(cardInvoices: List<Invoice>): Boolean =
+    status != Invoice.Status.OPEN &&
+    status != Invoice.Status.PAID &&
+    reopenSuccessor(cardInvoices)?.status == Invoice.Status.OPEN
+

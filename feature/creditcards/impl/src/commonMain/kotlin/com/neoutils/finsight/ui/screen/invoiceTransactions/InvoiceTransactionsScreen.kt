@@ -556,7 +556,7 @@ private fun InvoiceActions(
             }
         }
 
-        if (summary.status.isClosed) {
+        if (summary.canReopen) {
             OutlinedButton(
                 onClick = { modalManager.show(ReopenInvoiceModal(invoice.id)) },
                 modifier = Modifier.fillMaxWidth(),

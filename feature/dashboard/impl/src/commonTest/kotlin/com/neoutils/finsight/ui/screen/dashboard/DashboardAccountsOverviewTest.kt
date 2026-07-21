@@ -55,7 +55,8 @@ class DashboardAccountsOverviewTest {
         calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(),
         getPendingRecurringUseCase = GetPendingRecurringUseCase(),
         invoiceUiMapper = object : InvoiceUiMapper {
-            override suspend fun toUi(invoice: Invoice): InvoiceUi = throw NotImplementedError()
+            override suspend fun toUi(invoice: Invoice, cardInvoices: List<Invoice>): InvoiceUi =
+                throw NotImplementedError()
         },
         entryRepository = ThrowingEntryRepository,
         navCatalog = object : NavCatalog { override val destinations: List<NavDestination> = emptyList() },

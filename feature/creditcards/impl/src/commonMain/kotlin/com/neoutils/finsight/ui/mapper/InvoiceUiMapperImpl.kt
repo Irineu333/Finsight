@@ -1,6 +1,7 @@
 package com.neoutils.finsight.ui.mapper
 
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.isReopenable
 import com.neoutils.finsight.domain.usecase.CalculateAvailableLimitUseCase
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.ui.model.InvoiceUi
@@ -11,6 +12,7 @@ class InvoiceUiMapperImpl(
 ) : InvoiceUiMapper {
     override suspend fun toUi(
         invoice: Invoice,
+        cardInvoices: List<Invoice>,
     ): InvoiceUi {
 
         val outstandingDebt = calculateInvoiceUseCase(
@@ -18,6 +20,8 @@ class InvoiceUiMapperImpl(
         ).coerceAtLeast(0.0)
 
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
+
+        val canReopen = invoice.isReopenable(cardInvoices)
 
         if (outstandingDebt > 0 && limit.usage != 0.0) {
             return InvoiceUi(
@@ -28,6 +32,7 @@ class InvoiceUiMapperImpl(
                 usagePercentage = limit.usage,
                 showProgress = true,
                 closingDate = invoice.closingDate,
+                canReopen = canReopen,
             )
         }
 
@@ -39,6 +44,7 @@ class InvoiceUiMapperImpl(
             usagePercentage = 0.0,
             showProgress = false,
             closingDate = invoice.closingDate,
+            canReopen = canReopen,
         )
     }
 }

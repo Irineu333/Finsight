@@ -485,7 +485,7 @@ private fun CardActions(
                 }
             }
 
-            if (invoice.status.isClosed) {
+            if (invoice.canReopen) {
                 OutlinedButton(
                     onClick = {
                         modalManager.show(ReopenInvoiceModal(invoice.id))

@@ -9,6 +9,7 @@ import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.InvoiceError
 import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.model.reopenSuccessor
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import kotlin.time.ExperimentalTime
 
@@ -33,11 +34,13 @@ class ReopenInvoiceUseCase(
         // Reopening any closed invoice — including one that was retroactive, whose
         // RETROACTIVE status closing already overwrote with CLOSED and which nothing
         // persists — demotes back to FUTURE the successor that would otherwise stay
-        // OPEN alongside it (openingMonth == this.closingMonth). That successor must be
-        // the current OPEN one; if it is absent or not OPEN, reopening would leave two
-        // OPEN invoices on the card — refuse.
-        val successor = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
-            .find { existing -> existing.openingMonth == invoice.closingMonth }
+        // OPEN alongside it. That successor must be the current OPEN one; if it is
+        // absent or not OPEN, reopening would leave two OPEN invoices on the card —
+        // refuse. `isReopenable` (core/model) is the same rule the screens read to not
+        // offer the button.
+        val successor = invoice.reopenSuccessor(
+            invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
+        )
 
         ensureNotNull(successor?.takeIf { it.status == Invoice.Status.OPEN }) {
             InvoiceException(InvoiceError.CannotReopenInvoice)

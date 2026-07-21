@@ -43,7 +43,9 @@ class CalculateCategorySpendingUseCaseImpl(
 ) : CalculateCategorySpendingUseCase {
     override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> =
         categoryTotals(
-            categories = categoryRepository.getAllCategories().filter { it.type.isExpense },
+            // Include closed: a category archived mid-month keeps the spending it made
+            // that month; the ledger aggregate counts it, so the breakdown must too.
+            categories = categoryRepository.getAllCategoriesIncludingClosed().filter { it.type.isExpense },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
         )
@@ -55,7 +57,7 @@ class CalculateCategoryIncomeUseCaseImpl(
 ) : CalculateCategoryIncomeUseCase {
     override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> =
         categoryTotals(
-            categories = categoryRepository.getAllCategories().filter { it.type.isIncome },
+            categories = categoryRepository.getAllCategoriesIncludingClosed().filter { it.type.isIncome },
             forYearMonth = forYearMonth,
             entryRepository = entryRepository,
         )

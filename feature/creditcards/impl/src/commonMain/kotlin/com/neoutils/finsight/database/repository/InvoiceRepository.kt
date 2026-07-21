@@ -16,8 +16,11 @@ class InvoiceRepository(
     private val mapper: InvoiceMapper
 ) : IInvoiceRepository {
 
+    // Resolving the card of a stored invoice, not offering a choice: closed cards
+    // too. An archived card keeps its (paid) invoices, so the open-only list dropped
+    // them here — silently in the observers, and with a NPE in getAllInvoices below.
     private val creditCardsFlow = creditCardRepository
-        .observeAllCreditCards()
+        .observeAllCreditCardsIncludingClosed()
         .map { creditCards ->
             creditCards.associateBy { creditCard -> creditCard.id }
         }
@@ -149,7 +152,7 @@ class InvoiceRepository(
 
     override suspend fun getAllInvoices(): List<Invoice> {
 
-        val creditCards = creditCardRepository.getAllCreditCards().associateBy { it.id }
+        val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
 
         return dao.getAllInvoices().map { entity ->
             mapper.toDomain(

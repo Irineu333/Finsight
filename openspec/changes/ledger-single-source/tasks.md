@@ -536,3 +536,26 @@
 - [x] 10d.7 **Imports órfãos.** Sete imports mortos em arquivos tocados pela série (report, transactions, accounts, dashboard) removidos. `AccountTypeMapper` já era fonte única, sem cópias inline (confirmado pela higiene).
 
 > **Latentes/sem ação (verificados inofensivos hoje):** multi-moeda inerte (writer fixa BRL, sem UI de moeda por conta — vira bug só se habilitarem sem tocar o writer); **desarquivar não existe** (`AccountDao` só tem `close()`; comentário "single flag away" é aspiracional); `closedLegBlockingChange` usa `isPermanent` (inclui EQUITY) mas EQUITY nunca é arquivável e espelha de propósito a pré-condição de `ArchiveAccountUseCase`; `TransferBetweenAccountsUseCase`/`ConfirmRecurringUseCase` fallbacks — defesa-em-profundidade inalcançável pela UI; TODO pré-existente em `Validate*NameUseCase` (commit 975ef2be1, anterior à série).
+
+### 10e. Caça de bugs multiagente — cinco caçadores adversariais
+
+> Cinco agentes read-only focados em BUGS DE CORREÇÃO (crash, número errado, perda
+> de dado, corrida) — não estilo: fronteira de escrita/invariantes, leitura/reatividade,
+> hidratação/null-safety, gates de UI, fluxos cross-feature. Cada achado verificado no
+> código. **Reatividade e Σ=0/boundary: sólidos** (o `observeAllTransactions` combina
+> `entryDao.observeAll`, então toda tela reage à escrita; nenhum caminho grava entries
+> fora do writer). Um conflito entre agentes foi **refutado**: `ConfirmRecurringUseCase`
+> não duplica transação — ocorrências fazem upsert por `(recurringId, yearMonth)` com
+> índice único.
+>
+> **Tema sistêmico:** "lista SÓ-ABERTA usada onde o agregado inclui arquivado → dropa/
+> crasha". A mesma classe do bug de `getAllAccounts` (e9fb67a28); os fixes anteriores
+> pegaram vários sites, estes escaparam.
+
+- [x] 10e.1 **CRASH: `InvoiceRepository.getAllInvoices()` estourava `!!` para fatura de cartão arquivado.** `getAllCreditCards()` (só-abertos) + `!!` na perna; `getAllInvoices()` está em `TransactionRepository.lookups()`, e `createTransaction` termina em `getTransactionById(...)!!` → **criar QUALQUER transação depois de arquivar um cartão com faturas crashava**. Os observers (`observeAllInvoices`/`observeUnpaidInvoices`, via `creditCardsFlow`) faziam `mapNotNull` e dropavam faturas de arquivado (histórico perdia `targetInvoice`). Trocado para `getAllCreditCardsIncludingClosed()`/`observeAllCreditCardsIncludingClosed()`. Alta severidade.
+- [x] 10e.2 **`CalculateReportCategorySpendingUseCase` dropava categoria arquivada e inflava percentuais.** A resolução `accountId→Category` usava `getAllCategories()` (só-abertas) enquanto o agregado do razão conta arquivadas — a arquivada caía fora e o denominador era recalculado sobre as sobreviventes (pizza não batia com o total do relatório). Irônico: a linha dos *siblings* logo acima já usava `IncludingClosed` (F7/10d.4); a da categoria escapou. Trocado para `getAllCategoriesIncludingClosed()`.
+- [x] 10e.3 **Dashboard "gasto/receita por categoria" ignorava categoria arquivada no mês.** `CalculateCategorySpendingUseCaseImpl`/`...IncomeUseCaseImpl` filtravam `getAllCategories()` (só-abertas). Mesmo padrão, mês corrente. `IncludingClosed`.
+- [x] 10e.4 **Dashboard oferecia editar saldo de fatura FECHADA.** `CreditCardCard` variante `Dashboard` montava `onEdit` sem `takeIf { it.status.isEditable }` (a variante `Listing` tinha). O dashboard usa `observeUnpaidInvoices` (inclui CLOSED), então o lápis aparecia numa fatura fechada; tocar → `InvoiceLockedException`. Gate alinhado ao da Listing.
+- [x] 10e.5 **`PayInvoiceViewModel`: `.onLeft` ligava só ao ramo `else`.** `if (c) {payInvoiceUseCase} else {payInvoicePaymentUseCase}.onLeft{}` — em Kotlin a cadeia associa ao `else`, então o caminho de valor zero (`payInvoiceUseCase`) tinha o resultado **descartado**: sem erro, sem fechar, sem analytics. Extraído para `val result` e encadeado sobre ele. Menor/UX (writer não corrompe).
+
+> **Sólido (verificado, sem ação):** ordem de inicialização de `val` correta em todos os UiStates (`isChangeable` antes de `isEditable`/`isRemovable`/`isDeletable`); `closedLegBlockingChange` só congela ASSET/LIABILITY (categoria livre); ícone cinza só em ícone de categoria; footers com condição/especificidade corretas; `invoiceId` só na perna do cartão; guarda de arquivamento nos dois lados; atomicidade de create/update/delete (incl. bulk); guarda de fatura CLOSED/PAID; FKs/índices conforme desenho; migração 7→9 preserva `isArchived`/Σ=0. Multi-moeda nos agregados de saldo: latente (writer fixa BRL). `getCreditCardById` devolve `isArchived=false` (query plana, sem JOIN): assimetria com `getCategoryById`, mas consumidores atuais leem só `accountId` — menor.

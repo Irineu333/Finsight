@@ -73,7 +73,10 @@ class PayInvoiceViewModel(
     ) = viewModelScope.launch {
         val invoiceAmount = calculateInvoiceUseCase(invoiceId)
 
-        if (invoiceAmount == 0.0) {
+        // Bound to a `val`: `if (c) {..} else {..}.onLeft{}` attaches the chain to the
+        // else branch alone, so the zero-amount path's result was silently dropped
+        // (no error, no dismiss, no analytics).
+        val result = if (invoiceAmount == 0.0) {
             payInvoiceUseCase(
                 invoiceId = invoiceId,
                 paidAt = date,
@@ -84,7 +87,9 @@ class PayInvoiceViewModel(
                 date = date,
                 account = account ?: checkNotNull(accountRepository.getDefaultAccount()),
             )
-        }.onLeft {
+        }
+
+        result.onLeft {
             crashlytics.recordException(it)
             modalManager.showError(it.toUiMessage())
         }.onRight {

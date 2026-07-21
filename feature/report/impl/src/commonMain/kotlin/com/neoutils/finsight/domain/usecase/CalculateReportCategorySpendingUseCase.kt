@@ -64,7 +64,11 @@ class CalculateReportCategorySpendingUseCase(
         transactionType: TransactionType,
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
-        val categoriesByAccount: Map<Long, Category> = categoryRepository.getAllCategories()
+        // Include closed: the ledger totals above count an archived category's
+        // spending, so resolving with the open-only list would drop it from the
+        // breakdown AND inflate the survivors' percentages (the total below is a sum
+        // over what resolves). Mirrors the sibling-set a few lines up.
+        val categoriesByAccount: Map<Long, Category> = categoryRepository.getAllCategoriesIncludingClosed()
             .associateBy { it.accountId }
 
         val amounts = totals.mapNotNull { (accountId, natural) ->

@@ -169,7 +169,12 @@ fun CreditCardCard(
 
                 val onEdit: (() -> Unit)? = when (variant) {
                     is CreditCardCardVariant.Dashboard -> {
-                        invoiceUi?.let { { variant.onEditAmount() } }
+                        // Only an editable (not closed/paid) invoice may be adjusted —
+                        // the same gate the Listing variant applies; the write boundary
+                        // would refuse it anyway.
+                        invoiceUi
+                            ?.takeIf { it.status.isEditable }
+                            ?.let { { variant.onEditAmount() } }
                     }
 
                     is CreditCardCardVariant.Listing -> {

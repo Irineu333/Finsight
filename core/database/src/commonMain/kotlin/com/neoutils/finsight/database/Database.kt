@@ -324,18 +324,26 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
         //        NULL pointer (FK SET NULL), which would abort the upgrade on
         //        `entries.accountId NOT NULL`. The real type is recoverable from
         //        `transactions.target`; the name and the multiplicity are not, so all
-        //        the orphans of a type collapse into one closed account. ---
+        //        the orphans of a type collapse into one closed account.
+        //
+        //        The EXISTS must match every leg that step 7 will route to the bucket,
+        //        which is any leg with a NULL account/card — regardless of `operationId`.
+        //        Step 6b (below) backfills the NULL `operationId` of a leg that never had
+        //        an aggregate, and step 7 then routes it here too; guarding this EXISTS on
+        //        `operationId IS NOT NULL` would skip creating the bucket for a leg that is
+        //        *only* such an orphan, leaving its entry pointing at an account that does
+        //        not exist (a dangling FK the write-off cannot repair). ---
         connection.execSQL("CREATE TEMP TABLE `_closed` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
         connection.execSQL(
             "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_closed`) + 1, 'Conta encerrada', 'ASSET', 'BRL', 'wallet', 0, $now, 1 " +
-                "WHERE EXISTS (SELECT 1 FROM `transactions` WHERE `target` = 'ACCOUNT' AND `accountId` IS NULL AND `operationId` IS NOT NULL)"
+                "WHERE EXISTS (SELECT 1 FROM `transactions` WHERE `target` = 'ACCOUNT' AND `accountId` IS NULL)"
         )
         connection.execSQL(
             "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) " +
                 "SELECT (SELECT base FROM `_closed`) + 2, 'Cartão encerrado', 'LIABILITY', 'BRL', 'credit_card', 0, $now, 1 " +
                 "WHERE EXISTS (" +
-                "SELECT 1 FROM `transactions` t WHERE t.`target` = 'CREDIT_CARD' AND t.`operationId` IS NOT NULL " +
+                "SELECT 1 FROM `transactions` t WHERE t.`target` = 'CREDIT_CARD' " +
                 "AND (SELECT cc.`accountId` FROM `credit_cards` cc WHERE cc.`id` = t.`creditCardId`) IS NULL)"
         )
 

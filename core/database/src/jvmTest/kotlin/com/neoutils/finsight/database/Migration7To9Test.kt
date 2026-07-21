@@ -368,6 +368,62 @@ class Migration7To9Test {
         assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE accountId NOT IN (SELECT id FROM accounts)"))
     }
 
+    @Test
+    fun `given category legs when migrated then the category total is preserved in cents`() {
+        MIGRATION_7_9.migrate(connection)
+
+        // Food is the contra of three expenses: op1 (50.00), op6 (20.00, deleted
+        // account) and op7 (15.00, deleted card). Debit-positive, its account holds
+        // +8500 — the figure the category screen shows, which no prior test asserted.
+        val foodTotal = scalar(
+            "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e " +
+                "JOIN `categories` c ON c.`accountId` = e.`accountId` WHERE c.`id` = 1"
+        )
+        assertEquals(8500L, foodTotal)
+    }
+
+    @Test
+    fun `given the migrated ledger then net worth equals v7 assets minus liabilities`() {
+        MIGRATION_7_9.migrate(connection)
+
+        // Net worth = Σ over ASSET+LIABILITY: A(-12000) + B(+10000) + C(-4000) +
+        // card(-6000) = -12000. The two reconstructed closed accounts are zeroed by
+        // their write-off, so a deleted account's money no longer sits in net worth —
+        // the spec figure that only the `Σ = 0` invariant covered before.
+        val netWorth = scalar(
+            "SELECT COALESCE(SUM(e.`amount`), 0) FROM `entries` e " +
+                "JOIN `accounts` a ON a.`id` = e.`accountId` WHERE a.`type` IN ('ASSET', 'LIABILITY')"
+        )
+        assertEquals(-12000L, netWorth)
+    }
+
+    @Test
+    fun `given a leg orphan of both its operation and a deleted account when migrated then no dangling account remains`() {
+        // The sharp intersection the ordering of steps 6 and 6b must survive: a leg
+        // with BOTH a NULL operationId (never linked to an aggregate) AND a NULL
+        // accountId (its account was deleted), and no other deleted-account leg to
+        // trigger the closed-account bucket. Step 6b backfills the operationId and
+        // step 7 routes the entry to 'Conta encerrada'; if step 6 guarded its EXISTS
+        // on `operationId IS NOT NULL` the bucket would not be created and the entry
+        // would point at an account that does not exist.
+        connection.execSQL("DELETE FROM `transactions` WHERE `operationId` IN (6, 7)")
+        connection.execSQL("DELETE FROM `operations` WHERE `id` IN (6, 7)")
+        connection.execSQL(
+            "INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) " +
+                "VALUES (NULL,'EXPENSE',20.0,'2024-03-01',1,'ACCOUNT',NULL)"
+        )
+
+        MIGRATION_7_9.migrate(connection)
+
+        // Without the fix, foreign_key_check reports the dangling entry.
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM pragma_foreign_key_check"))
+        assertEquals(0L, scalar("SELECT COUNT(*) FROM entries WHERE accountId NOT IN (SELECT id FROM accounts)"))
+        // The bucket was created and the orphan's money routed into it, then zeroed.
+        assertEquals(1L, scalar("SELECT COUNT(*) FROM accounts WHERE name = 'Conta encerrada'"))
+        assertEquals(0L, scalar(closedBalance("Conta encerrada")))
+        assertEquals(0L, wholeLedgerSum())
+    }
+
     /** Σ of the whole ledger, which must be zero for every currency at all times. */
     private fun wholeLedgerSum(): Long = scalar("SELECT COALESCE(SUM(amount),0) FROM entries")
 }

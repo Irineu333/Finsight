@@ -37,6 +37,7 @@ sealed class InvoiceError(val message: String) {
     // Reopen
     data object AlreadyOpen : InvoiceError("Invoice is already open")
     data object CannotReopenPaidInvoice : InvoiceError("Cannot reopen a paid invoice")
+    data object CannotReopenInvoice : InvoiceError("Only the latest closed invoice can be reopened")
 
     // Delete
     data object CannotDeleteInvoice : InvoiceError("Only future or retroactive invoices can be deleted")

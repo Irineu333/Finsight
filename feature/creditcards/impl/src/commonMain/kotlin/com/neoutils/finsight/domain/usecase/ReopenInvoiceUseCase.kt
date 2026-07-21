@@ -30,18 +30,34 @@ class ReopenInvoiceUseCase(
             InvoiceException(InvoiceError.CannotReopenPaidInvoice)
         }
 
-        val existingInvoices = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
-
-        val nextOpenInvoice = existingInvoices.find { existing ->
-            existing.status == Invoice.Status.OPEN &&
-            existing.openingMonth == invoice.closingMonth
+        // A retroactive invoice belongs to a past cycle and never owned the current
+        // OPEN one — closing it opens no successor (CloseInvoiceUseCase). Reopening it
+        // must restore RETROACTIVE, not OPEN: turning it OPEN would leave two OPEN
+        // invoices on the card and erase the RETROACTIVE status the cycle depends on.
+        // Reachable only since a retroactive invoice with a balance now reaches CLOSED
+        // instead of going straight to PAID.
+        if (invoice.status.isRetroactive) {
+            return@either invoice.copy(
+                status = Invoice.Status.RETROACTIVE,
+                closedAt = null,
+                paidAt = null,
+            ).also {
+                invoiceRepository.update(it)
+            }
         }
 
-        if (nextOpenInvoice != null) {
-            invoiceRepository.update(
-                nextOpenInvoice.copy(status = Invoice.Status.FUTURE)
-            )
+        // A closed invoice is reopened by demoting the successor that closing it opened
+        // (openingMonth == this.closingMonth) back to FUTURE. That successor must be the
+        // current OPEN one; if it is not, this is a mid-chain invoice and reopening it
+        // would leave two OPEN invoices on the card — refuse.
+        val successor = invoiceRepository.getInvoicesByCreditCard(invoice.creditCard.id)
+            .find { existing -> existing.openingMonth == invoice.closingMonth }
+
+        ensureNotNull(successor?.takeIf { it.status == Invoice.Status.OPEN }) {
+            InvoiceException(InvoiceError.CannotReopenInvoice)
         }
+
+        invoiceRepository.update(successor.copy(status = Invoice.Status.FUTURE))
 
         invoice.copy(
             status = Invoice.Status.OPEN,

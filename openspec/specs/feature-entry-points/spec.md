@@ -42,7 +42,7 @@ O acesso a recursos de UI de outra feature SHALL ocorrer exclusivamente por: (1)
 - **THEN** ela injeta o `<Name>Entry` via Koin, obtém o detalhe (um `AdaptiveModal`, tipo de `:core:designsystem`) pela factory `viewXModal()` e o abre via `DetailPaneController`, sem importar nada do `impl` de destino; a superfície painel-vs-sheet é resolvida pela largura da janela na casca
 
 ### Requirement: Critério entry point vs core:ui
-Componente visual com wiring próprio (ViewModel, use cases) SHALL pertencer a uma feature e ser acessado via entry point. Componente que apenas renderiza modelos de `:core:model` (ex.: `AccountSelector`, `OperationCard`) SHALL residir em `:core:ui` e ser importado diretamente. Componente de `:core:ui` usado por uma única feature SHOULD migrar para o `impl` dessa feature — mas o critério normativo é o wiring, não a contagem de consumidores.
+Componente visual com wiring próprio (ViewModel, use cases) SHALL pertencer a uma feature e ser acessado via entry point. Componente que apenas renderiza modelos de `:core:model` (ex.: `AccountSelector`, `TransactionCard`) SHALL residir em `:core:ui` e ser importado diretamente. Componente de `:core:ui` usado por uma única feature SHOULD migrar para o `impl` dessa feature — mas o critério normativo é o wiring, não a contagem de consumidores.
 
 #### Scenario: Componente burro compartilhado
 - **WHEN** duas features renderizam a mesma visualização de um modelo do core, sem estado próprio

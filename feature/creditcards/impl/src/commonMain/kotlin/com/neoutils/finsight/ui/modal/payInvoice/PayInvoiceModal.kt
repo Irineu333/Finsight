@@ -166,6 +166,7 @@ class PayInvoiceModal(
                     viewModel.onAction(
                         PayInvoiceAction.Submit(
                             date = dayMonthYear.parse(date.text.toString()),
+                            account = uiState.selectedAccount,
                         )
                     )
                 },

@@ -166,6 +166,7 @@ class AdvancePaymentModal(
                         AdvancePaymentAction.Submit(
                             amount = parseMoneyToDouble(amount.text.toString()),
                             date = dayMonthYear.parse(date.text.toString()),
+                            account = uiState.selectedAccount,
                         )
                     )
                 },

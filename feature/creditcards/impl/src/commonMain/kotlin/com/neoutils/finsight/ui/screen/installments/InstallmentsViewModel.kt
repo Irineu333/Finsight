@@ -3,9 +3,12 @@ package com.neoutils.finsight.ui.screen.installments
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.mapper.InstallmentUiMapper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,11 +22,19 @@ class InstallmentsViewModel(
     private val installmentUiMapper: InstallmentUiMapper,
 ) : ViewModel() {
 
+    private data class InstallmentWithDomain(
+        val ui: InstallmentWithTransactionsUi,
+        val installment: Installment,
+        val transactions: List<Transaction>,
+    )
+
     private val selectedInstallmentIndex = MutableStateFlow(0)
     private val selectedCategory = MutableStateFlow<Category?>(null)
     private val selectedType = MutableStateFlow<TransactionType?>(null)
     private val selectedFilter = MutableStateFlow(InstallmentFilter.ACTIVE)
 
+    // Each installment paired with the domain transactions it was mapped from: the
+    // flat UI model carries no graph, and the delete modal still needs the domain.
     private val allInstallmentsUi = combine(
         installmentRepository.observeAllInstallments(),
         transactionRepository.observeAllTransactions(),
@@ -34,14 +45,24 @@ class InstallmentsViewModel(
 
         installments
             .mapNotNull { installment ->
+                val installmentTransactions =
+                    transactionsByInstallmentId[installment.id].orEmpty()
+
                 installmentUiMapper.toUi(
                     installment = installment,
-                    transactions = transactionsByInstallmentId[installment.id].orEmpty(),
-                )
+                    transactions = installmentTransactions,
+                )?.let { ui ->
+                    InstallmentWithDomain(
+                        ui = ui,
+                        installment = installment,
+                        transactions = installmentTransactions
+                            .sortedBy { it.installment?.number ?: Int.MAX_VALUE },
+                    )
+                }
             }
             .sortedWith(
-                compareByDescending<InstallmentWithTransactionsUi> {
-                    it.latestTransactionDate
+                compareByDescending<InstallmentWithDomain> {
+                    it.ui.latestTransactionDate
                 }.thenByDescending { it.installment.id }
             )
     }
@@ -54,8 +75,8 @@ class InstallmentsViewModel(
         selectedFilter,
     ) { installmentsAll, selectedIndex, category, type, filter ->
         val filtered = when (filter) {
-            InstallmentFilter.ACTIVE -> installmentsAll.filter { it.isActive }
-            InstallmentFilter.COMPLETED -> installmentsAll.filter { !it.isActive }
+            InstallmentFilter.ACTIVE -> installmentsAll.filter { it.ui.isActive }
+            InstallmentFilter.COMPLETED -> installmentsAll.filter { !it.ui.isActive }
             InstallmentFilter.ALL -> installmentsAll
         }
 
@@ -67,16 +88,32 @@ class InstallmentsViewModel(
             .coerceAtLeast(0)
             .coerceAtMost(filtered.size - 1)
 
-        val selectedTransactions = filtered.getOrNull(safeSelectedIndex)
-            ?.transactions.orEmpty()
+        val selected = filtered.getOrNull(safeSelectedIndex)
+        val selectedTransactions = selected?.transactions.orEmpty()
 
         val categories = selectedTransactions
             .mapNotNull { it.category }
             .distinctBy { it.id }
 
+        // Filtering lives here, as it does on every sibling screen — the state is
+        // handed the finished list instead of deriving it on read.
+        val rows = selectedTransactions
+            .filter { transaction ->
+                category == null || transaction.category?.id == category.id
+            }
+            .filter { transaction ->
+                type == null || transaction.primaryEntry?.let {
+                    deriveTransactionType(it.amount, transaction.entries)
+                } == type
+            }
+            .mapNotNull(installmentUiMapper::toRowUi)
+
         InstallmentsUiState.Content(
-            installments = filtered,
+            installments = filtered.map { it.ui },
             selectedInstallmentIndex = safeSelectedIndex,
+            transactions = rows,
+            selectedDomainInstallment = selected?.installment,
+            selectedDomainTransactions = selectedTransactions,
             selectedCategory = category,
             selectedType = type,
             selectedFilter = filter,

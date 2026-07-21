@@ -24,9 +24,22 @@ import com.neoutils.finsight.ui.theme.Income
 val Category.displayColor: Color
     @Composable
     @ReadOnlyComposable
-    get() = when {
-        isArchived -> colorScheme.onSurfaceVariant
-        type == Category.Type.INCOME -> Income
-        type == Category.Type.EXPENSE -> Expense
-        else -> colorScheme.onSurface
-    }
+    get() = categoryDisplayColor(type, isArchived)
+
+/**
+ * The same rule, for a flat UI model that carries no [Category] — only the two
+ * facts the colour depends on. A DTO holds no domain graph
+ * (`presentation-mapping`), so it cannot ask the extension above; it asks this,
+ * and the rule still has one owner instead of a copy per screen.
+ */
+@Composable
+@ReadOnlyComposable
+fun categoryDisplayColor(
+    type: Category.Type?,
+    isArchived: Boolean,
+): Color = when {
+    isArchived -> colorScheme.onSurfaceVariant
+    type == Category.Type.INCOME -> Income
+    type == Category.Type.EXPENSE -> Expense
+    else -> colorScheme.onSurface
+}

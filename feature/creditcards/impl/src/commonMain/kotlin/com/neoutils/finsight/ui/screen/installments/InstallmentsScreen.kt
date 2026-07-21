@@ -73,8 +73,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.style.TextDecoration
 import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.Invoice
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.CategoryIconBox
@@ -82,7 +80,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.TransactionCard
-import com.neoutils.finsight.ui.model.toTransactionUi
+import com.neoutils.finsight.ui.model.categoryDisplayColor
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentModal
 import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentModal
 import com.neoutils.finsight.ui.theme.Expense as ExpenseColor
@@ -282,15 +280,15 @@ private fun InstallmentsContent(
                         )
                     }
 
-                    uiState.selectedInstallment?.let { selected ->
-                        if (selected.isDeletable) {
+                    uiState.selectedDomainInstallment?.let { selectedInstallment ->
+                        if (uiState.selectedInstallment?.isDeletable == true) {
                             item(key = "delete_action") {
                                 OutlinedButton(
                                     onClick = {
                                         modalManager.show(
                                             DeleteInstallmentModal(
-                                                installment = selected.installment,
-                                                transactions = selected.transactions,
+                                                installment = selectedInstallment,
+                                                transactions = uiState.selectedDomainTransactions,
                                             )
                                         )
                                     },
@@ -337,36 +335,34 @@ private fun InstallmentsContent(
                     }
 
                     items(
-                        items = uiState.filteredTransactions,
-                        key = Transaction::id,
-                    ) { transaction ->
-                        transaction.toTransactionUi()?.let { transactionUi ->
+                        items = uiState.transactions,
+                        key = { it.transaction.id },
+                    ) { row ->
+                        val transactionUi = row.transaction
+
                         TransactionCard(
                             transaction = transactionUi,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .fillMaxWidth()
                                 .animateItem(),
-                            amountDecoration = when (transaction.targetInvoice?.status) {
-
-                                Invoice.Status.PAID,
-                                Invoice.Status.RETROACTIVE -> TextDecoration.LineThrough
-
-                                else -> TextDecoration.None
+                            amountDecoration = if (row.isSettled) {
+                                TextDecoration.LineThrough
+                            } else {
+                                TextDecoration.None
                             },
                             onClick = {
                                 when (transactionUi.direction) {
                                     TransactionType.ADJUSTMENT -> {
-                                        detailController.show(transactionsEntry.viewAdjustmentModal(transaction.id))
+                                        detailController.show(transactionsEntry.viewAdjustmentModal(transactionUi.id))
                                     }
 
                                     else -> {
-                                        detailController.show(transactionsEntry.viewTransactionModal(transaction.id))
+                                        detailController.show(transactionsEntry.viewTransactionModal(transactionUi.id))
                                     }
                                 }
                             },
                         )
-                        }
                     }
                 }
             }
@@ -477,9 +473,13 @@ private fun InstallmentSummaryCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (ui.category != null) {
+                    if (ui.categoryIcon != null) {
                         CategoryIconBox(
-                            category = ui.category,
+                            icon = ui.categoryIcon,
+                            tint = categoryDisplayColor(
+                                type = ui.categoryType,
+                                isArchived = ui.isCategoryArchived,
+                            ),
                             contentPadding = PaddingValues(8.dp),
                         )
                     } else {
@@ -520,7 +520,7 @@ private fun InstallmentSummaryCard(
                     color = colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = formatter.format(ui.installment.totalAmount),
+                    text = formatter.format(ui.totalAmount),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -546,7 +546,7 @@ private fun InstallmentSummaryCard(
                             modifier = Modifier.alignByBaseline(),
                         )
                         Text(
-                            text = " / ${ui.installment.count}",
+                            text = " / ${ui.totalCount}",
                             fontSize = 16.sp,
                             color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.alignByBaseline(),

@@ -16,11 +16,11 @@ import kotlin.test.assertNull
  */
 class TransactionMapperEntriesTest {
 
-    private val entity = TransactionEntity(id = 7, title = null, date = LocalDate(2026, 3, 10), categoryId = null)
+    private val entity = TransactionEntity(id = 7, title = null, date = LocalDate(2026, 3, 10))
 
     private fun toDomain(entries: List<Entry>) = TransactionMapper().toDomain(
         entity = entity,
-        categories = emptyMap(),
+        categoriesByDimension = emptyMap(),
         creditCards = emptyMap(),
         invoices = emptyMap(),
         installments = emptyMap(),

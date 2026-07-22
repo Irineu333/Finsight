@@ -1,7 +1,6 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
-import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
@@ -30,13 +29,12 @@ import kotlin.math.roundToLong
  * for a single-leg intent, and enforces the `Σ = 0` per-currency invariant —
  * throwing [UnbalancedTransactionException] and writing nothing on failure.
  *
- * Only *system* accounts are still created on demand: category and card accounts
- * are created with their facade, so nothing here has to guess whether one exists.
+ * Only *system* accounts are created on demand: card accounts are created with
+ * their facade, so nothing here has to guess whether one exists.
  */
 class LedgerEntryWriter(
     private val entryDao: EntryDao,
     private val accountDao: AccountDao,
-    private val categoryDao: CategoryDao,
     private val creditCardDao: CreditCardDao,
     private val dimensionDao: DimensionDao,
 ) {
@@ -84,6 +82,10 @@ class LedgerEntryWriter(
                         accountId = contraAccountId(leg),
                         amount = -leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
+                        // A nominal leg is classified by the category's dimension.
+                        // No category means genuinely unclassified — there is no
+                        // bucket account and no bucket dimension standing in for it.
+                        dimensionId = leg.category?.dimensionId,
                     )
                 )
             }
@@ -153,28 +155,30 @@ class LedgerEntryWriter(
                 .orRejectIfClosed(ClosedFacade.CREDIT_CARD)
     }
 
+    /**
+     * The account the synthesized contra leg posts to: reconciliation for an
+     * adjustment, otherwise one of the two nominal accounts.
+     *
+     * Which nominal is chosen comes from [Category.type] — feature state, not a
+     * ledger derivation. **This is the documented exception to the project's
+     * Derivation Rule** (design D4): "this is an expense category" is the user's
+     * declaration at creation time and nothing derives it. It used to be encoded as
+     * the type of the category's own account, which made it look derived; the state
+     * only moved home. With no category the *leg's* own type decides, which is the
+     * same question asked of the only source left.
+     */
     private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {
         TransactionType.ADJUSTMENT ->
             ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
 
-        TransactionType.EXPENSE ->
-            leg.category?.let { categoryAccountId(it) }
-                ?: ensureSystemAccount(SystemAccount.UNCATEGORIZED_EXPENSE, AccountEntity.Type.EXPENSE)
-
-        TransactionType.INCOME ->
-            leg.category?.let { categoryAccountId(it) }
-                ?: ensureSystemAccount(SystemAccount.UNCATEGORIZED_INCOME, AccountEntity.Type.INCOME)
+        TransactionType.EXPENSE, TransactionType.INCOME -> when (leg.category?.type ?: leg.type.asCategoryType()) {
+            Category.Type.EXPENSE -> ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE)
+            Category.Type.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
+        }
     }
 
-    /**
-     * The category's account, looked up — never created. Categories and cards are
-     * created together with their account (see `CategoryRepository`), so by the
-     * time anything is spent there the row exists. This is the difference between
-     * a facade that *has* an account and one that might.
-     */
-    private suspend fun categoryAccountId(category: Category): Long =
-        categoryDao.getCategoryById(category.id)?.accountId
-            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
+    private fun TransactionType.asCategoryType(): Category.Type =
+        if (isIncome) Category.Type.INCOME else Category.Type.EXPENSE
 
     private suspend fun cardAccountId(creditCard: CreditCard): Long =
         creditCardDao.getCreditCardById(creditCard.id)?.accountId

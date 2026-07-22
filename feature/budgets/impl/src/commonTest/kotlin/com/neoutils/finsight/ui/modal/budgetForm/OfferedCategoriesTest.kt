@@ -13,7 +13,7 @@ class OfferedCategoriesTest {
 
     private fun category(id: Long, isArchived: Boolean = false) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
-        type = Category.Type.EXPENSE, createdAt = 0L, accountId = id * 10, isArchived = isArchived,
+        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = id * 10, isArchived = isArchived,
     )
 
     private val food = category(1)

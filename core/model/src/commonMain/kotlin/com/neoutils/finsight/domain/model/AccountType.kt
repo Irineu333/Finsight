@@ -39,4 +39,12 @@ enum class AccountType {
      * account holds nothing — its balance is a total of things that already moved.
      */
     val isPermanent: Boolean get() = this == ASSET || this == LIABILITY || this == EQUITY
+
+    /**
+     * The complement of [isPermanent] restricted to the two types money *flows*
+     * through: `INCOME` and `EXPENSE`. These are the only accounts a category
+     * dimension may land on, which makes this the way to find the leg that carries
+     * one.
+     */
+    val isNominal: Boolean get() = this == INCOME || this == EXPENSE
 }

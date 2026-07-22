@@ -12,11 +12,11 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 
 /**
- * Removes a category that was never used, facade and ledger account together.
+ * Removes a category that was never used, facade and ledger dimension together.
  *
  * A category with movement is refused — see [ArchiveCategoryUseCase]. Removing the
  * pair is the repository's job, because the order is a persistence constraint:
- * the facade references the account, so the account cannot go first.
+ * the facade references the dimension, so the dimension cannot go first.
  *
  * The same guards account and card deletion carry: a category used by a budget
  * (`budget_categories` is CASCADE) or by a recurring (`recurring.categoryId` is
@@ -30,7 +30,7 @@ class DeleteCategoryUseCase(
     private val budgetRepository: IBudgetRepository,
 ) {
     suspend operator fun invoke(category: Category): Either<Throwable, Unit> {
-        if (entryRepository.hasEntries(category.accountId)) {
+        if (entryRepository.hasEntriesForDimension(category.dimensionId)) {
             return AccountException(AccountError.HAS_TRANSACTIONS).left()
         }
         if (budgetRepository.hasBudgetForCategory(category.id)) {

@@ -35,7 +35,7 @@ class DeleteCategoryGuardsTest {
 
     private val category = Category(
         id = 1, name = "Food", icon = CategoryLazyIcon("food"),
-        type = Category.Type.EXPENSE, createdAt = 0L, accountId = 10,
+        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = 10,
     )
 
     private fun useCase(
@@ -94,6 +94,8 @@ private class RecordingCategoryRepository : ICategoryRepository {
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
+    override suspend fun archive(id: Long) = Unit
+
     override suspend fun insert(category: Category) = throw NotImplementedError()
     override suspend fun update(category: Category) = throw NotImplementedError()
 }
@@ -120,27 +122,28 @@ private class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
 
 private class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = hasEntries
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = hasEntries
     override suspend fun balance(accountId: Long): Double = 0.0
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows = throw NotImplementedError()
     override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun categoryTotals(
-        categoryType: AccountType,
+    override suspend fun totalsByDimension(
+        nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long, Double> = throw NotImplementedError()
-    override suspend fun categoryTotalsForDimensions(
-        categoryType: AccountType,
-        dimensionIds: List<Long>,
-    ): Map<Long, Double> = throw NotImplementedError()
+    ): Map<Long?, Double> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }

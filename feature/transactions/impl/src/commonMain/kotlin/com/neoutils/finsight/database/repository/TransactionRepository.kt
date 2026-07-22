@@ -57,7 +57,7 @@ class TransactionRepository(
 ) : ITransactionRepository {
 
     // Resolving a historical reference, not offering a choice: closed included.
-    private val categoriesFlow = categoryRepository.observeAllCategoriesIncludingClosed().map { it.associateBy { category -> category.id } }
+    private val categoriesFlow = categoryRepository.observeAllCategoriesIncludingClosed()
     private val creditCardsFlow = creditCardRepository.observeAllCreditCardsIncludingClosed().map { it.associateBy { card -> card.id } }
     private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
     private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
@@ -71,10 +71,11 @@ class TransactionRepository(
         accountsFlow,
         creditCardsFlow,
     ) { entities, categories, accounts, creditCards ->
+        val categoriesById = categories.associateBy { it.id }
         entities.associate { entity ->
             entity.id to recurringMapper.toDomain(
                 entity = entity,
-                category = entity.categoryId?.let { categories[it] },
+                category = entity.categoryId?.let { categoriesById[it] },
                 account = entity.accountId?.let { accounts[it] },
                 creditCard = entity.creditCardId?.let { creditCards[it] },
             )
@@ -106,10 +107,11 @@ class TransactionRepository(
         entryDao.observeAll(),
     ) { transactions, categories, creditCards, invoices, installments, accounts, recurring, entries ->
         val entriesByTransactionId = entries.groupBy { it.transactionId }
+        val categoriesByDimension = categories.associateBy { it.dimensionId }
         transactions.mapNotNull { transaction ->
             transactionMapper.toDomain(
                 entity = transaction,
-                categories = categories,
+                categoriesByDimension = categoriesByDimension,
                 creditCards = creditCards,
                 invoices = invoices,
                 installments = installments,
@@ -143,7 +145,6 @@ class TransactionRepository(
     private fun TransactionIntent.toEntity() = TransactionEntity(
         title = title,
         date = date,
-        categoryId = category?.id,
         recurringId = recurringId,
         recurringCycle = recurringCycle,
         installmentId = installmentId,
@@ -151,7 +152,7 @@ class TransactionRepository(
     )
 
     private data class Lookups(
-        val categories: Map<Long, Category>,
+        val categoriesByDimension: Map<Long, Category>,
         val creditCards: Map<Long, CreditCard>,
         val invoices: Map<Long, Invoice>,
         val installments: Map<Long, Installment>,
@@ -160,11 +161,12 @@ class TransactionRepository(
     )
 
     private suspend fun lookups(): Lookups {
-        val categories = categoryRepository.getAllCategoriesIncludingClosed().associateBy { it.id }
+        val categories = categoryRepository.getAllCategoriesIncludingClosed()
+        val categoriesById = categories.associateBy { it.id }
         val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
         val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
         return Lookups(
-            categories = categories,
+            categoriesByDimension = categories.associateBy { it.dimensionId },
             creditCards = creditCards,
             invoices = invoiceRepository.getAllInvoices().associateBy { it.id },
             installments = installmentRepository.getAllInstallments().associateBy { it.id },
@@ -172,7 +174,7 @@ class TransactionRepository(
             recurring = recurringDao.getAll().associate { entity ->
                 entity.id to recurringMapper.toDomain(
                     entity = entity,
-                    category = entity.categoryId?.let { categories[it] },
+                    category = entity.categoryId?.let { categoriesById[it] },
                     account = entity.accountId?.let { accounts[it] },
                     creditCard = entity.creditCardId?.let { creditCards[it] },
                 )
@@ -182,7 +184,7 @@ class TransactionRepository(
 
     private suspend fun TransactionEntity.toDomain(lookups: Lookups): Transaction? = transactionMapper.toDomain(
         entity = this,
-        categories = lookups.categories,
+        categoriesByDimension = lookups.categoriesByDimension,
         creditCards = lookups.creditCards,
         invoices = lookups.invoices,
         installments = lookups.installments,
@@ -351,7 +353,6 @@ class TransactionRepository(
                     id = id,
                     title = title,
                     date = date,
-                    categoryId = leg.category?.id,
                 )
                 ledgerEntryWriter.rewriteEntries(id, listOf(leg))
             }

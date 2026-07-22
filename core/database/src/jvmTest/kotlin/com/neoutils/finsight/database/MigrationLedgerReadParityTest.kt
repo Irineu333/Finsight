@@ -41,7 +41,7 @@ class MigrationLedgerReadParityTest {
         val entryDao = database.entryDao()
         val accounts = database.accountDao().getAllLedgerAccounts()
         val aId = accounts.first { it.name == "A" }.id
-        val foodId = accounts.first { it.name == "Food" }.id
+        val foodDimensionId = database.categoryDao().getAllCategories().first { it.name == "Food" }.dimensionId
 
         // Account balance: A = -50 (expense) - 100 (transfer out) + 30 (adjustment) = -120.00.
         assertEquals(-12000L, entryDao.balanceOf(aId))
@@ -56,7 +56,8 @@ class MigrationLedgerReadParityTest {
         assertEquals(-6000L, entryDao.dimensionNaturalBalance(invoiceDimensionId))
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
-        assertEquals(8500L, entryDao.balanceOf(foodId))
+        // Read through the category's dimension, which is what carries it since v10.
+        assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId))
 
         // Temporal cut, read through the production query: nothing before A's first
         // movement, everything by the month of its last.

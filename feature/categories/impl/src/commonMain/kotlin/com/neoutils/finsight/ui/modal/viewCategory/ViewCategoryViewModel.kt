@@ -52,16 +52,16 @@ class ViewCategoryViewModel(
         entryRepository.observeLedgerChanges(),
     ) { category, yearMonth, _ ->
         category ?: return@combine ViewCategoryUiState.Error
-        // Σ entries of the category's chart account in the month, read from the ledger.
-        // The natural balance is debit-positive; the ledger's own display convention
-        // turns it into the positive figure a category is expected to read as.
+        // Σ entries carrying the category's dimension in the month, read from the
+        // ledger. The natural balance is debit-positive; the ledger's own display
+        // convention turns it into the positive figure a category reads as.
         val displaySign = category.type.accountType.displaySign
-        val totalAmount = entryRepository.balanceInMonth(yearMonth, category.accountId) * displaySign
-        val transactionCount = entryRepository.entryCountInMonth(yearMonth, category.accountId)
+        val totalAmount = entryRepository.dimensionBalanceInMonth(yearMonth, category.dimensionId) * displaySign
+        val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
         // Deleting is refused when the category has movement OR a budget/recurring
         // still points at it (DeleteCategoryUseCase), so those cases offer archiving
         // instead — the category is kept, and its dependents keep pointing at it.
-        val mustPreserve = entryRepository.hasEntries(category.accountId) ||
+        val mustPreserve = entryRepository.hasEntriesForDimension(category.dimensionId) ||
             budgetRepository.hasBudgetForCategory(category.id) ||
             recurringRepository.hasRecurringForCategory(category.id)
         ViewCategoryUiState.Content(

@@ -44,6 +44,8 @@ class RecurringRepositoryTest {
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
+        override suspend fun archive(id: Long) = Unit
+
         override suspend fun insert(category: Category) = throw NotImplementedError()
         override suspend fun update(category: Category) = throw NotImplementedError()
         override suspend fun delete(category: Category) = throw NotImplementedError()

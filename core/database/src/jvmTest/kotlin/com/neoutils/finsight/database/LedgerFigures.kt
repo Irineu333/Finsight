@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database
 
 import androidx.sqlite.SQLiteConnection
+import com.neoutils.finsight.database.mapper.toDomain
 
 /**
  * The four figures the app renders from the ledger, each **keyed by the id of the
@@ -27,11 +28,16 @@ internal data class LedgerFigures(
  * not move when the mechanism does.
  */
 internal fun SQLiteConnection.readV9Figures(): LedgerFigures = LedgerFigures(
+    // The balance *of an account*, which is what a screen shows: the monetary rows
+    // of the chart. The nominal rows are not accounts to the user (design D10) —
+    // whatever v10 does with them is answered by `totalByCategoryId` below, and
+    // comparing them by id would be comparing the mechanism to itself.
     balanceByAccountId = queryMap(
         """
         SELECT `a`.`id`, COALESCE(SUM(`e`.`amount`), 0)
         FROM `accounts` `a`
         LEFT JOIN `entries` `e` ON `e`.`accountId` = `a`.`id`
+        WHERE `a`.`type` IN ('ASSET', 'LIABILITY')
         GROUP BY `a`.`id`
         """
     ),
@@ -71,6 +77,7 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
     val entryDao = entryDao()
     return LedgerFigures(
         balanceByAccountId = accountDao().getAllLedgerAccounts()
+            .filter { it.type.toDomain().isMonetary }
             .associate { it.id to entryDao.balanceOf(it.id) },
         // Keyed by invoice id, read through the dimension — this is the side that
         // moved, and the only one that should have.
@@ -79,7 +86,7 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
         // Archived included: parity is about every figure the ledger can produce,
         // not only the ones a given screen currently lists.
         totalByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
-            .associate { it.category.id to entryDao.balanceOf(it.category.accountId) },
+            .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId) },
         netWorth = entryDao.netWorthCents(),
     )
 }

@@ -64,6 +64,8 @@ class ViewCategoryViewModelTest {
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+        override suspend fun archive(id: Long) = Unit
+
         override suspend fun insert(category: Category) = throw NotImplementedError()
         override suspend fun update(category: Category) = throw NotImplementedError()
         override suspend fun delete(category: Category) = throw NotImplementedError()
@@ -79,10 +81,11 @@ class ViewCategoryViewModelTest {
     ) : IEntryRepository {
         /** Stands in for Room's invalidation: emit after moving the ledger. */
         val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
-        override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = balances[accountId] ?: 0.0
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = balances[dimensionId] ?: 0.0
         override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
         override suspend fun hasEntries(accountId: Long): Boolean = false
-        override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = counts[accountId] ?: 0
+        override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
+        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = counts[dimensionId] ?: 0
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = ledger
@@ -92,16 +95,16 @@ class ViewCategoryViewModelTest {
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
         override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun categoryTotals(
-            categoryType: AccountType,
+        override suspend fun totalsByDimension(
+            nominalType: AccountType,
             startDate: LocalDate,
             endDate: LocalDate,
             siblingAccountIds: List<Long>,
-        ): Map<Long, Double> = throw NotImplementedError()
-        override suspend fun categoryTotalsForDimensions(
-            categoryType: AccountType,
-            dimensionIds: List<Long>,
-        ): Map<Long, Double> = throw NotImplementedError()
+        ): Map<Long?, Double> = throw NotImplementedError()
+        override suspend fun totalsByDimensionInScope(
+            nominalType: AccountType,
+            scopeDimensionIds: List<Long>,
+        ): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
     }
 
@@ -115,7 +118,7 @@ class ViewCategoryViewModelTest {
         icon = CategoryLazyIcon("shopping"),
         type = Category.Type.EXPENSE,
         createdAt = 0L,
-        accountId = accountId,
+        dimensionId = accountId,
     )
 
     private fun viewModel(

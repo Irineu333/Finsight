@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.domain.repository.balancesInMonth
+import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,9 +35,9 @@ class BudgetsViewModel(
         recurringRepository.observeAllRecurring(),
         selectedMonth,
     ) { budgets, transactions, recurringList, selectedMonth ->
-        val categoryBalances = entryRepository.balancesInMonth(
+        val categoryBalances = entryRepository.dimensionBalancesInMonth(
             month = selectedMonth,
-            accountIds = budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
+            dimensionIds = budgets.flatMap { budget -> budget.categories.map { it.dimensionId } },
         )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = budgets,

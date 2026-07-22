@@ -25,7 +25,7 @@ class CalculateReportCategorySpendingUseCase(
         endDate: LocalDate,
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
-        val categoryType = accountType(transactionType)
+        val nominalType = accountType(transactionType)
         // The perspective is expressed as the sibling legs a transaction must have:
         // its asset accounts (all, when none selected) or the card's ledger account.
         val siblingAccountIds = when (perspective) {
@@ -39,7 +39,7 @@ class CalculateReportCategorySpendingUseCase(
         if (siblingAccountIds.isEmpty()) return emptyList()
 
         return build(
-            totals = entryRepository.categoryTotals(categoryType, startDate, endDate, siblingAccountIds),
+            totals = entryRepository.totalsByDimension(nominalType, startDate, endDate, siblingAccountIds),
             transactionType = transactionType,
         )
     }
@@ -51,7 +51,7 @@ class CalculateReportCategorySpendingUseCase(
     ): List<CategorySpending> {
         if (dimensionIds.isEmpty()) return emptyList()
         return build(
-            totals = entryRepository.categoryTotalsForDimensions(accountType(transactionType), dimensionIds),
+            totals = entryRepository.totalsByDimensionInScope(accountType(transactionType), dimensionIds),
             transactionType = transactionType,
         )
     }
@@ -60,7 +60,7 @@ class CalculateReportCategorySpendingUseCase(
         if (transactionType.isIncome) AccountType.INCOME else AccountType.EXPENSE
 
     private suspend fun build(
-        totals: Map<Long, Double>,
+        totals: Map<Long?, Double>,
         transactionType: TransactionType,
     ): List<CategorySpending> {
         val displaySign = accountType(transactionType).displaySign
@@ -68,11 +68,14 @@ class CalculateReportCategorySpendingUseCase(
         // spending, so resolving with the open-only list would drop it from the
         // breakdown AND inflate the survivors' percentages (the total below is a sum
         // over what resolves). Mirrors the sibling-set a few lines up.
-        val categoriesByAccount: Map<Long, Category> = categoryRepository.getAllCategoriesIncludingClosed()
-            .associateBy { it.accountId }
+        //
+        // The unclassified group (`null` key) resolves to no category and drops out
+        // here, exactly as the uncategorized bucket account used to.
+        val categoriesByDimension: Map<Long, Category> = categoryRepository.getAllCategoriesIncludingClosed()
+            .associateBy { it.dimensionId }
 
-        val amounts = totals.mapNotNull { (accountId, natural) ->
-            val category = categoriesByAccount[accountId] ?: return@mapNotNull null
+        val amounts = totals.mapNotNull { (dimensionId, natural) ->
+            val category = categoriesByDimension[dimensionId] ?: return@mapNotNull null
             val amount = natural * displaySign
             if (amount == 0.0) null else category to amount
         }

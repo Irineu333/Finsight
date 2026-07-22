@@ -51,17 +51,17 @@ A fatia genuinamente arriscada. É grande de propósito: schema, writer e leitur
 categoria são a mesma verdade, e parti-los criaria colunas de transição. O que a torna
 verificável está em 5.10 e 5.11.
 
-- [ ] 5.1 Migração (passos 5 a 12 de `design.md`), na ordem exata: snapshots `_cat_map` e `_uncat` **antes de qualquer drop**; dimensões `CATEGORY` com offset; garantir as duas nominais; reescrever as pernas de conta de categoria pelo snapshot; reescrever as pernas em `UNCATEGORIZED_*`; rebuild de `categories` sem `accountId`; rebuild de `transactions` sem `categoryId` e sem as FKs de parcelamento/recorrência (D12); remoção guardada das contas, com contagem residual que aborta
-- [ ] 5.2 Verificação final da migração (passo 13): `Σ = 0` de novo, nenhuma entry com dimensão órfã, `PRAGMA foreign_key_check` limpo
-- [ ] 5.3 `Category` perde `accountId` e ganha `dimensionId`; `type` vira estado primário, com a exceção ao Derivation Rule documentada no ponto de uso; `isArchived` passa a ser próprio
-- [ ] 5.4 Emitir a dimensão na criação da categoria e **remover a linha de `dimensions` na remoção da categoria**, na mesma transação
-- [ ] 5.5 Writer: `contraAccountId` (`LedgerEntryWriter.kt:127-138`) passa a postar na nominal do `Category.type` com a dimensão da categoria; "sem categoria" vira nominal com dimensão nula; o `ensureSystemAccount(UNCATEGORIZED_*)` morre
-- [ ] 5.6 Remover `SystemAccount.UNCATEGORIZED_EXPENSE` e `UNCATEGORIZED_INCOME` apenas do código de produção — o SQL da v7→v9 (`Database.kt:317-320`) permanece intocado, e a v10 localiza essas contas por literal inline
-- [ ] 5.7 Converter as leituras por conta de categoria para dimensão: `categoryTotalsWithSiblingLeg`, o uso de `balanceInMonth` para gasto de categoria, e `entryCountInMonth`; renomeá-las para vocabulário de razão
-- [ ] 5.8 Criar a variante por dimensão de `hasEntries` e converter `DeleteCategoryUseCase.kt:33` e `ViewCategoryViewModel.kt:64` para ela — é o gate apagar-vs-arquivar que `account-lifecycle` exige, e sem `category.accountId` ele desaparece
-- [ ] 5.9 Adicionar a leitura do total sem classificação (entries sem dimensão na conta nominal), pelo mesmo mecanismo; converter budgets, report e dashboard
-- [ ] 5.10 **Portão:** teste de que a migração aborta integralmente quando uma transação semeada não balanceia — escrito junto com a reescrita, para que teste algo que existe
-- [ ] 5.11 **Portão:** paridade por figura contra os snapshots, keyed por id — saldo por conta, devido por fatura, patrimônio e total por categoria idênticos antes e depois; `MigrationSchemaEquivalenceTest` provando que migração e entities produzem o mesmo schema
+- [x] 5.1 Migração (passos 5 a 12 de `design.md`), na ordem exata: snapshots `_cat_map` e `_uncat` **antes de qualquer drop**; dimensões `CATEGORY` com offset; garantir as duas nominais; reescrever as pernas de conta de categoria pelo snapshot; reescrever as pernas em `UNCATEGORIZED_*`; rebuild de `categories` sem `accountId`; rebuild de `transactions` sem `categoryId` e sem as FKs de parcelamento/recorrência (D12); remoção guardada das contas, com contagem residual que aborta
+- [x] 5.2 Verificação final da migração (passo 13): `Σ = 0` de novo, nenhuma entry com dimensão órfã, `PRAGMA foreign_key_check` limpo
+- [x] 5.3 `Category` perde `accountId` e ganha `dimensionId`; `type` vira estado primário, com a exceção ao Derivation Rule documentada no ponto de uso; `isArchived` passa a ser próprio
+- [x] 5.4 Emitir a dimensão na criação da categoria e **remover a linha de `dimensions` na remoção da categoria**, na mesma transação
+- [x] 5.5 Writer: `contraAccountId` (`LedgerEntryWriter.kt:127-138`) passa a postar na nominal do `Category.type` com a dimensão da categoria; "sem categoria" vira nominal com dimensão nula; o `ensureSystemAccount(UNCATEGORIZED_*)` morre
+- [x] 5.6 Remover `SystemAccount.UNCATEGORIZED_EXPENSE` e `UNCATEGORIZED_INCOME` apenas do código de produção — o SQL da v7→v9 (`Database.kt:317-320`) permanece intocado, e a v10 localiza essas contas por literal inline
+- [x] 5.7 Converter as leituras por conta de categoria para dimensão: `categoryTotalsWithSiblingLeg`, o uso de `balanceInMonth` para gasto de categoria, e `entryCountInMonth`; renomeá-las para vocabulário de razão
+- [x] 5.8 Criar a variante por dimensão de `hasEntries` e converter `DeleteCategoryUseCase.kt:33` e `ViewCategoryViewModel.kt:64` para ela — é o gate apagar-vs-arquivar que `account-lifecycle` exige, e sem `category.accountId` ele desaparece
+- [x] 5.9 Adicionar a leitura do total sem classificação (entries sem dimensão na conta nominal), pelo mesmo mecanismo; converter budgets, report e dashboard
+- [x] 5.10 **Portão:** teste de que a migração aborta integralmente quando uma transação semeada não balanceia — escrito junto com a reescrita, para que teste algo que existe
+- [x] 5.11 **Portão:** paridade por figura contra os snapshots, keyed por id — saldo por conta, devido por fatura, patrimônio e total por categoria idênticos antes e depois; `MigrationSchemaEquivalenceTest` provando que migração e entities produzem o mesmo schema
 - [ ] 5.12 Rodar o app Desktop com um banco v9 migrado e conferir os quatro números manualmente
 
 ## 6. `Transaction` perde o grafo de fachada

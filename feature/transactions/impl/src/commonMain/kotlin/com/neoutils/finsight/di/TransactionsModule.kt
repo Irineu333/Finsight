@@ -45,7 +45,6 @@ val transactionsModule = module {
         LedgerEntryWriter(
             entryDao = get(),
             accountDao = get(),
-            categoryDao = get(),
             creditCardDao = get(),
             dimensionDao = get(),
         )

@@ -3,12 +3,11 @@ package com.neoutils.finsight.database.repository
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import com.neoutils.finsight.database.AppDatabase
-import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CategoryDao
-import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.mapper.CategoryMapper
-import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,7 +15,7 @@ import kotlinx.coroutines.flow.map
 class CategoryRepository(
     private val database: AppDatabase,
     private val dao: CategoryDao,
-    private val accountDao: AccountDao,
+    private val dimensionDao: DimensionDao,
     private val mapper: CategoryMapper,
 ) : ICategoryRepository {
     override fun observeAllCategories(): Flow<List<Category>> {
@@ -35,6 +34,8 @@ class CategoryRepository(
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> =
         dao.observeAllCategoriesIncludingClosed().map { rows -> rows.map { mapper.toDomain(it) } }
 
+    override suspend fun archive(id: Long) = dao.archive(id)
+
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> {
         return dao.observeCategoriesByType(
             mapper.toEntity(type)
@@ -44,68 +45,48 @@ class CategoryRepository(
     }
 
     override suspend fun getCategoryById(id: Long): Category? {
-        return dao.getCategoryWithArchivalById(id)?.let { mapper.toDomain(it) }
+        return dao.getCategoryById(id)?.let { mapper.toDomain(it) }
     }
 
     override fun observeCategoryById(id: Long): Flow<Category?> {
-        return dao.observeCategoryWithArchivalById(id).map { row -> row?.let { mapper.toDomain(it) } }
+        return dao.observeCategoryById(id).map { row -> row?.let { mapper.toDomain(it) } }
     }
 
     /**
-     * A category *is* an `INCOME`/`EXPENSE` account wearing a facade, so the two
-     * are created together, in one transaction. Creating the account lazily — on
-     * the first transaction that used the category — meant a category could exist
-     * without one, which every reader then had to special-case.
+     * A category and its ledger dimension are created together, in one transaction.
+     * Emitting the dimension lazily — on the first transaction that used the
+     * category — would let a category exist without one, which every reader would
+     * then have to special-case.
      */
     override suspend fun insert(category: Category) {
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
-                val accountId = accountDao.insert(category.toAccountEntity())
-                dao.insert(mapper.toEntity(category).copy(accountId = accountId))
+                val dimensionId = dimensionDao.emit(DimensionKind.CATEGORY)
+                dao.insert(mapper.toEntity(category).copy(dimensionId = dimensionId))
             }
         }
     }
 
-    /** The facade is a projection: renaming or re-icon-ing it moves its account too. */
+    /** The dimension carries no name or icon, so renaming touches the facade alone. */
     override suspend fun update(category: Category) {
-        database.useWriterConnection { connection ->
-            connection.immediateTransaction {
-                dao.update(mapper.toEntity(category))
-                accountDao.getAccountById(category.accountId)?.let { account ->
-                    accountDao.update(
-                        account.copy(name = category.name, iconKey = category.icon.key)
-                    )
-                }
-            }
-        }
+        dao.update(mapper.toEntity(category))
     }
 
-    private fun Category.toAccountEntity() = AccountEntity(
-        name = name,
-        type = when (type) {
-            Category.Type.INCOME -> AccountEntity.Type.INCOME
-            Category.Type.EXPENSE -> AccountEntity.Type.EXPENSE
-        },
-        currency = BASE_CURRENCY,
-        iconKey = icon.key,
-        createdAt = createdAt,
-    )
-
     /**
-     * Removes the facade **and** its ledger account, in that order and as one unit.
-     * The account cannot go first: `categories.accountId` is `NO ACTION`, so the row
-     * still pointing at it makes the delete fail on the foreign key.
-     */
-    /**
-     * Removes the facade **and** its ledger account, in that order and in one
-     * transaction. The order matters: `categories.accountId` references the account
-     * with `NO_ACTION`, so removing the account first violates the key.
+     * Removes the facade **and** its dimension, in that order and in one transaction.
+     * The order matters: `categories.dimensionId` references the dimension with
+     * `NO_ACTION`, so removing the dimension first violates the key.
+     *
+     * Removing the dimension is also what detaches whatever legs still carried it:
+     * `entries.dimensionId` is `ON DELETE SET NULL`, so they become unclassified with
+     * their amount and account untouched. It replaces the cascade that used to reach
+     * the ledger through the category's account.
      */
     override suspend fun delete(category: Category) {
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 dao.delete(mapper.toEntity(category))
-                accountDao.getAccountById(category.accountId)?.let { accountDao.delete(it) }
+                dimensionDao.deleteById(category.dimensionId)
             }
         }
     }

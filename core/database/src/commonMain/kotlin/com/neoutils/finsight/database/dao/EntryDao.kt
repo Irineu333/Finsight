@@ -12,8 +12,13 @@ import com.neoutils.finsight.database.entity.EntryEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
 
-/** Aggregated natural balance (cents) of one category/chart account. */
-data class CategoryAccountTotal(val accountId: Long, val total: Long)
+/**
+ * Aggregated natural balance (cents) of one dimension. A `null` [dimensionId] is
+ * the legitimate *unclassified* bucket — entries on a nominal account carrying no
+ * dimension — and not an absence of data: it is the same `GROUP BY`, one of whose
+ * groups happens to be "none".
+ */
+data class DimensionTotal(val dimensionId: Long?, val total: Long)
 
 /**
  * The per-account, per-period money flows (cents) an account screen shows, derived
@@ -105,6 +110,14 @@ interface EntryDao {
     @Query("SELECT EXISTS(SELECT 1 FROM entries WHERE accountId = :accountId)")
     suspend fun hasEntries(accountId: Long): Boolean
 
+    /**
+     * The same fact for a facade that owns a dimension instead of an account. It is
+     * what decides delete-vs-archive for a category, exactly as [hasEntries] does
+     * for an account or a card — one mechanism, two keys.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM entries WHERE dimensionId = :dimensionId)")
+    suspend fun hasEntriesForDimension(dimensionId: Long): Boolean
+
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     suspend fun getByTransactionId(transactionId: Long): List<EntryEntity>
 
@@ -147,13 +160,13 @@ interface EntryDao {
     )
     suspend fun assetsBalanceUpToMonth(yearMonth: String): Long
 
-    /** Natural balance of an account within a single month (yyyy-MM) — used for category spending. */
+    /** Natural balance of a dimension within a single month (yyyy-MM). */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
-            "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth"
+            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) = :yearMonth"
     )
-    suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long
+    suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long
 
     /** Natural balance of a sub-ledger = Σ the entries tagged with its dimension. */
     @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE dimensionId = :dimensionId")
@@ -225,13 +238,13 @@ interface EntryDao {
     )
     suspend fun cardMonthTotals(yearMonth: String): CardMonthTotals
 
-    /** Number of entries on a category (chart) account within a month (yyyy-MM). */
+    /** Number of entries carrying a dimension within a month (yyyy-MM). */
     @Query(
         "SELECT COUNT(*) FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
-            "WHERE e.accountId = :accountId AND substr(o.date, 1, 7) = :yearMonth"
+            "WHERE e.dimensionId = :dimensionId AND substr(o.date, 1, 7) = :yearMonth"
     )
-    suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int
+    suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int
 
     /** Net worth = Σ ASSET + LIABILITY natural balances (liabilities are stored negative). */
     @Query(
@@ -242,28 +255,32 @@ interface EntryDao {
     suspend fun netWorthCents(): Long
 
     /**
-     * Per-category totals in a date range, scoped by perspective: only transactions
-     * that also have a leg on one of [siblingAccountIds] (the perspective's asset
-     * accounts, or the card's liability account) are counted. This is category
-     * spending/income "seen from" those accounts.
+     * Per-dimension totals of the nominal legs of a given nature in a date range,
+     * scoped by perspective: only transactions that also have a leg on one of
+     * [siblingAccountIds] (the perspective's asset accounts, or the card's liability
+     * account) are counted. This is spending/income "seen from" those accounts,
+     * broken down by whatever the legs are classified as.
+     *
+     * The unclassified legs come back as the `null` group, by the same mechanism —
+     * not by a second query and not through a bucket account.
      */
     @Query(
         """
-        SELECT e.accountId AS accountId, COALESCE(SUM(e.amount), 0) AS total
+        SELECT e.dimensionId AS dimensionId, COALESCE(SUM(e.amount), 0) AS total
         FROM entries e
         JOIN transactions o ON o.id = e.transactionId
         JOIN accounts a ON a.id = e.accountId
-        WHERE a.type = :categoryType AND o.date BETWEEN :start AND :end
+        WHERE a.type = :nominalType AND o.date BETWEEN :start AND :end
           AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = o.id AND s.accountId IN (:siblingAccountIds))
-        GROUP BY e.accountId
+        GROUP BY e.dimensionId
         """
     )
-    suspend fun categoryTotalsWithSiblingLeg(
-        categoryType: String,
+    suspend fun totalsByDimensionWithSiblingLeg(
+        nominalType: String,
         start: LocalDate,
         end: LocalDate,
         siblingAccountIds: List<Long>,
-    ): List<CategoryAccountTotal>
+    ): List<DimensionTotal>
 
     /**
      * The income/expense/balance/opening-balance a report shows for an account or card
@@ -310,21 +327,21 @@ interface EntryDao {
     ): ReportStatsTotals
 
     /**
-     * Per-category totals scoped to a set of sub-ledgers: category legs of
-     * transactions that also have a leg tagged with one of [dimensionIds].
+     * Per-dimension totals scoped to a set of sub-ledgers: the nominal legs of
+     * transactions that also have a leg tagged with one of [scopeDimensionIds].
      */
     @Query(
         """
-        SELECT e.accountId AS accountId, COALESCE(SUM(e.amount), 0) AS total
+        SELECT e.dimensionId AS dimensionId, COALESCE(SUM(e.amount), 0) AS total
         FROM entries e
         JOIN accounts a ON a.id = e.accountId
-        WHERE a.type = :categoryType
-          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.dimensionId IN (:dimensionIds))
-        GROUP BY e.accountId
+        WHERE a.type = :nominalType
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.dimensionId IN (:scopeDimensionIds))
+        GROUP BY e.dimensionId
         """
     )
-    suspend fun categoryTotalsForDimensions(
-        categoryType: String,
-        dimensionIds: List<Long>,
-    ): List<CategoryAccountTotal>
+    suspend fun totalsByDimensionInScope(
+        nominalType: String,
+        scopeDimensionIds: List<Long>,
+    ): List<DimensionTotal>
 }

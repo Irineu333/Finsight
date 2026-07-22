@@ -13,14 +13,14 @@ import kotlin.time.ExperimentalTime
     tableName = "categories",
     foreignKeys = [
         ForeignKey(
-            entity = AccountEntity::class,
+            entity = DimensionEntity::class,
             parentColumns = ["id"],
-            childColumns = ["accountId"],
+            childColumns = ["dimensionId"],
             onDelete = ForeignKey.NO_ACTION
         ),
     ],
     indices = [
-        Index(value = ["accountId"]),
+        Index(value = ["dimensionId"]),
     ]
 )
 data class CategoryEntity(
@@ -30,9 +30,15 @@ data class CategoryEntity(
     val iconKey: String,
     val type: Type,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
-    // The category's own row in the chart of accounts. Created with the category
-    // itself, so it always exists: a facade with no account cannot be spent from.
-    val accountId: Long = 0,
+    // The category's own dimension, emitted with the category itself, so it always
+    // exists: a facade with no dimension could not be spent on. It replaces the
+    // chart-of-accounts row a category used to own — a category is an analytic axis
+    // of the ledger, not a line of it (design D4).
+    val dimensionId: Long = 0,
+    // Closure of a category lives here and nowhere else. Every other facade reads it
+    // from its account; a category has none, so there is no copy to diverge from —
+    // the facade is the single owner (spec `account-lifecycle`).
+    val isArchived: Boolean = false,
 ) {
     enum class Type {
         INCOME,

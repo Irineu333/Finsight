@@ -32,8 +32,7 @@ interface TransactionDao {
         """
         UPDATE transactions
         SET title = :title,
-            date = :date,
-            categoryId = :categoryId
+            date = :date
         WHERE id = :id
         """
     )
@@ -41,7 +40,6 @@ interface TransactionDao {
         id: Long,
         title: String?,
         date: LocalDate,
-        categoryId: Long?,
     )
 
     @Query("SELECT COUNT(*) FROM transactions WHERE installmentId = :installmentId")

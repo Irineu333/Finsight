@@ -13,8 +13,8 @@ import kotlin.time.Clock
 
 class CalculateBudgetProgressUseCase {
     /**
-     * [categoryBalances] maps a category's chart-account id to its `Σ entries` in the
-     * selected month (debit-positive, so an EXPENSE account already reads as +spent).
+     * [categoryBalances] maps a category's dimension id to its `Σ entries` in the
+     * selected month (debit-positive, so an expense already reads as +spent).
      * The caller reads it from the ledger — this use case lives in the feature `api`
      * and MUST NOT depend on another feature's repository (star topology), so the
      * ledger read happens in the `impl` that owns the `IEntryRepository` dependency.
@@ -45,7 +45,7 @@ class CalculateBudgetProgressUseCase {
             }
             val spent = budget.categories
                 .filter { it.type.isExpense }
-                .sumOf { category -> categoryBalances[category.accountId] ?: 0.0 }
+                .sumOf { category -> categoryBalances[category.dimensionId] ?: 0.0 }
             val recurring = if (budget.limitType == LimitType.PERCENTAGE) {
                 recurringList.find { it.id == budget.recurringId }
             } else null

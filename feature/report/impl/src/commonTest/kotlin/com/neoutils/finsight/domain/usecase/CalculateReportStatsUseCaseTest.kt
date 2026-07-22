@@ -87,16 +87,17 @@ private class CapturingEntryRepository : IEntryRepository {
     override fun observeLedgerChanges(): Flow<Unit> = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows = throw NotImplementedError()
     override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
-    override suspend fun categoryTotalsForDimensions(categoryType: AccountType, dimensionIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
 }
 
 private class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {

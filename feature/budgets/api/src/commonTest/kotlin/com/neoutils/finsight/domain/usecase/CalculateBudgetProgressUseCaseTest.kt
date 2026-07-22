@@ -30,7 +30,7 @@ class CalculateBudgetProgressUseCaseTest {
 
     private fun category(id: Long, accountId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
-        type = Category.Type.EXPENSE, createdAt = 0L, accountId = accountId,
+        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = accountId,
     )
 
     private val budget = Budget(

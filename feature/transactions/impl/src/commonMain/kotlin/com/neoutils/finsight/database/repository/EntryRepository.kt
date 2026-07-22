@@ -53,6 +53,9 @@ class EntryRepository(
 
     override suspend fun hasEntries(accountId: Long): Boolean = entryDao.hasEntries(accountId)
 
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean =
+        entryDao.hasEntriesForDimension(dimensionId)
+
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double {
         val cents = if (accountId == null) {
             entryDao.assetsBalanceUpToMonth(target.toString())
@@ -66,8 +69,8 @@ class EntryRepository(
         return entryDao.balanceOf(accountId) / CENTS_PER_UNIT
     }
 
-    override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double {
-        return entryDao.balanceInMonth(accountId, month.toString()) / CENTS_PER_UNIT
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double {
+        return entryDao.dimensionBalanceInMonth(dimensionId, month.toString()) / CENTS_PER_UNIT
     }
 
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows {
@@ -80,8 +83,8 @@ class EntryRepository(
         )
     }
 
-    override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int {
-        return entryDao.entryCountInMonth(accountId, month.toString())
+    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int {
+        return entryDao.dimensionEntryCountInMonth(dimensionId, month.toString())
     }
 
     override suspend fun dimensionOwed(dimensionId: Long): Double {
@@ -110,26 +113,26 @@ class EntryRepository(
         return entryDao.netWorthCents() / CENTS_PER_UNIT
     }
 
-    override suspend fun categoryTotals(
-        categoryType: AccountType,
+    override suspend fun totalsByDimension(
+        nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long, Double> {
+    ): Map<Long?, Double> {
         if (siblingAccountIds.isEmpty()) return emptyMap()
         return entryDao
-            .categoryTotalsWithSiblingLeg(categoryType.name, startDate, endDate, siblingAccountIds)
-            .associate { it.accountId to it.total / CENTS_PER_UNIT }
+            .totalsByDimensionWithSiblingLeg(nominalType.name, startDate, endDate, siblingAccountIds)
+            .associate { it.dimensionId to it.total / CENTS_PER_UNIT }
     }
 
-    override suspend fun categoryTotalsForDimensions(
-        categoryType: AccountType,
-        dimensionIds: List<Long>,
-    ): Map<Long, Double> {
-        if (dimensionIds.isEmpty()) return emptyMap()
+    override suspend fun totalsByDimensionInScope(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, Double> {
+        if (scopeDimensionIds.isEmpty()) return emptyMap()
         return entryDao
-            .categoryTotalsForDimensions(categoryType.name, dimensionIds)
-            .associate { it.accountId to it.total / CENTS_PER_UNIT }
+            .totalsByDimensionInScope(nominalType.name, scopeDimensionIds)
+            .associate { it.dimensionId to it.total / CENTS_PER_UNIT }
     }
 
     override suspend fun reportStats(

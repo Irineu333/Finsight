@@ -107,29 +107,30 @@ class ViewBudgetViewModelTest {
     )
 
     private class FakeEntryRepository : IEntryRepository {
-        override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = 0.0
+        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = 0.0
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
         override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long): Boolean = false
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-        override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
+        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
         override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun categoryTotals(
-            categoryType: AccountType,
+        override suspend fun totalsByDimension(
+            nominalType: AccountType,
             startDate: kotlinx.datetime.LocalDate,
             endDate: kotlinx.datetime.LocalDate,
             siblingAccountIds: List<Long>,
-        ): Map<Long, Double> = throw NotImplementedError()
-        override suspend fun categoryTotalsForDimensions(
-            categoryType: AccountType,
-            dimensionIds: List<Long>,
-        ): Map<Long, Double> = throw NotImplementedError()
+        ): Map<Long?, Double> = throw NotImplementedError()
+        override suspend fun totalsByDimensionInScope(
+            nominalType: AccountType,
+            scopeDimensionIds: List<Long>,
+        ): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
     }
 

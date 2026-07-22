@@ -1,13 +1,10 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
-import com.neoutils.finsight.database.dao.CategoryDao
-import com.neoutils.finsight.database.dao.CategoryWithArchival
 import com.neoutils.finsight.database.dao.CreditCardWithArchival
 import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
-import com.neoutils.finsight.database.entity.CategoryEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.ClosedAccountException
@@ -15,6 +12,7 @@ import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.SystemAccount
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -40,22 +38,31 @@ class LedgerEntryWriterTest {
 
     private val entryDao = FakeEntryDao()
     private val accountDao = FakeAccountDao()
-    private val categoryDao = FakeCategoryDao()
     private val creditCardDao = FakeCreditCardDao()
     private val dimensionDao = FakeDimensionDao()
 
-    private val writer = LedgerEntryWriter(entryDao, accountDao, categoryDao, creditCardDao, dimensionDao)
+    private val writer = LedgerEntryWriter(entryDao, accountDao, creditCardDao, dimensionDao)
 
     private fun assetAccount(id: Long) = Account(id = id, name = "Acc $id")
 
+    private fun foodCategory(isArchived: Boolean = false) = Category(
+        id = 1,
+        name = "Food",
+        icon = CategoryLazyIcon("food"),
+        type = Category.Type.EXPENSE,
+        createdAt = 0,
+        isArchived = isArchived,
+        dimensionId = 7,
+    )
+
     @Test
-    fun `given an expense when written then two entries sum to zero`() = runTest {
-        categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
+    fun `given an expense when written then the nominal leg carries the category dimension`() = runTest {
+        dimensionDao.insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
         val expense = TransactionLeg(
             type = TransactionType.EXPENSE,
             amount = 50.0,
             account = assetAccount(1),
-            category = Category(id = 1, name = "Food", icon = CategoryLazyIcon("food"), type = Category.Type.EXPENSE, createdAt = 0),
+            category = foodCategory(),
         )
 
         writer.writeEntries(transactionId = 1, legs = listOf(expense))
@@ -63,7 +70,12 @@ class LedgerEntryWriterTest {
         assertEquals(2, entryDao.inserted.size)
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         assertEquals(-5000L, entryDao.inserted.first { it.accountId == 1L }.amount)
-        assertEquals(5000L, entryDao.inserted.first { it.accountId == 10L }.amount)
+        // The category is no longer an account: the contra leg lands on the single
+        // EXPENSE nominal, and *which* category it is comes from the dimension.
+        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
+        val nominalEntry = entryDao.inserted.first { it.accountId == nominal.id }
+        assertEquals(5000L, nominalEntry.amount)
+        assertEquals(7L, nominalEntry.dimensionId)
     }
 
     @Test
@@ -130,19 +142,19 @@ class LedgerEntryWriterTest {
         // transaction whose category was archived meanwhile — a rule the ledger
         // never had. Keeping an archived category out of a *new* transaction is the
         // selector's job (it lists open ones).
-        accountDao.accounts[10L] = AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE, currency = "BRL", isArchived = true)
-        categoryDao.categories[1L] = CategoryEntity(id = 1, name = "Food", iconKey = "food", type = CategoryEntity.Type.EXPENSE, accountId = 10)
+        dimensionDao.insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
         val expense = TransactionLeg(
             type = TransactionType.EXPENSE,
             amount = 50.0,
             account = assetAccount(1),
-            category = Category(id = 1, name = "Food", icon = CategoryLazyIcon("food"), type = Category.Type.EXPENSE, createdAt = 0),
+            category = foodCategory(isArchived = true),
         )
 
         writer.writeEntries(transactionId = 1, legs = listOf(expense))
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
-        assertEquals(5000L, entryDao.inserted.first { it.accountId == 10L }.amount)
+        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
+        assertEquals(5000L, entryDao.inserted.first { it.accountId == nominal.id }.amount)
     }
 
     @Test
@@ -182,30 +194,31 @@ private class FakeEntryDao : EntryDao {
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
     override fun observeEntryCount(): Flow<Long> = flowOf(0)
     override suspend fun hasEntries(accountId: Long): Boolean = false
+    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun getByTransactionId(transactionId: Long): List<EntryEntity> = inserted.filter { it.transactionId == transactionId }
     override suspend fun getEntriesWithAccountByTransactionId(transactionId: Long): List<com.neoutils.finsight.database.dao.EntryWithAccount> = throw NotImplementedError()
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
-    override suspend fun entryCountInMonth(accountId: Long, yearMonth: String): Int = throw NotImplementedError()
+    override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.InvoicePeriodTotals = throw NotImplementedError()
     override suspend fun cardMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.CardMonthTotals = throw NotImplementedError()
-    override suspend fun categoryTotalsWithSiblingLeg(
+    override suspend fun totalsByDimensionWithSiblingLeg(
         categoryType: String,
         start: kotlinx.datetime.LocalDate,
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
-    ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
-    override suspend fun categoryTotalsForDimensions(
-        categoryType: String,
-        dimensionIds: List<Long>,
-    ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
+    ): List<com.neoutils.finsight.database.dao.DimensionTotal> = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(
+        nominalType: String,
+        scopeDimensionIds: List<Long>,
+    ): List<com.neoutils.finsight.database.dao.DimensionTotal> = throw NotImplementedError()
     override suspend fun reportStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ReportStatsTotals = throw NotImplementedError()
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = inserted.sumOf { it.amount }
-    override suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
+    override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
     override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
     override suspend fun netWorthCents(): Long = inserted.sumOf { it.amount }
 }
@@ -256,21 +269,6 @@ private class FakeAccountDao : AccountDao {
     override suspend fun delete(account: AccountEntity) { accounts.remove(account.id) }
 }
 
-private class FakeCategoryDao : CategoryDao {
-    override suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival> = emptyList()
-    override suspend fun getCategoryWithArchivalById(id: Long): CategoryWithArchival? = null
-    override fun observeCategoryWithArchivalById(id: Long): Flow<CategoryWithArchival?> = flowOf(null)
-    override fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>> = flowOf(emptyList())
-    val categories = linkedMapOf<Long, CategoryEntity>()
-    override suspend fun getCategoryById(id: Long): CategoryEntity? = categories[id]
-    override suspend fun update(category: CategoryEntity) { categories[category.id] = category }
-    override fun observeAllCategories(): Flow<List<CategoryEntity>> = throw NotImplementedError()
-    override suspend fun getAllCategories(): List<CategoryEntity> = categories.values.toList()
-    override fun observeCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>> = throw NotImplementedError()
-    override fun observeCategoryById(id: Long): Flow<CategoryEntity?> = throw NotImplementedError()
-    override suspend fun insert(category: CategoryEntity) { categories[category.id] = category }
-    override suspend fun delete(category: CategoryEntity) { categories.remove(category.id) }
-}
 
 private class FakeCreditCardDao : CreditCardDao {
     override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival> = emptyList()

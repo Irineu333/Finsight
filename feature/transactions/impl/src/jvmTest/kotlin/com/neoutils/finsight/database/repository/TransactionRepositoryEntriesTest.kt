@@ -55,7 +55,7 @@ class TransactionRepositoryEntriesTest {
         accountRepository = FakeAccountRepository(accounts),
         transactionMapper = TransactionMapper(),
         recurringMapper = RecurringMapper(),
-        ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao(), db.dimensionDao()),
+        ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.creditCardDao(), db.dimensionDao()),
     )
 
     @Test
@@ -66,7 +66,7 @@ class TransactionRepositoryEntriesTest {
         db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
 
         val transactionId = db.transactionDao().insert(
-            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
+            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10)),
         )
         db.entryDao().insertAll(
             listOf(
@@ -99,7 +99,7 @@ class TransactionRepositoryEntriesTest {
         db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
 
         val transactionId = db.transactionDao().insert(
-            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10), categoryId = null),
+            TransactionEntity(title = "Groceries", date = LocalDate(2026, 3, 10)),
         )
         db.entryDao().insertAll(
             listOf(
@@ -125,7 +125,7 @@ class TransactionRepositoryEntriesTest {
         db.accountDao().insert(AccountEntity(id = 10, name = "Food", type = AccountEntity.Type.EXPENSE))
 
         val transactionId = db.transactionDao().insert(
-            TransactionEntity(title = "Old", date = LocalDate(2026, 1, 5), categoryId = null),
+            TransactionEntity(title = "Old", date = LocalDate(2026, 1, 5)),
         )
         db.entryDao().insertAll(
             listOf(
@@ -149,6 +149,8 @@ internal object FakeCategoryRepository : ICategoryRepository {
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun archive(id: Long) = Unit
+
     override suspend fun insert(category: Category) = throw NotImplementedError()
     override suspend fun update(category: Category) = throw NotImplementedError()
     override suspend fun delete(category: Category) = throw NotImplementedError()

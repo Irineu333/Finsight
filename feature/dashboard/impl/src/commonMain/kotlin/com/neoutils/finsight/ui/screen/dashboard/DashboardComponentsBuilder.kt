@@ -14,7 +14,7 @@ import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.balancesInMonth
+import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
@@ -305,9 +305,9 @@ class DashboardComponentsBuilder(
     private suspend fun budgets(
         input: DashboardComponentsInput,
     ): DashboardComponent.Budgets? {
-        val categoryBalances = entryRepository.balancesInMonth(
+        val categoryBalances = entryRepository.dimensionBalancesInMonth(
             month = input.targetMonth,
-            accountIds = input.budgets.flatMap { budget -> budget.categories.mapNotNull { it.accountId } },
+            dimensionIds = input.budgets.flatMap { budget -> budget.categories.map { it.dimensionId } },
         )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = input.budgets,

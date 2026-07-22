@@ -34,7 +34,7 @@ class BudgetClosedCategoryTest {
 
     private fun category(id: Long, accountId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
-        type = Category.Type.EXPENSE, createdAt = 0L, accountId = accountId,
+        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = accountId,
     )
 
     private val food = category(id = 1, accountId = 10)
@@ -84,6 +84,8 @@ class BudgetClosedCategoryTest {
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
+        override suspend fun archive(id: Long) = Unit
+
         override suspend fun insert(category: Category) = throw NotImplementedError()
         override suspend fun update(category: Category) = throw NotImplementedError()
         override suspend fun delete(category: Category) = throw NotImplementedError()

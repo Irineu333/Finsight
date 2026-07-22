@@ -118,7 +118,7 @@ class InvoiceWriteGuardTest {
             accountRepository = LedgerAccountRepository(db),
             transactionMapper = TransactionMapper(),
             recurringMapper = RecurringMapper(),
-            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao(), db.dimensionDao()),
+            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.creditCardDao(), db.dimensionDao()),
     )
 
     private fun purchase() = TransactionIntent(

@@ -9,10 +9,10 @@ import com.neoutils.finsight.extension.displaySign
 import kotlinx.datetime.YearMonth
 
 /**
- * Per-category totals from the ledger: the amount is `Σ entries` of the category's
- * chart-of-accounts row in the month, converted to the ledger's display sign so that
- * both an expense and an income category read as a positive figure. Categories with no
- * ledger account yet (never posted to) contribute nothing.
+ * Per-category totals from the ledger: the amount is `Σ entries` carrying the
+ * category's dimension in the month, converted to the ledger's display sign so that
+ * both an expense and an income category read as a positive figure. A category with
+ * no movement contributes nothing.
  */
 internal suspend fun categoryTotals(
     categories: List<Category>,
@@ -20,8 +20,7 @@ internal suspend fun categoryTotals(
     entryRepository: IEntryRepository,
 ): List<CategorySpending> {
     val amounts = categories.mapNotNull { category ->
-        val accountId = category.accountId
-        val natural = entryRepository.balanceInMonth(forYearMonth, accountId)
+        val natural = entryRepository.dimensionBalanceInMonth(forYearMonth, category.dimensionId)
         val amount = natural * category.type.accountType.displaySign
         if (amount == 0.0) null else category to amount
     }

@@ -8,49 +8,46 @@ import androidx.room.Update
 import com.neoutils.finsight.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
-// A category is closed when *its* ledger account is (design D21) — it keeps no
-// copy of the flag. Every category has an account, created with it, so this is a
-// plain join.
-private const val OPEN_CATEGORIES =
-    "SELECT c.* FROM categories c JOIN accounts a ON a.id = c.accountId " +
-        "WHERE a.isArchived = 0"
+// Closure is the category's own column now: it has no account to read it from
+// (design D4), so the join these queries used to carry is gone with it.
+private const val OPEN_CATEGORIES = "SELECT * FROM categories WHERE isArchived = 0"
 
 // Rendering history needs the closed ones too: a transaction on a category that
 // was later closed must still show its name.
-private const val ALL_CATEGORIES =
-    "SELECT c.*, a.isArchived AS isArchived FROM categories c JOIN accounts a ON a.id = c.accountId"
+private const val ALL_CATEGORIES = "SELECT * FROM categories"
 
 @Dao
 interface CategoryDao {
-    @Query(ALL_CATEGORIES + " ORDER BY c.createdAt ASC")
-    suspend fun getAllCategoriesIncludingClosed(): List<CategoryWithArchival>
+    @Query(ALL_CATEGORIES + " ORDER BY createdAt ASC")
+    suspend fun getAllCategoriesIncludingClosed(): List<CategoryEntity>
 
-    @Query(ALL_CATEGORIES + " ORDER BY c.createdAt ASC")
-    fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryWithArchival>>
+    @Query(ALL_CATEGORIES + " ORDER BY createdAt ASC")
+    fun observeAllCategoriesIncludingClosed(): Flow<List<CategoryEntity>>
 
-    @Query(OPEN_CATEGORIES + " ORDER BY c.createdAt ASC")
+    @Query(OPEN_CATEGORIES + " ORDER BY createdAt ASC")
     fun observeAllCategories(): Flow<List<CategoryEntity>>
 
-    @Query(OPEN_CATEGORIES + " ORDER BY c.createdAt ASC")
+    @Query(OPEN_CATEGORIES + " ORDER BY createdAt ASC")
     suspend fun getAllCategories(): List<CategoryEntity>
 
-    @Query(OPEN_CATEGORIES + " AND c.type = :type ORDER BY c.createdAt ASC")
+    @Query(OPEN_CATEGORIES + " AND type = :type ORDER BY createdAt ASC")
     fun observeCategoriesByType(type: CategoryEntity.Type): Flow<List<CategoryEntity>>
 
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategoryById(id: Long): CategoryEntity?
 
-    @Query(ALL_CATEGORIES + " WHERE c.id = :id")
-    suspend fun getCategoryWithArchivalById(id: Long): CategoryWithArchival?
-
-    @Query(ALL_CATEGORIES + " WHERE c.id = :id")
-    fun observeCategoryWithArchivalById(id: Long): Flow<CategoryWithArchival?>
-
     @Query("SELECT * FROM categories WHERE id = :id")
     fun observeCategoryById(id: Long): Flow<CategoryEntity?>
 
+    /** Resolves the facade a dimension belongs to — the inverse of [CategoryEntity.dimensionId]. */
+    @Query("SELECT * FROM categories WHERE dimensionId = :dimensionId LIMIT 1")
+    suspend fun getCategoryByDimensionId(dimensionId: Long): CategoryEntity?
+
+    @Query("UPDATE categories SET isArchived = 1 WHERE id = :id")
+    suspend fun archive(id: Long)
+
     @Insert
-    suspend fun insert(category: CategoryEntity)
+    suspend fun insert(category: CategoryEntity): Long
 
     @Update
     suspend fun update(category: CategoryEntity)

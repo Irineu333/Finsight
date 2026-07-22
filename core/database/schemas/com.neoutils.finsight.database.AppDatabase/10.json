@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "d6f34968e73cd4747478295e0f0705d3",
+    "identityHash": "f6088041301fb44c699d73212d8456eb",
     "entities": [
       {
         "tableName": "transactions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `categoryId` INTEGER, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER, FOREIGN KEY(`categoryId`) REFERENCES `categories`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`installmentId`) REFERENCES `installments`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`recurringId`) REFERENCES `recurring`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT, `date` TEXT NOT NULL, `recurringId` INTEGER, `recurringCycle` INTEGER, `installmentId` INTEGER, `installmentNumber` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -24,11 +24,6 @@
             "columnName": "date",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "categoryId",
-            "columnName": "categoryId",
-            "affinity": "INTEGER"
           },
           {
             "fieldPath": "recurringId",
@@ -59,15 +54,6 @@
         },
         "indices": [
           {
-            "name": "index_transactions_categoryId",
-            "unique": false,
-            "columnNames": [
-              "categoryId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_categoryId` ON `${TABLE_NAME}` (`categoryId`)"
-          },
-          {
             "name": "index_transactions_installmentId",
             "unique": false,
             "columnNames": [
@@ -94,46 +80,11 @@
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_recurringCycle` ON `${TABLE_NAME}` (`recurringCycle`)"
           }
-        ],
-        "foreignKeys": [
-          {
-            "table": "categories",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "categoryId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "installments",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "installmentId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          },
-          {
-            "table": "recurring",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "recurringId"
-            ],
-            "referencedColumns": [
-              "id"
-            ]
-          }
         ]
       },
       {
         "tableName": "categories",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `accountId` INTEGER NOT NULL, FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `iconKey` TEXT NOT NULL, `type` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `dimensionId` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, FOREIGN KEY(`dimensionId`) REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "id",
@@ -166,8 +117,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "accountId",
-            "columnName": "accountId",
+            "fieldPath": "dimensionId",
+            "columnName": "dimensionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "isArchived",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -180,22 +137,22 @@
         },
         "indices": [
           {
-            "name": "index_categories_accountId",
+            "name": "index_categories_dimensionId",
             "unique": false,
             "columnNames": [
-              "accountId"
+              "dimensionId"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_accountId` ON `${TABLE_NAME}` (`accountId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_dimensionId` ON `${TABLE_NAME}` (`dimensionId`)"
           }
         ],
         "foreignKeys": [
           {
-            "table": "accounts",
+            "table": "dimensions",
             "onDelete": "NO ACTION",
             "onUpdate": "NO ACTION",
             "columns": [
-              "accountId"
+              "dimensionId"
             ],
             "referencedColumns": [
               "id"
@@ -1057,7 +1014,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6f34968e73cd4747478295e0f0705d3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f6088041301fb44c699d73212d8456eb')"
     ]
   }
 }

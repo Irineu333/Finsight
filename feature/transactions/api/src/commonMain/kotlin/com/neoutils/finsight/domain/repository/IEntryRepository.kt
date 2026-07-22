@@ -78,17 +78,24 @@ interface IEntryRepository {
      */
     suspend fun hasEntries(accountId: Long): Boolean
 
+    /**
+     * The same fact, for a facade keyed by dimension rather than by account — a
+     * category. Same mechanism, different key; without it the delete-vs-archive
+     * gate would simply disappear for categories.
+     */
+    suspend fun hasEntriesForDimension(dimensionId: Long): Boolean
+
     /** All-time natural balance of [accountId], across every date. */
     suspend fun balance(accountId: Long): Double
 
-    /** Natural balance of [accountId] within [month] — used for category spending. */
-    suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double
+    /** Natural balance of [dimensionId] within [month] — used for category spending. */
+    suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double
 
     /** The income/expense/adjustment/invoice-payment flows of [accountId] in [month]. */
     suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows
 
-    /** Number of ledger entries on a category (chart) account within [month]. */
-    suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int
+    /** Number of ledger entries carrying [dimensionId] within [month]. */
+    suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int
 
     /** Amount owed on a sub-ledger (positive), from the entries carrying its dimension. */
     suspend fun dimensionOwed(dimensionId: Long): Double
@@ -103,22 +110,25 @@ interface IEntryRepository {
     suspend fun netWorth(): Double
 
     /**
-     * Natural balance (reais) per category account of [categoryType] in a date
+     * Natural balance (reais) per dimension of the [nominalType] legs in a date
      * range, counting only transactions that also have a leg on one of
      * [siblingAccountIds] — i.e. spending/income "seen from" those accounts.
+     *
+     * The `null` key is the unclassified total: legs on a nominal account carrying
+     * no dimension. It is a group of the same aggregate, not a separate read.
      */
-    suspend fun categoryTotals(
-        categoryType: AccountType,
+    suspend fun totalsByDimension(
+        nominalType: AccountType,
         startDate: LocalDate,
         endDate: LocalDate,
         siblingAccountIds: List<Long>,
-    ): Map<Long, Double>
+    ): Map<Long?, Double>
 
-    /** Natural balance (reais) per category account scoped to a set of dimensions. */
-    suspend fun categoryTotalsForDimensions(
-        categoryType: AccountType,
-        dimensionIds: List<Long>,
-    ): Map<Long, Double>
+    /** The same totals, scoped to the transactions touching a set of sub-ledgers. */
+    suspend fun totalsByDimensionInScope(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ): Map<Long?, Double>
 
     /**
      * The income/expense/balance/opening-balance a report shows for an account or card
@@ -135,11 +145,11 @@ interface IEntryRepository {
 }
 
 /**
- * Natural balance (reais) of each account in [accountIds] within [month]. A thin fan
- * over [IEntryRepository.balanceInMonth] so callers in different feature `impl`s share
- * one way to gather per-account month balances from the ledger.
+ * Natural balance (reais) of each dimension in [dimensionIds] within [month]. A thin
+ * fan over [IEntryRepository.dimensionBalanceInMonth] so callers in different feature
+ * `impl`s share one way to gather per-dimension month balances from the ledger.
  */
-suspend fun IEntryRepository.balancesInMonth(
+suspend fun IEntryRepository.dimensionBalancesInMonth(
     month: YearMonth,
-    accountIds: Collection<Long>,
-): Map<Long, Double> = accountIds.distinct().associateWith { balanceInMonth(month, it) }
+    dimensionIds: Collection<Long>,
+): Map<Long, Double> = dimensionIds.distinct().associateWith { dimensionBalanceInMonth(month, it) }

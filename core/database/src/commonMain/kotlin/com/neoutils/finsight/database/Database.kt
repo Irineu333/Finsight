@@ -647,7 +647,145 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_accountId` ON `entries` (`accountId`)")
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_dimensionId` ON `entries` (`dimensionId`)")
 
+        // --- 5. Snapshots, taken before any drop. Every step below reads the
+        //        category → account mapping from here and not from `categories`,
+        //        so step 10 is free to rebuild that table without ordering
+        //        constraints. The LEFT JOIN keeps a category whose account row went
+        //        missing: it still has to survive the rebuild, with its own type.
+        //
+        //        The two uncategorized accounts are located by **inline literal**.
+        //        `SystemAccount` no longer names them — they cease to exist here —
+        //        and the v7 → v9 SQL that seeded them is deliberately untouched. ---
+        connection.execSQL(
+            "CREATE TEMP TABLE `_cat_map` AS " +
+                "SELECT `c`.`id` AS `categoryId`, `c`.`accountId` AS `oldAccountId`, " +
+                "COALESCE(`a`.`type`, `c`.`type`) AS `type`, COALESCE(`a`.`isArchived`, 0) AS `isArchived` " +
+                "FROM `categories` `c` LEFT JOIN `accounts` `a` ON `a`.`id` = `c`.`accountId`"
+        )
+        connection.execSQL(
+            "CREATE TEMP TABLE `_uncat` AS SELECT `id` AS `accountId`, `type` AS `type` FROM `accounts` " +
+                "WHERE (`type` = 'EXPENSE' AND `name` = 'Sem categoria (despesa)') " +
+                "OR (`type` = 'INCOME' AND `name` = 'Sem categoria (receita)')"
+        )
+
+        // --- 6. One CATEGORY dimension per category, offset past the invoice ones
+        //        so the two ranges cannot collide. ---
+        connection.execSQL("CREATE TEMP TABLE `_dim_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `dimensions`")
+        connection.execSQL(
+            "INSERT INTO `dimensions` (`id`, `kind`) " +
+                "SELECT (SELECT base FROM `_dim_base`) + `categoryId`, 'CATEGORY' FROM `_cat_map`"
+        )
+
+        // --- 7. The two nominal accounts every income and expense now lands on.
+        //        Created outright rather than looked up by name: a user category
+        //        called "Despesas" owns an EXPENSE account with that very name, and
+        //        reusing it would make step 12 try to delete the nominal itself. ---
+        val now = "CAST(strftime('%s','now') AS INTEGER) * 1000"
+        connection.execSQL("CREATE TEMP TABLE `_nom_base` AS SELECT COALESCE(MAX(`id`), 0) AS base FROM `accounts`")
+        connection.execSQL(
+            "INSERT INTO `accounts` (`id`, `name`, `type`, `currency`, `iconKey`, `isDefault`, `createdAt`, `isArchived`) VALUES " +
+                "((SELECT base FROM `_nom_base`) + 1, 'Despesas', 'EXPENSE', 'BRL', 'default', 0, $now, 0), " +
+                "((SELECT base FROM `_nom_base`) + 2, 'Receitas', 'INCOME', 'BRL', 'default', 0, $now, 0)"
+        )
+        connection.execSQL(
+            "CREATE TEMP TABLE `_nominal` AS " +
+                "SELECT 'EXPENSE' AS `type`, (SELECT base FROM `_nom_base`) + 1 AS `accountId` " +
+                "UNION ALL SELECT 'INCOME', (SELECT base FROM `_nom_base`) + 2"
+        )
+
+        // --- 8. Rewrite the category legs: the account becomes the nominal of the
+        //        category's type, and the dimension becomes the category's. SQLite
+        //        evaluates every SET expression against the pre-update row, so the
+        //        second assignment still sees the old `accountId`. ---
+        connection.execSQL(
+            "UPDATE `entries` SET " +
+                "`accountId` = (SELECT `n`.`accountId` FROM `_cat_map` `m` JOIN `_nominal` `n` ON `n`.`type` = `m`.`type` " +
+                "WHERE `m`.`oldAccountId` = `entries`.`accountId`), " +
+                "`dimensionId` = (SELECT (SELECT base FROM `_dim_base`) + `m`.`categoryId` FROM `_cat_map` `m` " +
+                "WHERE `m`.`oldAccountId` = `entries`.`accountId`) " +
+                "WHERE `accountId` IN (SELECT `oldAccountId` FROM `_cat_map`)"
+        )
+
+        // --- 9. The uncategorized legs land on the same nominals, with no
+        //        dimension: "unclassified" is the absence of one, not a bucket. ---
+        connection.execSQL(
+            "UPDATE `entries` SET " +
+                "`accountId` = (SELECT `n`.`accountId` FROM `_uncat` `u` JOIN `_nominal` `n` ON `n`.`type` = `u`.`type` " +
+                "WHERE `u`.`accountId` = `entries`.`accountId`), " +
+                "`dimensionId` = NULL " +
+                "WHERE `accountId` IN (SELECT `accountId` FROM `_uncat`)"
+        )
+
+        // --- 10. Rebuild `categories`: `accountId` out, `dimensionId` in, and the
+        //         closure flag that used to live on the account moves in with it. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `categories_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`name` TEXT NOT NULL, " +
+                "`iconKey` TEXT NOT NULL, " +
+                "`type` TEXT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, " +
+                "`dimensionId` INTEGER NOT NULL, " +
+                "`isArchived` INTEGER NOT NULL, " +
+                "FOREIGN KEY(`dimensionId`) REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION" +
+                ")"
+        )
+        connection.execSQL(
+            "INSERT INTO `categories_new` (`id`, `name`, `iconKey`, `type`, `createdAt`, `dimensionId`, `isArchived`) " +
+                "SELECT `c`.`id`, `c`.`name`, `c`.`iconKey`, `c`.`type`, `c`.`createdAt`, " +
+                "(SELECT base FROM `_dim_base`) + `c`.`id`, `m`.`isArchived` " +
+                "FROM `categories` `c` JOIN `_cat_map` `m` ON `m`.`categoryId` = `c`.`id`"
+        )
+        connection.execSQL("DROP TABLE `categories`")
+        connection.execSQL("ALTER TABLE `categories_new` RENAME TO `categories`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_categories_dimensionId` ON `categories` (`dimensionId`)")
+
+        // --- 11. Rebuild `transactions`: `categoryId` out — what a transaction is
+        //         spent on is the dimension of its nominal leg — and the installment
+        //         and recurring foreign keys out with it. The columns stay; the keys
+        //         cannot, because their parent tables are not the ledger's (D12).
+        //         The nullification they granted for free already has an explicit
+        //         owner in each facade's removal path. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `transactions_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`title` TEXT, " +
+                "`date` TEXT NOT NULL, " +
+                "`recurringId` INTEGER, " +
+                "`recurringCycle` INTEGER, " +
+                "`installmentId` INTEGER, " +
+                "`installmentNumber` INTEGER)"
+        )
+        connection.execSQL(
+            "INSERT INTO `transactions_new` (`id`, `title`, `date`, `recurringId`, `recurringCycle`, `installmentId`, `installmentNumber`) " +
+                "SELECT `id`, `title`, `date`, `recurringId`, `recurringCycle`, `installmentId`, `installmentNumber` FROM `transactions`"
+        )
+        connection.execSQL("DROP TABLE `transactions`")
+        connection.execSQL("ALTER TABLE `transactions_new` RENAME TO `transactions`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_installmentId` ON `transactions` (`installmentId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_recurringId` ON `transactions` (`recurringId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_transactions_recurringCycle` ON `transactions` (`recurringCycle`)")
+
+        // --- 12. Retire the accounts the chart no longer contains — the per-category
+        //         ones and the two uncategorized buckets — **guarded**: an account
+        //         still referenced by an entry is not deleted, and the count of what
+        //         survived aborts the migration. "Do not remove a referenced account"
+        //         becomes an assertion rather than trust in steps 8 and 9. ---
+        connection.execSQL(
+            "DELETE FROM `accounts` WHERE `id` IN (SELECT `oldAccountId` FROM `_cat_map`) " +
+                "AND NOT EXISTS (SELECT 1 FROM `entries` `e` WHERE `e`.`accountId` = `accounts`.`id`)"
+        )
+        connection.execSQL(
+            "DELETE FROM `accounts` WHERE `id` IN (SELECT `accountId` FROM `_uncat`) " +
+                "AND NOT EXISTS (SELECT 1 FROM `entries` `e` WHERE `e`.`accountId` = `accounts`.`id`)"
+        )
+        connection.verifyRetiredAccountsAreGone()
+
+        // --- 13. Post-verification. Balance again, no entry pointing at a dimension
+        //         that does not exist, and no dangling reference anywhere. ---
         connection.verifyLedgerBalanced(stage = "v9 → v10, after")
+        connection.verifyNoOrphanDimensions()
+        connection.verifyForeignKeys(stage = "v9 → v10")
         connection.execSQL("PRAGMA foreign_keys=ON")
     }
 }

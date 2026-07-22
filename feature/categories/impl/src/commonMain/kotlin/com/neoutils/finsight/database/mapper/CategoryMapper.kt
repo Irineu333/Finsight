@@ -5,8 +5,6 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 
 class CategoryMapper {
-    fun toDomain(row: com.neoutils.finsight.database.dao.CategoryWithArchival): Category =
-        toDomain(row.category).copy(isArchived = row.isArchived)
 
     fun toDomain(
         entity: CategoryEntity
@@ -17,7 +15,8 @@ class CategoryMapper {
             icon = CategoryLazyIcon(entity.iconKey),
             type = toDomain(entity.type),
             createdAt = entity.createdAt,
-            accountId = entity.accountId,
+            isArchived = entity.isArchived,
+            dimensionId = entity.dimensionId,
         )
     }
 
@@ -39,7 +38,8 @@ class CategoryMapper {
             iconKey = domain.icon.key,
             type = toEntity(domain.type),
             createdAt = domain.createdAt,
-            accountId = domain.accountId,
+            isArchived = domain.isArchived,
+            dimensionId = domain.dimensionId,
         )
     }
 

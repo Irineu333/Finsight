@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 
 /**
  * Validates the perspective-scoped category-spending SQL (EntryDao
- * `categoryTotalsWithSiblingLeg`): a category total is counted only when the
+ * `totalsByDimensionWithSiblingLeg`): a category total is counted only when the
  * transaction also has a leg on one of the perspective's accounts. Keep the SQL in
  * sync with the DAO.
  */
@@ -39,7 +39,7 @@ class EntryCategoryQueryTest {
     @AfterTest
     fun teardown() = connection.close()
 
-    // Mirrors EntryDao.categoryTotalsWithSiblingLeg with the given sibling ids inlined.
+    // Mirrors EntryDao.totalsByDimensionWithSiblingLeg with the given sibling ids inlined.
     private fun categoryTotal(categoryType: String, siblingIds: String): Long {
         val stmt = connection.prepare(
             "SELECT COALESCE(SUM(e.amount),0) FROM entries e " +
@@ -90,7 +90,7 @@ class EntryCategoryQueryTest {
         assertEquals(0L, monthTotal(10, "2026-02"))
     }
 
-    // Mirrors EntryDao.categoryTotalsForInvoices.
+    // Mirrors EntryDao.totalsByDimensionForInvoices.
     private fun categoryTotalForInvoices(categoryType: String, invoiceIds: String): Long {
         val stmt = connection.prepare(
             "SELECT COALESCE(SUM(e.amount),0) FROM entries e JOIN accounts a ON a.id=e.accountId " +

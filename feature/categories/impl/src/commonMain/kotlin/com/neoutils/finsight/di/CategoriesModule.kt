@@ -26,7 +26,7 @@ val categoriesModule = module {
         CategoryRepository(
             database = get(),
             dao = get(),
-            accountDao = get(),
+            dimensionDao = get(),
             mapper = get(),
         )
     }
@@ -74,8 +74,7 @@ val categoriesModule = module {
 
     factory {
         ArchiveCategoryUseCase(
-            accountRepository = get(),
-            archiveAccountUseCase = get(),
+            categoryRepository = get(),
         )
     }
 

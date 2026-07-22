@@ -17,12 +17,18 @@ class TransactionMapper {
     /**
      * Builds the domain [Transaction] from its row plus its hydrated ledger legs.
      * Everything about *what the transaction is* comes from the entries — the row
-     * only carries what the ledger cannot express (title, date, the user's
-     * category choice, and the recurring/installment links).
+     * only carries what the ledger cannot express (title, date, and the
+     * recurring/installment links).
+     *
+     * [categoriesByDimension] and [invoices] are both resolved from the dimension a
+     * leg carries, which is why the leg matters: an invoice dimension only ever
+     * lands on the `LIABILITY` leg and a category dimension only on the nominal one
+     * (the write boundary enforces it), so each lookup reads its own leg and the two
+     * never see each other's dimension.
      */
     fun toDomain(
         entity: TransactionEntity,
-        categories: Map<Long, Category>,
+        categoriesByDimension: Map<Long, Category>,
         creditCards: Map<Long, CreditCard>,
         invoices: Map<Long, Invoice>,
         installments: Map<Long, Installment>,
@@ -32,7 +38,8 @@ class TransactionMapper {
         if (entries.isEmpty()) return null
 
         val assetEntries = entries.filter { it.account.type == AccountType.ASSET }
-        val cardAccountId = entries.firstOrNull { it.account.type == AccountType.LIABILITY }?.account?.id
+        val cardEntry = entries.firstOrNull { it.account.type == AccountType.LIABILITY }
+        val nominalEntry = entries.firstOrNull { it.account.type.isNominal }
 
         return Transaction(
             id = entity.id,
@@ -45,14 +52,14 @@ class TransactionMapper {
                     }
                 }
             },
-            category = entity.categoryId?.let { categories[it] },
+            category = nominalEntry?.dimensionId?.let { categoriesByDimension[it] },
             // The money-out ASSET leg is the source; with a single leg it is that leg.
             sourceAccount = (assetEntries.minByOrNull { it.amount } ?: assetEntries.firstOrNull())?.account,
-            targetCreditCard = cardAccountId?.let { accountId ->
+            targetCreditCard = cardEntry?.account?.id?.let { accountId ->
                 creditCards.values.firstOrNull { it.accountId == accountId }
             },
             // The invoice is reached from the dimension its liability leg carries.
-            targetInvoice = entries.firstNotNullOfOrNull { it.dimensionId }
+            targetInvoice = cardEntry?.dimensionId
                 ?.let { dimensionId -> invoices.values.firstOrNull { it.dimensionId == dimensionId } },
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->

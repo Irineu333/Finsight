@@ -44,6 +44,23 @@ O corte temporal do saldo SHALL usar a data da transação como única referênc
 - **WHEN** uma transação é persistida
 - **THEN** a data que governa o corte de período é única para a transação e suas entries, sem possibilidade de divergência entre elas
 
+### Requirement: Razão como única fonte de leitura
+Toda leitura de dinheiro — saldo de conta, saldo devido de fatura, gasto por categoria, patrimônio líquido e totais de período — SHALL derivar do razão. Nenhum consumidor SHALL derivar valor monetário de um modelo de lançamento legado. O grafo de objetos exibido ao usuário SHALL igualmente derivar do razão: as telas de transações, contas, categorias, orçamentos, faturas e relatórios SHALL ler entries, e MUST NOT ler um modelo de perna paralelo.
+
+Uma leitura escopada a uma fachada SHALL derivar da identidade com que o razão a representa — a conta, para conta e cartão; a dimensão, para categoria e fatura — e MUST NOT consultar a tabela da fachada para obter valor monetário.
+
+#### Scenario: Tela de contas lê o razão
+- **WHEN** a tela de contas exibe saldos e totais do período
+- **THEN** os valores derivam do razão, e não de uma soma de lançamentos legados
+
+#### Scenario: Orçamentos leem o razão
+- **WHEN** o progresso de um orçamento por categoria é calculado
+- **THEN** ele deriva das entries que carregam a dimensão daquela categoria
+
+#### Scenario: Nenhum leitor legado remanescente
+- **WHEN** o código é inspecionado
+- **THEN** não existe consumidor que derive valor monetário de um modelo de lançamento legado, pois esse modelo não existe mais
+
 ## ADDED Requirements
 
 ### Requirement: Leituras do razão expressas em vocabulário de razão

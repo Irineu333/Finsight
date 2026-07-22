@@ -55,6 +55,8 @@ Em paralelo, a fachada vazou para dentro do razão: `Transaction` carrega 6 camp
 - `balanced-ledger`: a intenção de escrita passa a falar `accountId`/`dimensionId` em vez de fachadas; o writer perde as dependências de fachada; `Transaction` deixa de carregar o grafo de fachada; a migração para o razão ganha o requisito de verificação de `Σ = 0` antes e depois.
 - `ledger-reporting`: gasto por categoria passa a ser soma por dimensão, não por conta; o saldo de fatura passa a ser soma por dimensão; fica estabelecido o critério de derivabilidade para o que o razão expõe.
 - `module-architecture`: novo módulo `:core:ledger` e inversão de `core:database → core:ledger`; features deixam de depender de `feature:transactions:api` para ler ou escrever no razão.
+- `account-lifecycle`: o arquivamento de categoria passa a residir na própria fachada, por não haver mais conta de onde consumi-lo; "possui lançamentos" para categoria passa a ser derivado por dimensão; a integridade referencial ganha a regra de remoção atômica da dimensão junto com a fachada.
+- `build-conventions`: novo convention plugin `room.library`, ao qual passa a pertencer exclusivamente a configuração de KSP por target.
 
 ## Impact
 

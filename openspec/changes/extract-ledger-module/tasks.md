@@ -65,7 +65,7 @@
 - [ ] 7.4 Reescrever cada perna cujo `accountId` é conta de categoria: `accountId` ← nominal do tipo correspondente, `dimensionId` ← dimensão da categoria
 - [ ] 7.5 Reescrever as pernas em `UNCATEGORIZED_EXPENSE`/`_INCOME`: `accountId` ← nominal, `dimensionId` ← `NULL`
 - [ ] 7.6 Remover `categories.accountId`, `transactions.categoryId`, e do plano de contas as contas de categoria e as `UNCATEGORIZED_*` (já sem entries)
-- [ ] 7.7 Remover `SystemAccount.UNCATEGORIZED_EXPENSE` e `UNCATEGORIZED_INCOME` do código e do SQL de migração legado
+- [ ] 7.7 Remover `SystemAccount.UNCATEGORIZED_EXPENSE` e `UNCATEGORIZED_INCOME` apenas do código de produção — o SQL da migração v7→v9 (`Database.kt:317-320`) que as semeia MUST permanecer intocado, porque a cadeia v7→v9→v10 depende dessas contas existirem para a v10 localizar as pernas sem categoria
 - [ ] 7.8 Fazer `Category.type` ser o dono da natureza e o que escolhe a conta nominal no writer, documentando a exceção ao Derivation Rule no ponto de uso
 - [ ] 7.9 Passar a ler o arquivamento de categoria da própria fachada, removendo o vínculo com `Account.isArchived`
 - [ ] 7.10 Rodar a migração v9 → v10 completa e confirmar que os testes do grupo 6 passam
@@ -74,7 +74,9 @@
 
 - [ ] 8.1 Converter `categoryTotalsWithSiblingLeg` e `balanceInMonth` (uso de categoria) para agregar por dimensão, renomeando para vocabulário de razão
 - [ ] 8.2 Criar a variante por dimensão de `entryCountInMonth`, que é usada por categoria
-- [ ] 8.3 Registrar por escrito, em `design.md`, que `hasEntries` segue por conta (é regra de conta permanente, não se aplica a categoria) e que `closedLegBlockingChange` segue correta sem par (filtra por `type.isPermanent`, e categoria nunca foi permanente)
+- [ ] 8.3 Criar a variante por dimensão de `hasEntries` e converter `DeleteCategoryUseCase.kt:33` e `ViewCategoryViewModel.kt:64` para ela — é o gate apagar-vs-arquivar de categoria que `account-lifecycle` exige, e sem `category.accountId` ele desaparece
+- [ ] 8.3a Registrar em `design.md` que `closedLegBlockingChange` segue correta sem par por dimensão (filtra por `type.isPermanent`, e categoria nunca foi permanente)
+- [ ] 8.3b Remover a linha de `dimensions` na remoção de cada fachada que a possui (categoria e fatura), na mesma transação, disparando o `SET NULL` em `entries.dimensionId` — hoje esse desligamento vinha do FK `entries.invoiceId → invoices`, que deixa de existir
 - [ ] 8.4 Adicionar a leitura do total sem classificação (entries sem dimensão na conta nominal), pelo mesmo mecanismo
 - [ ] 8.5 Renomear `accountPeriodTotals` e `reportStats` para vocabulário de razão, mantendo-as no razão
 

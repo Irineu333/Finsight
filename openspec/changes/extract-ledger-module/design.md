@@ -11,7 +11,9 @@ O razão de partidas dobradas é a única fonte de verdade monetária do app, ma
 
 Oito das nove features restantes declaram `implementation(projects.feature.transactions.api)`. Nenhuma delas quer a tela de transações.
 
-Uma constatação orienta todo o desenho: **o SQL do razão já é razão puro.** Auditando `EntryDao`, de ~18 queries, todas menos três operam exclusivamente sobre `entries × accounts × transactions` com vocabulário `AccountType`/sinal/data. Nenhuma faz JOIN com `categories`, `invoices`, `credit_cards` ou `budgets`. As três exceções — `invoiceNaturalBalance`, `invoicePeriodTotals`, `categoryTotalsForInvoices` — tocam a coluna `entries.invoiceId`, e apenas ela.
+Uma constatação orienta todo o desenho: **o SQL de agregação do razão já é razão puro.** Auditando `EntryDao`, de ~18 queries, todas menos três operam exclusivamente sobre `entries × accounts × transactions` com vocabulário `AccountType`/sinal/data. Nenhuma faz JOIN com `categories`, `invoices`, `credit_cards` ou `budgets`. As três exceções — `invoiceNaturalBalance`, `invoicePeriodTotals`, `categoryTotalsForInvoices` — tocam a coluna `entries.invoiceId`, e apenas ela.
+
+A constatação **não** se estende ao `TransactionDao`, que se move junto: `observeBy` (`TransactionDao.kt:52-65`) faz `JOIN credit_cards c ON c.accountId = e.accountId` e filtra por `e.invoiceId`. É um filtro de listagem, não uma agregação, mas é uma referência real a tabela de fachada e precisa ser convertida para vocabulário de razão (conta `LIABILITY` do cartão, dimensão da fatura) **antes** de o DAO mudar de módulo — caso contrário `:core:ledger` não compila.
 
 A contaminação é, portanto, quase toda de **vocabulário e de forma de modelo**, não de mecanismo. Isso torna a extração muito menos arriscada do que o número de pontos de contato sugere, e é o que autoriza a inversão de dependência descrita adiante.
 
@@ -161,7 +163,7 @@ Consequências registradas: os nomes das nominais são chaves de lookup em `Syst
 → Ordenar a implementação em fatias que compilam, com a extração do módulo inteiramente concluída e verificada antes de a conversão de categoria começar. A verificação de `Σ = 0` é o portão entre as duas.
 
 **Leituras que operam por `accountId` e passam a precisar de par por dimensão:** `closedLegBlockingChange` (`Ledger.kt`), `hasEntries` e `entryCountInMonth`.
-→ Cada uma recebe decisão explícita e registrada: variante por dimensão, ou constatação de que categoria não a usa. `hasEntries` alimenta "posso remover ou só fechar", que é regra de conta permanente e não se aplica a categoria; `entryCountInMonth` é usada para categoria e precisa de variante por dimensão. `closedLegBlockingChange` filtra por `type.isPermanent`, e categoria nunca foi permanente — segue correta sem par.
+→ `hasEntries` **é usada por categoria** e precisa de variante por dimensão: `DeleteCategoryUseCase.kt:33` e `ViewCategoryViewModel.kt:64` a chamam com `category.accountId`, e é ela que decide apagar-vs-arquivar e o `mustPreserve` da modal. Sem o par por dimensão, o gate que `account-lifecycle` exige desaparece em silêncio. `entryCountInMonth` idem. `closedLegBlockingChange` filtra por `type.isPermanent`, e categoria nunca foi permanente — segue correta sem par.
 
 **O razão fica menos autodescritivo.** Um balancete por categoria deixa de ser produzível só com `entries + accounts`.
 → Aceito como consequência inerente do modelo de dimensões (D4). Mitigado pela coluna `kind`, que mantém o schema legível.

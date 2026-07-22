@@ -14,9 +14,11 @@ O domínio do razão MUST NOT atribuir significado a nenhum `kind` de dimensão:
 - **THEN** o cálculo não consulta nenhuma tabela de fachada, e nenhum ramo do código depende de qual `kind` está sendo agregado
 
 ### Requirement: Fachada liga-se à dimensão por identidade
-Uma fachada que classifica lançamentos SHALL guardar a identidade da sua dimensão, espelhando o vínculo `facade.accountId` já existente para as fachadas que projetam sobre o plano de contas. O razão MUST NOT guardar chave estrangeira para nenhuma tabela de fachada.
+Uma fachada que classifica lançamentos SHALL guardar a identidade da sua dimensão, espelhando o vínculo `facade.accountId` já existente para as fachadas que projetam sobre o plano de contas. Nenhuma coluna do razão que participe de uma soma — nem em `entries`, nem em `dimensions`, nem em `accounts` — SHALL referenciar tabela de fachada.
 
 A identidade de dimensão SHALL ser emitida por um espaço único, de modo que dimensões originadas de fachadas distintas jamais colidam.
+
+**Exceção declarada e delimitada:** a tabela de transações retém as colunas de parcelamento e recorrência, com as suas chaves estrangeiras para as tabelas de fachada correspondentes. Essas colunas MUST NOT participar de nenhuma soma, agrupamento ou classificação do razão: são metadados que agrupam transações, e nenhuma leitura do razão SHALL consultá-las. A exceção SHALL ser registrada por escrito, SHALL permanecer restrita a essas colunas, e nenhuma coluna nova de fachada SHALL ser acrescentada a uma tabela do razão por analogia com ela.
 
 #### Scenario: Categoria e fatura ligam-se por dimensão
 - **WHEN** uma categoria ou uma fatura é criada
@@ -24,7 +26,11 @@ A identidade de dimensão SHALL ser emitida por um espaço único, de modo que d
 
 #### Scenario: Razão sem chave estrangeira para fachada
 - **WHEN** o schema das tabelas do razão é inspecionado
-- **THEN** nenhuma coluna referencia `categories`, `invoices`, `credit_cards`, `installments`, `recurrings` ou `budgets`
+- **THEN** nenhuma coluna que participe de soma referencia `categories`, `invoices`, `credit_cards` ou `budgets`
+
+#### Scenario: A exceção não é consultada por leitura do razão
+- **WHEN** as consultas do razão são inspecionadas
+- **THEN** nenhuma delas referencia as colunas de parcelamento ou recorrência retidas na tabela de transações
 
 #### Scenario: Identidades de fachadas distintas não colidem
 - **WHEN** uma categoria e uma fatura existem simultaneamente

@@ -7,6 +7,8 @@ import com.neoutils.finsight.database.repository.InvoiceRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.InvoiceWriteGuard
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.impl.CreditCardsEntryImpl
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
@@ -56,6 +58,10 @@ val creditCardsModule = module {
             transactionDao = get(),
         )
     }
+
+    // The ledger asks whoever owns a dimension whether a write may touch it; for an
+    // invoice's sub-ledger, that owner is here (design D11).
+    single<DimensionWriteGuard> { InvoiceWriteGuard(invoiceRepository = get()) }
 
     single<CreditCardsEntry> { CreditCardsEntryImpl() }
 

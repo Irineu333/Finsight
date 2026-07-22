@@ -224,6 +224,21 @@ razão são gerados **duas vezes**, uma pelo KSP de cada módulo, no mesmo pacot
 inócua — qual das duas vence não muda comportamento. É o "código gerado duplicado" que D1 já
 antecipava como custo aceitável.
 
+### D14 — `closedLegBlockingChange` não ganha par por dimensão
+
+Registrado, conforme a tarefa 7.8: das três leituras que Risks apontou como
+possivelmente precisando de par por dimensão, `hasEntries` e `entryCountInMonth`
+ganharam um (`hasEntriesForDimension`, `dimensionEntryCountInMonth`) e
+`closedLegBlockingChange` **não precisa**.
+
+O motivo é o predicado que ela aplica: `it.account.isArchived && it.account.type.isPermanent`.
+Categoria nunca foi permanente — o seu saldo é total de período, não dinheiro parado —
+e é exatamente por isso que arquivar uma categoria nunca exigiu saldo zero. A regra
+continua sendo sobre a **conta** da perna, e a conta da perna nominal (`INCOME`/`EXPENSE`)
+falha `isPermanent` tanto antes quanto depois da mudança. Não há fato sobre a dimensão
+que a função precise consultar, e um par por dimensão só poderia introduzir uma regra
+que o razão não tem.
+
 ## Risks / Trade-offs
 
 **A migração reescreve história contábil e é irreversível na prática.** Colapsar N contas de categoria em duas nominais reescreve o `accountId` de toda perna nominal já gravada.

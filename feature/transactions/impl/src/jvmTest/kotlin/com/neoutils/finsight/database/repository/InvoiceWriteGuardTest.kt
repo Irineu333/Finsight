@@ -17,6 +17,8 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DimensionKind
+import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.LedgerWrite
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionIntent
@@ -42,6 +44,24 @@ import kotlin.test.assertFailsWith
  * still accept the payment that settles it, which is the whole point of closing.
  * A design that fused them would pass every test here but the third.
  */
+/**
+ * Stands in for the real guard, which lives with invoices now — this module cannot
+ * see it (design D11). It carries the same three-line rule on purpose: what these
+ * tests are about is the **boundary** — that creating, editing, removing and bulk
+ * removing all pass through it — not the rule itself, which `InvoiceWriteGuard`
+ * owns and is tested against in creditcards.
+ */
+private class StatusWriteGuard(private val invoice: Invoice) : DimensionWriteGuard {
+    override suspend fun ensureAccepts(write: LedgerWrite) {
+        if (invoice.dimensionId !in write.dimensionIds) return
+        when {
+            invoice.status.isPaid -> throw InvoiceLockedException(LedgerError.PaidInvoice)
+            invoice.status.isClosed && !write.settlesALiability ->
+                throw InvoiceLockedException(LedgerError.ClosedInvoice)
+        }
+    }
+}
+
 class InvoiceWriteGuardTest {
 
     private val db = Room.inMemoryDatabaseBuilder<AppDatabase>()
@@ -111,9 +131,9 @@ class InvoiceWriteGuardTest {
             database = db,
             transactionDao = db.transactionDao(),
             entryDao = db.entryDao(),
-            invoiceRepository = SingleInvoiceRepository(invoice(status)),
-            installmentRepository = FakeInstallmentRepository,
             accountRepository = LedgerAccountRepository(db),
+            writeGuard = StatusWriteGuard(invoice(status)),
+            installmentRepository = FakeInstallmentRepository,
             transactionMapper = TransactionMapper(),
             ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.dimensionDao()),
     )

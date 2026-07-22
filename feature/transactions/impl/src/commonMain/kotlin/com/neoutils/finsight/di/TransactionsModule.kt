@@ -31,9 +31,9 @@ val transactionsModule = module {
             database = get(),
             transactionDao = get(),
             entryDao = get(),
-            invoiceRepository = get(),
-            installmentRepository = get(),
             accountRepository = get(),
+            writeGuard = get(),
+            installmentRepository = get(),
             transactionMapper = get(),
             ledgerEntryWriter = get(),
         )

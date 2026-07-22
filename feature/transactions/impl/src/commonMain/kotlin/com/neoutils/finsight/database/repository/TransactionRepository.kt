@@ -13,18 +13,17 @@ import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
-import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.LedgerWrite
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,9 +40,13 @@ class TransactionRepository(
     private val database: RoomDatabase,
     private val transactionDao: TransactionDao,
     private val entryDao: EntryDao,
-    private val invoiceRepository: IInvoiceRepository,
-    private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
+    private val writeGuard: DimensionWriteGuard,
+    // TODO(task 7.6): the installment bookkeeping below is the last facade concern
+    //  left here. It is a *consequence* of a removal, not an invariant, so it does
+    //  not need the single point the veto does — but every delete path reaches it,
+    //  not just the credit-card one, so moving it needs a decision about which.
+    private val installmentRepository: IInstallmentRepository,
     private val transactionMapper: TransactionMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
@@ -133,51 +136,29 @@ class TransactionRepository(
     }
 
     /**
-     * The invoice-status invariant, enforced at the single write boundary next to
-     * `Σ = 0` (design D23) so no screen or use case has to remember it:
-     *
-     *  - `PAID` — settled history: nothing may touch it.
-     *  - `CLOSED` — takes no new spending, but must still accept the payment that
-     *    settles it, which is the whole point of closing.
-     *  - anything else — free.
-     *
-     * `CLOSED` and `PAID` behave differently here, which is why `isClosedToNewExpenses` (which
-     * fuses them) is not the predicate: it happens to be right only for creating
-     * an expense, where the two coincide.
+     * The facade veto, asked at the single write boundary next to `Σ = 0` (design
+     * D11/D23) so no screen or use case has to remember it. What the rule *is*
+     * belongs to whoever owns the dimensions — this only guarantees there is one
+     * place it gets asked.
      */
-    private suspend fun ensureInvoicesAccept(invoiceIds: Set<Long>, isPayment: Boolean) {
-        invoiceIds.forEach { invoiceId ->
-            val status = invoiceRepository.getInvoiceById(invoiceId)?.status ?: return@forEach
-            when {
-                status.isPaid -> throw InvoiceLockedException(LedgerError.PaidInvoice)
-                status.isClosed && !isPayment -> throw InvoiceLockedException(LedgerError.ClosedInvoice)
-            }
-        }
+    private suspend fun ensureDimensionsAccept(dimensionIds: Set<Long>, settlesALiability: Boolean) {
+        if (dimensionIds.isEmpty()) return
+        writeGuard.ensureAccepts(LedgerWrite(dimensionIds, settlesALiability))
     }
 
-    private suspend fun ensureInvoiceAccepts(legs: List<TransactionLeg>) = ensureInvoicesAccept(
-        // The legs name a dimension; which invoice owns it is the facade's business.
-        invoiceIds = invoicesOwning(legs.mapNotNull { it.dimensionId }.toSet()),
-        isPayment = legs.settlesALiability(),
+    private suspend fun ensureDimensionsAccept(legs: List<TransactionLeg>) = ensureDimensionsAccept(
+        dimensionIds = legs.mapNotNull { it.dimensionId }.toSet(),
+        settlesALiability = legs.settlesALiability(),
     )
 
-    private suspend fun invoicesOwning(dimensionIds: Set<Long>): Set<Long> {
-        if (dimensionIds.isEmpty()) return emptySet()
-        return invoiceRepository.getAllInvoices()
-            .filter { it.dimensionId in dimensionIds }
-            .map { it.id }
-            .toSet()
-    }
-
     /**
-     * Removing a transaction changes its invoice too, so it passes the same gate.
-     * `isPayment` is false because *un*-paying a closed invoice is not the payment
-     * that settles it — a closed invoice is immutable in both directions.
+     * Removing a transaction changes its sub-ledgers too, so it passes the same
+     * gate. It never *settles* one: undoing a payment is not the payment.
      */
-    private suspend fun ensureInvoiceAcceptsRemoval(id: Long) {
-        val dimensionIds = entryDao.getByTransactionId(id).mapNotNull { it.dimensionId }.toSet()
-        ensureInvoicesAccept(invoiceIds = invoicesOwning(dimensionIds), isPayment = false)
-    }
+    private suspend fun ensureDimensionsAcceptRemoval(id: Long) = ensureDimensionsAccept(
+        dimensionIds = entryDao.getByTransactionId(id).mapNotNull { it.dimensionId }.toSet(),
+        settlesALiability = false,
+    )
 
     /**
      * The closure invariant, in the removal direction.
@@ -226,7 +207,7 @@ class TransactionRepository(
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
         ledgerEntryWriter.validate(intent.legs)
-        ensureInvoiceAccepts(intent.legs)
+        ensureDimensionsAccept(intent.legs)
 
         // The transaction row and its ledger legs are written in a single transaction,
         // so a mid-way failure (missing facade row, cancellation, DB error) rolls back
@@ -247,7 +228,7 @@ class TransactionRepository(
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> {
         intents.forEach {
             ledgerEntryWriter.validate(it.legs)
-            ensureInvoiceAccepts(it.legs)
+            ensureDimensionsAccept(it.legs)
         }
 
         val ids = database.useWriterConnection { connection ->
@@ -275,7 +256,7 @@ class TransactionRepository(
         // the old entries and the one gaining the new. Checking only the new side let
         // a purchase be moved *off* a paid invoice, silently removing money from
         // settled history — the rewrite deletes the old entries either way.
-        ensureInvoiceAcceptsRemoval(id)
+        ensureDimensionsAcceptRemoval(id)
         // Same two-sided reasoning, for closure: the rewrite takes the old legs away,
         // so pointing an old transaction at a different account is how its archived
         // account got its balance back — the new legs are all open, so nothing else
@@ -283,9 +264,9 @@ class TransactionRepository(
         ensureClosedAccountsKeepTheirBalance(id)
         // Editing is never the payment that settles a closed invoice; that exception
         // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
-        ensureInvoicesAccept(
-            invoiceIds = invoicesOwning(setOfNotNull(leg.dimensionId)),
-            isPayment = false,
+        ensureDimensionsAccept(
+            dimensionIds = setOfNotNull(leg.dimensionId),
+            settlesALiability = false,
         )
 
         // Update and ledger rewrite (delete + re-insert legs) share one transaction, so a
@@ -318,7 +299,7 @@ class TransactionRepository(
      * transaction — so a bulk delete stays one unit instead of N.
      */
     private suspend fun removeRow(id: Long) {
-        ensureInvoiceAcceptsRemoval(id)
+        ensureDimensionsAcceptRemoval(id)
         ensureClosedAccountsKeepTheirBalance(id)
 
         val transaction = transactionDao.getById(id)

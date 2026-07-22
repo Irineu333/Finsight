@@ -135,7 +135,8 @@ class AddInstallmentUseCaseImpl(
                     legs = listOf(
                         baseLeg.copy(
                             amount = baseLeg.amount / invoices.size,
-                            invoice = invoice,
+                            // Each share lands on its own invoice's sub-ledger.
+                            dimensionId = invoice.dimensionId,
                         )
                     ),
                 )

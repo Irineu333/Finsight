@@ -11,6 +11,7 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -81,6 +82,7 @@ class ViewBudgetViewModelTest {
             title: String?,
             date: LocalDate,
             leg: TransactionLeg,
+            contra: ContraLeg?,
         ) = throw NotImplementedError()
         override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()
         override suspend fun deleteTransactionsByIds(ids: List<Long>) = throw NotImplementedError()

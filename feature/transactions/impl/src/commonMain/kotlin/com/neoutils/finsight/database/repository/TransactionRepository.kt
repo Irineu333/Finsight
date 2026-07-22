@@ -4,7 +4,7 @@ package com.neoutils.finsight.database.repository
 
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
-import com.neoutils.finsight.database.AppDatabase
+import androidx.room.RoomDatabase
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
@@ -16,6 +16,8 @@ import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
@@ -33,7 +35,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
 class TransactionRepository(
-    private val database: AppDatabase,
+    // The supertype, not the app's concrete `@Database`: opening a write transaction
+    // is a Room capability, and the ledger has no business knowing which schema it
+    // is part of (confirmed by the spike, design D13e).
+    private val database: RoomDatabase,
     private val transactionDao: TransactionDao,
     private val entryDao: EntryDao,
     private val invoiceRepository: IInvoiceRepository,
@@ -151,9 +156,18 @@ class TransactionRepository(
     }
 
     private suspend fun ensureInvoiceAccepts(legs: List<TransactionLeg>) = ensureInvoicesAccept(
-        invoiceIds = legs.mapNotNull { it.invoice?.id }.toSet(),
-        isPayment = legs.settlesACard(),
+        // The legs name a dimension; which invoice owns it is the facade's business.
+        invoiceIds = invoicesOwning(legs.mapNotNull { it.dimensionId }.toSet()),
+        isPayment = legs.settlesALiability(),
     )
+
+    private suspend fun invoicesOwning(dimensionIds: Set<Long>): Set<Long> {
+        if (dimensionIds.isEmpty()) return emptySet()
+        return invoiceRepository.getAllInvoices()
+            .filter { it.dimensionId in dimensionIds }
+            .map { it.id }
+            .toSet()
+    }
 
     /**
      * Removing a transaction changes its invoice too, so it passes the same gate.
@@ -161,16 +175,8 @@ class TransactionRepository(
      * that settles it — a closed invoice is immutable in both directions.
      */
     private suspend fun ensureInvoiceAcceptsRemoval(id: Long) {
-        // The legs name a dimension; which invoice owns it is the facade's business.
         val dimensionIds = entryDao.getByTransactionId(id).mapNotNull { it.dimensionId }.toSet()
-        if (dimensionIds.isEmpty()) return
-        ensureInvoicesAccept(
-            invoiceIds = invoiceRepository.getAllInvoices()
-                .filter { it.dimensionId in dimensionIds }
-                .map { it.id }
-                .toSet(),
-            isPayment = false,
-        )
+        ensureInvoicesAccept(invoiceIds = invoicesOwning(dimensionIds), isPayment = false)
     }
 
     /**
@@ -198,18 +204,24 @@ class TransactionRepository(
     }
 
     /**
-     * Whether this intent pays a card from an account — an account leg and a card
-     * leg on the same transaction.
+     * Whether this intent settles a liability from an asset — the ledger shape of
+     * paying a card.
+     *
+     * It used to read the user's own account-vs-card choice off the leg. With the
+     * legs down to identities there is no such choice to read, and there never
+     * needed to be one: the question is about the *nature* of the accounts the legs
+     * post to, which the chart answers.
      *
      * This deliberately does **not** return a [TransactionLabel], and is not a
-     * second implementation of the label rule: at this point the entries do not
-     * exist yet (the accounts are resolved by the writer, below), so
-     * `deriveTransactionLabel` — which reads `AccountType` — has nothing to read.
-     * It answers one boolean question the gate needs, from the only thing
-     * available here: the user's own account-vs-card choice.
+     * second implementation of the label rule: the entries do not exist yet, so
+     * `deriveTransactionLabel` — which reads them — has nothing to read.
      */
-    private fun List<TransactionLeg>.settlesACard(): Boolean =
-        size >= 2 && any { it.target.isAccount } && any { it.target.isCreditCard }
+    private suspend fun List<TransactionLeg>.settlesALiability(): Boolean {
+        if (size < 2) return false
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val types = mapNotNull { accounts[it.accountId]?.type }
+        return AccountType.ASSET in types && AccountType.LIABILITY in types
+    }
 
     override suspend fun createTransaction(intent: TransactionIntent): Transaction {
         // Reject an unbalanced intent before writing anything (Σ = 0 per currency).
@@ -223,7 +235,7 @@ class TransactionRepository(
             connection.immediateTransaction {
                 val transactionId = transactionDao.insert(intent.toEntity())
 
-                ledgerEntryWriter.writeEntries(transactionId, intent.legs)
+                ledgerEntryWriter.writeEntries(transactionId, intent.legs, intent.contra)
 
                 transactionId
             }
@@ -242,7 +254,7 @@ class TransactionRepository(
             connection.immediateTransaction {
                 intents.map { intent ->
                     val transactionId = transactionDao.insert(intent.toEntity())
-                    ledgerEntryWriter.writeEntries(transactionId, intent.legs)
+                    ledgerEntryWriter.writeEntries(transactionId, intent.legs, intent.contra)
                     transactionId
                 }
             }
@@ -252,7 +264,13 @@ class TransactionRepository(
         return ids.mapNotNull { transactionDao.getById(it)?.toDomain(accounts) }
     }
 
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {
+    override suspend fun updateTransaction(
+        id: Long,
+        title: String?,
+        date: LocalDate,
+        leg: TransactionLeg,
+        contra: ContraLeg?,
+    ) {
         // An edit has two sides, and both are changes to an invoice: the one losing
         // the old entries and the one gaining the new. Checking only the new side let
         // a purchase be moved *off* a paid invoice, silently removing money from
@@ -266,7 +284,7 @@ class TransactionRepository(
         // Editing is never the payment that settles a closed invoice; that exception
         // exists only for creating it (task 5.6: CLOSED/PAID blocks editing too).
         ensureInvoicesAccept(
-            invoiceIds = listOfNotNull(leg.invoice?.id).toSet(),
+            invoiceIds = invoicesOwning(setOfNotNull(leg.dimensionId)),
             isPayment = false,
         )
 
@@ -279,7 +297,7 @@ class TransactionRepository(
                     title = title,
                     date = date,
                 )
-                ledgerEntryWriter.rewriteEntries(id, listOf(leg))
+                ledgerEntryWriter.rewriteEntries(id, listOf(leg), contra)
             }
         }
     }

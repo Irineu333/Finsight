@@ -7,6 +7,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.CardMonthFlows
@@ -86,7 +87,7 @@ class InvoiceLedgerStore(card: CreditCard) {
                     transactionId = transactionId,
                     account = cardAccount,
                     amount = cents,
-                    dimensionId = leg.invoice?.dimensionId,
+                    dimensionId = leg.dimensionId,
                 ),
                 Entry(transactionId = transactionId, account = equity, amount = -cents),
             )
@@ -120,7 +121,7 @@ class FakeTransactionRepository(private val ledger: InvoiceLedgerStore) : ITrans
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> =
         intents.map { createTransaction(it) }
 
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) {
         ledger.dateByTransaction[id] = date
         ledger.write(id, listOf(leg))
     }

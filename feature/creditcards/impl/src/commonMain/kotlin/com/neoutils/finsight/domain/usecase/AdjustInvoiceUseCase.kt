@@ -6,6 +6,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.InvoiceNotAdjustedException
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
@@ -52,10 +53,11 @@ class AdjustInvoiceUseCase(
                             TransactionLeg(
                                 type = TransactionType.ADJUSTMENT,
                                 amount = -difference,
-                                creditCard = invoice.creditCard,
-                                invoice = invoice,
+                                accountId = invoice.creditCard.accountId,
+                                dimensionId = invoice.dimensionId,
                             )
                         ),
+                        contra = ContraLeg(AccountType.EQUITY),
                     )
                 )
                 return@catch
@@ -80,9 +82,10 @@ class AdjustInvoiceUseCase(
                 leg = TransactionLeg(
                     type = TransactionType.ADJUSTMENT,
                     amount = newAmount,
-                    creditCard = invoice.creditCard,
-                    invoice = invoice,
+                    accountId = invoice.creditCard.accountId,
+                    dimensionId = invoice.dimensionId,
                 ),
+                contra = ContraLeg(AccountType.EQUITY),
             )
         }.bind()
     }

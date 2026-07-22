@@ -58,18 +58,19 @@ class PayInvoicePaymentUseCase(
                     title = null,
                     date = date,
                     legs = listOf(
+                        // The money leaves the account undimensioned; only the card's
+                        // leg carries the invoice's sub-ledger, or the two would
+                        // cancel it out.
                         TransactionLeg(
                             type = TransactionType.EXPENSE,
                             amount = currentBillAmount,
-                            creditCard = invoice.creditCard,
-                            invoice = invoice,
-                            account = account,
+                            accountId = account.id,
                         ),
                         TransactionLeg(
                             type = TransactionType.INCOME,
                             amount = currentBillAmount,
-                            creditCard = invoice.creditCard,
-                            invoice = invoice,
+                            accountId = invoice.creditCard.accountId,
+                            dimensionId = invoice.dimensionId,
                         ),
                     ),
                 )

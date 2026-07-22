@@ -17,6 +17,7 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DimensionKind
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
@@ -114,7 +115,7 @@ class InvoiceWriteGuardTest {
             installmentRepository = FakeInstallmentRepository,
             accountRepository = LedgerAccountRepository(db),
             transactionMapper = TransactionMapper(),
-            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.creditCardDao(), db.dimensionDao()),
+            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.dimensionDao()),
     )
 
     private fun purchase() = TransactionIntent(
@@ -124,10 +125,11 @@ class InvoiceWriteGuardTest {
             TransactionLeg(
                 type = TransactionType.EXPENSE,
                 amount = 50.0,
-                creditCard = card,
-                invoice = invoice(Invoice.Status.OPEN),
+                accountId = card.accountId,
+                dimensionId = invoice(Invoice.Status.OPEN).dimensionId,
             )
         ),
+        contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
     )
 
     private fun payment() = TransactionIntent(
@@ -137,15 +139,13 @@ class InvoiceWriteGuardTest {
             TransactionLeg(
                 type = TransactionType.EXPENSE,
                 amount = 50.0,
-                account = payer,
-                creditCard = card,
-                invoice = invoice(Invoice.Status.CLOSED),
+                accountId = payer.id,
             ),
             TransactionLeg(
                 type = TransactionType.INCOME,
                 amount = 50.0,
-                creditCard = card,
-                invoice = invoice(Invoice.Status.CLOSED),
+                accountId = card.accountId,
+                dimensionId = invoice(Invoice.Status.CLOSED).dimensionId,
             ),
         ),
     )
@@ -202,7 +202,8 @@ class InvoiceWriteGuardTest {
             TransactionIntent(
                 title = "Groceries",
                 date = LocalDate(2026, 3, 5),
-                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = payer.id)),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         )
         db.accountDao().close(1)
@@ -229,7 +230,8 @@ class InvoiceWriteGuardTest {
             TransactionIntent(
                 title = "Groceries",
                 date = LocalDate(2026, 3, 5),
-                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = payer.id)),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         )
         db.accountDao().close(1)
@@ -239,7 +241,8 @@ class InvoiceWriteGuardTest {
                 id = spend.id,
                 title = "Moved",
                 date = LocalDate(2026, 3, 6),
-                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = other),
+                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = other.id),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         }
         assertEquals(LedgerError.ClosedAccountRemoval(ClosedFacade.ACCOUNT), error.error)
@@ -259,7 +262,8 @@ class InvoiceWriteGuardTest {
             TransactionIntent(
                 title = "Groceries",
                 date = LocalDate(2026, 3, 5),
-                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = payer.id)),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         )
         // Close the EXPENSE bucket the writer synthesized for the uncategorized leg.
@@ -287,7 +291,8 @@ class InvoiceWriteGuardTest {
                 id = purchase.id,
                 title = "Moved",
                 date = LocalDate(2026, 3, 6),
-                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, account = payer),
+                leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = payer.id),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
             )
         }
         assertEquals(2, locked.getTransactionById(purchase.id)?.entries?.size)
@@ -303,7 +308,8 @@ class InvoiceWriteGuardTest {
                 TransactionIntent(
                     title = "Groceries",
                     date = LocalDate(2026, 3, 5),
-                    legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, account = payer)),
+                    legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = payer.id)),
+                contra = ContraLeg(com.neoutils.finsight.domain.model.AccountType.EXPENSE),
                 )
             )
         }

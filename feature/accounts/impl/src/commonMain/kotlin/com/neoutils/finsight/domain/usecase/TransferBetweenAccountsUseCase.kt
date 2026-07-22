@@ -65,12 +65,12 @@ class TransferBetweenAccountsUseCase(
                         TransactionLeg(
                             type = TransactionType.EXPENSE,
                             amount = amount,
-                            account = sourceAccount,
+                            accountId = sourceAccount.id,
                         ),
                         TransactionLeg(
                             type = TransactionType.INCOME,
                             amount = amount,
-                            account = destinationAccount,
+                            accountId = destinationAccount.id,
                         ),
                     ),
                 )

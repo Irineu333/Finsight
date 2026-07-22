@@ -2,6 +2,7 @@ package com.neoutils.finsight.domain.repository
 
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.LocalDate
@@ -41,7 +42,13 @@ interface ITransactionRepository {
      * a card payment has two monetary legs; routing one through here would drop the
      * second silently. Any future support for editing those must change this shape.
      */
-    suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg)
+    suspend fun updateTransaction(
+        id: Long,
+        title: String?,
+        date: LocalDate,
+        leg: TransactionLeg,
+        contra: ContraLeg? = null,
+    )
 
     suspend fun deleteTransactionById(id: Long)
 

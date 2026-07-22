@@ -7,6 +7,7 @@ import arrow.core.raise.ensure
 import com.neoutils.finsight.domain.exception.AccountNotAdjustedException
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
@@ -58,9 +59,12 @@ class AdjustBalanceUseCase(
                             TransactionLeg(
                                 type = TransactionType.ADJUSTMENT,
                                 amount = difference,
-                                account = account,
+                                accountId = account.id,
                             )
                         ),
+                        // An adjustment's counterpart is reconciliation — equity, by
+                        // nature, which is all the ledger needs to be told.
+                        contra = ContraLeg(AccountType.EQUITY),
                     )
                 )
                 return@catch
@@ -83,8 +87,9 @@ class AdjustBalanceUseCase(
                 leg = TransactionLeg(
                     type = TransactionType.ADJUSTMENT,
                     amount = newAmount,
-                    account = account,
+                    accountId = account.id,
                 ),
+                contra = ContraLeg(AccountType.EQUITY),
             )
         }.bind()
     }

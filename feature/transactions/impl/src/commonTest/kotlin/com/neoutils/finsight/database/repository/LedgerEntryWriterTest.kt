@@ -1,77 +1,63 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
-import com.neoutils.finsight.database.dao.CreditCardWithArchival
-import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
-import com.neoutils.finsight.database.entity.CreditCardEntity
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
-import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.SystemAccount
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.ui.icons.CategoryLazyIcon
-import kotlinx.datetime.YearMonth
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.domain.model.DimensionKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private val DATE = LocalDate(2026, 1, 1)
-
+/**
+ * The write boundary, in the vocabulary it now speaks: account ids, dimension ids
+ * and account natures. No facade appears here, which is the point — if one had to,
+ * the writer would still be able to name it.
+ */
 class LedgerEntryWriterTest {
 
     private val entryDao = FakeEntryDao()
     private val accountDao = FakeAccountDao()
-    private val creditCardDao = FakeCreditCardDao()
     private val dimensionDao = FakeDimensionDao()
 
-    private val writer = LedgerEntryWriter(entryDao, accountDao, creditCardDao, dimensionDao)
+    private val writer = LedgerEntryWriter(entryDao, accountDao, dimensionDao)
 
-    private fun assetAccount(id: Long) = Account(id = id, name = "Acc $id")
-
-    private fun foodCategory(isArchived: Boolean = false) = Category(
-        id = 1,
-        name = "Food",
-        icon = CategoryLazyIcon("food"),
-        type = Category.Type.EXPENSE,
-        createdAt = 0,
-        isArchived = isArchived,
-        dimensionId = 7,
-    )
+    /** The user's own account, id 1, open. */
+    private fun openAsset(id: Long = 1) = AccountEntity(id = id, name = "Acc $id", type = AccountEntity.Type.ASSET)
+        .also { accountDao.accounts[id] = it }
 
     @Test
     fun `given an expense when written then the nominal leg carries the category dimension`() = runTest {
+        openAsset()
         dimensionDao.insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
-        val expense = TransactionLeg(
-            type = TransactionType.EXPENSE,
-            amount = 50.0,
-            account = assetAccount(1),
-            category = foodCategory(),
-        )
 
-        writer.writeEntries(transactionId = 1, legs = listOf(expense))
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+            contra = ContraLeg(AccountType.EXPENSE, dimensionId = 7),
+        )
 
         assertEquals(2, entryDao.inserted.size)
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         assertEquals(-5000L, entryDao.inserted.first { it.accountId == 1L }.amount)
-        // The category is no longer an account: the contra leg lands on the single
-        // EXPENSE nominal, and *which* category it is comes from the dimension.
+        // The category is not an account: the contra leg lands on the single EXPENSE
+        // nominal, and *which* category it is comes from the dimension.
         val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
         val nominalEntry = entryDao.inserted.first { it.accountId == nominal.id }
         assertEquals(5000L, nominalEntry.amount)
@@ -79,9 +65,27 @@ class LedgerEntryWriterTest {
     }
 
     @Test
+    fun `given an expense with no category when written then the nominal leg is unclassified`() = runTest {
+        openAsset()
+
+        writer.writeEntries(
+            transactionId = 1,
+            legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+            contra = ContraLeg(AccountType.EXPENSE),
+        )
+
+        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
+        // No bucket account and no bucket dimension: "uncategorized" is the absence.
+        assertNull(entryDao.inserted.first { it.accountId == nominal.id }.dimensionId)
+        assertEquals(1, accountDao.accounts.values.count { it.type == AccountEntity.Type.EXPENSE })
+    }
+
+    @Test
     fun `given a transfer when written then both legs balance without synthesis`() = runTest {
-        val out = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
-        val income = TransactionLeg(type = TransactionType.INCOME, amount = 100.0, account = assetAccount(2))
+        openAsset(1)
+        openAsset(2)
+        val out = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1)
+        val income = TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2)
 
         writer.validate(listOf(out, income))
         writer.writeEntries(transactionId = 2, legs = listOf(out, income))
@@ -94,91 +98,111 @@ class LedgerEntryWriterTest {
 
     @Test
     fun `given an adjustment when written then contra is a created reconciliation equity account`() = runTest {
-        val adjustment = TransactionLeg(type = TransactionType.ADJUSTMENT, amount = 30.0, account = assetAccount(1))
+        openAsset()
 
-        writer.writeEntries(transactionId = 3, legs = listOf(adjustment))
+        writer.writeEntries(
+            transactionId = 3,
+            legs = listOf(TransactionLeg(type = TransactionType.ADJUSTMENT, amount = 30.0, accountId = 1)),
+            contra = ContraLeg(AccountType.EQUITY),
+        )
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val reconciliation = accountDao.accounts.values.first { it.type == AccountEntity.Type.EQUITY }
+        assertEquals(SystemAccount.RECONCILIATION, reconciliation.name)
         assertEquals(-3000L, entryDao.inserted.first { it.accountId == reconciliation.id }.amount)
     }
 
     @Test
-    fun `given an invoice payment when written then the bank account is debited and only the card leg tags the invoice`() = runTest {
-        // Card 100 already promoted to ledger account 200.
-        creditCardDao.cards[100L] = CreditCardEntity(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 200)
-        val card = CreditCard(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20)
+    fun `given an invoice payment when written then only the liability leg tags the sub-ledger`() = runTest {
+        openAsset()
         accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY)
-        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Acc 1", type = AccountEntity.Type.ASSET)
         dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
-        val invoice = Invoice(
-            id = 5,
-            creditCard = card,
-            dimensionId = 5,
-            openingMonth = YearMonth(2026, 1),
-            closingMonth = YearMonth(2026, 2),
-            dueMonth = YearMonth(2026, 2),
-            status = Invoice.Status.CLOSED,
-        )
-        // The paying leg carries account + card + invoice (as the real use case builds it).
-        val accountLeg = TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, account = assetAccount(1), creditCard = card, invoice = invoice)
-        val cardLeg = TransactionLeg(type = TransactionType.INCOME, amount = 50.0, creditCard = card, invoice = invoice)
 
-        writer.writeEntries(transactionId = 4, legs = listOf(accountLeg, cardLeg))
+        writer.writeEntries(
+            transactionId = 4,
+            legs = listOf(
+                TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
+                TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 200, dimensionId = 5),
+            ),
+        )
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val bankEntry = entryDao.inserted.first { it.accountId == 1L }
         assertEquals(-5000L, bankEntry.amount) // bank account is debited
-        assertEquals(null, bankEntry.dimensionId) // account leg must NOT carry the dimension
+        assertNull(bankEntry.dimensionId) // or the two legs would cancel the sub-ledger out
         val cardEntry = entryDao.inserted.first { it.accountId == 200L }
         assertEquals(5000L, cardEntry.amount) // liability leg reduces the owed
-        assertEquals(5L, cardEntry.dimensionId) // only the card leg carries the dimension
+        assertEquals(5L, cardEntry.dimensionId)
     }
 
     @Test
-    fun `given an archived category when written then the write is accepted`() = runTest {
-        // A category holds no money: closing one strands nothing, so it carries no
-        // invariant a write could break. Refusing here froze editing every old
-        // transaction whose category was archived meanwhile — a rule the ledger
-        // never had. Keeping an archived category out of a *new* transaction is the
-        // selector's job (it lists open ones).
-        dimensionDao.insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
-        val expense = TransactionLeg(
-            type = TransactionType.EXPENSE,
-            amount = 50.0,
-            account = assetAccount(1),
-            category = foodCategory(isArchived = true),
-        )
+    fun `given a dimension landing on the wrong nature when written then nothing is written`() = runTest {
+        openAsset()
+        // An invoice's sub-ledger may only sit on a LIABILITY leg. Landing it on the
+        // nominal produces no wrong number anywhere — it just makes every sum by that
+        // dimension quietly wrong, which is why the boundary refuses it.
+        dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
 
-        writer.writeEntries(transactionId = 1, legs = listOf(expense))
-
-        assertEquals(0L, entryDao.inserted.sumOf { it.amount })
-        val nominal = accountDao.accounts.values.first { it.name == SystemAccount.EXPENSES }
-        assertEquals(5000L, entryDao.inserted.first { it.accountId == nominal.id }.amount)
+        val error = assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+                contra = ContraLeg(AccountType.EXPENSE, dimensionId = 5),
+            )
+        }
+        assertEquals(LedgerError.MisplacedDimension, error.error)
+        assertTrue(entryDao.inserted.isEmpty())
     }
 
     @Test
     fun `given an archived account when written then the write is rejected`() = runTest {
-        // The monetary case, which does carry an invariant: closing an ASSET
-        // required a zero balance, so a new entry there strands money.
-        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, currency = "BRL", isArchived = true)
-        val expense = TransactionLeg(
-            type = TransactionType.EXPENSE,
-            amount = 50.0,
-            account = assetAccount(1),
-        )
+        // Closing an ASSET required a zero balance, so a new entry there strands money.
+        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Checking", type = AccountEntity.Type.ASSET, isArchived = true)
 
         val error = assertFailsWith<ClosedAccountException> {
-            writer.writeEntries(transactionId = 1, legs = listOf(expense))
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+                contra = ContraLeg(AccountType.EXPENSE),
+            )
         }
         assertEquals(LedgerError.ClosedAccount(ClosedFacade.ACCOUNT), error.error)
         assertTrue(entryDao.inserted.isEmpty())
     }
 
     @Test
+    fun `given an archived card when written then the error names the card`() = runTest {
+        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY, isArchived = true)
+
+        val error = assertFailsWith<ClosedAccountException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 200)),
+                contra = ContraLeg(AccountType.EXPENSE),
+            )
+        }
+        // Which facade the account belongs to is read off its nature — the ledger
+        // reports what it knows, and the screen says the right word.
+        assertEquals(LedgerError.ClosedAccount(ClosedFacade.CREDIT_CARD), error.error)
+    }
+
+    @Test
+    fun `given a one-sided intent with no contra when written then nothing is written`() = runTest {
+        openAsset()
+
+        assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(
+                transactionId = 1,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+            )
+        }
+        assertTrue(entryDao.inserted.isEmpty())
+    }
+
+    @Test
     fun `given an unbalanced multi-leg transaction when validated then it is rejected`() {
-        val a = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, account = assetAccount(1))
-        val b = TransactionLeg(type = TransactionType.INCOME, amount = 80.0, account = assetAccount(2))
+        val a = TransactionLeg(type = TransactionType.EXPENSE, amount = 100.0, accountId = 1)
+        val b = TransactionLeg(type = TransactionType.INCOME, amount = 80.0, accountId = 2)
 
         assertFailsWith<UnbalancedTransactionException> { writer.validate(listOf(a, b)) }
     }
@@ -206,7 +230,7 @@ private class FakeEntryDao : EntryDao {
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.InvoicePeriodTotals = throw NotImplementedError()
     override suspend fun cardMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.CardMonthTotals = throw NotImplementedError()
     override suspend fun totalsByDimensionWithSiblingLeg(
-        categoryType: String,
+        nominalType: String,
         start: kotlinx.datetime.LocalDate,
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
@@ -270,16 +294,3 @@ private class FakeAccountDao : AccountDao {
 }
 
 
-private class FakeCreditCardDao : CreditCardDao {
-    override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCardWithArchival> = emptyList()
-    override fun observeCreditCardWithArchivalById(creditCardId: Long): Flow<CreditCardWithArchival?> = flowOf(null)
-    override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCardWithArchival>> = flowOf(emptyList())
-    val cards = linkedMapOf<Long, CreditCardEntity>()
-    override suspend fun getCreditCardById(id: Long): CreditCardEntity? = cards[id]
-    override suspend fun update(creditCard: CreditCardEntity) { cards[creditCard.id] = creditCard }
-    override fun observeAllCreditCards(): Flow<List<CreditCardEntity>> = throw NotImplementedError()
-    override suspend fun getAllCreditCardsList(): List<CreditCardEntity> = cards.values.toList()
-    override fun observeCreditCardById(id: Long): Flow<CreditCardEntity?> = throw NotImplementedError()
-    override suspend fun insert(creditCard: CreditCardEntity): Long { cards[creditCard.id] = creditCard; return creditCard.id }
-    override suspend fun delete(creditCard: CreditCardEntity) { cards.remove(creditCard.id) }
-}

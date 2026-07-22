@@ -9,10 +9,13 @@ import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import com.neoutils.finsight.domain.error.BuildTransactionError
 import com.neoutils.finsight.domain.exception.BuildTransactionException
+import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
+import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
@@ -22,6 +25,18 @@ import kotlin.time.ExperimentalTime
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+/**
+ * How the writer must complete the single leg above: on the nominal of the
+ * category's own nature, tagged with its dimension. With no category the leg's type
+ * decides the nature and the leg stays unclassified — which is what "no category"
+ * means, with no bucket standing in for it.
+ */
+private fun TransactionForm.contraLeg(): ContraLeg = when (type) {
+    TransactionType.ADJUSTMENT -> ContraLeg(AccountType.EQUITY)
+    TransactionType.EXPENSE -> ContraLeg(category?.type?.accountType ?: AccountType.EXPENSE, category?.dimensionId)
+    TransactionType.INCOME -> ContraLeg(category?.type?.accountType ?: AccountType.INCOME, category?.dimensionId)
+}
 
 class BuildTransactionUseCaseImpl(
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
@@ -54,22 +69,21 @@ class BuildTransactionUseCaseImpl(
 
         if (form.target.isAccount) {
 
-            ensureNotNull(form.account) {
+            val account = ensureNotNull(form.account) {
                 BuildTransactionException(BuildTransactionError.AccountRequired)
             }
 
             return@either TransactionIntent(
                 title = form.title,
                 date = date,
-                category = form.category,
                 legs = listOf(
                     TransactionLeg(
                         type = form.type,
                         amount = form.amount.moneyToDouble(),
-                        account = form.account,
-                        category = form.category,
+                        accountId = account.id,
                     )
                 ),
+                contra = form.contraLeg(),
             )
         }
 
@@ -90,16 +104,18 @@ class BuildTransactionUseCaseImpl(
         TransactionIntent(
             title = form.title,
             date = date,
-            category = form.category,
             legs = listOf(
                 TransactionLeg(
                     type = form.type,
                     amount = form.amount.moneyToDouble(),
-                    creditCard = form.creditCard,
-                    invoice = invoice,
-                    category = form.category,
+                    // The card *is* its LIABILITY account, and the invoice *is* the
+                    // dimension that leg carries. Resolving both is this caller's job
+                    // now (design D6); the writer only sees identities.
+                    accountId = creditCard.accountId,
+                    dimensionId = invoice.dimensionId,
                 )
             ),
+            contra = form.contraLeg(),
         )
     }
 }

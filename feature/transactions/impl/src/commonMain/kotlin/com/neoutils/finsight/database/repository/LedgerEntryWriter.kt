@@ -1,7 +1,6 @@
 package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.AccountDao
-import com.neoutils.finsight.database.dao.CreditCardDao
 import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
@@ -11,12 +10,11 @@ import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.BASE_CURRENCY
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SystemAccount
-import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionLeg
 import kotlin.math.roundToLong
@@ -25,17 +23,16 @@ import kotlin.math.roundToLong
  * The single write-boundary that turns the user's intent into balanced
  * double-entry [EntryEntity] rows.
  *
- * It resolves each leg to its chart-of-accounts row, synthesizes the contra leg
- * for a single-leg intent, and enforces the `Σ = 0` per-currency invariant —
- * throwing [UnbalancedTransactionException] and writing nothing on failure.
- *
- * Only *system* accounts are created on demand: card accounts are created with
- * their facade, so nothing here has to guess whether one exists.
+ * Every leg arrives as an identity — an account id and, at most, a dimension id
+ * (design D6) — so there is nothing here to look a facade up with, and nothing that
+ * could name one. What remains is what genuinely belongs at a write boundary:
+ * completing a one-sided intent (which creates the system account on demand),
+ * applying the one sign rule, and enforcing the two invariants — `Σ = 0` per
+ * currency and the dimension landing rule — throwing and writing nothing on failure.
  */
 class LedgerEntryWriter(
     private val entryDao: EntryDao,
     private val accountDao: AccountDao,
-    private val creditCardDao: CreditCardDao,
     private val dimensionDao: DimensionDao,
 ) {
 
@@ -50,42 +47,43 @@ class LedgerEntryWriter(
     }
 
     /** Rebuilds the entries of [transactionId] from its (edited) legs. */
-    suspend fun rewriteEntries(transactionId: Long, legs: List<TransactionLeg>) {
+    suspend fun rewriteEntries(transactionId: Long, legs: List<TransactionLeg>, contra: ContraLeg? = null) {
         entryDao.deleteByTransactionId(transactionId)
-        writeEntries(transactionId, legs)
+        writeEntries(transactionId, legs, contra)
     }
 
-    suspend fun writeEntries(transactionId: Long, legs: List<TransactionLeg>) {
+    suspend fun writeEntries(
+        transactionId: Long,
+        legs: List<TransactionLeg>,
+        contra: ContraLeg? = null,
+    ) {
         val entries = buildList {
             legs.forEach { leg ->
                 add(
                     EntryEntity(
                         transactionId = transactionId,
-                        accountId = realAccountId(leg),
+                        accountId = leg.accountId.orRejectIfClosed(),
                         amount = leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
-                        // Only the credit-card (LIABILITY) leg carries the invoice's
-                        // dimension — its sub-ledger. A payment's account leg also
-                        // references the card but must not carry it, or the two legs
-                        // would cancel the sub-ledger out.
-                        dimensionId = leg.invoice?.dimensionId
-                            ?.takeIf { leg.target == TransactionTarget.CREDIT_CARD },
+                        dimensionId = leg.dimensionId,
                     )
                 )
             }
             // Single-leg transactions need a synthesized contra leg to balance.
             if (legs.size == 1) {
                 val leg = legs.first()
+                val counterpart = contra
+                    ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
                 add(
                     EntryEntity(
                         transactionId = transactionId,
-                        accountId = contraAccountId(leg),
+                        accountId = systemAccountId(counterpart.nature),
                         amount = -leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
                         // A nominal leg is classified by the category's dimension.
-                        // No category means genuinely unclassified — there is no
+                        // No dimension means genuinely unclassified — there is no
                         // bucket account and no bucket dimension standing in for it.
-                        dimensionId = leg.category?.dimensionId,
+                        dimensionId = counterpart.dimensionId,
                     )
                 )
             }
@@ -132,57 +130,34 @@ class LedgerEntryWriter(
      * that happen to offer the action. A closed account keeps its history; it just
      * receives nothing new.
      *
-     * Only the **monetary** facades are checked. Closing an ASSET/LIABILITY
-     * requires a zero balance, so a new entry there strands money; a category
-     * closes at any balance, so writing to it breaks nothing the ledger promised.
-     * Keeping an archived category out of a *new* transaction is a selector's job
-     * (it lists open ones), not an invariant — and enforcing it here is what made
-     * editing an old transaction fail for a reason the ledger never had.
+     * Only the **monetary** accounts are checked. Closing an ASSET/LIABILITY
+     * requires a zero balance, so a new entry there strands money; a nominal account
+     * is never closed at all, so nothing there could break. Which facade the account
+     * belongs to comes from its nature — the ledger reports what it knows, and the
+     * error carries it so the screen can say the right word.
      */
-    private suspend fun Long.orRejectIfClosed(facade: ClosedFacade): Long = also { accountId ->
-        if (accountDao.getAccountById(accountId)?.isArchived == true) {
-            throw ClosedAccountException(LedgerError.ClosedAccount(facade))
+    private suspend fun Long.orRejectIfClosed(): Long = also { accountId ->
+        val account = accountDao.getAccountById(accountId)
+            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
+        if (account.isArchived) {
+            throw ClosedAccountException(LedgerError.ClosedAccount(ClosedFacade.of(account.type.toDomain())))
         }
-    }
-
-    private suspend fun realAccountId(leg: TransactionLeg): Long = when (leg.target) {
-        TransactionTarget.ACCOUNT ->
-            (leg.account?.id ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
-                .orRejectIfClosed(ClosedFacade.ACCOUNT)
-
-        TransactionTarget.CREDIT_CARD ->
-            cardAccountId(leg.creditCard ?: throw UnbalancedTransactionException(LedgerError.Unbalanced))
-                .orRejectIfClosed(ClosedFacade.CREDIT_CARD)
     }
 
     /**
-     * The account the synthesized contra leg posts to: reconciliation for an
-     * adjustment, otherwise one of the two nominal accounts.
-     *
-     * Which nominal is chosen comes from [Category.type] — feature state, not a
-     * ledger derivation. **This is the documented exception to the project's
-     * Derivation Rule** (design D4): "this is an expense category" is the user's
-     * declaration at creation time and nothing derives it. It used to be encoded as
-     * the type of the category's own account, which made it look derived; the state
-     * only moved home. With no category the *leg's* own type decides, which is the
-     * same question asked of the only source left.
+     * The single account of a given nature the app keeps for itself: the two
+     * nominals and reconciliation, created on demand. Their names are lookup keys,
+     * never rendered (design D10).
      */
-    private suspend fun contraAccountId(leg: TransactionLeg): Long = when (leg.type) {
-        TransactionType.ADJUSTMENT ->
-            ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
-
-        TransactionType.EXPENSE, TransactionType.INCOME -> when (leg.category?.type ?: leg.type.asCategoryType()) {
-            Category.Type.EXPENSE -> ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE)
-            Category.Type.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
-        }
+    private suspend fun systemAccountId(nature: AccountType): Long = when (nature) {
+        AccountType.EXPENSE -> ensureSystemAccount(SystemAccount.EXPENSES, AccountEntity.Type.EXPENSE)
+        AccountType.INCOME -> ensureSystemAccount(SystemAccount.INCOMES, AccountEntity.Type.INCOME)
+        AccountType.EQUITY -> ensureSystemAccount(SystemAccount.RECONCILIATION, AccountEntity.Type.EQUITY)
+        // ASSET and LIABILITY are the user's own rows: there is no system account of
+        // that nature to complete an intent with.
+        AccountType.ASSET, AccountType.LIABILITY ->
+            throw UnbalancedTransactionException(LedgerError.Unbalanced)
     }
-
-    private fun TransactionType.asCategoryType(): Category.Type =
-        if (isIncome) Category.Type.INCOME else Category.Type.EXPENSE
-
-    private suspend fun cardAccountId(creditCard: CreditCard): Long =
-        creditCardDao.getCreditCardById(creditCard.id)?.accountId
-            ?: throw UnbalancedTransactionException(LedgerError.Unbalanced)
 
     private suspend fun ensureSystemAccount(name: String, type: AccountEntity.Type): Long {
         accountDao.getByTypeAndName(type, name)?.let { return it.id }

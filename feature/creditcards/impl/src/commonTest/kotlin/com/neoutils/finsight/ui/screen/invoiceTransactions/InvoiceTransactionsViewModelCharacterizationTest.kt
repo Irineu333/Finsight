@@ -12,6 +12,7 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -148,7 +149,7 @@ private class FakeTransactionRepository(private val transactions: List<Transacti
     override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
     override suspend fun createTransaction(intent: TransactionIntent): Transaction = throw NotImplementedError()
     override suspend fun createTransactions(intents: List<TransactionIntent>): List<Transaction> = throw NotImplementedError()
-    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) = throw NotImplementedError()
+    override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg, contra: ContraLeg?) = throw NotImplementedError()
     override suspend fun deleteTransactionsByIds(ids: List<Long>) = ids.forEach { deleteTransactionById(it) }
 
     override suspend fun deleteTransactionById(id: Long) = throw NotImplementedError()

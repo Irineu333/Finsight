@@ -1,72 +1,73 @@
-This is a Kotlin Multiplatform project targeting Android, Desktop (JVM) and iOS.
+Projeto Kotlin Multiplatform com alvos Android, Desktop (JVM) e iOS.
 
-## Module structure
+## Estrutura de módulos
 
-The app is modularized **by feature** in the **api/impl** pattern, on top of shared **core**
-modules; dependency rules are enforced mechanically by convention plugins in `build-logic`.
+O app é modularizado **por feature** no padrão **api/impl**, sobre módulos **core**
+compartilhados; as regras de dependência são impostas mecanicamente pelos convention
+plugins do `build-logic`.
 
 - `build-logic/` — convention plugins (`finsight.kmp.library` / `compose.library` /
   `feature.api` / `feature.impl`).
 - `core/*` — `common`, `ledger`, `model`, `navigation`, `resources`, `designsystem`, `ui`,
   `database`, `analytics`, `crashlytics`, `auth`.
-- `feature/<name>/{api,impl}` — one pair per feature (support, categories, budgets,
-  accounts, creditcards, recurring, transactions, report, dashboard). The `api` holds
-  routes, repository/use-case interfaces and the `<Name>Entry`; the `impl` holds the
-  screens, ViewModels, use cases, repositories and the feature's Koin module.
-- `app/*` — the app split by responsibility: `shared` (KMP library shell/aggregator: root
-  `App`, `AppNavHost`, Koin wiring via `appModules`), `android` (`com.android.application`),
-  `desktop` (`kotlin("jvm")`), `ios` (KMP iOS-only framework, hosts
+- `feature/<nome>/{api,impl}` — um par por feature (support, categories, budgets,
+  accounts, creditcards, recurring, transactions, report, dashboard). A `api` guarda
+  rotas, interfaces de repositório/use case e o `<Nome>Entry`; o `impl` guarda as
+  telas, ViewModels, use cases, repositórios e o módulo Koin da feature.
+- `app/*` — o app partido por responsabilidade: `shared` (shell/agregador KMP: `App` raiz,
+  `AppNavHost`, wiring do Koin via `appModules`), `android` (`com.android.application`),
+  `desktop` (`kotlin("jvm")`), `ios` (framework KMP só-iOS, hospeda
   `:app:ios:embedAndSignAppleFrameworkForXcode`).
 
-> See **`feature/README.md`** for the normative dependency rules and entry-point pattern,
-> and **`CLAUDE.md`** for the full module map.
+> Veja **`feature/README.md`** para as regras normativas de dependência e o padrão de entry
+> point, e **`CLAUDE.md`** para o mapa completo de módulos.
 
-## The ledger
+## O razão
 
-Money is modeled as a **balanced double-entry ledger**, and that is the only model — no
-balance stored in a column, no second way to compute a figure. It lives in `:core:ledger`,
-which depends on no other project module: every write is a set of entries summing to zero,
-every figure (balance, invoice owed, category spending, net worth) is `Σ entries`, and the
-features are flavors of that one truth.
+Dinheiro é modelado como um **razão de partidas dobradas balanceado**, e esse é o único
+modelo — nenhum saldo guardado numa coluna, nenhuma segunda forma de calcular um número.
+Vive em `:core:ledger`, que não depende de nenhum outro módulo do projeto: toda escrita é
+um conjunto de lançamentos que soma zero, toda figura (saldo, devido de fatura, gasto por
+categoria, patrimônio) é `Σ lançamentos`, e as features são sabores dessa única verdade.
 
-> The ledger is the source of truth, with accounting guarantees; the features are flavors
-> of that truth, and the facades, the sugar.
+> O razão é a fonte de verdade, com garantia contábil; as features são sabores dessa
+> verdade, e as fachadas, o açúcar.
 
-> See **`core/ledger/README.md`** — the normative reference for the ledger: its vocabulary,
-> read and write surfaces, the two ports and what is derived rather than persisted.
+> Veja **`core/ledger/README.md`** — a referência normativa do razão: vocabulário,
+> superfícies de leitura e escrita, as duas portas e o que é derivado em vez de persistido.
 
-* [/app/shared](./app/shared/src) is the app shell — Compose entry points shared across targets.
-  Platform entry points live in [/app/android](./app/android/src/main),
-  [/app/desktop](./app/desktop/src/main) and [/app/ios](./app/ios/src/iosMain).
+* [/app/shared](./app/shared/src) é o shell do app — os entry points Compose compartilhados
+  entre os alvos. Os entry points de plataforma vivem em [/app/android](./app/android/src/main),
+  [/app/desktop](./app/desktop/src/main) e [/app/ios](./app/ios/src/iosMain).
 
-### Build and Run Android Application
+### Compilar e rodar o app Android
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
+Para compilar e rodar a versão de desenvolvimento do app Android, use a configuração de
+execução no widget da toolbar da IDE ou compile direto pelo terminal:
 
-- on macOS/Linux
+- em macOS/Linux
   ```shell
   ./gradlew :app:android:assembleDebug
   ```
-- on Windows
+- em Windows
   ```shell
   .\gradlew.bat :app:android:assembleDebug
   ```
 
-### Build and Run Desktop (JVM) Application
+### Compilar e rodar o app Desktop (JVM)
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
+Para compilar e rodar a versão de desenvolvimento do app desktop, use a configuração de
+execução no widget da toolbar da IDE ou rode direto pelo terminal:
 
-- on macOS/Linux
+- em macOS/Linux
   ```shell
   ./gradlew :app:desktop:run
   ```
-- on Windows
+- em Windows
   ```shell
   .\gradlew.bat :app:desktop:run
   ```
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Saiba mais sobre [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…

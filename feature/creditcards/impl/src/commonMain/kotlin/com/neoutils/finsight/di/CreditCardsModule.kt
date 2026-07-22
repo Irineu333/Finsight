@@ -8,7 +8,9 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.InstallmentRemovalReconciler
 import com.neoutils.finsight.domain.ledger.InvoiceWriteGuard
+import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.feature.creditcards.api.CreditCardsEntry
 import com.neoutils.finsight.feature.creditcards.impl.CreditCardsEntryImpl
 import com.neoutils.finsight.ui.modal.addInstallment.AddInstallmentViewModel
@@ -55,13 +57,18 @@ val creditCardsModule = module {
         InstallmentRepository(
             database = get(),
             installmentDao = get(),
-            transactionDao = get(),
         )
     }
 
     // The ledger asks whoever owns a dimension whether a write may touch it; for an
     // invoice's sub-ledger, that owner is here (design D11).
     single<DimensionWriteGuard> { InvoiceWriteGuard(invoiceRepository = get()) }
+
+    // …and tells it, after a removal, what an installment has to correct about
+    // itself. A second contract rather than a second form on the first (D11).
+    single<TransactionRemovalHook> {
+        InstallmentRemovalReconciler(installmentRepository = get(), installmentDao = get())
+    }
 
     single<CreditCardsEntry> { CreditCardsEntryImpl() }
 

@@ -30,7 +30,6 @@ val recurringModule = module {
         RecurringRepository(
             database = get(),
             dao = get(),
-            transactionDao = get(),
             mapper = get(),
             categoryRepository = get(),
             accountRepository = get(),

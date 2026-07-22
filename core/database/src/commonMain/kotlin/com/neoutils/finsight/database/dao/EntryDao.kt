@@ -39,11 +39,11 @@ data class AccountPeriodTotals(
 )
 
 /**
- * The per-invoice money flows (cents) a card invoice screen shows, derived from the
- * card's LIABILITY-leg entries. [expense]/[advancePayment] are positive magnitudes;
- * [adjustment] is signed.
+ * The money flows (cents) of one sub-ledger, from the entries carrying its
+ * dimension. [expense]/[advancePayment] are positive magnitudes; [adjustment] is
+ * signed.
  */
-data class InvoicePeriodTotals(
+data class DimensionPeriodTotals(
     val expense: Long,
     val advancePayment: Long,
     val adjustment: Long,
@@ -198,7 +198,7 @@ interface EntryDao {
     /**
      * The expense/advance-payment/adjustment breakdown of a sub-ledger, from the
      * entries tagged with its dimension, classified by sign and by whether the
-     * transaction also has an EQUITY counter-leg. See [InvoicePeriodTotals]. All are
+     * transaction also has an EQUITY counter-leg. See [DimensionPeriodTotals]. All are
      * positive magnitudes except [adjustment], which is signed.
      */
     @Query(
@@ -215,7 +215,7 @@ interface EntryDao {
         )
         """
     )
-    suspend fun dimensionPeriodTotals(dimensionId: Long): InvoicePeriodTotals
+    suspend fun dimensionPeriodTotals(dimensionId: Long): DimensionPeriodTotals
 
     /**
      * Month-wide card expense/advance-payment across every LIABILITY (card) account

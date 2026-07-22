@@ -4,7 +4,6 @@ import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
-import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.map
 class RecurringRepository(
     private val database: AppDatabase,
     private val dao: RecurringDao,
-    private val transactionDao: TransactionDao,
     private val mapper: RecurringMapper,
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
@@ -96,7 +94,7 @@ class RecurringRepository(
     override suspend fun delete(recurring: Recurring) {
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
-                transactionDao.detachFromRecurring(recurring.id)
+                dao.detachTransactions(recurring.id)
                 dao.delete(mapper.toEntity(recurring))
             }
         }

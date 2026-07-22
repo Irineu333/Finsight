@@ -33,7 +33,7 @@ val transactionsModule = module {
             entryDao = get(),
             accountRepository = get(),
             writeGuard = get(),
-            installmentRepository = get(),
+            removalHook = get(),
             transactionMapper = get(),
             ledgerEntryWriter = get(),
         )

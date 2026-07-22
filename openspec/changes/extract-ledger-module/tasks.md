@@ -82,10 +82,10 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [x] 7.3 Mover a resolução fachada → identidade para cada chamador: `AddInstallmentUseCase`, `PayInvoicePaymentUseCase`, `AdjustInvoiceUseCase`, `AdvanceInvoicePaymentUseCase`, `DeleteFutureInvoiceUseCase`, `TransferBetweenAccountsUseCase`, `AdjustBalanceUseCase`, `ConfirmRecurringUseCase`, `BuildTransactionUseCaseImpl` e os ViewModels de transações
 - [x] 7.4 Re-expressar `settlesACard()` (`TransactionRepository.kt:278-279`) por natureza de conta, resolvida a partir dos `accountId` do intent
 - [x] 7.5 Extrair o veto de fatura fechada (`ensureInvoicesAccept`, `TransactionRepository.kt:218-241,327-338`) para a porta opaca keyed por dimensão declarada em `:core:ledger` e implementada por creditcards (D11); `InvoiceWriteGuardTest` continua provando a invariante nos dois sentidos
-- [ ] 7.6 Mover a contabilidade de parcelamento de `removeRow` (`TransactionRepository.kt:370-402`) para o use case de deleção de creditcards, mantendo a atomicidade na mesma transação de escrita (D11)
+- [x] 7.6 Mover a contabilidade de parcelamento de `removeRow` para o `TransactionRemovalHook` implementado por creditcards (D11 emendada — são três caminhos de remoção, não um), mantendo a atomicidade na mesma transação de escrita
 - [x] 7.7 Trocar `AppDatabase` por `RoomDatabase` no construtor de `TransactionRepository` (`:45,289`), conforme confirmado em 1.7e
 - [x] 7.8 Registrar em `design.md` que `closedLegBlockingChange` segue correta sem par por dimensão — filtra por `type.isPermanent`, e categoria nunca foi permanente
-- [ ] 7.9 Verificar por grep que `LedgerEntryWriter`, `EntryRepository` e `TransactionRepository` não importam `Category`, `CreditCard`, `Invoice` nem `Installment` — é a pré-condição exata do grupo 8
+- [x] 7.9 Verificar por grep que `LedgerEntryWriter`, `EntryRepository` e `TransactionRepository` não importam `Category`, `CreditCard`, `Invoice` nem `Installment` — é a pré-condição exata do grupo 8
 - [x] 7.10 Reescrever `LedgerEntryWriterTest` em vocabulário de identidade, cobrindo soma zero, pouso e fechamento no mesmo ponto
 
 ## 8. Mover o razão para `:core:ledger`

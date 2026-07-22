@@ -42,39 +42,6 @@ interface TransactionDao {
         date: LocalDate,
     )
 
-    @Query("SELECT COUNT(*) FROM transactions WHERE installmentId = :installmentId")
-    suspend fun countByInstallmentId(installmentId: Long): Int
-
-    /**
-     * Detaches every transaction from a facade that is being removed.
-     *
-     * Today the `ON DELETE SET NULL` foreign key already clears the id half of the
-     * pair, which makes these calls redundant — deliberately so. `transactions`
-     * moves to the ledger module, where the foreign key cannot survive because its
-     * parent entity stays behind (design D12), and the behaviour it granted for free
-     * has to have an explicit owner *before* the key is dropped, not after.
-     *
-     * They are also not purely redundant: the key never cleared `installmentNumber`
-     * or `recurringCycle`, so a removed facade used to leave half a reference behind.
-     */
-    @Query(
-        """
-        UPDATE transactions
-        SET installmentId = NULL, installmentNumber = NULL
-        WHERE installmentId = :installmentId
-        """
-    )
-    suspend fun detachFromInstallment(installmentId: Long)
-
-    @Query(
-        """
-        UPDATE transactions
-        SET recurringId = NULL, recurringCycle = NULL
-        WHERE recurringId = :recurringId
-        """
-    )
-    suspend fun detachFromRecurring(recurringId: Long)
-
     /**
      * Transactions filtered by date, by sub-ledger and by account — all three in
      * ledger terms.

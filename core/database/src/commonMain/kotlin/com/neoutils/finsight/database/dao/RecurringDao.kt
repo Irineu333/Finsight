@@ -11,6 +11,22 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RecurringDao {
 
+    /**
+     * Clears the recurring half of the pair on every transaction that names this
+     * template — the nullification the dropped foreign key used to grant, now with
+     * an explicit owner (design D12). It writes `transactions` from the facade's
+     * DAO because a ledger DAO may not consult those columns at all, and it also
+     * does more than the key did: the key never cleared `recurringCycle`.
+     */
+    @Query(
+        """
+        UPDATE transactions
+        SET recurringId = NULL, recurringCycle = NULL
+        WHERE recurringId = :recurringId
+        """
+    )
+    suspend fun detachTransactions(recurringId: Long)
+
     @Query("SELECT * FROM recurring ORDER BY createdAt ASC")
     fun observeAll(): Flow<List<RecurringEntity>>
 

@@ -18,13 +18,13 @@ import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
 import com.neoutils.finsight.domain.ledger.LedgerWrite
+import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -42,11 +42,7 @@ class TransactionRepository(
     private val entryDao: EntryDao,
     private val accountRepository: IAccountRepository,
     private val writeGuard: DimensionWriteGuard,
-    // TODO(task 7.6): the installment bookkeeping below is the last facade concern
-    //  left here. It is a *consequence* of a removal, not an invariant, so it does
-    //  not need the single point the veto does — but every delete path reaches it,
-    //  not just the credit-card one, so moving it needs a decision about which.
-    private val installmentRepository: IInstallmentRepository,
+    private val removalHook: TransactionRemovalHook,
     private val transactionMapper: TransactionMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
@@ -284,9 +280,9 @@ class TransactionRepository(
     }
 
     override suspend fun deleteTransactionById(id: Long) {
-        // The installment bookkeeping and the row removal are one transaction: a
-        // failure between them would leave the installment's count and total
-        // describing transactions that no longer exist.
+        // The removal and whatever a facade has to correct because of it are one
+        // transaction: a failure between them would leave that facade describing
+        // rows that no longer exist.
         database.useWriterConnection { connection ->
             connection.immediateTransaction {
                 removeRow(id)
@@ -302,34 +298,14 @@ class TransactionRepository(
         ensureDimensionsAcceptRemoval(id)
         ensureClosedAccountsKeepTheirBalance(id)
 
-        val transaction = transactionDao.getById(id)
-        val installmentId = transaction?.installmentId
-
-        if (installmentId == null) {
-            transactionDao.deleteById(id)
-            return
-        }
-
-        // The transaction's own share of the installment, from the ledger.
-        val transactionAmount = entryDao.getByTransactionId(id)
-            .filter { it.amount < 0 }
-            .sumOf { -it.amount } / 100.0
-        val remainingCount = transactionDao.countByInstallmentId(installmentId) - 1
+        // Read whole before deleting: the entries go with the row (CASCADE), and a
+        // facade correcting itself may need what they said.
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val removed = transactionDao.getById(id)?.toDomain(accounts)
 
         transactionDao.deleteById(id)
 
-        if (remainingCount <= 0) {
-            installmentRepository.deleteInstallmentById(installmentId)
-        } else {
-            val installment = installmentRepository.getInstallmentById(installmentId)
-            if (installment != null) {
-                installmentRepository.updateInstallment(
-                    id = installmentId,
-                    count = remainingCount,
-                    totalAmount = installment.totalAmount - transactionAmount,
-                )
-            }
-        }
+        removed?.let { removalHook.onRemoved(it) }
     }
 
     override suspend fun deleteTransactionsByIds(ids: List<Long>) {

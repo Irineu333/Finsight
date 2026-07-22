@@ -174,12 +174,31 @@ Rejeitado mover o veto para os use cases de feature que escrevem: seriam vários
 reimplementação por consumidor. O `InvoiceWriteGuardTest` existe porque essa divergência já
 aconteceu.
 
-**O efeito colateral vai para o use case de creditcards.** Ele nunca foi invariante — é
-consequência de uma remoção, não proibição de uma escrita — e portanto nunca precisou de
-ponto único. Empurrá-lo para a porta obrigaria o contrato a ter duas formas (vetar e
-executar efeito), abstração que só a simetria justificaria.
+**O efeito colateral vai para um gancho próprio, implementado por creditcards.** A
+premissa de que ele tinha um caminho só **caiu na implementação**: toda remoção de linha
+o alcança — apagar uma parcela isolada (`DeleteTransactionUseCase`, transactions), apagar
+o parcelamento inteiro (`DeleteInstallmentUseCase`, creditcards) e apagar uma fatura
+futura que contenha parcelas (`DeleteFutureInvoiceUseCase`, creditcards). Movê-lo para um
+único use case quebraria os outros caminhos em silêncio; movê-lo para os três
+reimplementaria a mesma regra por consumidor, que é a divergência que este desenho recusa
+em toda parte.
 
-A separação é o que torna a porta barata: um contrato, uma forma, um implementador.
+Ele continua não sendo invariante — é consequência de uma remoção, não proibição de uma
+escrita — mas precisa do mesmo ponto único pela mesma razão prática: nenhum caminho de
+remoção pode esquecê-lo. A forma é um **segundo contrato, separado do veto**:
+`TransactionRemovalHook.onRemoved(transaction)`, chamado pelo repositório dentro da mesma
+transação de escrita, depois da remoção da linha, implementado por creditcards e
+registrado como o veto é. O que esta decisão rejeitou — e segue rejeitando — é *um*
+contrato com duas formas; dois contratos de uma forma cada, um implementador cada,
+mantêm o argumento que torna a porta barata.
+
+Considerado e rejeitado derivar `Installment.count`/`totalAmount` das próprias
+transações, o que dissolveria o efeito inteiro: `count` é derivável, mas `totalAmount` é
+o total **declarado pelo usuário**, e o arredondamento por parcela faz Σ das fatias
+divergir dele (R$ 100,00 em três é 3 × 33,33). Derivá-lo mudaria um número exibido, o que
+o Non-Goal desta change proíbe.
+
+A separação é o que torna cada porta barata: um contrato, uma forma, um implementador.
 
 ### D12 — As FKs de parcelamento e recorrência não sobrevivem à mudança de módulo
 

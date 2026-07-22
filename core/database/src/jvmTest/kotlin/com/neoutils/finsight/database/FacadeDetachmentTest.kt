@@ -84,7 +84,7 @@ class FacadeDetachmentTest {
                 database.transactionDao().deleteById(transactionId)
                 database.useWriterConnection { inner ->
                     inner.immediateTransaction {
-                        database.transactionDao().detachFromInstallment(installmentId)
+                        database.installmentDao().detachTransactions(installmentId)
                         database.installmentDao().deleteById(installmentId)
                     }
                 }
@@ -137,12 +137,12 @@ class FacadeDetachmentTest {
             connection.immediateTransaction {
                 when (facade) {
                     Facade.Installment -> {
-                        database.transactionDao().detachFromInstallment(installmentId)
+                        database.installmentDao().detachTransactions(installmentId)
                         database.installmentDao().deleteById(installmentId)
                     }
 
                     Facade.Recurring -> {
-                        database.transactionDao().detachFromRecurring(recurringId)
+                        database.recurringDao().detachTransactions(recurringId)
                         database.recurringDao().delete(recurring.copy(id = recurringId))
                     }
                 }

@@ -86,7 +86,7 @@ class InvoiceTransactionsViewModel(
         // Invoice owed and its expense/advancePayment/adjustment breakdown, both derived
         // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
         val owedByInvoiceId = mutableMapOf<Long, Double>()
-        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.InvoiceFlows>()
+        val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.DimensionFlows>()
         for (inv in invoices) {
             val dimensionId = inv.dimensionId ?: continue
             owedByInvoiceId[inv.id] = entryRepository.dimensionOwed(dimensionId)

@@ -9,7 +9,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.CardMonthFlows
-import com.neoutils.finsight.domain.repository.InvoiceFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import com.neoutils.finsight.domain.repository.ReportStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -92,9 +92,9 @@ class EntryRepository(
         return -entryDao.dimensionNaturalBalance(dimensionId) / CENTS_PER_UNIT
     }
 
-    override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows {
+    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows {
         val totals = entryDao.dimensionPeriodTotals(dimensionId)
-        return InvoiceFlows(
+        return DimensionFlows(
             expense = totals.expense / CENTS_PER_UNIT,
             advancePayment = totals.advancePayment / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,

@@ -18,6 +18,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.ledger.LedgerWrite
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.Invoice
@@ -133,7 +134,7 @@ class InvoiceWriteGuardTest {
             entryDao = db.entryDao(),
             accountRepository = LedgerAccountRepository(db),
             writeGuard = StatusWriteGuard(invoice(status)),
-            installmentRepository = FakeInstallmentRepository,
+            removalHook = TransactionRemovalHook.None,
             transactionMapper = TransactionMapper(),
             ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.dimensionDao()),
     )

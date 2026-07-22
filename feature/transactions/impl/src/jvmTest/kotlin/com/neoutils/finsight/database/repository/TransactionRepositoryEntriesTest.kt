@@ -9,6 +9,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
+import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
@@ -50,7 +51,7 @@ class TransactionRepositoryEntriesTest {
         entryDao = db.entryDao(),
         accountRepository = FakeAccountRepository(accounts),
         writeGuard = DimensionWriteGuard.None,
-        installmentRepository = FakeInstallmentRepository,
+        removalHook = TransactionRemovalHook.None,
         transactionMapper = TransactionMapper(),
         ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.dimensionDao()),
     )

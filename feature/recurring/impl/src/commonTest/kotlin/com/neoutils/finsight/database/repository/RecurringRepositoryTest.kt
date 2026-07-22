@@ -34,6 +34,7 @@ class RecurringRepositoryTest {
         override suspend fun countByCreditCard(creditCardId: Long): Int = throw NotImplementedError()
         override suspend fun countByCategory(categoryId: Long): Int = throw NotImplementedError()
         override suspend fun delete(entity: RecurringEntity) = throw NotImplementedError()
+        override suspend fun detachTransactions(recurringId: Long) = Unit
     }
 
     private val categoryRepository = object : ICategoryRepository {
@@ -89,7 +90,6 @@ class RecurringRepositoryTest {
     private val repository = RecurringRepository(
         database = database,
         dao = dao,
-        transactionDao = database.transactionDao(),
         mapper = RecurringMapper(),
         categoryRepository = categoryRepository,
         accountRepository = accountRepository,

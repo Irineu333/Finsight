@@ -6,7 +6,7 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.InvoiceFlows
+import com.neoutils.finsight.domain.repository.DimensionFlows
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -39,7 +39,7 @@ class CalculateInvoiceOverviewsUseCaseTest {
         // Ledger reads for invoice 1 (march): expense 100, advance payment 30, adjustment 10,
         // owed = +expense − income − adjustment = 60. Invoice 2 (april) does not close in march.
         val entryRepository = FakeInvoiceOverviewEntryRepository(
-            flows = mapOf(1L to InvoiceFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
+            flows = mapOf(1L to DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0)),
             owed = mapOf(1L to 60.0),
         )
         val useCase = CalculateInvoiceOverviewsUseCase(entryRepository)
@@ -57,10 +57,10 @@ class CalculateInvoiceOverviewsUseCaseTest {
 }
 
 private class FakeInvoiceOverviewEntryRepository(
-    private val flows: Map<Long, InvoiceFlows>,
+    private val flows: Map<Long, DimensionFlows>,
     private val owed: Map<Long, Double>,
 ) : IEntryRepository {
-    override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows = flows.getValue(dimensionId)
+    override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = flows.getValue(dimensionId)
     override suspend fun dimensionOwed(dimensionId: Long): Double = owed.getValue(dimensionId)
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

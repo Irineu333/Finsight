@@ -24,10 +24,10 @@ data class AccountFlows(
 )
 
 /**
- * The per-invoice money flows (reais) a card invoice screen shows, derived from the
- * ledger. [adjustment] is signed; the rest are positive magnitudes.
+ * The money flows (reais) of one sub-ledger, derived from the entries carrying its
+ * dimension. [adjustment] is signed; the rest are positive magnitudes.
  */
-data class InvoiceFlows(
+data class DimensionFlows(
     val expense: Double,
     val advancePayment: Double,
     val adjustment: Double,
@@ -101,7 +101,7 @@ interface IEntryRepository {
     suspend fun dimensionOwed(dimensionId: Long): Double
 
     /** The expense/advance-payment/adjustment breakdown of a sub-ledger, from the ledger. */
-    suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows
+    suspend fun dimensionFlows(dimensionId: Long): DimensionFlows
 
     /** Month-wide card expense/payment across every card account. */
     suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows

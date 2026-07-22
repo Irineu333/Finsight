@@ -94,7 +94,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             entryRepository = FakeEntryRepository(
                 owedByInvoiceId = mapOf(1L to 70.0),
                 flowsByInvoiceId = mapOf(
-                    1L to com.neoutils.finsight.domain.repository.InvoiceFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
+                    1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
                 ),
             ),
         )
@@ -172,11 +172,11 @@ private class FakeCategoryRepository : ICategoryRepository {
 
 private class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
-    private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.InvoiceFlows> = emptyMap(),
+    private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.DimensionFlows> = emptyMap(),
 ) : IEntryRepository {
     override suspend fun dimensionOwed(dimensionId: Long): Double = owedByInvoiceId[dimensionId] ?: 0.0
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows =
-        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.InvoiceFlows(0.0, 0.0, 0.0)
+    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows =
+        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.DimensionFlows(0.0, 0.0, 0.0)
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)

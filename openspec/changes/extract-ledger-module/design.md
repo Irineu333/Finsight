@@ -201,13 +201,36 @@ passo sem mudança de comportamento observável.
 Isto é o custo real do que a proposal chamou de "sem custo estrutural" ao adiar a saída
 dessas colunas. Não é grande, mas não era zero.
 
+### D13 — Resultado do spike do Room: a direção (b) se sustenta
+
+O spike da tarefa 1.7 rodou em `:spike:ledger` + `:spike:database`, réplica mínima do arranjo
+alvo: o razão com `SpikeAccountEntity`/`SpikeDimensionEntity`/`SpikeEntryEntity`, seus DAOs e o
+`LedgerSpikeDatabase` **interno**; a fachada com `SpikeInvoiceEntity` (FK → dimensão), o
+`SpikeAppDatabase` listando as entities dos dois módulos, e uma migração 1→2 declarada na
+fachada. **Nenhuma premissa caiu**; a direção (b) é adotada sem ressalvas e o fallback de D1
+não é acionado.
+
+| | Pergunta | Resultado |
+|---|---|---|
+| (a) | `@Dao` em módulo sem `@Database` de produção gera implementação utilizável a partir de um `@Database` noutro módulo? | **Sim.** O KSP de `:spike:database` gerou `SpikeEntryDao_Impl` no pacote do razão e o `SpikeAppDatabase` o expõe; os testes escrevem e leem por ele |
+| (b) | O `@Query` é validado contra o schema de qual `@Database` — o `LedgerDatabase` interno resolve? | **Resolve.** Um `JOIN spike_invoices` acrescentado ao `SpikeEntryDao` fez `:spike:ledger` **falhar a compilação**: `[ksp] There is a problem with the query: [SQLITE_ERROR] ... no such table: spike_invoices`. A garantia de D9 é real e é de compilação |
+| (c) | O `AppDatabase` monta, migra e exporta schema com entities de outro módulo, nos três targets? | **Sim.** `2.json` exportado com as quatro tabelas, as do razão inclusive; a migração declarada na fachada alterou `spike_dimensions` (tabela do razão) e o Room validou o schema resultante; `compileDebugKotlinAndroid`, `compileKotlinIosSimulatorArm64`, `compileKotlinIosArm64` e `jvmTest` verdes |
+| (d) | Entity de fachada declara FK para entity do razão em outro módulo? | **Sim.** `SpikeInvoiceEntity` declara `ForeignKey(entity = SpikeDimensionEntity::class, onDelete = CASCADE)` e o JOIN fachada × razão funciona — habilita `recurring_occurrences → transactions` e `invoices`/`categories → dimensions` |
+| (e) | Injetar o supertipo `RoomDatabase` basta para o razão abrir transação? | **Sim.** `SpikeLedgerWriter(database: RoomDatabase)` usa `useWriterConnection { immediateTransaction { … } }` sem conhecer o `@Database` concreto — 7.7 é uma troca de tipo, não um redesenho |
+
+Um efeito colateral observado e classificado como **não crítico** por D1: os `_Impl` dos DAOs do
+razão são gerados **duas vezes**, uma pelo KSP de cada módulo, no mesmo pacote. Verificado por
+`diff` que os dois são **byte-idênticos**, de modo que a colisão de classe no classpath é
+inócua — qual das duas vence não muda comportamento. É o "código gerado duplicado" que D1 já
+antecipava como custo aceitável.
+
 ## Risks / Trade-offs
 
 **A migração reescreve história contábil e é irreversível na prática.** Colapsar N contas de categoria em duas nominais reescreve o `accountId` de toda perna nominal já gravada.
 → A migração valida `Σ = 0` por transação e por moeda **antes e depois** da reescrita, como teste de migração automatizado, não como cuidado manual. Uma transação que não balanceie após a reescrita aborta a migração. `MigrationLedgerReadParityTest` ganha o par de leituras equivalentes antes/depois para cada figura exibida.
 
 **A direção invertida apoia-se em premissas não confirmadas sobre o Room.** D1 e D9 assumem comportamentos do processador que ainda não foram verificados contra a ferramenta.
-→ A tarefa 2.0 os confirma num módulo descartável, **antes** de qualquer movimentação de código. Se uma premissa cair de forma crítica, D1 tem fallback documentado para a direção (a), condicionado ao teste que verifica as strings SQL do razão — a garantia muda de mecanismo, não é abandonada.
+→ **Risco fechado.** O spike da tarefa 1.7 confirmou as cinco premissas num módulo descartável, antes de qualquer movimentação de código (D13). O fallback da direção (a) permanece escrito em D1, mas não é acionado.
 
 **Duas mudanças de risco muito diferente numa só migração.** Extrair o módulo é quase mecânico; converter categoria em dimensão reescreve dados. Foram deliberadamente empacotadas juntas por decisão do dono do projeto.
 → Ordenar a implementação em fatias que compilam, com a extração do módulo inteiramente concluída e verificada antes de a conversão de categoria começar. A verificação de `Σ = 0` é o portão entre as duas.
@@ -297,6 +320,6 @@ que cria a v10 e a que a completa, o branch é não-publicável por definição.
 
 Nenhuma questão de desenho. As quatro que esta seção registrava foram resolvidas em D7 (`DimensionKind` como enum do razão), D8 (regra de pouso como invariante do tipo), D9 (`finsight.room.library` + `LedgerDatabase` de verificação) e D10 (contas nominais invisíveis por construção); as duas que a revisão adversarial expôs, em D11 (veto na porta, efeito colateral no dono) e D12 (as FKs de parcelamento e recorrência caem).
 
-Resta **uma incógnita empírica**, não uma decisão: o comportamento real do Room sob a dependência invertida, que a tarefa 1.7 mede num módulo descartável antes de qualquer código mudar de lugar. D1 já tem o fallback escrito para o caso de ela cair.
+A única incógnita empírica que restava — o comportamento real do Room sob a dependência invertida — foi medida pelo spike da tarefa 1.7 e está resolvida em D13: as cinco premissas se confirmaram, e o fallback de D1 para a direção (a) não é acionado.
 
 E um risco sem mitigação satisfatória, registrado em Risks: um banco que já chegue desbalanceado à v10 aborta a migração a cada abertura, sem caminho de recuperação. A change aceita o abort; o que falta é telemetria para saber se algum dispositivo real cairia nele.

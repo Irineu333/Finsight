@@ -16,7 +16,7 @@ Os modelos e regras do razão — plano de contas, entries, transações, dimens
 ### Requirement: Banco de dados centralizado em core
 O `AppDatabase`, os converters e as migrações do Room SHALL residir em `:core:database`, que agrega as entities de todas as origens. As entities e DAOs de fachada SHALL residir em `:core:database`; as entities e DAOs do razão SHALL residir em `:core:ledger`, que MUST NOT depender de `:core:database`.
 
-`:core:database` SHALL depender de `:core:ledger` para montar o banco. Essa direção SHALL ser mantida para que uma consulta do razão não possa referenciar tabela de fachada: o tipo não está visível em tempo de compilação.
+`:core:database` SHALL depender de `:core:ledger` para montar o banco, de modo que uma consulta do razão não possa referenciar tabela de fachada — o tipo não está visível em tempo de compilação. Se uma limitação da ferramenta de persistência tornar essa direção inviável, ela MAY ser revertida, desde que a limitação seja registrada por escrito e a proibição passe a ser garantida por teste automatizado, conforme `ledger-module-boundary`.
 
 As implementações de repositório e seus mappers SHALL residir no `impl` da feature dona, consumindo os DAOs de `:core:database`; as implementações de repositório do razão SHALL residir em `:core:ledger`. Nenhuma entity Room SHALL aparecer em assinatura de `api` de feature nem na superfície pública de `:core:ledger`.
 
@@ -29,8 +29,12 @@ As implementações de repositório e seus mappers SHALL residir no `impl` da fe
 - **THEN** `:core:database` depende de `:core:ledger`, e `:core:ledger` não depende de `:core:database`
 
 #### Scenario: Consulta do razão não compila contra fachada
-- **WHEN** uma consulta em `:core:ledger` tenta referenciar uma entity de fachada
+- **WHEN** a direção preferencial está em vigor e uma consulta em `:core:ledger` tenta referenciar uma entity de fachada
 - **THEN** a compilação falha, por o tipo não estar visível no módulo
+
+#### Scenario: Direção revertida mantém a proibição garantida
+- **WHEN** a direção é revertida por limitação da ferramenta de persistência
+- **THEN** a limitação está registrada por escrito e um teste automatizado falha ao encontrar consulta do razão referenciando tabela de fachada
 
 ### Requirement: Regras de dependência entre módulos
 As dependências entre módulos SHALL obedecer: (1) `api` não depende de `api` de outra feature; (2) `impl` não depende de `impl` de outra feature; (3) `api` não depende de nenhum `impl`; (4) `impl` pode depender de qualquer `api` e de módulos `:core:*`; módulos `api` só podem depender de `:core:*`. O `:app:shared` é o único módulo autorizado a depender de módulos `impl`.

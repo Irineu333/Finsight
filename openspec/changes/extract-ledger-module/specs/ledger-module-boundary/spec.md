@@ -17,18 +17,24 @@ Nenhuma feature SHALL depender da `api` de outra feature para ler ou escrever no
 - **WHEN** um caso de uso declarado na `api` de uma feature precisa de uma figura derivada do razão
 - **THEN** ele pode depender do razão diretamente, sem violar a proibição de `api` depender de `api`
 
-### Requirement: Separação razão/fachada imposta pelo compilador
-O módulo do razão SHALL declarar as próprias tabelas e objetos de acesso a dados, de modo que nenhuma tabela de fachada esteja visível para ele em tempo de compilação. A montagem do banco de dados da aplicação e as suas migrações SHALL residir no módulo que agrega as tabelas de todas as origens, o qual SHALL depender do razão.
+### Requirement: Separação razão/fachada imposta mecanicamente
+Nenhuma consulta do razão SHALL referenciar tabela de fachada, e essa proibição MUST NOT depender de convenção ou de revisão de código: SHALL existir um mecanismo automatizado que a faça falhar.
 
-A independência do razão MUST NOT depender de convenção ou revisão: uma consulta do razão que referenciasse uma tabela de fachada SHALL falhar a compilação.
+O mecanismo preferencial SHALL ser a falha de compilação: o módulo do razão declara as próprias tabelas e objetos de acesso a dados, de modo que nenhuma tabela de fachada lhe esteja visível, e a montagem do banco de dados da aplicação e as suas migrações residem no módulo que agrega as tabelas de todas as origens, o qual depende do razão.
+
+Quando uma limitação da ferramenta de persistência tornar esse arranjo inviável, a proibição SHALL ser garantida por um teste automatizado que inspecione as consultas do razão e falhe ao encontrar referência a tabela que não seja do razão. A limitação encontrada SHALL ser registrada por escrito. MUST NOT existir estado em que nem a compilação nem um teste garantam a proibição.
 
 #### Scenario: Consulta do razão não alcança fachada
-- **WHEN** uma consulta do razão tenta referenciar uma tabela de fachada
-- **THEN** a compilação falha, por o tipo não estar visível no módulo
+- **WHEN** uma consulta do razão referencia uma tabela de fachada
+- **THEN** a compilação falha, ou um teste automatizado falha apontando a referência
 
 #### Scenario: Montagem do banco depende do razão
-- **WHEN** o grafo de módulos é inspecionado
+- **WHEN** o arranjo preferencial está em vigor e o grafo de módulos é inspecionado
 - **THEN** o módulo montador do banco depende do razão, e não o contrário
+
+#### Scenario: Limitação da ferramenta não dissolve a garantia
+- **WHEN** a direção preferencial se mostra inviável e a direção é revertida
+- **THEN** a limitação é registrada por escrito e o teste automatizado passa a garantir a proibição, que em nenhum momento fica sem mecanismo
 
 ### Requirement: Critério de derivabilidade governa a superfície do razão
 Uma leitura SHALL permanecer no razão quando for derivável exclusivamente de tipo de conta, sinal, período e dimensão. Uma leitura SHALL sair do razão apenas quando exigir vocabulário que só a fachada possui.

@@ -9,7 +9,7 @@ Em paralelo, a fachada vazou para dentro do razão: `Transaction` carrega 6 camp
 ### Novo módulo `:core:ledger`, com dependência invertida
 
 - **BREAKING (build)** Criar `:core:ledger` contendo as entities `accounts`/`transactions`/`entries`/`dimensions`, seus DAOs, os modelos de domínio do razão, o writer e os repositórios. Depende apenas de Room e `:core:model` — de nenhum módulo do app.
-- **BREAKING (build)** Inverter a direção: `core:database → core:ledger`. `core:database` deixa de declarar as tabelas do razão e passa a importá-las para montar o `AppDatabase` e as migrações. O `EntryDao` fica impedido *em tempo de compilação* de fazer JOIN com tabela de fachada, porque não a enxerga.
+- **BREAKING (build)** Inverter a direção: `core:database → core:ledger`. `core:database` deixa de declarar as tabelas do razão e passa a importá-las para montar o `AppDatabase` e as migrações. O `EntryDao` fica impedido *em tempo de compilação* de fazer JOIN com tabela de fachada, porque não a enxerga. Essa direção apoia-se em premissas sobre o Room a confirmar antes de mover código; havendo problema crítico, o desenho tem fallback documentado para a direção esperada, condicionado a um teste que preserve a proibição (ver D1).
 - Features passam a depender de `:core:ledger` diretamente. `feature:transactions:api` volta a expor apenas rotas, entry point e o que é da tela.
 
 ### Dimensões analíticas substituem o vazamento de fatura

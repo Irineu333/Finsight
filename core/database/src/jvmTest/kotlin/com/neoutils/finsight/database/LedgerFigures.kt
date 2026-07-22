@@ -72,8 +72,10 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
     return LedgerFigures(
         balanceByAccountId = accountDao().getAllLedgerAccounts()
             .associate { it.id to entryDao.balanceOf(it.id) },
+        // Keyed by invoice id, read through the dimension — this is the side that
+        // moved, and the only one that should have.
         owedByInvoiceId = invoiceDao().getAllInvoices()
-            .associate { it.id to entryDao.invoiceNaturalBalance(it.id) },
+            .associate { it.id to it.dimensionId?.let { d -> entryDao.dimensionNaturalBalance(d) }.orZero() },
         // Archived included: parity is about every figure the ledger can produce,
         // not only the ones a given screen currently lists.
         totalByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
@@ -81,6 +83,8 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
         netWorth = entryDao.netWorthCents(),
     )
 }
+
+private fun Long?.orZero(): Long = this ?: 0L
 
 private fun SQLiteConnection.queryMap(sql: String): Map<Long, Long> {
     val statement = prepare(sql)

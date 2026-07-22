@@ -11,8 +11,7 @@ interface ITransactionRepository {
 
     fun observeTransactionsBy(
         date: LocalDate? = null,
-        invoiceId: Long? = null,
-        creditCardId: Long? = null,
+        dimensionId: Long? = null,
         accountId: Long? = null,
     ): Flow<List<Transaction>>
 

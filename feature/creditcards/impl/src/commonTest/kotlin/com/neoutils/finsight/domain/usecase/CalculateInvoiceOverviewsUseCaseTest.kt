@@ -17,8 +17,8 @@ import kotlin.test.assertEquals
 
 /**
  * Characterizes [CalculateInvoiceOverviewsUseCase] over the ledger (task 4.11):
- * expense/advancePayment/adjustment come from [IEntryRepository.invoiceFlows] and the
- * owed total from [IEntryRepository.invoiceOwed]; the use case only selects the
+ * expense/advancePayment/adjustment come from [IEntryRepository.dimensionFlows] and the
+ * owed total from [IEntryRepository.dimensionOwed]; the use case only selects the
  * invoices closing in the month and aggregates. The numbers match the legacy leg-based
  * form.
  */
@@ -27,7 +27,7 @@ class CalculateInvoiceOverviewsUseCaseTest {
     private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
 
     private fun invoice(id: Long, closing: Int) = Invoice(
-        id = id, creditCard = card,
+        id = id, creditCard = card, dimensionId = id,
         openingMonth = YearMonth(2026, closing - 1), closingMonth = YearMonth(2026, closing), dueMonth = YearMonth(2026, closing + 1),
         status = Invoice.Status.OPEN,
     )
@@ -60,8 +60,8 @@ private class FakeInvoiceOverviewEntryRepository(
     private val flows: Map<Long, InvoiceFlows>,
     private val owed: Map<Long, Double>,
 ) : IEntryRepository {
-    override suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows = flows.getValue(invoiceId)
-    override suspend fun invoiceOwed(invoiceId: Long): Double = owed.getValue(invoiceId)
+    override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows = flows.getValue(dimensionId)
+    override suspend fun dimensionOwed(dimensionId: Long): Double = owed.getValue(dimensionId)
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
@@ -74,6 +74,6 @@ private class FakeInvoiceOverviewEntryRepository(
     override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
-    override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun categoryTotalsForDimensions(categoryType: AccountType, dimensionIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }

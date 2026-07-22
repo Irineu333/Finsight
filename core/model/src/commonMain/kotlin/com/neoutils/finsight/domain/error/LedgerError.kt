@@ -14,6 +14,16 @@ import com.neoutils.finsight.util.UiText
 sealed class LedgerError(val message: String) {
     data object Unbalanced : LedgerError("Transaction entries must sum to zero for every currency.")
 
+    /**
+     * A leg was tagged with a dimension its kind does not accept.
+     *
+     * Never reachable by a user action — it is a defect in the writer, surfaced
+     * loudly precisely because its natural failure mode is silence: a misplaced
+     * dimension produces no error, only sums that are quietly wrong.
+     */
+    data object MisplacedDimension :
+        LedgerError("A dimension may only be carried by a leg of an account nature its kind accepts.")
+
     /** A paid invoice is settled history: nothing about it may change. */
     data object PaidInvoice : LedgerError("A paid invoice cannot be changed.")
 
@@ -86,6 +96,7 @@ class ClosedAccountException(val error: LedgerError) : Exception(error.message)
 
 fun LedgerError.toUiText() = when (this) {
     LedgerError.Unbalanced -> UiText.Res(Res.string.ledger_error_unbalanced)
+    LedgerError.MisplacedDimension -> UiText.Res(Res.string.ledger_error_unbalanced)
     LedgerError.PaidInvoice -> UiText.Res(Res.string.ledger_error_paid_invoice)
     LedgerError.ClosedInvoice -> UiText.Res(Res.string.ledger_error_closed_invoice)
     is LedgerError.ClosedAccount -> when (facade) {

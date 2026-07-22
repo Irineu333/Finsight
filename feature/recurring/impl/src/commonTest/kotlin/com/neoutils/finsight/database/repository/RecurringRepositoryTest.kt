@@ -1,6 +1,9 @@
 package com.neoutils.finsight.database.repository
 
+import androidx.room.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import app.cash.turbine.test
+import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.entity.RecurringEntity
 import com.neoutils.finsight.database.mapper.RecurringMapper
@@ -75,8 +78,16 @@ class RecurringRepositoryTest {
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     }
 
+    // Room opens lazily and this test never writes, so the connection is never made;
+    // the repository needs a database only to make removal atomic.
+    private val database = Room.inMemoryDatabaseBuilder<AppDatabase>()
+        .setDriver(BundledSQLiteDriver())
+        .build()
+
     private val repository = RecurringRepository(
+        database = database,
         dao = dao,
+        transactionDao = database.transactionDao(),
         mapper = RecurringMapper(),
         categoryRepository = categoryRepository,
         accountRepository = accountRepository,

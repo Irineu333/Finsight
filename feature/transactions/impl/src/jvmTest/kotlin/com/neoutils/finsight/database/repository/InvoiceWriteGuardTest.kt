@@ -5,6 +5,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.database.entity.CreditCardEntity
+import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.database.entity.InvoiceEntity
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
@@ -15,6 +16,7 @@ import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
@@ -65,6 +67,7 @@ class InvoiceWriteGuardTest {
     private fun invoice(status: Invoice.Status) = Invoice(
         id = 1,
         creditCard = card,
+        dimensionId = 1,
         openingMonth = YearMonth(2026, 2),
         closingMonth = YearMonth(2026, 3),
         dueMonth = YearMonth(2026, 3),
@@ -89,10 +92,12 @@ class InvoiceWriteGuardTest {
         db.creditCardDao().insert(
             CreditCardEntity(id = 1, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 2)
         )
+        db.dimensionDao().insert(DimensionEntity(id = 1, kind = DimensionKind.INVOICE))
         db.invoiceDao().insert(
             InvoiceEntity(
                 id = 1,
                 creditCardId = 1,
+                dimensionId = 1,
                 openingMonth = YearMonth(2026, 2),
                 closingMonth = YearMonth(2026, 3),
                 dueMonth = YearMonth(2026, 3),
@@ -113,7 +118,7 @@ class InvoiceWriteGuardTest {
             accountRepository = LedgerAccountRepository(db),
             transactionMapper = TransactionMapper(),
             recurringMapper = RecurringMapper(),
-            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
+            ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao(), db.dimensionDao()),
     )
 
     private fun purchase() = TransactionIntent(

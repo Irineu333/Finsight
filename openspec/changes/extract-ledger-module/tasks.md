@@ -37,13 +37,13 @@ um v11.
 
 ## 4. v10, primeira metade — dimensões e fatura
 
-- [ ] 4.1 Criar `:core:ledger` sob `finsight.room.library` contendo **apenas** `DimensionEntity(id, kind)`, `DimensionKind(landsOn)` (D7/D8), `DimensionDao` e o type converter; fazer `:core:database` depender dele e listar a entity no `AppDatabase` — exercita a direção invertida de D1 numa superfície de dois arquivos, em vez de descobrir problemas movendo vinte
-- [ ] 4.2 Migração (passos 1 a 4 de `design.md`): verificar `Σ = 0` antes de tocar em nada; criar `dimensions`; emitir dimensão `INVOICE` por fatura e preencher `invoices.dimensionId`; **rebuild de `entries`** trocando `invoiceId` por `dimensionId` (FK → `dimensions`, `SET NULL`), com os índices recriados
-- [ ] 4.3 Emitir a dimensão na criação de fatura e **remover a linha de `dimensions` na remoção da fatura**, na mesma transação — é o que substitui o `SET NULL` que hoje vem do FK `entries.invoiceId → invoices`
-- [ ] 4.4 Implementar no writer a validação de pouso via `account.type in kind.landsOn` — uniforme, sem `when` por kind — com erro tipado, no mesmo ponto da validação de soma zero
-- [ ] 4.5 Converter `invoiceNaturalBalance`, `invoicePeriodTotals` e `categoryTotalsForInvoices` para agregar por dimensão, renomeadas para vocabulário de razão; converter `ensureInvoiceAcceptsRemoval` (`TransactionRepository.kt:238-241`) para mapear entries → fatura via dimensão
-- [ ] 4.6 Colapsar `TransactionDao.observeBy` (`TransactionDao.kt:52-65`): o `JOIN credit_cards` é redundante com o filtro por conta — "transação do cartão X" é "transação com perna na conta `LIABILITY` de X`". A assinatura passa a `(date, dimensionId, accountId)`, e quem resolvia `creditCardId` passa `creditCard.accountId`
-- [ ] 4.7 Rodar `allTests` e os testes de migração; confirmar paridade do devido por fatura e do breakdown por fatura, keyed por id, sobre um banco v9 representativo
+- [x] 4.1 Criar `:core:ledger` sob `finsight.room.library` contendo **apenas** `DimensionEntity(id, kind)`, `DimensionKind(landsOn)` (D7/D8), `DimensionDao` e o type converter; fazer `:core:database` depender dele e listar a entity no `AppDatabase` — exercita a direção invertida de D1 numa superfície de dois arquivos, em vez de descobrir problemas movendo vinte
+- [x] 4.2 Migração (passos 1 a 4 de `design.md`): verificar `Σ = 0` antes de tocar em nada; criar `dimensions`; emitir dimensão `INVOICE` por fatura e preencher `invoices.dimensionId`; **rebuild de `entries`** trocando `invoiceId` por `dimensionId` (FK → `dimensions`, `SET NULL`), com os índices recriados
+- [x] 4.3 Emitir a dimensão na criação de fatura e **remover a linha de `dimensions` na remoção da fatura**, na mesma transação — é o que substitui o `SET NULL` que hoje vem do FK `entries.invoiceId → invoices`
+- [x] 4.4 Implementar no writer a validação de pouso via `account.type in kind.landsOn` — uniforme, sem `when` por kind — com erro tipado, no mesmo ponto da validação de soma zero
+- [x] 4.5 Converter `invoiceNaturalBalance`, `invoicePeriodTotals` e `categoryTotalsForInvoices` para agregar por dimensão, renomeadas para vocabulário de razão; converter `ensureInvoiceAcceptsRemoval` (`TransactionRepository.kt:238-241`) para mapear entries → fatura via dimensão
+- [x] 4.6 Colapsar `TransactionDao.observeBy` (`TransactionDao.kt:52-65`): o `JOIN credit_cards` é redundante com o filtro por conta — "transação do cartão X" é "transação com perna na conta `LIABILITY` de X`". A assinatura passa a `(date, dimensionId, accountId)`, e quem resolvia `creditCardId` passa `creditCard.accountId`
+- [x] 4.7 Rodar `allTests` e os testes de migração; confirmar paridade do devido por fatura e do breakdown por fatura, keyed por id, sobre um banco v9 representativo
 
 ## 5. v10, segunda metade — categoria como dimensão ⚠
 

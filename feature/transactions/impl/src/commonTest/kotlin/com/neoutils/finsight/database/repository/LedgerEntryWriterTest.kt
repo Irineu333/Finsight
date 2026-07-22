@@ -22,6 +22,9 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import kotlinx.datetime.YearMonth
+import com.neoutils.finsight.database.dao.DimensionDao
+import com.neoutils.finsight.database.entity.DimensionEntity
+import com.neoutils.finsight.domain.model.DimensionKind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -39,8 +42,9 @@ class LedgerEntryWriterTest {
     private val accountDao = FakeAccountDao()
     private val categoryDao = FakeCategoryDao()
     private val creditCardDao = FakeCreditCardDao()
+    private val dimensionDao = FakeDimensionDao()
 
-    private val writer = LedgerEntryWriter(entryDao, accountDao, categoryDao, creditCardDao)
+    private val writer = LedgerEntryWriter(entryDao, accountDao, categoryDao, creditCardDao, dimensionDao)
 
     private fun assetAccount(id: Long) = Account(id = id, name = "Acc $id")
 
@@ -92,9 +96,13 @@ class LedgerEntryWriterTest {
         // Card 100 already promoted to ledger account 200.
         creditCardDao.cards[100L] = CreditCardEntity(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20, accountId = 200)
         val card = CreditCard(id = 100, name = "Card", limit = 1000.0, closingDay = 10, dueDay = 20)
+        accountDao.accounts[200L] = AccountEntity(id = 200, name = "Card", type = AccountEntity.Type.LIABILITY)
+        accountDao.accounts[1L] = AccountEntity(id = 1, name = "Acc 1", type = AccountEntity.Type.ASSET)
+        dimensionDao.insert(DimensionEntity(id = 5, kind = DimensionKind.INVOICE))
         val invoice = Invoice(
             id = 5,
             creditCard = card,
+            dimensionId = 5,
             openingMonth = YearMonth(2026, 1),
             closingMonth = YearMonth(2026, 2),
             dueMonth = YearMonth(2026, 2),
@@ -109,10 +117,10 @@ class LedgerEntryWriterTest {
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
         val bankEntry = entryDao.inserted.first { it.accountId == 1L }
         assertEquals(-5000L, bankEntry.amount) // bank account is debited
-        assertEquals(null, bankEntry.invoiceId) // account leg must NOT tag the invoice
+        assertEquals(null, bankEntry.dimensionId) // account leg must NOT carry the dimension
         val cardEntry = entryDao.inserted.first { it.accountId == 200L }
         assertEquals(5000L, cardEntry.amount) // liability leg reduces the owed
-        assertEquals(5L, cardEntry.invoiceId) // only the card leg tags the invoice
+        assertEquals(5L, cardEntry.dimensionId) // only the card leg carries the dimension
     }
 
     @Test
@@ -182,7 +190,7 @@ private class FakeEntryDao : EntryDao {
     override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
-    override suspend fun invoicePeriodTotals(invoiceId: Long): com.neoutils.finsight.database.dao.InvoicePeriodTotals = throw NotImplementedError()
+    override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.InvoicePeriodTotals = throw NotImplementedError()
     override suspend fun cardMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.CardMonthTotals = throw NotImplementedError()
     override suspend fun categoryTotalsWithSiblingLeg(
         categoryType: String,
@@ -190,16 +198,29 @@ private class FakeEntryDao : EntryDao {
         end: kotlinx.datetime.LocalDate,
         siblingAccountIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
-    override suspend fun categoryTotalsForInvoices(
+    override suspend fun categoryTotalsForDimensions(
         categoryType: String,
-        invoiceIds: List<Long>,
+        dimensionIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.CategoryAccountTotal> = throw NotImplementedError()
     override suspend fun reportStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ReportStatsTotals = throw NotImplementedError()
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = inserted.sumOf { it.amount }
     override suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
-    override suspend fun invoiceNaturalBalance(invoiceId: Long): Long = inserted.filter { it.invoiceId == invoiceId }.sumOf { it.amount }
+    override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = inserted.filter { it.dimensionId == dimensionId }.sumOf { it.amount }
     override suspend fun netWorthCents(): Long = inserted.sumOf { it.amount }
+}
+
+private class FakeDimensionDao : DimensionDao {
+    val dimensions = linkedMapOf<Long, DimensionEntity>()
+    private var seq = 0L
+    override suspend fun insert(dimension: DimensionEntity): Long {
+        val id = if (dimension.id != 0L) dimension.id else ++seq
+        dimensions[id] = dimension.copy(id = id)
+        return id
+    }
+
+    override suspend fun getById(id: Long): DimensionEntity? = dimensions[id]
+    override suspend fun deleteById(id: Long) { dimensions.remove(id) }
 }
 
 private class FakeAccountDao : AccountDao {

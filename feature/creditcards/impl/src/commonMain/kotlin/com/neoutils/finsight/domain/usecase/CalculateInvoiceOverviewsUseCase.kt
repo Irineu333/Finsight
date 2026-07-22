@@ -6,9 +6,9 @@ import kotlinx.datetime.YearMonth
 
 /**
  * Invoice overviews derived from the ledger (task 4.11): each invoice's
- * expense/advance-payment/adjustment come from its LIABILITY-leg entries
- * ([IEntryRepository.invoiceFlows]) and the owed total from [IEntryRepository.invoiceOwed],
- * replacing the leg-based sums by `TransactionType`/`Target`.
+ * expense/advance-payment/adjustment come from the entries carrying its dimension
+ * ([IEntryRepository.dimensionFlows]) and the owed total from
+ * [IEntryRepository.dimensionOwed].
  */
 class CalculateInvoiceOverviewsUseCase(
     private val entryRepository: IEntryRepository,
@@ -21,15 +21,16 @@ class CalculateInvoiceOverviewsUseCase(
         val invoiceOverviews = invoices
             .filter { it.closingMonth == forYearMonth }
             .map { invoice ->
-                val flows = entryRepository.invoiceFlows(invoice.id)
+                val dimensionId = invoice.dimensionId
+                val flows = dimensionId?.let { entryRepository.dimensionFlows(it) }
                 InvoiceOverviewResult(
                     invoiceId = invoice.id,
                     creditCardName = invoice.creditCard.name,
                     invoiceStatus = invoice.status,
-                    expense = flows.expense,
-                    advancePayment = flows.advancePayment,
-                    adjustment = flows.adjustment,
-                    total = entryRepository.invoiceOwed(invoice.id),
+                    expense = flows?.expense ?: 0.0,
+                    advancePayment = flows?.advancePayment ?: 0.0,
+                    adjustment = flows?.adjustment ?: 0.0,
+                    total = dimensionId?.let { entryRepository.dimensionOwed(it) } ?: 0.0,
                 )
             }
 

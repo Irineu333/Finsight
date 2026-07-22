@@ -91,12 +91,12 @@ private class CapturingEntryRepository : IEntryRepository {
     override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
-    override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
-    override suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows = throw NotImplementedError()
+    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+    override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows = throw NotImplementedError()
     override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
-    override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun categoryTotalsForDimensions(categoryType: AccountType, dimensionIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
 }
 
 private class FakeAccountRepository(private val accounts: List<Account>) : IAccountRepository {

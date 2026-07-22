@@ -77,11 +77,12 @@ class ReportViewerViewModel(
         invoicesFlow,
     ) { transactions, accounts, creditCards, invoices ->
         val invoiceIds = invoices.map { it.id }.toSet()
+        val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
         val stats = if (invoices.isNotEmpty()) {
             val invoiceLegs = transactions.flatMap { transaction ->
                 transaction.entries
-                    .filter { it.invoiceId in invoiceIds && it.account.type == AccountType.LIABILITY }
+                    .filter { it.dimensionId in invoiceDimensionIds && it.account.type == AccountType.LIABILITY }
                     .map { entry ->
                         InvoiceLeg(
                             label = transaction.label,
@@ -101,7 +102,7 @@ class ReportViewerViewModel(
                 // which is exactly what the ledger already labels a PAYMENT.
                 advancePayment = sum { it.direction.isIncome && it.label == TransactionLabel.PAYMENT },
                 adjustment = sum { it.direction.isAdjustment },
-                total = invoices.sumOf { entryRepository.invoiceOwed(it.id) },
+                total = invoiceDimensionIds.sumOf { entryRepository.dimensionOwed(it) },
             )
         } else {
             val reportStats = calculateReportStatsUseCase(
@@ -134,8 +135,8 @@ class ReportViewerViewModel(
 
         val categorySpending = when {
             !params.includeSpendingByCategory -> null
-            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
-                invoiceIds = invoiceIds.toList(),
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
+                dimensionIds = invoiceDimensionIds.toList(),
                 transactionType = TransactionType.EXPENSE,
             )
             else -> calculateReportCategorySpendingUseCase(
@@ -148,8 +149,8 @@ class ReportViewerViewModel(
 
         val categoryIncome = when {
             !params.includeIncomeByCategory -> null
-            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forInvoices(
-                invoiceIds = invoiceIds.toList(),
+            invoices.isNotEmpty() -> calculateReportCategorySpendingUseCase.forDimensions(
+                dimensionIds = invoiceDimensionIds.toList(),
                 transactionType = TransactionType.INCOME,
             )
             else -> calculateReportCategorySpendingUseCase(
@@ -164,7 +165,7 @@ class ReportViewerViewModel(
             val filteredOps = if (invoices.isNotEmpty()) {
                 transactions.filter { op ->
                     op.targetInvoice?.id in invoiceIds ||
-                            op.entries.any { it.invoiceId in invoiceIds }
+                            op.entries.any { it.dimensionId in invoiceDimensionIds }
                 }
             } else {
                 transactions

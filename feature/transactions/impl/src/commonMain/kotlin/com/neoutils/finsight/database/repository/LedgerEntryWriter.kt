@@ -3,8 +3,10 @@ package com.neoutils.finsight.database.repository
 import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.CategoryDao
 import com.neoutils.finsight.database.dao.CreditCardDao
+import com.neoutils.finsight.database.dao.DimensionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.AccountEntity
+import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
@@ -13,6 +15,7 @@ import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.model.BASE_CURRENCY
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.DimensionKind
 import com.neoutils.finsight.domain.model.SystemAccount
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -35,6 +38,7 @@ class LedgerEntryWriter(
     private val accountDao: AccountDao,
     private val categoryDao: CategoryDao,
     private val creditCardDao: CreditCardDao,
+    private val dimensionDao: DimensionDao,
 ) {
 
     /**
@@ -62,10 +66,11 @@ class LedgerEntryWriter(
                         accountId = realAccountId(leg),
                         amount = leg.ledgerAmount(),
                         currency = BASE_CURRENCY,
-                        // Only the credit-card (LIABILITY) leg carries the invoice — its
-                        // sub-ledger. A payment's account leg also references the card but
-                        // must not tag the invoice, or the two legs would cancel it out.
-                        invoiceId = leg.invoice?.id
+                        // Only the credit-card (LIABILITY) leg carries the invoice's
+                        // dimension — its sub-ledger. A payment's account leg also
+                        // references the card but must not carry it, or the two legs
+                        // would cancel the sub-ledger out.
+                        dimensionId = leg.invoice?.dimensionId
                             ?.takeIf { leg.target == TransactionTarget.CREDIT_CARD },
                     )
                 )
@@ -93,7 +98,31 @@ class LedgerEntryWriter(
             throw UnbalancedTransactionException(LedgerError.Unbalanced)
         }
 
+        entries.forEach { rejectIfDimensionLandsWrong(it) }
+
         entryDao.insertAll(entries)
+    }
+
+    /**
+     * A dimension may only land on an account of a nature its kind accepts
+     * ([DimensionKind.landsOn]). Uniform, with no branch per kind: the ledger never
+     * asks what an `INVOICE` *is*, only where one may sit.
+     *
+     * Without this the rule would be the writer's discipline rather than the
+     * schema's — and its violation is silent. An invoice dimension landing on a
+     * nominal leg produces no error at all; it just makes every sum by that
+     * dimension quietly wrong. That is the defect class the kind exists to kill,
+     * so the check belongs beside the zero-sum one, at the same single boundary.
+     */
+    private suspend fun rejectIfDimensionLandsWrong(entry: EntryEntity) {
+        val dimensionId = entry.dimensionId ?: return
+        val kind = dimensionDao.getById(dimensionId)?.kind
+            ?: throw UnbalancedTransactionException(LedgerError.MisplacedDimension)
+        val type = accountDao.getAccountById(entry.accountId)?.type?.toDomain()
+            ?: throw UnbalancedTransactionException(LedgerError.MisplacedDimension)
+        if (type !in kind.landsOn) {
+            throw UnbalancedTransactionException(LedgerError.MisplacedDimension)
+        }
     }
 
     /**

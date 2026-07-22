@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 
 package com.neoutils.finsight.ui.screen.invoiceTransactions
 
@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -64,8 +65,11 @@ class InvoiceTransactionsViewModel(
     private val invoicesFlow = invoiceRepository
         .observeInvoicesByCreditCard(creditCardId = creditCardId)
 
-    private val transactionsFlow = transactionRepository
-        .observeTransactionsBy(creditCardId = creditCardId)
+    // A transaction of this card is one with a leg on the card's LIABILITY account.
+    private val transactionsFlow = creditCardFlow
+        .flatMapLatest { creditCard ->
+            transactionRepository.observeTransactionsBy(accountId = creditCard.accountId)
+        }
 
     val uiState = combine(
         creditCardFlow,
@@ -80,14 +84,15 @@ class InvoiceTransactionsViewModel(
         val owedByInvoiceId = mutableMapOf<Long, Double>()
         val flowsByInvoiceId = mutableMapOf<Long, com.neoutils.finsight.domain.repository.InvoiceFlows>()
         for (inv in invoices) {
-            owedByInvoiceId[inv.id] = entryRepository.invoiceOwed(inv.id)
-            flowsByInvoiceId[inv.id] = entryRepository.invoiceFlows(inv.id)
+            val dimensionId = inv.dimensionId ?: continue
+            owedByInvoiceId[inv.id] = entryRepository.dimensionOwed(dimensionId)
+            flowsByInvoiceId[inv.id] = entryRepository.dimensionFlows(dimensionId)
         }
 
         val invoice = invoices.getOrNull(index)
 
         val invoiceTransactions = transactions
-            .filter { transaction -> transaction.entries.any { it.invoiceId == invoice?.id } }
+            .filter { transaction -> transaction.entries.any { it.dimensionId == invoice?.dimensionId } }
         val filteredTransactions = invoiceTransactions
             .filter(currentFilters.category)
             .filter(currentFilters.type)

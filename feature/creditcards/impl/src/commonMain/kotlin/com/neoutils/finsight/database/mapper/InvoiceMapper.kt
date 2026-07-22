@@ -13,6 +13,7 @@ class InvoiceMapper {
         return Invoice(
             id = entity.id,
             creditCard = creditCard,
+            dimensionId = entity.dimensionId,
             openingMonth = entity.openingMonth,
             closingMonth = entity.closingMonth,
             dueMonth = entity.dueMonth,
@@ -28,6 +29,7 @@ class InvoiceMapper {
         return InvoiceEntity(
             id = domain.id,
             creditCardId = domain.creditCard.id,
+            dimensionId = domain.dimensionId,
             openingMonth = domain.openingMonth,
             closingMonth = domain.closingMonth,
             dueMonth = domain.dueMonth,

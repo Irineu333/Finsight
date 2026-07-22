@@ -584,11 +584,88 @@ val MIGRATION_7_9 = object : Migration(7, 9) {
     }
 }
 
+/**
+ * The invoice half of v10: the card sub-ledger stops being a foreign key into
+ * `invoices` and becomes a dimension the ledger owns.
+ *
+ * Written in two stages over one version number — this one, and the category half.
+ * That is only legitimate because no build between them may be released: a device
+ * carrying half a v10 would need a v11 to be rescued.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("PRAGMA foreign_keys=OFF")
+
+        // --- 1. Verify the input before touching it. A database that already
+        //        arrives unbalanced must abort here, where nothing was written,
+        //        rather than be diagnosed from a half-rewritten ledger. ---
+        connection.verifyLedgerBalanced(stage = "v9 → v10, before")
+
+        // --- 2. The dimension table. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `dimensions` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`kind` TEXT NOT NULL)"
+        )
+
+        // --- 3. One INVOICE dimension per invoice. With `dimensions` empty,
+        //        `id = invoices.id` is free of collision, which is what keeps
+        //        step 4's mapping a plain join. ---
+        connection.execSQL("INSERT INTO `dimensions` (`id`, `kind`) SELECT `id`, 'INVOICE' FROM `invoices`")
+        connection.execSQL(
+            "ALTER TABLE `invoices` ADD COLUMN `dimensionId` INTEGER " +
+                "REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL"
+        )
+        connection.execSQL("UPDATE `invoices` SET `dimensionId` = `id`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_invoices_dimensionId` ON `invoices` (`dimensionId`)")
+
+        // --- 4. Rebuild `entries`, trading `invoiceId` for `dimensionId`. A rebuild
+        //        and not an ALTER: the column is indexed and carries a foreign key,
+        //        which SQLite cannot drop in place. The two columns never coexist
+        //        outside the SELECT below. ---
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `entries_new` (" +
+                "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`transactionId` INTEGER NOT NULL, " +
+                "`accountId` INTEGER NOT NULL, " +
+                "`amount` INTEGER NOT NULL, " +
+                "`currency` TEXT NOT NULL, " +
+                "`dimensionId` INTEGER, " +
+                "FOREIGN KEY(`transactionId`) REFERENCES `transactions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                "FOREIGN KEY(`accountId`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION, " +
+                "FOREIGN KEY(`dimensionId`) REFERENCES `dimensions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL" +
+                ")"
+        )
+        connection.execSQL(
+            "INSERT INTO `entries_new` (`id`, `transactionId`, `accountId`, `amount`, `currency`, `dimensionId`) " +
+                "SELECT `e`.`id`, `e`.`transactionId`, `e`.`accountId`, `e`.`amount`, `e`.`currency`, `i`.`dimensionId` " +
+                "FROM `entries` `e` LEFT JOIN `invoices` `i` ON `i`.`id` = `e`.`invoiceId`"
+        )
+        connection.execSQL("DROP TABLE `entries`")
+        connection.execSQL("ALTER TABLE `entries_new` RENAME TO `entries`")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_transactionId` ON `entries` (`transactionId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_accountId` ON `entries` (`accountId`)")
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_entries_dimensionId` ON `entries` (`dimensionId`)")
+
+        connection.verifyLedgerBalanced(stage = "v9 → v10, after")
+        connection.execSQL("PRAGMA foreign_keys=ON")
+    }
+}
+
 fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_9)
+        .addMigrations(
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+            MIGRATION_4_5,
+            MIGRATION_5_6,
+            MIGRATION_6_7,
+            MIGRATION_7_9,
+            MIGRATION_9_10,
+        )
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

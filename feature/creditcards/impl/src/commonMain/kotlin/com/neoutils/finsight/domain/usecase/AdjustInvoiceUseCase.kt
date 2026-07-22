@@ -24,7 +24,7 @@ class AdjustInvoiceUseCase(
         adjustmentDate: LocalDate
     ): Either<Throwable, Unit> = either {
         val currentInvoice = catch {
-            calculateInvoiceUseCase(invoiceId = invoice.id)
+            calculateInvoiceUseCase(invoice)
         }.bind()
 
         ensure(target != currentInvoice) { InvoiceNotAdjustedException() }
@@ -35,7 +35,7 @@ class AdjustInvoiceUseCase(
             // this date carrying this invoice and an EQUITY (reconciliation)
             // counter-leg — the ledger shape of "an invoice adjustment".
             val existingTransaction = transactionRepository
-                .observeTransactionsBy(date = adjustmentDate, invoiceId = invoice.id)
+                .observeTransactionsBy(date = adjustmentDate, dimensionId = invoice.dimensionId)
                 .first()
                 .firstOrNull { transaction ->
                     transaction.entries.any { it.account.type == AccountType.EQUITY }
@@ -64,7 +64,7 @@ class AdjustInvoiceUseCase(
             // The adjustment's current size is read back from its own ledger leg, so a
             // re-adjustment can never accumulate onto a stale value (D17).
             val currentAdjustment = existingTransaction.entries
-                .filter { it.invoiceId == invoice.id }
+                .filter { it.dimensionId == invoice.dimensionId }
                 .sumOf { it.amount } / 100.0
             val newAmount = currentAdjustment - difference
 

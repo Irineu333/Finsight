@@ -90,11 +90,11 @@ interface IEntryRepository {
     /** Number of ledger entries on a category (chart) account within [month]. */
     suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int
 
-    /** Amount owed on an invoice (positive), from its liability-leg entries. */
-    suspend fun invoiceOwed(invoiceId: Long): Double
+    /** Amount owed on a sub-ledger (positive), from the entries carrying its dimension. */
+    suspend fun dimensionOwed(dimensionId: Long): Double
 
-    /** The expense/advance-payment/adjustment breakdown of an invoice, from the ledger. */
-    suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows
+    /** The expense/advance-payment/adjustment breakdown of a sub-ledger, from the ledger. */
+    suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows
 
     /** Month-wide card expense/payment across every card account. */
     suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows
@@ -114,10 +114,10 @@ interface IEntryRepository {
         siblingAccountIds: List<Long>,
     ): Map<Long, Double>
 
-    /** Natural balance (reais) per category account scoped to a set of invoices. */
-    suspend fun categoryTotalsForInvoices(
+    /** Natural balance (reais) per category account scoped to a set of dimensions. */
+    suspend fun categoryTotalsForDimensions(
         categoryType: AccountType,
-        invoiceIds: List<Long>,
+        dimensionIds: List<Long>,
     ): Map<Long, Double>
 
     /**

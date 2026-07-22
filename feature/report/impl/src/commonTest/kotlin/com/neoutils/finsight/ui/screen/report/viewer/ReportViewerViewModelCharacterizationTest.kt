@@ -66,8 +66,8 @@ class ReportViewerViewModelCharacterizationTest {
     private fun op(id: Long, date: LocalDate, entries: List<Entry>) =
         Transaction(id = id, title = null, date = date, entries = entries)
 
-    private fun entry(acc: Account, amount: Double, invoiceId: Long? = null) =
-        Entry(account = acc, amount = (amount * 100).toLong(), invoiceId = invoiceId)
+    private fun entry(acc: Account, amount: Double, dimensionId: Long? = null) =
+        Entry(account = acc, amount = (amount * 100).toLong(), dimensionId = dimensionId)
 
     // The account-perspective stats now read the ledger legs (task 4.6). Each transaction
     // carries its balanced entries; the report figures derive from those.
@@ -136,16 +136,16 @@ class ReportViewerViewModelCharacterizationTest {
             accountId = cardLiability.id,
         )
         val invoice = Invoice(
-            id = 1, creditCard = card,
+            id = 1, creditCard = card, dimensionId = 1,
             openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),
             status = Invoice.Status.OPEN,
         )
         val date = LocalDate(2026, 3, 10)
-        // The card leg carries the invoice id; the counter-leg's account type is what
+        // The card leg carries the invoice's dimension; the counter-leg's account type is what
         // makes the transaction an expense, an adjustment or a payment.
         fun cardOp(id: Long, cardAmount: Double, counter: Account) = op(
             id, date,
-            listOf(entry(cardLiability, cardAmount, invoiceId = invoice.id), entry(counter, -cardAmount)),
+            listOf(entry(cardLiability, cardAmount, dimensionId = invoice.dimensionId), entry(counter, -cardAmount)),
         )
         val transactions = listOf(
             cardOp(1, -60.0, expenseAcc),
@@ -192,7 +192,7 @@ class ReportViewerViewModelCharacterizationTest {
             assertEquals(100.0, stats.expense)
             assertEquals(30.0, stats.advancePayment)
             assertEquals(10.0, stats.adjustment)
-            assertEquals(70.0, stats.total, "owed comes from the ledger's invoiceOwed")
+            assertEquals(70.0, stats.total, "owed comes from the ledger's dimensionOwed")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -201,7 +201,7 @@ class ReportViewerViewModelCharacterizationTest {
 private class Fakes {
     fun transactionRepository(transactions: List<Transaction>) = object : ITransactionRepository {
         override fun observeAllTransactions(): Flow<List<Transaction>> = MutableStateFlow(transactions)
-        override fun observeTransactionsBy(date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
+        override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = throw NotImplementedError()
         override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
         override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
         override suspend fun getTransactionById(id: Long): Transaction? = throw NotImplementedError()
@@ -244,7 +244,7 @@ private class Fakes {
     fun invoiceRepository(invoices: List<Invoice> = emptyList()) = object : IInvoiceRepository {
         override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = MutableStateFlow(invoices)
         override fun observeAllInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
-        override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> = throw NotImplementedError()
+        override fun observeInvoiceById(dimensionId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
         override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
         override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
@@ -285,12 +285,12 @@ private class Fakes {
         override suspend fun balanceInMonth(month: YearMonth, accountId: Long): Double = throw NotImplementedError()
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun entryCountInMonth(month: YearMonth, accountId: Long): Int = throw NotImplementedError()
-        override suspend fun invoiceOwed(invoiceId: Long): Double = owed[invoiceId] ?: 0.0
-        override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+        override suspend fun dimensionOwed(dimensionId: Long): Double = owed[dimensionId] ?: 0.0
+        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
         override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
-        override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+        override suspend fun categoryTotalsForDimensions(categoryType: AccountType, dimensionIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
         override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ReportStats = stats
     }
 

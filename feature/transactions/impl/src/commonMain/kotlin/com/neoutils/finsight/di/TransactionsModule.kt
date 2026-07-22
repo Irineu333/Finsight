@@ -47,6 +47,7 @@ val transactionsModule = module {
             accountDao = get(),
             categoryDao = get(),
             creditCardDao = get(),
+            dimensionDao = get(),
         )
     }
     factory { TransactionMapper() }

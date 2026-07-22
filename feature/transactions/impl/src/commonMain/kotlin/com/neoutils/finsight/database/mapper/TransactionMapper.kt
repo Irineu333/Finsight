@@ -51,7 +51,9 @@ class TransactionMapper {
             targetCreditCard = cardAccountId?.let { accountId ->
                 creditCards.values.firstOrNull { it.accountId == accountId }
             },
-            targetInvoice = entries.firstNotNullOfOrNull { it.invoiceId }?.let { invoices[it] },
+            // The invoice is reached from the dimension its liability leg carries.
+            targetInvoice = entries.firstNotNullOfOrNull { it.dimensionId }
+                ?.let { dimensionId -> invoices.values.firstOrNull { it.dimensionId == dimensionId } },
             installment = entity.installmentNumber?.let { number ->
                 entity.installmentId?.let { installmentId ->
                     installments[installmentId]?.let { instance ->

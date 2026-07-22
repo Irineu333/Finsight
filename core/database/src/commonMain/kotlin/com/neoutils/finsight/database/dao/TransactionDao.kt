@@ -77,26 +77,29 @@ interface TransactionDao {
     )
     suspend fun detachFromRecurring(recurringId: Long)
 
-    // The invoice/card/account filters derive from the ledger legs: an invoice is the
-    // card account's sub-ledger, a card is reached through its LIABILITY account.
+    /**
+     * Transactions filtered by date, by sub-ledger and by account — all three in
+     * ledger terms.
+     *
+     * The card filter used to be its own parameter, resolved through
+     * `JOIN credit_cards ON c.accountId = e.accountId`. That join did nothing the
+     * account filter does not already do: "a transaction of card X" *is* "a
+     * transaction with a leg on X's LIABILITY account". Callers pass
+     * `creditCard.accountId`, and with the join goes the last reference this query
+     * made to a facade table.
+     */
     @Query(
         """
         SELECT * FROM transactions o
         WHERE (:date IS NULL OR o.date = :date)
-          AND (:invoiceId IS NULL OR EXISTS (SELECT 1 FROM entries e WHERE e.transactionId = o.id AND e.invoiceId = :invoiceId))
-          AND (:creditCardId IS NULL OR EXISTS (
-              SELECT 1 FROM entries e
-              JOIN credit_cards c ON c.accountId = e.accountId
-              WHERE e.transactionId = o.id AND c.id = :creditCardId
-          ))
+          AND (:dimensionId IS NULL OR EXISTS (SELECT 1 FROM entries e WHERE e.transactionId = o.id AND e.dimensionId = :dimensionId))
           AND (:accountId IS NULL OR EXISTS (SELECT 1 FROM entries e WHERE e.transactionId = o.id AND e.accountId = :accountId))
         ORDER BY o.date DESC, o.id DESC
     """
     )
     fun observeBy(
         date: LocalDate?,
-        invoiceId: Long?,
-        creditCardId: Long?,
+        dimensionId: Long?,
         accountId: Long?,
     ): Flow<List<TransactionEntity>>
 }

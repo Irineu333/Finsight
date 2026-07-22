@@ -54,7 +54,7 @@ class AdvanceInvoicePaymentUseCase(
             InvoiceException(InvoiceError.DateInFuture)
         }
 
-        val currentBillAmount = calculateInvoiceUseCase(invoiceId)
+        val currentBillAmount = calculateInvoiceUseCase(invoice)
 
         ensure(currentBillAmount > 0.0) {
             InvoiceException(InvoiceError.InvoiceNotInDebt)

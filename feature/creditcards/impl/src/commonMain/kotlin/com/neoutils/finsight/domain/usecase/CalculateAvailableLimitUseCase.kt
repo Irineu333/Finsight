@@ -14,7 +14,7 @@ class CalculateAvailableLimitUseCase(
         val unpaidInvoices = invoiceRepository.getUnpaidInvoicesByCreditCard(creditCard.id)
 
         val totalUnpaidAmount = unpaidInvoices.sumOf { invoice ->
-            calculateInvoiceUseCase(invoice.id).coerceAtLeast(0.0)
+            calculateInvoiceUseCase(invoice).coerceAtLeast(0.0)
         }
 
         if (creditCard.limit != 0.0) {

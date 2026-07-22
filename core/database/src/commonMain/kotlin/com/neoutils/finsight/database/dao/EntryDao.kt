@@ -155,9 +155,9 @@ interface EntryDao {
     )
     suspend fun balanceInMonth(accountId: Long, yearMonth: String): Long
 
-    /** Natural balance of a card invoice = Σ its liability-leg entries. */
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE invoiceId = :invoiceId")
-    suspend fun invoiceNaturalBalance(invoiceId: Long): Long
+    /** Natural balance of a sub-ledger = Σ the entries tagged with its dimension. */
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE dimensionId = :dimensionId")
+    suspend fun dimensionNaturalBalance(dimensionId: Long): Long
 
     /**
      * The account's income/expense/adjustment/invoice-payment flows within a month
@@ -183,11 +183,10 @@ interface EntryDao {
     suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): AccountPeriodTotals
 
     /**
-     * The expense/advance-payment/adjustment breakdown of a card invoice, from its
-     * LIABILITY-leg entries (the only entries carrying an [invoiceId]), classified by
-     * sign and by whether the transaction also has an EQUITY counter-leg. See
-     * [InvoicePeriodTotals]. All are positive magnitudes except [adjustment], which is
-     * signed.
+     * The expense/advance-payment/adjustment breakdown of a sub-ledger, from the
+     * entries tagged with its dimension, classified by sign and by whether the
+     * transaction also has an EQUITY counter-leg. See [InvoicePeriodTotals]. All are
+     * positive magnitudes except [adjustment], which is signed.
      */
     @Query(
         """
@@ -199,11 +198,11 @@ interface EntryDao {
           SELECT e.amount AS amount,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq
           FROM entries e
-          WHERE e.invoiceId = :invoiceId
+          WHERE e.dimensionId = :dimensionId
         )
         """
     )
-    suspend fun invoicePeriodTotals(invoiceId: Long): InvoicePeriodTotals
+    suspend fun dimensionPeriodTotals(dimensionId: Long): InvoicePeriodTotals
 
     /**
      * Month-wide card expense/advance-payment across every LIABILITY (card) account
@@ -311,8 +310,8 @@ interface EntryDao {
     ): ReportStatsTotals
 
     /**
-     * Per-category totals scoped to a set of invoices: category legs of transactions
-     * that also have a leg tagged with one of [invoiceIds] (the card sub-ledger).
+     * Per-category totals scoped to a set of sub-ledgers: category legs of
+     * transactions that also have a leg tagged with one of [dimensionIds].
      */
     @Query(
         """
@@ -320,12 +319,12 @@ interface EntryDao {
         FROM entries e
         JOIN accounts a ON a.id = e.accountId
         WHERE a.type = :categoryType
-          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.invoiceId IN (:invoiceIds))
+          AND EXISTS (SELECT 1 FROM entries s WHERE s.transactionId = e.transactionId AND s.dimensionId IN (:dimensionIds))
         GROUP BY e.accountId
         """
     )
-    suspend fun categoryTotalsForInvoices(
+    suspend fun categoryTotalsForDimensions(
         categoryType: String,
-        invoiceIds: List<Long>,
+        dimensionIds: List<Long>,
     ): List<CategoryAccountTotal>
 }

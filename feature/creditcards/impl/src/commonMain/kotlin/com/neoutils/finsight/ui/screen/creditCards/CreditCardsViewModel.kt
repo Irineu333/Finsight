@@ -75,7 +75,7 @@ class CreditCardsViewModel(
         invoices[selectedCard?.id]?.currentUnpaid()
     }.flatMapLatest { invoice ->
         if (invoice != null) {
-            transactionRepository.observeTransactionsBy(invoiceId = invoice.id)
+            transactionRepository.observeTransactionsBy(dimensionId = invoice.dimensionId)
         } else {
             flowOf(emptyList())
         }

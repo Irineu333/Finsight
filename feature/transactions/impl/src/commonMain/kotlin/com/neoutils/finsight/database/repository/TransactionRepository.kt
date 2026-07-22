@@ -90,7 +90,7 @@ class TransactionRepository(
                     account = account,
                     amount = entity.amount,
                     currency = entity.currency,
-                    invoiceId = entity.invoiceId,
+                    dimensionId = entity.dimensionId,
                 )
             }
         }
@@ -124,13 +124,11 @@ class TransactionRepository(
 
     override fun observeTransactionsBy(
         date: LocalDate?,
-        invoiceId: Long?,
-        creditCardId: Long?,
+        dimensionId: Long?,
         accountId: Long?,
     ): Flow<List<Transaction>> = transactionDao.observeBy(
         date = date,
-        invoiceId = invoiceId,
-        creditCardId = creditCardId,
+        dimensionId = dimensionId,
         accountId = accountId,
     ).mapToDomain()
 
@@ -235,10 +233,18 @@ class TransactionRepository(
      * `isPayment` is false because *un*-paying a closed invoice is not the payment
      * that settles it — a closed invoice is immutable in both directions.
      */
-    private suspend fun ensureInvoiceAcceptsRemoval(id: Long) = ensureInvoicesAccept(
-        invoiceIds = entryDao.getByTransactionId(id).mapNotNull { it.invoiceId }.toSet(),
-        isPayment = false,
-    )
+    private suspend fun ensureInvoiceAcceptsRemoval(id: Long) {
+        // The legs name a dimension; which invoice owns it is the facade's business.
+        val dimensionIds = entryDao.getByTransactionId(id).mapNotNull { it.dimensionId }.toSet()
+        if (dimensionIds.isEmpty()) return
+        ensureInvoicesAccept(
+            invoiceIds = invoiceRepository.getAllInvoices()
+                .filter { it.dimensionId in dimensionIds }
+                .map { it.id }
+                .toSet(),
+            isPayment = false,
+        )
+    }
 
     /**
      * The closure invariant, in the removal direction.

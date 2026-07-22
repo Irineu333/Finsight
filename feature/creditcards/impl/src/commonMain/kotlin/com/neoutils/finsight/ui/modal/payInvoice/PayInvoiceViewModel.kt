@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.repository.IAccountRepository
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.CalculateInvoiceUseCase
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PayInvoice
@@ -30,6 +31,7 @@ class PayInvoiceViewModel(
     private val payInvoicePaymentUseCase: PayInvoicePaymentUseCase,
     private val payInvoiceUseCase: PayInvoiceUseCase,
     private val calculateInvoiceUseCase: CalculateInvoiceUseCase,
+    private val invoiceRepository: IInvoiceRepository,
     private val accountRepository: IAccountRepository,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
@@ -71,7 +73,10 @@ class PayInvoiceViewModel(
         date: LocalDate,
         account: Account? = selectedAccount.value,
     ) = viewModelScope.launch {
-        val invoiceAmount = calculateInvoiceUseCase(invoiceId)
+        // The screen holds an id; resolving it to the facade is its job, because the
+        // ledger only knows the dimension the facade carries.
+        val invoice = invoiceRepository.getInvoiceById(invoiceId) ?: return@launch
+        val invoiceAmount = calculateInvoiceUseCase(invoice)
 
         // Bound to a `val`: `if (c) {..} else {..}.onLeft{}` attaches the chain to the
         // else branch alone, so the zero-amount path's result was silently dropped

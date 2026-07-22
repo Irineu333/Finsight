@@ -22,7 +22,7 @@ class InvoiceUiMapperImpl(
         invoice: Invoice,
         cardInvoices: List<Invoice>,
     ): InvoiceUi {
-        val outstandingDebt = calculateInvoiceUseCase(invoiceId = invoice.id).coerceAtLeast(0.0)
+        val outstandingDebt = calculateInvoiceUseCase(invoice).coerceAtLeast(0.0)
         val limit = calculateAvailableLimitUseCase(invoice.creditCard)
         val hasProgress = outstandingDebt > 0 && limit.usage != 0.0
         val status = invoice.status

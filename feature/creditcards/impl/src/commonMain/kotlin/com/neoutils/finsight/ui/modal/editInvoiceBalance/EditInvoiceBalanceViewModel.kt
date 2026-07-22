@@ -56,7 +56,7 @@ class EditInvoiceBalanceViewModel(
     private val selectedInvoice = MutableStateFlow(initialInvoice)
 
     private val currentBalance = selectedInvoice.map { invoice ->
-        calculateInvoiceUseCase(invoice.id)
+        calculateInvoiceUseCase(invoice)
     }.stateIn(
         scope = viewModelScope,
         initialValue = null,

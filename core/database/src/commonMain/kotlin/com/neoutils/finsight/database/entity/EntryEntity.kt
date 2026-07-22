@@ -27,16 +27,16 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.NO_ACTION
         ),
         ForeignKey(
-            entity = InvoiceEntity::class,
+            entity = DimensionEntity::class,
             parentColumns = ["id"],
-            childColumns = ["invoiceId"],
+            childColumns = ["dimensionId"],
             onDelete = ForeignKey.SET_NULL
         ),
     ],
     indices = [
         Index(value = ["transactionId"]),
         Index(value = ["accountId"]),
-        Index(value = ["invoiceId"]),
+        Index(value = ["dimensionId"]),
     ]
 )
 data class EntryEntity(
@@ -46,7 +46,7 @@ data class EntryEntity(
     val accountId: Long,
     val amount: Long,
     val currency: String = "BRL",
-    // Set only on the credit-card (LIABILITY) leg of a purchase, so an invoice's
-    // balance is Σ entries with this invoiceId — the sub-ledger of the card account.
-    val invoiceId: Long? = null,
+    // The analytic axis this leg is tagged with, if any: the sub-ledger it belongs
+    // to inside its account. A facade's total is Σ entries carrying its dimension.
+    val dimensionId: Long? = null,
 )

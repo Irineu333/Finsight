@@ -38,7 +38,7 @@ import kotlin.test.assertEquals
 /**
  * Characterizes the per-invoice sums of [InvoiceTransactionsViewModel] (sites
  * :102,106,110): expense/advancePayment/adjustment of the card legs, and the owed
- * total read from the ledger (`invoiceOwed`). Task 4.11 flips the sums to the ledger;
+ * total read from the ledger (`dimensionOwed`). Task 4.11 flips the sums to the ledger;
  * the numbers must survive.
  */
 class InvoiceTransactionsViewModelCharacterizationTest {
@@ -50,7 +50,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
 
     private val card = CreditCard(id = 1, name = "Card", limit = 1000.0, closingDay = 5, dueDay = 15)
     private val invoice = Invoice(
-        id = 1, creditCard = card,
+        id = 1, creditCard = card, dimensionId = 1,
         openingMonth = YearMonth(2026, 2), closingMonth = YearMonth(2026, 3), dueMonth = YearMonth(2026, 4),
         status = Invoice.Status.OPEN,
     )
@@ -69,7 +69,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             targetCreditCard = card,
             targetInvoice = invoice,
             entries = listOf(
-                Entry(transactionId = id, account = cardAccount, amount = signed, invoiceId = invoice.id),
+                Entry(transactionId = id, account = cardAccount, amount = signed, dimensionId = invoice.dimensionId),
                 Entry(transactionId = id, account = contraAccount, amount = -signed),
             ),
         )
@@ -103,7 +103,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             assertEquals(100.0, summary.expense)
             assertEquals(30.0, summary.advancePayment)
             assertEquals(10.0, summary.adjustment)
-            assertEquals(70.0, summary.total, "owed comes from the ledger's invoiceOwed")
+            assertEquals(70.0, summary.total, "owed comes from the ledger's dimensionOwed")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -126,7 +126,7 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
     override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = invoices
     override suspend fun getInvoiceById(id: Long): Invoice? = invoices.firstOrNull { it.id == id }
     override fun observeAllInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
-    override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> = throw NotImplementedError()
+    override fun observeInvoiceById(dimensionId: Long): Flow<Invoice?> = throw NotImplementedError()
     override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
     override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
     override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
@@ -140,7 +140,7 @@ private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvo
 }
 
 private class FakeTransactionRepository(private val transactions: List<Transaction>) : ITransactionRepository {
-    override fun observeTransactionsBy(date: LocalDate?, invoiceId: Long?, creditCardId: Long?, accountId: Long?): Flow<List<Transaction>> = MutableStateFlow(transactions)
+    override fun observeTransactionsBy(date: LocalDate?, dimensionId: Long?, accountId: Long?): Flow<List<Transaction>> = MutableStateFlow(transactions)
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionById(id: Long): Flow<Transaction?> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()
@@ -170,9 +170,9 @@ private class FakeEntryRepository(
     private val owedByInvoiceId: Map<Long, Double>,
     private val flowsByInvoiceId: Map<Long, com.neoutils.finsight.domain.repository.InvoiceFlows> = emptyMap(),
 ) : IEntryRepository {
-    override suspend fun invoiceOwed(invoiceId: Long): Double = owedByInvoiceId[invoiceId] ?: 0.0
-    override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows =
-        flowsByInvoiceId[invoiceId] ?: com.neoutils.finsight.domain.repository.InvoiceFlows(0.0, 0.0, 0.0)
+    override suspend fun dimensionOwed(dimensionId: Long): Double = owedByInvoiceId[dimensionId] ?: 0.0
+    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows =
+        flowsByInvoiceId[dimensionId] ?: com.neoutils.finsight.domain.repository.InvoiceFlows(0.0, 0.0, 0.0)
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
@@ -185,6 +185,6 @@ private class FakeEntryRepository(
     override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun categoryTotals(categoryType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
-    override suspend fun categoryTotalsForInvoices(categoryType: AccountType, invoiceIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
+    override suspend fun categoryTotalsForDimensions(categoryType: AccountType, dimensionIds: List<Long>): Map<Long, Double> = throw NotImplementedError()
     override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
 }

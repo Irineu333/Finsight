@@ -12,6 +12,9 @@ import kotlin.time.Instant
 data class Invoice(
     val id: Long = 0,
     val creditCard: CreditCard,
+    // The ledger identity this invoice's legs are tagged with. Nullable only
+    // because v10 added the column to existing rows; every invoice has one.
+    val dimensionId: Long? = null,
     val openingMonth: YearMonth,
     val closingMonth: YearMonth,
     val dueMonth: YearMonth,

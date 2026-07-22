@@ -88,8 +88,8 @@ class ViewCategoryViewModelTest {
         override fun observeLedgerChanges(): Flow<Unit> = ledger
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun invoiceOwed(invoiceId: Long): Double = throw NotImplementedError()
-        override suspend fun invoiceFlows(invoiceId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
+        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
+        override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.InvoiceFlows = throw NotImplementedError()
         override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun categoryTotals(
@@ -98,9 +98,9 @@ class ViewCategoryViewModelTest {
             endDate: LocalDate,
             siblingAccountIds: List<Long>,
         ): Map<Long, Double> = throw NotImplementedError()
-        override suspend fun categoryTotalsForInvoices(
+        override suspend fun categoryTotalsForDimensions(
             categoryType: AccountType,
-            invoiceIds: List<Long>,
+            dimensionIds: List<Long>,
         ): Map<Long, Double> = throw NotImplementedError()
         override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
     }

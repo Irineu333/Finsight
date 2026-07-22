@@ -38,7 +38,7 @@ class MigrationSchemaEquivalenceTest {
         }
 
         val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-            .addMigrations(MIGRATION_7_9)
+            .addMigrations(MIGRATION_7_9, MIGRATION_9_10)
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

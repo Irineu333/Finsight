@@ -55,7 +55,7 @@ class TransactionRepositoryEntriesTest {
         accountRepository = FakeAccountRepository(accounts),
         transactionMapper = TransactionMapper(),
         recurringMapper = RecurringMapper(),
-        ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao()),
+        ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.categoryDao(), db.creditCardDao(), db.dimensionDao()),
     )
 
     @Test

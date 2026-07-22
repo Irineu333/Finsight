@@ -44,14 +44,14 @@ class CalculateReportCategorySpendingUseCase(
         )
     }
 
-    /** Invoice-scoped report: category totals across a set of card invoices. */
-    suspend fun forInvoices(
-        invoiceIds: List<Long>,
+    /** Sub-ledger-scoped report: category totals across a set of dimensions. */
+    suspend fun forDimensions(
+        dimensionIds: List<Long>,
         transactionType: TransactionType = TransactionType.EXPENSE,
     ): List<CategorySpending> {
-        if (invoiceIds.isEmpty()) return emptyList()
+        if (dimensionIds.isEmpty()) return emptyList()
         return build(
-            totals = entryRepository.categoryTotalsForInvoices(accountType(transactionType), invoiceIds),
+            totals = entryRepository.categoryTotalsForDimensions(accountType(transactionType), dimensionIds),
             transactionType = transactionType,
         )
     }

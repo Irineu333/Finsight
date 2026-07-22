@@ -7,6 +7,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.androidx.room.runtime)
             api(libs.androidx.sqlite.bundled)
+            api(projects.core.ledger)
             implementation(projects.core.model)
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)

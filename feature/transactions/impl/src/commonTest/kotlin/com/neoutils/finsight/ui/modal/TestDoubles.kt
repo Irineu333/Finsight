@@ -34,8 +34,7 @@ class FakeTransactionRepository : ITransactionRepository {
     override fun observeAllTransactions(): Flow<List<Transaction>> = throw NotImplementedError()
     override fun observeTransactionsBy(
         date: LocalDate?,
-        invoiceId: Long?,
-        creditCardId: Long?,
+        dimensionId: Long?,
         accountId: Long?,
     ): Flow<List<Transaction>> = throw NotImplementedError()
     override suspend fun getAllTransactions(): List<Transaction> = throw NotImplementedError()

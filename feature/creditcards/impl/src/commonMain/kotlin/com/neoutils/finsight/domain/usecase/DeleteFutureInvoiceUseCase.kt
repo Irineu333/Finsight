@@ -26,7 +26,7 @@ class DeleteFutureInvoiceUseCase(
         }
 
         transactionRepository.observeTransactionsBy(
-            invoiceId = invoiceId,
+            dimensionId = invoice.dimensionId,
         ).first().forEach { transaction ->
             transactionRepository.deleteTransactionById(transaction.id)
         }

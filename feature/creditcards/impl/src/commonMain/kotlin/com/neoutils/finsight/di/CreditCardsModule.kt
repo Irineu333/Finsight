@@ -42,7 +42,9 @@ val creditCardsModule = module {
     }
     single<IInvoiceRepository> {
         InvoiceRepository(
+            database = get(),
             dao = get(),
+            dimensionDao = get(),
             mapper = get(),
             creditCardRepository = get(),
         )
@@ -154,6 +156,7 @@ val creditCardsModule = module {
     viewModel {
         PayInvoiceViewModel(
             invoiceId = it.get(),
+            invoiceRepository = get(),
             payInvoicePaymentUseCase = get(),
             payInvoiceUseCase = get(),
             calculateInvoiceUseCase = get(),

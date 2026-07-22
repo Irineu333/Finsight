@@ -49,7 +49,7 @@ class CloseInvoiceUseCase(
             InvoiceException(InvoiceError.CannotCloseOutsideClosingMonth)
         }
 
-        val invoiceAmount = calculateInvoiceUseCase(invoiceId)
+        val invoiceAmount = calculateInvoiceUseCase(invoice)
 
         ensure(invoiceAmount >= 0) {
             InvoiceException(InvoiceError.NegativeBalance)

@@ -46,7 +46,7 @@ class EntryRepository(
         ),
         amount = entry.amount,
         currency = entry.currency,
-        invoiceId = entry.invoiceId,
+        dimensionId = entry.dimensionId,
     )
 
     override fun observeLedgerChanges(): Flow<Unit> = entryDao.observeEntryCount().map { }
@@ -84,13 +84,13 @@ class EntryRepository(
         return entryDao.entryCountInMonth(accountId, month.toString())
     }
 
-    override suspend fun invoiceOwed(invoiceId: Long): Double {
+    override suspend fun dimensionOwed(dimensionId: Long): Double {
         // Liability entries are stored negative (credit); owed reads positive.
-        return -entryDao.invoiceNaturalBalance(invoiceId) / CENTS_PER_UNIT
+        return -entryDao.dimensionNaturalBalance(dimensionId) / CENTS_PER_UNIT
     }
 
-    override suspend fun invoiceFlows(invoiceId: Long): InvoiceFlows {
-        val totals = entryDao.invoicePeriodTotals(invoiceId)
+    override suspend fun dimensionFlows(dimensionId: Long): InvoiceFlows {
+        val totals = entryDao.dimensionPeriodTotals(dimensionId)
         return InvoiceFlows(
             expense = totals.expense / CENTS_PER_UNIT,
             advancePayment = totals.advancePayment / CENTS_PER_UNIT,
@@ -122,13 +122,13 @@ class EntryRepository(
             .associate { it.accountId to it.total / CENTS_PER_UNIT }
     }
 
-    override suspend fun categoryTotalsForInvoices(
+    override suspend fun categoryTotalsForDimensions(
         categoryType: AccountType,
-        invoiceIds: List<Long>,
+        dimensionIds: List<Long>,
     ): Map<Long, Double> {
-        if (invoiceIds.isEmpty()) return emptyMap()
+        if (dimensionIds.isEmpty()) return emptyMap()
         return entryDao
-            .categoryTotalsForInvoices(categoryType.name, invoiceIds)
+            .categoryTotalsForDimensions(categoryType.name, dimensionIds)
             .associate { it.accountId to it.total / CENTS_PER_UNIT }
     }
 

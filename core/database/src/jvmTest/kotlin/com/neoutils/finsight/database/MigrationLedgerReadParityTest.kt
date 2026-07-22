@@ -36,11 +36,7 @@ class MigrationLedgerReadParityTest {
             connection.execSQL("PRAGMA user_version = 7")
         }
 
-        val database = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-            .addMigrations(MIGRATION_7_9)
-            .setDriver(BundledSQLiteDriver())
-            .setQueryCoroutineContext(Dispatchers.IO)
-            .build()
+        val database = openMigrated()
 
         val entryDao = database.entryDao()
         val accounts = database.accountDao().getAllLedgerAccounts()
@@ -55,7 +51,9 @@ class MigrationLedgerReadParityTest {
         assertEquals(-12000L, entryDao.netWorthCents())
 
         // Invoice owed, natural: purchase -10000 + payment +4000 = -6000 (60.00 owed).
-        assertEquals(-6000L, entryDao.invoiceNaturalBalance(1))
+        // Read through the invoice's dimension, which is what carries it since v10.
+        val invoiceDimensionId = database.invoiceDao().getAllInvoices().first { it.id == 1L }.dimensionId!!
+        assertEquals(-6000L, entryDao.dimensionNaturalBalance(invoiceDimensionId))
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
         assertEquals(8500L, entryDao.balanceOf(foodId))
@@ -69,24 +67,22 @@ class MigrationLedgerReadParityTest {
     }
 
     /**
-     * The parity harness itself, run over the v7 → v9 chain, where it must pass
-     * trivially: nothing has changed the mechanism yet, so the raw-SQL snapshot and
-     * the production reads are two views of the same schema. It is built here, ahead
-     * of the migration that will make it non-trivial, so that when v10 rewrites how
-     * an invoice and a category are computed, the assertion already exists and only
-     * the production side of it moves.
+     * The parity gate of v10, figure by figure and keyed by facade id.
+     *
+     * The "before" is raw SQL over the v9 schema, taken while `entries.invoiceId`
+     * still exists; the "after" is the production reads over v10, where the same
+     * invoice total comes from a dimension. Only the mechanism changed, so only the
+     * production side of the comparison moved — and the two must still agree on
+     * every account balance, every invoice owed, every category total and net worth.
      */
     @Test
-    fun `given a migrated ledger when compared figure by figure then the harness agrees`() = runTest {
-        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
-            buildV7Fixture(connection)
-            connection.execSQL("PRAGMA user_version = 7")
-        }
-
-        // Room opens lazily: the migration only runs on the first query.
-        openMigrated().apply { entryDao().getAll() }.close()
-
+    fun `given a v9 ledger when v10 rewrites the mechanism then every figure is unchanged`() = runTest {
         val expected = BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+            buildV7Fixture(connection)
+            // v9 by hand, so the snapshot can be taken before v10 removes the columns
+            // it is computed from.
+            MIGRATION_7_9.migrate(connection)
+            connection.execSQL("PRAGMA user_version = 9")
             connection.verifyLedgerBalanced(stage = "v9 snapshot")
             connection.readV9Figures()
         }
@@ -97,7 +93,7 @@ class MigrationLedgerReadParityTest {
     }
 
     private fun openMigrated(): AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
-        .addMigrations(MIGRATION_7_9)
+        .addMigrations(MIGRATION_7_9, MIGRATION_9_10)
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()

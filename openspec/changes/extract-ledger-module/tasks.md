@@ -31,9 +31,9 @@ um v11.
 
 ## 3. Anulações explícitas que hoje vêm de graça das FKs
 
-- [ ] 3.1 Fazer o caminho de remoção de parcelamento anular `transactions.installmentId`/`installmentNumber` na mesma transação (D12) — redundante enquanto a FK vive, o que torna a mudança aditiva
-- [ ] 3.2 Idem para recorrência: `transactions.recurringId`/`recurringCycle`
-- [ ] 3.3 Teste de característica: remover parcelamento ou recorrência não deixa referência pendurada, com e sem a FK
+- [x] 3.1 Fazer o caminho de remoção de parcelamento anular `transactions.installmentId`/`installmentNumber` na mesma transação (D12) — redundante enquanto a FK vive, o que torna a mudança aditiva
+- [x] 3.2 Idem para recorrência: `transactions.recurringId`/`recurringCycle`
+- [x] 3.3 Teste de característica: remover parcelamento ou recorrência não deixa referência pendurada, com e sem a FK
 
 ## 4. v10, primeira metade — dimensões e fatura
 

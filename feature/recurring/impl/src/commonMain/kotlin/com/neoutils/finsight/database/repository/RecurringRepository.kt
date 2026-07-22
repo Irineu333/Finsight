@@ -1,6 +1,10 @@
 package com.neoutils.finsight.database.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
+import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.database.dao.RecurringDao
+import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
@@ -13,7 +17,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 class RecurringRepository(
+    private val database: AppDatabase,
     private val dao: RecurringDao,
+    private val transactionDao: TransactionDao,
     private val mapper: RecurringMapper,
     private val categoryRepository: ICategoryRepository,
     private val accountRepository: IAccountRepository,
@@ -72,7 +78,17 @@ class RecurringRepository(
         dao.update(mapper.toEntity(recurring))
     }
 
+    /**
+     * Removing the recurring and detaching the transactions it generated are one unit
+     * of work: a transaction left naming a recurring that no longer exists would
+     * render as an occurrence of nothing (design D12).
+     */
     override suspend fun delete(recurring: Recurring) {
-        dao.delete(mapper.toEntity(recurring))
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                transactionDao.detachFromRecurring(recurring.id)
+                dao.delete(mapper.toEntity(recurring))
+            }
+        }
     }
 }

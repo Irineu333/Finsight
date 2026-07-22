@@ -28,7 +28,9 @@ import org.koin.dsl.module
 val recurringModule = module {
     single<IRecurringRepository> {
         RecurringRepository(
+            database = get(),
             dao = get(),
+            transactionDao = get(),
             mapper = get(),
             categoryRepository = get(),
             accountRepository = get(),

@@ -49,7 +49,9 @@ val creditCardsModule = module {
     }
     single<IInstallmentRepository> {
         InstallmentRepository(
+            database = get(),
             installmentDao = get(),
+            transactionDao = get(),
         )
     }
 

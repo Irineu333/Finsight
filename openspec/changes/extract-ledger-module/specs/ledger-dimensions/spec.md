@@ -46,6 +46,8 @@ Quando a fachada que originou uma dimensão deixa de existir, as entries que a r
 ### Requirement: Regra de pouso validada na escrita
 A fronteira de escrita SHALL validar que o `kind` da dimensão de cada perna é compatível com a natureza da conta daquela perna, e MUST NOT persistir uma transação que viole essa compatibilidade. A validação SHALL ocorrer no mesmo ponto único em que a invariante de soma zero é verificada.
 
+A compatibilidade SHALL ser propriedade do `kind` — o conjunto de naturezas de conta em que ele pode pousar, declarado uma única vez, no razão. Ela MUST NOT ser declarada por dimensão, por escrita ou pela feature que a emite, e a validação MUST NOT ramificar por `kind`: um mesmo predicado uniforme decide o pouso de qualquer dimensão.
+
 Essa validação existe porque uma dimensão pousada na perna errada não produz erro observável: as somas agrupadas por dimensão simplesmente ficam incorretas, em silêncio.
 
 #### Scenario: Dimensão na perna errada é rejeitada
@@ -55,3 +57,7 @@ Essa validação existe porque uma dimensão pousada na perna errada não produz
 #### Scenario: Dimensões corretas coexistem na mesma transação
 - **WHEN** uma compra no cartão é registrada com fatura e categoria
 - **THEN** a perna `LIABILITY` carrega a dimensão da fatura, a perna nominal carrega a dimensão da categoria, e a transação é persistida
+
+#### Scenario: A regra acompanha o kind, não a linha
+- **WHEN** duas dimensões do mesmo `kind` existem
+- **THEN** ambas aceitam exatamente as mesmas naturezas de conta, e nenhum caminho de escrita pode conceder a uma delas um pouso que a outra não teria

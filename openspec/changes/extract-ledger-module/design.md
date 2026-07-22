@@ -102,6 +102,47 @@ Isto é a metade mais valiosa da limpeza, e não um efeito colateral: é onde mo
 
 `ensureSystemAccount` (reconciliação) permanece no writer sem problema: `accounts` é tabela do razão.
 
+### D7 — `DimensionKind` é enum do razão; o nome não é o significado
+
+`Dimension.kind` é um `enum` declarado em `:core:ledger` — `DimensionKind` — persistido pelo nome. Cada entrada carrega um único dado: `landsOn: Set<AccountType>`, o conjunto de naturezas de conta em que uma dimensão daquele kind pode pousar (`INVOICE → {LIABILITY}`, `CATEGORY → {INCOME, EXPENSE}`).
+
+A objeção óbvia: o razão passa a enumerar nomes de fachada. A resposta é um re-escopo do princípio de D2: a opacidade protegida é **comportamental** — nenhuma query junta tabela de fachada, nenhum ramo de agregação depende do kind, e o writer valida com `account.type in kind.landsOn`, uniforme, sem `when` por kind. O que o enum contém é um rótulo e um conjunto de naturezas; `INVOICE` ali é um nome legível para humanos, não um conceito que o razão manipula. Precedente idêntico já existe no próprio razão: o SQL de `AccountDao` grava literais `'ASSET'` sem que isso faça o DAO saber o que é um ativo.
+
+Alternativas rejeitadas:
+
+- **`String` opaca** — o typo silencioso é exatamente a classe de defeito que o kind existe para matar (soma por dimensão errada, sem erro); perde a exaustividade do `when` e da validação; e a opacidade que preservaria é a textual, que D2 já declarou não ser o alvo.
+- **value class sobre `String`** — cerimônia de tipo sem exaustividade; o typo continua compilando.
+- **enum declarado fora do razão** (em `:core:model` ou registrado pelas features), com o razão guardando só o nome — o writer não validaria pouso sem receber a regra de fora, o que degenera na alternativa rejeitada em D8; e um tipo passaria a ter dois donos.
+- **nomes em vocabulário de razão** (`SUBLEDGER`/`ANALYTIC` em vez de `INVOICE`/`CATEGORY`) — opacidade textual perfeita ao custo de schema ilegível, e a legibilidade do schema é metade do motivo de o kind existir (D2).
+
+Custo aceito e registrado: uma fachada nova com dimensão exige uma linha nova no enum do razão. É o mesmo contrato que `:core:database` tem com as migrações (D1) — `:core:ledger` é a biblioteca contábil **deste** app (Context), não uma genérica.
+
+### D8 — A regra de pouso é invariante do tipo, dado do razão
+
+A regra de pouso mora no próprio `DimensionKind`, como `landsOn`. A feature escolhe o kind ao emitir a dimensão; ela **nunca** declara a regra. Uma regra, um dono, no razão — os consumidores a recebem pronta, no espírito do Derivation Rule.
+
+Rejeitada a declaração pela feature na emissão (a dimensão nascendo carregando as naturezas que aceita): a regra viraria estado por linha, não invariante do tipo — duas dimensões do mesmo kind poderiam aceitar naturezas diferentes, e um bug na feature emitiria a regra errada, reabrindo um nível acima o mesmo defeito silencioso que a validação existe para matar. Exigiria ainda uma coluna extra (conjunto serializado, sem FK possível) para comprar uma opacidade que D7 já estabeleceu não ser o alvo.
+
+Rejeitado o registro em runtime (features registram kind → regra na inicialização): troca falha de compilação por falha de runtime, adiciona ordem de inicialização como preocupação, e é exatamente o tipo de abstração que o projeto se recusa a pagar (CLAUDE.md: não aumentar complexidade vem antes de não duplicar).
+
+D7 e D8 são uma decisão só vista de dois lados: o enum é o *portador* da regra, e é isso que torna a validação de pouso exaustiva, uniforme e sem ramo por kind.
+
+### D9 — `finsight.room.library`: convenção Room compartilhada, e o banco de verificação do razão
+
+`:core:ledger` não reusa `finsight.kmp.library` puro nem ganha convenção exclusiva: nasce **`finsight.room.library`** — `configureKotlinMultiplatform()` + plugins `ksp`/`room` + `schemaDirectory` + o `room-compiler` em cada configuração KSP por target — aplicado também a `:core:database`.
+
+Verificado em `build-logic`: `finsight.kmp.library` é só `configureKotlinMultiplatform()` (`KmpLibraryConventionPlugin.kt:6-10`), sem Compose; Compose vive apenas em `configureCompose()`, aplicado por `finsight.compose.library` — que portanto traria Compose indevidamente a um módulo de domínio+dados. Todo o encargo Room de `core/database/build.gradle.kts` são os dois plugins, o bloco `room {}` e as seis linhas `add("ksp<Target>", room.compiler)` (linhas 22–33). Esse bloco por target é justamente a parte com histórico real de quebra em upgrade de Kotlin/KSP, e sem o plugin passaria a existir idêntico em dois módulos, a manter em sincronia a cada target novo. O projeto impõe regra por plugin, não por disciplina (D1); o plugin nasce com dois consumidores e devolve ambos os `build.gradle.kts` à norma de ~5 linhas + dependências.
+
+Junto vem um achado que refina D1: a garantia "query do razão não compila se referenciar fachada" **não** vem de graça da visibilidade Kotlin. Room valida a string SQL de um `@Query` no processamento do `@Database` que o inclui — e o `AppDatabase` enxerga as tabelas de fachada, então um `JOIN invoices` escrito no `EntryDao` validaria lá sem erro. A garantia real vem de `:core:ledger` declarar um **`LedgerDatabase` interno** listando só as entities do razão: o KSP do próprio módulo valida cada `@Query` contra um schema em que `invoices`/`categories` não existem, e a referência espúria falha na compilação do razão. O mesmo `LedgerDatabase` é o banco dos testes de query que migram para o módulo. (Refinamento, não contradição: a visibilidade Kotlin bloqueia o import da entity; o `LedgerDatabase` bloqueia o nome da tabela dentro da string SQL.)
+
+Rejeitado reuso + bloco Room copiado no `build.gradle.kts` do módulo: duplicaria a única parte da configuração com custo de manutenção real. Rejeitado um plugin exclusivo `finsight.ledger`: teria um consumidor e conteúdo idêntico ao que `:core:database` já precisa — simetria estética, não custo real.
+
+### D10 — As contas nominais são invisíveis por construção — constatação, não mecanismo novo
+
+As duas contas nominais são **invisíveis ao usuário**, e isso é constatação, não decisão que exija código: a invisibilidade já é consequência dos predicados existentes. Verificado: toda listagem e seletor de conta sai de `WHERE type = 'ASSET'` (`AccountDao.kt:17-31,44-48,63`), com comentário explícito de que linhas não-ASSET "must not leak into the accounts facade" (`AccountDao.kt:13-16`); o patrimônio líquido soma apenas `ASSET`/`LIABILITY` (`netWorthCents`, `EntryDao.kt:238-243`); a UI de transação renderiza só as pernas monetárias (`Transaction.monetaryEntries`, `Transaction.kt:37`; `TransactionUiMapper.kt:23`); os escopos de relatório são contas `ASSET` ou a `LIABILITY` do cartão (`reportStats`, `EntryDao.kt:280-311`). A conta de reconciliação nunca foi escondida por nome nem por flag "de sistema" — ela é invisível porque é `EQUITY` e nenhum predicado de UI alcança contas não-monetárias. As nominais (`INCOME`/`EXPENSE`) caem nos mesmos predicados sem uma linha nova.
+
+Consequências registradas: os nomes das nominais são chaves de lookup em `SystemAccount` (o padrão de `RECONCILIATION`, `SystemAccount.kt:10-14`), jamais renderizados; o rótulo que o usuário vê vem da fachada de categoria, e "sem categoria" vem de `dimensionId = NULL` via string de recurso — nunca do nome de conta. Rejeitada a alternativa de exibi-las (como "Despesas"/"Receitas" navegáveis): criaria um terceiro tipo de item em listas que hoje só conhecem contas e cartões, sem caso de uso que o pague — e nada impede promovê-las depois, porque é só predicado de leitura.
+
 ## Risks / Trade-offs
 
 **A migração reescreve história contábil e é irreversível na prática.** Colapsar N contas de categoria em duas nominais reescreve o `accountId` de toda perna nominal já gravada.
@@ -144,7 +185,4 @@ Rollback: não há caminho automático de v10 → v9. A prevenção é o par de 
 
 ## Open Questions
 
-- O `kind` da dimensão é um `enum` do razão ou uma `String` opaca? Um `enum` dá exaustividade ao writer na validação de pouso, mas obriga o razão a enumerar os tipos de fachada existentes — voltando a saber o que é uma fatura. Uma `String` mantém a opacidade do domínio mas perde a exaustividade.
-- A regra de pouso ("qual `kind` pode pousar em qual perna") é dado do razão ou é declarada pela feature ao criar a dimensão?
-- `:core:ledger` precisa de convention plugin próprio em `build-logic`, ou reusa `finsight.kmp.library` acrescido de Room?
-- As duas contas nominais recebem nome exibível ao usuário, ou tornam-se invisíveis na UI como a de reconciliação?
+Nenhuma. As quatro questões que esta seção registrava foram resolvidas em D7 (`DimensionKind` como enum do razão), D8 (regra de pouso como invariante do tipo), D9 (`finsight.room.library` + `LedgerDatabase` de verificação) e D10 (contas nominais invisíveis por construção).

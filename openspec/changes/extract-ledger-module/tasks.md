@@ -1,23 +1,25 @@
 ## 1. Resolver as questões abertas do design
 
-- [ ] 1.1 Decidir se `Dimension.kind` é `enum` do razão ou `String` opaca, e registrar a decisão em `design.md` com a justificativa (exaustividade na validação de pouso vs. opacidade do domínio)
-- [ ] 1.2 Decidir se a regra de pouso (`kind` × natureza da conta) é dado do razão ou é declarada pela feature ao emitir a dimensão, e registrar em `design.md`
-- [ ] 1.3 Decidir se `:core:ledger` recebe convention plugin próprio em `build-logic` ou reusa `finsight.kmp.library` acrescido de Room, e registrar em `design.md`
-- [ ] 1.4 Decidir se as duas contas nominais são exibíveis ao usuário ou invisíveis como a de reconciliação, e registrar em `design.md`
+- [x] 1.1 Decidido: `Dimension.kind` é o enum `DimensionKind` de `:core:ledger`, persistido pelo nome, cujo único dado é a regra de pouso (`landsOn: Set<AccountType>`) — a opacidade protegida é comportamental, não textual (`design.md`, D7)
+- [x] 1.2 Decidido: a regra de pouso é dado do razão e invariante do tipo — propriedade da entrada do enum, nunca declarada pela feature ao emitir a dimensão nem estado por linha (`design.md`, D8)
+- [x] 1.3 Decidido: nasce o convention plugin `finsight.room.library` (KMP + Room + KSP por target), aplicado a `:core:ledger` e `:core:database`; a garantia de compilação de D1 exige o `LedgerDatabase` interno de verificação em `:core:ledger` (`design.md`, D9)
+- [x] 1.4 Constatado e decidido: as duas contas nominais são invisíveis por construção — todo predicado de UI já filtra `type = 'ASSET'`/`isMonetary`, como já acontece com a de reconciliação; seus nomes são chaves em `SystemAccount`, jamais renderizados (`design.md`, D10)
 
 ## 2. Criar `:core:ledger` e mover o razão sem mudar comportamento
 
-- [ ] 2.1 Criar o módulo `:core:ledger` (`settings.gradle.kts` + `build.gradle.kts`), dependendo apenas de Room, `:core:model` e das libs de base — sem nenhum `feature:*` e sem `:core:database`
-- [ ] 2.2 Mover `AccountEntity`, `TransactionEntity`, `EntryEntity`, `AccountDao`, `EntryDao` e `TransactionDao` de `:core:database` para `:core:ledger`
-- [ ] 2.3 Fazer `:core:database` depender de `:core:ledger` e montar o `AppDatabase` com as entities importadas; confirmar que `:core:ledger` não referencia `:core:database`
-- [ ] 2.4 Mover `Account`, `AccountType`, `Entry`, `Transaction`, `SystemAccount`, `Currency`/`BASE_CURRENCY` e `extension/Ledger.kt` de `:core:model` para `:core:ledger`
-- [ ] 2.5 Mover `LedgerError` e as exceções do razão de `:core:model` para `:core:ledger`
-- [ ] 2.6 Mover `IEntryRepository`, `ITransactionRepository` e `CalculateBalanceUseCase` de `feature:transactions:api` para `:core:ledger`
-- [ ] 2.7 Mover `EntryRepository`, `LedgerEntryWriter` e `TransactionRepository` de `feature:transactions:impl` para `:core:ledger`
-- [ ] 2.8 Mover os testes de query do razão (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os testes do writer/repositórios para `:core:ledger`
-- [ ] 2.9 Expor o módulo Koin do razão em `:core:ledger` e agregá-lo em `:app:shared`, removendo essas ligações de `TransactionsModule`
-- [ ] 2.10 Exportar `:core:ledger` no framework iOS em `app/ios/build.gradle.kts`
-- [ ] 2.11 Rodar `./gradlew allTests` e confirmar verde sem nenhuma mudança de comportamento
+- [ ] 2.1 Criar o convention plugin `finsight.room.library` em `build-logic` (`configureKotlinMultiplatform()` + plugins `ksp`/`room` + `schemaDirectory` + `room-compiler` em cada configuração KSP por target) e migrar `:core:database` para ele, sem mudança de comportamento
+- [ ] 2.2 Criar o módulo `:core:ledger` (`settings.gradle.kts` + `build.gradle.kts`) sob `finsight.room.library`, dependendo apenas de Room, `:core:model` e das libs de base — sem nenhum `feature:*` e sem `:core:database`
+- [ ] 2.3 Mover `AccountEntity`, `TransactionEntity`, `EntryEntity`, `AccountDao`, `EntryDao` e `TransactionDao` de `:core:database` para `:core:ledger`
+- [ ] 2.4 Declarar o `LedgerDatabase` interno de verificação em `:core:ledger`, listando só as entities do razão — é ele que faz um `@Query` referenciando tabela de fachada falhar na compilação do próprio módulo (D9), e é o banco dos testes de query movidos
+- [ ] 2.5 Fazer `:core:database` depender de `:core:ledger` e montar o `AppDatabase` com as entities importadas; confirmar que `:core:ledger` não referencia `:core:database`
+- [ ] 2.6 Mover `Account`, `AccountType`, `Entry`, `Transaction`, `SystemAccount`, `Currency`/`BASE_CURRENCY` e `extension/Ledger.kt` de `:core:model` para `:core:ledger`
+- [ ] 2.7 Mover `LedgerError` e as exceções do razão de `:core:model` para `:core:ledger`
+- [ ] 2.8 Mover `IEntryRepository`, `ITransactionRepository` e `CalculateBalanceUseCase` de `feature:transactions:api` para `:core:ledger`
+- [ ] 2.9 Mover `EntryRepository`, `LedgerEntryWriter` e `TransactionRepository` de `feature:transactions:impl` para `:core:ledger`
+- [ ] 2.10 Mover os testes de query do razão (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os testes do writer/repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`
+- [ ] 2.11 Expor o módulo Koin do razão em `:core:ledger` e agregá-lo em `:app:shared`, removendo essas ligações de `TransactionsModule`
+- [ ] 2.12 Exportar `:core:ledger` no framework iOS em `app/ios/build.gradle.kts`
+- [ ] 2.13 Rodar `./gradlew allTests` e confirmar verde sem nenhuma mudança de comportamento
 
 ## 3. Trocar as features de dependência
 
@@ -37,10 +39,10 @@
 
 ## 5. Dimensões e migração da fatura (v10, primeira metade)
 
-- [ ] 5.1 Criar a entity `dimensions(id, kind)` e seu DAO em `:core:ledger`
+- [ ] 5.1 Criar a entity `dimensions(id, kind)` e seu DAO em `:core:ledger`, com o enum `DimensionKind(val landsOn: Set<AccountType>)` persistido pelo nome (D7/D8) e o type converter correspondente
 - [ ] 5.2 Adicionar `entries.dimensionId` (FK → `dimensions`, `ON DELETE SET NULL`) e o índice correspondente
 - [ ] 5.3 Adicionar `invoices.dimensionId` e emitir uma dimensão `INVOICE` por fatura existente
-- [ ] 5.4 Implementar no writer a validação de pouso (`kind` × natureza da conta), com erro tipado, no mesmo ponto da validação de soma zero
+- [ ] 5.4 Implementar no writer a validação de pouso via `account.type in kind.landsOn` — uniforme, sem `when` por kind — com erro tipado, no mesmo ponto da validação de soma zero
 - [ ] 5.5 Escrever o helper de verificação de `Σ = 0` por transação e por moeda, usável dentro da migração e nos testes
 - [ ] 5.6 Migrar `entries.invoiceId` → `dimensionId` via `invoices.dimensionId` e remover a coluna `invoiceId`
 - [ ] 5.7 Converter `invoiceNaturalBalance`, `invoicePeriodTotals` e `categoryTotalsForInvoices` para agregar por dimensão, renomeando-as para vocabulário de razão
@@ -54,7 +56,7 @@
 
 ## 7. Categoria como dimensão (v10, segunda metade)
 
-- [ ] 7.1 Semear as duas contas nominais (`EXPENSE` e `INCOME`) e garantir sua existência sob demanda
+- [ ] 7.1 Semear as duas contas nominais (`EXPENSE` e `INCOME`) com nomes-chave em `SystemAccount` e garantir sua existência sob demanda — invisíveis por construção (D10): nenhuma listagem sai de `WHERE type = 'ASSET'` e o patrimônio líquido soma só `ASSET`/`LIABILITY`, então nenhum predicado de UI muda
 - [ ] 7.2 Adicionar `categories.dimensionId` e emitir uma dimensão `CATEGORY` por categoria existente
 - [ ] 7.3 Adicionar `categories.isArchived`, preenchendo a partir de `accounts.isArchived` pelo `accountId` antigo
 - [ ] 7.4 Reescrever cada perna cujo `accountId` é conta de categoria: `accountId` ← nominal do tipo correspondente, `dimensionId` ← dimensão da categoria

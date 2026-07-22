@@ -127,6 +127,9 @@ compiler, not by discipline (see below).
 
 **Documented exceptions, both deliberate:** `Category.type` is primary state, not derived — "this is an expense category" is the user's declaration and nothing in the ledger produces it. And `transactions` retains the installment/recurring columns *without* foreign keys; they are grouping metadata, no ledger read consults them, and each facade's removal path nullifies them explicitly.
 
+> Normative reference: **`core/ledger/README.md`** — the full vocabulary, the read and
+> write surfaces with examples, the two ports, and what is derived rather than persisted.
+
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.
 - Prefer simplicity to abstractions that increase complexity (overengineering), prioritizing:

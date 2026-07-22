@@ -98,6 +98,9 @@ portas que o razão declara — `DimensionWriteGuard` (recusar) e `TransactionRe
 (corrigir-se depois de uma remoção) — e registra no seu módulo Koin. O razão conhece
 dimensões, nunca o que elas representam.
 
+> Referência normativa do razão: **`core/ledger/README.md`** — vocabulário, superfície de
+> leitura e de escrita com exemplos, as duas portas e o que é derivado em vez de persistido.
+
 > A regra "api não depende de api" descarta deliberadamente a opção de modelos nas apis
 > referenciando-se entre si. Restrição intencional.
 

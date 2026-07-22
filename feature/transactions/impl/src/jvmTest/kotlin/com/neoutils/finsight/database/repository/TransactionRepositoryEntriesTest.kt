@@ -49,7 +49,7 @@ class TransactionRepositoryEntriesTest {
         database = db,
         transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
-        accountRepository = FakeAccountRepository(accounts),
+        accountDao = db.accountDao(),
         writeGuard = DimensionWriteGuard.None,
         removalHook = TransactionRemovalHook.None,
         transactionMapper = TransactionMapper(),

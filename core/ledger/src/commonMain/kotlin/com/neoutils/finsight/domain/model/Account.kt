@@ -2,8 +2,6 @@
 
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.domain.error.AccountError
-import com.neoutils.finsight.domain.exception.AccountException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -21,8 +19,10 @@ data class Account(
     val isArchived: Boolean = false,
 ) {
     init {
-        if (name.isEmpty()) {
-            throw AccountException(AccountError.EMPTY_NAME)
-        }
+        // A last-resort guard, not the validation the user sees: an empty name is
+        // refused by `ValidateAccountNameUseCase` with a typed error long before a
+        // row is built. Nothing catches this — reaching it is a defect — so it says
+        // so in the plainest way rather than borrowing a facade's error vocabulary.
+        require(name.isNotEmpty()) { "An account must have a name." }
     }
 }

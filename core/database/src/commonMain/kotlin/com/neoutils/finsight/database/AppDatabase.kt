@@ -47,7 +47,7 @@ import com.neoutils.finsight.database.entity.TransactionEntity
     version = 10,
     exportSchema = true
 )
-@TypeConverters(Converters::class)
+@TypeConverters(Converters::class, LedgerConverters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao

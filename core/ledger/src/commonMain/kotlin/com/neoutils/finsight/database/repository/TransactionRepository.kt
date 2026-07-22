@@ -6,10 +6,12 @@ import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import androidx.room.RoomDatabase
 import com.neoutils.finsight.database.dao.TransactionDao
+import com.neoutils.finsight.database.dao.AccountDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
+import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.extension.closedLegBlockingChange
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
@@ -24,7 +26,6 @@ import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +41,7 @@ class TransactionRepository(
     private val database: RoomDatabase,
     private val transactionDao: TransactionDao,
     private val entryDao: EntryDao,
-    private val accountRepository: IAccountRepository,
+    private val accountDao: AccountDao,
     private val writeGuard: DimensionWriteGuard,
     private val removalHook: TransactionRemovalHook,
     private val transactionMapper: TransactionMapper,
@@ -49,7 +50,16 @@ class TransactionRepository(
 
     // The whole chart of accounts, not the ASSET facade: an entry whose account is
     // missing from this map is dropped, and a card purchase has no asset leg.
-    private val accountsFlow = accountRepository.observeAllLedgerAccounts().map { it.associateBy { account -> account.id } }
+    private val accountsFlow = accountDao.observeAllLedgerAccounts()
+        .map { accounts -> accounts.associate { it.id to it.toDomain() } }
+
+    /**
+     * The whole chart of accounts, not a facade's view of it: an entry whose
+     * account is missing from this map is dropped, and a card purchase has no
+     * asset leg at all.
+     */
+    private suspend fun ledgerAccounts(): Map<Long, Account> =
+        accountDao.getAllLedgerAccounts().associate { it.id to it.toDomain() }
 
     private fun List<EntryEntity>.toDomainEntries(accounts: Map<Long, Account>): List<Entry> =
         mapNotNull { entity ->
@@ -122,13 +132,13 @@ class TransactionRepository(
         )
 
     override suspend fun getAllTransactions(): List<Transaction> {
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val accounts = ledgerAccounts()
         return transactionDao.getAll().mapNotNull { it.toDomain(accounts) }
     }
 
     override suspend fun getTransactionById(id: Long): Transaction? {
         val entity = transactionDao.getById(id) ?: return null
-        return entity.toDomain(accountRepository.getAllLedgerAccounts().associateBy { it.id })
+        return entity.toDomain(ledgerAccounts())
     }
 
     /**
@@ -170,7 +180,7 @@ class TransactionRepository(
      * movement strands nothing.
      */
     private suspend fun ensureClosedAccountsKeepTheirBalance(id: Long) {
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val accounts = ledgerAccounts()
         val blocking = entryDao.getByTransactionId(id)
             .toDomainEntries(accounts)
             .closedLegBlockingChange() ?: return
@@ -195,7 +205,7 @@ class TransactionRepository(
      */
     private suspend fun List<TransactionLeg>.settlesALiability(): Boolean {
         if (size < 2) return false
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val accounts = ledgerAccounts()
         val types = mapNotNull { accounts[it.accountId]?.type }
         return AccountType.ASSET in types && AccountType.LIABILITY in types
     }
@@ -237,7 +247,7 @@ class TransactionRepository(
             }
         }
 
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val accounts = ledgerAccounts()
         return ids.mapNotNull { transactionDao.getById(it)?.toDomain(accounts) }
     }
 
@@ -300,7 +310,7 @@ class TransactionRepository(
 
         // Read whole before deleting: the entries go with the row (CASCADE), and a
         // facade correcting itself may need what they said.
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        val accounts = ledgerAccounts()
         val removed = transactionDao.getById(id)?.toDomain(accounts)
 
         transactionDao.deleteById(id)

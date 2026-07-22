@@ -1,15 +1,6 @@
 package com.neoutils.finsight.domain.error
 
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.ledger_error_closed_account
-import com.neoutils.finsight.resources.ledger_error_closed_credit_card
-import com.neoutils.finsight.resources.ledger_error_closed_invoice
-import com.neoutils.finsight.resources.ledger_error_closed_removal_account
-import com.neoutils.finsight.resources.ledger_error_closed_removal_credit_card
-import com.neoutils.finsight.resources.ledger_error_paid_invoice
-import com.neoutils.finsight.resources.ledger_error_unbalanced
-import com.neoutils.finsight.util.UiText
 
 sealed class LedgerError(val message: String) {
     data object Unbalanced : LedgerError("Transaction entries must sum to zero for every currency.")
@@ -93,19 +84,3 @@ class InvoiceLockedException(val error: LedgerError) : Exception(error.message)
 
 /** Raised at the write boundary when an account is closed to new movement. */
 class ClosedAccountException(val error: LedgerError) : Exception(error.message)
-
-fun LedgerError.toUiText() = when (this) {
-    LedgerError.Unbalanced -> UiText.Res(Res.string.ledger_error_unbalanced)
-    LedgerError.MisplacedDimension -> UiText.Res(Res.string.ledger_error_unbalanced)
-    LedgerError.PaidInvoice -> UiText.Res(Res.string.ledger_error_paid_invoice)
-    LedgerError.ClosedInvoice -> UiText.Res(Res.string.ledger_error_closed_invoice)
-    is LedgerError.ClosedAccount -> when (facade) {
-        ClosedFacade.ACCOUNT -> UiText.Res(Res.string.ledger_error_closed_account)
-        ClosedFacade.CREDIT_CARD -> UiText.Res(Res.string.ledger_error_closed_credit_card)
-    }
-
-    is LedgerError.ClosedAccountRemoval -> when (facade) {
-        ClosedFacade.ACCOUNT -> UiText.Res(Res.string.ledger_error_closed_removal_account)
-        ClosedFacade.CREDIT_CARD -> UiText.Res(Res.string.ledger_error_closed_removal_credit_card)
-    }
-}

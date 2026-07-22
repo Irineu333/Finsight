@@ -132,7 +132,7 @@ class InvoiceWriteGuardTest {
             database = db,
             transactionDao = db.transactionDao(),
             entryDao = db.entryDao(),
-            accountRepository = LedgerAccountRepository(db),
+            accountDao = db.accountDao(),
             writeGuard = StatusWriteGuard(invoice(status)),
             removalHook = TransactionRemovalHook.None,
             transactionMapper = TransactionMapper(),

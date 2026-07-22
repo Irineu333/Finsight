@@ -3,11 +3,14 @@
 package com.neoutils.finsight.database
 
 import androidx.room.TypeConverter
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+/**
+ * The conversions the facade tables need. A transaction's date lives in
+ * [LedgerConverters], with the ledger — `AppDatabase` declares both.
+ */
 class Converters {
 
     @TypeConverter
@@ -18,16 +21,6 @@ class Converters {
     @TypeConverter
     fun toInstant(timestamp: Long): Instant {
         return Instant.fromEpochMilliseconds(timestamp)
-    }
-
-    @TypeConverter
-    fun fromLocalDate(date: LocalDate): String {
-        return date.toString()
-    }
-
-    @TypeConverter
-    fun toLocalDate(dateString: String): LocalDate {
-        return LocalDate.parse(dateString)
     }
 
     @TypeConverter

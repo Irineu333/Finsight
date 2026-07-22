@@ -1,14 +1,7 @@
 package com.neoutils.finsight.di
 
-import com.neoutils.finsight.database.mapper.TransactionMapper
-import com.neoutils.finsight.database.repository.EntryRepository
-import com.neoutils.finsight.database.repository.LedgerEntryWriter
-import com.neoutils.finsight.database.repository.TransactionRepository
-import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
@@ -26,27 +19,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val transactionsModule = module {
-    single<ITransactionRepository> {
-        TransactionRepository(
-            database = get(),
-            transactionDao = get(),
-            entryDao = get(),
-            accountRepository = get(),
-            writeGuard = get(),
-            removalHook = get(),
-            transactionMapper = get(),
-            ledgerEntryWriter = get(),
-        )
-    }
-    single<IEntryRepository> { EntryRepository(entryDao = get()) }
-    factory {
-        LedgerEntryWriter(
-            entryDao = get(),
-            accountDao = get(),
-            dimensionDao = get(),
-        )
-    }
-    factory { TransactionMapper() }
     factory<TransactionFacadeResolver> {
         LedgerTransactionFacadeResolver(
             categoryRepository = get(),
@@ -59,7 +31,6 @@ val transactionsModule = module {
     factory<DeleteTransactionUseCase> { DeleteTransactionUseCaseImpl(transactionRepository = get()) }
 
     factory { CalculateTransactionStatsUseCase() }
-    factory { CalculateBalanceUseCase(entryRepository = get()) }
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),

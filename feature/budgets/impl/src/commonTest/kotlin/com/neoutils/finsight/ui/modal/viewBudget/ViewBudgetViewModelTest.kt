@@ -145,8 +145,7 @@ class ViewBudgetViewModelTest {
         budgetRepository = budgetRepository,
         transactionRepository = FakeTransactionRepository(),
         recurringRepository = FakeRecurringRepository(),
-        entryRepository = FakeEntryRepository(),
-        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(),
+        calculateBudgetProgressUseCase = CalculateBudgetProgressUseCase(FakeEntryRepository()),
         crashlytics = crashlytics,
     )
 

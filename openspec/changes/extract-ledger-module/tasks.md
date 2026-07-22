@@ -101,9 +101,9 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 
 ## 9. Trocar as features de dependência
 
-- [ ] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
-- [ ] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
-- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types
+- [x] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
+- [x] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
+- [x] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types
 
 ## 10. Verificação final
 

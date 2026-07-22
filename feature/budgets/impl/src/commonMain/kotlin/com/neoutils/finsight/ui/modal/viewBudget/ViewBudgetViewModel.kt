@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
@@ -27,7 +25,6 @@ class ViewBudgetViewModel(
     budgetRepository: IBudgetRepository,
     transactionRepository: ITransactionRepository,
     recurringRepository: IRecurringRepository,
-    private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -41,13 +38,8 @@ class ViewBudgetViewModel(
         recurringRepository.observeAllRecurring(),
     ) { budgets, transactions, recurringList ->
         val month = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth
-        val categoryBalances = entryRepository.dimensionBalancesInMonth(
-            month = month,
-            dimensionIds = budgets.flatMap { budget -> budget.categories.map { it.dimensionId } },
-        )
         calculateBudgetProgressUseCase(
             budgets = budgets,
-            categoryBalances = categoryBalances,
             recurringList = recurringList,
             transactions = transactions,
             month = month,

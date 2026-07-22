@@ -5,6 +5,10 @@ import com.neoutils.finsight.database.entity.BudgetCategoryEntity
 import com.neoutils.finsight.database.entity.BudgetEntity
 import com.neoutils.finsight.database.mapper.BudgetMapper
 import com.neoutils.finsight.domain.model.Category
+import kotlinx.datetime.YearMonth
+import kotlinx.datetime.LocalDate
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -30,15 +34,16 @@ import kotlin.test.assertEquals
 class BudgetClosedCategoryTest {
 
     private val mapper = BudgetMapper()
-    private val useCase = CalculateBudgetProgressUseCase()
+    private fun useCase(balances: Map<Long, Double>) =
+        CalculateBudgetProgressUseCase(MonthBalances(balances))
 
-    private fun category(id: Long, accountId: Long) = Category(
+    private fun category(id: Long, dimensionId: Long) = Category(
         id = id, name = "Cat$id", icon = CategoryLazyIcon("shopping"),
-        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = accountId,
+        type = Category.Type.EXPENSE, createdAt = 0L, dimensionId = dimensionId,
     )
 
-    private val food = category(id = 1, accountId = 10)
-    private val transport = category(id = 2, accountId = 11)
+    private val food = category(id = 1, dimensionId = 10)
+    private val transport = category(id = 2, dimensionId = 11)
 
     private fun budgetEntity(id: Long) = BudgetEntity(
         id = id, iconCategoryId = 0, iconKey = "shopping", title = "Budget $id",
@@ -119,9 +124,8 @@ class BudgetClosedCategoryTest {
         assertEquals(listOf(food, transport), budget.categories)
 
         // Both accounts carry entries; the archived category spends like any other.
-        val progress = useCase(
+        val progress = useCase(mapOf(10L to 30.0, 11L to 70.0))(
             budgets = listOf(budget),
-            categoryBalances = mapOf(10L to 30.0, 11L to 70.0),
         ).single()
 
         assertEquals(100.0, progress.spent)
@@ -140,9 +144,8 @@ class BudgetClosedCategoryTest {
 
         assertEquals(listOf(food), budget.categories)
 
-        val progress = useCase(
+        val progress = useCase(mapOf(10L to 30.0))(
             budgets = listOf(budget),
-            categoryBalances = mapOf(10L to 30.0),
         ).single()
 
         assertEquals(30.0, progress.spent)
@@ -188,4 +191,39 @@ class BudgetClosedCategoryTest {
         // CASCADE destroyed the whole budget when the listed category was deleted.
         assertEquals(budgetEntity(id = 1), mapper.toEntity(budget))
     }
+}
+
+/** The one ledger read the budget use case makes; anything else is out of scope. */
+private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRepository {
+    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double =
+        balances[dimensionId] ?: 0.0
+
+    override suspend fun getEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
+    override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
+    override fun observeLedgerChanges() = throw NotImplementedError()
+    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?) = throw NotImplementedError()
+    override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
+    override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
+    override suspend fun balance(accountId: Long) = throw NotImplementedError()
+    override suspend fun accountFlows(month: YearMonth, accountId: Long) = throw NotImplementedError()
+    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
+    override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
+    override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
+    override suspend fun cardMonthFlows(month: YearMonth) = throw NotImplementedError()
+    override suspend fun netWorth() = throw NotImplementedError()
+    override suspend fun totalsByDimension(
+        nominalType: AccountType,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        siblingAccountIds: List<Long>,
+    ) = throw NotImplementedError()
+    override suspend fun totalsByDimensionInScope(
+        nominalType: AccountType,
+        scopeDimensionIds: List<Long>,
+    ) = throw NotImplementedError()
+    override suspend fun reportStats(
+        scopeAccountIds: List<Long>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ) = throw NotImplementedError()
 }

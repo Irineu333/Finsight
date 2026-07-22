@@ -5,10 +5,8 @@ package com.neoutils.finsight.ui.screen.budgets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.repository.IBudgetRepository
-import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
-import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +21,6 @@ class BudgetsViewModel(
     private val budgetRepository: IBudgetRepository,
     private val transactionRepository: ITransactionRepository,
     private val recurringRepository: IRecurringRepository,
-    private val entryRepository: IEntryRepository,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
 ) : ViewModel() {
 
@@ -35,13 +32,8 @@ class BudgetsViewModel(
         recurringRepository.observeAllRecurring(),
         selectedMonth,
     ) { budgets, transactions, recurringList, selectedMonth ->
-        val categoryBalances = entryRepository.dimensionBalancesInMonth(
-            month = selectedMonth,
-            dimensionIds = budgets.flatMap { budget -> budget.categories.map { it.dimensionId } },
-        )
         val budgetProgress = calculateBudgetProgressUseCase(
             budgets = budgets,
-            categoryBalances = categoryBalances,
             recurringList = recurringList,
             transactions = transactions,
             month = selectedMonth,

@@ -5,31 +5,43 @@ import com.neoutils.finsight.domain.model.BudgetProgress
 import com.neoutils.finsight.domain.model.LimitType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.dimensionBalancesInMonth
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonth
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 
-class CalculateBudgetProgressUseCase {
+/**
+ * How much of each budget has been spent, and out of how much.
+ *
+ * It reads the ledger itself. It used to be handed `categoryBalances` already
+ * computed, because an `api` may not depend on another feature's repository — but
+ * `IEntryRepository` is a *core* now, so the rule that forced the number to be
+ * computed one layer up no longer applies, and three callers stop each gathering
+ * the same map before asking the same question.
+ */
+class CalculateBudgetProgressUseCase(
+    private val entryRepository: IEntryRepository,
+) {
     /**
-     * [categoryBalances] maps a category's dimension id to its `Σ entries` in the
-     * selected month (debit-positive, so an expense already reads as +spent).
-     * The caller reads it from the ledger — this use case lives in the feature `api`
-     * and MUST NOT depend on another feature's repository (star topology), so the
-     * ledger read happens in the `impl` that owns the `IEntryRepository` dependency.
-     *
-     * [month] is the month being looked at, the same one [categoryBalances] was read for:
-     * a `PERCENTAGE` limit is based on the recurring confirmed *in that month*, not in the
-     * current one, so browsing a past month must not consult today's confirmation.
+     * [month] is the month being looked at: a `PERCENTAGE` limit is based on the
+     * recurring confirmed *in that month*, not in the current one, so browsing a
+     * past month must not consult today's confirmation.
      */
-    operator fun invoke(
+    suspend operator fun invoke(
         budgets: List<Budget>,
-        categoryBalances: Map<Long, Double>,
         recurringList: List<Recurring> = emptyList(),
         transactions: List<Transaction> = emptyList(),
         month: YearMonth = Clock.System.todayIn(TimeZone.currentSystemDefault()).yearMonth,
     ): List<BudgetProgress> {
+        // Σ entries carrying each budgeted category's dimension, in the month —
+        // debit-positive, so an expense already reads as +spent.
+        val categoryBalances = entryRepository.dimensionBalancesInMonth(
+            month = month,
+            dimensionIds = budgets.flatMap { budget -> budget.categories.map { it.dimensionId } },
+        )
         return budgets.map { budget ->
             val limit = when (budget.limitType) {
                 LimitType.FIXED -> budget.amount

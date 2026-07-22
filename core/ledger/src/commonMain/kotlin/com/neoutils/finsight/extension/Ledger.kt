@@ -19,10 +19,6 @@ fun List<Entry>.naturalBalanceOf(accountId: Long): Long =
  */
 val AccountType.displaySign: Int get() = if (isDebitNatured) 1 else -1
 
-/**
- * A natural balance converted to the sign the user expects to see for [type].
- */
-fun AccountType.displayBalance(naturalBalance: Long): Long = naturalBalance * displaySign
 
 /**
  * The closed *permanent* leg that makes this transaction immutable, or `null` when

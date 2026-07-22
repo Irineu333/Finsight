@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.mapper
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.toTransactionUi
 import com.neoutils.finsight.ui.screen.installments.InstallmentTransactionUi
@@ -45,9 +46,7 @@ class InstallmentUiMapper {
         return InstallmentUi(
             installmentId = installment.id,
             latestTransactionDate = sortedTransactions.maxOf { it.date },
-            title = firstTransaction.title?.takeIf { it.isNotBlank() }
-                ?: category?.name?.takeIf { it.isNotBlank() }
-                ?: "Untitled",
+            title = displayTitleOf(firstTransaction.title, category),
             categoryName = category?.name?.uppercase(),
             categoryIcon = category?.icon,
             categoryType = category?.type,

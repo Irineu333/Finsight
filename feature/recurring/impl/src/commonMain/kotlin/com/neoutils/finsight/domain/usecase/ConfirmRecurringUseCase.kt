@@ -20,7 +20,7 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.IRecurringOccurrenceRepository
-import com.neoutils.finsight.extension.accountType
+import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.monthsUntil
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.datetime.LocalDate
@@ -28,17 +28,6 @@ import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-
-/**
- * How the writer completes the recurring's single leg: on the nominal of its
- * category's nature, tagged with that category's dimension. Same rule as a manual
- * transaction — the template just carries the choice instead of a form.
- */
-private fun Recurring.contraLeg(): ContraLeg = when (type) {
-    TransactionType.ADJUSTMENT -> ContraLeg(AccountType.EQUITY)
-    TransactionType.EXPENSE -> ContraLeg(category?.type?.accountType ?: AccountType.EXPENSE, category?.dimensionId)
-    TransactionType.INCOME -> ContraLeg(category?.type?.accountType ?: AccountType.INCOME, category?.dimensionId)
-}
 
 class ConfirmRecurringUseCase(
     private val transactionRepository: ITransactionRepository,
@@ -92,7 +81,7 @@ class ConfirmRecurringUseCase(
                                 dimensionId = invoice.dimensionId,
                             )
                         ),
-                        contra = recurring.contraLeg(),
+                        contra = contraLegFor(recurring.type, recurring.category),
                     )
                 )
             } else {
@@ -112,7 +101,7 @@ class ConfirmRecurringUseCase(
                                 }.id,
                             )
                         ),
-                        contra = recurring.contraLeg(),
+                        contra = contraLegFor(recurring.type, recurring.category),
                     )
                 )
             }

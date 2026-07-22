@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.extension.isAccept
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.Transaction
@@ -389,11 +390,5 @@ class EditTransactionModal(
         }
     }
 
-    private fun Category.Type.isAccept(type: TransactionType): Boolean {
-        return when (this) {
-            Category.Type.EXPENSE -> type.isExpense
-            Category.Type.INCOME -> type.isIncome
-        }
-    }
 
 }

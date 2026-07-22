@@ -54,10 +54,11 @@ enum class ClosedFacade {
 
     companion object {
         /**
-         * The facade a chart-of-accounts row projects onto, read from its type —
-         * for the ledger side, where only the `AccountType` is known. The write
-         * boundary derives the same thing from the user's own account-vs-card
-         * choice, which is the intent, not the row.
+         * The facade a chart-of-accounts row projects onto, read from its type.
+         *
+         * It is the only way to know: since the write intent became identities
+         * (design D6) a leg carries an `accountId` and nothing about what the user
+         * picked, so both the write boundary and the removal guard ask the chart.
          *
          * Callers reach this only for a permanent account (the closure rules do
          * not apply to any other), so EQUITY — the reconciliation row, which no

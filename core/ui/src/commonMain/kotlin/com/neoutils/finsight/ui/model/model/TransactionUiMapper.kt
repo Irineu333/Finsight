@@ -3,6 +3,7 @@ package com.neoutils.finsight.ui.model
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.deriveTransactionLabel
+import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import kotlin.math.abs
 
@@ -37,9 +38,7 @@ fun Transaction.toTransactionUi(
         id = id,
         label = entries.deriveTransactionLabel(),
         direction = deriveTransactionType(leg.amount, entries),
-        // The title falls back to the category's name, which is why the rule lives
-        // here and not on the transaction: only the caller has the name.
-        title = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled",
+        title = displayTitleOf(title, category),
         amount = abs(leg.amount) / 100.0,
         date = date,
         categoryId = category?.id,

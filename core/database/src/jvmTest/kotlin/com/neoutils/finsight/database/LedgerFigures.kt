@@ -19,6 +19,16 @@ internal data class LedgerFigures(
     val balanceByAccountId: Map<Long, Long>,
     val owedByInvoiceId: Map<Long, Long>,
     val totalByCategoryId: Map<Long, Long>,
+    /**
+     * The nature of the chart account each category's entries sit on.
+     *
+     * Without it the other three figures are blind to the one mistake this migration
+     * is most able to make: sending the `EXPENSE` legs to the `INCOME` nominal. Every
+     * balance would still match (the nominals are not monetary), every category total
+     * would still match (they are summed by dimension, not by account) — and the
+     * chart would be quietly wrong, taking the derived label and display sign with it.
+     */
+    val nominalNatureByCategoryId: Map<Long, String>,
     val netWorth: Long,
 )
 
@@ -59,6 +69,15 @@ internal fun SQLiteConnection.readV9Figures(): LedgerFigures = LedgerFigures(
         GROUP BY `c`.`id`
         """
     ),
+    // Before, a category *is* an account, so the nature is that account's.
+    nominalNatureByCategoryId = queryTextMap(
+        """
+        SELECT `c`.`id`, `a`.`type`
+        FROM `categories` `c`
+        JOIN `accounts` `a` ON `a`.`id` = `c`.`accountId`
+        WHERE EXISTS (SELECT 1 FROM `entries` `e` WHERE `e`.`accountId` = `c`.`accountId`)
+        """
+    ),
     netWorth = querySum(
         """
         SELECT COALESCE(SUM(`e`.`amount`), 0)
@@ -87,6 +106,16 @@ internal suspend fun AppDatabase.readProductionFigures(): LedgerFigures {
         // not only the ones a given screen currently lists.
         totalByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
             .associate { it.id to entryDao.dimensionNaturalBalance(it.dimensionId) },
+        // After, it is the nature of the nominal the dimension's entries landed on.
+        nominalNatureByCategoryId = categoryDao().getAllCategoriesIncludingClosed()
+            .mapNotNull { category ->
+                accountDao().getAllLedgerAccounts()
+                    .firstOrNull { account ->
+                        entryDao.getAll().any { it.dimensionId == category.dimensionId && it.accountId == account.id }
+                    }
+                    ?.let { category.id to it.type.name }
+            }
+            .toMap(),
         netWorth = entryDao.netWorthCents(),
     )
 }
@@ -98,6 +127,17 @@ private fun SQLiteConnection.queryMap(sql: String): Map<Long, Long> {
     val result = mutableMapOf<Long, Long>()
     try {
         while (statement.step()) result[statement.getLong(0)] = statement.getLong(1)
+    } finally {
+        statement.close()
+    }
+    return result
+}
+
+private fun SQLiteConnection.queryTextMap(sql: String): Map<Long, String> {
+    val statement = prepare(sql)
+    val result = mutableMapOf<Long, String>()
+    try {
+        while (statement.step()) result[statement.getLong(0)] = statement.getText(1)
     } finally {
         statement.close()
     }

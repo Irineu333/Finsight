@@ -33,7 +33,7 @@ class DeleteInstallmentViewModel(
         // the dimension its nominal leg carries (design D6).
         val categoryName = transactions.firstOrNull()?.nominalDimensionId
             ?.let { dimensionId ->
-                categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
+                categoryRepository.getCategoryByDimensionId(dimensionId)
             }
             ?.name
         deleteInstallmentUseCase(installment, transactions).onRight {

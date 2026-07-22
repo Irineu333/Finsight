@@ -77,7 +77,7 @@ e o core está partido em dois, pela linha que importa:
 
 | Módulo | Contém | Enxerga |
 |---|---|---|
-| **`:core:ledger`** | O razão: `Account`, `Entry`, `Transaction`, `AccountType`, as entities/DAOs dessas tabelas, `IEntryRepository`/`ITransactionRepository` e a fronteira de escrita | Room, `:core:common`, `:core:resources` — **nenhuma fachada** |
+| **`:core:ledger`** | O razão: `Account`, `Entry`, `Transaction`, `AccountType`, as entities/DAOs dessas tabelas, `IEntryRepository`/`ITransactionRepository` e a fronteira de escrita | Room, datetime, serialization, Koin — e **nenhum outro módulo do projeto** |
 | **`:core:model`** | As fachadas: `Category`, `CreditCard`, `Invoice`, `Installment`, `Recurring`, `Budget`, os formulários e os erros delas | `:core:ledger` |
 
 A seta corre nesse sentido e só nesse: uma fachada projeta sobre o razão (uma recorrência

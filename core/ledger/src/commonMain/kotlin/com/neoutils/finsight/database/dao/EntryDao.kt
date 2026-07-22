@@ -85,8 +85,6 @@ interface EntryDao {
     @Insert
     suspend fun insertAll(entries: List<EntryEntity>): List<Long>
 
-    @Delete
-    suspend fun delete(entry: EntryEntity)
 
     @Query("DELETE FROM entries WHERE transactionId = :transactionId")
     suspend fun deleteByTransactionId(transactionId: Long)
@@ -131,11 +129,7 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE transactionId = :transactionId ORDER BY id ASC")
     fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<EntryWithAccount>>
 
-    @Query("SELECT * FROM entries WHERE accountId = :accountId ORDER BY id ASC")
-    fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>>
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE accountId = :accountId AND currency = :currency")
-    suspend fun naturalBalanceOf(accountId: Long, currency: String): Long
 
     /** All-time natural balance of an account, across every date and currency. */
     @Query("SELECT COALESCE(SUM(amount), 0) FROM entries WHERE accountId = :accountId")

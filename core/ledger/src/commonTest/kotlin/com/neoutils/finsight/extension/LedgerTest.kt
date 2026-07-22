@@ -97,18 +97,7 @@ class LedgerTest {
 
     // --- display sign inversion by AccountType ---
 
-    @Test
-    fun `debit-natured accounts read their natural balance`() {
-        assertEquals(5000L, AccountType.ASSET.displayBalance(5000))
-        assertEquals(5000L, AccountType.EXPENSE.displayBalance(5000))
-    }
 
-    @Test
-    fun `credit-natured accounts invert for display`() {
-        assertEquals(3000L, AccountType.LIABILITY.displayBalance(-3000))
-        assertEquals(3000L, AccountType.INCOME.displayBalance(-3000))
-        assertEquals(3000L, AccountType.EQUITY.displayBalance(-3000))
-    }
 
     // --- deriveTransactionType (recovers the leg's type from the ledger) ---
 

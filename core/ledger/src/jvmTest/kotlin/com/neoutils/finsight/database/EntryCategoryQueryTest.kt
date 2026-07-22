@@ -85,6 +85,21 @@ class EntryCategoryQueryTest {
     }
 
     @Test
+    fun `a refund reduces the category's total instead of adding to it`() = runTest {
+        // A refund is not a separate concept: it is a credit on the same dimension.
+        // Σ handles it, which is the whole reason every figure is a sum — but nothing
+        // asserted it, and every fixture until now was debits only.
+        seed().transaction("2026-01-25", (10L posts -2_000).taggedWith(10), 1L posts 2_000)
+
+        assertEquals(6_000L, entryDao.dimensionBalanceInMonth(10, "2026-01"), "8000 spent less 2000 refunded")
+        assertEquals(
+            listOf(DimensionTotal(dimensionId = 10, total = 3_000)),
+            entryDao.totalsByDimensionWithSiblingLeg("EXPENSE", january.first, january.second, listOf(1)),
+            "and the perspective total nets the refund against the purchase it reverses",
+        )
+    }
+
+    @Test
     fun `month total sums the legs carrying a dimension within the month`() = runTest {
         seed()
 

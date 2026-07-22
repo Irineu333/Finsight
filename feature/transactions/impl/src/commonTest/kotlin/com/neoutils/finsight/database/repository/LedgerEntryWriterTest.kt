@@ -81,6 +81,38 @@ class LedgerEntryWriterTest {
     }
 
     @Test
+    fun `however many writes, the chart holds one nominal of each nature`() = runTest {
+        // `ensureSystemAccount` looks up before inserting, so the chart keeps exactly
+        // the three system rows however much is posted through them. A second
+        // 'Despesas' would not fail anything — it would just split every expense
+        // total in two, silently (spec `chart-of-accounts`).
+        openAsset(1)
+        repeat(3) { index ->
+            writer.writeEntries(
+                transactionId = index + 1L,
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 10.0, accountId = 1)),
+                contra = ContraLeg(AccountType.EXPENSE),
+            )
+            writer.writeEntries(
+                transactionId = index + 10L,
+                legs = listOf(TransactionLeg(type = TransactionType.INCOME, amount = 10.0, accountId = 1)),
+                contra = ContraLeg(AccountType.INCOME),
+            )
+            writer.writeEntries(
+                transactionId = index + 20L,
+                legs = listOf(TransactionLeg(type = TransactionType.ADJUSTMENT, amount = 10.0, accountId = 1)),
+                contra = ContraLeg(AccountType.EQUITY),
+            )
+        }
+
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.EXPENSES })
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.INCOMES })
+        assertEquals(1, accountDao.accounts.values.count { it.name == SystemAccount.RECONCILIATION })
+        // The user's account plus the three system rows, and nothing else.
+        assertEquals(4, accountDao.accounts.size)
+    }
+
+    @Test
     fun `given a transfer when written then both legs balance without synthesis`() = runTest {
         openAsset(1)
         openAsset(2)
@@ -226,7 +258,6 @@ private class FakeEntryDao : EntryDao {
     val inserted = mutableListOf<EntryEntity>()
     override suspend fun insert(entry: EntryEntity): Long { inserted += entry; return inserted.size.toLong() }
     override suspend fun insertAll(entries: List<EntryEntity>): List<Long> { inserted += entries; return entries.indices.map { it.toLong() } }
-    override suspend fun delete(entry: EntryEntity) = Unit
     override suspend fun deleteByTransactionId(transactionId: Long) { inserted.removeAll { it.transactionId == transactionId } }
     override suspend fun getAll(): List<EntryEntity> = inserted
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
@@ -238,8 +269,6 @@ private class FakeEntryDao : EntryDao {
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
-    override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
-    override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
     override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()

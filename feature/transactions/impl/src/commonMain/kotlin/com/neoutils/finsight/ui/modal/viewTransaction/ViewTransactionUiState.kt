@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.closedLegBlockingChange
+import com.neoutils.finsight.extension.displayTitleOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.ui.model.TransactionPerspective
 import kotlin.math.abs
@@ -52,13 +53,7 @@ sealed interface ViewTransactionUiState {
             ?.let { deriveTransactionType(it.amount, transaction.entries) }
             ?: TransactionType.EXPENSE
 
-        /**
-         * The title falls back to the category's name, which is why it is derived
-         * here and not on the transaction: only this state has the name.
-         */
-        val displayTitle: String = transaction.title?.takeIf { it.isNotBlank() }
-            ?: category?.name?.takeIf { it.isNotBlank() }
-            ?: "Untitled"
+        val displayTitle: String = displayTitleOf(transaction.title, category)
 
         val date = transaction.date
         val account = transaction.sourceAccount

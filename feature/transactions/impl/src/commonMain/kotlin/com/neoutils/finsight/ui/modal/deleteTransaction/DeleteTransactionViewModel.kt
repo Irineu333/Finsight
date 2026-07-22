@@ -31,7 +31,7 @@ class DeleteTransactionViewModel(
         // hands out its dimension, so the name is resolved here (design D6).
         val categoryName = transaction.nominalDimensionId
             ?.let { dimensionId ->
-                categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
+                categoryRepository.getCategoryByDimensionId(dimensionId)
             }
             ?.name
         deleteTransactionUseCase(transaction).onRight {

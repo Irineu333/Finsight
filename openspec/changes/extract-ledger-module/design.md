@@ -284,6 +284,17 @@ que o razão não tem.
 
 ## Risks / Trade-offs
 
+**Os guardas de escrita rodam fora da transação de escrita.** `ledgerEntryWriter.validate`
+e o veto por dimensão são chamados antes do `immediateTransaction`, então existe uma
+janela entre verificar e gravar: uma fatura fechada entre as duas passaria pelo veto e
+gravaria assim mesmo.
+→ **Aceito, com o motivo escrito.** O app é local e mono-usuário; não há segundo escritor
+para vencer a corrida, e as duas únicas fontes de escrita concorrente seriam duas telas do
+mesmo processo, que o `ModalManager` não abre em paralelo. Fechar a janela exigiria que o
+veto — que é da fachada, por uma porta — rodasse dentro da transação do razão, invertendo
+quem controla a transação. A forma é anterior a esta change; o que ela acrescenta é o
+registro de que é deliberada.
+
 **A migração reescreve história contábil e é irreversível na prática.** Colapsar N contas de categoria em duas nominais reescreve o `accountId` de toda perna nominal já gravada.
 → A migração valida `Σ = 0` por transação e por moeda **antes e depois** da reescrita, como teste de migração automatizado, não como cuidado manual. Uma transação que não balanceie após a reescrita aborta a migração. `MigrationLedgerReadParityTest` ganha o par de leituras equivalentes antes/depois para cada figura exibida.
 

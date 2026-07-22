@@ -43,12 +43,13 @@ class MigrationLedgerReadParityTest {
         val aId = accounts.first { it.name == "A" }.id
         val foodDimensionId = database.categoryDao().getAllCategories().first { it.name == "Food" }.dimensionId
 
-        // Account balance: A = -50 (expense) - 100 (transfer out) + 30 (adjustment) = -120.00.
-        assertEquals(-12000L, entryDao.balanceOf(aId))
+        // Account balance: A = -50 (expense) - 100 (transfer out) + 30 (adjustment)
+        // + 900 (salary) = 780.00.
+        assertEquals(78000L, entryDao.balanceOf(aId))
 
-        // Net worth (ASSET + LIABILITY): A(-12000) + B(+10000) + C(-4000) + card(-6000);
+        // Net worth (ASSET + LIABILITY): A(+78000) + B(+20000) + C(-4000) + card(-6000);
         // the two reconstructed closed accounts are zeroed by their write-off.
-        assertEquals(-12000L, entryDao.netWorthCents())
+        assertEquals(88000L, entryDao.netWorthCents())
 
         // Invoice owed, natural: purchase -10000 + payment +4000 = -6000 (60.00 owed).
         // Read through the invoice's dimension, which is what carries it since v10.
@@ -59,10 +60,19 @@ class MigrationLedgerReadParityTest {
         // Read through the category's dimension, which is what carries it since v10.
         assertEquals(8500L, entryDao.dimensionNaturalBalance(foodDimensionId))
 
+        // The income side, which the fixture had no case for until now: an income
+        // category lands on the INCOME nominal, credit-natured, so its total is
+        // negative — and it must not have been routed to the expense one.
+        val categories = database.categoryDao().getAllCategories()
+        val salaryDimensionId = categories.first { it.name == "Salary" }.dimensionId
+        assertEquals(-90000L, entryDao.dimensionNaturalBalance(salaryDimensionId))
+        val nominals = accounts.filter { it.type.name == "INCOME" || it.type.name == "EXPENSE" }
+        assertEquals(2, nominals.size, "the whole chart holds exactly two nominal accounts")
+
         // Temporal cut, read through the production query: nothing before A's first
         // movement, everything by the month of its last.
         assertEquals(0L, entryDao.balanceUpToMonth(aId, "2023-12"))
-        assertEquals(-12000L, entryDao.balanceUpToMonth(aId, "2024-01"))
+        assertEquals(78000L, entryDao.balanceUpToMonth(aId, "2024-01"))
 
         database.close()
     }
@@ -109,7 +119,10 @@ private fun buildV7Fixture(connection: SQLiteConnection) {
     V7_SCHEMA.forEach(connection::execSQL)
 
     connection.execSQL("INSERT INTO `accounts` (`id`,`name`,`iconKey`,`isDefault`,`createdAt`) VALUES (1,'A','wallet',1,1000),(2,'B','wallet',0,1000)")
-    connection.execSQL("INSERT INTO `categories` (`id`,`name`,`iconKey`,`type`,`createdAt`) VALUES (1,'Food','food','EXPENSE',1000)")
+    connection.execSQL(
+        "INSERT INTO `categories` (`id`,`name`,`iconKey`,`type`,`createdAt`) VALUES " +
+            "(1,'Food','food','EXPENSE',1000),(2,'Salary','salary','INCOME',1000)"
+    )
 
     // op1: expense 50 from A, category Food (single leg)
     connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (1,'TRANSACTION','2024-01-10')")
@@ -138,6 +151,17 @@ private fun buildV7Fixture(connection: SQLiteConnection) {
     connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (5,'PAYMENT','2024-02-05')")
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`,`creditCardId`,`invoiceId`) VALUES (5,'EXPENSE',40.0,'2024-02-05','ACCOUNT',3,1,1)")
     connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`creditCardId`,`invoiceId`) VALUES (5,'INCOME',40.0,'2024-02-05','CREDIT_CARD',1,1)")
+
+    // op8: income 900 into A, category Salary — the INCOME side of the chart, which
+    // the fixture had no case for. Without it the migration could route every nominal
+    // leg to the EXPENSE nominal and every figure would still match.
+    connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (8,'TRANSACTION','2024-01-05')")
+    connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`categoryId`,`target`,`accountId`) VALUES (8,'INCOME',900.0,'2024-01-05',2,'ACCOUNT',1)")
+
+    // op9: income 100 into B with no category — the `Sem categoria (receita)` bucket,
+    // whose rewrite to the INCOME nominal had no coverage either.
+    connection.execSQL("INSERT INTO `operations` (`id`,`kind`,`date`) VALUES (9,'TRANSACTION','2024-01-06')")
+    connection.execSQL("INSERT INTO `transactions` (`operationId`,`type`,`amount`,`date`,`target`,`accountId`) VALUES (9,'INCOME',100.0,'2024-01-06','ACCOUNT',2)")
 
     // Orphaned legs from a deleted account/card (FK SET_NULL).
     // op6: expense 20 whose account was deleted (accountId NULL), category Food.

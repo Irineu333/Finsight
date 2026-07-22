@@ -77,9 +77,13 @@ class TransactionRepository(
 
     /**
      * Row plus legs, and nothing else. The facade lookups this used to combine —
-     * categories, cards, invoices, installments, recurring — are gone: each feature
-     * resolves what it needs from the legs (design D6), and this flow no longer
-     * re-emits every transaction in the app because a card was renamed.
+     * categories, invoices, installments, recurring — are gone: each feature resolves
+     * what it needs from the legs (design D6), so renaming a category no longer
+     * re-emits every transaction in the app.
+     *
+     * Renaming a *card* still does, and legitimately: a card projects onto its
+     * chart-of-accounts row, so the rename lands on `accounts.name`, and the chart is
+     * the ledger's own.
      */
     private fun Flow<List<TransactionEntity>>.mapToDomain(): Flow<List<Transaction>> = flowCombine(
         this,

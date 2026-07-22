@@ -15,7 +15,7 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.model.form.TransactionForm
-import com.neoutils.finsight.extension.accountType
+import com.neoutils.finsight.extension.contraLegFor
 import com.neoutils.finsight.extension.moneyToDouble
 import com.neoutils.finsight.util.dayMonthYear
 import kotlinx.datetime.TimeZone
@@ -25,18 +25,6 @@ import kotlin.time.ExperimentalTime
 
 private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-/**
- * How the writer must complete the single leg above: on the nominal of the
- * category's own nature, tagged with its dimension. With no category the leg's type
- * decides the nature and the leg stays unclassified — which is what "no category"
- * means, with no bucket standing in for it.
- */
-private fun TransactionForm.contraLeg(): ContraLeg = when (type) {
-    TransactionType.ADJUSTMENT -> ContraLeg(AccountType.EQUITY)
-    TransactionType.EXPENSE -> ContraLeg(category?.type?.accountType ?: AccountType.EXPENSE, category?.dimensionId)
-    TransactionType.INCOME -> ContraLeg(category?.type?.accountType ?: AccountType.INCOME, category?.dimensionId)
-}
 
 class BuildTransactionUseCaseImpl(
     private val getOrCreateInvoiceForMonthUseCase: GetOrCreateInvoiceForMonthUseCase
@@ -83,7 +71,7 @@ class BuildTransactionUseCaseImpl(
                         accountId = account.id,
                     )
                 ),
-                contra = form.contraLeg(),
+                contra = contraLegFor(form.type, form.category),
             )
         }
 
@@ -115,7 +103,7 @@ class BuildTransactionUseCaseImpl(
                     dimensionId = invoice.dimensionId,
                 )
             ),
-            contra = form.contraLeg(),
+            contra = contraLegFor(form.type, form.category),
         )
     }
 }

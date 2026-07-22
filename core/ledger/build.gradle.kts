@@ -9,16 +9,14 @@ kotlin {
             api(libs.androidx.room.runtime)
             api(libs.androidx.sqlite.bundled)
 
-            // The ledger sees no facade — not even a model of one. `:core:common`
-            // and `:core:resources` carry `UiText` and the strings its errors speak
-            // in; neither knows what a category or an invoice is.
-            implementation(projects.core.common)
-            implementation(projects.core.resources)
-
+            // No project dependency at all: the ledger sees no facade, not even a
+            // model of one. Its errors carry a message and a type; turning either
+            // into a sentence needs the string resources, and that lives with the
+            // facades in `:core:model` (design D1, amended) precisely so this list
+            // can stay empty.
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.koin.core)
-            implementation(libs.arrow.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutinesTest)

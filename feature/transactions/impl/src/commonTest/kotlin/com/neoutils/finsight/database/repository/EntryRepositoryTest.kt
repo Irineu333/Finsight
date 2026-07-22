@@ -46,7 +46,6 @@ private class FakeReadEntryDao(
     override suspend fun netWorthCents(): Long = netWorth
     override suspend fun insert(entry: EntryEntity): Long = throw NotImplementedError()
     override suspend fun insertAll(entries: List<EntryEntity>): List<Long> = throw NotImplementedError()
-    override suspend fun delete(entry: EntryEntity) = throw NotImplementedError()
     override suspend fun deleteByTransactionId(transactionId: Long) = throw NotImplementedError()
     override suspend fun getAll(): List<EntryEntity> = throw NotImplementedError()
     override fun observeAll(): Flow<List<EntryEntity>> = throw NotImplementedError()
@@ -58,8 +57,6 @@ private class FakeReadEntryDao(
     override fun observeEntriesWithAccountByTransactionId(transactionId: Long): Flow<List<com.neoutils.finsight.database.dao.EntryWithAccount>> = throw NotImplementedError()
     override suspend fun accountPeriodTotals(accountId: Long, yearMonth: String): com.neoutils.finsight.database.dao.AccountPeriodTotals = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(dimensionId: Long, yearMonth: String): Int = throw NotImplementedError()
-    override fun observeByAccountId(accountId: Long): Flow<List<EntryEntity>> = throw NotImplementedError()
-    override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = throw NotImplementedError()
     override suspend fun balanceOf(accountId: Long): Long = throw NotImplementedError()
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
     override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()

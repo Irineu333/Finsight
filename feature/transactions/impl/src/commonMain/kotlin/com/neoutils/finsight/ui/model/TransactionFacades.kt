@@ -47,7 +47,7 @@ class LedgerTransactionFacadeResolver(
      */
     override suspend fun resolve(transaction: Transaction) = TransactionFacades(
         category = transaction.nominalDimensionId?.let { dimensionId ->
-            categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
+            categoryRepository.getCategoryByDimensionId(dimensionId)
         },
         creditCard = transaction.liabilityAccountId?.let { accountId ->
             creditCardRepository.getAllCreditCardsIncludingClosed().firstOrNull { it.accountId == accountId }

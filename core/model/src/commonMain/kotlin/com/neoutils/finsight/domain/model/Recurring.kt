@@ -1,5 +1,7 @@
 package com.neoutils.finsight.domain.model
 
+import com.neoutils.finsight.extension.displayTitleOf
+
 data class Recurring(
     val id: Long = 0,
     val type: TransactionType,
@@ -12,7 +14,7 @@ data class Recurring(
     val createdAt: Long,
     val isActive: Boolean = true,
 ) {
-    val label get() = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled"
+    val label get() = displayTitleOf(title, category)
 
     /**
      * Whether the money still has somewhere to move through.

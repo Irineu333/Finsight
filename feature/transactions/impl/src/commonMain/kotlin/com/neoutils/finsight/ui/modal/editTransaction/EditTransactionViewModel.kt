@@ -65,8 +65,7 @@ class EditTransactionViewModel(
                     ?.dueMonth
             }
             transaction.nominalDimensionId?.let { dimensionId ->
-                transactionCategory.value = categoryRepository.getAllCategoriesIncludingClosed()
-                    .firstOrNull { it.dimensionId == dimensionId }
+                transactionCategory.value = categoryRepository.getCategoryByDimensionId(dimensionId)
             }
         }
     }

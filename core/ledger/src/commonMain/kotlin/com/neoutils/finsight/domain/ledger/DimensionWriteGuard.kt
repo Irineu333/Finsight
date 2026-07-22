@@ -29,7 +29,11 @@ fun interface DimensionWriteGuard {
     suspend fun ensureAccepts(write: LedgerWrite)
 
     companion object {
-        /** Accepts everything — the default when no facade claims a veto. */
+        /**
+         * Accepts everything. Not a default — the ledger's Koin module requires a
+         * binding, so an app without one fails to start rather than silently
+         * skipping every veto. This is for tests whose subject is elsewhere.
+         */
         val None = DimensionWriteGuard { }
     }
 }

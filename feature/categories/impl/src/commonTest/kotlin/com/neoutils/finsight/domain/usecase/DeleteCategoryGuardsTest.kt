@@ -93,6 +93,7 @@ private class RecordingCategoryRepository : ICategoryRepository {
     override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(emptyList())
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
+    override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun archive(id: Long) = Unit
 

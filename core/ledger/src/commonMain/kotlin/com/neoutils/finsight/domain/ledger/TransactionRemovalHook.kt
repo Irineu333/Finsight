@@ -25,7 +25,11 @@ fun interface TransactionRemovalHook {
     suspend fun onRemoved(transaction: Transaction)
 
     companion object {
-        /** Does nothing — the default when no facade describes the removed rows. */
+        /**
+         * Does nothing. Not a default — the ledger's Koin module requires a binding,
+         * so a facade that forgets to register loses its correction at startup, not
+         * silently at the first removal. This is for tests whose subject is elsewhere.
+         */
         val None = TransactionRemovalHook { }
     }
 }

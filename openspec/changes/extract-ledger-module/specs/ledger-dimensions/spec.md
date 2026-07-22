@@ -18,7 +18,9 @@ Uma fachada que classifica lançamentos SHALL guardar a identidade da sua dimens
 
 A identidade de dimensão SHALL ser emitida por um espaço único, de modo que dimensões originadas de fachadas distintas jamais colidam.
 
-**Exceção declarada e delimitada:** a tabela de transações retém as colunas de parcelamento e recorrência, com as suas chaves estrangeiras para as tabelas de fachada correspondentes. Essas colunas MUST NOT participar de nenhuma soma, agrupamento ou classificação do razão: são metadados que agrupam transações, e nenhuma leitura do razão SHALL consultá-las. A exceção SHALL ser registrada por escrito, SHALL permanecer restrita a essas colunas, e nenhuma coluna nova de fachada SHALL ser acrescentada a uma tabela do razão por analogia com ela.
+**Exceção declarada e delimitada:** a tabela de transações retém as colunas de parcelamento e recorrência, **sem** chave estrangeira para as tabelas de fachada correspondentes — uma tabela do razão não pode declarar chave estrangeira para uma tabela que o razão não enxerga. Essas colunas MUST NOT participar de nenhuma soma, agrupamento ou classificação do razão: são metadados que agrupam transações, e nenhuma leitura do razão SHALL consultá-las. A exceção SHALL ser registrada por escrito, SHALL permanecer restrita a essas colunas, e nenhuma coluna nova de fachada SHALL ser acrescentada a uma tabela do razão por analogia com ela.
+
+A anulação que a chave estrangeira dava — a referência zerada quando a fachada é removida — SHALL passar a ter dono explícito: o caminho de remoção de cada uma dessas fachadas SHALL anular as referências a ela na tabela de transações, na mesma transação. Remover uma fachada MUST NOT deixar referência pendurada.
 
 #### Scenario: Categoria e fatura ligam-se por dimensão
 - **WHEN** uma categoria ou uma fatura é criada
@@ -31,6 +33,10 @@ A identidade de dimensão SHALL ser emitida por um espaço único, de modo que d
 #### Scenario: A exceção não é consultada por leitura do razão
 - **WHEN** as consultas do razão são inspecionadas
 - **THEN** nenhuma delas referencia as colunas de parcelamento ou recorrência retidas na tabela de transações
+
+#### Scenario: Remoção de fachada sem chave estrangeira não deixa referência pendurada
+- **WHEN** um parcelamento ou uma recorrência é removido
+- **THEN** as referências a ele na tabela de transações são anuladas na mesma transação, sem depender de chave estrangeira
 
 #### Scenario: Identidades de fachadas distintas não colidem
 - **WHEN** uma categoria e uma fatura existem simultaneamente

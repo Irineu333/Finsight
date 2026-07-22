@@ -151,6 +151,56 @@ As duas contas nominais são **invisíveis ao usuário**, e isso é constataçã
 
 Consequências registradas: os nomes das nominais são chaves de lookup em `SystemAccount` (o padrão de `RECONCILIATION`, `SystemAccount.kt:10-14`), jamais renderizados; o rótulo que o usuário vê vem da fachada de categoria, e "sem categoria" vem de `dimensionId = NULL` via string de recurso — nunca do nome de conta. Rejeitada a alternativa de exibi-las (como "Despesas"/"Receitas" navegáveis): criaria um terceiro tipo de item em listas que hoje só conhecem contas e cartões, sem caso de uso que o pague — e nada impede promovê-las depois, porque é só predicado de leitura.
 
+### D11 — O veto vai para uma porta; o efeito colateral vai para o seu dono
+
+Duas coisas de fachada vivem hoje dentro de `TransactionRepository`, e a change não dizia
+onde ficariam. Elas parecem o mesmo problema e não são:
+
+- **O veto:** `ensureInvoicesAccept` (`TransactionRepository.kt:218-241`) recusa escrever,
+  editar ou remover uma transação que pertença a uma fatura fechada ou paga. Fala
+  `Invoice.status` — vocabulário de fachada.
+- **O efeito colateral:** a contabilidade de parcelamento em `removeRow`
+  (`TransactionRepository.kt:370-402`), via `IInstallmentRepository`.
+
+**O veto vai para uma porta.** `:core:ledger` declara um contrato opaco — dado o conjunto de
+dimensões que uma escrita toca, o dono daquelas dimensões pode vetá-la — implementado por
+creditcards e registrado na fronteira de escrita. O razão continua sem saber o que é uma
+fatura: ele conhece dimensões, e o veto é keyed por dimensão. Isso preserva a exigência da
+spec `balanced-ledger` de que as validações de escrita ocorram num ponto único, que é o que
+impede duas telas de divergirem sobre o que é editável.
+
+Rejeitado mover o veto para os use cases de feature que escrevem: seriam vários caminhos
+(criar, editar, remover, em transactions e em creditcards), e a spec proíbe exatamente essa
+reimplementação por consumidor. O `InvoiceWriteGuardTest` existe porque essa divergência já
+aconteceu.
+
+**O efeito colateral vai para o use case de creditcards.** Ele nunca foi invariante — é
+consequência de uma remoção, não proibição de uma escrita — e portanto nunca precisou de
+ponto único. Empurrá-lo para a porta obrigaria o contrato a ter duas formas (vetar e
+executar efeito), abstração que só a simetria justificaria.
+
+A separação é o que torna a porta barata: um contrato, uma forma, um implementador.
+
+### D12 — As FKs de parcelamento e recorrência não sobrevivem à mudança de módulo
+
+A exceção declarada na spec `ledger-dimensions` dizia que as colunas de parcelamento e
+recorrência permaneceriam em `transactions` **com as suas chaves estrangeiras**. Isso é
+impossível: `@ForeignKey` exige a entity-pai no mesmo `@Database`, e `TransactionEntity` em
+`:core:ledger` não consegue sequer importar `InstallmentEntity`/`RecurringEntity`, que ficam
+em `:core:database`. Ou as FKs caem, ou `TransactionEntity` não muda de módulo.
+
+Escolhido: **as FKs caem** no rebuild de `transactions`, e o comportamento que elas davam de
+graça ganha dono explícito. Hoje o `ON DELETE SET NULL` limpa `transactions.installmentId` e
+`recurringId` quando o parcelamento ou a recorrência é apagado; a partir daqui, os caminhos
+de remoção dessas fachadas anulam as referências na mesma transação.
+
+A anulação explícita SHALL ser introduzida **antes** do rebuild que remove as FKs: com a FK
+ainda viva ela é redundante e inofensiva, o que torna a fatia aditiva e a remoção da FK um
+passo sem mudança de comportamento observável.
+
+Isto é o custo real do que a proposal chamou de "sem custo estrutural" ao adiar a saída
+dessas colunas. Não é grande, mas não era zero.
+
 ## Risks / Trade-offs
 
 **A migração reescreve história contábil e é irreversível na prática.** Colapsar N contas de categoria em duas nominais reescreve o `accountId` de toda perna nominal já gravada.
@@ -176,24 +226,77 @@ Consequências registradas: os nomes das nominais são chaves de lookup em `Syst
 
 ## Migration Plan
 
-Ordem da migração v9 → v10, numa única transação:
+Ordem da migração v9 → v10, numa única transação, com `PRAGMA foreign_keys=OFF` na
+abertura (padrão da `MIGRATION_7_9`) e `PRAGMA foreign_key_check` antes do fim. O abort é
+um `throw` dentro de `migrate()`, que faz o Room reverter a transação inteira.
 
-1. Criar `dimensions(id, kind)`.
-2. Emitir uma dimensão `INVOICE` por fatura; preencher `invoices.dimensionId`.
-3. Emitir uma dimensão `CATEGORY` por categoria; preencher `categories.dimensionId`.
-4. Adicionar `entries.dimensionId` (FK → `dimensions`, `SET NULL`).
-5. **Verificar `Σ = 0` por transação e por moeda.** Falha aborta.
-6. Copiar `entries.invoiceId` → `dimensionId` via `invoices.dimensionId`; remover `entries.invoiceId`.
-7. Garantir as duas contas nominais (`EXPENSE`, `INCOME`).
-8. Reescrever cada perna cujo `accountId` é conta de categoria: `accountId` ← nominal do tipo correspondente, `dimensionId` ← dimensão da categoria.
-9. Reescrever as pernas em `UNCATEGORIZED_EXPENSE`/`_INCOME`: `accountId` ← nominal, `dimensionId` ← `NULL`.
-10. Adicionar `categories.isArchived`, preenchendo a partir de `accounts.isArchived` pelo `accountId` antigo; remover `categories.accountId`.
-11. Remover do plano as contas de categoria e as `UNCATEGORIZED_*`, agora sem entries.
-12. Remover `transactions.categoryId`.
-13. **Verificar `Σ = 0` por transação e por moeda novamente**, e verificar paridade de leitura para cada figura exibida. Falha aborta.
+Onde o SQLite não alcança por `ALTER` — dropar coluna indexada ou com FK — o passo é um
+**rebuild explícito** de tabela (criar nova, `INSERT ... SELECT`, drop, rename, recriar
+índices). O plano anterior descrevia esses passos como `ALTER` simples, o que falharia.
 
-Rollback: não há caminho automático de v10 → v9. A prevenção é o par de verificações nos passos 5 e 13, que aborta a transação inteira antes de qualquer gravação parcial.
+**Pré-verificação**
+
+1. **`Σ = 0` por `(transactionId, currency)`** sobre `entries` ainda intocada. Falha aborta.
+   Verificar o insumo *antes* de tocar nele é estritamente mais forte do que verificar um
+   estado já alterado.
+
+**Dimensões e fatura**
+
+2. `CREATE TABLE dimensions(id, kind)`.
+3. Emitir dimensões `INVOICE`: com `dimensions` vazia, `id = invoices.id` é livre de
+   colisão. Adicionar `invoices.dimensionId` (`ADD COLUMN ... REFERENCES` é válido para
+   coluna nova anulável) e preencher.
+4. **Rebuild de `entries`** sem `invoiceId` e com `dimensionId` (FK → `dimensions`,
+   `ON DELETE SET NULL`), mapeando `invoiceId → invoices.dimensionId` no `INSERT ... SELECT`.
+   Recriar os índices `transactionId`, `accountId`, `dimensionId`. As duas colunas nunca
+   coexistem fora do próprio `SELECT`.
+
+**Categoria**
+
+5. **Snapshots, antes de qualquer drop.** `_cat_map(categoryId, oldAccountId, type,
+   isArchived)` juntando `categories` e `accounts` enquanto `categories.accountId` existe; e
+   `_uncat(accountId, type)` com as contas `UNCATEGORIZED_*` localizadas **por literal
+   inline** — a v10 não referencia `SystemAccount`, cujas constantes saem do código, e o SQL
+   da `MIGRATION_7_9` que as semeia permanece intocado.
+6. Emitir dimensões `CATEGORY` com offset sobre o maior id existente.
+7. Garantir as duas contas nominais; capturar os ids em `_nominal(type, accountId)`.
+8. Reescrever as pernas de conta de categoria — `accountId` ← nominal do tipo,
+   `dimensionId` ← dimensão da categoria — **pelo snapshot**, não pela tabela `categories`,
+   de modo que o passo não dependa de ela ainda ter `accountId`.
+9. Reescrever as pernas em `UNCATEGORIZED_*` via `_uncat`: `accountId` ← nominal,
+   `dimensionId` ← `NULL`.
+10. **Rebuild de `categories`** sem `accountId`, com `dimensionId` e `isArchived`, este
+    preenchido a partir do snapshot.
+11. **Rebuild de `transactions`** sem `categoryId`, mantendo as colunas de parcelamento e
+    recorrência — e **sem as FKs** para `installments`/`recurring` (ver D11), com os índices
+    recriados.
+12. Remover do plano as contas de `_cat_map` e `_uncat`, **guardado**: a remoção é
+    condicionada a não existir entry referenciando-as, e em seguida uma contagem das que
+    sobraram diferente de zero aborta. O requisito "não remover conta ainda referenciada"
+    vira asserção, não confiança nos passos 8 e 9.
+
+**Pós-verificação**
+
+13. **`Σ = 0` de novo**; nenhuma entry com `dimensionId` sem linha correspondente em
+    `dimensions`; `PRAGMA foreign_key_check` limpo. Falha aborta.
+
+A **paridade de leitura por figura** — saldo por conta, devido por fatura, patrimônio,
+total por categoria — vive no teste de migração, não dentro da migração, e é comparada
+*keyed por id de fachada*: o "antes" por SQL cru sobre o banco v9, o "depois" pelas leituras
+novas. Isso a torna independente do mecanismo, que é justamente o que muda.
+
+Rollback: não há caminho automático de v10 → v9. A prevenção é o par de verificações dos
+passos 1 e 13, que aborta antes de qualquer gravação parcial.
+
+**Restrição de release.** A v10 é escrita em dois estágios (dimensões/fatura, depois
+categoria) sobre o mesmo número de versão. Isso só é legítimo porque **nenhuma versão
+intermediária pode ser publicada**: publicar um v10 parcial obrigaria um v11. Entre a fatia
+que cria a v10 e a que a completa, o branch é não-publicável por definição.
 
 ## Open Questions
 
-Nenhuma. As quatro questões que esta seção registrava foram resolvidas em D7 (`DimensionKind` como enum do razão), D8 (regra de pouso como invariante do tipo), D9 (`finsight.room.library` + `LedgerDatabase` de verificação) e D10 (contas nominais invisíveis por construção).
+Nenhuma questão de desenho. As quatro que esta seção registrava foram resolvidas em D7 (`DimensionKind` como enum do razão), D8 (regra de pouso como invariante do tipo), D9 (`finsight.room.library` + `LedgerDatabase` de verificação) e D10 (contas nominais invisíveis por construção); as duas que a revisão adversarial expôs, em D11 (veto na porta, efeito colateral no dono) e D12 (as FKs de parcelamento e recorrência caem).
+
+Resta **uma incógnita empírica**, não uma decisão: o comportamento real do Room sob a dependência invertida, que a tarefa 1.7 mede num módulo descartável antes de qualquer código mudar de lugar. D1 já tem o fallback escrito para o caso de ela cair.
+
+E um risco sem mitigação satisfatória, registrado em Risks: um banco que já chegue desbalanceado à v10 aborta a migração a cada abertura, sem caminho de recuperação. A change aceita o abort; o que falta é telemetria para saber se algum dispositivo real cairia nele.

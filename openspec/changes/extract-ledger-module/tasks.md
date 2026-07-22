@@ -23,11 +23,11 @@ um v11.
 
 ## 2. Convenção de build e arcabouço de verificação
 
-- [ ] 2.1 Criar o convention plugin `finsight.room.library` em `build-logic` (`configureKotlinMultiplatform()` + plugins `ksp`/`room` + `schemaDirectory` + `room-compiler` em cada configuração KSP por target) e migrar `:core:database` para ele
+- [x] 2.1 Criar o convention plugin `finsight.room.library` em `build-logic` (`configureKotlinMultiplatform()` + plugins `ksp`/`room` + `schemaDirectory` + `room-compiler` em cada configuração KSP por target) e migrar `:core:database` para ele
 - [ ] 2.2 Confirmar que `9.json` não muda e que `allTests`, `:app:android:assembleDebug` e o link iOS seguem verdes
-- [ ] 2.3 Escrever o helper de verificação de `Σ = 0` por transação e por moeda, executável dentro de uma migração e em teste
-- [ ] 2.4 Estender `MigrationLedgerReadParityTest` com plumbing para capturar as figuras exibidas **keyed por id de fachada** (saldo por conta, devido por fatura-id, total por categoria-id, patrimônio), computando o "antes" por SQL cru sobre o banco v9 — a paridade precisa ser independente do mecanismo, porque é o mecanismo que muda
-- [ ] 2.5 Rodar o arcabouço sobre a cadeia v7→v9 existente, onde deve passar trivialmente
+- [x] 2.3 Escrever o helper de verificação de `Σ = 0` por transação e por moeda, executável dentro de uma migração e em teste
+- [x] 2.4 Estender `MigrationLedgerReadParityTest` com plumbing para capturar as figuras exibidas **keyed por id de fachada** (saldo por conta, devido por fatura-id, total por categoria-id, patrimônio), computando o "antes" por SQL cru sobre o banco v9 — a paridade precisa ser independente do mecanismo, porque é o mecanismo que muda
+- [x] 2.5 Rodar o arcabouço sobre a cadeia v7→v9 existente, onde deve passar trivialmente
 
 ## 3. Anulações explícitas que hoje vêm de graça das FKs
 

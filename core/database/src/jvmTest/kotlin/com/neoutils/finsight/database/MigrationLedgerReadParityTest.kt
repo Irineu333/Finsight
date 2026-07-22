@@ -67,6 +67,40 @@ class MigrationLedgerReadParityTest {
 
         database.close()
     }
+
+    /**
+     * The parity harness itself, run over the v7 → v9 chain, where it must pass
+     * trivially: nothing has changed the mechanism yet, so the raw-SQL snapshot and
+     * the production reads are two views of the same schema. It is built here, ahead
+     * of the migration that will make it non-trivial, so that when v10 rewrites how
+     * an invoice and a category are computed, the assertion already exists and only
+     * the production side of it moves.
+     */
+    @Test
+    fun `given a migrated ledger when compared figure by figure then the harness agrees`() = runTest {
+        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+            buildV7Fixture(connection)
+            connection.execSQL("PRAGMA user_version = 7")
+        }
+
+        // Room opens lazily: the migration only runs on the first query.
+        openMigrated().apply { entryDao().getAll() }.close()
+
+        val expected = BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+            connection.verifyLedgerBalanced(stage = "v9 snapshot")
+            connection.readV9Figures()
+        }
+
+        val database = openMigrated()
+        assertEquals(expected, database.readProductionFigures())
+        database.close()
+    }
+
+    private fun openMigrated(): AppDatabase = Room.databaseBuilder<AppDatabase>(name = file.absolutePath)
+        .addMigrations(MIGRATION_7_9)
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()
 }
 
 /**

@@ -6,12 +6,12 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.DimensionFlows
-import com.neoutils.finsight.domain.repository.ReportStats
+import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -77,9 +77,9 @@ class CalculateReportStatsUseCaseTest {
 
 private class CapturingEntryRepository : IEntryRepository {
     var capturedScope: List<Long> = emptyList()
-    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ReportStats {
+    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats {
         capturedScope = scopeAccountIds
-        return ReportStats(0.0, 0.0, 0.0, 0.0)
+        return ScopeStats(0.0, 0.0, 0.0, 0.0)
     }
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
@@ -94,7 +94,7 @@ private class CapturingEntryRepository : IEntryRepository {
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()

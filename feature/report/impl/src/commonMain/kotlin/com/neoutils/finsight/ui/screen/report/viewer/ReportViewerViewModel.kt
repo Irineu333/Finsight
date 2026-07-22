@@ -118,7 +118,7 @@ class ReportViewerViewModel(
                 total = invoiceDimensionIds.sumOf { entryRepository.dimensionOwed(it) },
             )
         } else {
-            val reportStats = calculateReportStatsUseCase(
+            val scopeStats = calculateReportStatsUseCase(
                 perspective = perspective,
                 startDate = startDate,
                 endDate = endDate,
@@ -126,10 +126,10 @@ class ReportViewerViewModel(
             ReportViewerUiState.Stats.Account(
                 startDate = startDate,
                 endDate = endDate,
-                openingBalance = reportStats.openingBalance,
-                income = reportStats.income,
-                expense = reportStats.expense,
-                balance = reportStats.balance,
+                openingBalance = scopeStats.openingBalance,
+                income = scopeStats.income,
+                expense = scopeStats.expense,
+                balance = scopeStats.balance,
             )
         }
 
@@ -195,11 +195,11 @@ class ReportViewerViewModel(
                             }
 
                             is ReportPerspective.CreditCardPerspective -> {
-                                val cardAccountId = creditCards
+                                val liabilityAccountId = creditCards
                                     .find { it.id == perspective.creditCardId }?.accountId
                                 op.entries.any {
                                     it.account.type == AccountType.LIABILITY &&
-                                            it.account.id == cardAccountId
+                                            it.account.id == liabilityAccountId
                                 }
                             }
                         }

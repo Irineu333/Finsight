@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.DeleteInstallments
 import com.neoutils.finsight.domain.error.ClosedAccountException
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Transaction
@@ -31,7 +31,7 @@ class DeleteInstallmentViewModel(
     fun deleteInstallment() = viewModelScope.launch {
         // The event still reports the category by name; the ledger hands out only
         // the dimension its nominal leg carries (design D6).
-        val categoryName = transactions.firstOrNull()?.categoryDimensionId
+        val categoryName = transactions.firstOrNull()?.nominalDimensionId
             ?.let { dimensionId ->
                 categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
             }
@@ -51,7 +51,7 @@ class DeleteInstallmentViewModel(
      * just did not close and said nothing, which reads as "it worked".
      */
     private fun Throwable.toUiMessage(): UiText = when (this) {
-        is InvoiceLockedException -> error.toUiText()
+        is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         else -> UiText.Res(Res.string.ledger_action_error_generic)
     }

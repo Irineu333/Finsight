@@ -214,10 +214,10 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
-    override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows =
-        com.neoutils.finsight.domain.repository.CardMonthFlows(expense = 60.0, payment = 25.0)
+    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
+        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0)
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }

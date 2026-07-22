@@ -99,7 +99,7 @@ class AccountsViewModel(
                 income = flows.income,
                 expense = flows.expense,
                 adjustment = flows.adjustment,
-                invoicePayment = flows.invoicePayment,
+                settlement = flows.settlement,
                 hasMovement = entryRepository.hasEntries(account.id),
             )
         }

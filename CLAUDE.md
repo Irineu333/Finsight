@@ -30,12 +30,15 @@ enforced mechanically by convention plugins in `build-logic`
 (`finsight.kmp.library` / `compose.library` / `feature.api` / `feature.impl` / `app.shared`).
 
 - **`build-logic/`** — convention plugins; a feature `build.gradle.kts` is ~5 lines.
-- **`core/`** — `common` (util/extension/UiText/Platform/icons), `model` (domain models,
-  errors, exceptions), `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
+- **`core/`** — `common` (util/extension/UiText/Platform/icons), `ledger` (the double-entry
+  ledger: models, entities/DAOs, repositories and the write boundary — depends on no app
+  module and **cannot name a facade**), `model` (facade models — category, card, invoice,
+  installment, recurring, budget — their forms, errors and exceptions; depends on `ledger`),
+  `navigation` (`LocalNavController` + the `NavRoute`/`NavGraphRoute`
   markers — no feature is ever named here), `resources` (single `Res`), `designsystem` (theme, `ModalManager`,
   generic components + shared modals like date/icon pickers), `ui` (components that render
-  core models + shared UI models — never names a feature), `database` (Room entities/DAOs/
-  `AppDatabase`/converters + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
+  core models + shared UI models — never names a feature), `database` (the facade entities/DAOs,
+  `AppDatabase` and every migration + shared mappers), `analytics`/`crashlytics`/`auth` (Firebase/
   no-op services).
 - **`feature/<name>/api`** — routes (`@Serializable`), repository interfaces, public
   use-case interfaces, the `<Name>Entry` UI entry point. Depends only on `:core:*`.
@@ -104,19 +107,25 @@ markers live in `:core:navigation`, making every route findable by its implement
 
 > Always use `UiText.Res` for user-facing messages. `UiText.Raw` only for dynamic/runtime values with no translation.
 
-## Error Types (`core/model` — `domain/error/`)
+## Error Types (`core/model` — `domain/error/`; the ledger's own in `core/ledger`)
 `enum class` or `sealed class` with:
 - `val message: String` — English, for logging only
 - `toUiText()` extension — internationalized via `UiText.Res`, for UI display
 - `XxxException(val error: XxxError)` wrapper — **only** for operation use cases that can throw (e.g. `TransferBetweenAccountsUseCase`); validation use cases return the error type directly via `Either`
 
 ## Ledger (double-entry)
-Money is modeled as a **balanced double-entry ledger**, and that is the only model.
-- **Chart of accounts:** every account, card and category is an `Account` with a `type` from the **closed** set `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/model`). Cards and categories are facades linked to their `Account` by `accountId`; closure lives on the account (`isClosed`), so a facade never keeps its own copy.
-- **Entries:** a `Transaction` is a set of `Entry` (signed `Long` cents, debit-positive, `currency`). `Σ = 0` per currency is validated at the single write boundary (`LedgerEntryWriter`), alongside the invoice-status invariant.
+Money is modeled as a **balanced double-entry ledger**, and that is the only model. It lives
+in **`:core:ledger`**, which depends on no app module — the separation is enforced by the
+compiler, not by discipline (see below).
+- **Chart of accounts:** every account and card is an `Account` with a `type` from the **closed** set `{ASSET, LIABILITY, INCOME, EXPENSE, EQUITY}` (`core/ledger`). A card is a facade linked to its `Account` by `accountId`, and reads closure from it — no copy. A **category is not in the chart**: it is a dimension (see below), so it owns its own `isArchived`. Beyond the user's accounts and cards the chart holds only three system rows: the two nominals every expense and income lands on, and reconciliation.
+- **Entries:** a `Transaction` is a set of `Entry` (signed `Long` cents, debit-positive, `currency`). `Σ = 0` per currency is validated at the single write boundary (`LedgerEntryWriter`), alongside the dimension landing rule and whatever the registered `DimensionWriteGuard` refuses.
 - **Reads:** every figure — balance, opening balance, invoice owed, category spending, net worth — is `Σ entries`, via `IEntryRepository`. There is no per-type sign rule and no second way to compute a number.
 - **Derivation:** what a transaction *is* comes from the account types of its entries (`deriveTransactionLabel`), and the display sign from `AccountType.displaySign`. Neither is persisted.
-- **Writes:** callers express **intent** (`TransactionIntent`/`TransactionLeg`), not legs. Resolving the counterpart account creates rows on demand, so the translation belongs to the writer, not to a pure mapper.
+- **Writes:** callers express **intent** by identity — `TransactionLeg(type, amount, accountId, dimensionId?)` plus a `ContraLeg(nature, dimensionId?)` for a one-sided intent. Resolving a facade to an id is the caller's job; completing and balancing the intent is the writer's, because it creates the system account on demand.
+- **Dimensions:** a leg may carry one `dimensionId` — the analytic axis it is classified by. An invoice's dimension lands on the `LIABILITY` leg, a category's on the nominal one; `DimensionKind.landsOn` is the rule and the writer enforces it beside `Σ = 0`. "Uncategorized" is the *absence* of a dimension, never a bucket account.
+- **The module boundary:** `:core:ledger` declares an internal `LedgerDatabase` listing only its four tables, so a `@Query` naming a facade table fails to compile (`no such table: invoices`). Two ports let a facade take part without the ledger knowing it exists: `DimensionWriteGuard` (veto a write touching my dimensions) and `TransactionRemovalHook` (a transaction was removed — correct yourself, in the same write transaction).
+
+**Documented exceptions, both deliberate:** `Category.type` is primary state, not derived — "this is an expense category" is the user's declaration and nothing in the ledger produces it. And `transactions` retains the installment/recurring columns *without* foreign keys; they are grouping metadata, no ledger read consults them, and each facade's removal path nullifies them explicitly.
 
 ## Code Style
 - Write clear code; comments are the exception, not a crutch.

@@ -122,7 +122,7 @@ class ViewBudgetViewModelTest {
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-        override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
+        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun totalsByDimension(
             nominalType: AccountType,
@@ -134,7 +134,7 @@ class ViewBudgetViewModelTest {
             nominalType: AccountType,
             scopeDimensionIds: List<Long>,
         ): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
     }
 
     private fun viewModel(

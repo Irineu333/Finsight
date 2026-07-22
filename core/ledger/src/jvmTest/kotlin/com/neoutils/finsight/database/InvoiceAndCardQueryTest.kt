@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database
 
-import com.neoutils.finsight.database.dao.CardMonthTotals
+import com.neoutils.finsight.database.dao.LiabilityMonthTotals
 import com.neoutils.finsight.database.dao.DimensionPeriodTotals
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.DimensionKind
@@ -59,8 +59,8 @@ class InvoiceAndCardQueryTest {
         seed()
 
         assertEquals(
-            CardMonthTotals(expense = 10_000, payment = 3_000),
-            entryDao.cardMonthTotals("2026-03"),
+            LiabilityMonthTotals(expense = 10_000, payment = 3_000),
+            entryDao.liabilityMonthTotals("2026-03"),
         )
     }
 

@@ -25,7 +25,7 @@ import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.repository.ReportStats
+import com.neoutils.finsight.domain.repository.ScopeStats
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
@@ -51,9 +51,9 @@ import kotlin.test.assertEquals
 /**
  * Characterizes the account-perspective stats of [ReportViewerViewModel] (sites
  * :84,87,90): it forwards [CalculateReportStatsUseCase], whose figures now come from
- * the ledger aggregate (`IEntryRepository.reportStats`, its semantics pinned by
+ * the ledger aggregate (`IEntryRepository.scopeStats`, its semantics pinned by
  * ReportStatsQueryTest). This pins the ViewModel wiring — that the use case's
- * [ReportStats] surface as `Stats.Account`.
+ * [ScopeStats] surface as `Stats.Account`.
  */
 class ReportViewerViewModelCharacterizationTest {
 
@@ -101,7 +101,7 @@ class ReportViewerViewModelCharacterizationTest {
             invoiceRepository = fakes.invoiceRepository(),
             calculateReportStatsUseCase = CalculateReportStatsUseCase(
                 entryRepository = fakes.entryRepository(
-                    stats = ReportStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
+                    stats = ScopeStats(income = 100.0, expense = 30.0, balance = 70.0, openingBalance = -20.0),
                 ),
                 accountRepository = fakes.accountRepository(listOf(account)),
                 creditCardRepository = fakes.creditCardRepository(),
@@ -283,7 +283,7 @@ private class Fakes {
 
     fun entryRepository(
         owed: Map<Long, Double> = emptyMap(),
-        stats: ReportStats = ReportStats(0.0, 0.0, 0.0, 0.0),
+        stats: ScopeStats = ScopeStats(0.0, 0.0, 0.0, 0.0),
     ) = object : IEntryRepository {
         override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
         override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
@@ -297,11 +297,11 @@ private class Fakes {
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = owed[dimensionId] ?: 0.0
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-        override suspend fun cardMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.CardMonthFlows = throw NotImplementedError()
+        override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ReportStats = stats
+        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = stats
     }
 
     val renderer = object : ReportDocumentRenderer {

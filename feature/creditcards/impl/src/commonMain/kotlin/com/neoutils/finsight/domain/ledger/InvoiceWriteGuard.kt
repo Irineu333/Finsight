@@ -1,7 +1,7 @@
 package com.neoutils.finsight.domain.ledger
 
-import com.neoutils.finsight.domain.error.InvoiceLockedException
-import com.neoutils.finsight.domain.error.LedgerError
+import com.neoutils.finsight.domain.error.InvoiceError
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 
 /**
@@ -33,9 +33,9 @@ class InvoiceWriteGuard(
 
         invoices.forEach { invoice ->
             when {
-                invoice.status.isPaid -> throw InvoiceLockedException(LedgerError.PaidInvoice)
+                invoice.status.isPaid -> throw InvoiceException(InvoiceError.Paid)
                 invoice.status.isClosed && !write.settlesALiability ->
-                    throw InvoiceLockedException(LedgerError.ClosedInvoice)
+                    throw InvoiceException(InvoiceError.ClosedToNewSpending)
             }
         }
     }

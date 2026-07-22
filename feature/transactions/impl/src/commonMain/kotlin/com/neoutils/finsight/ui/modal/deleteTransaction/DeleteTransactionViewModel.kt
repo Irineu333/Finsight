@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.error.ClosedAccountException
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.transaction_error_generic
@@ -29,7 +29,7 @@ class DeleteTransactionViewModel(
     fun deleteTransaction() = viewModelScope.launch {
         // The analytics event still reports the category by name; the ledger only
         // hands out its dimension, so the name is resolved here (design D6).
-        val categoryName = transaction.categoryDimensionId
+        val categoryName = transaction.nominalDimensionId
             ?.let { dimensionId ->
                 categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
             }
@@ -50,7 +50,7 @@ class DeleteTransactionViewModel(
      * "it worked".
      */
     private fun Throwable.toUiMessage(): UiText = when (this) {
-        is InvoiceLockedException -> error.toUiText()
+        is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)
     }

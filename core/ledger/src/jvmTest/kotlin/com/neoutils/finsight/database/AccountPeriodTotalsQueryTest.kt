@@ -53,7 +53,7 @@ class AccountPeriodTotalsQueryTest {
                 income = 10_000,      // the salary
                 expense = 8_000,      // the expense (3000) plus the transfer out (5000)
                 adjustment = 4_000,   // signed, and kept out of income
-                invoicePayment = 8_000,
+                settlement = 8_000,
             ),
             entryDao.accountPeriodTotals(1, "2026-01"),
         )
@@ -64,7 +64,7 @@ class AccountPeriodTotalsQueryTest {
         seed()
 
         assertEquals(
-            AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, invoicePayment = 0),
+            AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, settlement = 0),
             entryDao.accountPeriodTotals(3, "2026-01"),
         )
     }

@@ -186,7 +186,7 @@ private data class CreditCardsFilters(
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
     return filter { transaction ->
-        transaction.categoryDimensionId == category.dimensionId
+        transaction.nominalDimensionId == category.dimensionId
     }
 }
 

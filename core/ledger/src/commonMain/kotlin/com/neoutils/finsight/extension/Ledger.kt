@@ -78,7 +78,7 @@ fun List<Entry>.deriveTransactionLabel(): TransactionLabel {
  * is the whole class of defect the landing rule exists to prevent, so the reading has
  * one owner too.
  */
-fun List<Entry>.cardLeg(): Entry? = firstOrNull { it.account.type == AccountType.LIABILITY }
+fun List<Entry>.liabilityLeg(): Entry? = firstOrNull { it.account.type == AccountType.LIABILITY }
 
 fun List<Entry>.nominalLeg(): Entry? = firstOrNull { it.account.type.isNominal }
 

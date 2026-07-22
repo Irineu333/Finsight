@@ -1,6 +1,7 @@
 package com.neoutils.finsight.domain.ledger
 
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceError
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -45,10 +46,10 @@ class InvoiceWriteGuardTest {
 
     @Test
     fun `a closed invoice refuses new spending`() = runTest {
-        val error = assertFailsWith<InvoiceLockedException> {
+        val error = assertFailsWith<InvoiceException> {
             guard(Invoice.Status.CLOSED).ensureAccepts(write())
         }
-        assertEquals(LedgerError.ClosedInvoice, error.error)
+        assertEquals(InvoiceError.ClosedToNewSpending, error.error)
     }
 
     @Test
@@ -60,13 +61,13 @@ class InvoiceWriteGuardTest {
 
     @Test
     fun `a paid invoice refuses everything, settlement included`() = runTest {
-        assertFailsWith<InvoiceLockedException> {
+        assertFailsWith<InvoiceException> {
             guard(Invoice.Status.PAID).ensureAccepts(write())
         }
-        val error = assertFailsWith<InvoiceLockedException> {
+        val error = assertFailsWith<InvoiceException> {
             guard(Invoice.Status.PAID).ensureAccepts(write(settlesALiability = true))
         }
-        assertEquals(LedgerError.PaidInvoice, error.error)
+        assertEquals(InvoiceError.Paid, error.error)
     }
 
     @Test

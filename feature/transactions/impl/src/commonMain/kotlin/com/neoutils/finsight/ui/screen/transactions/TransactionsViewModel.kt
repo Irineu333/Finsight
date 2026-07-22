@@ -80,7 +80,7 @@ class TransactionsViewModel(
                 // Month-wide card payments from the ledger (D12), not summed from the
                 // loaded list. Reactive because observeAllTransactions() above re-runs
                 // this block on every ledger write, and on month change.
-                payment = entryRepository.cardMonthFlows(yearMonth).payment,
+                payment = entryRepository.liabilityMonthFlows(yearMonth).payment,
                 // Opening/final balances from the ledger (task 4.11): Σ entries of all
                 // ASSET accounts up to the previous / selected month.
                 openingBalance = calculateBalanceUseCase(target = yearMonth.minusMonth()),
@@ -161,7 +161,7 @@ private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<
 
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
-    return filter { it.categoryDimensionId == category.dimensionId }
+    return filter { it.nominalDimensionId == category.dimensionId }
 }
 
 private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {
@@ -173,5 +173,5 @@ private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> 
 
 private fun List<Transaction>.filter(target: TransactionTarget?): List<Transaction> {
     if (target == null) return this
-    return filter { transaction -> transaction.isCardTarget == target.isCreditCard }
+    return filter { transaction -> transaction.hasLiabilityLeg == target.isCreditCard }
 }

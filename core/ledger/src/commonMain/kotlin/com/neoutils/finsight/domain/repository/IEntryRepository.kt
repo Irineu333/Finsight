@@ -20,7 +20,7 @@ data class AccountFlows(
     val income: Double,
     val expense: Double,
     val adjustment: Double,
-    val invoicePayment: Double,
+    val settlement: Double,
 )
 
 /**
@@ -34,7 +34,7 @@ data class DimensionFlows(
 )
 
 /** Month-wide card expense/payment (reais) across every card, both positive. */
-data class CardMonthFlows(
+data class LiabilityMonthFlows(
     val expense: Double,
     val payment: Double,
 )
@@ -44,7 +44,7 @@ data class CardMonthFlows(
  * ledger. [income]/[expense] are positive magnitudes; [balance] is signed and includes
  * adjustments; [openingBalance] is the signed scope balance before the period.
  */
-data class ReportStats(
+data class ScopeStats(
     val income: Double,
     val expense: Double,
     val balance: Double,
@@ -104,7 +104,7 @@ interface IEntryRepository {
     suspend fun dimensionFlows(dimensionId: Long): DimensionFlows
 
     /** Month-wide card expense/payment across every card account. */
-    suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows
+    suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows
 
     /** Net worth = Σ ASSET − Σ LIABILITY, via the same entry mechanism. */
     suspend fun netWorth(): Double
@@ -137,11 +137,11 @@ interface IEntryRepository {
      * LIABILITY account); internal transfers among them are excluded. Empty scope yields
      * zeros — the caller resolves "all accounts" before calling.
      */
-    suspend fun reportStats(
+    suspend fun scopeStats(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ReportStats
+    ): ScopeStats
 }
 
 /**

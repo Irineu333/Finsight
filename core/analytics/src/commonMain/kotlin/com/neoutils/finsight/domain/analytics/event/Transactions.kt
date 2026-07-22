@@ -37,7 +37,7 @@ class DeleteTransaction(params: Map<String, String>) : Event("delete_transaction
             transaction.primaryEntry?.let { entry ->
                 put("type", deriveTransactionType(entry.amount, transaction.entries).name.lowercase())
             }
-            val target = if (transaction.isCardTarget) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
+            val target = if (transaction.hasLiabilityLeg) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
             put("target", target.name.lowercase())
             categoryName?.let { put("category", it) }
         }

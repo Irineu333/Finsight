@@ -171,7 +171,7 @@ class DashboardComponentsBuilder(
         config: Map<String, String>,
     ): DashboardComponent.CreditCardBalanceStats? {
         // Month-wide card expense/payment from the ledger (task 4.11).
-        val flows = entryRepository.cardMonthFlows(input.targetMonth)
+        val flows = entryRepository.liabilityMonthFlows(input.targetMonth)
         val payment = flows.payment
         val expense = flows.expense
 

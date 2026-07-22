@@ -52,8 +52,8 @@ class MigrationLedgerReadParityTest {
 
         // Invoice owed, natural: purchase -10000 + payment +4000 = -6000 (60.00 owed).
         // Read through the invoice's dimension, which is what carries it since v10.
-        val invoiceDimensionId = database.invoiceDao().getAllInvoices().first { it.id == 1L }.dimensionId!!
-        assertEquals(-6000L, entryDao.dimensionNaturalBalance(invoiceDimensionId))
+        val liabilityDimensionId = database.invoiceDao().getAllInvoices().first { it.id == 1L }.dimensionId!!
+        assertEquals(-6000L, entryDao.dimensionNaturalBalance(liabilityDimensionId))
 
         // Category total, all-time: op1 (5000) + op6 (2000) + op7 (1500) = 8500.
         // Read through the category's dimension, which is what carries it since v10.

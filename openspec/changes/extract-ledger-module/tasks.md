@@ -107,9 +107,9 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 
 ## 10. Verificação final
 
-- [ ] 10.1 Auditar as assinaturas públicas de `:core:ledger` e confirmar que nenhuma nomeia fatura, cartão, categoria, orçamento ou relatório
-- [ ] 10.2 Auditar o SQL de `:core:ledger` e confirmar que todo JOIN é entre tabelas do razão
-- [ ] 10.3 Confirmar por grep que nenhuma feature depende de `feature:transactions:api` para ler ou escrever no razão
+- [x] 10.1 Auditar as assinaturas públicas de `:core:ledger` e confirmar que nenhuma nomeia fatura, cartão, categoria, orçamento ou relatório
+- [x] 10.2 Auditar o SQL de `:core:ledger` e confirmar que todo JOIN é entre tabelas do razão
+- [x] 10.3 Confirmar por grep que nenhuma feature depende de `feature:transactions:api` para ler ou escrever no razão
 - [ ] 10.4 Rodar `./gradlew allTests`
 - [ ] 10.5 Executar o app em Android e Desktop com um banco migrado de v9 e conferir visualmente saldos, faturas, gastos por categoria e relatórios
-- [ ] 10.6 Atualizar `CLAUDE.md` e `feature/README.md` com o novo módulo, a direção da dependência e as exceções documentadas: `Category.type`, as colunas de parcelamento/recorrência e as FKs removidas
+- [x] 10.6 Atualizar `CLAUDE.md` e `feature/README.md` com o novo módulo, a direção da dependência e as exceções documentadas: `Category.type`, as colunas de parcelamento/recorrência e as FKs removidas

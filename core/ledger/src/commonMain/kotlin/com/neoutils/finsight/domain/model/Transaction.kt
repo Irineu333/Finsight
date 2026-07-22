@@ -1,6 +1,6 @@
 package com.neoutils.finsight.domain.model
 
-import com.neoutils.finsight.extension.cardLeg
+import com.neoutils.finsight.extension.liabilityLeg
 import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.extension.nominalLeg
 import com.neoutils.finsight.extension.sourceLeg
@@ -56,14 +56,14 @@ data class Transaction(
     val sourceAccount: Account? get() = entries.sourceLeg()?.account
 
     /**
-     * The identities a feature resolves its facade from. The ledger hands out the
-     * key; what it opens is the feature's business.
+     * The identities a feature resolves its facade from, named for the leg they come
+     * off rather than for whatever the feature will make of them. The ledger hands
+     * out the key; what it opens is none of its business.
      */
-    val cardAccountId: Long? get() = entries.cardLeg()?.account?.id
-    val invoiceDimensionId: Long? get() = entries.cardLeg()?.dimensionId
-    val categoryDimensionId: Long? get() = entries.nominalLeg()?.dimensionId
+    val liabilityAccountId: Long? get() = entries.liabilityLeg()?.account?.id
+    val liabilityDimensionId: Long? get() = entries.liabilityLeg()?.dimensionId
+    val nominalDimensionId: Long? get() = entries.nominalLeg()?.dimensionId
 
-    val isCardTarget: Boolean get() = entries.any { it.account.type == AccountType.LIABILITY }
-
-    val hasInstallment: Boolean get() = installmentId != null
+    /** Whether any leg posts to a liability — a card purchase or its payment. */
+    val hasLiabilityLeg: Boolean get() = entries.any { it.account.type == AccountType.LIABILITY }
 }

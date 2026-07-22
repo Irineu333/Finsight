@@ -3,7 +3,7 @@ package com.neoutils.finsight.ui.modal.payInvoice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.error.ClosedAccountException
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.domain.model.Account
@@ -105,7 +105,7 @@ class PayInvoiceViewModel(
 
     private fun Throwable.toUiMessage(): UiText = when (this) {
         is ClosedAccountException -> error.toUiText()
-        is InvoiceLockedException -> error.toUiText()
+        is InvoiceException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
         else -> UiText.Res(Res.string.ledger_action_error_generic)
     }

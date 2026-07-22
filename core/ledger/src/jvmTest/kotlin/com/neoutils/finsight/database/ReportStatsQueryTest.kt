@@ -1,6 +1,6 @@
 package com.neoutils.finsight.database
 
-import com.neoutils.finsight.database.dao.ReportStatsTotals
+import com.neoutils.finsight.database.dao.ScopeStatsTotals
 import com.neoutils.finsight.database.entity.AccountEntity
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
@@ -28,8 +28,8 @@ class ReportStatsQueryTest {
 
     @AfterTest fun tearDown() = database.close()
 
-    private suspend fun stats(scope: List<Long>, start: String, end: String): ReportStatsTotals =
-        entryDao.reportStats(scope, LocalDate.parse(start), LocalDate.parse(end))
+    private suspend fun stats(scope: List<Long>, start: String, end: String): ScopeStatsTotals =
+        entryDao.scopeStats(scope, LocalDate.parse(start), LocalDate.parse(end))
 
     @Test
     fun `account perspective includes adjustments in the period and the opening balance`() = runTest {
@@ -48,7 +48,7 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ReportStatsTotals(income = 0, expense = 4_000, balance = -1_500, openingBalance = 7_000),
+            ScopeStatsTotals(income = 0, expense = 4_000, balance = -1_500, openingBalance = 7_000),
             stats(listOf(1), start = "2026-03-10", end = "2026-03-31"),
         )
     }
@@ -72,7 +72,7 @@ class ReportStatsQueryTest {
         }
 
         assertEquals(
-            ReportStatsTotals(income = 8_000, expense = 20_000, balance = -11_000, openingBalance = -7_500),
+            ScopeStatsTotals(income = 8_000, expense = 20_000, balance = -11_000, openingBalance = -7_500),
             stats(listOf(200), start = "2026-03-01", end = "2026-03-31"),
         )
     }

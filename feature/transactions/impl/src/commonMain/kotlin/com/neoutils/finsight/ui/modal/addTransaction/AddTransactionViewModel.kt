@@ -3,7 +3,7 @@
 package com.neoutils.finsight.ui.modal.addTransaction
 
 import com.neoutils.finsight.domain.error.ClosedAccountException
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.resources.Res
@@ -148,7 +148,7 @@ class AddTransactionViewModel(
      * reached crashlytics and the user saw a modal that simply refused to close.
      */
     private fun Throwable.toUiMessage(): UiText = when (this) {
-        is InvoiceLockedException -> error.toUiText()
+        is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)

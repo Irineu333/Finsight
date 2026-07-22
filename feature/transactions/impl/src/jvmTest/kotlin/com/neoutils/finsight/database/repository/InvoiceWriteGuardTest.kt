@@ -11,7 +11,8 @@ import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceError
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.AccountType
@@ -56,9 +57,9 @@ private class StatusWriteGuard(private val invoice: Invoice) : DimensionWriteGua
     override suspend fun ensureAccepts(write: LedgerWrite) {
         if (invoice.dimensionId !in write.dimensionIds) return
         when {
-            invoice.status.isPaid -> throw InvoiceLockedException(LedgerError.PaidInvoice)
+            invoice.status.isPaid -> throw InvoiceException(InvoiceError.Paid)
             invoice.status.isClosed && !write.settlesALiability ->
-                throw InvoiceLockedException(LedgerError.ClosedInvoice)
+                throw InvoiceException(InvoiceError.ClosedToNewSpending)
         }
     }
 }
@@ -179,10 +180,10 @@ class InvoiceWriteGuardTest {
 
     @Test
     fun `a closed invoice refuses a new expense`() = runTest {
-        val error = assertFailsWith<InvoiceLockedException> {
+        val error = assertFailsWith<InvoiceException> {
             repository(Invoice.Status.CLOSED).createTransaction(purchase())
         }
-        assertEquals(LedgerError.ClosedInvoice, error.error)
+        assertEquals(InvoiceError.ClosedToNewSpending, error.error)
     }
 
     @Test
@@ -193,10 +194,10 @@ class InvoiceWriteGuardTest {
 
     @Test
     fun `a paid invoice refuses a new expense`() = runTest {
-        val error = assertFailsWith<InvoiceLockedException> {
+        val error = assertFailsWith<InvoiceException> {
             repository(Invoice.Status.PAID).createTransaction(purchase())
         }
-        assertEquals(LedgerError.PaidInvoice, error.error)
+        assertEquals(InvoiceError.Paid, error.error)
     }
 
     @Test
@@ -206,10 +207,10 @@ class InvoiceWriteGuardTest {
 
         val locked = repository(Invoice.Status.PAID)
 
-        assertFailsWith<InvoiceLockedException> { locked.deleteTransactionById(purchase.id) }
+        assertFailsWith<InvoiceException> { locked.deleteTransactionById(purchase.id) }
         // The bulk path is the one an installment deletion takes; it used to reach
         // the row removal without passing the gate at all.
-        assertFailsWith<InvoiceLockedException> { locked.deleteTransactionsByIds(listOf(purchase.id)) }
+        assertFailsWith<InvoiceException> { locked.deleteTransactionsByIds(listOf(purchase.id)) }
     }
 
     @Test
@@ -307,7 +308,7 @@ class InvoiceWriteGuardTest {
         // entries from the paid invoice.
         val locked = repository(Invoice.Status.PAID)
 
-        assertFailsWith<InvoiceLockedException> {
+        assertFailsWith<InvoiceException> {
             locked.updateTransaction(
                 id = purchase.id,
                 title = "Moved",
@@ -339,10 +340,10 @@ class InvoiceWriteGuardTest {
 
     @Test
     fun `a paid invoice refuses even its own payment`() = runTest {
-        val error = assertFailsWith<InvoiceLockedException> {
+        val error = assertFailsWith<InvoiceException> {
             repository(Invoice.Status.PAID).createTransaction(payment())
         }
-        assertEquals(LedgerError.PaidInvoice, error.error)
+        assertEquals(InvoiceError.Paid, error.error)
     }
 }
 

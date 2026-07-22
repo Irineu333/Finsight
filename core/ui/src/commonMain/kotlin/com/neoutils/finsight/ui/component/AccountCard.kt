@@ -207,10 +207,10 @@ private fun DetailContent(
             )
         }
 
-        if (accountUi.invoicePayment != 0.0) {
+        if (accountUi.settlement != 0.0) {
             AccountSummaryRow(
                 label = stringResource(Res.string.accounts_invoices),
-                amount = accountUi.invoicePayment,
+                amount = accountUi.settlement,
                 color = InvoicePayment,
                 signDisplay = AccountSignDisplay.ALWAYS_NEGATIVE,
             )

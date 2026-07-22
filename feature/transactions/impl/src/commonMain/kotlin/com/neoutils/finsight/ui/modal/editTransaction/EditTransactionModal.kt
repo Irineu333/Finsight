@@ -79,7 +79,7 @@ class EditTransactionModal(
         }
         var target by remember {
             mutableStateOf(
-                if (transaction.isCardTarget) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
+                if (transaction.hasLiabilityLeg) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
             )
         }
 

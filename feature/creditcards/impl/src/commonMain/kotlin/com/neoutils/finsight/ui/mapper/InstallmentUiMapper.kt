@@ -14,7 +14,7 @@ import com.neoutils.finsight.ui.screen.installments.InstallmentUi
  * feature — which owns invoices — is where it becomes one.
  */
 internal fun Map<Long, Invoice>.invoiceOf(transaction: Transaction): Invoice? =
-    transaction.invoiceDimensionId?.let { this[it] }
+    transaction.liabilityDimensionId?.let { this[it] }
 
 class InstallmentUiMapper {
 

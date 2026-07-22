@@ -62,7 +62,7 @@ private class FakeReadEntryDao(
     override suspend fun naturalBalanceOf(accountId: Long, currency: String): Long = throw NotImplementedError()
     override suspend fun balanceOf(accountId: Long): Long = throw NotImplementedError()
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
-    override suspend fun cardMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.CardMonthTotals = throw NotImplementedError()
+    override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()
     override suspend fun totalsByDimensionWithSiblingLeg(
         categoryType: String,
         start: kotlinx.datetime.LocalDate,
@@ -73,5 +73,5 @@ private class FakeReadEntryDao(
         nominalType: String,
         scopeDimensionIds: List<Long>,
     ): List<com.neoutils.finsight.database.dao.DimensionTotal> = throw NotImplementedError()
-    override suspend fun reportStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ReportStatsTotals = throw NotImplementedError()
+    override suspend fun scopeStats(scopeIds: List<Long>, startDate: kotlinx.datetime.LocalDate, endDate: kotlinx.datetime.LocalDate): com.neoutils.finsight.database.dao.ScopeStatsTotals = throw NotImplementedError()
 }

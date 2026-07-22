@@ -209,7 +209,7 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long) = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
-    override suspend fun cardMonthFlows(month: YearMonth) = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
     override suspend fun netWorth() = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,
@@ -221,7 +221,7 @@ private class MonthBalances(private val balances: Map<Long, Double>) : IEntryRep
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
     ) = throw NotImplementedError()
-    override suspend fun reportStats(
+    override suspend fun scopeStats(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,

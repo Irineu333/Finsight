@@ -15,15 +15,6 @@ sealed class LedgerError(val message: String) {
     data object MisplacedDimension :
         LedgerError("A dimension may only be carried by a leg of an account nature its kind accepts.")
 
-    /** A paid invoice is settled history: nothing about it may change. */
-    data object PaidInvoice : LedgerError("A paid invoice cannot be changed.")
-
-    /**
-     * A closed invoice takes no new spending, but it must still accept the payment
-     * that settles it — the one transaction that is *about* closing the cycle.
-     */
-    data object ClosedInvoice : LedgerError("A closed invoice only accepts its own payment.")
-
     /**
      * A closed account keeps its history and takes no new movement.
      *
@@ -78,9 +69,6 @@ enum class ClosedFacade {
 }
 
 class UnbalancedTransactionException(val error: LedgerError) : Exception(error.message)
-
-/** Raised at the write boundary when an invoice's status forbids the transaction. */
-class InvoiceLockedException(val error: LedgerError) : Exception(error.message)
 
 /** Raised at the write boundary when an account is closed to new movement. */
 class ClosedAccountException(val error: LedgerError) : Exception(error.message)

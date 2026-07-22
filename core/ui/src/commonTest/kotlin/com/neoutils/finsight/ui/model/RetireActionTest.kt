@@ -21,7 +21,7 @@ class RetireActionTest {
     fun `the ui models expose the same rule so the two screens cannot drift`() {
         val moved = AccountUi(
             id = 1, openingBalance = 0.0, balance = 0.0, income = 0.0,
-            expense = 0.0, adjustment = 0.0, invoicePayment = 0.0, hasMovement = true,
+            expense = 0.0, adjustment = 0.0, settlement = 0.0, hasMovement = true,
         )
         assertEquals(RetireAction.ARCHIVE, moved.retireAction)
         assertEquals(RetireAction.DELETE, moved.copy(hasMovement = false).retireAction)

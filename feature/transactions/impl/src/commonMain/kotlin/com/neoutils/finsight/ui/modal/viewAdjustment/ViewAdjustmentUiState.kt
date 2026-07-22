@@ -18,7 +18,7 @@ sealed interface ViewAdjustmentUiState {
         val creditCard: CreditCard? = null,
         val invoice: Invoice? = null,
     ) : ViewAdjustmentUiState {
-        val isCardTarget = transaction.isCardTarget
+        val isCardTarget = transaction.hasLiabilityLeg
         val title = transaction.title
         val date = transaction.date
         val account = transaction.sourceAccount

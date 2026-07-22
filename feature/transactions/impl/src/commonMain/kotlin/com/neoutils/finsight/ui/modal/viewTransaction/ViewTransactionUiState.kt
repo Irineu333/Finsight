@@ -62,7 +62,7 @@ sealed interface ViewTransactionUiState {
 
         val date = transaction.date
         val account = transaction.sourceAccount
-        val isCardTarget = transaction.isCardTarget
+        val isCardTarget = transaction.hasLiabilityLeg
         val amount = abs(perspectiveEntry?.amount ?: 0L) / 100.0
 
         private val assetEntries = transaction.entries.filter { it.account.type == AccountType.ASSET }

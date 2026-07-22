@@ -8,9 +8,9 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.DimensionFlows
-import com.neoutils.finsight.domain.repository.ReportStats
+import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -79,7 +79,7 @@ class EntryRepository(
             income = totals.income / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             adjustment = totals.adjustment / CENTS_PER_UNIT,
-            invoicePayment = totals.invoicePayment / CENTS_PER_UNIT,
+            settlement = totals.settlement / CENTS_PER_UNIT,
         )
     }
 
@@ -101,9 +101,9 @@ class EntryRepository(
         )
     }
 
-    override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows {
-        val totals = entryDao.cardMonthTotals(month.toString())
-        return CardMonthFlows(
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows {
+        val totals = entryDao.liabilityMonthTotals(month.toString())
+        return LiabilityMonthFlows(
             expense = totals.expense / CENTS_PER_UNIT,
             payment = totals.payment / CENTS_PER_UNIT,
         )
@@ -135,14 +135,14 @@ class EntryRepository(
             .associate { it.dimensionId to it.total / CENTS_PER_UNIT }
     }
 
-    override suspend fun reportStats(
+    override suspend fun scopeStats(
         scopeAccountIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ReportStats {
-        if (scopeAccountIds.isEmpty()) return ReportStats(0.0, 0.0, 0.0, 0.0)
-        val totals = entryDao.reportStats(scopeAccountIds, startDate, endDate)
-        return ReportStats(
+    ): ScopeStats {
+        if (scopeAccountIds.isEmpty()) return ScopeStats(0.0, 0.0, 0.0, 0.0)
+        val totals = entryDao.scopeStats(scopeAccountIds, startDate, endDate)
+        return ScopeStats(
             income = totals.income / CENTS_PER_UNIT,
             expense = totals.expense / CENTS_PER_UNIT,
             balance = totals.balance / CENTS_PER_UNIT,

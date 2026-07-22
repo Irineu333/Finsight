@@ -131,7 +131,7 @@ class InstallmentsViewModel(
         // handed the finished list instead of deriving it on read.
         val rows = selectedTransactions
             .filter { transaction ->
-                category == null || transaction.categoryDimensionId == category.dimensionId
+                category == null || transaction.nominalDimensionId == category.dimensionId
             }
             .filter { transaction ->
                 type == null || transaction.primaryEntry?.let {

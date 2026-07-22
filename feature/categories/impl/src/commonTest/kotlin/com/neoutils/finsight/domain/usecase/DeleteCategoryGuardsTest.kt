@@ -8,7 +8,7 @@ import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
@@ -134,7 +134,7 @@ private class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-    override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
+    override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,
@@ -146,5 +146,5 @@ private class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
         nominalType: AccountType,
         scopeDimensionIds: List<Long>,
     ): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }

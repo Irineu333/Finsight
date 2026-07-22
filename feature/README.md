@@ -39,8 +39,8 @@ construção* — não existe caminho de volta.
 
 ```
                 ┌────────────────────────────────┐
-                │   :core:model   :core:common   │
-                │   (kernel compartilhado)       │
+                │   :core:ledger  ◄── :core:model│
+                │   (razão)          (fachadas)  │
                 └──────────────▲─────────────────┘
           ┌──────────┬────────┴──┬───────────┐
     ┌─────┴────┐ ┌───┴────┐ ┌────┴───┐ ┌─────┴──┐
@@ -72,21 +72,34 @@ O `:app:shared` é o único módulo que enxerga os `impl` — é ele quem faz o 
 
 ## Domínio compartilhado
 
-Os modelos de domínio (`Transaction`, `Account`, `Invoice`...) e os tipos de erro vivem em
-`:core:model`, **não** nas apis das features. Motivo: os agregados são emaranhados
-(`Transaction` embute `Account`, `CreditCard`, `Invoice` e `Category`), e qualquer api que
-os mencionasse em assinaturas arrastaria os demais — violando a regra 1.
+Os modelos de domínio e os tipos de erro vivem no core, **não** nas apis das features —
+e o core está partido em dois, pela linha que importa:
 
-Chamamos isso de **dependência cruzada de domínio público**: modelos que precisariam
-existir simultaneamente na api de várias features. O kernel compartilhado (`:core:model`)
-mitiga o problema por ora. O split do domínio por feature é uma evolução futura, com duas
-saídas possíveis (a decidir quando chegar a hora):
+| Módulo | Contém | Enxerga |
+|---|---|---|
+| **`:core:ledger`** | O razão: `Account`, `Entry`, `Transaction`, `AccountType`, as entities/DAOs dessas tabelas, `IEntryRepository`/`ITransactionRepository` e a fronteira de escrita | Room, `:core:common`, `:core:resources` — **nenhuma fachada** |
+| **`:core:model`** | As fachadas: `Category`, `CreditCard`, `Invoice`, `Installment`, `Recurring`, `Budget`, os formulários e os erros delas | `:core:ledger` |
 
-- **Referência por ID** — `Transaction.accountId: Long` em vez de `account: Account`;
-- **Kernel mínimo permanente** — `:core:model` permanece apenas com os agregados emaranhados.
+A seta corre nesse sentido e só nesse: uma fachada projeta sobre o razão (uma recorrência
+nomeia uma conta), e o razão **não consegue** nomear uma fachada — não é convenção, é o
+compilador. `:core:ledger` declara um `LedgerDatabase` interno com as suas quatro tabelas,
+então um `JOIN invoices` escrito num `@Query` do razão falha a compilação com
+`no such table: invoices`.
 
-> A regra "api não depende de api" descarta deliberadamente a terceira opção
-> (modelos nas apis referenciando-se entre si). Restrição intencional.
+Isto encerra o que este documento chamava de **dependência cruzada de domínio público**:
+`Transaction` embutia `Account`, `CreditCard`, `Invoice` e `Category`, e as duas saídas
+previstas — referência por identidade e kernel mínimo — acabaram sendo a mesma. Uma
+transação carrega hoje identidades (`liabilityAccountId`, `nominalDimensionId`, os
+escalares de parcelamento e recorrência); resolver o que elas abrem é da feature dona.
+
+**Como uma feature fala com o razão.** Ela declara `:core:ledger` e lê por
+`IEntryRepository`. Se precisar *vetar* ou *reagir a* uma escrita, implementa uma das duas
+portas que o razão declara — `DimensionWriteGuard` (recusar) e `TransactionRemovalHook`
+(corrigir-se depois de uma remoção) — e registra no seu módulo Koin. O razão conhece
+dimensões, nunca o que elas representam.
+
+> A regra "api não depende de api" descarta deliberadamente a opção de modelos nas apis
+> referenciando-se entre si. Restrição intencional.
 
 ---
 

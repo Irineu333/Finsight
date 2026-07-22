@@ -4,12 +4,12 @@ import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.ReportStats
+import com.neoutils.finsight.domain.repository.ScopeStats
 import kotlinx.datetime.LocalDate
 
 /**
  * Report figures derived entirely from the ledger, via a single SQL aggregate
- * ([IEntryRepository.reportStats]) rather than by summing a loaded transaction list in
+ * ([IEntryRepository.scopeStats]) rather than by summing a loaded transaction list in
  * memory. This use case only resolves the perspective into the ledger accounts the
  * report is "seen from" — a perspective's ASSET accounts (all of them, including
  * archived, when none are selected, so an archived account's history is not silently
@@ -28,7 +28,7 @@ class CalculateReportStatsUseCase(
         perspective: ReportPerspective,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ReportStats {
+    ): ScopeStats {
         val scopeAccountIds = when (perspective) {
             is ReportPerspective.AccountPerspective ->
                 perspective.accountIds.ifEmpty {
@@ -38,6 +38,6 @@ class CalculateReportStatsUseCase(
             is ReportPerspective.CreditCardPerspective ->
                 listOfNotNull(creditCardRepository.getCreditCardById(perspective.creditCardId)?.accountId)
         }
-        return entryRepository.reportStats(scopeAccountIds, startDate, endDate)
+        return entryRepository.scopeStats(scopeAccountIds, startDate, endDate)
     }
 }

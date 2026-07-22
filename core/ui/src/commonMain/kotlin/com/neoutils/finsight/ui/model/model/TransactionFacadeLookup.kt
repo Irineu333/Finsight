@@ -22,7 +22,7 @@ data class TransactionFacadeLookup(
     val installmentsById: Map<Long, Installment> = emptyMap(),
 ) {
     fun categoryOf(transaction: Transaction): Category? =
-        transaction.categoryDimensionId?.let { categoriesByDimension[it] }
+        transaction.nominalDimensionId?.let { categoriesByDimension[it] }
 
     fun installmentLabelOf(transaction: Transaction): String? {
         val number = transaction.installmentNumber ?: return null

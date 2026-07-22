@@ -46,13 +46,13 @@ class LedgerTransactionFacadeResolver(
      * the card's name — dropping it would read as if the link had been erased.
      */
     override suspend fun resolve(transaction: Transaction) = TransactionFacades(
-        category = transaction.categoryDimensionId?.let { dimensionId ->
+        category = transaction.nominalDimensionId?.let { dimensionId ->
             categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
         },
-        creditCard = transaction.cardAccountId?.let { accountId ->
+        creditCard = transaction.liabilityAccountId?.let { accountId ->
             creditCardRepository.getAllCreditCardsIncludingClosed().firstOrNull { it.accountId == accountId }
         },
-        invoice = transaction.invoiceDimensionId?.let { dimensionId ->
+        invoice = transaction.liabilityDimensionId?.let { dimensionId ->
             invoiceRepository.getAllInvoices().firstOrNull { it.dimensionId == dimensionId }
         },
         installment = transaction.installmentNumber?.let { number ->

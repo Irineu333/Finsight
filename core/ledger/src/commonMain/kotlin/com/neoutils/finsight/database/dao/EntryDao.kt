@@ -28,14 +28,14 @@ data class DimensionTotal(val dimensionId: Long?, val total: Long)
  *    split by the sign of the account's own entry (this includes a transfer's two
  *    legs, exactly as the legacy leg types EXPENSE/INCOME did);
  *  - [adjustment]: transactions with an EQUITY counter-leg, kept signed;
- *  - [invoicePayment]: transactions with a LIABILITY counter-leg (a card payment).
+ *  - [settlement]: transactions with a LIABILITY counter-leg — paying off a debt.
  * All are positive magnitudes except [adjustment], which is signed.
  */
 data class AccountPeriodTotals(
     val income: Long,
     val expense: Long,
     val adjustment: Long,
-    val invoicePayment: Long,
+    val settlement: Long,
 )
 
 /**
@@ -50,7 +50,7 @@ data class DimensionPeriodTotals(
 )
 
 /** Month-wide card [expense]/[payment] (cents), both positive magnitudes. */
-data class CardMonthTotals(
+data class LiabilityMonthTotals(
     val expense: Long,
     val payment: Long,
 )
@@ -62,7 +62,7 @@ data class CardMonthTotals(
  * is the signed sum of the scope legs before the period. Internal transfers — a
  * transaction whose ASSET legs all fall inside the scope — are excluded on both sides.
  */
-data class ReportStatsTotals(
+data class ScopeStatsTotals(
     val income: Long,
     val expense: Long,
     val balance: Long,
@@ -182,7 +182,7 @@ interface EntryDao {
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
           COALESCE(SUM(CASE WHEN eq = 0 AND li = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
           COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment,
-          COALESCE(SUM(CASE WHEN eq = 0 AND li = 1 THEN -amount ELSE 0 END), 0) AS invoicePayment
+          COALESCE(SUM(CASE WHEN eq = 0 AND li = 1 THEN -amount ELSE 0 END), 0) AS settlement
         FROM (
           SELECT e.amount AS amount,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a ON a.id = x.accountId WHERE x.transactionId = e.transactionId AND a.type = 'EQUITY') AS eq,
@@ -236,7 +236,7 @@ interface EntryDao {
         )
         """
     )
-    suspend fun cardMonthTotals(yearMonth: String): CardMonthTotals
+    suspend fun liabilityMonthTotals(yearMonth: String): LiabilityMonthTotals
 
     /** Number of entries carrying a dimension within a month (yyyy-MM). */
     @Query(
@@ -291,7 +291,7 @@ interface EntryDao {
      * adjustment, so it lands in [balance] but not in income/expense). Internal
      * transfers — a transaction with two or more ASSET legs all inside [scopeIds] —
      * are excluded from both the period and the opening balance, exactly as the account
-     * screen ignores moving money between the user's own accounts. See [ReportStatsTotals].
+     * screen ignores moving money between the user's own accounts. See [ScopeStatsTotals].
      */
     @Query(
         """
@@ -320,11 +320,11 @@ interface EntryDao {
         )
         """
     )
-    suspend fun reportStats(
+    suspend fun scopeStats(
         scopeIds: List<Long>,
         startDate: LocalDate,
         endDate: LocalDate,
-    ): ReportStatsTotals
+    ): ScopeStatsTotals
 
     /**
      * Per-dimension totals scoped to a set of sub-ledgers: the nominal legs of

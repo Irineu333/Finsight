@@ -3,7 +3,7 @@
 package com.neoutils.finsight.ui.modal.editTransaction
 
 import com.neoutils.finsight.domain.error.ClosedAccountException
-import com.neoutils.finsight.domain.error.InvoiceLockedException
+import com.neoutils.finsight.domain.error.InvoiceException
 import com.neoutils.finsight.domain.error.UnbalancedTransactionException
 import com.neoutils.finsight.domain.error.toUiText
 import com.neoutils.finsight.resources.Res
@@ -55,16 +55,16 @@ class EditTransactionViewModel(
 
     init {
         viewModelScope.launch {
-            transaction.cardAccountId?.let { accountId ->
+            transaction.liabilityAccountId?.let { accountId ->
                 selectedCreditCard.value = creditCardRepository.getAllCreditCardsIncludingClosed()
                     .firstOrNull { it.accountId == accountId }
             }
-            transaction.invoiceDimensionId?.let { dimensionId ->
+            transaction.liabilityDimensionId?.let { dimensionId ->
                 selectedDueMonth.value = invoiceRepository.getAllInvoices()
                     .firstOrNull { it.dimensionId == dimensionId }
                     ?.dueMonth
             }
-            transaction.categoryDimensionId?.let { dimensionId ->
+            transaction.nominalDimensionId?.let { dimensionId ->
                 transactionCategory.value = categoryRepository.getAllCategoriesIncludingClosed()
                     .firstOrNull { it.dimensionId == dimensionId }
             }
@@ -161,7 +161,7 @@ class EditTransactionViewModel(
      * reached crashlytics and the user saw a modal that simply refused to close.
      */
     private fun Throwable.toUiMessage(): UiText = when (this) {
-        is InvoiceLockedException -> error.toUiText()
+        is InvoiceException -> error.toUiText()
         is ClosedAccountException -> error.toUiText()
         is UnbalancedTransactionException -> error.toUiText()
         else -> UiText.Res(Res.string.transaction_error_generic)

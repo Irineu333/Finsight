@@ -3,7 +3,7 @@ package com.neoutils.finsight.domain.usecase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.CardMonthFlows
+import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.DimensionFlows
 import kotlinx.coroutines.flow.Flow
@@ -35,11 +35,11 @@ class CalculateBalanceUseCaseTest {
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-        override suspend fun cardMonthFlows(month: YearMonth): CardMonthFlows = throw NotImplementedError()
+        override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
         override suspend fun netWorth(): Double = throw NotImplementedError()
         override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
         override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
     }
 
     @Test

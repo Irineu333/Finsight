@@ -20,11 +20,6 @@ class TransactionMapperEntriesTest {
 
     private fun toDomain(entries: List<Entry>) = TransactionMapper().toDomain(
         entity = entity,
-        categoriesByDimension = emptyMap(),
-        creditCards = emptyMap(),
-        invoices = emptyMap(),
-        installments = emptyMap(),
-        recurring = emptyMap(),
         entries = entries,
     )
 

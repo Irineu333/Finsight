@@ -7,6 +7,13 @@ import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.TransactionTarget
 
 data class EditTransactionUiState(
+    /**
+     * The category the transaction already carries, resolved from the dimension of
+     * its nominal leg. It arrives asynchronously, unlike the rest of the form's
+     * seed values, because the ledger hands out an identity and the categories
+     * feature turns it into a facade (design D6).
+     */
+    val transactionCategory: Category? = null,
     val incomeCategories: List<Category> = emptyList(),
     val expenseCategories: List<Category> = emptyList(),
     val creditCards: List<CreditCard> = emptyList(),

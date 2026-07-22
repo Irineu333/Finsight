@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either.Companion.catch
 import arrow.core.flatMap
+import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.InvoiceMonthSelection
 import com.neoutils.finsight.domain.model.Transaction
@@ -45,9 +46,30 @@ class EditTransactionViewModel(
 
 
 
-    private val selectedCreditCard = MutableStateFlow(transaction.targetCreditCard)
-    private val selectedDueMonth = MutableStateFlow(transaction.targetInvoice?.dueMonth)
+    // The ledger gives an account id and a dimension; the facades behind them are
+    // resolved once, here, because that is a lookup only these features can do.
+    private val selectedCreditCard = MutableStateFlow<CreditCard?>(null)
+    private val selectedDueMonth = MutableStateFlow<YearMonth?>(null)
     private val selectedAccount = MutableStateFlow(transaction.sourceAccount)
+    private val transactionCategory = MutableStateFlow<Category?>(null)
+
+    init {
+        viewModelScope.launch {
+            transaction.cardAccountId?.let { accountId ->
+                selectedCreditCard.value = creditCardRepository.getAllCreditCardsIncludingClosed()
+                    .firstOrNull { it.accountId == accountId }
+            }
+            transaction.invoiceDimensionId?.let { dimensionId ->
+                selectedDueMonth.value = invoiceRepository.getAllInvoices()
+                    .firstOrNull { it.dimensionId == dimensionId }
+                    ?.dueMonth
+            }
+            transaction.categoryDimensionId?.let { dimensionId ->
+                transactionCategory.value = categoryRepository.getAllCategoriesIncludingClosed()
+                    .firstOrNull { it.dimensionId == dimensionId }
+            }
+        }
+    }
 
     private val invoices = selectedCreditCard.map { card ->
         if (card != null) {
@@ -71,8 +93,10 @@ class EditTransactionViewModel(
         selectedCreditCard,
         selectedDueMonth,
         selectedAccount,
-    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account ->
+        transactionCategory,
+    ) { categories, creditCards, invoices, accounts, selectedCard, dueMonth, account, category ->
         EditTransactionUiState(
+            transactionCategory = category,
             incomeCategories = categories.filter { it.type.isIncome },
             expenseCategories = categories.filter { it.type.isExpense },
             creditCards = creditCards,
@@ -89,16 +113,7 @@ class EditTransactionViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = EditTransactionUiState(
-            selectedCreditCard = transaction.targetCreditCard,
-            selectedAccount = transaction.sourceAccount,
-            invoiceSelection = transaction.targetInvoice?.let {
-                InvoiceMonthSelection(
-                    dueMonth = it.dueMonth,
-                    existingInvoice = it
-                )
-            }
-        )
+        initialValue = EditTransactionUiState(selectedAccount = transaction.sourceAccount)
     )
 
     fun onAction(action: EditTransactionAction) {

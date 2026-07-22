@@ -6,6 +6,7 @@ import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.datetime.LocalDate
 
 sealed class CreditCardsUiState {
@@ -29,5 +30,6 @@ sealed class CreditCardsUiState {
         val selectedType: TransactionType?,
         val showRecurringOnly: Boolean,
         val showInstallmentOnly: Boolean,
+        val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     ) : CreditCardsUiState()
 }

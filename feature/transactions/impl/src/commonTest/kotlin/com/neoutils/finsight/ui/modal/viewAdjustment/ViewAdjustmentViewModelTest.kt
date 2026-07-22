@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.ui.model.TransactionFacades
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
 import com.neoutils.finsight.ui.modal.transaction
@@ -38,6 +39,7 @@ class ViewAdjustmentViewModelTest {
     ) = ViewAdjustmentViewModel(
         transactionId = 1L,
         transactionRepository = repository,
+        facadeResolver = { TransactionFacades() },
         crashlytics = crashlytics,
     )
 

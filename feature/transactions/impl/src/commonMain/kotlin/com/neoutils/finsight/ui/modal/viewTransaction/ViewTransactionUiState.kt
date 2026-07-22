@@ -1,7 +1,12 @@
 package com.neoutils.finsight.ui.modal.viewTransaction
 
 import com.neoutils.finsight.domain.model.AccountType
+import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionInstallment
+import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.closedLegBlockingChange
@@ -15,9 +20,22 @@ sealed interface ViewTransactionUiState {
 
     data object Error : ViewTransactionUiState
 
+    /**
+     * The transaction plus the facades this screen renders around it.
+     *
+     * They are passed in, not read off the transaction: the ledger carries account
+     * ids and dimensions, and turning those into a card, an invoice or a category is
+     * the owning feature's job (design D6). Hydrating them here — in the view model —
+     * is what keeps the ledger unable to name any of them.
+     */
     data class Content(
         val transaction: Transaction,
         val perspective: TransactionPerspective? = null,
+        val category: Category? = null,
+        val creditCard: CreditCard? = null,
+        val invoice: Invoice? = null,
+        val installment: TransactionInstallment? = null,
+        val recurring: TransactionRecurring? = null,
     ) : ViewTransactionUiState {
 
         // The entry seen through the current perspective (the account's leg, else
@@ -34,11 +52,16 @@ sealed interface ViewTransactionUiState {
             ?.let { deriveTransactionType(it.amount, transaction.entries) }
             ?: TransactionType.EXPENSE
 
-        val category = transaction.category
+        /**
+         * The title falls back to the category's name, which is why it is derived
+         * here and not on the transaction: only this state has the name.
+         */
+        val displayTitle: String = transaction.title?.takeIf { it.isNotBlank() }
+            ?: category?.name?.takeIf { it.isNotBlank() }
+            ?: "Untitled"
+
         val date = transaction.date
         val account = transaction.sourceAccount
-        val creditCard = transaction.targetCreditCard
-        val invoice = transaction.targetInvoice
         val isCardTarget = transaction.isCardTarget
         val amount = abs(perspectiveEntry?.amount ?: 0L) / 100.0
 
@@ -73,7 +96,7 @@ sealed interface ViewTransactionUiState {
         val isEditable: Boolean =
             label != TransactionLabel.ADJUSTMENT &&
                 transaction.monetaryEntries.size == 1 &&
-                transaction.installment == null &&
+                transaction.installmentId == null &&
                 isChangeable
 
         val isRemovable: Boolean = isChangeable

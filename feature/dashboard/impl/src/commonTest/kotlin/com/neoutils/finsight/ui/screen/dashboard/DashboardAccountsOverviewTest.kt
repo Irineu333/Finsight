@@ -168,7 +168,7 @@ class DashboardAccountsOverviewTest {
         )
         val marchConfirmation = Transaction(
             id = 1, title = "Salary", date = LocalDate(2026, 3, 5),
-            recurring = TransactionRecurring(instance = salary, cycleNumber = 1),
+            recurringId = salary.id, recurringCycle = 1,
             entries = listOf(
                 Entry(account = accountA, amount = -200_000),
                 Entry(account = Account(id = 3, name = "Salary", type = AccountType.INCOME), amount = 200_000),

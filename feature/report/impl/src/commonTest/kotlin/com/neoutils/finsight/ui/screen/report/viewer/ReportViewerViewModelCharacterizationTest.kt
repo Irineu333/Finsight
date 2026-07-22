@@ -20,6 +20,8 @@ import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.model.Installment
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.repository.ReportStats
@@ -110,6 +112,8 @@ class ReportViewerViewModelCharacterizationTest {
                 creditCardRepository = fakes.creditCardRepository(),
             ),
             entryRepository = fakes.entryRepository(),
+            categoryRepository = fakes.categoryRepository,
+            installmentRepository = NoInstallments,
             renderer = fakes.renderer,
             analytics = fakes.analytics,
         )
@@ -181,6 +185,8 @@ class ReportViewerViewModelCharacterizationTest {
                 creditCardRepository = fakes.creditCardRepository(listOf(card)),
             ),
             entryRepository = fakes.entryRepository(owed = mapOf(1L to 70.0)),
+            categoryRepository = fakes.categoryRepository,
+            installmentRepository = NoInstallments,
             renderer = fakes.renderer,
             analytics = fakes.analytics,
         )
@@ -260,9 +266,9 @@ private class Fakes {
     }
 
     val categoryRepository = object : ICategoryRepository {
-        override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
+        override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
         override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
-        override suspend fun getAllCategories(): List<Category> = throw NotImplementedError()
+        override suspend fun getAllCategories(): List<Category> = emptyList()
         override suspend fun getAllCategoriesIncludingClosed(): List<Category> = getAllCategories()
         override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = observeAllCategories()
         override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = throw NotImplementedError()
@@ -306,4 +312,14 @@ private class Fakes {
         override fun logEvent(event: Event) = Unit
         override fun setUserId(id: String?) = Unit
     }
+}
+
+/** No installment badge is under test here; the list only needs the read to answer. */
+private object NoInstallments : IInstallmentRepository {
+    override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
+    override suspend fun getAllInstallments(): List<Installment> = emptyList()
+    override suspend fun getInstallmentById(id: Long): Installment? = null
+    override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
+    override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }

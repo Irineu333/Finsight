@@ -12,10 +12,12 @@ import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -33,6 +35,7 @@ class TransactionsViewModel(
     private val filterTarget: TransactionTarget?,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
     private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
@@ -54,9 +57,10 @@ class TransactionsViewModel(
         // able to narrow to one — including closed. This is a filter over existing
         // data, not a selector for a new transaction (which stays open-only).
         categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
         selectedYearMonth,
         filters
-    ) { transactions, categories, yearMonth, filters ->
+    ) { transactions, categories, installments, yearMonth, filters ->
         // Transfers and card payments move money between the user's own accounts;
         // neither is income or expense. Derived from the ledger, never persisted.
         val transactionsForStats = transactions.filterNot {
@@ -84,6 +88,9 @@ class TransactionsViewModel(
             ),
             selectedYearMonth = yearMonth,
             categories = categories,
+            // The list still shows a category icon and an installment badge; the
+            // ledger only hands out the identities behind them (design D6).
+            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = filters.category,
             selectedType = filters.type,
             selectedTarget = filters.target,
@@ -144,17 +151,17 @@ class TransactionsViewModel(
 
 private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { transaction -> transaction.recurring != null }
+    return filter { transaction -> transaction.recurringId != null }
 }
 
 private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { transaction -> transaction.installment != null }
+    return filter { transaction -> transaction.installmentId != null }
 }
 
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
-    return filter { it.category?.id == category.id }
+    return filter { it.categoryDimensionId == category.dimensionId }
 }
 
 private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> {

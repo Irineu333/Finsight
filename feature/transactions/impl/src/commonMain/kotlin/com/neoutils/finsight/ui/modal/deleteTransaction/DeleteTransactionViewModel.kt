@@ -12,12 +12,14 @@ import com.neoutils.finsight.util.UiText
 import com.neoutils.finsight.domain.analytics.event.DeleteTransaction
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.ui.component.ModalManager
 import kotlinx.coroutines.launch
 
 class DeleteTransactionViewModel(
     private val transaction: Transaction,
+    private val categoryRepository: ICategoryRepository,
     private val deleteTransactionUseCase: DeleteTransactionUseCase,
     private val modalManager: ModalManager,
     private val analytics: Analytics,
@@ -25,8 +27,15 @@ class DeleteTransactionViewModel(
 ) : ViewModel() {
 
     fun deleteTransaction() = viewModelScope.launch {
+        // The analytics event still reports the category by name; the ledger only
+        // hands out its dimension, so the name is resolved here (design D6).
+        val categoryName = transaction.categoryDimensionId
+            ?.let { dimensionId ->
+                categoryRepository.getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == dimensionId }
+            }
+            ?.name
         deleteTransactionUseCase(transaction).onRight {
-            analytics.logEvent(DeleteTransaction(transaction))
+            analytics.logEvent(DeleteTransaction(transaction, categoryName))
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)

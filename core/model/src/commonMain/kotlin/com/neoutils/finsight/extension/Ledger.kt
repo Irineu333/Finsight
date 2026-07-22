@@ -68,6 +68,24 @@ fun List<Entry>.deriveTransactionLabel(): TransactionLabel {
     }
 }
 
+/**
+ * The three legs a facade is reached through, named once here so no consumer has to
+ * remember which nature carries what.
+ *
+ * A transaction no longer carries its card, invoice or category (design D6): the
+ * card *is* the `LIABILITY` leg's account, the invoice *is* that leg's dimension,
+ * and the category *is* the nominal leg's dimension. Reading them from the wrong leg
+ * is the whole class of defect the landing rule exists to prevent, so the reading has
+ * one owner too.
+ */
+fun List<Entry>.cardLeg(): Entry? = firstOrNull { it.account.type == AccountType.LIABILITY }
+
+fun List<Entry>.nominalLeg(): Entry? = firstOrNull { it.account.type.isNominal }
+
+/** The money-out `ASSET` leg — where a movement came from, when it came from one. */
+fun List<Entry>.sourceLeg(): Entry? = filter { it.account.type == AccountType.ASSET }
+    .let { assets -> assets.minByOrNull { it.amount } }
+
 /** True when the entries balance to zero for every currency present. */
 fun List<Entry>.isBalanced(): Boolean =
     groupBy { it.currency }.all { (_, entries) -> entries.sumOf { it.amount } == 0L }

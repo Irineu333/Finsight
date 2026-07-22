@@ -5,35 +5,26 @@ package com.neoutils.finsight.database.repository
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import com.neoutils.finsight.database.AppDatabase
-import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
 import com.neoutils.finsight.database.entity.TransactionEntity
 import com.neoutils.finsight.database.mapper.TransactionMapper
 import com.neoutils.finsight.extension.closedLegBlockingChange
-import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.error.ClosedAccountException
 import com.neoutils.finsight.domain.error.ClosedFacade
 import com.neoutils.finsight.domain.error.InvoiceLockedException
 import com.neoutils.finsight.domain.error.LedgerError
 import com.neoutils.finsight.domain.model.Account
-import com.neoutils.finsight.domain.model.Category
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.repository.IAccountRepository
-import com.neoutils.finsight.domain.repository.ICategoryRepository
-import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.extension.combine
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine as flowCombine
@@ -45,42 +36,16 @@ class TransactionRepository(
     private val database: AppDatabase,
     private val transactionDao: TransactionDao,
     private val entryDao: EntryDao,
-    private val recurringDao: RecurringDao,
-    private val categoryRepository: ICategoryRepository,
-    private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val installmentRepository: IInstallmentRepository,
     private val accountRepository: IAccountRepository,
     private val transactionMapper: TransactionMapper,
-    private val recurringMapper: RecurringMapper,
     private val ledgerEntryWriter: LedgerEntryWriter,
 ) : ITransactionRepository {
 
-    // Resolving a historical reference, not offering a choice: closed included.
-    private val categoriesFlow = categoryRepository.observeAllCategoriesIncludingClosed()
-    private val creditCardsFlow = creditCardRepository.observeAllCreditCardsIncludingClosed().map { it.associateBy { card -> card.id } }
-    private val invoicesFlow = invoiceRepository.observeAllInvoices().map { it.associateBy { invoice -> invoice.id } }
-    private val installmentsFlow = installmentRepository.observeAllInstallments().map { it.associateBy { installment -> installment.id } }
     // The whole chart of accounts, not the ASSET facade: an entry whose account is
     // missing from this map is dropped, and a card purchase has no asset leg.
     private val accountsFlow = accountRepository.observeAllLedgerAccounts().map { it.associateBy { account -> account.id } }
-
-    private val recurringFlow = flowCombine(
-        recurringDao.observeAll(),
-        categoriesFlow,
-        accountsFlow,
-        creditCardsFlow,
-    ) { entities, categories, accounts, creditCards ->
-        val categoriesById = categories.associateBy { it.id }
-        entities.associate { entity ->
-            entity.id to recurringMapper.toDomain(
-                entity = entity,
-                category = entity.categoryId?.let { categoriesById[it] },
-                account = entity.accountId?.let { accounts[it] },
-                creditCard = entity.creditCardId?.let { creditCards[it] },
-            )
-        }
-    }
 
     private fun List<EntryEntity>.toDomainEntries(accounts: Map<Long, Account>): List<Entry> =
         mapNotNull { entity ->
@@ -96,26 +61,21 @@ class TransactionRepository(
             }
         }
 
-    private fun Flow<List<TransactionEntity>>.mapToDomain(): Flow<List<Transaction>> = combine(
+    /**
+     * Row plus legs, and nothing else. The facade lookups this used to combine —
+     * categories, cards, invoices, installments, recurring — are gone: each feature
+     * resolves what it needs from the legs (design D6), and this flow no longer
+     * re-emits every transaction in the app because a card was renamed.
+     */
+    private fun Flow<List<TransactionEntity>>.mapToDomain(): Flow<List<Transaction>> = flowCombine(
         this,
-        categoriesFlow,
-        creditCardsFlow,
-        invoicesFlow,
-        installmentsFlow,
         accountsFlow,
-        recurringFlow,
         entryDao.observeAll(),
-    ) { transactions, categories, creditCards, invoices, installments, accounts, recurring, entries ->
+    ) { transactions, accounts, entries ->
         val entriesByTransactionId = entries.groupBy { it.transactionId }
-        val categoriesByDimension = categories.associateBy { it.dimensionId }
         transactions.mapNotNull { transaction ->
             transactionMapper.toDomain(
                 entity = transaction,
-                categoriesByDimension = categoriesByDimension,
-                creditCards = creditCards,
-                invoices = invoices,
-                installments = installments,
-                recurring = recurring,
                 entries = entriesByTransactionId[transaction.id].orEmpty().toDomainEntries(accounts),
             )
         }
@@ -151,55 +111,20 @@ class TransactionRepository(
         installmentNumber = installmentNumber,
     )
 
-    private data class Lookups(
-        val categoriesByDimension: Map<Long, Category>,
-        val creditCards: Map<Long, CreditCard>,
-        val invoices: Map<Long, Invoice>,
-        val installments: Map<Long, Installment>,
-        val accounts: Map<Long, Account>,
-        val recurring: Map<Long, Recurring>,
-    )
-
-    private suspend fun lookups(): Lookups {
-        val categories = categoryRepository.getAllCategoriesIncludingClosed()
-        val categoriesById = categories.associateBy { it.id }
-        val creditCards = creditCardRepository.getAllCreditCardsIncludingClosed().associateBy { it.id }
-        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
-        return Lookups(
-            categoriesByDimension = categories.associateBy { it.dimensionId },
-            creditCards = creditCards,
-            invoices = invoiceRepository.getAllInvoices().associateBy { it.id },
-            installments = installmentRepository.getAllInstallments().associateBy { it.id },
-            accounts = accounts,
-            recurring = recurringDao.getAll().associate { entity ->
-                entity.id to recurringMapper.toDomain(
-                    entity = entity,
-                    category = entity.categoryId?.let { categoriesById[it] },
-                    account = entity.accountId?.let { accounts[it] },
-                    creditCard = entity.creditCardId?.let { creditCards[it] },
-                )
-            },
+    private suspend fun TransactionEntity.toDomain(accounts: Map<Long, Account>): Transaction? =
+        transactionMapper.toDomain(
+            entity = this,
+            entries = entryDao.getByTransactionId(id).toDomainEntries(accounts),
         )
-    }
-
-    private suspend fun TransactionEntity.toDomain(lookups: Lookups): Transaction? = transactionMapper.toDomain(
-        entity = this,
-        categoriesByDimension = lookups.categoriesByDimension,
-        creditCards = lookups.creditCards,
-        invoices = lookups.invoices,
-        installments = lookups.installments,
-        recurring = lookups.recurring,
-        entries = entryDao.getByTransactionId(id).toDomainEntries(lookups.accounts),
-    )
 
     override suspend fun getAllTransactions(): List<Transaction> {
-        val lookups = lookups()
-        return transactionDao.getAll().mapNotNull { it.toDomain(lookups) }
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        return transactionDao.getAll().mapNotNull { it.toDomain(accounts) }
     }
 
     override suspend fun getTransactionById(id: Long): Transaction? {
         val entity = transactionDao.getById(id) ?: return null
-        return entity.toDomain(lookups())
+        return entity.toDomain(accountRepository.getAllLedgerAccounts().associateBy { it.id })
     }
 
     /**
@@ -323,8 +248,8 @@ class TransactionRepository(
             }
         }
 
-        val lookups = lookups()
-        return ids.mapNotNull { transactionDao.getById(it)?.toDomain(lookups) }
+        val accounts = accountRepository.getAllLedgerAccounts().associateBy { it.id }
+        return ids.mapNotNull { transactionDao.getById(it)?.toDomain(accounts) }
     }
 
     override suspend fun updateTransaction(id: Long, title: String?, date: LocalDate, leg: TransactionLeg) {

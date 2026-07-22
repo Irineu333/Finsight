@@ -15,8 +15,18 @@ import kotlin.math.abs
  * leg (the outgoing one for a two-leg transaction, which is how a transfer or a
  * payment reads from a neutral list). Returns `null` when the perspective has no
  * matching leg, so the caller omits the item instead of failing on a read.
+ *
+ * [lookup] closes the gap the ledger leaves: a transaction carries the *dimension*
+ * its nominal leg is classified by and the *id* of its installment, and turning
+ * either into something with a name belongs to the feature that owns that facade
+ * (design D6). Left empty, the item simply renders without them.
  */
-fun Transaction.toTransactionUi(accountId: Long? = null): TransactionUi? {
+fun Transaction.toTransactionUi(
+    accountId: Long? = null,
+    lookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
+): TransactionUi? {
+    val category = lookup.categoryOf(this)
+
     val leg = if (accountId != null) {
         entries.firstOrNull { it.account.id == accountId }
     } else {
@@ -27,14 +37,16 @@ fun Transaction.toTransactionUi(accountId: Long? = null): TransactionUi? {
         id = id,
         label = entries.deriveTransactionLabel(),
         direction = deriveTransactionType(leg.amount, entries),
-        title = displayTitle,
+        // The title falls back to the category's name, which is why the rule lives
+        // here and not on the transaction: only the caller has the name.
+        title = title?.takeIf { it.isNotBlank() } ?: category?.name?.takeIf { it.isNotBlank() } ?: "Untitled",
         amount = abs(leg.amount) / 100.0,
         date = date,
         categoryId = category?.id,
         categoryIcon = category?.icon,
         isCategoryArchived = category?.isArchived == true,
         isCardTarget = entries.any { it.account.type == AccountType.LIABILITY },
-        isRecurring = recurring != null,
-        installmentLabel = installment?.label,
+        isRecurring = recurringId != null,
+        installmentLabel = lookup.installmentLabelOf(this),
     )
 }

@@ -68,12 +68,15 @@ val creditCardsModule = module {
             invoiceRepository = get(),
             invoiceUiMapper = get(),
             categoryRepository = get(),
+            installmentRepository = get(),
         )
     }
     viewModel {
         InstallmentsViewModel(
             installmentRepository = get(),
             transactionRepository = get(),
+            categoryRepository = get(),
+            invoiceRepository = get(),
             installmentUiMapper = get(),
         )
     }
@@ -92,6 +95,7 @@ val creditCardsModule = module {
         DeleteInstallmentViewModel(
             installment = it.get(),
             transactions = it.get(),
+            categoryRepository = get(),
             deleteInstallmentUseCase = get(),
             modalManager = get(),
             analytics = get(),
@@ -196,6 +200,7 @@ val creditCardsModule = module {
     }
     viewModel {
         InvoiceTransactionsViewModel(
+            installmentRepository = get(),
             creditCardId = it.get(),
             creditCardRepository = get(),
             invoiceRepository = get(),

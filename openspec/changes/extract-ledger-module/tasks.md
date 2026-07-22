@@ -69,10 +69,10 @@ verificável está em 5.10 e 5.11.
 Depois do grupo 5 de propósito: as features escrevem a própria hidratação **uma vez**, contra
 o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas vezes.
 
-- [ ] 6.1 Remover de `Transaction` (`Transaction.kt:18-23`) os campos `category`, `sourceAccount`, `targetCreditCard`, `targetInvoice`, `installment` e `recurring`, mantendo os escalares de parcelamento e recorrência
-- [ ] 6.2 Encolher `TransactionMapper` para linha + entries; remover de `TransactionRepository` os flows de hidratação (`TransactionRepository.kt:60-82,98-120`) e as dependências `ICategoryRepository`, `ICreditCardRepository`, `IInstallmentRepository`, `RecurringDao` e `RecurringMapper`
-- [ ] 6.3 Cada feature hidrata a própria fachada a partir das entries: cartão pela perna `LIABILITY` + `creditCard.accountId`; fatura pela dimensão da perna `LIABILITY`; categoria pela dimensão da perna nominal; parcelamento e recorrência pelos escalares. Consumidores: `InstallmentUiMapper.kt:16-69`, `InstallmentsViewModel`, `CreditCardsViewModel`, `InvoiceTransactionsViewModel`, `ViewTransactionUiState.kt:39-76`, `EditTransactionViewModel.kt:48-95`, `ViewAdjustmentUiState`, `ReportViewerViewModel.kt:166`, `TransactionsViewModel`, `DashboardPreviewFactory`
-- [ ] 6.4 Preservar a derivação de editabilidade e o gate visual de fatura fechada, que hoje saem de `targetInvoice`/`installment` — o status da fatura passa a vir da fachada hidratada pela feature
+- [x] 6.1 Remover de `Transaction` (`Transaction.kt:18-23`) os campos `category`, `sourceAccount`, `targetCreditCard`, `targetInvoice`, `installment` e `recurring`, mantendo os escalares de parcelamento e recorrência
+- [x] 6.2 Encolher `TransactionMapper` para linha + entries; remover de `TransactionRepository` os flows de hidratação (`TransactionRepository.kt:60-82,98-120`) e as dependências `ICategoryRepository`, `ICreditCardRepository`, `IInstallmentRepository`, `RecurringDao` e `RecurringMapper`
+- [x] 6.3 Cada feature hidrata a própria fachada a partir das entries: cartão pela perna `LIABILITY` + `creditCard.accountId`; fatura pela dimensão da perna `LIABILITY`; categoria pela dimensão da perna nominal; parcelamento e recorrência pelos escalares. Consumidores: `InstallmentUiMapper.kt:16-69`, `InstallmentsViewModel`, `CreditCardsViewModel`, `InvoiceTransactionsViewModel`, `ViewTransactionUiState.kt:39-76`, `EditTransactionViewModel.kt:48-95`, `ViewAdjustmentUiState`, `ReportViewerViewModel.kt:166`, `TransactionsViewModel`, `DashboardPreviewFactory`
+- [x] 6.4 Preservar a derivação de editabilidade e o gate visual de fatura fechada, que hoje saem de `targetInvoice`/`installment` — o status da fatura passa a vir da fachada hidratada pela feature
 - [ ] 6.5 `allTests` verde consumidor a consumidor; smoke manual dos modais de ver e editar transação e da tela de parcelas
 
 ## 7. Intenção de escrita por identidade, e o que sobra de fachada no repositório

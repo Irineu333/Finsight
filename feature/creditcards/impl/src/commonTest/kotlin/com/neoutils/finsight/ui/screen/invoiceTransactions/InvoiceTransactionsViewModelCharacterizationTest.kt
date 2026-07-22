@@ -6,7 +6,9 @@ import app.cash.turbine.test
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Entry
+import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.model.Invoice
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.Account
 import com.neoutils.finsight.domain.model.TransactionIntent
@@ -66,8 +68,6 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             id = id,
             title = null,
             date = LocalDate(2026, 3, 10),
-            targetCreditCard = card,
-            targetInvoice = invoice,
             entries = listOf(
                 Entry(transactionId = id, account = cardAccount, amount = signed, dimensionId = invoice.dimensionId),
                 Entry(transactionId = id, account = contraAccount, amount = -signed),
@@ -89,6 +89,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
             invoiceRepository = FakeInvoiceRepository(listOf(invoice)),
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
+            installmentRepository = NoInstallments,
             entryRepository = FakeEntryRepository(
                 owedByInvoiceId = mapOf(1L to 70.0),
                 flowsByInvoiceId = mapOf(
@@ -190,4 +191,14 @@ private class FakeEntryRepository(
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+}
+
+/** No installment badge is under test here; the list only needs the read to answer. */
+private object NoInstallments : IInstallmentRepository {
+    override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
+    override suspend fun getAllInstallments(): List<Installment> = emptyList()
+    override suspend fun getInstallmentById(id: Long): Installment? = null
+    override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
+    override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }

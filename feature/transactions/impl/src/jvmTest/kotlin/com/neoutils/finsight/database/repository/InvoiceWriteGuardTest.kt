@@ -110,14 +110,10 @@ class InvoiceWriteGuardTest {
             database = db,
             transactionDao = db.transactionDao(),
             entryDao = db.entryDao(),
-            recurringDao = db.recurringDao(),
-            categoryRepository = FakeCategoryRepository,
-            creditCardRepository = FakeCreditCardRepository,
             invoiceRepository = SingleInvoiceRepository(invoice(status)),
             installmentRepository = FakeInstallmentRepository,
             accountRepository = LedgerAccountRepository(db),
             transactionMapper = TransactionMapper(),
-            recurringMapper = RecurringMapper(),
             ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.creditCardDao(), db.dimensionDao()),
     )
 

@@ -38,8 +38,10 @@ class ViewTransactionGatesTest {
             title = "Op",
             date = date,
             entries = entries,
-            installment = installment,
+            installmentId = installment?.id,
+            installmentNumber = installment?.number,
         ),
+        installment = installment,
     )
 
     @Test

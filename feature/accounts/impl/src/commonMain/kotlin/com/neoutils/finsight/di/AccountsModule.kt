@@ -90,6 +90,7 @@ val accountsModule = module {
 
     viewModel {
         AccountsViewModel(
+            installmentRepository = get(),
             accountRepository = get(),
             transactionRepository = get(),
             categoryRepository = get(),

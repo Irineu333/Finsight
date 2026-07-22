@@ -289,7 +289,7 @@ private fun InvoiceTransactionsContent(
                     items = transactions,
                     key = { it.id }
                 ) { transaction ->
-                    transaction.toTransactionUi()?.let { transactionUi ->
+                    transaction.toTransactionUi(lookup = uiState.facadeLookup)?.let { transactionUi ->
                     TransactionCard(
                         transaction = transactionUi,
                         modifier = Modifier

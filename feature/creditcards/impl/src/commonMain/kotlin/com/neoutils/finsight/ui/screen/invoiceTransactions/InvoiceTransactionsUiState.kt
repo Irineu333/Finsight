@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.invoiceTransactions
 import com.neoutils.finsight.ui.model.RetireAction
 
 import com.neoutils.finsight.domain.model.Category
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionType
@@ -27,6 +28,7 @@ data class InvoiceTransactionsUiState(
     val selectedInvoiceIndex: Int = 0,
     val transactions: Map<LocalDate, List<Transaction>> = emptyMap(),
     val categories: List<Category> = emptyList(),
+    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     val selectedCategory: Category? = null,
     val selectedType: TransactionType? = null,
     val showRecurringOnly: Boolean = false,

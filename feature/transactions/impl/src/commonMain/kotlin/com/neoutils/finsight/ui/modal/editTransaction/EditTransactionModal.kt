@@ -88,7 +88,13 @@ class EditTransactionModal(
         val title = rememberTextFieldState(transaction.title.orEmpty())
         val date = rememberTextFieldState(dayMonthYear.format(transaction.date))
 
-        var selectedCategory by remember { mutableStateOf(transaction.category) }
+        // Seeded from the ui state rather than from the transaction: the category is
+        // resolved from the leg's dimension, so it arrives a beat later (design D6).
+        var selectedCategory by remember { mutableStateOf<Category?>(null) }
+
+        LaunchedEffect(uiState.transactionCategory) {
+            selectedCategory = selectedCategory ?: uiState.transactionCategory
+        }
 
         LaunchedEffect(type) {
             selectedCategory = selectedCategory?.takeIf {

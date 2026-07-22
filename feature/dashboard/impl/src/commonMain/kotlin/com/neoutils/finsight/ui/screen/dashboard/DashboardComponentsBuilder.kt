@@ -5,6 +5,7 @@ import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
@@ -36,6 +37,7 @@ data class DashboardComponentsInput(
     val occurrences: List<RecurringOccurrence>,
     val today: LocalDate,
     val targetMonth: YearMonth,
+    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
 )
 
 data class DashboardBuilderContext(
@@ -375,6 +377,7 @@ class DashboardComponentsBuilder(
             DashboardComponent.Recents(
                 transactions = recentTransactions,
                 hasMore = presentTransactions.size > count,
+                facadeLookup = input.facadeLookup,
             )
         } else {
             null

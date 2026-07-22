@@ -267,7 +267,7 @@ private fun DashboardRecentsSection(
         }
         component.transactions.forEachIndexed { index, transaction ->
             val isLastWithFade = component.hasMore && index == component.transactions.lastIndex
-            val transactionUi = transaction.toTransactionUi() ?: return@forEachIndexed
+            val transactionUi = transaction.toTransactionUi(lookup = component.facadeLookup) ?: return@forEachIndexed
             TransactionCard(
                 transaction = transactionUi,
                 modifier = Modifier

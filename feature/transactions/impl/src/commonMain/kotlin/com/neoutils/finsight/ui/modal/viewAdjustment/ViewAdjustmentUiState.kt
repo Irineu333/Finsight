@@ -1,5 +1,7 @@
 package com.neoutils.finsight.ui.modal.viewAdjustment
 
+import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.extension.closedLegBlockingChange
 
@@ -9,15 +11,17 @@ sealed interface ViewAdjustmentUiState {
 
     data object Error : ViewAdjustmentUiState
 
+    // The card and the invoice are hydrated by the view model from the ledger's
+    // identities — the transaction names neither (design D6).
     data class Content(
         val transaction: Transaction,
+        val creditCard: CreditCard? = null,
+        val invoice: Invoice? = null,
     ) : ViewAdjustmentUiState {
         val isCardTarget = transaction.isCardTarget
         val title = transaction.title
         val date = transaction.date
         val account = transaction.sourceAccount
-        val creditCard = transaction.targetCreditCard
-        val invoice = transaction.targetInvoice
 
         /**
          * An adjustment is the one transaction whose sign the user must see: it says

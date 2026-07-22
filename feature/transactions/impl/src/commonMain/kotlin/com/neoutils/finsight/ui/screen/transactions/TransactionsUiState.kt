@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.screen.transactions
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.ui.model.InvoiceOverview
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -27,6 +28,7 @@ data class TransactionsUiState(
     val selectedTarget: TransactionTarget? = null,
     val showRecurringOnly: Boolean = false,
     val showInstallmentOnly: Boolean = false,
+    val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
 ) {
 
     val isCurrentMonth = selectedYearMonth == currentMonth

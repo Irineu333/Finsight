@@ -8,6 +8,13 @@ interface IRecurringRepository {
     fun observeRecurringById(id: Long): Flow<Recurring?>
 
     /**
+     * One template by identity. A transaction carries the id of the recurring that
+     * produced it and nothing more (design D6), so the screen that renders the link
+     * resolves it here.
+     */
+    suspend fun getRecurringById(id: Long): Recurring?
+
+    /**
      * Whether any template — active or stopped — still points at this account or
      * card. Deleting one out from under a recurring leaves it with nothing to post
      * through, so the owning feature asks before removing it.

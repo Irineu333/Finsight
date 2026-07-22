@@ -266,8 +266,6 @@ class DashboardPreviewFactory(
                             id = 1,
                             title = getString(Res.string.preview_transaction_supermarket),
                             date = LocalDate(2026, 3, 20),
-                            category = foodCategory,
-                            sourceAccount = mainAccount,
                             entries = listOf(
                                 Entry(id = 1, account = mainAccount, amount = -15680),
                                 Entry(id = 2, account = foodAccount, amount = 15680),
@@ -277,7 +275,6 @@ class DashboardPreviewFactory(
                             id = 2,
                             title = getString(Res.string.preview_category_salary),
                             date = LocalDate(2026, 3, 5),
-                            sourceAccount = mainAccount,
                             entries = listOf(
                                 Entry(id = 3, account = mainAccount, amount = 350000),
                                 Entry(id = 4, account = salaryAccount, amount = -350000),
@@ -287,8 +284,6 @@ class DashboardPreviewFactory(
                             id = 3,
                             title = getString(Res.string.preview_transaction_spotify),
                             date = LocalDate(2026, 3, 1),
-                            category = foodCategory,
-                            sourceAccount = mainAccount,
                             entries = listOf(
                                 Entry(id = 5, account = mainAccount, amount = -2190),
                                 Entry(id = 6, account = foodAccount, amount = 2190),

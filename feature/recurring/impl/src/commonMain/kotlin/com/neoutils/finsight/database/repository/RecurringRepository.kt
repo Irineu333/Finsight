@@ -53,6 +53,16 @@ class RecurringRepository(
         }
     }
 
+    override suspend fun getRecurringById(id: Long): Recurring? {
+        val entity = dao.getAll().firstOrNull { it.id == id } ?: return null
+        return mapper.toDomain(
+            entity = entity,
+            category = entity.categoryId?.let { categoryRepository.getCategoryById(it) },
+            account = entity.accountId?.let { accountRepository.getAccountById(it) },
+            creditCard = entity.creditCardId?.let { creditCardRepository.getCreditCardById(it) },
+        )
+    }
+
     override fun observeRecurringById(id: Long): Flow<Recurring?> {
         return observeAllRecurring()
             .map { list -> list.firstOrNull { it.id == id } }

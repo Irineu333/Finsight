@@ -7,11 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.*
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.resources.*
@@ -40,6 +42,7 @@ class InvoiceTransactionsViewModel(
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
 ) : ViewModel() {
 
@@ -75,10 +78,11 @@ class InvoiceTransactionsViewModel(
         creditCardFlow,
         invoicesFlow,
         transactionsFlow,
-        categoryRepository.observeAllCategories(),
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
         selectedInvoiceIndex,
         filters,
-    ) { creditCard, invoices, transactions, categories, index, currentFilters ->
+    ) { creditCard, invoices, transactions, categories, installments, index, currentFilters ->
         // Invoice owed and its expense/advancePayment/adjustment breakdown, both derived
         // from the ledger (Σ liability-leg entries — task 4.11), not from legacy legs.
         val owedByInvoiceId = mutableMapOf<Long, Double>()
@@ -152,7 +156,10 @@ class InvoiceTransactionsViewModel(
             },
             selectedInvoiceIndex = index,
             transactions = filteredTransactions,
-            categories = categories,
+            // The filter offers only open categories; the rows still render the
+            // archived ones, so the lookup keeps them.
+            categories = categories.filterNot { it.isArchived },
+            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
@@ -217,7 +224,7 @@ private data class InvoiceTransactionsFilters(
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
     return filter { transaction ->
-        transaction.category?.id == category.id
+        transaction.categoryDimensionId == category.dimensionId
     }
 }
 
@@ -234,10 +241,10 @@ private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> 
 
 private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { transaction -> transaction.recurring != null }
+    return filter { transaction -> transaction.recurringId != null }
 }
 
 private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { transaction -> transaction.installment != null }
+    return filter { transaction -> transaction.installmentId != null }
 }

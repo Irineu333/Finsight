@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.BuildDashboardViewingUseCase
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.GetDashboardPreferencesUseCase
 import com.neoutils.finsight.extension.combine
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -33,6 +34,8 @@ class DashboardViewModel(
     private val budgetRepository: IBudgetRepository,
     private val recurringRepository: IRecurringRepository,
     private val recurringOccurrenceRepository: IRecurringOccurrenceRepository,
+    private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val ensureDefaultAccountUseCase: EnsureDefaultAccountUseCase,
     private val getDashboardPreferences: GetDashboardPreferencesUseCase,
     private val buildDashboardViewingUseCase: BuildDashboardViewingUseCase,
@@ -67,9 +70,23 @@ class DashboardViewModel(
 
     private val editingState = MutableStateFlow<DashboardUiState.Editing?>(null)
 
+    /**
+     * The transactions plus what the ledger cannot name for them: the category
+     * behind a leg's dimension and the installment behind its id (design D6).
+     * Combined into one flow because the dashboard's own combine is already at the
+     * arity ceiling — and because they always travel together anyway.
+     */
+    private val transactionsWithFacades = combine(
+        transactionRepository.observeAllTransactions(),
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
+    ) { transactions, categories, installments ->
+        transactions to TransactionFacadeLookup.of(categories, installments)
+    }
+
     private val viewingState: Flow<DashboardUiState> = combine(
         invoices,
-        transactionRepository.observeAllTransactions(),
+        transactionsWithFacades,
         creditCardRepository.observeAllCreditCards(),
         accountRepository.observeAllAccounts(),
         budgetRepository.observeAllBudgets(),
@@ -77,7 +94,8 @@ class DashboardViewModel(
         recurringOccurrenceRepository.observeAllOccurrences(),
         dashboardPreferencesRepository.observeEditTipDismissed(),
         preferences,
-    ) { invoices, transactions, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+    ) { invoices, transactionsAndFacades, creditCards, accounts, budgets, recurringList, occurrences, editTipDismissed, preferences ->
+        val (transactions, facadeLookup) = transactionsAndFacades
         val today = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         val items = buildDashboardViewingUseCase(
@@ -91,6 +109,7 @@ class DashboardViewModel(
                 occurrences = occurrences,
                 today = today,
                 targetMonth = today.yearMonth,
+                facadeLookup = facadeLookup,
             ),
             preferences = preferences,
         )

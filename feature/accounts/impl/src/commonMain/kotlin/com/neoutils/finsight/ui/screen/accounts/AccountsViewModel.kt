@@ -9,10 +9,12 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.AccountUi
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.model.TransactionUi
 import com.neoutils.finsight.ui.model.toTransactionUi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +32,7 @@ class AccountsViewModel(
     private val accountRepository: IAccountRepository,
     private val transactionRepository: ITransactionRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
     private val initialAccountId: Long? = null
 ) : ViewModel() {
@@ -59,12 +62,19 @@ class AccountsViewModel(
     private val transactionsUi = combine(
         selectedAccount,
         transactions,
-    ) { account, transactions ->
+        // The row still shows a category icon and an installment badge; the ledger
+        // hands out only the identities behind them (design D6).
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
+    ) { account, transactions, categories, installments ->
         // No account selected (e.g. all accounts deleted with the screen open) → no transactions.
         account ?: return@combine emptyList()
+        val lookup = TransactionFacadeLookup.of(categories, installments)
         // Flat DTO derived from the ledger under this account's perspective; ops
         // whose entries don't touch the account map to null and are omitted.
-        transactions.mapNotNull { transaction -> transaction.toTransactionUi(accountId = account.id) }
+        transactions.mapNotNull { transaction ->
+            transaction.toTransactionUi(accountId = account.id, lookup = lookup)
+        }
     }
 
     private val selectedMonth = MutableStateFlow(Clock.System.now().toYearMonth())

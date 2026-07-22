@@ -1,6 +1,5 @@
 package com.neoutils.finsight
 
-import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionRecurring
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.TransactionType
@@ -11,16 +10,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ComposeAppCommonTest {
-
-    @Test
-    fun transactionDisplayTitleFallsBackToUntitledWhenTitleAndCategoryAreMissing() {
-        val transaction = Transaction(
-            title = null,
-            date = LocalDate(2026, 3, 3),
-        )
-
-        assertEquals("Untitled", transaction.displayTitle)
-    }
 
     @Test
     fun recurringLabelFallsBackToUntitledWhenTitleAndCategoryAreMissing() {

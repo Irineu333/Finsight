@@ -30,14 +30,16 @@ class DeleteTransaction(params: Map<String, String>) : Event("delete_transaction
     // The wire keys and values are published format: `type`/`target` carry the
     // same constant names as before, now derived from the ledger instead of read
     // off a persisted leg.
-    constructor(transaction: Transaction) : this(
+    // [categoryName] is passed in rather than read off the transaction: the ledger
+    // hands out a dimension, and only the categories feature knows what it names.
+    constructor(transaction: Transaction, categoryName: String?) : this(
         buildMap {
             transaction.primaryEntry?.let { entry ->
                 put("type", deriveTransactionType(entry.amount, transaction.entries).name.lowercase())
             }
             val target = if (transaction.isCardTarget) TransactionTarget.CREDIT_CARD else TransactionTarget.ACCOUNT
             put("target", target.name.lowercase())
-            transaction.category?.let { put("category", it.name) }
+            categoryName?.let { put("category", it) }
         }
     )
 }

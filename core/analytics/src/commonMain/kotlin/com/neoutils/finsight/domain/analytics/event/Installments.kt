@@ -15,9 +15,9 @@ class CreateInstallments(params: Map<String, String>) : Event("create_installmen
 }
 
 class DeleteInstallments(params: Map<String, String>) : Event("delete_installments", params) {
-    constructor(installment: Installment, transactions: List<Transaction>) : this(
+    constructor(installment: Installment, categoryName: String?) : this(
         buildMap {
-            transactions.firstOrNull()?.category?.let { put("category", it.name) }
+            categoryName?.let { put("category", it) }
             put("installments_count", installment.count.toString())
         }
     )

@@ -2,6 +2,7 @@ package com.neoutils.finsight.ui.screen.report.viewer
 
 import com.neoutils.finsight.domain.model.CategorySpending
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.util.UiText
 import kotlinx.datetime.LocalDate
 
@@ -36,5 +37,6 @@ sealed class ReportViewerUiState {
         val categorySpending: List<CategorySpending>?,
         val categoryIncome: List<CategorySpending>?,
         val transactions: Map<LocalDate, List<Transaction>>?,
+        val facadeLookup: TransactionFacadeLookup = TransactionFacadeLookup.EMPTY,
     ) : ReportViewerUiState()
 }

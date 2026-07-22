@@ -47,14 +47,10 @@ class TransactionRepositoryEntriesTest {
         database = db,
         transactionDao = db.transactionDao(),
         entryDao = db.entryDao(),
-        recurringDao = db.recurringDao(),
-        categoryRepository = FakeCategoryRepository,
-        creditCardRepository = FakeCreditCardRepository,
         invoiceRepository = FakeInvoiceRepository,
         installmentRepository = FakeInstallmentRepository,
         accountRepository = FakeAccountRepository(accounts),
         transactionMapper = TransactionMapper(),
-        recurringMapper = RecurringMapper(),
         ledgerEntryWriter = LedgerEntryWriter(db.entryDao(), db.accountDao(), db.creditCardDao(), db.dimensionDao()),
     )
 

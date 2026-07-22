@@ -14,6 +14,8 @@ import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
+import com.neoutils.finsight.ui.model.LedgerTransactionFacadeResolver
+import com.neoutils.finsight.ui.model.TransactionFacadeResolver
 import com.neoutils.finsight.ui.modal.addTransaction.AddTransactionViewModel
 import com.neoutils.finsight.ui.modal.deleteTransaction.DeleteTransactionViewModel
 import com.neoutils.finsight.ui.modal.editTransaction.EditTransactionViewModel
@@ -29,14 +31,10 @@ val transactionsModule = module {
             database = get(),
             transactionDao = get(),
             entryDao = get(),
-            recurringDao = get(),
-            categoryRepository = get(),
-            creditCardRepository = get(),
             invoiceRepository = get(),
             installmentRepository = get(),
             accountRepository = get(),
             transactionMapper = get(),
-            recurringMapper = get(),
             ledgerEntryWriter = get(),
         )
     }
@@ -50,6 +48,15 @@ val transactionsModule = module {
         )
     }
     factory { TransactionMapper() }
+    factory<TransactionFacadeResolver> {
+        LedgerTransactionFacadeResolver(
+            categoryRepository = get(),
+            creditCardRepository = get(),
+            invoiceRepository = get(),
+            installmentRepository = get(),
+            recurringRepository = get(),
+        )
+    }
     factory<DeleteTransactionUseCase> { DeleteTransactionUseCaseImpl(transactionRepository = get()) }
 
     factory { CalculateTransactionStatsUseCase() }
@@ -66,6 +73,7 @@ val transactionsModule = module {
         ViewAdjustmentViewModel(
             transactionId = it.get(),
             transactionRepository = get(),
+            facadeResolver = get(),
             crashlytics = get(),
         )
     }
@@ -74,6 +82,7 @@ val transactionsModule = module {
             transactionId = it.get(),
             perspective = it.getOrNull(),
             transactionRepository = get(),
+            facadeResolver = get(),
             crashlytics = get(),
         )
     }
@@ -84,6 +93,7 @@ val transactionsModule = module {
             filterTarget = getOrNull(),
             transactionRepository = get(),
             categoryRepository = get(),
+            installmentRepository = get(),
             entryRepository = get(),
             calculateBalanceUseCase = get(),
             calculateTransactionStatsUseCase = get(),
@@ -120,6 +130,7 @@ val transactionsModule = module {
     viewModel {
         DeleteTransactionViewModel(
             transaction = it.get(),
+            categoryRepository = get(),
             deleteTransactionUseCase = get(),
             modalManager = get(),
             analytics = get(),

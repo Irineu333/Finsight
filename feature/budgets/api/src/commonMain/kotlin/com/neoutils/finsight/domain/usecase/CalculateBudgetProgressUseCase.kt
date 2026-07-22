@@ -35,7 +35,7 @@ class CalculateBudgetProgressUseCase {
                 LimitType.FIXED -> budget.amount
                 LimitType.PERCENTAGE -> {
                     val confirmedAmount = transactions
-                        .filter { it.recurring?.id == budget.recurringId }
+                        .filter { it.recurringId == budget.recurringId }
                         .filter { it.date.yearMonth == month }
                         .firstOrNull()
                         ?.amount

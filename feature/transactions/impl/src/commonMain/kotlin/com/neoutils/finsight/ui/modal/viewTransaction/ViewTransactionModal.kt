@@ -190,7 +190,7 @@ class ViewTransactionModal(
                         text = when (uiState.label) {
                             TransactionLabel.PAYMENT -> stringResource(Res.string.transaction_card_payment)
                             TransactionLabel.TRANSFER -> stringResource(Res.string.transaction_card_transfer)
-                            else -> uiState.transaction.displayTitle
+                            else -> uiState.displayTitle
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         color = colorScheme.onSurface
@@ -312,7 +312,7 @@ class ViewTransactionModal(
                 )
             }
 
-            uiState.transaction.installment?.let { installment ->
+            uiState.installment?.let { installment ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_installment_label),
                     value = "${installment.label} de ${formatter.format(installment.instance.totalAmount)}",
@@ -324,7 +324,7 @@ class ViewTransactionModal(
                 )
             }
 
-            uiState.transaction.recurring?.let { recurring ->
+            uiState.recurring?.let { recurring ->
                 DetailRow(
                     label = stringResource(Res.string.view_transaction_recurring_label),
                     value = recurring.label,

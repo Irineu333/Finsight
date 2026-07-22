@@ -13,11 +13,13 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
 import com.neoutils.finsight.ui.model.CreditCardUi
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,6 +31,7 @@ class CreditCardsViewModel(
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val invoiceUiMapper: InvoiceUiMapper,
     private val initialCreditCardId: Long? = null,
 ) : ViewModel() {
@@ -85,10 +88,11 @@ class CreditCardsViewModel(
         creditCards,
         transactionsFlow,
         invoicesFlow,
-        categoryRepository.observeAllCategories(),
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
         selectedCardIndex,
         filters,
-    ) { creditCards, transactions, invoices, categories, index, currentFilters ->
+    ) { creditCards, transactions, invoices, categories, installments, index, currentFilters ->
         if (creditCards.isEmpty()) {
             return@combine CreditCardsUiState.Empty
         }
@@ -125,7 +129,10 @@ class CreditCardsViewModel(
             domainInvoices = cards.map { it.second },
             selectedCardIndex = index,
             transactions = filteredTransactions,
-            categories = categories,
+            // The filter offers only open categories; the rows still render the
+            // archived ones, so the lookup keeps them.
+            categories = categories.filterNot { it.isArchived },
+            facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = currentFilters.category,
             selectedType = currentFilters.type,
             showRecurringOnly = currentFilters.recurringOnly,
@@ -179,7 +186,7 @@ private data class CreditCardsFilters(
 private fun List<Transaction>.filter(category: Category?): List<Transaction> {
     if (category == null) return this
     return filter { transaction ->
-        transaction.category?.id == category.id
+        transaction.categoryDimensionId == category.dimensionId
     }
 }
 
@@ -196,10 +203,10 @@ private fun List<Transaction>.filter(type: TransactionType?): List<Transaction> 
 
 private fun List<Transaction>.filter(recurringOnly: Boolean): List<Transaction> {
     if (!recurringOnly) return this
-    return filter { transaction -> transaction.recurring != null }
+    return filter { transaction -> transaction.recurringId != null }
 }
 
 private fun List<Transaction>.filterInstallment(installmentOnly: Boolean): List<Transaction> {
     if (!installmentOnly) return this
-    return filter { transaction -> transaction.installment != null }
+    return filter { transaction -> transaction.installmentId != null }
 }

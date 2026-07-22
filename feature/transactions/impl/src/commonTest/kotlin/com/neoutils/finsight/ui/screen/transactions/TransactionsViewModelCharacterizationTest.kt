@@ -11,7 +11,9 @@ import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.TransactionLeg
 import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.model.Installment
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
@@ -79,6 +81,7 @@ class TransactionsViewModelCharacterizationTest {
             filterType = null, category = null, filterTarget = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
+            installmentRepository = NoInstallments,
             entryRepository = ledger,
             calculateBalanceUseCase = CalculateBalanceUseCase(ledger),
             calculateTransactionStatsUseCase = CalculateTransactionStatsUseCase(),
@@ -172,4 +175,14 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun reportStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ReportStats = throw NotImplementedError()
+}
+
+/** No installment badge is under test here; the list only needs the read to answer. */
+private object NoInstallments : IInstallmentRepository {
+    override fun observeAllInstallments(): Flow<List<Installment>> = flowOf(emptyList())
+    override suspend fun getAllInstallments(): List<Installment> = emptyList()
+    override suspend fun getInstallmentById(id: Long): Installment? = null
+    override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
+    override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
+    override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
 }

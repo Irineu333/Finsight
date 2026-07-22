@@ -13,10 +13,13 @@ import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.ICategoryRepository
+import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateReportCategorySpendingUseCase
 import com.neoutils.finsight.domain.usecase.CalculateReportStatsUseCase
+import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import com.neoutils.finsight.ui.screen.report.render.ReportDocumentRenderer
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.report_viewer_badge_account
@@ -40,6 +43,8 @@ class ReportViewerViewModel(
     private val accountRepository: IAccountRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
+    private val categoryRepository: ICategoryRepository,
+    private val installmentRepository: IInstallmentRepository,
     private val calculateReportStatsUseCase: CalculateReportStatsUseCase,
     private val calculateReportCategorySpendingUseCase: CalculateReportCategorySpendingUseCase,
     private val entryRepository: IEntryRepository,
@@ -70,12 +75,20 @@ class ReportViewerViewModel(
     private val _events = Channel<ReportViewerEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    // The rows still show a category icon and an installment badge; the ledger hands
+    // out only the identities behind them (design D6).
+    private val facadeLookupFlow = combine(
+        categoryRepository.observeAllCategoriesIncludingClosed(),
+        installmentRepository.observeAllInstallments(),
+    ) { categories, installments -> TransactionFacadeLookup.of(categories, installments) }
+
     val uiState = combine(
         transactionRepository.observeAllTransactions(),
         accountRepository.observeAllAccounts(),
         creditCardRepository.observeAllCreditCards(),
         invoicesFlow,
-    ) { transactions, accounts, creditCards, invoices ->
+        facadeLookupFlow,
+    ) { transactions, accounts, creditCards, invoices, facadeLookup ->
         val invoiceIds = invoices.map { it.id }.toSet()
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
@@ -163,9 +176,11 @@ class ReportViewerViewModel(
 
         val transactionsMap = if (params.includeTransactionList) {
             val filteredOps = if (invoices.isNotEmpty()) {
+                // One test, not two: an invoice *is* the dimension its card leg
+                // carries, so the id comparison the first clause used to make is the
+                // same question asked of the facade (design D6).
                 transactions.filter { op ->
-                    op.targetInvoice?.id in invoiceIds ||
-                            op.entries.any { it.dimensionId in invoiceDimensionIds }
+                    op.entries.any { it.dimensionId in invoiceDimensionIds }
                 }
             } else {
                 transactions
@@ -218,6 +233,7 @@ class ReportViewerViewModel(
             categorySpending = categorySpending,
             categoryIncome = categoryIncome,
             transactions = transactionsMap,
+            facadeLookup = facadeLookup,
         )
     }.stateIn(
         scope = viewModelScope,

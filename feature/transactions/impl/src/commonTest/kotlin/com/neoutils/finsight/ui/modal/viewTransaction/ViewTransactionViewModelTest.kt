@@ -5,6 +5,7 @@ package com.neoutils.finsight.ui.modal.viewTransaction
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.ui.model.TransactionFacades
 import com.neoutils.finsight.ui.modal.FakeCrashlytics
 import com.neoutils.finsight.ui.modal.FakeTransactionRepository
 import com.neoutils.finsight.ui.modal.transaction
@@ -38,6 +39,8 @@ class ViewTransactionViewModelTest {
         transactionId = 1L,
         perspective = null,
         transactionRepository = repository,
+        // The screen's subject here is loading/absence, not the facades.
+        facadeResolver = { TransactionFacades() },
         crashlytics = crashlytics,
     )
 

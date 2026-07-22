@@ -108,7 +108,7 @@ class CalculateBudgetProgressUseCaseTest {
 
     private fun confirmedTransaction(recurring: Recurring, date: LocalDate, cents: Long) = Transaction(
         id = 1, title = recurring.title, date = date,
-        recurring = TransactionRecurring(instance = recurring, cycleNumber = 1),
+        recurringId = recurring.id, recurringCycle = 1,
         entries = listOf(
             Entry(account = Account(id = 100, name = "Checking", type = AccountType.ASSET), amount = -cents),
             Entry(account = Account(id = 101, name = "Salary", type = AccountType.INCOME), amount = cents),

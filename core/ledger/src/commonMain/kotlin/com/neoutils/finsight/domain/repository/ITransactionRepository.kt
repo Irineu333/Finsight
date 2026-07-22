@@ -42,12 +42,20 @@ interface ITransactionRepository {
      * a card payment has two monetary legs; routing one through here would drop the
      * second silently. Any future support for editing those must change this shape.
      */
+    /**
+     * Rewrites the transaction from [leg] and its [contra].
+     *
+     * [contra] has no default on purpose: a rewrite deletes the old entries, so a
+     * caller that forgets it turns a one-sided intent into an unbalanced write —
+     * refused at the boundary, with the edit silently rolled back. Defaulting it to
+     * `null` let exactly that compile.
+     */
     suspend fun updateTransaction(
         id: Long,
         title: String?,
         date: LocalDate,
         leg: TransactionLeg,
-        contra: ContraLeg? = null,
+        contra: ContraLeg?,
     )
 
     suspend fun deleteTransactionById(id: Long)

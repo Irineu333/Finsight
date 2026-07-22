@@ -145,6 +145,7 @@ class EditTransactionViewModel(
                     title = intent.title,
                     date = intent.date,
                     leg = intent.legs.first(),
+                    contra = intent.contra,
                 )
             }
         }.onLeft {

@@ -88,7 +88,7 @@ class LedgerEntryWriterTest {
         val income = TransactionLeg(type = TransactionType.INCOME, amount = 100.0, accountId = 2)
 
         writer.validate(listOf(out, income))
-        writer.writeEntries(transactionId = 2, legs = listOf(out, income))
+        writer.writeEntries(transactionId = 2, legs = listOf(out, income), contra = null)
 
         assertEquals(2, entryDao.inserted.size)
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
@@ -124,6 +124,8 @@ class LedgerEntryWriterTest {
                 TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1),
                 TransactionLeg(type = TransactionType.INCOME, amount = 50.0, accountId = 200, dimensionId = 5),
             ),
+            // Two legs already balance: there is nothing to synthesize.
+            contra = null,
         )
 
         assertEquals(0L, entryDao.inserted.sumOf { it.amount })
@@ -194,7 +196,19 @@ class LedgerEntryWriterTest {
             writer.writeEntries(
                 transactionId = 1,
                 legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+                contra = null,
             )
+        }
+        assertTrue(entryDao.inserted.isEmpty())
+    }
+
+    @Test
+    fun `given no legs at all when written then nothing is written`() = runTest {
+        // The empty set balances vacuously, so without this an intent with no legs
+        // produced a transaction with no entries — fewer than the two a double entry
+        // has by definition.
+        assertFailsWith<UnbalancedTransactionException> {
+            writer.writeEntries(transactionId = 1, legs = emptyList(), contra = null)
         }
         assertTrue(entryDao.inserted.isEmpty())
     }

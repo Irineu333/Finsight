@@ -93,7 +93,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [x] 8.1 Mover, mantendo os pacotes Kotlin inalterados para que o diff não cause churn de import: `AccountEntity`, `TransactionEntity`, `EntryEntity`, `AccountDao`, `EntryDao`, `TransactionDao`; `Account`, `AccountType`, `Entry`, `Transaction`, `SystemAccount`, `Currency`/`BASE_CURRENCY`, `extension/Ledger.kt`, `LedgerError` e as exceções do razão; `IEntryRepository`, `ITransactionRepository`, `CalculateBalanceUseCase`; `EntryRepository`, `LedgerEntryWriter`, `TransactionRepository`; os converters que as entities do razão usam
 - [x] 8.2 Declarar o `LedgerDatabase` interno de verificação em `:core:ledger`, listando só as entities do razão (D9)
 - [x] 8.3 Fazer `:core:database` montar o `AppDatabase` com as entities importadas; as migrações ficam onde estão
-- [x] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os do writer e repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database`
+- [ ] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os do writer e repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database`
 - [x] 8.5 Expor o módulo Koin do razão em `:core:ledger` e agregá-lo em `:app:shared`, removendo essas ligações de `TransactionsModule`; exportar `:core:ledger` no framework iOS
 - [x] 8.6 Acrescentar `api(projects.core.ledger)` a `feature:transactions:api` — linha temporária, de vida de uma fatia, para que as oito consumidoras compilem sem mudar seus `build.gradle.kts` e o move seja verificável isolado
 - [x] 8.7 Teste-sentinela de D9: acrescentar localmente um `@Query` com `JOIN invoices` ao `EntryDao` e confirmar que `:core:ledger` **não compila**; remover em seguida, sem commitar
@@ -103,7 +103,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 
 - [x] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
 - [x] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
-- [x] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types
+- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types
 
 ## 10. Verificação final
 

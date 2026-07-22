@@ -47,7 +47,7 @@ class LedgerEntryWriter(
     }
 
     /** Rebuilds the entries of [transactionId] from its (edited) legs. */
-    suspend fun rewriteEntries(transactionId: Long, legs: List<TransactionLeg>, contra: ContraLeg? = null) {
+    suspend fun rewriteEntries(transactionId: Long, legs: List<TransactionLeg>, contra: ContraLeg?) {
         entryDao.deleteByTransactionId(transactionId)
         writeEntries(transactionId, legs, contra)
     }
@@ -55,8 +55,14 @@ class LedgerEntryWriter(
     suspend fun writeEntries(
         transactionId: Long,
         legs: List<TransactionLeg>,
-        contra: ContraLeg? = null,
+        contra: ContraLeg?,
     ) {
+        // A transaction is a *balanced set*, and the empty set balances vacuously —
+        // which is how an intent with no legs used to reach the database as a
+        // transaction with no entries at all (spec `balanced-ledger`: never fewer
+        // than two). Refused here, where every write passes.
+        if (legs.isEmpty()) throw UnbalancedTransactionException(LedgerError.Unbalanced)
+
         val entries = buildList {
             legs.forEach { leg ->
                 add(

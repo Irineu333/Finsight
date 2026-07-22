@@ -11,6 +11,12 @@ import com.neoutils.finsight.database.mapper.RecurringMapper
 import com.neoutils.finsight.domain.ledger.DimensionWriteGuard
 import com.neoutils.finsight.domain.ledger.TransactionRemovalHook
 import com.neoutils.finsight.domain.model.Account
+import com.neoutils.finsight.domain.model.TransactionType
+import com.neoutils.finsight.domain.model.TransactionLeg
+import com.neoutils.finsight.domain.model.TransactionIntent
+import com.neoutils.finsight.domain.model.DimensionKind
+import com.neoutils.finsight.domain.model.ContraLeg
+import com.neoutils.finsight.database.entity.DimensionEntity
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.CreditCard
@@ -137,6 +143,46 @@ class TransactionRepositoryEntriesTest {
         assertEquals(2, transaction?.entries?.size)
         assertEquals(true, transaction?.entries?.first { it.account.id == 1L }?.account?.isArchived)
     }
+
+    @Test
+    fun `editing a transaction rewrites both legs, keeping it balanced and classified`() = runTest {
+        // The rewrite deletes the old entries and writes new ones, so an edit that
+        // carries only the money leg leaves the transaction one-sided — refused at
+        // the boundary, and the whole edit rolled back with it. That is what a
+        // nullable `contra` with a default let a caller do by omission.
+        val asset = Account(id = 1, name = "A", type = AccountType.ASSET)
+        val nominal = Account(id = 10, name = "Despesas", type = AccountType.EXPENSE)
+        db.accountDao().insert(AccountEntity(id = 1, name = "A", type = AccountEntity.Type.ASSET))
+        db.accountDao().insert(AccountEntity(id = 10, name = "Despesas", type = AccountEntity.Type.EXPENSE))
+        db.dimensionDao().insert(DimensionEntity(id = 7, kind = DimensionKind.CATEGORY))
+        val repository = repository(listOf(asset, nominal))
+
+        val created = repository.createTransaction(
+            TransactionIntent(
+                title = "Groceries",
+                date = LocalDate(2026, 3, 10),
+                legs = listOf(TransactionLeg(type = TransactionType.EXPENSE, amount = 50.0, accountId = 1)),
+                contra = ContraLeg(AccountType.EXPENSE, dimensionId = 7),
+            )
+        )
+
+        repository.updateTransaction(
+            id = created.id,
+            title = "Groceries, corrected",
+            date = LocalDate(2026, 3, 11),
+            leg = TransactionLeg(type = TransactionType.EXPENSE, amount = 80.0, accountId = 1),
+            contra = ContraLeg(AccountType.EXPENSE, dimensionId = 7),
+        )
+
+        val edited = repository.getTransactionById(created.id)!!
+        assertEquals("Groceries, corrected", edited.title)
+        assertEquals(2, edited.entries.size, "the edit must not leave the transaction one-sided")
+        assertEquals(0L, edited.entries.sumOf { it.amount }, "and it must still balance")
+        assertEquals(-8000L, edited.entries.first { it.account.id == 1L }.amount)
+        // The classification survives the rewrite: it travels in the contra leg now.
+        assertEquals(7L, edited.entries.first { it.account.id == 10L }.dimensionId)
+    }
+
 }
 
 internal object FakeCategoryRepository : ICategoryRepository {
@@ -191,6 +237,7 @@ internal object FakeInstallmentRepository : IInstallmentRepository {
     override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
     override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
+
 }
 
 /**
@@ -215,4 +262,5 @@ internal class FakeAccountRepository(private val accounts: List<Account>) : IAcc
     override suspend fun insert(account: Account): Long = throw NotImplementedError()
     override suspend fun update(account: Account) = throw NotImplementedError()
     override suspend fun delete(account: Account) = throw NotImplementedError()
+
 }

@@ -13,13 +13,21 @@ import com.neoutils.finsight.database.dao.RecurringDao
 import com.neoutils.finsight.database.dao.RecurringOccurrenceDao
 import com.neoutils.finsight.database.dao.TransactionDao
 import com.neoutils.finsight.database.getRoomDatabase
+import androidx.room.RoomDatabase
 import org.koin.core.module.Module
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val databaseModule = module {
     includes(databasePlatformModule)
 
-    single<AppDatabase> { getRoomDatabase(builder = get()) }
+    // Bound under both types, and deliberately the **same instance**: `:core:ledger`
+    // takes the `RoomDatabase` supertype, because opening a write transaction is a
+    // Room capability and the ledger has no business knowing which schema it is part
+    // of. A second instance here would not just waste a connection — the removal hook
+    // runs inside the ledger's write transaction and opens the facade's, and two
+    // pools would deadlock instead of nesting.
+    single<AppDatabase> { getRoomDatabase(builder = get()) } bind RoomDatabase::class
     single<TransactionDao> { get<AppDatabase>().transactionDao() }
     single<CategoryDao> { get<AppDatabase>().categoryDao() }
     single<CreditCardDao> { get<AppDatabase>().creditCardDao() }

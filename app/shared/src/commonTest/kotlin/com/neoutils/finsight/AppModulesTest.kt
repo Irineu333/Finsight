@@ -1,13 +1,21 @@
 package com.neoutils.finsight
 
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.neoutils.finsight.database.AppDatabase
 import com.neoutils.finsight.di.appModules
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.feature.shell.api.NavCatalog
 import com.neoutils.finsight.feature.support.api.SupportGraph
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -23,6 +31,32 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules) }.koin
 
         assertNotNull(koin.get<TransactionsEntry>())
+    }
+
+    /**
+     * The ledger takes the `RoomDatabase` supertype, not `AppDatabase` — so the graph
+     * only closes if the database is bound under both. It was not, and nothing
+     * noticed: every jvm test builds its repositories by hand, so the suite stayed
+     * green while the app crashed on the first screen that touched a transaction.
+     */
+    @Test
+    fun appModulesResolveTheLedgerRepositories() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertNotNull(koin.get<ITransactionRepository>())
+        assertNotNull(koin.get<IEntryRepository>())
+    }
+
+    /**
+     * And the *same* instance under both types: the removal hook runs inside the
+     * ledger's write transaction and opens the facade's, which nests only while they
+     * share one connection pool. Two instances would deadlock, not fail.
+     */
+    @Test
+    fun theLedgerAndTheFacadesShareOneDatabase() {
+        val koin = koinApplication { modules(appModules + inMemoryDatabase) }.koin
+
+        assertSame(koin.get<AppDatabase>(), koin.get<RoomDatabase>())
     }
 
     @Test
@@ -62,5 +96,12 @@ class AppModulesTest {
         // Persistence keys (route type names) must be unique — the grid stores hidden actions by them.
         val keys = destinations.map { it.route::class.simpleName }
         assertEquals(keys.size, keys.toSet().size)
+    }
+}
+
+/** Keeps the graph check off the user's real desktop database file. */
+private val inMemoryDatabase = module {
+    single<RoomDatabase.Builder<AppDatabase>> {
+        Room.inMemoryDatabaseBuilder<AppDatabase>().setDriver(BundledSQLiteDriver())
     }
 }

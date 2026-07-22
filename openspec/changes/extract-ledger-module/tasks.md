@@ -93,7 +93,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [x] 8.1 Mover, mantendo os pacotes Kotlin inalterados para que o diff não cause churn de import: `AccountEntity`, `TransactionEntity`, `EntryEntity`, `AccountDao`, `EntryDao`, `TransactionDao`; `Account`, `AccountType`, `Entry`, `Transaction`, `SystemAccount`, `Currency`/`BASE_CURRENCY`, `extension/Ledger.kt`, `LedgerError` e as exceções do razão; `IEntryRepository`, `ITransactionRepository`, `CalculateBalanceUseCase`; `EntryRepository`, `LedgerEntryWriter`, `TransactionRepository`; os converters que as entities do razão usam
 - [x] 8.2 Declarar o `LedgerDatabase` interno de verificação em `:core:ledger`, listando só as entities do razão (D9)
 - [x] 8.3 Fazer `:core:database` montar o `AppDatabase` com as entities importadas; as migrações ficam onde estão
-- [ ] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os do writer e repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database`
+- [ ] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os do writer e repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database` — **os de query moveram e rodam sobre o `LedgerDatabase`; os do writer e dos repositórios continuam em `transactions:impl`, sobre o `AppDatabase`**
 - [x] 8.5 Expor o módulo Koin do razão em `:core:ledger` e agregá-lo em `:app:shared`, removendo essas ligações de `TransactionsModule`; exportar `:core:ledger` no framework iOS
 - [x] 8.6 Acrescentar `api(projects.core.ledger)` a `feature:transactions:api` — linha temporária, de vida de uma fatia, para que as oito consumidoras compilem sem mudar seus `build.gradle.kts` e o move seja verificável isolado
 - [x] 8.7 Teste-sentinela de D9: acrescentar localmente um `@Query` com `JOIN invoices` ao `EntryDao` e confirmar que `:core:ledger` **não compila**; remover em seguida, sem commitar
@@ -103,7 +103,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 
 - [x] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
 - [x] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
-- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types
+- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types — **a linha saiu; a confirmação é falsa**: a api ainda declara `BuildTransactionUseCase`, `DeleteTransactionUseCase` e `CalculateTransactionStatsUseCase` (este com regra contábil concreta, ver 11.6)
 
 ## 10. Verificação final
 
@@ -113,3 +113,43 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [ ] 10.4 Rodar `./gradlew allTests`
 - [ ] 10.5 Executar o app em Android e Desktop com um banco migrado de v9 e conferir visualmente saldos, faturas, gastos por categoria e relatórios
 - [x] 10.6 Atualizar `CLAUDE.md` e `feature/README.md` com o novo módulo, a direção da dependência e as exceções documentadas: `Category.type`, as colunas de parcelamento/recorrência e as FKs removidas
+
+## 11. O que a auditoria adversarial encontrou
+
+Quatro auditores independentes revisaram os grupos 5 a 10 com lentes distintas
+(paridade de comportamento, migração, conformidade com as specs, arquitetura), instruídos
+a procurar defeito e a não confiar nas mensagens de commit. Acharam **dois defeitos que
+quebravam o app em produção** — nenhum dos dois pego pelos 271 testes verdes nem pela
+minha própria auditoria das tarefas 10.1–10.3.
+
+A lição comum aos dois: ambos passaram porque **um valor default deixou o esquecimento
+compilar**, e porque a suíte constrói tudo à mão e nunca fecha o grafo real.
+
+### Corrigido
+
+- [x] 11.1 **O app não subia.** A 7.7 trocou `TransactionRepository` para `RoomDatabase` mas o Koin continuou registrando só `AppDatabase` — `NoDefinitionFoundException` em toda tela que toca transação. Corrigido com `bind RoomDatabase::class` (mesma instância, obrigatoriamente: duas instâncias fariam o `TransactionRemovalHook` deadlocar em vez de aninhar em savepoint). `AppModulesTest` ganhou dois testes que fecham o grafo e falham sem a correção
+- [x] 11.2 **Editar transação não salvava nada.** `EditTransactionViewModel.submit()` descartava `intent.contra`; o rewrite apagava as entries antigas e a fronteira recusava a transação unilateral, revertendo título e data junto. A causa era o default `contra: ContraLeg? = null`, agora removido — o compilador conferiu os demais chamadores. Regressão coberta por teste que falha sem o fix
+- [x] 11.3 **Escrita sem pernas era aceita.** O conjunto vazio balanceia vacuamente, então `Σ = 0` deixava passar uma transação com zero entries — menos que as duas que uma partida dobrada tem por definição (spec `balanced-ledger`). Recusada na fronteira
+
+### Duplicação e regras sem dono introduzidas por esta change
+
+- [ ] 11.4 `BuildTransactionUseCaseImpl.contraLeg()` e `ConfirmRecurringUseCase.contraLeg()` são byte-idênticas — a regra "em que nominal a perna pousa", derivável de (tipo, categoria), com dois donos. Extrair um `ContraLeg.of(type, category)` em `:core:model`
+- [ ] 11.5 O fallback de título (`title ?: category?.name ?: "Untitled"`) virou quatro cópias ao remover `Transaction.displayTitle` — `TransactionUiMapper`, `InstallmentUiMapper`, `ViewTransactionUiState` e `Recurring.label` — com `"Untitled"` hardcoded, contra a regra de sempre usar `UiText.Res`. Dar um dono em `:core:ui`
+- [ ] 11.6 `CalculateTransactionStatsUseCase` (em `transactions:api`) reimplementa em memória a classificação por contra-perna que `EntryDao.accountPeriodTotals` já faz em SQL, e o dashboard a consome via api de outra feature — viola `ledger-reporting` e `ledger-module-boundary`
+- [ ] 11.7 `ReportViewerViewModel` (`:96-118`) recalcula o breakdown de fatura somando pernas em memória, com `dimensionPeriodTotals` disponível no razão — viola "MUST NOT existir forma alternativa que some lançamentos já carregados em memória"
+
+### Comentários e dependências que mentem
+
+- [ ] 11.8 `core/ledger/build.gradle.kts` declara `:core:common`, `:core:resources` e `arrow.core` — as três **mortas** (o `toUiText` ficou em `:core:model` pela emenda de D1) — e o comentário afirma que são usadas. Remover as três, corrigir o comentário e a tabela do `feature/README.md`
+- [ ] 11.9 Quatro comentários descrevem comportamento que esta própria change mudou: `Account.kt:16-18` (categoria lendo closure da conta), `TransactionRepository.kt:79-83` (exemplo do cartão renomeado, que é justamente o que continua re-emitindo), `LedgerError.kt:58-60` (escolha conta-vs-cartão que não existe mais na perna) e o KDoc de `DimensionWriteGuard.None`/`TransactionRemovalHook.None` ("the default", quando o `ledgerModule` exige `get()`)
+- [ ] 11.10 `CategoryDao.getCategoryByDimensionId` nasceu sem chamador enquanto cinco lugares fazem `getAllCategoriesIncludingClosed().firstOrNull { it.dimensionId == d }`. Expor no repositório e usar, ou apagar
+- [ ] 11.11 Código morto no razão: `EntryDao.observeByAccountId`, `EntryDao.naturalBalanceOf`, `EntryDao.delete`, e `Ledger.kt` `displayBalance` (usado só nos próprios testes, com a regra inlined em três sites)
+
+### Cobertura que falta
+
+- [ ] 11.12 O teste de paridade é cego a uma troca de nominais: `LedgerFigures` filtra saldos por `ASSET`/`LIABILITY` e soma categorias por dimensão, então mapear pernas `EXPENSE` para a nominal `INCOME` passaria com as quatro figuras idênticas. Nenhum fixture tem receita categorizada — acrescentar o lado `INCOME`
+- [ ] 11.13 Cenários de spec sem teste: coerência categoria × sentido do lançamento (`chart-of-accounts` — hoje só os filtros de picker a aplicam, com a regra duplicada entre `Category.isAccept` e uma cópia privada em `EditTransactionModal`); "reembolso reduz o gasto da categoria" (`ledger-reporting`); "conta arquivada não é selecionável" (`account-lifecycle`); "cartão recém-criado tem conta" (`account-lifecycle`); "o plano de contas contém duas nominais" (`chart-of-accounts`)
+
+### Riscos registrados, sem ação
+
+- [ ] 11.14 Registrar em `design.md`: os guardas de escrita (`ensureDimensionsAccept`, `validate`) rodam **fora** da `immediateTransaction`, então há uma janela TOCTOU entre o check e a escrita. Forma preexistente e app local mono-usuário; decidir se fecha ou se documenta como aceito

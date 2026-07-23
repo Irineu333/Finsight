@@ -9,7 +9,7 @@ Uma conta ou cartão que possua qualquer lançamento MUST NOT ser removida do pl
 
 Uma categoria que possua qualquer lançamento MUST NOT ser removida: SHALL ser arquivada, e as entries que carregam a sua dimensão permanecem intactas e classificadas nela. O fato "possui lançamentos" SHALL ser derivado do razão pelo mesmo mecanismo das demais fachadas — a existência de entry, consultada pela dimensão da categoria em vez de pela conta.
 
-Uma conta arquivada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas; o mesmo vale para uma categoria arquivada nos seus seletores e listagens.
+Uma conta arquivada MUST NOT ser oferecida na seleção de contas de um novo lançamento, e MUST NOT aparecer nas listagens de contas ativas. Uma categoria arquivada MUST NOT ser oferecida nos seus seletores de lançamento nem aparecer nas listagens ativas da sua tela; ela SHALL, porém, permanecer **acessível** por uma listagem dedicada de arquivadas na sua própria tela, de onde pode ser visualizada e desarquivada. Tornar a arquivada visível ali MUST NOT reintroduzi-la em seletor algum nem nas listagens ativas.
 
 O estado de arquivamento de conta e cartão SHALL residir **exclusivamente no plano de contas**, e a fachada de cartão SHALL consumi-lo da sua conta pelo vínculo que já possui — MUST NOT existir cópia desse estado nessa fachada. Todo cartão SHALL possuir conta no plano de contas desde a sua criação, de modo que a consulta não dependa de tratamento para vínculo ausente.
 
@@ -45,9 +45,9 @@ A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que
 - **WHEN** o usuário tenta apagar uma categoria que possui entries classificadas na sua dimensão
 - **THEN** o sistema recusa com erro tipado e a categoria é arquivada na própria fachada, permanecendo as entries classificadas nela
 
-#### Scenario: Categoria arquivada some da sua tela
+#### Scenario: Categoria arquivada some das listagens ativas mas fica acessível
 - **WHEN** uma categoria com lançamentos é removida
-- **THEN** ela é arquivada na fachada e desaparece da tela de categorias e dos seletores
+- **THEN** ela é arquivada na fachada e desaparece das listagens ativas e dos seletores, permanecendo acessível pela listagem de arquivadas da sua tela
 
 #### Scenario: Cartão recém-criado tem conta
 - **WHEN** um cartão é criado
@@ -60,6 +60,26 @@ A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que
 #### Scenario: Conta arquivada não é selecionável
 - **WHEN** o usuário registra um novo lançamento
 - **THEN** contas arquivadas não são oferecidas
+
+### Requirement: Categoria arquivada pode ser desarquivada
+
+Uma categoria arquivada SHALL poder voltar à circulação por uma operação de **desarquivamento**, com use case próprio, simétrica ao arquivamento: a fachada tem o seu flag `isArchived` revertido para falso e nada mais muda — as entries classificadas na sua dimensão permanecem intactas, e a sua dimensão e histórico já existiam e não são tocados. O desarquivamento SHALL residir na própria fachada de categoria, pela mesma razão que o arquivamento (categoria não é linha do plano de contas, `chart-of-accounts`, logo não há conta a reabrir).
+
+O desarquivamento é uma ação **reversível e inócua**: MUST NOT ser recusado por invariante alguma e MUST NOT exigir confirmação destrutiva, ao contrário do arquivar e do apagar. Uma vez desarquivada, a categoria SHALL reaparecer nos seus seletores e nas listagens ativas, e SHALL voltar a ser oferecida para `Budget.categories`.
+
+A interface SHALL oferecer o desarquivar **apenas** para uma categoria já arquivada, e o arquivar/apagar **apenas** para uma não arquivada — as duas ofertas são mutuamente exclusivas pelo estado de arquivamento, decisão de apresentação com dono único. Desarquivar é oferecido a partir da visualização da categoria, alcançada pela listagem de arquivadas.
+
+#### Scenario: Desarquivar uma categoria arquivada
+- **WHEN** o usuário desarquiva uma categoria que estava arquivada
+- **THEN** o seu flag de arquivamento é revertido, ela reaparece nas listagens ativas e nos seletores de lançamento, volta a ser oferecível em orçamentos, e as suas entries permanecem classificadas na sua dimensão
+
+#### Scenario: A visualização oferece desarquivar apenas para arquivada
+- **WHEN** a categoria exibida está arquivada
+- **THEN** a interface oferece a ação de desarquivar, e não oferece arquivar nem apagar
+
+#### Scenario: A visualização oferece retirar apenas para não arquivada
+- **WHEN** a categoria exibida não está arquivada
+- **THEN** a interface oferece a ação de retirá-la (arquivar ou apagar, conforme o domínio), e não oferece desarquivar
 
 ### Requirement: Arquivar conta permanente exige saldo zero
 Arquivar uma conta **permanente** (`ASSET`/`LIABILITY`/`EQUITY`) cujo saldo não seja zero SHALL ser recusado, com erro tipado. O sistema MUST NOT gerar lançamento algum para zerar o saldo por conta própria: um lançamento que o usuário não pediu aparece no histórico dele como se ele o tivesse feito, e substitui a informação que só ele tem — para onde o dinheiro foi — por uma reconciliação genérica.

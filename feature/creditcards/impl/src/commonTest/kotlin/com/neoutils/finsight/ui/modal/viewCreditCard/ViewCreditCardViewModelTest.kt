@@ -42,15 +42,16 @@ class ViewCreditCardViewModelTest {
 
     private class FakeCreditCardRepository : ICreditCardRepository {
         private val byId = MutableSharedFlow<CreditCard?>(replay = 1)
+        private var current: CreditCard? = null
         val unarchived = mutableListOf<Long>()
-        fun emit(card: CreditCard?) { byId.tryEmit(card) }
+        fun emit(card: CreditCard?) { current = card; byId.tryEmit(card) }
         override fun observeCreditCardById(creditCardId: Long): Flow<CreditCard?> = byId
+        override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = current
         override suspend fun unarchive(accountId: Long) { unarchived += accountId }
         override fun observeAllCreditCards(): Flow<List<CreditCard>> = throw NotImplementedError()
         override suspend fun getAllCreditCards(): List<CreditCard> = throw NotImplementedError()
         override suspend fun getAllCreditCardsIncludingClosed(): List<CreditCard> = throw NotImplementedError()
         override fun observeAllCreditCardsIncludingClosed(): Flow<List<CreditCard>> = throw NotImplementedError()
-        override suspend fun getCreditCardById(creditCardId: Long): CreditCard? = throw NotImplementedError()
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()

@@ -4,14 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import com.neoutils.finsight.ui.model.toArchivedUi
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -19,8 +17,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ViewCreditCardViewModel(
-    cardId: Long,
-    creditCardRepository: ICreditCardRepository,
+    private val cardId: Long,
+    private val creditCardRepository: ICreditCardRepository,
     invoiceRepository: IInvoiceRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
     private val crashlytics: Crashlytics,
@@ -28,11 +26,6 @@ class ViewCreditCardViewModel(
 
     private val _events = Channel<ViewCreditCardEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
-
-    // The domain card stays here, on the ViewModel side of the boundary — the UI
-    // reads the flat [ViewCreditCardUiState], never the domain graph. The unarchive
-    // use case (which takes a CreditCard) reads it from here.
-    private val currentCard = MutableStateFlow<CreditCard?>(null)
 
     val uiState = combine(
         creditCardRepository.observeCreditCardById(cardId)
@@ -42,7 +35,6 @@ class ViewCreditCardViewModel(
             ),
         invoiceRepository.observeInvoicesByCreditCard(cardId),
     ) { creditCard, invoices ->
-        currentCard.value = creditCard
         creditCard ?: return@combine ViewCreditCardUiState.Error
         ViewCreditCardUiState.Content(
             card = creditCard.toArchivedUi(),
@@ -63,10 +55,12 @@ class ViewCreditCardViewModel(
 
     // Reversible and innocuous (design D8): no confirmation. This detail is
     // archived-only and reached solely from the archived list, so once the card is
-    // back in circulation there is nothing left to show — dismiss it.
+    // back in circulation there is nothing left to show — dismiss it. The use case
+    // takes the domain CreditCard, resolved by id at the moment of the action so the
+    // domain model never has to sit in observable state the UI could read.
     private fun unarchive() {
-        val creditCard = currentCard.value ?: return
         viewModelScope.launch {
+            val creditCard = creditCardRepository.getCreditCardById(cardId) ?: return@launch
             unarchiveCreditCard(creditCard)
                 .onRight { _events.send(ViewCreditCardEvent.Dismiss) }
                 .onLeft { crashlytics.recordException(it) }

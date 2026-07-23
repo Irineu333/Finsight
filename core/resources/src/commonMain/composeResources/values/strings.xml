@@ -237,6 +237,7 @@
     <string name="categories_empty">Sem categorias</string>
     <string name="categories_create_default">Usar padrão</string>
     <string name="categories_create_manual">Criar manualmente</string>
+    <string name="category_card_archived">Arquivada</string>
 
     <!-- Budgets Screen -->
     <string name="budgets_title">Orçamentos</string>

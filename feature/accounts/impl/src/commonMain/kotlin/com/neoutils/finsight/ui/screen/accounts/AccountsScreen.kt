@@ -54,6 +54,7 @@ import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.ui.component.MonthPickerDropdownMenu
+import com.neoutils.finsight.ui.component.OutlinedActionButton
 import com.neoutils.finsight.ui.component.TransactionCard
 import com.neoutils.finsight.ui.modal.accountForm.AccountFormModal
 import com.neoutils.finsight.ui.model.RetireAction
@@ -361,9 +362,13 @@ private fun AccountActions(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            OutlinedButton(
-                // Which of the two is offered is a presentation rule (`retireActionOf`);
-                // which one actually happens is the ledger's, in ArchiveAccountUseCase.
+            // Which of the two is offered is a presentation rule (`retireActionOf`);
+            // which one actually happens is the ledger's, in ArchiveAccountUseCase.
+            OutlinedActionButton(
+                label = stringResource(retireAction.label),
+                icon = retireAction.icon,
+                contentColor = Expense,
+                enabled = !account.isDefault,
                 onClick = {
                     modalManager.show(
                         when (retireAction) {
@@ -372,93 +377,30 @@ private fun AccountActions(
                         }
                     )
                 },
-                enabled = !account.isDefault,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Expense,
-                    disabledContentColor = colorScheme.onSurface.copy(alpha = 0.38f)
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = !account.isDefault).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(
-                        if (account.isDefault) {
-                            colorScheme.onSurface.copy(alpha = 0.12f)
-                        } else {
-                            Expense.copy(alpha = 0.5f)
-                        }
-                    )
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = retireAction.icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(retireAction.label),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            )
 
-            OutlinedButton(
+            OutlinedActionButton(
+                label = stringResource(Res.string.accounts_edit),
+                icon = Icons.Default.Edit,
+                contentColor = Info,
                 onClick = {
                     modalManager.show(AccountFormModal(account))
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Info
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(Info.copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.accounts_edit),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
+            )
         }
 
         if (canTransfer) {
-            OutlinedButton(
+            OutlinedActionButton(
+                label = stringResource(Res.string.accounts_transfer),
+                icon = Icons.Default.SwapHoriz,
+                contentColor = colorScheme.primary,
                 onClick = {
                     modalManager.show(TransferBetweenAccountsModal(account))
                 },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colorScheme.primary
-                ),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
-                    brush = androidx.compose.ui.graphics.SolidColor(colorScheme.primary.copy(alpha = 0.5f))
-                ),
-                contentPadding = PaddingValues(12.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.accounts_transfer),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            )
         }
     }
 }

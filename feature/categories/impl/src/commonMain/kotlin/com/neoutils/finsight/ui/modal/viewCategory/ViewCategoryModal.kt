@@ -28,6 +28,7 @@ import com.neoutils.finsight.ui.component.DetailLoadingState
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.ui.component.MonthSelector
+import com.neoutils.finsight.ui.component.OutlinedActionButton
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryModal
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryModal
@@ -173,7 +174,10 @@ class ViewCategoryModal(
             // one would only ever re-offer archiving what is already archived. A screen
             // decides whether it offers the action, never which one it is.
             if (!content.category.isArchived) {
-                OutlinedButton(
+                OutlinedActionButton(
+                    label = stringResource(content.retireAction.label),
+                    icon = content.retireAction.icon,
+                    contentColor = colorScheme.error,
                     onClick = {
                         manager.show(
                             when (content.retireAction) {
@@ -183,55 +187,18 @@ class ViewCategoryModal(
                         )
                     },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = colorScheme.error,
-                    ),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = colorScheme.error,
-                    )
-                ) {
-                    Icon(
-                        imageVector = content.retireAction.icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = stringResource(content.retireAction.label),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                )
             }
 
-            OutlinedButton(
+            OutlinedActionButton(
+                label = stringResource(Res.string.view_category_edit),
+                icon = Icons.Default.Edit,
+                contentColor = Info,
                 onClick = {
                     manager.show(CategoryFormModal(content.category))
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Info,
-                ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = Info,
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(Res.string.view_category_edit),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            )
         }
     }
 

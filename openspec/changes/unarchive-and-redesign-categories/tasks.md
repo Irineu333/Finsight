@@ -24,9 +24,9 @@
 
 ## 4. core/ui — componente de ação compartilhado (D9)
 
-- [ ] 4.1 Extrair `OutlinedActionButton(label, icon, contentColor, onClick, modifier, fontWeight = Medium)` em `core/ui`, com `RoundedCornerShape(12.dp)` + `BorderStroke(1.dp, contentColor)` + ícone 18.dp + `Text` em `MaterialTheme.typography.labelLarge`.
-- [ ] 4.2 Refatorar `ViewCategoryModal.DetailActions` (retirar/editar) e `AccountsScreen.AccountActions` (retirar/editar/transferir) para consumir `OutlinedActionButton`.
-- [ ] 4.3 `CategoryCard`: adicionar indicação **textual/iconográfica** de arquivada (ex.: `Text` "Arquivada" em `labelSmall`/`onSurfaceVariant` ou `Icons.Default.Archive`), além da cor esmaecida já existente — cor não pode ser o único diferenciador.
+- [x] 4.1 Extrair `OutlinedActionButton(label, icon, contentColor, onClick, modifier, fontWeight = Medium)` em `core/ui`, com `RoundedCornerShape(12.dp)` + `BorderStroke(1.dp, contentColor)` + ícone 18.dp + `Text` em `MaterialTheme.typography.labelLarge`.
+- [x] 4.2 Refatorar `ViewCategoryModal.DetailActions` (retirar/editar) e `AccountsScreen.AccountActions` (retirar/editar/transferir) para consumir `OutlinedActionButton`.
+- [x] 4.3 `CategoryCard`: adicionar indicação **textual/iconográfica** de arquivada (ex.: `Text` "Arquivada" em `labelSmall`/`onSurfaceVariant` ou `Icons.Default.Archive`), além da cor esmaecida já existente — cor não pode ser o único diferenciador.
 
 ## 5. UI — refactor do modal + botão Desarquivar (D8, D1)
 

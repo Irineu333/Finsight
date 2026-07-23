@@ -65,6 +65,8 @@ class DeleteCategoryGuardsTest {
         val error = assertIs<RetireException>(useCase(hasEntries = true, repo = repo)(category).leftOrNull())
         assertEquals(RetireError.HAS_TRANSACTIONS, error.error)
         assertTrue(repo.deleted.isEmpty())
+        // Delete refused MUST error, never silently fall back to archiving.
+        assertTrue(repo.archived.isEmpty(), "a refused delete must not archive")
     }
 
     @Test
@@ -74,6 +76,7 @@ class DeleteCategoryGuardsTest {
         val error = assertIs<RetireException>(useCase(hasBudget = true, repo = repo)(category).leftOrNull())
         assertEquals(RetireError.HAS_BUDGET, error.error)
         assertTrue(repo.deleted.isEmpty(), "nothing may be removed")
+        assertTrue(repo.archived.isEmpty(), "a refused delete must not archive")
     }
 
     @Test
@@ -83,6 +86,7 @@ class DeleteCategoryGuardsTest {
         val error = assertIs<RetireException>(useCase(hasRecurring = true, repo = repo)(category).leftOrNull())
         assertEquals(RetireError.HAS_RECURRING, error.error)
         assertTrue(repo.deleted.isEmpty())
+        assertTrue(repo.archived.isEmpty(), "a refused delete must not archive")
     }
 }
 
@@ -92,6 +96,7 @@ class RecordingCategoryRepository(
     private val existing: List<Category> = emptyList(),
 ) : ICategoryRepository {
     val deleted = mutableListOf<Long>()
+    val archived = mutableListOf<Long>()
     val unarchived = mutableListOf<Long>()
     val insertedBatches = mutableListOf<List<Category>>()
     override suspend fun delete(category: Category) { deleted += category.id }
@@ -106,7 +111,7 @@ class RecordingCategoryRepository(
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
-    override suspend fun archive(id: Long) = Unit
+    override suspend fun archive(id: Long) { archived += id }
 
     override suspend fun insert(category: Category) = throw NotImplementedError()
     override suspend fun insertAll(categories: List<Category>) { insertedBatches += categories }

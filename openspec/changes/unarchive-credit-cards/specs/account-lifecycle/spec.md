@@ -6,7 +6,7 @@ Um cartão arquivado SHALL poder voltar à circulação por uma operação de **
 
 O desarquivamento é uma ação **reversível e inócua**: MUST NOT ser recusado por invariante alguma e MUST NOT exigir confirmação destrutiva, ao contrário do arquivar e do apagar. Um cartão arquivado é garantidamente de **saldo zero** — arquivar conta permanente já o exige —, logo reabri-lo restaura uma conta consistente e não reintroduz dinheiro preso nem carece de reconciliação. Uma vez desarquivado, o cartão SHALL reaparecer na tela de cartões ativa e voltar a ser oferecido para novos lançamentos.
 
-A interface SHALL oferecer o desarquivar **apenas** para um cartão já arquivado, e o arquivar/apagar **apenas** para um não arquivado — as duas ofertas são mutuamente exclusivas pelo estado de arquivamento, decisão de apresentação com dono único, o mesmo já compartilhado por conta, cartão e categoria. Desarquivar SHALL ser oferecido a partir de uma **visualização do cartão**, alcançada pela listagem dedicada de arquivadas.
+A oferta de desarquivar e a de retirar (arquivar/apagar) SHALL ser mutuamente exclusivas pelo estado de arquivamento — decisão de apresentação com dono único, o mesmo já compartilhado por conta, cartão e categoria. Desarquivar SHALL ser oferecido a partir de uma **visualização do cartão** alcançada pela listagem dedicada de arquivados, e essa visualização — por só ser alcançada a partir dessa listagem — SHALL oferecer exclusivamente o desarquivar. A oferta de retirar um cartão **não** arquivado permanece na tela de cartões ativa, como já é hoje, e MUST NOT ser duplicada na visualização de arquivados.
 
 #### Scenario: Desarquivar um cartão arquivado
 - **WHEN** o usuário desarquiva um cartão que estava arquivado
@@ -16,13 +16,9 @@ A interface SHALL oferecer o desarquivar **apenas** para um cartão já arquivad
 - **WHEN** o desarquivamento de um cartão arquivado é solicitado ao domínio
 - **THEN** a operação é executada sem recusa por invariante e sem modal de confirmação destrutiva, por reabrir uma conta garantidamente de saldo zero
 
-#### Scenario: A visualização do cartão oferece desarquivar apenas para arquivado
-- **WHEN** o cartão exibido está arquivado
+#### Scenario: A visualização de um cartão arquivado oferece apenas desarquivar
+- **WHEN** o usuário abre a visualização de um cartão a partir da listagem de arquivados
 - **THEN** a interface oferece a ação de desarquivar, e não oferece arquivar nem apagar
-
-#### Scenario: A visualização do cartão oferece retirar apenas para não arquivado
-- **WHEN** o cartão exibido não está arquivado
-- **THEN** a interface oferece a ação de retirá-lo (arquivar ou apagar, conforme o domínio), e não oferece desarquivar
 
 ## MODIFIED Requirements
 

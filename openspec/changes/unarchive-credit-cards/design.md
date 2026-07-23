@@ -7,9 +7,11 @@ Estado atual relevante (levantado por dois agentes de exploração):
 - `isArchived` da conta é **flag de visibilidade**, nunca filtro de soma: `EntryDao.balanceOf`/`netWorthCents` somam entries independentemente dele. Arquivar não toca faturas nem entries. Um cartão arquivado é garantidamente saldo-zero (o guard `AccountError.HAS_BALANCE` de `ArchiveAccountUseCase` já o exige). Logo reabrir é inócuo: não há nada a reconciliar. Veredito confirmado — desarquivar é flip puro e simétrico.
 - `CreditCardDao` já expõe `observeAllCreditCardsIncludingClosed()` (traz o `isArchived` da conta via JOIN); `CreditCardsViewModel` observa só `observeAllCreditCards()` (ativos).
 - `ArchiveCreditCardUseCase` resolve a conta do cartão e delega a `ArchiveAccountUseCase` (accounts feature) por causa do guard de saldo. Registro em `di/UseCaseModule.kt`.
-- **Não existe** `ViewCreditCardModal`: a tela de cartões é um `HorizontalPager` com `CardActions` inline (retirar/editar) no cartão visível. Não há detalhe de cartão hoje.
+- **Não existe** `ViewCreditCardModal`: a tela de cartões é um `HorizontalPager` com `CardActions` inline (retirar/editar) no cartão visível. Não há detalhe de cartão hoje. O precedente `ViewCategoryModal` estende **`AdaptiveModal`** (slots `DetailContent()`/`DetailActions()`, canal `events`, `interceptAbsence`) e é aberto por `LocalDetailPaneController.show(...)` — **não** por `ModalBottomSheet`/`ModalManager`. É esse o padrão a espelhar.
 - `OutlinedActionButton` já foi extraído para `core/ui` pela mudança de categorias — o botão de ação a reusar.
 - `UnarchiveCategoryUseCase` é o precedente de forma (`Either<Throwable, Unit>` via `catch`), mas mora na fachada de categoria; o de cartão mora na conta.
+- **O `CreditCard` de domínio carrega `isArchived`, `limit`, `closingDay`, `dueDay`, `iconKey`, `accountId` — mas não cor nem saldo.** Não há cor por cartão (o visual deriva de `iconKey` + tema); o saldo vem de `IEntryRepository.balance(accountId)`. O `CreditCardUi` (`core/ui`) **não** carrega `isArchived` e é montado só de cartões ativos — logo a lista e o modal renderizam do `CreditCard` de domínio, não do `CreditCardUi`.
+- `ArchiveCreditCardUseCase` recebe o `CreditCard` e lê `creditCard.accountId`; o `unarchive` faz o mesmo. O módulo de use cases chama-se `useCaseModules` (plural).
 
 ## Goals / Non-Goals
 
@@ -30,12 +32,12 @@ Estado atual relevante (levantado por dois agentes de exploração):
 Desarquivar cartão começa no `:core:ledger`: `reopen(id)` = `UPDATE accounts SET isArchived = 0 WHERE id = :id`, o inverso exato de `close(id)`, ao lado dele no `AccountDao`. É onde o estado mora e onde `close` já vive; qualquer outro lugar seria cópia do estado que a spec proíbe.
 - *Alternativa:* dar ao cartão um `isArchived` próprio e um flip de fachada como categoria. Rejeitada — viola "o estado de arquivamento de cartão reside exclusivamente no plano de contas, sem cópia na fachada".
 
-### D2 — `UnarchiveCreditCardUseCase` separado, espelhando `ArchiveCreditCardUseCase`
-Mesma forma: `Either<Throwable, Unit>` via `catch`, resolve o `accountId` do cartão e reabre. Mantém a simetria e "um use case por ação nomeada".
+### D2 — `UnarchiveCreditCardUseCase` separado, mesma forma de `ArchiveCreditCardUseCase`
+Mesma **forma**: `Either<Throwable, Unit>` via `catch`, recebe o `CreditCard` e lê `creditCard.accountId`. Mantém a simetria e "um use case por ação nomeada". A **fiação** difere (D3): archive depende de `IAccountRepository`+`ArchiveAccountUseCase`; unarchive depende só de `ICreditCardRepository`.
 - *Alternativa:* um `SetCreditCardArchivedUseCase(archived: Boolean)`. Rejeitada — a spec exige use cases distintos e nomeados; um booleano genérico reintroduz o "use case que faz coisa diferente do seu nome".
 
 ### D3 — Desarquivar não passa por `ArchiveAccountUseCase`; vai direto ao repo → `reopen`
-Arquivar delega a `ArchiveAccountUseCase` **porque** há um guard (saldo zero). Desarquivar não tem guard — é inócuo por invariante — então introduzir um `UnarchiveAccountUseCase` na accounts feature só para envolver um `UPDATE` seria cerimônia sem regra. `ICreditCardRepository.unarchive(id)` resolve o `accountId` e chama `AccountDao.reopen`; o use case apenas o embrulha em `catch`. A `CreditCardRepository` já opera cartão+conta juntas, então tem o `AccountDao` à mão.
+Arquivar delega a `ArchiveAccountUseCase` **porque** há um guard (saldo zero). Desarquivar não tem guard — é inócuo por invariante — então introduzir um `UnarchiveAccountUseCase` na accounts feature só para envolver um `UPDATE` seria cerimônia sem regra. `ICreditCardRepository.unarchive(accountId)` chama `AccountDao.reopen(accountId)` diretamente; o use case apenas o embrulha em `catch`, passando `creditCard.accountId`. A `CreditCardRepository` **já tem o `AccountDao` injetado** (opera cartão+conta juntas), então não há nova dependência. A assinatura recebe `accountId` (não o `card.id`) para não forçar um `getCreditCardById` redundante — o chamador já tem o `CreditCard`.
 - *Alternativa:* `UnarchiveAccountUseCase` simétrico a `ArchiveAccountUseCase`. Rejeitada por escopo e por ausência de regra a hospedar; se um dia contas comuns precisarem desarquivar, extrai-se então.
 
 ### D4 — `ArchivedCreditCardsRoute` é destino **interno** ao `creditcards/impl`
@@ -43,15 +45,15 @@ Só se navega a ela de dentro do próprio feature (da `CreditCardsScreen`). Pela
 - *Alternativa:* declará-la no `api`. Rejeitada — nenhum outro feature navega até ela; exportá-la alargaria a superfície pública sem consumidor.
 
 ### D5 — `ArchivedCreditCardsScreen`: lista vertical simples, não pager
-ViewModel observa `observeAllCreditCardsIncludingClosed()` e filtra `isArchived`. UiState carrega a lista já resolvida. A tela é uma `LazyColumn` de linhas de cartão (identidade + esmaecido de arquivado), sem `HorizontalPager` — arquivado quer lista, não carrossel. Sem itens → um empty-state discreto ("nenhum cartão arquivado"), não um CTA. Topbar transparente (`containerColor = colorScheme.background`), como as demais telas do app.
+ViewModel observa `observeAllCreditCardsIncludingClosed()` e filtra `isArchived`, renderizando do `CreditCard` de domínio. UiState carrega a lista já resolvida. A tela é uma `LazyColumn` sem `HorizontalPager` — arquivado quer lista, não carrossel. Não há row leve reutilizável (o `CreditCardCard` é pesado/invoice-centric), então nasce um `ArchivedCreditCardRow` enxuto (ícone + nome + indicação **textual** de arquivado — cor/alpha não pode ser o único diferenciador, paridade com `category_card_archived`). Topbar transparente com ícone de voltar (`navigateUp`). Sem itens → empty-state discreto ("nenhum cartão arquivado"), não um CTA.
 
-### D6 — `ViewCreditCardModal` novo, detalhe decente, é onde o desarquivar mora
-Toca-se numa linha da lista → abre o modal (sem botão inline, decisão do usuário). O modal:
-- Resolve o VM e coleta o estado **uma vez**, com `collectAsStateWithLifecycle()` (o padrão do feature; evita a dupla-resolução que a mudança de categorias teve de corrigir no `ViewCategoryModal`).
-- Observa o cartão por id, então ao desarquivar o `isArchived` vira falso e o item some da lista reativamente — sem `dismiss` manual.
-- Mostra um detalhe **enxuto porém decente**: identidade (nome, ícone/bandeira, cor), atributos (limite, dia de fechamento, dia de vencimento) e saldo (garantidamente zero).
+### D6 — `ViewCreditCardModal` novo (`AdaptiveModal`), detalhe decente, archived-only
+Toca-se numa linha da lista → `LocalDetailPaneController.show(ViewCreditCardModal(id))` (sem botão inline, decisão do usuário). É um `AdaptiveModal` (slots `DetailContent()`/`DetailActions()`), espelhando `ViewCategoryModal`. O modal:
+- Resolve o VM e coleta o estado **uma vez**, com `collectAsStateWithLifecycle()`.
+- Observa o cartão por id (`observeCreditCardById`, que já traz `isArchived`); usa `interceptAbsence` para dismiss quando o cartão some. Busca o saldo via `IEntryRepository.balance(accountId)` — não há saldo no `CreditCard`.
+- Mostra um detalhe **enxuto porém decente**: identidade (nome + ícone via `AppIcon.fromKey(iconKey)` — **sem cor**, que o cartão não possui), atributos (limite, dia de fechamento, dia de vencimento) e saldo (garantidamente zero).
 - Ação: `OutlinedActionButton` "Desarquivar" (ícone `Icons.Default.Unarchive`), disparando `ViewCreditCardAction.Unarchive` → `UnarchiveCreditCardUseCase`. Ação direta, sem modal de confirmação — reversível e inócua (mesma razão do D1 de categorias).
-- *Reuso futuro:* o modal nasce **genérico quanto ao estado** (oferece desarquivar se arquivado; retirar/editar se não) para satisfazer os cenários da spec, mas neste escopo só é **alcançado** pela lista de arquivados. Fica pronto para virar o "ver detalhe do cartão" ativo depois, sem redesenho.
+- *Escopo cortado (decisão do usuário):* o modal é **archived-only**. Como só é alcançado pela lista de arquivados, o ramo não-arquivado seria código morto e puxaria `RetireAction`/`DeleteCreditCardModal`/`ArchiveCreditCardModal`/`Form`, dobrando a superfície. `DetailActions()` renderiza só o Desarquivar; fica um `when(isArchived)` como costura, sem implementar retirar/editar. A oferta de retirar cartão ativo permanece nas `CardActions` inline do pager, onde já está.
 
 ### D7 — Entrada discreta: overflow na topbar da `CreditCardsScreen`
 Um `IconButton` de overflow (`⋯`) nas `actions` da top bar, com um `DropdownMenuItem` "Cartões arquivados" que faz `LocalNavController.current.navigate(ArchivedCreditCardsRoute)`. Não compete com o pager nem com as `CardActions` do cartão; some quando não há nada a fazer ali.
@@ -60,8 +62,8 @@ Um `IconButton` de overflow (`⋯`) nas `actions` da top bar, com um `DropdownMe
 ### D8 — Sem confirmação, sem aviso, sem toque em fatura
 Coerente com o veredito: desarquivar é `SET isArchived = 0` e nada mais. Nenhum `ReopenInvoiceUseCase`, nenhuma checagem de saldo, nenhum hook de escrita. O único efeito colateral protetor que o flag governa (`closedLegBlockingChange` tornando imutáveis lançamentos que tocam conta arquivada) é auto-corrigido pela reabertura: voltar o flag a 0 re-permite edição normal numa conta que segue saldo-zero.
 
-### D9 — Strings novas em `core/resources`
-`credit_cards_archived_title` (título da tela), `credit_cards_archived_empty` (vazio da tela), `credit_cards_view_archived` (item do overflow), `credit_cards_unarchive` (botão), e rótulos do detalhe (`credit_card_limit`, `credit_card_closing_day`, `credit_card_due_day`, `credit_card_balance`) — reusando os que já existirem. Em `values/` (pt) e `values-en/`.
+### D9 — Strings em `core/resources`
+**Novas:** `credit_cards_archived_title` (título da tela), `credit_cards_archived_empty` (vazio da tela), `credit_cards_view_archived` (item do overflow), `credit_cards_unarchive` (botão), `credit_card_archived` (indicador do row), `credit_card_balance` (rótulo de saldo). **Reusadas** no detalhe: `credit_card_form_limit_label`, `credit_card_ui_closes_on`, `credit_card_ui_due_on`. Em `values/` (pt) e `values-en/`.
 
 ### D10 — Sem migração de banco
 Apenas um `UPDATE` no flag existente `accounts.isArchived`. `AppDatabase` e migrações não mudam.

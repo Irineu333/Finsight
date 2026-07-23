@@ -69,7 +69,7 @@ Apagar e arquivar SHALL ser **ações distintas**, com use cases distintos, e ca
 
 O domínio SHALL recusar apenas o que violaria uma invariante, e MUST NOT recusar o que é meramente inapropriado. Arquivar uma conta sem lançamentos, por exemplo, SHALL ser permitido: não quebra nada, apenas não é a ação que uma tela ofereceria.
 
-A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que será recusada. Ela não é a salvaguarda: o desfecho é decidido pelo domínio. Qual retirada oferecer é decisão de **apresentação**, derivada do fato "possui lançamentos" — e, para conta, também de `isDefault`, que produz um **terceiro caso** em que nenhuma retirada é oferecida (ver "A conta padrão não pode ser retirada"). A oferta de retirada SHALL ter um dono único, consumido por conta, cartão e categoria, e as telas MUST NOT re-derivá-la inline.
+A interface SHALL oferecer a ação correta pelo nome, e MUST NOT oferecer a que será recusada. Ela não é a salvaguarda: o desfecho é decidido pelo domínio. Qual retirada oferecer — arquivar ou apagar — é decisão de **apresentação** derivada do fato "possui lançamentos", com um dono único consumido por conta, cartão e categoria, e as telas MUST NOT re-derivá-la inline. Para **conta**, a oferta depende também de `isDefault`: quando a conta é a padrão, nenhuma retirada é oferecida — um **terceiro caso** (ver "A conta padrão não pode ser retirada"). Esse terceiro caso é próprio da conta (só a conta tem padrão) e SHALL ter o seu próprio dono único, envolvendo — sem alterar — o dono compartilhado do arquivar-vs-apagar; MUST NOT ser re-derivado inline por tela.
 
 #### Scenario: Arquivar conta com lançamentos
 - **WHEN** o usuário arquiva uma conta que possui lançamentos

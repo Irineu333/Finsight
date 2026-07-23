@@ -16,4 +16,11 @@ interface ICreditCardRepository {
     suspend fun insert(creditCard: CreditCard): Long
     suspend fun update(creditCard: CreditCard)
     suspend fun delete(creditCard: CreditCard)
+
+    /**
+     * Brings an archived card back into circulation by reopening its
+     * chart-of-accounts row — the card's archival flag lives on that `LIABILITY`
+     * account, not on the facade, so [accountId] is the card's `accountId`.
+     */
+    suspend fun unarchive(accountId: Long)
 }

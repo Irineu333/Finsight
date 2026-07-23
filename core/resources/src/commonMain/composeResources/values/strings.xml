@@ -202,6 +202,12 @@
     <string name="credit_cards_filter_type_expense">Despesa</string>
     <string name="credit_cards_filter_type_adjustment">Ajuste</string>
     <string name="credit_cards_filter_type_payment">Pagamento</string>
+    <string name="credit_cards_view_archived">Cartões arquivados</string>
+    <string name="credit_cards_archived_title">Cartões arquivados</string>
+    <string name="credit_cards_archived_empty">Nenhum cartão arquivado</string>
+    <string name="credit_cards_unarchive">Desarquivar</string>
+    <string name="credit_card_archived">Arquivado</string>
+    <string name="credit_card_balance">Saldo</string>
 
     <!-- Accounts Screen -->
     <string name="accounts_title">Contas</string>

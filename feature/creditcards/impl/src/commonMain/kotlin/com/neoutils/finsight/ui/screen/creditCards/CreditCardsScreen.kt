@@ -9,6 +9,7 @@ import com.neoutils.finsight.ui.util.isWideWindow
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.ui.navigation.ArchivedCreditCardsRoute
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -109,6 +110,29 @@ private fun CreditCardsContent(
                                 contentDescription = null,
                             )
                         }
+                    }
+                },
+                actions = {
+                    var expanded by remember { mutableStateOf(false) }
+
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = null,
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.credit_cards_view_archived)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(ArchivedCreditCardsRoute)
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

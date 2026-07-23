@@ -219,6 +219,7 @@ private class FakeEntries(
 private class RecordingAccountDao : AccountDao {
     val closed = mutableListOf<Long>()
     override suspend fun close(id: Long) { closed += id }
+    override suspend fun reopen(id: Long) { closed -= id }
     override suspend fun entryCount(accountId: Long): Int = throw NotImplementedError()
     override fun observeAllAccounts(): Flow<List<AccountEntity>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<AccountEntity> = emptyList()

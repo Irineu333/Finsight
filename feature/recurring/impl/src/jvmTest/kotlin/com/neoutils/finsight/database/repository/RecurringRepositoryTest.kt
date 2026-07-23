@@ -83,6 +83,7 @@ class RecurringRepositoryTest {
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+        override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
     }
 
     // Room opens lazily and this test never writes, so the connection is never made;

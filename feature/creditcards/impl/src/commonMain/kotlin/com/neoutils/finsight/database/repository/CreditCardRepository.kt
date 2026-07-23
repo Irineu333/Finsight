@@ -77,6 +77,11 @@ class CreditCardRepository(
         }
     }
 
+    /** Reopens the card's `LIABILITY` account — the inverse of archiving (design D3). */
+    override suspend fun unarchive(accountId: Long) {
+        accountDao.reopen(accountId)
+    }
+
     /** Facade then account, in one transaction — see `CategoryRepository.delete`. */
     override suspend fun delete(creditCard: CreditCard) {
         database.useWriterConnection { connection ->

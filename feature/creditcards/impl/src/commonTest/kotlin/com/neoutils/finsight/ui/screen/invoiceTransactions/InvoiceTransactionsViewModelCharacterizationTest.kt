@@ -121,6 +121,7 @@ private class FakeCreditCardRepository(private val card: CreditCard) : ICreditCa
     override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
 }
 
 private class FakeInvoiceRepository(private val invoices: List<Invoice>) : IInvoiceRepository {

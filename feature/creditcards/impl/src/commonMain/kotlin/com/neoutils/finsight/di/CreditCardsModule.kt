@@ -24,6 +24,8 @@ import com.neoutils.finsight.ui.modal.deleteInstallment.DeleteInstallmentViewMod
 import com.neoutils.finsight.ui.modal.editInvoiceBalance.EditInvoiceBalanceViewModel
 import com.neoutils.finsight.ui.modal.payInvoice.PayInvoiceViewModel
 import com.neoutils.finsight.ui.modal.reopenInvoice.ReopenInvoiceViewModel
+import com.neoutils.finsight.ui.modal.viewCreditCard.ViewCreditCardViewModel
+import com.neoutils.finsight.ui.screen.archived.ArchivedCreditCardsViewModel
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsViewModel
 import com.neoutils.finsight.ui.screen.installments.InstallmentsViewModel
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsViewModel
@@ -209,6 +211,20 @@ val creditCardsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+    viewModel {
+        ViewCreditCardViewModel(
+            cardId = it.get(),
+            creditCardRepository = get(),
+            entryRepository = get(),
+            unarchiveCreditCard = get(),
+            crashlytics = get(),
+        )
+    }
+    viewModel {
+        ArchivedCreditCardsViewModel(
+            creditCardRepository = get(),
         )
     }
     viewModel {

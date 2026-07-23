@@ -1,0 +1,63 @@
+package com.neoutils.finsight.ui.modal.viewCreditCard
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.exception.DetailNotFoundException
+import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
+import com.neoutils.finsight.extension.interceptAbsence
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class ViewCreditCardViewModel(
+    cardId: Long,
+    creditCardRepository: ICreditCardRepository,
+    private val entryRepository: IEntryRepository,
+    private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val crashlytics: Crashlytics,
+) : ViewModel() {
+
+    private val _events = Channel<ViewCreditCardEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+
+    val uiState = combine(
+        creditCardRepository.observeCreditCardById(cardId)
+            .interceptAbsence(
+                onMissing = { crashlytics.recordException(DetailNotFoundException("CreditCard", cardId)) },
+                onDisappeared = { _events.send(ViewCreditCardEvent.Dismiss) },
+            ),
+        // The balance is a SQL aggregate, so the ledger has to say when it moved.
+        entryRepository.observeLedgerChanges(),
+    ) { creditCard, _ ->
+        creditCard ?: return@combine ViewCreditCardUiState.Error
+        ViewCreditCardUiState.Content(
+            creditCard = creditCard,
+            balance = entryRepository.balance(creditCard.accountId),
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ViewCreditCardUiState.Loading,
+    )
+
+    fun onAction(action: ViewCreditCardAction) {
+        when (action) {
+            ViewCreditCardAction.Unarchive -> unarchive()
+        }
+    }
+
+    // Reversible and innocuous (design D8): no confirmation. The modal observes the
+    // card, so flipping isArchived dismisses it from the archived list on its own.
+    private fun unarchive() {
+        val creditCard = (uiState.value as? ViewCreditCardUiState.Content)?.creditCard ?: return
+        viewModelScope.launch {
+            unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
+        }
+    }
+}

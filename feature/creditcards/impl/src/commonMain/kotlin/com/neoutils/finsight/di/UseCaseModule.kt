@@ -24,6 +24,7 @@ import com.neoutils.finsight.domain.usecase.OpenInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoicePaymentUseCase
 import com.neoutils.finsight.domain.usecase.PayInvoiceUseCase
 import com.neoutils.finsight.domain.usecase.ReopenInvoiceUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.usecase.UpdateCreditCardUseCase
 import org.koin.dsl.module
 
@@ -146,6 +147,8 @@ val useCaseModules = module {
             archiveAccountUseCase = get(),
         )
     }
+
+    factory { UnarchiveCreditCardUseCase(repository = get()) }
 
     factory {
         DeleteFutureInvoiceUseCase(

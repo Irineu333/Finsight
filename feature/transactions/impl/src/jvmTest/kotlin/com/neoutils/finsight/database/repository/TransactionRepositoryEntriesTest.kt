@@ -214,6 +214,7 @@ internal object FakeCreditCardRepository : ICreditCardRepository {
     override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
     override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
     override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+    override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
 }
 
 private object FakeInvoiceRepository : IInvoiceRepository {

@@ -251,6 +251,7 @@ private class Fakes {
         override suspend fun insert(creditCard: CreditCard): Long = throw NotImplementedError()
         override suspend fun update(creditCard: CreditCard) = throw NotImplementedError()
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
+        override suspend fun unarchive(accountId: Long) = throw NotImplementedError()
     }
 
     fun invoiceRepository(invoices: List<Invoice> = emptyList()) = object : IInvoiceRepository {

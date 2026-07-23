@@ -70,6 +70,15 @@ interface AccountDao {
     @Query("UPDATE accounts SET isArchived = 1 WHERE id = :id")
     suspend fun close(id: Long)
 
+    /**
+     * The inverse of [close]: it flips the archival flag back on and touches
+     * nothing else — no entry, no invoice. Reopening a closed account is safe by
+     * invariant: closing already required a zero balance, so there is nothing to
+     * reconcile.
+     */
+    @Query("UPDATE accounts SET isArchived = 0 WHERE id = :id")
+    suspend fun reopen(id: Long)
+
     @Query("SELECT COUNT(*) FROM entries WHERE accountId = :accountId")
     suspend fun entryCount(accountId: Long): Int
 

@@ -9,7 +9,9 @@ import com.neoutils.finsight.feature.creditcards.api.InstallmentsRoute
 import com.neoutils.finsight.feature.creditcards.api.InvoiceTransactionsRoute
 import com.neoutils.finsight.navigation.LocalNavController
 import com.neoutils.finsight.navigation.NavGraphRoute
+import com.neoutils.finsight.navigation.NavRoute
 import com.neoutils.finsight.ui.component.AnimatedVisibilityScopeProvider
+import com.neoutils.finsight.ui.screen.archived.ArchivedCreditCardsScreen
 import com.neoutils.finsight.ui.screen.creditCards.CreditCardsScreen
 import com.neoutils.finsight.ui.screen.installments.InstallmentsScreen
 import com.neoutils.finsight.ui.screen.invoiceTransactions.InvoiceTransactionsScreen
@@ -17,6 +19,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data object CreditCardsGraph : NavGraphRoute
+
+// Internal destination: only reached from within the credit cards feature (design
+// D4), so it lives in the impl rather than the api.
+@Serializable
+data object ArchivedCreditCardsRoute : NavRoute
 
 fun NavGraphBuilder.creditCardsGraph() {
     navigation<CreditCardsGraph>(
@@ -48,6 +55,14 @@ fun NavGraphBuilder.creditCardsGraph() {
             val navController = LocalNavController.current
 
             InstallmentsScreen(
+                onNavigateBack = { navController.navigateUp() },
+            )
+        }
+
+        composable<ArchivedCreditCardsRoute> {
+            val navController = LocalNavController.current
+
+            ArchivedCreditCardsScreen(
                 onNavigateBack = { navController.navigateUp() },
             )
         }

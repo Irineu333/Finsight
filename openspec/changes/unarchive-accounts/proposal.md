@@ -1,0 +1,33 @@
+## Why
+
+Conta é a última das três fachadas arquiváveis sem simétrico. Categoria e cartão já ganharam desarquivar; conta ainda é **via de mão única**: `observeAllAccounts()` só traz ativas e não há nenhum caminho de volta. Arquivar por engano — ou arquivar uma conta que voltou a ser usada — prende a conta fora de circulação para sempre.
+
+E há uma inconsistência latente do lado do arquivar. A conta **padrão** é protegida contra **apagar** por um guard de domínio (`AccountError.CANNOT_DELETE_DEFAULT`), mas contra **arquivar** só existe um `enabled = !isDefault` **na tela** — trava frágil, fora do dono de apresentação, e sem salvaguarda no domínio. O próprio spec diz que a interface "não é a salvaguarda: o desfecho é decidido pelo domínio". Arquivar a conta padrão viola isso hoje.
+
+## What Changes
+
+- **Arquivar a conta padrão passa a ser recusado no domínio.** Novo guard em `ArchiveAccountUseCase`, simétrico ao que `DeleteAccountUseCase` já tem, com erro tipado próprio `AccountError.CANNOT_ARCHIVE_DEFAULT`. O usuário resolve o **papel** de padrão antes (escolhendo outra conta), do mesmo modo que já resolve o **saldo** antes de arquivar — pelos meios que já existem (`SetDefaultAccountUseCase`). O guard vale só para conta: a conta `LIABILITY` de um cartão nunca é padrão, então o mesmo use case compartilhado não muda o comportamento do cartão.
+- **A oferta de retirada vira estado de três casos, com dono único.** `retireActionOf` passa a receber `isDefault` e a devolver um **terceiro caso nomeado** (não `null`): a conta padrão não oferece nem arquivar nem apagar, e o caso carrega a própria orientação ("escolha outra conta como padrão antes") em vez de um `label`+`icon` de ação. A tela para de fazer `enabled = !isDefault` por conta própria — a trava muda de hoje vira orientação explicada, decidida num só lugar (`core/ui`) e consumida via `UiState`.
+- **Desarquivar conta.** Nova operação simétrica ao arquivar, ponta a ponta. O estado de arquivamento de conta mora no plano de contas (`accounts.isArchived`) — e a conta **é** a própria linha do plano de contas (diferente do cartão, que é fachada sobre ela). O desarquivamento **reabre a conta** via `AccountDao.reopen(id)` (o inverso de `close()`, que **já existe** — foi adicionado pelo desarquivar de cartão). Ação direta, sem modal de confirmação: reversível e inócua, garantidamente sobre uma conta de saldo zero (arquivar conta permanente já exige zero). Como a padrão nunca pode ser arquivada, nenhuma conta arquivada foi padrão — desarquivar sempre a traz de volta como conta **comum**, sem a pergunta "volta como padrão?".
+- **Nova tela de contas arquivadas.** Rota própria (`ArchivedAccountsRoute`, **interna** ao `accounts/impl` — só se chega a ela de dentro do próprio feature), uma **lista vertical simples** de contas arquivadas — não o pager da tela de contas. Contas arquivadas continuam **fora** da tela ativa e de qualquer seletor de lançamento.
+- **Entrada discreta na tela de contas.** Como o slot `actions` da topbar já é ocupado pelo `MonthSelector`, o acesso é um menu de overflow (`⋮`) **ao lado** dele, espelhando o gesto do cartão ("abrir menu → ver arquivados"). Não compete com o pager nem com as ações da conta.
+- **Novo `ViewAccountModal` (archived-only).** Espelha `ViewCreditCardModal`/`ViewCategoryModal`. Exibe um detalhe enxuto da conta arquivada (identidade — ícone e nome; tipo) e é onde vive o botão **Desarquivar**. Toca-se na linha, abre o modal; ao desarquivar com sucesso o modal se fecha sozinho. É a **visualização** que a `account-lifecycle` já exige das outras duas fachadas: alcançada só pela listagem de arquivados, oferece **exclusivamente** o desarquivar.
+
+## Capabilities
+
+### New Capabilities
+<!-- Nenhuma capability nova: o ciclo de vida de conta já mora em account-lifecycle. -->
+
+### Modified Capabilities
+- `account-lifecycle`: (1) adiciona o desarquivamento de **conta** como operação suportada — simétrico ao arquivar, reabrindo a própria linha do plano de contas; (2) eleva a proteção da conta padrão contra **arquivar** ao domínio, unificando-a com a proteção contra apagar que já existe; (3) reconcilia o requisito atual — conta arquivada some das listagens ativas e dos seletores, mas passa a ser **acessível** por uma listagem dedicada de arquivadas (tela própria) de onde pode ser desarquivada; (4) generaliza o dono de apresentação da retirada para um estado de três casos, incluindo o "indisponível" da conta padrão.
+
+## Impact
+
+- **`core/ledger`** — nada. `AccountDao.reopen(id)` já existe (adicionado pelo desarquivar de cartão).
+- **`core/ui`** — `retireActionOf` ganha o parâmetro `isDefault` (default `false`, então `CreditCardUi` e as categorias não quebram) e um terceiro caso no enum de retirada, com a orientação da conta padrão. `AccountUi.retireAction` passa `isDefault`.
+- **`core/model` / erro** — `AccountError.CANNOT_ARCHIVE_DEFAULT` (+ `message`, `toUiText()`), simétrico a `CANNOT_DELETE_DEFAULT`.
+- **`feature/accounts/api`** — `IAccountRepository.reopen(accountId)`; novo `UnarchiveAccountUseCase` (interface, se seguir o padrão de `ArchiveAccountUseCase` que declara a interface no api).
+- **`feature/accounts/impl`** — guard `isDefault` em `ArchiveAccountUseCaseImpl`; `AccountRepository.reopen(accountId)` → `dao.reopen`; `UnarchiveAccountUseCaseImpl` (direto ao repo, sem guard); rota interna `ArchivedAccountsRoute`; UI model plano `ArchivedAccountUi` + mapper `Account.toArchivedUi()`; nova `ArchivedAccountsScreen` + ViewModel (observa `observeAllAccountsIncludingClosed()`, filtra arquivadas) + um card enxuto; novo `ViewAccountModal` (`AdaptiveModal`) + ViewModel/UiState/Action/Event (detalhe + desarquivar); menu de overflow no slot `actions` da topbar de `AccountsScreen`, ao lado do `MonthSelector`; a tela deixa de fazer `enabled = !isDefault` e passa a ler o terceiro caso do `retireAction`; `accountsGraph()` registra a nova tela; registros no `accountsModule` / módulo de use cases.
+- **Testes** — patchar os fakes que a nova assinatura de `IAccountRepository.reopen` quebra; `RecordingAccountDao` (`RetireAccountGuardsTest`) já tem `reopen`. Novo teste do guard `CANNOT_ARCHIVE_DEFAULT`, do `UnarchiveAccountUseCase`, do `ArchivedAccountsViewModel`, do `ViewAccountViewModel` e do terceiro caso de `retireActionOf`.
+- **`core/resources`** — novas strings: mensagem do erro de padrão, título da tela de arquivadas, vazio da tela, item do overflow, botão desarquivar, indicador textual de arquivada no card, orientação do caso "conta padrão" na retirada.
+- Sem migração de banco: apenas um `UPDATE` no flag existente `accounts.isArchived`.

@@ -23,8 +23,15 @@ Hoje uma categoria arquivada é **invisível** e **irreversível** pela interfac
 
 ## Impact
 
-- **`core/database`** — `CategoryDao.unarchive(id)`.
-- **`feature/categories/api`** — `ICategoryRepository.unarchive(id)`.
-- **`feature/categories/impl`** — `CategoryRepository.unarchive`, novo `UnarchiveCategoryUseCase` (+ registro no Koin module), `ViewCategoryAction.Unarchive` + tratamento no `ViewCategoryViewModel`, botão em `ViewCategoryModal`. Reescrita de `CategoriesScreen`, `CategoriesUiState`, `CategoriesAction`, `CategoriesViewModel` para o modelo de filtro + seções.
-- **`core/resources`** — novas strings: rótulo do desarquivar, rótulos dos chips (Ativas/Arquivadas), cabeçalhos de seção, vazios por filtro.
+Escopo ampliado após análise de arquitetura + design de código (dois agentes) sobre a tela e o modal — melhorias que reforçam o desarquivar (ver `design.md` D7–D12).
+
+- **`core/database`** — `CategoryDao`: `unarchive(id)`, `existsByName(name, ignoreId)`.
+- **`core/model`** — `RetireError` compartilhado (razões de retirada + `toUiText()`); `CategoryRetirability`.
+- **`core/ui`** — `OutlinedActionButton` compartilhado (reusado por Categorias e `AccountsScreen`); `Throwable.toRetireUiMessage()`; indicação de arquivada no `CategoryCard`.
+- **`feature/categories/api`** — `ICategoryRepository`: `unarchive`, `existsByName`, `insertAll`.
+- **`feature/categories/impl`** — `CategoryRepository` (impls acima), novos `UnarchiveCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`, `DeleteCategoryUseCase`/`ValidateCategoryNameUseCase`/`CreateDefaultCategoriesUseCase` ajustados, `ViewCategoryModal`/`ViewCategoryViewModel` (resolução única do VM + lifecycle + desarquivar + retirabilidade centralizada), reescrita de `CategoriesScreen`/`CategoriesUiState`/`CategoriesAction`/`CategoriesViewModel` (filtro + seções + dois empty-states), registros no `categoriesModule`.
+- **`feature/accounts/impl`** — `AccountsScreen.AccountActions` passa a consumir `OutlinedActionButton`.
+- **`core/resources`** — novas strings: desarquivar, chips (Ativas/Arquivadas), cabeçalhos de seção, vazios por filtro, mensagens de `RetireError`.
 - Sem migração de banco: apenas um `UPDATE` no flag existente `categories.isArchived`.
+
+**Fora de escopo** (dívida transversal, tarefas próprias): dupla-resolução estrutural do `AdaptiveModal` (5 features), token `Info` sem role MD3, `TypeToggle` como segmented control, `@Preview`, N+1 de `CalculateCategorySpendingUseCaseImpl`.

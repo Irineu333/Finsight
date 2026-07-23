@@ -19,6 +19,7 @@ Estado atual relevante:
 - Desarquivar/reabrir **conta ou cartão** — esses fecham via conta contábil e estão fora de escopo.
 - Qualquer migração de banco. O flag `categories.isArchived` já existe.
 - Mudar o modelo de dados de categoria (tipo, dimensão, ícone permanecem como estão).
+- **Dívida transversal do design system**, deixada para tarefas próprias (ambos os agentes concordaram em não resolver aqui): a dupla-resolução de `koinViewModel` estrutural ao `AdaptiveModal` (afeta 5 features — só corrigimos o sintoma local em Categorias via D8), o token `Info` sem role MD3, o `TypeToggle` que reimplementa um segmented control, a ausência de `@Preview`, e o N+1 de `CalculateCategorySpendingUseCaseImpl` (afeta dashboard/report, não a tela nova).
 
 ## Decisions
 
@@ -49,6 +50,40 @@ O seletor mistura dois eixos (tipo e status); "Ativas" (em vez de "Todas") deixa
 ### D6 — Topbar e seletor
 - Topbar: `TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.background, …)`, idêntico a `AccountsScreen`.
 - Seletor: `FilterChip` numa `Row`/`LazyRow` — o app ainda não tem `SegmentedButton` nem chips; `FilterChip` é o caminho mais leve para 4 itens.
+
+---
+
+> **Decisões D7–D12** vêm da análise de arquitetura e design de código (dois agentes) sobre a tela e o modal atuais. São melhorias que **reforçam** o desarquivar e evitam que a nova ação nasça duplicando lógica. Ficam propositalmente **antes** da implementação da UI de desarquivar no `tasks.md`.
+
+### D7 — Retirabilidade de categoria tem um dono único no domínio
+Hoje `ViewCategoryViewModel` reconstrói, em prosa, os três guardas de `DeleteCategoryUseCase` (`hasEntriesForDimension || hasBudgetForCategory || hasRecurringForCategory`) para decidir `mustPreserve`. A regra "o que impede apagar uma categoria" fica com **dois donos**: um quarto dependente futuro faria a tela oferecer um DELETE que o domínio recusa. Extrair para o domínio:
+```kotlin
+sealed interface CategoryRetirability {
+    data object Deletable : CategoryRetirability
+    data class MustArchive(val reason: RetireError) : CategoryRetirability
+}
+class ResolveCategoryRetirabilityUseCase(/* entry, budget, recurring repos */) {
+    suspend operator fun invoke(category: Category): CategoryRetirability
+}
+```
+`DeleteCategoryUseCase` consome e mapeia `reason → UiText`; `ViewCategoryViewModel` consome e faz `retireActionOf(retirability !is Deletable)`. Um lugar decide, dois consomem. Isso remove 3 injeções de repositório do ViewModel. Quando o botão Desarquivar (D1) somar um ramo à decisão de "qual ação retirar oferecer", a lógica já estará centralizada.
+- *Alternativa:* deixar a duplicação e sincronizar na mão. Rejeitada — é exatamente a "regra reimplementada sem dono" que o CLAUDE.md proíbe.
+
+### D8 — O modal resolve o ViewModel e coleta o estado **uma vez**
+`ViewCategoryModal` resolve `koinViewModel` + `collectAsState()` **duas vezes** (`DetailContent` e `DetailActions`), com dois assinantes do mesmo `StateFlow` e dependência frágil de os dois slots caírem no mesmo `ViewModelStoreOwner`. Resolver o VM e coletar `uiState` uma vez, passando `uiState`/`onAction` como parâmetros — como `CategoriesContent` já faz. Além disso, trocar `collectAsState()` por `collectAsStateWithLifecycle()` (o resto do feature e `AccountsScreen` já usam; agrava aqui porque `uiState` reage a `observeLedgerChanges()`). Pré-requisito limpo da task do botão Desarquivar.
+
+### D9 — `OutlinedActionButton` compartilhado em `core/ui`
+O bloco de botão de ação (`RoundedCornerShape(12.dp)` + `BorderStroke(1.dp, color)` + ícone 18.dp + `Text`) é reescrito em `ViewCategoryModal` (retirar/editar) e em `AccountsScreen.AccountActions` (retirar/editar/transferir). Extrair `OutlinedActionButton(label, icon, contentColor, onClick, modifier)` em `core/ui` **antes** de adicionar o Desarquivar, para que ele nasça reusando o componente, não como a quarta cópia. Também usa `MaterialTheme.typography.labelLarge` em vez de `fontSize`/`FontWeight` soltos.
+
+### D10 — Dois empty-states distintos (refina D5)
+"Banco sem categoria alguma" → CTA grande (`EmptyDatabaseState`, com "Usar padrão / Criar manualmente"). "Filtro atual sem itens, banco não vazio" (ex.: nenhuma arquivada) → `EmptyFilterState` compacto (texto + ícone monocromático, **sem** botão). Não reaproveitar o CTA para o segundo caso — empurraria "Usar categorias padrão" para quem só filtrou Arquivadas.
+
+### D11 — Retirada de categoria fala a própria língua de erro
+`DeleteCategoryUseCase` reporta `AccountException`/`AccountError` (categoria falando a língua de conta) e `Throwable.toUiMessage()` está duplicado byte a byte entre `DeleteCategoryViewModel` e `ArchiveCategoryViewModel`. Introduzir um `RetireError` compartilhado (`core/model`) com `toUiText()` e uma única `Throwable.toRetireUiMessage()` (`core/ui`/`core/model`), consumidos pelos dois ViewModels. `MustArchive.reason` de D7 mapeia para esse erro comum. Reduz o par archive/delete a diferir só no use case chamado.
+
+### D12 — Robustez de dados (independente do redesenho, mas no mesmo módulo)
+- **`CreateDefaultCategoriesUseCase` atômico:** hoje insere 14 categorias em 14 transações (`insert` em laço, cada uma abrindo sua `immediateTransaction`); falha no meio deixa defaults parciais — e é o CTA do empty-state que dispara. Adicionar `ICategoryRepository.insertAll(List<Category>)` numa única transação (emite as dimensões + insere as fachadas em bloco); uma só invalidação de Flow.
+- **`ValidateCategoryNameUseCase` sem varredura O(n) por tecla:** hoje carrega `getAllCategoriesIncludingClosed()` e faz `.any` a cada tecla (tem `// TODO`), e valida "vazio" sem `trim` mas compara duplicidade com `trim` — inconsistência de fronteira. Trocar por query `SELECT EXISTS(... name = :name COLLATE NOCASE AND id != :ignoreId)` (incluindo arquivadas) e aplicar `trim` uma vez no topo, usado tanto pelo `isEmpty` quanto pela checagem.
 
 ## Risks / Trade-offs
 

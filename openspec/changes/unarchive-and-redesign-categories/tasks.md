@@ -69,4 +69,4 @@
 
 - [x] 9.1 `openspec validate unarchive-and-redesign-categories --strict`.
 - [x] 9.2 `./gradlew :app:shared:testDebugUnitTest` (categorias) verde.
-- [ ] 9.3 Conferir na tela: arquivar → aparece em Arquivadas (com indicação) → abrir → Desarquivar → reaparece em Ativas e nos seletores de lançamento.
+- [x] 9.3 Conferir na tela: arquivar → aparece em Arquivadas (com indicação) → abrir → Desarquivar → reaparece em Ativas e nos seletores de lançamento.

@@ -30,14 +30,14 @@
 
 ## 5. UI — refactor do modal + botão Desarquivar (D8, D1)
 
-- [ ] 5.1 `ViewCategoryModal`: resolver `koinViewModel` + coletar `uiState` **uma vez**, passando `uiState`/`onAction` para `DetailContent`/`DetailActions` como parâmetros (fim da dupla-resolução).
-- [ ] 5.2 Trocar `collectAsState()` por `collectAsStateWithLifecycle()`.
-- [ ] 5.3 `ViewCategoryViewModel`: consumir `ResolveCategoryRetirabilityUseCase` para `retireAction` (remover os 3 reads inline e as 3 injeções de repo dedicadas a `mustPreserve`).
-- [ ] 5.4 `ViewCategoryAction`: adicionar `data object Unarchive`.
-- [ ] 5.5 `ViewCategoryViewModel`: injetar `UnarchiveCategoryUseCase`; `onAction(Unarchive)` chama o use case com `onLeft { crashlytics.recordException(it) }`. Atualizar a construção do VM no Koin.
-- [ ] 5.6 `ViewCategoryModal.DetailActions`: no ramo `else` (categoria arquivada), renderizar `OutlinedActionButton` **Desarquivar** (ícone `Icons.Default.Unarchive`).
-- [ ] 5.7 Strings: `view_category_unarchive` ("Desarquivar").
-- [ ] 5.8 Limpezas locais: remover imports mortos `Expense`/`Income` e `val formatter` não usado em `DetailContent`; remover defaults de `ViewCategoryUiState.Content`; extrair `typeLabel` das expressões condicionais longas; typography (`bodyLarge`/`titleMedium`/`labelLarge`) no lugar de `fontSize`/`FontWeight` soltos nos modais (D6).
+- [x] 5.1 `ViewCategoryModal`: resolver `koinViewModel` + coletar `uiState` **uma vez**, passando `uiState`/`onAction` para `DetailContent`/`DetailActions` como parâmetros (fim da dupla-resolução).
+- [x] 5.2 Trocar `collectAsState()` por `collectAsStateWithLifecycle()`.
+- [x] 5.3 `ViewCategoryViewModel`: consumir `ResolveCategoryRetirabilityUseCase` para `retireAction` (remover os 3 reads inline e as 3 injeções de repo dedicadas a `mustPreserve`).
+- [x] 5.4 `ViewCategoryAction`: adicionar `data object Unarchive`.
+- [x] 5.5 `ViewCategoryViewModel`: injetar `UnarchiveCategoryUseCase`; `onAction(Unarchive)` chama o use case com `onLeft { crashlytics.recordException(it) }`. Atualizar a construção do VM no Koin.
+- [x] 5.6 `ViewCategoryModal.DetailActions`: no ramo `else` (categoria arquivada), renderizar `OutlinedActionButton` **Desarquivar** (ícone `Icons.Default.Unarchive`).
+- [x] 5.7 Strings: `view_category_unarchive` ("Desarquivar").
+- [x] 5.8 Limpezas locais: remover imports mortos `Expense`/`Income` e `val formatter` não usado em `DetailContent`; remover defaults de `ViewCategoryUiState.Content`; extrair `typeLabel` das expressões condicionais longas; typography (`bodyLarge`/`titleMedium`/`labelLarge`) no lugar de `fontSize`/`FontWeight` soltos nos modais (D6).
 
 ## 6. Redesenho da tela — estado
 

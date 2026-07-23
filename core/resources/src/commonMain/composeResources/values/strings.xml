@@ -475,6 +475,7 @@
     <string name="view_category_total_spent">Total Gasto</string>
     <string name="view_category_transactions_month">Transações no Mês</string>
     <string name="view_category_edit">Editar</string>
+    <string name="view_category_unarchive">Desarquivar</string>
 
     <!-- View Budget Modal -->
     <string name="view_budget_percentage_label">Percentual</string>

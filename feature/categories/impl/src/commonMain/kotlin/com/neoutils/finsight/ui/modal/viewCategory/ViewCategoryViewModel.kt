@@ -6,10 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
-import com.neoutils.finsight.domain.repository.IBudgetRepository
+import com.neoutils.finsight.domain.model.CategoryRetirability
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.retireActionOf
 import com.neoutils.finsight.extension.accountType
 import com.neoutils.finsight.extension.displaySign
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.minusMonth
 import kotlinx.datetime.plusMonth
 import kotlin.time.Clock
@@ -30,8 +32,8 @@ class ViewCategoryViewModel(
     categoryId: Long,
     categoryRepository: ICategoryRepository,
     private val entryRepository: IEntryRepository,
-    private val recurringRepository: IRecurringRepository,
-    private val budgetRepository: IBudgetRepository,
+    private val resolveRetirability: ResolveCategoryRetirabilityUseCase,
+    private val unarchiveCategory: UnarchiveCategoryUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
@@ -58,15 +60,12 @@ class ViewCategoryViewModel(
         val displaySign = category.type.accountType.displaySign
         val totalAmount = entryRepository.dimensionBalanceInMonth(yearMonth, category.dimensionId) * displaySign
         val transactionCount = entryRepository.dimensionEntryCountInMonth(yearMonth, category.dimensionId)
-        // Deleting is refused when the category has movement OR a budget/recurring
-        // still points at it (DeleteCategoryUseCase), so those cases offer archiving
-        // instead — the category is kept, and its dependents keep pointing at it.
-        val mustPreserve = entryRepository.hasEntriesForDimension(category.dimensionId) ||
-            budgetRepository.hasBudgetForCategory(category.id) ||
-            recurringRepository.hasRecurringForCategory(category.id)
+        // Whether deleting is refused (so the screen offers archiving instead) is one
+        // rule with a single owner — the same one DeleteCategoryUseCase consumes.
+        val retirability = resolveRetirability(category)
         ViewCategoryUiState.Content(
             category = category,
-            retireAction = retireActionOf(mustPreserve),
+            retireAction = retireActionOf(retirability !is CategoryRetirability.Deletable),
             selectedYearMonth = yearMonth,
             totalAmount = totalAmount,
             transactionCount = transactionCount,
@@ -77,12 +76,24 @@ class ViewCategoryViewModel(
         initialValue = ViewCategoryUiState.Loading,
     )
 
-    fun onAction(action: ViewCategoryAction) = when (action) {
-        ViewCategoryAction.NextMonth -> {
-            selectedYearMonth.value = selectedYearMonth.value.plusMonth()
+    fun onAction(action: ViewCategoryAction) {
+        when (action) {
+            ViewCategoryAction.NextMonth ->
+                selectedYearMonth.value = selectedYearMonth.value.plusMonth()
+
+            ViewCategoryAction.PreviousMonth ->
+                selectedYearMonth.value = selectedYearMonth.value.minusMonth()
+
+            ViewCategoryAction.Unarchive -> unarchive()
         }
-        ViewCategoryAction.PreviousMonth -> {
-            selectedYearMonth.value = selectedYearMonth.value.minusMonth()
+    }
+
+    // Reversible and innocuous (design D1): no confirmation. The modal observes the
+    // category, so flipping isArchived swaps the button back on its own.
+    private fun unarchive() {
+        val category = (uiState.value as? ViewCategoryUiState.Content)?.category ?: return
+        viewModelScope.launch {
+            unarchiveCategory(category).onLeft { crashlytics.recordException(it) }
         }
     }
 }

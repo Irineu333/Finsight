@@ -16,6 +16,8 @@ import com.neoutils.finsight.domain.repository.IBudgetRepository
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
+import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.model.RetireAction
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
@@ -132,12 +134,17 @@ class ViewCategoryViewModelTest {
         entryRepository: FakeEntryRepository = FakeEntryRepository(),
         recurringRepository: IRecurringRepository = FakeRecurringRepository(),
         budgetRepository: IBudgetRepository = FakeBudgetRepository(),
+        unarchiveCategory: UnarchiveCategoryUseCase = UnarchiveCategoryUseCase(categoryRepository),
     ) = ViewCategoryViewModel(
         categoryId = 1L,
         categoryRepository = categoryRepository,
         entryRepository = entryRepository,
-        recurringRepository = recurringRepository,
-        budgetRepository = budgetRepository,
+        resolveRetirability = ResolveCategoryRetirabilityUseCase(
+            entryRepository = entryRepository,
+            budgetRepository = budgetRepository,
+            recurringRepository = recurringRepository,
+        ),
+        unarchiveCategory = unarchiveCategory,
         crashlytics = crashlytics,
     )
 

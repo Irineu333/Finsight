@@ -1,37 +1,49 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.categories
+
 import com.neoutils.finsight.ui.util.isWideWindow
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -104,6 +116,16 @@ private fun CategoriesContent(
                         }
                     }
                 },
+                actions = {
+                    // The view selector lives in the top bar, as a dropdown — the same
+                    // place and shape the accounts screen keeps its month control.
+                    if (uiState is CategoriesUiState.Content) {
+                        FilterSelector(
+                            selected = uiState.filter,
+                            onSelect = { onAction(CategoriesAction.SelectFilter(it)) },
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {
@@ -147,50 +169,45 @@ private fun CategoriesContent(
                 )
             }
 
-            is CategoriesUiState.Content -> {
-                Column(
+            is CategoriesUiState.Content if uiState.sections.isEmpty() -> {
+                EmptyFilterState(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
+                )
+            }
+
+            is CategoriesUiState.Content -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilterChipsRow(
-                        selected = uiState.filter,
-                        onSelect = { onAction(CategoriesAction.SelectFilter(it)) },
-                    )
-
-                    if (uiState.sections.isEmpty()) {
-                        EmptyFilterState(modifier = Modifier.fillMaxSize())
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            uiState.sections.forEachIndexed { index, section ->
-                                section.header?.let { header ->
-                                    item(key = "header_$index") {
-                                        SectionHeader(
-                                            text = stringResource(header),
-                                            modifier = Modifier.animateItem(),
-                                        )
-                                    }
-                                }
-
-                                items(
-                                    items = section.categories,
-                                    key = { it.id },
-                                ) { category ->
-                                    CategoryCard(
-                                        category = category,
-                                        onClick = {
-                                            detailController.show(ViewCategoryModal(category.id))
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .animateItem()
-                                    )
-                                }
+                    uiState.sections.forEachIndexed { index, section ->
+                        section.header?.let { header ->
+                            item(key = "header_$index") {
+                                SectionHeader(
+                                    text = stringResource(header),
+                                    modifier = Modifier.animateItem(),
+                                )
                             }
+                        }
+
+                        items(
+                            items = section.categories,
+                            key = { it.id },
+                        ) { category ->
+                            CategoryCard(
+                                category = category,
+                                onClick = {
+                                    detailController.show(ViewCategoryModal(category.id))
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem()
+                            )
                         }
                     }
                 }
@@ -200,25 +217,56 @@ private fun CategoriesContent(
 }
 
 @Composable
-private fun FilterChipsRow(
+private fun FilterSelector(
     selected: CategoryFilter,
     onSelect: (CategoryFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(
-            items = CategoryFilter.entries,
-            key = { it.name },
-        ) { filter ->
-            FilterChip(
-                selected = filter == selected,
-                onClick = { onSelect(filter) },
-                label = { Text(stringResource(filter.label)) },
-            )
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        CompositionLocalProvider(
+            LocalContentColor provides colorScheme.onBackground,
+            LocalTextStyle provides MaterialTheme.typography.labelLarge,
+        ) {
+            TextButton(
+                onClick = { menuExpanded = true },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.Unspecified,
+                ),
+            ) {
+                Text(text = stringResource(selected.label))
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+        ) {
+            CategoryFilter.entries.forEach { filter ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(filter.label)) },
+                    trailingIcon = if (selected == filter) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    } else null,
+                    onClick = {
+                        onSelect(filter)
+                        menuExpanded = false
+                    },
+                )
+            }
         }
     }
 }

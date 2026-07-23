@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.credit_card_archived
@@ -33,12 +32,13 @@ import com.neoutils.finsight.resources.credit_card_form_limit_label
 import com.neoutils.finsight.resources.credit_card_ui_closes_on
 import com.neoutils.finsight.resources.credit_card_ui_day
 import com.neoutils.finsight.resources.credit_card_ui_due_on
+import com.neoutils.finsight.ui.model.ArchivedCreditCardUi
 import com.neoutils.finsight.util.AppIcon
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ArchivedCreditCardCard(
-    creditCard: CreditCard,
+    creditCard: ArchivedCreditCardUi,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

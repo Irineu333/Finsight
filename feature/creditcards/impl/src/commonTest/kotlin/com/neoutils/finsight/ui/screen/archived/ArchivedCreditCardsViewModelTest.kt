@@ -66,7 +66,7 @@ class ArchivedCreditCardsViewModelTest {
                 )
             )
             val content = assertIs<ArchivedCreditCardsUiState.Content>(awaitItem())
-            assertEquals(listOf(2L, 3L), content.creditCards.map { it.id })
+            assertEquals(listOf(2L, 3L), content.creditCards.map { it.cardId })
         }
     }
 

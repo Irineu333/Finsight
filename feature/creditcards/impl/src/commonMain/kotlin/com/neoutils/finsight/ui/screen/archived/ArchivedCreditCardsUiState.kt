@@ -1,6 +1,6 @@
 package com.neoutils.finsight.ui.screen.archived
 
-import com.neoutils.finsight.domain.model.CreditCard
+import com.neoutils.finsight.ui.model.ArchivedCreditCardUi
 
 sealed interface ArchivedCreditCardsUiState {
 
@@ -8,9 +8,7 @@ sealed interface ArchivedCreditCardsUiState {
 
     data object Empty : ArchivedCreditCardsUiState
 
-    // Rendered from the domain CreditCard: CreditCardUi is built from active cards
-    // only and carries no isArchived (design D5).
     data class Content(
-        val creditCards: List<CreditCard>,
+        val creditCards: List<ArchivedCreditCardUi>,
     ) : ArchivedCreditCardsUiState
 }

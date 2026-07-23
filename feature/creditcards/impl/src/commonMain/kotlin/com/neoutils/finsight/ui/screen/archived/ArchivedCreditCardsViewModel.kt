@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
+import com.neoutils.finsight.ui.model.toArchivedUi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -18,7 +19,7 @@ class ArchivedCreditCardsViewModel(
             if (archived.isEmpty()) {
                 ArchivedCreditCardsUiState.Empty
             } else {
-                ArchivedCreditCardsUiState.Content(archived)
+                ArchivedCreditCardsUiState.Content(archived.map(CreditCard::toArchivedUi))
             }
         }
         .stateIn(

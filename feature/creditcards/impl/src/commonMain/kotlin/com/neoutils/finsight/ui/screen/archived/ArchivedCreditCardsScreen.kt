@@ -111,11 +111,11 @@ private fun ArchivedCreditCardsContent(
             ) {
                 items(
                     items = uiState.creditCards,
-                    key = { it.id },
+                    key = { it.cardId },
                 ) { creditCard ->
                     ArchivedCreditCardCard(
                         creditCard = creditCard,
-                        onClick = { detailController.show(ViewCreditCardModal(creditCard.id)) },
+                        onClick = { detailController.show(ViewCreditCardModal(creditCard.cardId)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

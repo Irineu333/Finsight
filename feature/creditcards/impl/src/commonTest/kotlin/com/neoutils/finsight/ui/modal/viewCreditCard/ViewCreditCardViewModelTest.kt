@@ -114,7 +114,7 @@ class ViewCreditCardViewModelTest {
             assertEquals(ViewCreditCardUiState.Loading, awaitItem())
             repository.emit(shown)
             val content = assertIs<ViewCreditCardUiState.Content>(awaitItem())
-            assertTrue(content.creditCard.isArchived)
+            assertTrue(content.isArchived)
             assertEquals(2, content.invoiceCount)
         }
     }

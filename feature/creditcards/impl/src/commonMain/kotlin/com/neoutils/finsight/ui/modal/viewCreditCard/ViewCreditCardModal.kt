@@ -70,7 +70,7 @@ class ViewCreditCardModal(
     @Composable
     private fun ContentBody(uiState: ViewCreditCardUiState.Content) {
         val formatter = LocalCurrencyFormatter.current
-        val card = uiState.creditCard
+        val card = uiState.card
 
         Column(
             modifier = Modifier
@@ -147,7 +147,7 @@ class ViewCreditCardModal(
             // unarchiving — retiring an active card stays in the pager's CardActions
             // (design D6). The when leaves room for the non-archived branch without
             // implementing it.
-            when (content.creditCard.isArchived) {
+            when (content.isArchived) {
                 true -> OutlinedActionButton(
                     label = stringResource(Res.string.credit_cards_unarchive),
                     icon = Icons.Default.Unarchive,

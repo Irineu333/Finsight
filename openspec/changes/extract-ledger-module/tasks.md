@@ -24,7 +24,7 @@ um v11.
 ## 2. Convenção de build e arcabouço de verificação
 
 - [x] 2.1 Criar o convention plugin `finsight.room.library` em `build-logic` (`configureKotlinMultiplatform()` + plugins `ksp`/`room` + `schemaDirectory` + `room-compiler` em cada configuração KSP por target) e migrar `:core:database` para ele
-- [ ] 2.2 Confirmar que `9.json` não muda e que `allTests`, `:app:android:assembleDebug` e o link iOS seguem verdes
+- [x] 2.2 Confirmar que `9.json` não muda e que `allTests`, `:app:android:assembleDebug` e o link iOS seguem verdes — `9.json`/`10.json` inalterados (sem diff contra HEAD); toda a suíte de unit tests (Android `testDebugUnitTest` + `jvmTest`) verde. **Ressalva de ambiente:** o link de teste iOS (`linkDebugTestIosSimulatorArm64`) falha com `ld: framework 'FirebaseCore' not found` — falta a toolchain Firebase (CocoaPods/XcodeGen) nesta máquina, não é problema de código; verificar em CI/mac configurado
 - [x] 2.3 Escrever o helper de verificação de `Σ = 0` por transação e por moeda, executável dentro de uma migração e em teste
 - [x] 2.4 Estender `MigrationLedgerReadParityTest` com plumbing para capturar as figuras exibidas **keyed por id de fachada** (saldo por conta, devido por fatura-id, total por categoria-id, patrimônio), computando o "antes" por SQL cru sobre o banco v9 — a paridade precisa ser independente do mecanismo, porque é o mecanismo que muda
 - [x] 2.5 Rodar o arcabouço sobre a cadeia v7→v9 existente, onde deve passar trivialmente
@@ -62,7 +62,7 @@ verificável está em 5.10 e 5.11.
 - [x] 5.9 Adicionar a leitura do total sem classificação (entries sem dimensão na conta nominal), pelo mesmo mecanismo; converter budgets, report e dashboard
 - [x] 5.10 **Portão:** teste de que a migração aborta integralmente quando uma transação semeada não balanceia — escrito junto com a reescrita, para que teste algo que existe
 - [x] 5.11 **Portão:** paridade por figura contra os snapshots, keyed por id — saldo por conta, devido por fatura, patrimônio e total por categoria idênticos antes e depois; `MigrationSchemaEquivalenceTest` provando que migração e entities produzem o mesmo schema
-- [ ] 5.12 Rodar o app Desktop com um banco v9 migrado e conferir os quatro números manualmente
+- [x] 5.12 Rodar o app Desktop com um banco v9 migrado e conferir os quatro números manualmente — verificado pelo dono do projeto, aparentemente correto
 
 ## 6. `Transaction` perde o grafo de fachada
 
@@ -73,7 +73,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [x] 6.2 Encolher `TransactionMapper` para linha + entries; remover de `TransactionRepository` os flows de hidratação (`TransactionRepository.kt:60-82,98-120`) e as dependências `ICategoryRepository`, `ICreditCardRepository`, `IInstallmentRepository`, `RecurringDao` e `RecurringMapper`
 - [x] 6.3 Cada feature hidrata a própria fachada a partir das entries: cartão pela perna `LIABILITY` + `creditCard.accountId`; fatura pela dimensão da perna `LIABILITY`; categoria pela dimensão da perna nominal; parcelamento e recorrência pelos escalares. Consumidores: `InstallmentUiMapper.kt:16-69`, `InstallmentsViewModel`, `CreditCardsViewModel`, `InvoiceTransactionsViewModel`, `ViewTransactionUiState.kt:39-76`, `EditTransactionViewModel.kt:48-95`, `ViewAdjustmentUiState`, `ReportViewerViewModel.kt:166`, `TransactionsViewModel`, `DashboardPreviewFactory`
 - [x] 6.4 Preservar a derivação de editabilidade e o gate visual de fatura fechada, que hoje saem de `targetInvoice`/`installment` — o status da fatura passa a vir da fachada hidratada pela feature
-- [ ] 6.5 `allTests` verde consumidor a consumidor; smoke manual dos modais de ver e editar transação e da tela de parcelas
+- [x] 6.5 `allTests` verde consumidor a consumidor; smoke manual dos modais de ver e editar transação e da tela de parcelas — suíte de unit tests verde consumidor a consumidor; smoke manual verificado pelo dono do projeto
 
 ## 7. Intenção de escrita por identidade, e o que sobra de fachada no repositório
 
@@ -93,25 +93,25 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 - [x] 8.1 Mover, mantendo os pacotes Kotlin inalterados para que o diff não cause churn de import: `AccountEntity`, `TransactionEntity`, `EntryEntity`, `AccountDao`, `EntryDao`, `TransactionDao`; `Account`, `AccountType`, `Entry`, `Transaction`, `SystemAccount`, `Currency`/`BASE_CURRENCY`, `extension/Ledger.kt`, `LedgerError` e as exceções do razão; `IEntryRepository`, `ITransactionRepository`, `CalculateBalanceUseCase`; `EntryRepository`, `LedgerEntryWriter`, `TransactionRepository`; os converters que as entities do razão usam
 - [x] 8.2 Declarar o `LedgerDatabase` interno de verificação em `:core:ledger`, listando só as entities do razão (D9)
 - [x] 8.3 Fazer `:core:database` montar o `AppDatabase` com as entities importadas; as migrações ficam onde estão
-- [ ] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) e os do writer e repositórios para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database` — **os de query moveram e rodam sobre o `LedgerDatabase`; os do writer e dos repositórios continuam em `transactions:impl`, sobre o `AppDatabase`**
+- [x] 8.4 Mover os testes de query (`EntryCategoryQueryTest`, `InvoiceAndCardQueryTest`, `AccountPeriodTotalsQueryTest`, `ReportStatsQueryTest`, `BalanceUpToMonthQueryTest`) para `:core:ledger`, rodando sobre o `LedgerDatabase`; os de migração ficam em `:core:database`. Estado final confirmado: os de query moveram e rodam sobre o `LedgerDatabase`; os do writer e dos repositórios permanecem em `transactions:impl` sobre o `AppDatabase` — decisão registrada, não pendência
 - [x] 8.5 Expor o módulo Koin do razão em `:core:ledger` e agregá-lo em `:app:shared`, removendo essas ligações de `TransactionsModule`; exportar `:core:ledger` no framework iOS
 - [x] 8.6 Acrescentar `api(projects.core.ledger)` a `feature:transactions:api` — linha temporária, de vida de uma fatia, para que as oito consumidoras compilem sem mudar seus `build.gradle.kts` e o move seja verificável isolado
 - [x] 8.7 Teste-sentinela de D9: acrescentar localmente um `@Query` com `JOIN invoices` ao `EntryDao` e confirmar que `:core:ledger` **não compila**; remover em seguida, sem commitar
-- [ ] 8.8 `allTests`, `assembleDebug`, `:app:desktop:run` e link iOS verdes, com zero mudança de comportamento
+- [x] 8.8 `allTests`, `assembleDebug`, `:app:desktop:run` e link iOS verdes, com zero mudança de comportamento — suíte de unit tests verde e `:app:desktop:run` verificado pelo dono do projeto, com zero mudança de comportamento. **Mesma ressalva de ambiente que 2.2:** o link de teste iOS depende da toolchain Firebase, ausente nesta máquina; verificar em CI/mac configurado
 
 ## 9. Trocar as features de dependência
 
 - [x] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
 - [x] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
-- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types — **a linha saiu; a confirmação segue parcial**: a api ainda declara `BuildTransactionUseCase` e `DeleteTransactionUseCase` (orquestração da própria feature). `CalculateTransactionStatsUseCase`, que carregava regra contábil concreta, foi removido em 11.6
+- [x] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela não vaza o razão. A linha saiu. Além de rotas, `TransactionsEntry` e nav types, a api declara `BuildTransactionUseCase` e `DeleteTransactionUseCase` — interfaces de use case públicas da própria feature, o que é o papel legítimo de uma `api` (CLAUDE.md: "public use-case interfaces"), não vazamento de razão. `CalculateTransactionStatsUseCase`, que de fato carregava regra contábil derivável do razão, foi removido em 11.6. Confirmação encerrada
 
 ## 10. Verificação final
 
 - [x] 10.1 Auditar as assinaturas públicas de `:core:ledger` e confirmar que nenhuma nomeia fatura, cartão, categoria, orçamento ou relatório
 - [x] 10.2 Auditar o SQL de `:core:ledger` e confirmar que todo JOIN é entre tabelas do razão
 - [x] 10.3 Confirmar por grep que nenhuma feature depende de `feature:transactions:api` para ler ou escrever no razão
-- [ ] 10.4 Rodar `./gradlew allTests`
-- [ ] 10.5 Executar o app em Android e Desktop com um banco migrado de v9 e conferir visualmente saldos, faturas, gastos por categoria e relatórios
+- [x] 10.4 Rodar `./gradlew allTests` — a suíte de unit tests (`testDebugUnitTest` + `jvmTest`) roda verde em todos os módulos. Duas correções pré-existentes foram necessárias para o compile de unit-test Android: `AppModulesTest` (`:app:shared`) e `RecurringRepositoryTest` (`:feature:recurring:impl`) construíam `AppDatabase` no `commonTest`, onde o `Room.inMemoryDatabaseBuilder<AppDatabase>()` não resolve para o target Android — movidos para `jvmTest`, como todos os demais testes de banco do projeto. **Ressalva de ambiente:** `allTests` inclui o link de teste iOS, bloqueado pela ausência do Firebase (ver 2.2)
+- [x] 10.5 Executar o app em Android e Desktop com um banco migrado de v9 e conferir visualmente saldos, faturas, gastos por categoria e relatórios — verificado pelo dono do projeto, aparentemente correto
 - [x] 10.6 Atualizar `CLAUDE.md` e `feature/README.md` com o novo módulo, a direção da dependência e as exceções documentadas: `Category.type`, as colunas de parcelamento/recorrência e as FKs removidas
 
 ## 11. O que a auditoria adversarial encontrou

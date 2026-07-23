@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.LocalDate
@@ -37,6 +38,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -58,6 +60,7 @@ class ViewCategoryViewModelTest {
 
     private class FakeCategoryRepository : ICategoryRepository {
         private val byId = MutableSharedFlow<Category?>(replay = 1)
+        val unarchived = mutableListOf<Long>()
         fun emit(category: Category?) { byId.tryEmit(category) }
         override fun observeCategoryById(id: Long): Flow<Category?> = byId
         override fun observeAllCategories(): Flow<List<Category>> = throw NotImplementedError()
@@ -68,7 +71,7 @@ class ViewCategoryViewModelTest {
         override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
         override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
         override suspend fun archive(id: Long) = Unit
-        override suspend fun unarchive(id: Long) = Unit
+        override suspend fun unarchive(id: Long) { unarchived += id }
         override suspend fun existsByName(name: String, ignoreId: Long): Boolean = false
 
         override suspend fun insert(category: Category) = throw NotImplementedError()
@@ -119,12 +122,14 @@ class ViewCategoryViewModelTest {
         id: Long = 1L,
         name: String = "Food",
         accountId: Long = 10L,
+        isArchived: Boolean = false,
     ) = Category(
         id = id,
         name = name,
         icon = CategoryLazyIcon("shopping"),
         type = Category.Type.EXPENSE,
         createdAt = 0L,
+        isArchived = isArchived,
         dimensionId = accountId,
     )
 
@@ -229,6 +234,44 @@ class ViewCategoryViewModelTest {
             assertEquals(ViewCategoryUiState.Loading, awaitItem())
             repository.emit(category(id = 1L, name = "Food", accountId = 10L))
             assertEquals(RetireAction.ARCHIVE, assertIs<ViewCategoryUiState.Content>(awaitItem()).retireAction)
+        }
+    }
+
+    @Test
+    fun `an archived category is shown archived, so the view offers unarchive`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository)
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, isArchived = true))
+            assertTrue(assertIs<ViewCategoryUiState.Content>(awaitItem()).category.isArchived)
+        }
+    }
+
+    @Test
+    fun `a non-archived category is shown active, so the view offers retire`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository)
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 1L, isArchived = false))
+            assertFalse(assertIs<ViewCategoryUiState.Content>(awaitItem()).category.isArchived)
+        }
+    }
+
+    @Test
+    fun `the unarchive action unarchives the shown category`() = runTest(dispatcher) {
+        val repository = FakeCategoryRepository()
+        val vm = viewModel(categoryRepository = repository)
+        vm.uiState.test {
+            assertEquals(ViewCategoryUiState.Loading, awaitItem())
+            repository.emit(category(id = 5L, isArchived = true))
+            assertIs<ViewCategoryUiState.Content>(awaitItem())
+
+            vm.onAction(ViewCategoryAction.Unarchive)
+            runCurrent()
+
+            assertEquals(listOf(5L), repository.unarchived)
         }
     }
 

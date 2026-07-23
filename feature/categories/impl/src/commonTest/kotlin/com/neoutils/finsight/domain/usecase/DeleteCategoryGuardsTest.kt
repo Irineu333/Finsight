@@ -86,27 +86,34 @@ class DeleteCategoryGuardsTest {
     }
 }
 
-private class RecordingCategoryRepository : ICategoryRepository {
+// Shared across the domain use-case tests in this package: records the retire calls
+// and answers existsByName from a seeded name list.
+class RecordingCategoryRepository(
+    private val existing: List<Category> = emptyList(),
+) : ICategoryRepository {
     val deleted = mutableListOf<Long>()
+    val unarchived = mutableListOf<Long>()
+    val insertedBatches = mutableListOf<List<Category>>()
     override suspend fun delete(category: Category) { deleted += category.id }
+    override suspend fun unarchive(id: Long) { unarchived += id }
+    override suspend fun existsByName(name: String, ignoreId: Long): Boolean =
+        existing.any { it.name.equals(name, ignoreCase = true) && it.id != ignoreId }
     override fun observeAllCategories(): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun getAllCategories(): List<Category> = emptyList()
-    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = emptyList()
-    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(emptyList())
+    override suspend fun getAllCategoriesIncludingClosed(): List<Category> = existing
+    override fun observeAllCategoriesIncludingClosed(): Flow<List<Category>> = flowOf(existing)
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> = flowOf(emptyList())
     override suspend fun getCategoryById(id: Long): Category? = throw NotImplementedError()
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun archive(id: Long) = Unit
-    override suspend fun unarchive(id: Long) = Unit
-    override suspend fun existsByName(name: String, ignoreId: Long): Boolean = false
 
     override suspend fun insert(category: Category) = throw NotImplementedError()
-    override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
+    override suspend fun insertAll(categories: List<Category>) { insertedBatches += categories }
     override suspend fun update(category: Category) = throw NotImplementedError()
 }
 
-private class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepository {
+class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepository {
     override suspend fun hasRecurringForCategory(categoryId: Long) = hasRecurring
     override suspend fun hasRecurringForAccount(accountId: Long) = false
     override suspend fun hasRecurringForCreditCard(creditCardId: Long) = false
@@ -118,7 +125,7 @@ private class FakeRecurring(private val hasRecurring: Boolean) : IRecurringRepos
     override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }
 
-private class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
+class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
     override suspend fun hasBudgetForCategory(categoryId: Long) = hasBudget
     override fun observeAllBudgets(): Flow<List<Budget>> = flowOf(emptyList())
     override suspend fun getAllBudgets(): List<Budget> = emptyList()
@@ -127,7 +134,7 @@ private class FakeBudget(private val hasBudget: Boolean) : IBudgetRepository {
     override suspend fun delete(budget: Budget) = throw NotImplementedError()
 }
 
-private class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
+class FakeEntries(private val hasEntries: Boolean) : IEntryRepository {
     override suspend fun hasEntries(accountId: Long): Boolean = hasEntries
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = hasEntries
     override suspend fun balance(accountId: Long): Double = 0.0

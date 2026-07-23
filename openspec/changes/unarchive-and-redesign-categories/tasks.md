@@ -58,12 +58,12 @@
 
 ## 8. Testes
 
-- [ ] 8.1 `ResolveCategoryRetirabilityUseCase`: cada guarda dispara sua `MustArchive.reason`; sem dependentes → `Deletable`.
-- [ ] 8.2 `UnarchiveCategoryUseCase`: chama `unarchive(id)` e retorna `Right(Unit)`.
-- [ ] 8.3 `ViewCategoryViewModelTest`: ação `Unarchive` invoca o use case; categoria arquivada oferece desarquivar (e não arquivar/apagar), não arquivada oferece retirar (e não desarquivar).
-- [ ] 8.4 `ValidateCategoryNameUseCase`: nome só com espaços é rejeitado como vazio; duplicidade case-insensitive ignora o próprio id; consulta via `existsByName`.
-- [ ] 8.5 `CategoriesViewModel`: ACTIVE não inclui arquivadas e vem seccionado; ARCHIVED lista só arquivadas; Empty grande só sem categorias.
-- [ ] 8.6 `CreateDefaultCategoriesUseCase`: usa `insertAll` (uma transação); ajustar/estender os fakes existentes.
+- [x] 8.1 `ResolveCategoryRetirabilityUseCase`: cada guarda dispara sua `MustArchive.reason`; sem dependentes → `Deletable`.
+- [x] 8.2 `UnarchiveCategoryUseCase`: chama `unarchive(id)` e retorna `Right(Unit)`.
+- [x] 8.3 `ViewCategoryViewModelTest`: ação `Unarchive` invoca o use case; categoria arquivada oferece desarquivar (e não arquivar/apagar), não arquivada oferece retirar (e não desarquivar).
+- [x] 8.4 `ValidateCategoryNameUseCase`: nome só com espaços é rejeitado como vazio; duplicidade case-insensitive ignora o próprio id; consulta via `existsByName`.
+- [x] 8.5 `CategoriesViewModel`: ACTIVE não inclui arquivadas e vem seccionado; ARCHIVED lista só arquivadas; Empty grande só sem categorias.
+- [x] 8.6 `CreateDefaultCategoriesUseCase`: usa `insertAll` (uma transação); ajustar/estender os fakes existentes.
 
 ## 9. Validação
 

@@ -50,4 +50,11 @@
 
 - [x] 8.1 `openspec validate unarchive-credit-cards --strict`.
 - [x] 8.2 `./gradlew :app:shared:testDebugUnitTest` verde (inclui os fakes patchados de 1.2 e 2.4).
-- [ ] 8.3 Conferir na tela: arquivar cartão → some da tela ativa → overflow "Cartões arquivados" → abrir cartão → Desarquivar → reaparece na tela de cartões e nos seletores de lançamento; voltar (system-back) funciona.
+- [x] 8.3 Conferir na tela: arquivar cartão → some da tela ativa → overflow "Cartões arquivados" → abrir cartão → Desarquivar → reaparece na tela de cartões e nos seletores de lançamento; voltar (system-back) funciona.
+
+## 9. Ajustes pós-revisão
+
+- [x] 9.1 Item do overflow na `CreditCardsScreen` passa a ler **"Arquivados"** (`credit_cards_view_archived`) — o contexto já é a tela de cartões, então o qualificador "cartões" era redundante.
+- [x] 9.2 Listagem de arquivados renderiza **cards** (`ArchivedCreditCardCard`: ícone + nome + indicador "Arquivado", limite em destaque e dias de fechamento/vencimento nas pontas Start/End) em vez do row enxuto — um terceiro atributo num `SpaceBetween` flutuava para o centro e quebrava a simetria. Remove `ArchivedCreditCardRow`.
+- [x] 9.3 O detalhe do cartão mostra a **quantidade de faturas** (`credit_card_invoices_label`) no lugar do saldo, que é sempre zero para um cartão arquivado. `ViewCreditCardViewModel` observa `IInvoiceRepository.observeInvoicesByCreditCard` em vez de ler o saldo do razão; `UiState.Content.invoiceCount` substitui `balance`. Remove a string `credit_card_balance`.
+- [x] 9.4 **Fechar o detalhe após desarquivar:** como a visualização é archived-only e só alcançada pela lista de arquivados, `unarchive()` emite `ViewCreditCardEvent.Dismiss` no sucesso (`onRight`), fechando o modal/painel sozinho.

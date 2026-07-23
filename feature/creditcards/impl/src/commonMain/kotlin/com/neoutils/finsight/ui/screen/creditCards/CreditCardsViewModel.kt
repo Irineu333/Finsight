@@ -15,6 +15,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.mapper.InvoiceUiMapper
@@ -27,6 +28,7 @@ import kotlin.time.ExperimentalTime
 
 class CreditCardsViewModel(
     private val entryRepository: IEntryRepository,
+    private val recurringRepository: IRecurringRepository,
     private val creditCardRepository: ICreditCardRepository,
     private val transactionRepository: ITransactionRepository,
     private val invoiceRepository: IInvoiceRepository,
@@ -118,7 +120,8 @@ class CreditCardsViewModel(
                 invoiceUi = invoice?.let {
                     invoiceUiMapper.toUi(invoice = it, cardInvoices = cardInvoices)
                 },
-                hasMovement = entryRepository.hasEntries(creditCard.accountId),
+                mustPreserve = entryRepository.hasEntries(creditCard.accountId) ||
+                    recurringRepository.hasRecurringForCreditCard(creditCard.id),
             )
             Triple(creditCard, invoice, ui)
         }

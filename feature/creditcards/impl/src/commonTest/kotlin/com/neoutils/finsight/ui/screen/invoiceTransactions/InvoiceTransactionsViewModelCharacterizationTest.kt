@@ -20,7 +20,9 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.AccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -97,6 +99,7 @@ class InvoiceTransactionsViewModelCharacterizationTest {
                     1L to com.neoutils.finsight.domain.repository.DimensionFlows(expense = 100.0, advancePayment = 30.0, adjustment = 10.0),
                 ),
             ),
+            recurringRepository = NoRecurring,
         )
 
         vm.uiState.test {
@@ -208,4 +211,17 @@ private object NoInstallments : IInstallmentRepository {
     override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
     override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
+}
+
+/** The retire action is not what this test characterizes; no template points at the card. */
+private object NoRecurring : IRecurringRepository {
+    override fun observeAllRecurring(): Flow<List<Recurring>> = flowOf(emptyList())
+    override fun observeRecurringById(id: Long): Flow<Recurring?> = throw NotImplementedError()
+    override suspend fun getRecurringById(id: Long): Recurring? = null
+    override suspend fun hasRecurringForAccount(accountId: Long): Boolean = false
+    override suspend fun hasRecurringForCreditCard(creditCardId: Long): Boolean = false
+    override suspend fun hasRecurringForCategory(categoryId: Long): Boolean = false
+    override suspend fun insert(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun update(recurring: Recurring) = throw NotImplementedError()
+    override suspend fun delete(recurring: Recurring) = throw NotImplementedError()
 }

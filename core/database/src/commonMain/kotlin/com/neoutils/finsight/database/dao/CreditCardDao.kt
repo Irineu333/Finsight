@@ -31,8 +31,11 @@ interface CreditCardDao {
     @Query(OPEN_CREDIT_CARDS + " ORDER BY cc.createdAt ASC")
     suspend fun getAllCreditCardsList(): List<CreditCardEntity>
 
-    @Query("SELECT * FROM credit_cards WHERE id = :id")
-    suspend fun getCreditCardById(id: Long): CreditCardEntity?
+    // Carries the account's archival, like the observe variant: a plain read would
+    // report every card as active, so a caller checking `isArchived` off a by-id read
+    // would always be told "false".
+    @Query(ALL_CREDIT_CARDS + " WHERE cc.id = :creditCardId")
+    suspend fun getCreditCardWithArchivalById(creditCardId: Long): CreditCardWithArchival?
 
     @Query(ALL_CREDIT_CARDS + " WHERE cc.id = :creditCardId")
     fun observeCreditCardWithArchivalById(creditCardId: Long): Flow<CreditCardWithArchival?>

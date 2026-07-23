@@ -10,6 +10,7 @@ import com.neoutils.finsight.domain.repository.ICreditCardRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.combine
@@ -44,6 +45,7 @@ class InvoiceTransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
+    private val recurringRepository: IRecurringRepository,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -108,7 +110,10 @@ class InvoiceTransactionsViewModel(
         InvoiceTransactionsUiState(
             creditCardName = creditCard.name,
             isArchived = creditCard.isArchived,
-            retireAction = retireActionOf(entryRepository.hasEntries(creditCard.accountId)),
+            retireAction = retireActionOf(
+                entryRepository.hasEntries(creditCard.accountId) ||
+                    recurringRepository.hasRecurringForCreditCard(creditCard.id)
+            ),
             invoices = invoices.map { invoice ->
                 val flows = flowsByInvoiceId.getValue(invoice.id)
                 val expense = flows.expense

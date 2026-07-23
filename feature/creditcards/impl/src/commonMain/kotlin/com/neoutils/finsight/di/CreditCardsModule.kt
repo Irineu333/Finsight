@@ -77,6 +77,7 @@ val creditCardsModule = module {
     viewModel {
         CreditCardsViewModel(
             entryRepository = get(),
+            recurringRepository = get(),
             initialCreditCardId = it.getOrNull(),
             creditCardRepository = get(),
             transactionRepository = get(),
@@ -236,6 +237,7 @@ val creditCardsModule = module {
             transactionRepository = get(),
             categoryRepository = get(),
             entryRepository = get(),
+            recurringRepository = get(),
         )
     }
 }

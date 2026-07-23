@@ -216,6 +216,9 @@
     <string name="retire_action_delete">Excluir</string>
     <string name="retire_action_archive">Arquivar</string>
     <string name="retire_action_error_generic">Algo deu errado ao salvar. Tente de novo em instantes.</string>
+    <string name="retire_error_has_transactions">Esta categoria tem lançamentos e não pode ser excluída. Arquive-a para preservar o histórico.</string>
+    <string name="retire_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
+    <string name="retire_error_has_recurring">Há recorrências que dependem desta categoria. Aponte-as para outra ou encerre-as antes de excluir.</string>
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>

@@ -1,7 +1,7 @@
 package com.neoutils.finsight.domain.usecase
 
-import com.neoutils.finsight.domain.error.AccountError
-import com.neoutils.finsight.domain.exception.AccountException
+import com.neoutils.finsight.domain.error.RetireError
+import com.neoutils.finsight.domain.exception.RetireException
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Budget
 import com.neoutils.finsight.domain.model.Category
@@ -45,9 +45,11 @@ class DeleteCategoryGuardsTest {
         repo: RecordingCategoryRepository = RecordingCategoryRepository(),
     ) = DeleteCategoryUseCase(
         categoryRepository = repo,
-        entryRepository = FakeEntries(hasEntries),
-        recurringRepository = FakeRecurring(hasRecurring),
-        budgetRepository = FakeBudget(hasBudget),
+        resolveRetirability = ResolveCategoryRetirabilityUseCase(
+            entryRepository = FakeEntries(hasEntries),
+            budgetRepository = FakeBudget(hasBudget),
+            recurringRepository = FakeRecurring(hasRecurring),
+        ),
     )
 
     @Test
@@ -60,8 +62,8 @@ class DeleteCategoryGuardsTest {
     @Test
     fun `a category with movement is refused`() = runTest {
         val repo = RecordingCategoryRepository()
-        val error = assertIs<AccountException>(useCase(hasEntries = true, repo = repo)(category).leftOrNull())
-        assertEquals(AccountError.HAS_TRANSACTIONS, error.error)
+        val error = assertIs<RetireException>(useCase(hasEntries = true, repo = repo)(category).leftOrNull())
+        assertEquals(RetireError.HAS_TRANSACTIONS, error.error)
         assertTrue(repo.deleted.isEmpty())
     }
 
@@ -69,8 +71,8 @@ class DeleteCategoryGuardsTest {
     fun `a category still in a budget is refused`() = runTest {
         // budget_categories is CASCADE: deleting would strip it from the budget.
         val repo = RecordingCategoryRepository()
-        val error = assertIs<AccountException>(useCase(hasBudget = true, repo = repo)(category).leftOrNull())
-        assertEquals(AccountError.HAS_BUDGET, error.error)
+        val error = assertIs<RetireException>(useCase(hasBudget = true, repo = repo)(category).leftOrNull())
+        assertEquals(RetireError.HAS_BUDGET, error.error)
         assertTrue(repo.deleted.isEmpty(), "nothing may be removed")
     }
 
@@ -78,8 +80,8 @@ class DeleteCategoryGuardsTest {
     fun `a category a recurring still points at is refused`() = runTest {
         // recurring.categoryId is SET_NULL: the template would survive uncategorized.
         val repo = RecordingCategoryRepository()
-        val error = assertIs<AccountException>(useCase(hasRecurring = true, repo = repo)(category).leftOrNull())
-        assertEquals(AccountError.HAS_RECURRING, error.error)
+        val error = assertIs<RetireException>(useCase(hasRecurring = true, repo = repo)(category).leftOrNull())
+        assertEquals(RetireError.HAS_RECURRING, error.error)
         assertTrue(repo.deleted.isEmpty())
     }
 }

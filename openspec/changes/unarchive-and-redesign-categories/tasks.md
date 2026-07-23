@@ -2,11 +2,11 @@
 
 ## 1. Domínio — retirabilidade e erro de retirada (D7, D11)
 
-- [ ] 1.1 Criar `RetireError` compartilhado em `core/model` (razões: `HAS_TRANSACTIONS`, `HAS_BUDGET`, `HAS_RECURRING`) com `val message` (inglês, log) e `toUiText()` (i18n via `UiText.Res`), no padrão de erro do projeto.
-- [ ] 1.2 Criar `CategoryRetirability` (`Deletable` | `MustArchive(reason: RetireError)`) e `ResolveCategoryRetirabilityUseCase` (injeta entry/budget/recurring repos) que resolve os três guardas num único lugar.
-- [ ] 1.3 `DeleteCategoryUseCase`: consumir `ResolveCategoryRetirabilityUseCase` e mapear `MustArchive.reason` → erro; parar de retornar `AccountException`/`AccountError`.
-- [ ] 1.4 Extrair `fun Throwable.toRetireUiMessage(): UiText` única (em `core/ui` ou `core/model`), substituindo a `toUiMessage()` duplicada em `DeleteCategoryViewModel` e `ArchiveCategoryViewModel`.
-- [ ] 1.5 Registrar `ResolveCategoryRetirabilityUseCase` no `categoriesModule` (Koin).
+- [x] 1.1 Criar `RetireError` compartilhado em `core/model` (razões: `HAS_TRANSACTIONS`, `HAS_BUDGET`, `HAS_RECURRING`) com `val message` (inglês, log) e `toUiText()` (i18n via `UiText.Res`), no padrão de erro do projeto.
+- [x] 1.2 Criar `CategoryRetirability` (`Deletable` | `MustArchive(reason: RetireError)`) e `ResolveCategoryRetirabilityUseCase` (injeta entry/budget/recurring repos) que resolve os três guardas num único lugar.
+- [x] 1.3 `DeleteCategoryUseCase`: consumir `ResolveCategoryRetirabilityUseCase` e mapear `MustArchive.reason` → erro; parar de retornar `AccountException`/`AccountError`.
+- [x] 1.4 Extrair `fun Throwable.toRetireUiMessage(): UiText` única (em `core/ui` ou `core/model`), substituindo a `toUiMessage()` duplicada em `DeleteCategoryViewModel` e `ArchiveCategoryViewModel`.
+- [x] 1.5 Registrar `ResolveCategoryRetirabilityUseCase` no `categoriesModule` (Koin).
 
 ## 2. Camada de dados — desarquivar + robustez (D12)
 

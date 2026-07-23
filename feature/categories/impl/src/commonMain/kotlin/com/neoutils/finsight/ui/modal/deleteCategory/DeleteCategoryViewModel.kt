@@ -1,10 +1,6 @@
 package com.neoutils.finsight.ui.modal.deleteCategory
 
-import com.neoutils.finsight.domain.error.toUiText
-import com.neoutils.finsight.domain.exception.AccountException
-import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.retire_action_error_generic
-import com.neoutils.finsight.util.UiText
+import com.neoutils.finsight.domain.error.toRetireUiMessage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.analytics.Analytics
@@ -29,17 +25,7 @@ class DeleteCategoryViewModel(
             modalManager.dismissAll()
         }.onLeft {
             crashlytics.recordException(it)
-            modalManager.showError(it.toUiMessage())
+            modalManager.showError(it.toRetireUiMessage())
         }
-    }
-
-    /**
-     * A refused action has a reason the user can act on — "this account still has a
-     * balance", "this category has transactions". Without this the sheet just did
-     * not close and said nothing.
-     */
-    private fun Throwable.toUiMessage(): UiText = when (this) {
-        is AccountException -> error.toUiText()
-        else -> UiText.Res(Res.string.retire_action_error_generic)
     }
 }

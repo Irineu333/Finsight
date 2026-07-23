@@ -100,8 +100,11 @@ private class FakeCategoryRepository(private val categories: List<Category>) : I
     override suspend fun getCategoryByDimensionId(dimensionId: Long): Category? = null
     override fun observeCategoryById(id: Long): Flow<Category?> = throw NotImplementedError()
     override suspend fun archive(id: Long) = Unit
+    override suspend fun unarchive(id: Long) = Unit
+    override suspend fun existsByName(name: String, ignoreId: Long): Boolean = false
 
     override suspend fun insert(category: Category) = throw NotImplementedError()
+    override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
     override suspend fun update(category: Category) = throw NotImplementedError()
     override suspend fun delete(category: Category) = throw NotImplementedError()
 }

@@ -36,6 +36,11 @@ class CategoryRepository(
 
     override suspend fun archive(id: Long) = dao.archive(id)
 
+    override suspend fun unarchive(id: Long) = dao.unarchive(id)
+
+    override suspend fun existsByName(name: String, ignoreId: Long): Boolean =
+        dao.existsByName(name, ignoreId)
+
     override fun observeCategoriesByType(type: Category.Type): Flow<List<Category>> {
         return dao.observeCategoriesByType(
             mapper.toEntity(type)
@@ -66,6 +71,22 @@ class CategoryRepository(
             connection.immediateTransaction {
                 val dimensionId = dimensionDao.emit(DimensionKind.CATEGORY)
                 dao.insert(mapper.toEntity(category).copy(dimensionId = dimensionId))
+            }
+        }
+    }
+
+    /**
+     * The atomic sibling of [insert]: every category gets its dimension, and all of
+     * them land in one transaction. A failure midway rolls the whole batch back —
+     * the default-categories seed can never leave a partial chart behind.
+     */
+    override suspend fun insertAll(categories: List<Category>) {
+        database.useWriterConnection { connection ->
+            connection.immediateTransaction {
+                categories.forEach { category ->
+                    val dimensionId = dimensionDao.emit(DimensionKind.CATEGORY)
+                    dao.insert(mapper.toEntity(category).copy(dimensionId = dimensionId))
+                }
             }
         }
     }

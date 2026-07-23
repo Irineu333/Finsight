@@ -28,7 +28,27 @@ interface ICategoryRepository {
     /** Retires the category on its own facade — it owns no account to close (D4). */
     suspend fun archive(id: Long)
 
+    /**
+     * Brings an archived category back into circulation — the exact inverse of
+     * [archive], and just as reversible: a flag flip on the facade, nothing in the
+     * ledger touched.
+     */
+    suspend fun unarchive(id: Long)
+
+    /**
+     * Whether [name] is already taken (closed categories included), case-insensitive,
+     * ignoring [ignoreId] so an edit may keep its own name.
+     */
+    suspend fun existsByName(name: String, ignoreId: Long): Boolean
+
     suspend fun insert(category: Category)
+
+    /**
+     * Inserts many categories with their dimensions in a single transaction, so a
+     * failure midway leaves none behind — unlike [insert] called in a loop.
+     */
+    suspend fun insertAll(categories: List<Category>)
+
     suspend fun update(category: Category)
     suspend fun delete(category: Category)
 }

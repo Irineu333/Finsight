@@ -46,6 +46,18 @@ interface CategoryDao {
     @Query("UPDATE categories SET isArchived = 1 WHERE id = :id")
     suspend fun archive(id: Long)
 
+    @Query("UPDATE categories SET isArchived = 0 WHERE id = :id")
+    suspend fun unarchive(id: Long)
+
+    /**
+     * Whether a name is already taken, closed categories included: closing keeps the
+     * name and history still renders it, so two "Mercado" side by side — one grey —
+     * is not a name. `COLLATE NOCASE` makes it case-insensitive; [ignoreId] lets an
+     * edit keep its own name.
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name COLLATE NOCASE AND id != :ignoreId)")
+    suspend fun existsByName(name: String, ignoreId: Long): Boolean
+
     @Insert
     suspend fun insert(category: CategoryEntity): Long
 

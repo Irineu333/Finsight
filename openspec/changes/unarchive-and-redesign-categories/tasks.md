@@ -10,10 +10,10 @@
 
 ## 2. Camada de dados — desarquivar + robustez (D12)
 
-- [ ] 2.1 `CategoryDao`: `@Query("UPDATE categories SET isArchived = 0 WHERE id = :id") suspend fun unarchive(id: Long)`, ao lado de `archive`.
-- [ ] 2.2 `CategoryDao`: `@Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name COLLATE NOCASE AND id != :ignoreId)") suspend fun existsByName(name: String, ignoreId: Long): Boolean` (inclui arquivadas).
-- [ ] 2.3 `ICategoryRepository`: adicionar `unarchive(id)`, `existsByName(name, ignoreId)` e `insertAll(categories: List<Category>)` (KDoc simétrico a `archive`/`insert`).
-- [ ] 2.4 `CategoryRepository`: `unarchive` → `dao.unarchive`; `existsByName` → `dao.existsByName`; `insertAll` numa única `immediateTransaction` que emite as dimensões e insere as fachadas em bloco.
+- [x] 2.1 `CategoryDao`: `@Query("UPDATE categories SET isArchived = 0 WHERE id = :id") suspend fun unarchive(id: Long)`, ao lado de `archive`.
+- [x] 2.2 `CategoryDao`: `@Query("SELECT EXISTS(SELECT 1 FROM categories WHERE name = :name COLLATE NOCASE AND id != :ignoreId)") suspend fun existsByName(name: String, ignoreId: Long): Boolean` (inclui arquivadas).
+- [x] 2.3 `ICategoryRepository`: adicionar `unarchive(id)`, `existsByName(name, ignoreId)` e `insertAll(categories: List<Category>)` (KDoc simétrico a `archive`/`insert`).
+- [x] 2.4 `CategoryRepository`: `unarchive` → `dao.unarchive`; `existsByName` → `dao.existsByName`; `insertAll` numa única `immediateTransaction` que emite as dimensões e insere as fachadas em bloco.
 
 ## 3. Domínio — UnarchiveCategoryUseCase + validação/criação corrigidas
 

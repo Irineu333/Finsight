@@ -18,7 +18,6 @@ import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -77,7 +76,12 @@ class TransactionsViewModelCharacterizationTest {
 
         // Ledger opening/final balance: 0 up to the previous month, 30 up to the month
         // (Σ the account's signed legs 100 − 30 + 40 − 80). Month-wide card payment = 80.
-        val ledger = LedgerBalance(month = month, balance = 30.0, payment = 80.0)
+        // Month-wide asset flows come from the ledger now (spec `ledger-reporting`):
+        // income 100, expense 30, adjustment 40 — the figures the stats use case derived.
+        val ledger = LedgerBalance(
+            month = month, balance = 30.0, payment = 80.0,
+            income = 100.0, expense = 30.0, adjustment = 40.0,
+        )
         val vm = TransactionsViewModel(
             filterType = null, category = null, filterTarget = null,
             transactionRepository = FakeTransactionRepository(transactions),
@@ -85,7 +89,6 @@ class TransactionsViewModelCharacterizationTest {
             installmentRepository = NoInstallments,
             entryRepository = ledger,
             calculateBalanceUseCase = CalculateBalanceUseCase(ledger),
-            calculateTransactionStatsUseCase = CalculateTransactionStatsUseCase(),
         )
 
         vm.uiState.test {
@@ -138,6 +141,9 @@ private class LedgerBalance(
     private val month: YearMonth,
     private val balance: Double,
     private val payment: Double = 0.0,
+    private val income: Double = 0.0,
+    private val expense: Double = 0.0,
+    private val adjustment: Double = 0.0,
 ) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = if (target == month) balance else 0.0
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
@@ -153,6 +159,9 @@ private class LedgerBalance(
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
         com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 0.0, payment = if (month == this.month) payment else 0.0)
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =
+        if (month == this.month) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = income, expense = expense, adjustment = adjustment)
+        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0)
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
@@ -173,6 +182,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()

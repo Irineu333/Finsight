@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Transaction
-import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.domain.model.TransactionType
@@ -15,7 +14,6 @@ import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +36,6 @@ class TransactionsViewModel(
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
@@ -61,16 +58,11 @@ class TransactionsViewModel(
         selectedYearMonth,
         filters
     ) { transactions, categories, installments, yearMonth, filters ->
-        // Transfers and card payments move money between the user's own accounts;
-        // neither is income or expense. Derived from the ledger, never persisted.
-        val transactionsForStats = transactions.filterNot {
-            it.label == TransactionLabel.TRANSFER || it.label == TransactionLabel.PAYMENT
-        }
-
-        val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
-            forYearMonth = yearMonth,
-        )
+        // Month-wide income/expense/adjustment across the user's ASSET accounts, from
+        // the ledger — transfers and card payments are excluded there, not re-derived
+        // over the loaded list (spec `ledger-reporting`). Reactive because
+        // observeAllTransactions() re-runs this block on every ledger write.
+        val stats = entryRepository.assetMonthFlows(yearMonth)
 
         TransactionsUiState(
             balanceOverview = TransactionsUiState.BalanceOverview(

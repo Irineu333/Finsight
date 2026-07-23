@@ -139,6 +139,7 @@ private class MonthBalances(
     override suspend fun dimensionOwed(dimensionId: Long) = throw NotImplementedError()
     override suspend fun dimensionFlows(dimensionId: Long) = throw NotImplementedError()
     override suspend fun liabilityMonthFlows(month: YearMonth) = throw NotImplementedError()
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
     override suspend fun netWorth() = throw NotImplementedError()
     override suspend fun totalsByDimension(
         nominalType: AccountType,

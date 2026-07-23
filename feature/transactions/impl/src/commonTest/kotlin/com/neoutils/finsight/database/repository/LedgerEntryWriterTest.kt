@@ -272,6 +272,7 @@ private class FakeEntryDao : EntryDao {
     override suspend fun balanceOf(accountId: Long): Long = inserted.filter { it.accountId == accountId }.sumOf { it.amount }
     override suspend fun dimensionPeriodTotals(dimensionId: Long): com.neoutils.finsight.database.dao.DimensionPeriodTotals = throw NotImplementedError()
     override suspend fun liabilityMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.LiabilityMonthTotals = throw NotImplementedError()
+    override suspend fun assetMonthTotals(yearMonth: String): com.neoutils.finsight.database.dao.AssetMonthTotals = throw NotImplementedError()
     override suspend fun totalsByDimensionWithSiblingLeg(
         nominalType: String,
         start: kotlinx.datetime.LocalDate,

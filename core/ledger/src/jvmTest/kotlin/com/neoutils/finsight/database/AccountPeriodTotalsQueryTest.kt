@@ -1,6 +1,7 @@
 package com.neoutils.finsight.database
 
 import com.neoutils.finsight.database.dao.AccountPeriodTotals
+import com.neoutils.finsight.database.dao.AssetMonthTotals
 import com.neoutils.finsight.database.entity.AccountEntity
 import com.neoutils.finsight.domain.model.DimensionKind
 import kotlinx.coroutines.test.runTest
@@ -66,6 +67,26 @@ class AccountPeriodTotalsQueryTest {
         assertEquals(
             AccountPeriodTotals(income = 5_000, expense = 0, adjustment = 0, settlement = 0),
             entryDao.accountPeriodTotals(3, "2026-01"),
+        )
+    }
+
+    @Test
+    fun `asset month totals exclude transfers and card payments across every asset account`() = runTest {
+        seed()
+
+        // Month-wide, over accounts 1 and 3: only the salary (income), the expense, and
+        // the reconciliation adjustment survive. The transfer (two ASSET legs) and the
+        // card payment (LIABILITY counter-leg) move money between the user's own
+        // accounts and are neither income nor expense — this is what the per-account
+        // `accountPeriodTotals` deliberately does *not* do, and why the summary needs
+        // its own read.
+        assertEquals(
+            AssetMonthTotals(income = 10_000, expense = 3_000, adjustment = 4_000),
+            entryDao.assetMonthTotals("2026-01"),
+        )
+        assertEquals(
+            AssetMonthTotals(income = 0, expense = 0, adjustment = 0),
+            entryDao.assetMonthTotals("2026-03"),
         )
     }
 

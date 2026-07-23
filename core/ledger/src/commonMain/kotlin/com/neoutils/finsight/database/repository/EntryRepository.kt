@@ -7,6 +7,7 @@ import com.neoutils.finsight.database.mapper.toDomain
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
+import com.neoutils.finsight.domain.repository.AssetMonthFlows
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
 import com.neoutils.finsight.domain.repository.DimensionFlows
@@ -106,6 +107,15 @@ class EntryRepository(
         return LiabilityMonthFlows(
             expense = totals.expense / CENTS_PER_UNIT,
             payment = totals.payment / CENTS_PER_UNIT,
+        )
+    }
+
+    override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows {
+        val totals = entryDao.assetMonthTotals(month.toString())
+        return AssetMonthFlows(
+            income = totals.income / CENTS_PER_UNIT,
+            expense = totals.expense / CENTS_PER_UNIT,
+            adjustment = totals.adjustment / CENTS_PER_UNIT,
         )
     }
 

@@ -19,7 +19,6 @@ import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.repository.AccountFlows
@@ -45,7 +44,6 @@ class DashboardAccountsOverviewTest {
 
     private fun builder() = DashboardComponentsBuilder(
         calculateBalanceUseCase = CalculateBalanceUseCase(entryRepository = ThrowingEntryRepository),
-        calculateTransactionStatsUseCase = CalculateTransactionStatsUseCase(),
         calculateCategorySpendingUseCase = object : CalculateCategorySpendingUseCase {
             override suspend fun invoke(forYearMonth: YearMonth): List<CategorySpending> = throw NotImplementedError()
         },
@@ -216,6 +214,11 @@ private object ThrowingEntryRepository : IEntryRepository {
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
     override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
         com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0)
+    // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
+    // March holds income 100, expense 30; other months are empty.
+    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =
+        if (month == YearMonth(2026, 3)) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 100.0, expense = 30.0, adjustment = 0.0)
+        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0)
     override suspend fun netWorth(): Double = throw NotImplementedError()
     override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
     override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()

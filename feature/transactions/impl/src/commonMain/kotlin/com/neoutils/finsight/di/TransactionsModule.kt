@@ -4,7 +4,6 @@ import com.neoutils.finsight.domain.usecase.BuildTransactionUseCase
 import com.neoutils.finsight.domain.usecase.BuildTransactionUseCaseImpl
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCase
 import com.neoutils.finsight.domain.usecase.DeleteTransactionUseCaseImpl
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
 import com.neoutils.finsight.feature.transactions.impl.TransactionsEntryImpl
 import com.neoutils.finsight.ui.model.LedgerTransactionFacadeResolver
@@ -30,7 +29,6 @@ val transactionsModule = module {
     }
     factory<DeleteTransactionUseCase> { DeleteTransactionUseCaseImpl(transactionRepository = get()) }
 
-    factory { CalculateTransactionStatsUseCase() }
     factory<BuildTransactionUseCase> {
         BuildTransactionUseCaseImpl(
             getOrCreateInvoiceForMonthUseCase = get(),
@@ -66,7 +64,6 @@ val transactionsModule = module {
             installmentRepository = get(),
             entryRepository = get(),
             calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
         )
     }
     viewModel {

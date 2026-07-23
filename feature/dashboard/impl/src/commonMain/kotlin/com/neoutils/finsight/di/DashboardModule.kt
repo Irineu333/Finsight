@@ -20,7 +20,6 @@ val dashboardModule = module {
     factory {
         DashboardComponentsBuilder(
             calculateBalanceUseCase = get(),
-            calculateTransactionStatsUseCase = get(),
             calculateCategorySpendingUseCase = get(),
             calculateCategoryIncomeUseCase = get(),
             calculateBudgetProgressUseCase = get(),

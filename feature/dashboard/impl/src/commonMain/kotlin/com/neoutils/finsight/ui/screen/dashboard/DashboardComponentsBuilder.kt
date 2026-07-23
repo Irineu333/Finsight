@@ -6,16 +6,13 @@ import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
-import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.Recurring
 import com.neoutils.finsight.domain.model.RecurringOccurrence
-import com.neoutils.finsight.extension.deriveTransactionLabel
 import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.domain.usecase.CalculateBudgetProgressUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategoryIncomeUseCase
 import com.neoutils.finsight.domain.usecase.CalculateCategorySpendingUseCase
 import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.usecase.CalculateTransactionStatsUseCase
 import com.neoutils.finsight.domain.usecase.GetPendingRecurringUseCase
 import com.neoutils.finsight.extension.effectiveDay
 import com.neoutils.finsight.feature.shell.api.NavCatalog
@@ -45,7 +42,6 @@ data class DashboardBuilderContext(
 
 class DashboardComponentsBuilder(
     private val calculateBalanceUseCase: CalculateBalanceUseCase,
-    private val calculateTransactionStatsUseCase: CalculateTransactionStatsUseCase,
     private val calculateCategorySpendingUseCase: CalculateCategorySpendingUseCase,
     private val calculateCategoryIncomeUseCase: CalculateCategoryIncomeUseCase,
     private val calculateBudgetProgressUseCase: CalculateBudgetProgressUseCase,
@@ -122,20 +118,14 @@ class DashboardComponentsBuilder(
         )
     }
 
-    private fun concreteBalanceStats(
+    private suspend fun concreteBalanceStats(
         input: DashboardComponentsInput,
         config: Map<String, String>,
     ): DashboardComponent.ConcreteBalanceStats? {
-        // Transfers and card payments move money between the user's own accounts:
-        // they are not income or expense. Derived from the ledger, never persisted.
-        val transactionsForStats = input.transactions.filterNot { transaction ->
-            transaction.entries.deriveTransactionLabel() in setOf(TransactionLabel.TRANSFER, TransactionLabel.PAYMENT)
-        }
-
-        val stats = calculateTransactionStatsUseCase(
-            transactions = transactionsForStats,
-            forYearMonth = input.targetMonth,
-        )
+        // Month-wide income/expense across the user's ASSET accounts, straight from the
+        // ledger — transfers and card payments (money between the user's own accounts)
+        // are excluded there, not re-derived here (spec `ledger-reporting`).
+        val stats = entryRepository.assetMonthFlows(input.targetMonth)
 
         val isEmpty = stats.income <= 0.0 && stats.expense <= 0.0
         if (isEmpty && config.hideWhenEmpty(defaultValue = false)) {

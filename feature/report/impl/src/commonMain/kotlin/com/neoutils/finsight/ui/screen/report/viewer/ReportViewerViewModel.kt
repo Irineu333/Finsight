@@ -6,10 +6,8 @@ import com.neoutils.finsight.domain.analytics.Analytics
 import com.neoutils.finsight.domain.analytics.event.PrintReport
 import com.neoutils.finsight.domain.analytics.event.ShareReport
 import com.neoutils.finsight.domain.model.AccountType
-import com.neoutils.finsight.domain.model.TransactionLabel
 import com.neoutils.finsight.domain.model.ReportPerspective
 import com.neoutils.finsight.domain.model.TransactionType
-import com.neoutils.finsight.extension.deriveTransactionType
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IAccountRepository
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
@@ -35,7 +33,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 class ReportViewerViewModel(
     private val params: ReportViewerParams,
@@ -93,28 +90,17 @@ class ReportViewerViewModel(
         val invoiceDimensionIds = invoices.mapNotNull { it.dimensionId }.toSet()
 
         val stats = if (invoices.isNotEmpty()) {
-            val invoiceLegs = transactions.flatMap { transaction ->
-                transaction.entries
-                    .filter { it.dimensionId in invoiceDimensionIds && it.account.type == AccountType.LIABILITY }
-                    .map { entry ->
-                        InvoiceLeg(
-                            label = transaction.label,
-                            direction = deriveTransactionType(entry.amount, transaction.entries),
-                            cents = abs(entry.amount),
-                        )
-                    }
-            }
-            fun sum(predicate: (InvoiceLeg) -> Boolean) =
-                invoiceLegs.filter(predicate).sumOf { it.cents } / 100.0
-
+            // Expense / advance-payment / adjustment straight from the ledger, one read
+            // per invoice dimension — the same `dimensionFlows` the card feature's own
+            // invoice screens use, instead of re-summing the loaded legs in memory
+            // (spec `ledger-reporting`: no alternative that sums entries already loaded).
+            val flows = invoiceDimensionIds.map { entryRepository.dimensionFlows(it) }
             ReportViewerUiState.Stats.Invoice(
                 openingDate = invoices.minOf { it.openingDate },
                 closingDate = invoices.maxOf { it.closingDate },
-                expense = sum { it.direction.isExpense },
-                // Money into the card settles it only when the counter-leg is an asset,
-                // which is exactly what the ledger already labels a PAYMENT.
-                advancePayment = sum { it.direction.isIncome && it.label == TransactionLabel.PAYMENT },
-                adjustment = sum { it.direction.isAdjustment },
+                expense = flows.sumOf { it.expense },
+                advancePayment = flows.sumOf { it.advancePayment },
+                adjustment = flows.sumOf { it.adjustment },
                 total = invoiceDimensionIds.sumOf { entryRepository.dimensionOwed(it) },
             )
         } else {
@@ -255,11 +241,3 @@ class ReportViewerViewModel(
         }
     }
 }
-
-
-/** A card leg of an invoice, reduced to the three axes the invoice stats aggregate on. */
-private data class InvoiceLeg(
-    val label: TransactionLabel,
-    val direction: TransactionType,
-    val cents: Long,
-)

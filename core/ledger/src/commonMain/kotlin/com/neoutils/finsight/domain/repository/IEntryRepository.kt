@@ -40,6 +40,17 @@ data class LiabilityMonthFlows(
 )
 
 /**
+ * The month-wide income/expense/adjustment (reais) across every ASSET account,
+ * derived from the ledger. Transfers and card payments are excluded — neither is
+ * income or expense. [income]/[expense] are positive magnitudes; [adjustment] is signed.
+ */
+data class AssetMonthFlows(
+    val income: Double,
+    val expense: Double,
+    val adjustment: Double,
+)
+
+/**
  * The report figures (reais) for an account/card scope over a period, derived from the
  * ledger. [income]/[expense] are positive magnitudes; [balance] is signed and includes
  * adjustments; [openingBalance] is the signed scope balance before the period.
@@ -105,6 +116,12 @@ interface IEntryRepository {
 
     /** Month-wide card expense/payment across every card account. */
     suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows
+
+    /**
+     * The month-wide income/expense/adjustment across every ASSET account, excluding
+     * transfers and card payments — the summary a transaction list or dashboard shows.
+     */
+    suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows
 
     /** Net worth = Σ ASSET − Σ LIABILITY, via the same entry mechanism. */
     suspend fun netWorth(): Double

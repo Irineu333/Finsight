@@ -56,6 +56,19 @@ data class LiabilityMonthTotals(
 )
 
 /**
+ * The month-wide income/expense/adjustment (cents) across every ASSET account,
+ * classified by each transaction's counter-legs — the "money in / money out" a
+ * transaction list or dashboard summarises. Transfers and card payments move money
+ * between the user's own accounts and are neither, so they are excluded. [income]/
+ * [expense] are positive magnitudes; [adjustment] is signed. See [EntryDao.assetMonthTotals].
+ */
+data class AssetMonthTotals(
+    val income: Long,
+    val expense: Long,
+    val adjustment: Long,
+)
+
+/**
  * The report figures for an account/card scope over a period, all in cents. [income]/
  * [expense] are positive magnitudes of the scope legs classified by counter-leg;
  * [balance] is their signed sum within the period (adjustments included); [openingBalance]
@@ -231,6 +244,37 @@ interface EntryDao {
         """
     )
     suspend fun liabilityMonthTotals(yearMonth: String): LiabilityMonthTotals
+
+    /**
+     * The month-wide income/expense/adjustment across every ASSET account (yyyy-MM),
+     * classified by each transaction's counter-legs. A transaction counts only when it
+     * has a nominal (EXPENSE/INCOME) or EQUITY counter-leg — which is exactly "not a
+     * transfer and not a card payment", the two forms that move money between the
+     * user's own accounts. An EQUITY counter-leg is an adjustment (kept signed); the
+     * rest split by the sign of the ASSET leg (money out = expense, money in = income),
+     * so a refund on an expense reads as income by the same rule. See [AssetMonthTotals].
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS income,
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
+          COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
+        FROM (
+          SELECT e.amount AS amount,
+            EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq
+          FROM entries e
+          JOIN accounts a ON a.id = e.accountId
+          JOIN transactions o ON o.id = e.transactionId
+          WHERE a.type = 'ASSET' AND substr(o.date, 1, 7) = :yearMonth
+            AND (
+              EXISTS(SELECT 1 FROM entries x JOIN accounts a3 ON a3.id = x.accountId WHERE x.transactionId = e.transactionId AND a3.type = 'EQUITY')
+              OR EXISTS(SELECT 1 FROM entries x JOIN accounts a4 ON a4.id = x.accountId WHERE x.transactionId = e.transactionId AND a4.type IN ('EXPENSE', 'INCOME'))
+            )
+        )
+        """
+    )
+    suspend fun assetMonthTotals(yearMonth: String): AssetMonthTotals
 
     /** Number of entries carrying a dimension within a month (yyyy-MM). */
     @Query(

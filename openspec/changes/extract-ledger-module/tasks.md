@@ -103,7 +103,7 @@ o schema final. Fazê-lo antes obrigaria cada consumidor a trocar de chave duas 
 
 - [x] 9.1 Substituir `projects.feature.transactions.api` por `projects.core.ledger` em `accounts:impl`, `creditcards:impl`, `categories:impl`, `budgets:impl`, `report:impl`, `dashboard:impl`, `recurring:impl` e `shell:impl`, mantendo transactions apenas onde a tela é de fato usada — um commit verde por troca
 - [x] 9.2 Mover a leitura do razão para dentro de `CalculateBudgetProgressUseCase`, na `api` de budgets, removendo o repasse do número já calculado pelo `impl` — agora legal, porque `:core:*` é acessível a uma `api`
-- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types — **a linha saiu; a confirmação é falsa**: a api ainda declara `BuildTransactionUseCase`, `DeleteTransactionUseCase` e `CalculateTransactionStatsUseCase` (este com regra contábil concreta, ver 11.6)
+- [ ] 9.3 Remover a linha temporária `api(projects.core.ledger)` de `feature:transactions:api` e confirmar que ela expõe apenas rotas, `TransactionsEntry` e nav types — **a linha saiu; a confirmação segue parcial**: a api ainda declara `BuildTransactionUseCase` e `DeleteTransactionUseCase` (orquestração da própria feature). `CalculateTransactionStatsUseCase`, que carregava regra contábil concreta, foi removido em 11.6
 
 ## 10. Verificação final
 
@@ -135,8 +135,8 @@ compilar**, e porque a suíte constrói tudo à mão e nunca fecha o grafo real.
 
 - [x] 11.4 `BuildTransactionUseCaseImpl.contraLeg()` e `ConfirmRecurringUseCase.contraLeg()` são byte-idênticas — a regra "em que nominal a perna pousa", derivável de (tipo, categoria), com dois donos. Extrair um `ContraLeg.of(type, category)` em `:core:model`
 - [x] 11.5 O fallback de título (`title ?: category?.name ?: "Untitled"`) virou quatro cópias ao remover `Transaction.displayTitle` — `TransactionUiMapper`, `InstallmentUiMapper`, `ViewTransactionUiState` e `Recurring.label` — com `"Untitled"` hardcoded, contra a regra de sempre usar `UiText.Res`. Dar um dono em `:core:ui`
-- [ ] 11.6 (fora do escopo desta change — abrir proposta própria) `CalculateTransactionStatsUseCase` (em `transactions:api`) reimplementa em memória a classificação por contra-perna que `EntryDao.accountPeriodTotals` já faz em SQL, e o dashboard a consome via api de outra feature — viola `ledger-reporting` e `ledger-module-boundary`
-- [ ] 11.7 (fora do escopo desta change — abrir proposta própria) `ReportViewerViewModel` (`:96-118`) recalcula o breakdown de fatura somando pernas em memória, com `dimensionPeriodTotals` disponível no razão — viola "MUST NOT existir forma alternativa que some lançamentos já carregados em memória"
+- [x] 11.6 (trazido para o escopo por decisão do dono do projeto) `CalculateTransactionStatsUseCase` reimplementava em memória a classificação por contra-perna que o razão já faz em SQL, e o dashboard a consumia via api de outra feature. Substituída pela leitura de razão `assetMonthTotals`/`assetMonthFlows` (income/expense/adjustment mês-inteiro sobre as contas `ASSET`, com transferência e pagamento excluídos por construção), consumida pelo dashboard (`concreteBalanceStats`) e pela `TransactionsViewModel`. O use case e seu teste foram apagados de `transactions:api`; teste de query no razão fixa a exclusão de transferência/pagamento
+- [x] 11.7 (trazido para o escopo por decisão do dono do projeto) `ReportViewerViewModel` recalculava o breakdown de fatura somando pernas em memória. Passou a ler `entryRepository.dimensionFlows(dimensionId)` por dimensão de fatura — a mesma leitura de razão que as telas de fatura de creditcards já usam —, o que também elimina a divergência de sinal do ajuste entre as duas telas. A data class `InvoiceLeg` e a classificação em memória saíram
 
 ### Comentários e dependências que mentem
 

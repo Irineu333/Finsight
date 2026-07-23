@@ -51,12 +51,15 @@ class ViewCreditCardViewModel(
         }
     }
 
-    // Reversible and innocuous (design D8): no confirmation. The modal observes the
-    // card, so flipping isArchived dismisses it from the archived list on its own.
+    // Reversible and innocuous (design D8): no confirmation. This detail is
+    // archived-only and reached solely from the archived list, so once the card is
+    // back in circulation there is nothing left to show — dismiss it.
     private fun unarchive() {
         val creditCard = (uiState.value as? ViewCreditCardUiState.Content)?.creditCard ?: return
         viewModelScope.launch {
-            unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
+            unarchiveCreditCard(creditCard)
+                .onRight { _events.send(ViewCreditCardEvent.Dismiss) }
+                .onLeft { crashlytics.recordException(it) }
         }
     }
 }

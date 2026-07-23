@@ -3,6 +3,7 @@
 package com.neoutils.finsight.ui.modal.viewCreditCard
 
 import app.cash.turbine.test
+import app.cash.turbine.turbineScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.model.CreditCard
 import com.neoutils.finsight.domain.model.Invoice
@@ -119,19 +120,26 @@ class ViewCreditCardViewModelTest {
     }
 
     @Test
-    fun `the unarchive action unarchives the shown card by its accountId`() = runTest(dispatcher) {
+    fun `the unarchive action unarchives the shown card by its accountId and dismisses`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
         val vm = viewModel(repository, FakeInvoiceRepository(emptyList()))
 
-        vm.uiState.test {
-            assertEquals(ViewCreditCardUiState.Loading, awaitItem())
+        turbineScope {
+            val state = vm.uiState.testIn(backgroundScope)
+            val events = vm.events.testIn(backgroundScope)
+
+            assertEquals(ViewCreditCardUiState.Loading, state.awaitItem())
             repository.emit(card(accountId = 77L, isArchived = true))
-            assertIs<ViewCreditCardUiState.Content>(awaitItem())
+            assertIs<ViewCreditCardUiState.Content>(state.awaitItem())
 
             vm.onAction(ViewCreditCardAction.Unarchive)
             runCurrent()
 
             assertEquals(listOf(77L), repository.unarchived)
+            assertIs<ViewCreditCardEvent.Dismiss>(events.awaitItem())
+
+            state.cancel()
+            events.cancel()
         }
     }
 }

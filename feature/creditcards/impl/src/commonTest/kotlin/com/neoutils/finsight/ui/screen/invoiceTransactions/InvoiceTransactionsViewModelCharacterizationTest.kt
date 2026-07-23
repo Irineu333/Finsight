@@ -23,6 +23,8 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Recurring
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -100,6 +102,8 @@ class InvoiceTransactionsViewModelCharacterizationTest {
                 ),
             ),
             recurringRepository = NoRecurring,
+            unarchiveCreditCard = UnarchiveCreditCardUseCase(FakeCreditCardRepository(card)),
+            crashlytics = NoCrashlytics,
         )
 
         vm.uiState.test {
@@ -211,6 +215,11 @@ private object NoInstallments : IInstallmentRepository {
     override suspend fun createInstallment(count: Int, totalAmount: Double): Long = throw NotImplementedError()
     override suspend fun updateInstallment(id: Long, count: Int, totalAmount: Double) = throw NotImplementedError()
     override suspend fun deleteInstallmentById(id: Long) = throw NotImplementedError()
+}
+
+private object NoCrashlytics : Crashlytics {
+    override fun setUserId(id: String?) = Unit
+    override fun recordException(e: Throwable) = Unit
 }
 
 /** The retire action is not what this test characterizes; no template points at the card. */

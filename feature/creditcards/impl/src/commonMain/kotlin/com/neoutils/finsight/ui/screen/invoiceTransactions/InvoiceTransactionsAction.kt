@@ -9,4 +9,5 @@ sealed class InvoiceTransactionsAction {
     data class SelectType(val type: TransactionType?) : InvoiceTransactionsAction()
     data class ToggleRecurring(val enabled: Boolean) : InvoiceTransactionsAction()
     data class ToggleInstallment(val enabled: Boolean) : InvoiceTransactionsAction()
+    data object Unarchive : InvoiceTransactionsAction()
 }

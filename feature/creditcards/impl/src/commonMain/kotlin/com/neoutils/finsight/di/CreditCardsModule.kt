@@ -238,6 +238,8 @@ val creditCardsModule = module {
             categoryRepository = get(),
             entryRepository = get(),
             recurringRepository = get(),
+            unarchiveCreditCard = get(),
+            crashlytics = get(),
         )
     }
 }

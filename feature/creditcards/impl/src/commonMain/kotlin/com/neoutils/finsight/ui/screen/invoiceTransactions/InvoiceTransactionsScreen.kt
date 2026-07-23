@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Payment
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
@@ -67,6 +68,7 @@ import com.neoutils.finsight.ui.theme.Adjustment as AdjustmentColor
 import com.neoutils.finsight.ui.theme.InvoicePayment as BillPaymentColor
 import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.resources.Res
+import com.neoutils.finsight.resources.credit_cards_unarchive
 import com.neoutils.finsight.resources.invoice_transactions_advance_payment
 import com.neoutils.finsight.resources.invoice_transactions_advance_payments
 import com.neoutils.finsight.resources.invoice_transactions_adjustments
@@ -183,27 +185,46 @@ private fun InvoiceTransactionsContent(
                                         modalManager.show(CreditCardFormModal(creditCard))
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(uiState.retireAction.label)) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = uiState.retireAction.icon,
-                                            contentDescription = null,
-                                            tint = Expense
-                                        )
-                                    },
-                                    // This entry used to open the delete modal whatever
-                                    // the card was, which the strict guard now refuses.
-                                    onClick = {
-                                        menuExpanded = false
-                                        modalManager.show(
-                                            when (uiState.retireAction) {
-                                                RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
-                                                RetireAction.ARCHIVE -> ArchiveCreditCardModal(creditCard)
-                                            }
-                                        )
-                                    }
-                                )
+                                // An archived card is already retired: offering to archive
+                                // it again is a dead end, so the entry becomes unarchive —
+                                // reversible and innocuous, no confirmation (design D8).
+                                if (uiState.isArchived) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(Res.string.credit_cards_unarchive)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Unarchive,
+                                                contentDescription = null,
+                                            )
+                                        },
+                                        onClick = {
+                                            menuExpanded = false
+                                            onAction(InvoiceTransactionsAction.Unarchive)
+                                        }
+                                    )
+                                } else {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(uiState.retireAction.label)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = uiState.retireAction.icon,
+                                                contentDescription = null,
+                                                tint = Expense
+                                            )
+                                        },
+                                        // This entry used to open the delete modal whatever
+                                        // the card was, which the strict guard now refuses.
+                                        onClick = {
+                                            menuExpanded = false
+                                            modalManager.show(
+                                                when (uiState.retireAction) {
+                                                    RetireAction.DELETE -> DeleteCreditCardModal(creditCard)
+                                                    RetireAction.ARCHIVE -> ArchiveCreditCardModal(creditCard)
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

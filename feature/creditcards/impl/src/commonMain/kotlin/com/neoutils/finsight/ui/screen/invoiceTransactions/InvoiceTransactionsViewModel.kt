@@ -12,6 +12,8 @@ import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IRecurringRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
+import com.neoutils.finsight.domain.crashlytics.Crashlytics
+import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.extension.combine
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
@@ -38,7 +40,7 @@ private val currentDate
     get() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 class InvoiceTransactionsViewModel(
-    creditCardId: Long,
+    private val creditCardId: Long,
     private val creditCardRepository: ICreditCardRepository,
     private val invoiceRepository: IInvoiceRepository,
     private val transactionRepository: ITransactionRepository,
@@ -46,6 +48,8 @@ class InvoiceTransactionsViewModel(
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
     private val recurringRepository: IRecurringRepository,
+    private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
+    private val crashlytics: Crashlytics,
 ) : ViewModel() {
 
     private val selectedInvoiceIndex = MutableStateFlow(0)
@@ -214,6 +218,15 @@ class InvoiceTransactionsViewModel(
 
             is InvoiceTransactionsAction.ToggleInstallment -> {
                 filters.value = filters.value.copy(installmentOnly = action.enabled)
+            }
+
+            // Reversible and innocuous (design D8): no confirmation. The screen offers this
+            // only for an archived card; the reopened account re-emits and the UI flips back
+            // to the active affordances on its own. The card is resolved at action time so no
+            // domain model sits in observable state.
+            InvoiceTransactionsAction.Unarchive -> {
+                val creditCard = creditCardRepository.getCreditCardById(creditCardId) ?: return@launch
+                unarchiveCreditCard(creditCard).onLeft { crashlytics.recordException(it) }
             }
         }
     }

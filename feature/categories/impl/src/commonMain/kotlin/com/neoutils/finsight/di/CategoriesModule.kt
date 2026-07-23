@@ -15,6 +15,7 @@ import com.neoutils.finsight.ui.modal.categoryForm.CategoryFormViewModel
 import com.neoutils.finsight.domain.usecase.ArchiveCategoryUseCase
 import com.neoutils.finsight.domain.usecase.DeleteCategoryUseCase
 import com.neoutils.finsight.domain.usecase.ResolveCategoryRetirabilityUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveCategoryUseCase
 import com.neoutils.finsight.ui.modal.archiveCategory.ArchiveCategoryViewModel
 import com.neoutils.finsight.ui.modal.deleteCategory.DeleteCategoryViewModel
 import com.neoutils.finsight.ui.modal.viewCategory.ViewCategoryViewModel
@@ -81,6 +82,12 @@ val categoriesModule = module {
 
     factory {
         ArchiveCategoryUseCase(
+            categoryRepository = get(),
+        )
+    }
+
+    factory {
+        UnarchiveCategoryUseCase(
             categoryRepository = get(),
         )
     }

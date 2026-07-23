@@ -58,17 +58,17 @@ class CreateDefaultCategoriesUseCase(
     suspend operator fun invoke(): Either<Throwable, Unit> = either {
         val createdAtBase = Clock.System.now().toEpochMilliseconds()
 
-        catch {
-            templates.forEachIndexed { index, template ->
-                categoryRepository.insert(
-                    Category(
-                        name = template.name.asString(),
-                        icon = CategoryLazyIcon(template.icon.key),
-                        type = template.type,
-                        createdAt = createdAtBase + index,
-                    )
-                )
-            }
-        }.bind()
+        val categories = templates.mapIndexed { index, template ->
+            Category(
+                name = template.name.asString(),
+                icon = CategoryLazyIcon(template.icon.key),
+                type = template.type,
+                createdAt = createdAtBase + index,
+            )
+        }
+
+        // One transaction, not fourteen: a failure midway used to leave a partial set
+        // of defaults behind — and this is what the empty-state CTA triggers.
+        catch { categoryRepository.insertAll(categories) }.bind()
     }
 }

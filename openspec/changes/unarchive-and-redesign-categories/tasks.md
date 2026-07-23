@@ -17,10 +17,10 @@
 
 ## 3. Domínio — UnarchiveCategoryUseCase + validação/criação corrigidas
 
-- [ ] 3.1 Criar `UnarchiveCategoryUseCase` espelhando `ArchiveCategoryUseCase` (`Either<Throwable, Unit>` via `catch`, chamando `unarchive`), com KDoc de "reversível e inócuo".
-- [ ] 3.2 `CreateDefaultCategoriesUseCase`: montar `List<Category>` e chamar `insertAll` uma vez (atômico), no lugar do laço de `insert`.
-- [ ] 3.3 `ValidateCategoryNameUseCase`: aplicar `trim` uma vez no topo (usado tanto por `isEmpty` quanto pela duplicidade); trocar a varredura O(n) por `repository.existsByName(trimmed, ignoreId)`. Remover o `// TODO`.
-- [ ] 3.4 Registrar `UnarchiveCategoryUseCase` no `categoriesModule`.
+- [x] 3.1 Criar `UnarchiveCategoryUseCase` espelhando `ArchiveCategoryUseCase` (`Either<Throwable, Unit>` via `catch`, chamando `unarchive`), com KDoc de "reversível e inócuo".
+- [x] 3.2 `CreateDefaultCategoriesUseCase`: montar `List<Category>` e chamar `insertAll` uma vez (atômico), no lugar do laço de `insert`.
+- [x] 3.3 `ValidateCategoryNameUseCase`: aplicar `trim` uma vez no topo (usado tanto por `isEmpty` quanto pela duplicidade); trocar a varredura O(n) por `repository.existsByName(trimmed, ignoreId)`. Remover o `// TODO`.
+- [x] 3.4 Registrar `UnarchiveCategoryUseCase` no `categoriesModule`.
 
 ## 4. core/ui — componente de ação compartilhado (D9)
 

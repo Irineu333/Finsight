@@ -41,20 +41,20 @@
 
 ## 6. Redesenho da tela — estado
 
-- [ ] 6.1 Criar `CategoryFilter { ACTIVE, EXPENSE, INCOME, ARCHIVED }` no pacote da tela.
-- [ ] 6.2 `CategoriesUiState`: trocar `selectedType` por `filter`; `Content` carrega as seções resolvidas (cada seção com cabeçalho opcional + categorias); `Empty` guarda o `filter` para o `initialType` do FAB.
-- [ ] 6.3 `CategoriesAction`: substituir `SelectType(type)` por `SelectFilter(filter)`.
-- [ ] 6.4 `CategoriesViewModel`: observar `observeAllCategoriesIncludingClosed()`; combinar com `MutableStateFlow<CategoryFilter>` (default `ACTIVE`); derivar as seções (ACTIVE = Despesas+Receitas de ativas, seccionado; EXPENSE/INCOME = ativas do tipo; ARCHIVED = arquivadas). Omitir seção vazia. Comentar que o predicado de "ativa" (`!isArchived`) espelha `OPEN_CATEGORIES` do DAO (B1).
+- [x] 6.1 Criar `CategoryFilter { ACTIVE, EXPENSE, INCOME, ARCHIVED }` no pacote da tela.
+- [x] 6.2 `CategoriesUiState`: trocar `selectedType` por `filter`; `Content` carrega as seções resolvidas (cada seção com cabeçalho opcional + categorias); `Empty` guarda o `filter` para o `initialType` do FAB.
+- [x] 6.3 `CategoriesAction`: substituir `SelectType(type)` por `SelectFilter(filter)`.
+- [x] 6.4 `CategoriesViewModel`: observar `observeAllCategoriesIncludingClosed()`; combinar com `MutableStateFlow<CategoryFilter>` (default `ACTIVE`); derivar as seções (ACTIVE = Despesas+Receitas de ativas, seccionado; EXPENSE/INCOME = ativas do tipo; ARCHIVED = arquivadas). Omitir seção vazia. Comentar que o predicado de "ativa" (`!isArchived`) espelha `OPEN_CATEGORIES` do DAO (B1).
 
 ## 7. Redesenho da tela — UI (D10, D5, D6)
 
-- [ ] 7.1 `CategoriesScreen`: remover `PrimaryTabRow` + `HorizontalPager` + sincronização de pager.
-- [ ] 7.2 Topbar transparente (`containerColor = colorScheme.background`, padrão `AccountsScreen`).
-- [ ] 7.3 Seletor de `FilterChip` (Ativas · Despesas · Receitas · Arquivadas) em `Row`/`LazyRow` → `SelectFilter`. Materializar as opções de `CategoryFilter.entries` (não recriar lista sem `remember`).
-- [ ] 7.4 Renderizar seções numa `LazyColumn` única (cabeçalho quando houver + `CategoryCard`s); card abre `ViewCategoryModal`.
-- [ ] 7.5 FAB: `initialType` resolvido do filtro (EXPENSE→despesa, INCOME→receita, ACTIVE/ARCHIVED→despesa).
-- [ ] 7.6 Dois empty-states distintos (D10): `EmptyDatabaseState` grande (CTA) só com banco vazio; `EmptyFilterState` compacto (texto/ícone, sem botão) para filtro vazio.
-- [ ] 7.7 Strings: cabeçalhos de seção, rótulos de chip (`categories_filter_active`, `categories_filter_archived`; reusar `categories_expense`/`categories_income`), e vazio por filtro.
+- [x] 7.1 `CategoriesScreen`: remover `PrimaryTabRow` + `HorizontalPager` + sincronização de pager.
+- [x] 7.2 Topbar transparente (`containerColor = colorScheme.background`, padrão `AccountsScreen`).
+- [x] 7.3 Seletor de `FilterChip` (Ativas · Despesas · Receitas · Arquivadas) em `Row`/`LazyRow` → `SelectFilter`. Materializar as opções de `CategoryFilter.entries` (não recriar lista sem `remember`).
+- [x] 7.4 Renderizar seções numa `LazyColumn` única (cabeçalho quando houver + `CategoryCard`s); card abre `ViewCategoryModal`.
+- [x] 7.5 FAB: `initialType` resolvido do filtro (EXPENSE→despesa, INCOME→receita, ACTIVE/ARCHIVED→despesa).
+- [x] 7.6 Dois empty-states distintos (D10): `EmptyDatabaseState` grande (CTA) só com banco vazio; `EmptyFilterState` compacto (texto/ícone, sem botão) para filtro vazio.
+- [x] 7.7 Strings: cabeçalhos de seção, rótulos de chip (`categories_filter_active`, `categories_filter_archived`; reusar `categories_expense`/`categories_income`), e vazio por filtro.
 
 ## 8. Testes
 

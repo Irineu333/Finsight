@@ -1,40 +1,40 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.neoutils.finsight.ui.screen.categories
 import com.neoutils.finsight.ui.util.isWideWindow
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import com.neoutils.finsight.domain.analytics.Analytics
 import org.koin.compose.koinInject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.ui.component.CategoryCard
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
@@ -44,10 +44,13 @@ import com.neoutils.finsight.resources.Res
 import com.neoutils.finsight.resources.categories_create_default
 import com.neoutils.finsight.resources.categories_create_manual
 import com.neoutils.finsight.resources.categories_empty
+import com.neoutils.finsight.resources.categories_empty_filter
 import com.neoutils.finsight.resources.categories_expense
+import com.neoutils.finsight.resources.categories_filter_active
+import com.neoutils.finsight.resources.categories_filter_archived
 import com.neoutils.finsight.resources.categories_income
 import com.neoutils.finsight.resources.categories_title
-import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -85,6 +88,12 @@ private fun CategoriesContent(
                 title = {
                     Text(text = stringResource(Res.string.categories_title))
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colorScheme.background,
+                    titleContentColor = colorScheme.onBackground,
+                    navigationIconContentColor = colorScheme.onBackground,
+                    actionIconContentColor = colorScheme.onBackground,
+                ),
                 navigationIcon = {
                     if (!isWideWindow()) {
                         IconButton(onClick = onNavigateBack) {
@@ -101,7 +110,7 @@ private fun CategoriesContent(
             if (uiState is CategoriesUiState.Content) {
                 FloatingActionButton(
                     onClick = {
-                        modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
+                        modalManager.show(CategoryFormModal(initialType = uiState.filter.fabInitialType))
                     },
                 ) {
                     Icon(
@@ -125,12 +134,12 @@ private fun CategoriesContent(
             }
 
             is CategoriesUiState.Empty -> {
-                EmptyCategoriesState(
+                EmptyDatabaseState(
                     onCreateDefaultCategories = {
                         onAction(CategoriesAction.CreateDefaultCategories)
                     },
                     onCreateManualCategory = {
-                        modalManager.show(CategoryFormModal(initialType = uiState.selectedType))
+                        modalManager.show(CategoryFormModal(initialType = uiState.filter.fabInitialType))
                     },
                     modifier = Modifier
                         .fillMaxSize()
@@ -139,76 +148,48 @@ private fun CategoriesContent(
             }
 
             is CategoriesUiState.Content -> {
-                val tabs = listOf(Category.Type.EXPENSE, Category.Type.INCOME)
-                val selectedTabIndex = tabs.indexOf(uiState.selectedType).coerceAtLeast(0)
-
-                val pagerState = rememberPagerState(
-                    initialPage = selectedTabIndex,
-                    pageCount = { tabs.size },
-                )
-
-                LaunchedEffect(pagerState) {
-                    snapshotFlow { pagerState.currentPage }
-                        .distinctUntilChanged()
-                        .collect { page ->
-                            onAction(CategoriesAction.SelectType(tabs[page]))
-                        }
-                }
-
-                LaunchedEffect(selectedTabIndex) {
-                    if (pagerState.currentPage != selectedTabIndex) {
-                        pagerState.animateScrollToPage(selectedTabIndex)
-                    }
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
-                        tabs.forEachIndexed { index, type ->
-                            val title = when (type) {
-                                Category.Type.EXPENSE -> stringResource(Res.string.categories_expense)
-                                Category.Type.INCOME -> stringResource(Res.string.categories_income)
-                            }
+                    FilterChipsRow(
+                        selected = uiState.filter,
+                        onSelect = { onAction(CategoriesAction.SelectFilter(it)) },
+                    )
 
-                            Tab(
-                                selected = selectedTabIndex == index,
-                                onClick = {
-                                    onAction(CategoriesAction.SelectType(type))
-                                },
-                                text = {
-                                    Text(text = title)
-                                }
-                            )
-                        }
-                    }
-
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize(),
-                    ) { page ->
-                        val pageCategories = uiState.categories.filter { it.type == tabs[page] }
-
+                    if (uiState.sections.isEmpty()) {
+                        EmptyFilterState(modifier = Modifier.fillMaxSize())
+                    } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(
-                                items = pageCategories,
-                                key = { it.id },
-                            ) { category ->
-                                CategoryCard(
-                                    category = category,
-                                    onClick = {
-                                        detailController.show(ViewCategoryModal(category.id))
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .animateItem()
-                                )
+                            uiState.sections.forEachIndexed { index, section ->
+                                section.header?.let { header ->
+                                    item(key = "header_$index") {
+                                        SectionHeader(
+                                            text = stringResource(header),
+                                            modifier = Modifier.animateItem(),
+                                        )
+                                    }
+                                }
+
+                                items(
+                                    items = section.categories,
+                                    key = { it.id },
+                                ) { category ->
+                                    CategoryCard(
+                                        category = category,
+                                        onClick = {
+                                            detailController.show(ViewCategoryModal(category.id))
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .animateItem()
+                                    )
+                                }
                             }
                         }
                     }
@@ -219,7 +200,54 @@ private fun CategoriesContent(
 }
 
 @Composable
-private fun EmptyCategoriesState(
+private fun FilterChipsRow(
+    selected: CategoryFilter,
+    onSelect: (CategoryFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(
+            items = CategoryFilter.entries,
+            key = { it.name },
+        ) { filter ->
+            FilterChip(
+                selected = filter == selected,
+                onClick = { onSelect(filter) },
+                label = { Text(stringResource(filter.label)) },
+            )
+        }
+    }
+}
+
+private val CategoryFilter.label: StringResource
+    get() = when (this) {
+        CategoryFilter.ACTIVE -> Res.string.categories_filter_active
+        CategoryFilter.EXPENSE -> Res.string.categories_expense
+        CategoryFilter.INCOME -> Res.string.categories_income
+        CategoryFilter.ARCHIVED -> Res.string.categories_filter_archived
+    }
+
+@Composable
+private fun SectionHeader(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(top = 8.dp),
+    )
+}
+
+/** The big CTA, earned only by a database with no category at all (design D10). */
+@Composable
+private fun EmptyDatabaseState(
     onCreateDefaultCategories: () -> Unit,
     onCreateManualCategory: () -> Unit,
     modifier: Modifier = Modifier,
@@ -265,5 +293,31 @@ private fun EmptyCategoriesState(
                 Text(text = stringResource(Res.string.categories_create_manual))
             }
         }
+    }
+}
+
+/** A filter with nothing to show, database not empty: a quiet note, no CTA (design D10). */
+@Composable
+private fun EmptyFilterState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Category,
+            contentDescription = null,
+            tint = colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(bottom = 12.dp)
+                .size(40.dp),
+        )
+        Text(
+            text = stringResource(Res.string.categories_empty_filter),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurfaceVariant,
+        )
     }
 }

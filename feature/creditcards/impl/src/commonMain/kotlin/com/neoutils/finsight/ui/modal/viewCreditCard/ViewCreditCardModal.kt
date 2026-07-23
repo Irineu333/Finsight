@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.resources.Res
-import com.neoutils.finsight.resources.credit_card_balance
 import com.neoutils.finsight.resources.credit_card_form_limit_label
+import com.neoutils.finsight.resources.credit_card_invoices_label
 import com.neoutils.finsight.resources.credit_card_ui_closes_on
 import com.neoutils.finsight.resources.credit_card_ui_day
 import com.neoutils.finsight.resources.credit_card_ui_due_on
@@ -125,8 +125,8 @@ class ViewCreditCardModal(
             Spacer(Modifier.height(8.dp))
 
             DetailRow(
-                label = stringResource(Res.string.credit_card_balance),
-                value = formatter.format(uiState.balance),
+                label = stringResource(Res.string.credit_card_invoices_label),
+                value = uiState.invoiceCount.toString(),
             )
         }
     }

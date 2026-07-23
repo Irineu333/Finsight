@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
 import com.neoutils.finsight.domain.exception.DetailNotFoundException
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IEntryRepository
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import com.neoutils.finsight.extension.interceptAbsence
 import kotlinx.coroutines.channels.Channel
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 class ViewCreditCardViewModel(
     cardId: Long,
     creditCardRepository: ICreditCardRepository,
-    private val entryRepository: IEntryRepository,
+    invoiceRepository: IInvoiceRepository,
     private val unarchiveCreditCard: UnarchiveCreditCardUseCase,
     private val crashlytics: Crashlytics,
 ) : ViewModel() {
@@ -32,13 +32,12 @@ class ViewCreditCardViewModel(
                 onMissing = { crashlytics.recordException(DetailNotFoundException("CreditCard", cardId)) },
                 onDisappeared = { _events.send(ViewCreditCardEvent.Dismiss) },
             ),
-        // The balance is a SQL aggregate, so the ledger has to say when it moved.
-        entryRepository.observeLedgerChanges(),
-    ) { creditCard, _ ->
+        invoiceRepository.observeInvoicesByCreditCard(cardId),
+    ) { creditCard, invoices ->
         creditCard ?: return@combine ViewCreditCardUiState.Error
         ViewCreditCardUiState.Content(
             creditCard = creditCard,
-            balance = entryRepository.balance(creditCard.accountId),
+            invoiceCount = invoices.size,
         )
     }.stateIn(
         scope = viewModelScope,

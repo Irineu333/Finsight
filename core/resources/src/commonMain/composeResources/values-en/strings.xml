@@ -201,12 +201,12 @@
     <string name="credit_cards_filter_type_expense">Expense</string>
     <string name="credit_cards_filter_type_adjustment">Adjustment</string>
     <string name="credit_cards_filter_type_payment">Payment</string>
-    <string name="credit_cards_view_archived">Archived cards</string>
+    <string name="credit_cards_view_archived">Archived</string>
     <string name="credit_cards_archived_title">Archived cards</string>
     <string name="credit_cards_archived_empty">No archived cards</string>
     <string name="credit_cards_unarchive">Unarchive</string>
     <string name="credit_card_archived">Archived</string>
-    <string name="credit_card_balance">Balance</string>
+    <string name="credit_card_invoices_label">Invoices</string>
 
     <!-- Accounts Screen -->
     <string name="accounts_title">Accounts</string>

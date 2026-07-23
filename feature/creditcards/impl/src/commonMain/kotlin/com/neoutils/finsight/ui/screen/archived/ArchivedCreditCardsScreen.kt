@@ -4,6 +4,7 @@ package com.neoutils.finsight.ui.screen.archived
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -105,14 +106,14 @@ private fun ArchivedCreditCardsContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(
                     items = uiState.creditCards,
                     key = { it.id },
                 ) { creditCard ->
-                    ArchivedCreditCardRow(
+                    ArchivedCreditCardCard(
                         creditCard = creditCard,
                         onClick = { detailController.show(ViewCreditCardModal(creditCard.id)) },
                         modifier = Modifier.fillMaxWidth(),

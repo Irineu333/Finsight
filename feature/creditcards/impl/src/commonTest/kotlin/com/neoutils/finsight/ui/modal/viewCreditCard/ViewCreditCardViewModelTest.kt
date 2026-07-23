@@ -4,27 +4,21 @@ package com.neoutils.finsight.ui.modal.viewCreditCard
 
 import app.cash.turbine.test
 import com.neoutils.finsight.domain.crashlytics.Crashlytics
-import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.CreditCard
-import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.repository.AccountFlows
-import com.neoutils.finsight.domain.repository.AssetMonthFlows
-import com.neoutils.finsight.domain.repository.DimensionFlows
+import com.neoutils.finsight.domain.model.Invoice
 import com.neoutils.finsight.domain.repository.ICreditCardRepository
-import com.neoutils.finsight.domain.repository.IEntryRepository
-import com.neoutils.finsight.domain.repository.LiabilityMonthFlows
-import com.neoutils.finsight.domain.repository.ScopeStats
+import com.neoutils.finsight.domain.repository.IInvoiceRepository
 import com.neoutils.finsight.domain.usecase.UnarchiveCreditCardUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.YearMonth
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -61,26 +55,23 @@ class ViewCreditCardViewModelTest {
         override suspend fun delete(creditCard: CreditCard) = throw NotImplementedError()
     }
 
-    private class FakeEntryRepository(var balances: Map<Long, Double> = emptyMap()) : IEntryRepository {
-        val ledger = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
-        override suspend fun balance(accountId: Long): Double = balances[accountId] ?: 0.0
-        override fun observeLedgerChanges(): Flow<Unit> = ledger
-        override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-        override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
-        override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-        override suspend fun hasEntries(accountId: Long): Boolean = throw NotImplementedError()
-        override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = throw NotImplementedError()
-        override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-        override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-        override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-        override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-        override suspend fun dimensionFlows(dimensionId: Long): DimensionFlows = throw NotImplementedError()
-        override suspend fun liabilityMonthFlows(month: YearMonth): LiabilityMonthFlows = throw NotImplementedError()
-        override suspend fun assetMonthFlows(month: YearMonth): AssetMonthFlows = throw NotImplementedError()
-        override suspend fun netWorth(): Double = throw NotImplementedError()
-        override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-        override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): ScopeStats = throw NotImplementedError()
+    private class FakeInvoiceRepository(invoices: List<Invoice>) : IInvoiceRepository {
+        private val byCard = MutableStateFlow(invoices)
+        override fun observeInvoicesByCreditCard(creditCardId: Long): Flow<List<Invoice>> = byCard
+        override fun observeAllInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeInvoiceById(invoiceId: Long): Flow<Invoice?> = throw NotImplementedError()
+        override fun observeOpenInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
+        override fun observeAvailableInvoices(creditCardId: Long): Flow<List<Invoice>> = throw NotImplementedError()
+        override fun observeUnpaidInvoice(creditCardId: Long): Flow<Invoice?> = throw NotImplementedError()
+        override fun observeUnpaidInvoices(): Flow<List<Invoice>> = throw NotImplementedError()
+        override suspend fun getAllInvoices(): List<Invoice> = throw NotImplementedError()
+        override suspend fun getInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getUnpaidInvoicesByCreditCard(creditCardId: Long): List<Invoice> = throw NotImplementedError()
+        override suspend fun getOpenInvoice(creditCardId: Long): Invoice? = throw NotImplementedError()
+        override suspend fun getInvoiceById(id: Long): Invoice? = throw NotImplementedError()
+        override suspend fun insert(invoice: Invoice): Long = throw NotImplementedError()
+        override suspend fun update(invoice: Invoice) = throw NotImplementedError()
+        override suspend fun deleteById(id: Long) = throw NotImplementedError()
     }
 
     private fun card(id: Long = 1L, accountId: Long = 10L, isArchived: Boolean = true) = CreditCard(
@@ -93,35 +84,44 @@ class ViewCreditCardViewModelTest {
         isArchived = isArchived,
     )
 
+    private fun invoice(card: CreditCard) = Invoice(
+        creditCard = card,
+        openingMonth = YearMonth(2026, 1),
+        closingMonth = YearMonth(2026, 2),
+        dueMonth = YearMonth(2026, 3),
+        status = Invoice.Status.PAID,
+    )
+
     private fun viewModel(
         creditCardRepository: FakeCreditCardRepository,
-        entryRepository: FakeEntryRepository = FakeEntryRepository(),
+        invoiceRepository: FakeInvoiceRepository,
     ) = ViewCreditCardViewModel(
         cardId = 1L,
         creditCardRepository = creditCardRepository,
-        entryRepository = entryRepository,
+        invoiceRepository = invoiceRepository,
         unarchiveCreditCard = UnarchiveCreditCardUseCase(creditCardRepository),
         crashlytics = FakeCrashlytics(),
     )
 
     @Test
-    fun `an archived card is shown archived, with its balance read from the ledger`() = runTest(dispatcher) {
+    fun `an archived card is shown archived, with its invoice count`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
-        val vm = viewModel(repository, FakeEntryRepository(balances = mapOf(10L to 0.0)))
+        val shown = card(accountId = 10L, isArchived = true)
+        val vm = viewModel(repository, FakeInvoiceRepository(listOf(invoice(shown), invoice(shown))))
 
         vm.uiState.test {
             assertEquals(ViewCreditCardUiState.Loading, awaitItem())
-            repository.emit(card(accountId = 10L, isArchived = true))
+            repository.emit(shown)
             val content = assertIs<ViewCreditCardUiState.Content>(awaitItem())
             assertTrue(content.creditCard.isArchived)
-            assertEquals(0.0, content.balance)
+            assertEquals(2, content.invoiceCount)
         }
     }
 
     @Test
     fun `the unarchive action unarchives the shown card by its accountId`() = runTest(dispatcher) {
         val repository = FakeCreditCardRepository()
-        val vm = viewModel(repository)
+        val vm = viewModel(repository, FakeInvoiceRepository(emptyList()))
 
         vm.uiState.test {
             assertEquals(ViewCreditCardUiState.Loading, awaitItem())

@@ -10,8 +10,8 @@ sealed interface ViewCreditCardUiState {
 
     data class Content(
         val creditCard: CreditCard,
-        // Σ entries on the card's LIABILITY account, read from the ledger — the card
-        // model carries no balance of its own. Zero for an archived card by invariant.
-        val balance: Double,
+        // How many invoices the card has. The balance would always read zero for an
+        // archived card (design D8), so this is the informative figure to show instead.
+        val invoiceCount: Int,
     ) : ViewCreditCardUiState
 }

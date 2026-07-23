@@ -217,7 +217,7 @@ val creditCardsModule = module {
         ViewCreditCardViewModel(
             cardId = it.get(),
             creditCardRepository = get(),
-            entryRepository = get(),
+            invoiceRepository = get(),
             unarchiveCreditCard = get(),
             crashlytics = get(),
         )

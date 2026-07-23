@@ -13,7 +13,7 @@ Estado atual relevante:
 **Goals:**
 - Desarquivar categoria ponta a ponta (DAO → repo → use case → UI), simétrico ao arquivar.
 - Tornar categorias arquivadas visíveis e alcançáveis, sem vazá-las para seletores/listagens ativas.
-- Alinhar a tela ao design do app: topbar transparente + filtro por chips, no lugar de tabs/pager.
+- Alinhar a tela ao design do app: topbar transparente + seletor de filtro, no lugar de tabs/pager.
 
 **Non-Goals:**
 - Desarquivar/reabrir **conta ou cartão** — esses fecham via conta contábil e estão fora de escopo.
@@ -37,8 +37,8 @@ Mesma forma: `Either<Throwable, Unit>` via `catch`, chamando `categoryRepository
 - `EXPENSE` / `INCOME` → lista simples de ativas daquele tipo.
 - `ARCHIVED` → lista simples de arquivadas (ambos os tipos), cards esmaecidos.
 
-O seletor mistura dois eixos (tipo e status); "Ativas" (em vez de "Todas") deixa isso honesto — o rótulo "Todas" mentiria, pois arquivadas ficam de fora dos três primeiros chips.
-- *Alternativa considerada:* filtro de tipo + toggle "mostrar arquivadas" (dois eixos separados). Rejeitada: o pedido é um seletor único com "Arquivadas" como opção; o híbrido cobre isso e mantém uma linha de chips.
+O seletor mistura dois eixos (tipo e status); "Ativas" (em vez de "Todas") deixa isso honesto — o rótulo "Todas" mentiria, pois arquivadas ficam de fora das três primeiras opções.
+- *Alternativa considerada:* filtro de tipo + toggle "mostrar arquivadas" (dois eixos separados). Rejeitada: o pedido é um seletor único com "Arquivadas" como opção; o híbrido cobre isso e mantém um seletor único.
 
 ### D4 — UiState carrega a lista já resolvida; seções só em ACTIVE
 `CategoriesUiState.Content(sections: List<Section>, filter: CategoryFilter, ...)`, onde uma `Section` tem um cabeçalho opcional e as categorias. Em `ACTIVE`, duas seções com cabeçalho; nos demais filtros, uma seção sem cabeçalho. A tela renderiza uniformemente uma `LazyColumn` de seções — sem `HorizontalPager`. Uma seção sem itens é omitida (ex.: só há despesas → "Ativas" mostra só a seção Despesas).
@@ -49,7 +49,8 @@ O seletor mistura dois eixos (tipo e status); "Ativas" (em vez de "Todas") deixa
 
 ### D6 — Topbar e seletor
 - Topbar: `TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.background, …)`, idêntico a `AccountsScreen`.
-- Seletor: `FilterChip` numa `Row`/`LazyRow` — o app ainda não tem `SegmentedButton` nem chips; `FilterChip` é o caminho mais leve para 4 itens.
+- Seletor: `DropdownMenu` nas `actions` da top bar — o mesmo lugar e forma em que o `AccountsScreen` mantém o controle de mês. O gatilho é um `TextButton` com o rótulo do filtro atual + chevron; o menu lista `CategoryFilter.entries` com um check no selecionado. Preferido a uma linha de `FilterChip`: encosta o seletor à direita do título em vez de gastar uma faixa horizontal só para quatro visões, e reaproveita o padrão que a tela de contas já estabeleceu.
+  - *Alternativa considerada:* `FilterChip` numa `Row`/`LazyRow`. Rejeitada em favor do dropdown por consistência com `AccountsScreen` e por não roubar altura vertical da lista.
 
 ---
 
@@ -89,7 +90,7 @@ O bloco de botão de ação (`RoundedCornerShape(12.dp)` + `BorderStroke(1.dp, c
 
 - **Arquivadas visíveis reintroduzindo a categoria em algum seletor por engano** → os seletores de lançamento e `Budget.categories` continuam consumindo as leituras **ativas** (`observeAllCategories`/`observeCategoriesByType`), inalteradas; só a tela de categorias passa a `...IncludingClosed`. A visibilidade é local à tela.
 - **Regressão visual/estado ao remover o pager** → a lógica de sincronização pager↔tab desaparece por completo; o estado do filtro é um único `MutableStateFlow<CategoryFilter>`, mais simples de raciocinar do que a dupla pager/selectedType atual.
-- **Chip "Ativas" x chips de tipo podem parecer redundantes** → são visões (Ativas = seccionada; Despesas/Receitas = recorte simples), coerentes como conjunto; o rótulo "Ativas" evita a leitura de que "Todas" incluiria arquivadas.
+- **Opção "Ativas" x opções de tipo podem parecer redundantes** → são visões (Ativas = seccionada; Despesas/Receitas = recorte simples), coerentes como conjunto; o rótulo "Ativas" evita a leitura de que "Todas" incluiria arquivadas.
 
 ## Migration Plan
 
@@ -97,4 +98,4 @@ Sem migração de dados. Mudança puramente de código; `categories.isArchived` 
 
 ## Open Questions
 
-- Nenhuma pendente. Vocabulário dos chips travado em **Ativas · Despesas · Receitas · Arquivadas**.
+- Nenhuma pendente. Vocabulário do seletor travado em **Ativas · Despesas · Receitas · Arquivadas**.

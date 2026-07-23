@@ -9,7 +9,7 @@ Hoje uma categoria arquivada é **invisível** e **irreversível** pela interfac
 - **Redesenho da tela de categorias:**
   - Topbar transparente (`containerColor = colorScheme.background`), igual a `AccountsScreen`.
   - Remoção de `PrimaryTabRow` + `HorizontalPager`.
-  - Seletor de filtro por chips: **Ativas · Despesas · Receitas · Arquivadas**.
+  - Seletor de filtro (dropdown na top bar): **Ativas · Despesas · Receitas · Arquivadas**.
   - Em **Ativas**, a lista vem dividida em seções (Despesas / Receitas); os demais filtros são listas simples.
 - A tela passa a observar `observeAllCategoriesIncludingClosed()` e particiona por status/tipo no ViewModel.
 
@@ -31,7 +31,7 @@ Escopo ampliado após análise de arquitetura + design de código (dois agentes)
 - **`feature/categories/api`** — `ICategoryRepository`: `unarchive`, `existsByName`, `insertAll`.
 - **`feature/categories/impl`** — `CategoryRepository` (impls acima), novos `UnarchiveCategoryUseCase` e `ResolveCategoryRetirabilityUseCase`, `DeleteCategoryUseCase`/`ValidateCategoryNameUseCase`/`CreateDefaultCategoriesUseCase` ajustados, `ViewCategoryModal`/`ViewCategoryViewModel` (resolução única do VM + lifecycle + desarquivar + retirabilidade centralizada), reescrita de `CategoriesScreen`/`CategoriesUiState`/`CategoriesAction`/`CategoriesViewModel` (filtro + seções + dois empty-states), registros no `categoriesModule`.
 - **`feature/accounts/impl`** — `AccountsScreen.AccountActions` passa a consumir `OutlinedActionButton`.
-- **`core/resources`** — novas strings: desarquivar, chips (Ativas/Arquivadas), cabeçalhos de seção, vazios por filtro, mensagens de `RetireError`.
+- **`core/resources`** — novas strings: desarquivar, opções do seletor (Ativas/Arquivadas), cabeçalhos de seção, vazios por filtro, mensagens de `RetireError`.
 - Sem migração de banco: apenas um `UPDATE` no flag existente `categories.isArchived`.
 
 **Fora de escopo** (dívida transversal, tarefas próprias): dupla-resolução estrutural do `AdaptiveModal` (5 features), token `Info` sem role MD3, `TypeToggle` como segmented control, `@Preview`, N+1 de `CalculateCategorySpendingUseCaseImpl`.

@@ -50,11 +50,11 @@
 
 - [x] 7.1 `CategoriesScreen`: remover `PrimaryTabRow` + `HorizontalPager` + sincronização de pager.
 - [x] 7.2 Topbar transparente (`containerColor = colorScheme.background`, padrão `AccountsScreen`).
-- [x] 7.3 Seletor de `FilterChip` (Ativas · Despesas · Receitas · Arquivadas) em `Row`/`LazyRow` → `SelectFilter`. Materializar as opções de `CategoryFilter.entries` (não recriar lista sem `remember`).
+- [x] 7.3 Seletor (Ativas · Despesas · Receitas · Arquivadas) como `DropdownMenu` nas `actions` da top bar → `SelectFilter`, no mesmo lugar e forma do controle de mês do `AccountsScreen`. Iterar `CategoryFilter.entries` para os itens do menu.
 - [x] 7.4 Renderizar seções numa `LazyColumn` única (cabeçalho quando houver + `CategoryCard`s); card abre `ViewCategoryModal`.
 - [x] 7.5 FAB: `initialType` resolvido do filtro (EXPENSE→despesa, INCOME→receita, ACTIVE/ARCHIVED→despesa).
 - [x] 7.6 Dois empty-states distintos (D10): `EmptyDatabaseState` grande (CTA) só com banco vazio; `EmptyFilterState` compacto (texto/ícone, sem botão) para filtro vazio.
-- [x] 7.7 Strings: cabeçalhos de seção, rótulos de chip (`categories_filter_active`, `categories_filter_archived`; reusar `categories_expense`/`categories_income`), e vazio por filtro.
+- [x] 7.7 Strings: cabeçalhos de seção, rótulos das opções do seletor (`categories_filter_active`, `categories_filter_archived`; reusar `categories_expense`/`categories_income`), e vazio por filtro.
 
 ## 8. Testes
 

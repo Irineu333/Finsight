@@ -4,13 +4,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -20,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +47,6 @@ import com.neoutils.finsight.resources.summary_card_payments
 import com.neoutils.finsight.resources.summary_card_scope_accounts
 import com.neoutils.finsight.resources.summary_card_scope_all
 import com.neoutils.finsight.resources.summary_card_scope_cards
-import com.neoutils.finsight.resources.summary_card_see_invoices
 import kotlinx.datetime.YearMonth
 import org.jetbrains.compose.resources.stringResource
 
@@ -72,9 +67,6 @@ fun SummaryCard(
     onMonthSelected: (YearMonth) -> Unit,
     modifier: Modifier = Modifier,
     isCurrentMonth: Boolean = false,
-    onEditBalance: (() -> Unit)? = null,
-    onEditOpeningBalance: (() -> Unit)? = null,
-    onInvoiceClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -122,9 +114,6 @@ fun SummaryCard(
                         is BalanceOverview.Accounts -> AccountsBody(
                             overview = overview,
                             isCurrentMonth = isCurrentMonth,
-                            onEditBalance = onEditBalance,
-                            onEditOpeningBalance = onEditOpeningBalance,
-                            onInvoiceClick = onInvoiceClick,
                         )
 
                         is BalanceOverview.Cards -> CardsBody(overview)
@@ -141,15 +130,11 @@ fun SummaryCard(
 private fun ColumnScope.AccountsBody(
     overview: BalanceOverview.Accounts,
     isCurrentMonth: Boolean,
-    onEditBalance: (() -> Unit)?,
-    onEditOpeningBalance: (() -> Unit)?,
-    onInvoiceClick: (() -> Unit)?,
 ) {
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_balance),
         amount = overview.openingBalance,
         color = colorScheme.onSurface,
-        onEditClick = onEditOpeningBalance,
         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
     )
 
@@ -174,7 +159,6 @@ private fun ColumnScope.AccountsBody(
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
             color = InvoicePayment,
-            onNavigateClick = onInvoiceClick,
             signDisplay = SignDisplay.ALWAYS_NEGATIVE
         )
     }
@@ -198,22 +182,22 @@ private fun ColumnScope.AccountsBody(
         amount = overview.finalBalance,
         color = colorScheme.onSurface,
         config = SummaryRowConfig.Total,
-        onEditClick = onEditBalance,
         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
     )
 }
 
 @Composable
 private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
-    // The column runs in the ledger's own sign, like the accounts one: spending takes
-    // the balance down, a payment brings it up, and a card you owe on simply has a
-    // negative balance. Reading the card's book the other way round — debt positive —
-    // would make spending read `+90`, which is not how anyone reads a statement.
+    // The flows run in the ledger's own sign, like the accounts ones: spending takes the
+    // balance down, a payment brings it up. Reading the card's book the other way round —
+    // debt positive — would make spending read `+90`, which is not how anyone reads a
+    // statement. The two ends are the exception: a line called "debt" answers *how much
+    // is owed*, so it carries no sign at all (see [SignDisplay.OWED]).
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_debt),
         amount = overview.openingBalance,
         color = colorScheme.onSurface,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        signDisplay = SignDisplay.OWED
     )
 
     SummaryRow(
@@ -248,7 +232,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
         amount = overview.finalBalance,
         color = colorScheme.onSurface,
         config = SummaryRowConfig.Total,
-        signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
+        signDisplay = SignDisplay.OWED
     )
 }
 
@@ -417,8 +401,6 @@ private fun SummaryRow(
     amount: Double,
     color: Color,
     modifier: Modifier = Modifier,
-    onEditClick: (() -> Unit)? = null,
-    onNavigateClick: (() -> Unit)? = null,
     config: SummaryRowConfig = SummaryRowConfig.Default,
     signDisplay: SignDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
 ) {
@@ -429,87 +411,45 @@ private fun SummaryRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.then(
-                if (onNavigateClick != null) {
-                    Modifier.clickable { onNavigateClick() }
-                } else {
-                    Modifier
-                }
-            )
-        ) {
-            Text(
-                text = label,
-                style = config.labelStyle
-            )
+        Text(
+            text = label,
+            style = config.labelStyle
+        )
 
-            if (onNavigateClick != null) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = stringResource(Res.string.summary_card_see_invoices),
-                    tint = config.labelStyle.color.copy(alpha = 0.7f),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .then(
-                    if (onEditClick != null) {
-                        Modifier.clickable { onEditClick() }
-                    } else {
-                        Modifier
-                    }
-                )
-        ) {
-            if (onEditClick != null) {
-                Icon(
-                    imageVector = Icons.Rounded.ModeEdit,
-                    contentDescription = null,
-                    tint = color.copy(alpha = 0.5f),
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-
-            val formattedAmount = when (signDisplay) {
-                SignDisplay.ALWAYS_POSITIVE -> "+${formatter.format(amount)}"
-                SignDisplay.ALWAYS_NEGATIVE -> "-${formatter.format(amount)}"
-                SignDisplay.NONE -> formatter.format(amount)
-                SignDisplay.SHOW_ALWAYS -> {
-                    when {
-                        amount > 0 -> "+${formatter.format(amount)}"
-                        amount < 0 -> formatter.format(amount)
-                        else -> formatter.format(amount)
-                    }
-                }
-
-                SignDisplay.SHOW_ONLY_NEGATIVE -> {
-                    if (amount < 0) formatter.format(amount) else formatter.format(amount)
-                }
-            }
-
-            Text(
-                text = formattedAmount,
-                style = config.amountStyle.copy(color = color)
-            )
-        }
+        Text(
+            text = signDisplay.format(amount, formatter::format),
+            style = config.amountStyle.copy(color = color)
+        )
     }
 }
 
 enum class SignDisplay {
     ALWAYS_POSITIVE,
     ALWAYS_NEGATIVE,
+
+    /** The figure carries its own sign, and a positive one is spelled out. */
     SHOW_ALWAYS,
+
+    /** The figure carries its own sign, and only a negative one is visible. */
     SHOW_ONLY_NEGATIVE,
 
     /** No sign at all — an informative line that is not part of any sum. */
-    NONE
+    NONE,
+
+    /**
+     * How much is owed, from a balance in the ledger's sign: a liability you owe on is
+     * stored negative, and the line answers the magnitude of the debt. A card in credit
+     * owes nothing, so it reads zero rather than a negative debt.
+     */
+    OWED;
+
+    fun format(amount: Double, format: (Double) -> String): String = when (this) {
+        ALWAYS_POSITIVE -> "+${format(amount)}"
+        ALWAYS_NEGATIVE -> "-${format(amount)}"
+        SHOW_ALWAYS -> if (amount > 0) "+${format(amount)}" else format(amount)
+        SHOW_ONLY_NEGATIVE, NONE -> format(amount)
+        OWED -> format(maxOf(0.0, -amount))
+    }
 }
 
 data class SummaryRowConfig(

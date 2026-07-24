@@ -38,7 +38,9 @@ saldo(P, mês) = saldo(P, mês anterior) + Σ entries de P no mês
 
 As linhas de fluxo exibidas SHALL **particionar** `Σ entries de P no mês`: toda entry do perímetro no período pertence a exatamente uma linha exibida, ou a um lançamento interno ao perímetro.
 
-Cada escopo SHALL exibir a coluna inteira — abertura, fluxos e fechamento — em **um único sentido de sinal**, o do razão: o que aumenta o saldo do perímetro é positivo e o que o diminui é negativo, qualquer que seja a natureza. Um perímetro de `LIABILITY` em que se deve tem, portanto, saldo negativo, o gasto é negativo e o pagamento é positivo. MUST NOT ocorrer de os fluxos correrem em um sentido e o total no outro — é o que aconteceria ao exibir dívida positiva sobre fluxos de caixa, e a coluna deixaria de fechar aos olhos de quem a lê.
+Os **fluxos** de um escopo SHALL correr todos em **um único sentido de sinal**, o do razão: o que aumenta o saldo do perímetro é positivo e o que o diminui é negativo, qualquer que seja a natureza. Num perímetro de `LIABILITY`, portanto, o gasto é negativo e o pagamento é positivo. MUST NOT ocorrer de os fluxos correrem em um sentido e o total no outro — é o que aconteceria ao exibir dívida positiva sobre fluxos de caixa, e a coluna deixaria de fechar aos olhos de quem a lê.
+
+Uma linha de abertura ou de fechamento nomeada como **dívida** SHALL exibir *quanto se deve* — magnitude, sem sinal —, e SHALL exibir **zero** quando nada é devido. Um rótulo que pergunta "quanto devo" MUST NOT ser respondido com um número negativo. A magnitude é decisão de **apresentação**: o estado da tela SHALL continuar carregando o saldo no sinal do razão, para que a identidade aritmética permaneça verificável.
 
 Uma linha exibida fora dessa soma SHALL ser identificável como informativa — sem sinal — e MUST NOT participar do fechamento.
 
@@ -50,9 +52,17 @@ Uma linha exibida fora dessa soma SHALL ser identificável como informativa — 
 - **WHEN** o resumo do escopo "cartões" é exibido em um mês que contém ajuste de fatura
 - **THEN** o saldo final é igual ao saldo inicial subtraídos os gastos, somados os pagamentos e aplicados os ajustes
 
-#### Scenario: A coluna do cartão corre no mesmo sentido da conta
+#### Scenario: Os fluxos do cartão correm no mesmo sentido dos da conta
 - **WHEN** o resumo do escopo "cartões" é exibido
-- **THEN** o gasto aparece negativo e o pagamento positivo, como em qualquer extrato, e o total abaixo deles está no mesmo sentido
+- **THEN** o gasto aparece negativo e o pagamento positivo, como em qualquer extrato
+
+#### Scenario: A dívida é exibida como magnitude
+- **WHEN** o perímetro de cartões deve 120 no início do mês e 75 no fim
+- **THEN** as linhas de dívida inicial e final exibem 120 e 75, sem sinal
+
+#### Scenario: Cartão sem dívida
+- **WHEN** o perímetro de cartões não deve nada — saldo zero ou a favor do usuário
+- **THEN** a linha de dívida exibe zero, e não um valor negativo
 
 #### Scenario: Escopo geral fecha
 - **WHEN** o resumo do escopo geral é exibido

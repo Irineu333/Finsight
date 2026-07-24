@@ -56,3 +56,10 @@
 - [x] 6.7 O filtro de parcelas não é oferecido no escopo contas, e deixa de recortar a lista quando não é oferecido — a mesma regra do filtro de alvo, generalizada na spec
 - [x] 6.8 Simetria vertical da tela: o `contentPadding` da lista era `top = 8, bottom = 16` — os 8 vinham do `padding(vertical = 8)` do `topBar` removido e ficaram órfãos
 - [x] 6.9 Simetria vertical do card: o respiro próprio do chip empilhava sobre o padding do card, dando 26 acima contra 20 abaixo. O padding superior passa a descontá-lo (`20.dp - CHIP_INSET`), com o valor extraído para uma constante para que os dois lugares não divirjam
+
+## 7. Correções da verificação
+
+- [x] 7.1 Teste: um filtro que o escopo deixa de oferecer (parcelas e alvo) para de recortar a lista — o cenário que 6.7 criou estava sem rede
+- [x] 7.2 Dívida inicial e final são exibidas como **magnitude do que se deve**, zero quando nada é devido (`SignDisplay.OWED`); os fluxos seguem no sinal do razão de 6.5. O modelo continua no sinal do razão, para a identidade seguir verificável — spec e D2 atualizadas
+- [x] 7.3 `SummaryRow` perde `onEditClick`/`onNavigateClick` e o `SummaryCard` perde `onEditBalance`/`onEditOpeningBalance`/`onInvoiceClick`: nenhum call site os passava, e `summary_card_see_invoices` ficava sem leitor
+- [x] 7.4 `SignDisplay` passa a formatar a si mesmo, sem os ramos em que os dois lados do `if` eram idênticos

@@ -524,7 +524,6 @@
     <string name="summary_card_adjustments">Ajustes</string>
     <string name="summary_card_current_balance">Saldo Atual</string>
     <string name="summary_card_final_balance">Saldo Final</string>
-    <string name="summary_card_see_invoices">Ver faturas</string>
 
     <string name="summary_card_scope_all">Geral</string>
     <string name="summary_card_scope_accounts">Contas</string>

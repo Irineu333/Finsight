@@ -106,6 +106,23 @@ tela promete é a mesma que o usuário consegue conferir de cabeça. `displaySig
 sendo a regra do razão para uma figura isolada; o que ela não é é a regra de uma coluna
 que soma.
 
+**As duas pontas são a exceção, e por causa do rótulo.** "Dívida Inicial: −R$ 120,00"
+pergunta *quanto devo* e responde com um número negativo. As linhas de abertura e
+fechamento do escopo Cartões passam a exibir a **magnitude do que se deve** — zero quando
+nada é devido —, enquanto os fluxos entre elas seguem no sinal do razão. A coluna deixa de
+fechar por soma visível, e é o preço aceito: quem lê um extrato de cartão lê os fluxos como
+movimento e as pontas como dívida, não como um saldo assinado.
+
+Isso é decisão de **apresentação**, não de modelo: `BalanceOverview.Cards` continua
+carregando o saldo no sinal do razão — é o que mantém `saldo(m) = saldo(m−1) − gastos +
+pagamentos + adj` verificável em teste — e o `SummaryCard` aplica a magnitude via
+`SignDisplay.OWED`. Um modelo que já guardasse a dívida positiva perderia a identidade e,
+com ela, a rede de segurança da change.
+
+Alternativa descartada: **coluna inteira em dívida positiva** (gasto `+90`, pagamento
+`−120`), que fecharia de cabeça. É exatamente o que 6.5 reverteu: gasto lido como positivo
+não é como se lê um extrato.
+
 ### D3 — `LiabilityMonthFlows` ganha `adjustment`, por simetria e por necessidade
 
 A query de `liabilityMonthTotals` classifica só `eq = 0` (`EntryDao.kt:275-289`): um ajuste de fatura não cai em `expense` nem em `payment`, e desaparece. A irmã `assetMonthTotals` tem o ramo `eq = 1`. Hoje a assimetria é invisível porque nenhuma tela tenta fechar a conta do cartão; com a change ela quebraria **dois** escopos — Cartões e Geral, cuja linha "Ajustes" é `adjA + adjL`.

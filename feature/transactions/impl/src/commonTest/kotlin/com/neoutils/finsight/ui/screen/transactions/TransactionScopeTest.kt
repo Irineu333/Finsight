@@ -8,6 +8,7 @@ import com.neoutils.finsight.domain.model.AccountType
 import com.neoutils.finsight.domain.model.Category
 import com.neoutils.finsight.domain.model.Entry
 import com.neoutils.finsight.domain.model.Transaction
+import com.neoutils.finsight.domain.model.TransactionTarget
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.icons.CategoryLazyIcon
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
@@ -263,5 +264,52 @@ class TransactionScopeTest {
         assertEquals(true, stateUnder(TransactionScope.ALL).mustShowTargetFilter)
         assertEquals(false, stateUnder(TransactionScope.ACCOUNTS).mustShowTargetFilter)
         assertEquals(false, stateUnder(TransactionScope.CARDS).mustShowTargetFilter)
+    }
+
+    @Test
+    fun `the instalment filter stops narrowing in the scope that stops offering it`() = runTest(dispatcher) {
+        val onlyInstalments = listOf(TransactionsAction.ToggleInstallment(true))
+
+        // In the overall scope it does narrow — nothing this month is an instalment —
+        // so the assertion below is about the filter being dropped, not about it being
+        // harmless to begin with.
+        val narrowed = stateUnder(
+            TransactionScope.ALL,
+            actions = onlyInstalments,
+            settled = { it.showInstallmentOnly },
+        )
+        assertEquals(emptyList(), narrowed.listed)
+
+        val accounts = stateUnder(
+            TransactionScope.ACCOUNTS,
+            actions = onlyInstalments,
+        )
+
+        assertEquals(false, accounts.mustShowInstallmentFilter, "it is no longer offered")
+        assertEquals(false, accounts.showInstallmentOnly)
+        assertEquals(
+            stateUnder(TransactionScope.ACCOUNTS).listed.toSet(),
+            accounts.listed.toSet(),
+            "and it no longer cuts: an invisible filter is indistinguishable from a short list",
+        )
+    }
+
+    @Test
+    fun `the target filter stops narrowing in the scope that stops offering it`() = runTest(dispatcher) {
+        val cardsOnly = listOf(TransactionsAction.SelectTarget(TransactionTarget.CREDIT_CARD))
+
+        val narrowed = stateUnder(
+            TransactionScope.ALL,
+            actions = cardsOnly,
+            settled = { it.selectedTarget == TransactionTarget.CREDIT_CARD },
+        )
+        assertEquals(setOf(cardPurchase, invoicePayment, invoiceAdjustment), narrowed.listed.toSet())
+
+        // Contradictory on its face — accounts under a card filter — which is why the
+        // scope drops it instead of letting the two controls disagree.
+        val accounts = stateUnder(TransactionScope.ACCOUNTS, actions = cardsOnly)
+
+        assertNull(accounts.selectedTarget)
+        assertEquals(stateUnder(TransactionScope.ACCOUNTS).listed.toSet(), accounts.listed.toSet())
     }
 }

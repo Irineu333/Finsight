@@ -84,7 +84,6 @@ import com.neoutils.finsight.resources.accounts_more_options_content_description
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
 import com.neoutils.finsight.resources.accounts_view_archived
-import com.neoutils.finsight.resources.retire_action_unavailable_default
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
@@ -387,60 +386,43 @@ private fun AccountActions(
 ) {
     val modalManager = LocalModalManager.current
 
-    val editButton = @Composable { buttonModifier: Modifier ->
-        OutlinedActionButton(
-            label = stringResource(Res.string.accounts_edit),
-            icon = Icons.Default.Edit,
-            contentColor = Info,
-            onClick = {
-                modalManager.show(AccountFormModal(account))
-            },
-            modifier = buttonModifier,
-        )
-    }
-
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // The default account offers no retire at all — the third case owned by
-        // `accountRetireOfferOf`. The domain refuses it too (CANNOT_ARCHIVE_DEFAULT);
-        // here we replace the button with guidance to elect another default first,
-        // and the edit button takes the full width the retire button vacated.
-        when (retireOffer) {
-            is AccountRetireOffer.Retire -> Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Which of the two is offered is a presentation rule (`retireActionOf`);
-                // which one actually happens is the ledger's, in ArchiveAccountUseCase.
-                OutlinedActionButton(
-                    label = stringResource(retireOffer.action.label),
-                    icon = retireOffer.action.icon,
-                    contentColor = Expense,
-                    onClick = {
-                        modalManager.show(
-                            when (retireOffer.action) {
-                                RetireAction.DELETE -> DeleteAccountModal(account)
-                                RetireAction.ARCHIVE -> ArchiveAccountModal(account)
-                            }
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Which of the two is offered is a presentation rule (`retireActionOf`);
+            // which one actually happens is the ledger's, in ArchiveAccountUseCase.
+            // The default account shows the action disabled — it cannot be retired,
+            // and the domain refuses it too (CANNOT_ARCHIVE_DEFAULT).
+            OutlinedActionButton(
+                label = stringResource(retireOffer.action.label),
+                icon = retireOffer.action.icon,
+                contentColor = Expense,
+                enabled = retireOffer is AccountRetireOffer.Retire,
+                onClick = {
+                    modalManager.show(
+                        when (retireOffer.action) {
+                            RetireAction.DELETE -> DeleteAccountModal(account)
+                            RetireAction.ARCHIVE -> ArchiveAccountModal(account)
+                        }
+                    )
+                },
+                modifier = Modifier.weight(1f),
+            )
 
-                editButton(Modifier.weight(1f))
-            }
-
-            AccountRetireOffer.UnavailableDefault -> {
-                editButton(Modifier.fillMaxWidth())
-                Text(
-                    text = stringResource(Res.string.retire_action_unavailable_default),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            OutlinedActionButton(
+                label = stringResource(Res.string.accounts_edit),
+                icon = Icons.Default.Edit,
+                contentColor = Info,
+                onClick = {
+                    modalManager.show(AccountFormModal(account))
+                },
+                modifier = Modifier.weight(1f),
+            )
         }
 
         if (canTransfer) {

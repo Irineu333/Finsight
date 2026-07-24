@@ -11,9 +11,15 @@ import kotlin.test.assertEquals
 class AccountRetireOfferTest {
 
     @Test
-    fun `the default account offers no retire`() {
-        assertEquals(AccountRetireOffer.UnavailableDefault, accountRetireOfferOf(hasMovement = false, isDefault = true))
-        assertEquals(AccountRetireOffer.UnavailableDefault, accountRetireOfferOf(hasMovement = true, isDefault = true))
+    fun `the default account cannot be retired but still names the action for a disabled button`() {
+        assertEquals(
+            AccountRetireOffer.UnavailableDefault(RetireAction.DELETE),
+            accountRetireOfferOf(hasMovement = false, isDefault = true),
+        )
+        assertEquals(
+            AccountRetireOffer.UnavailableDefault(RetireAction.ARCHIVE),
+            accountRetireOfferOf(hasMovement = true, isDefault = true),
+        )
     }
 
     @Test

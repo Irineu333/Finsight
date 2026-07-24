@@ -231,8 +231,6 @@
     <string name="accounts_archived_empty">No archived accounts</string>
     <string name="account_unarchive">Unarchive</string>
     <string name="account_archived">Archived</string>
-    <!-- Reads as guidance, not a button label. -->
-    <string name="retire_action_unavailable_default">This is the default account. Choose another account as the default before archiving or deleting it.</string>
     <string name="accounts_more_options_content_description">More options</string>
     <string name="accounts_navigate_back_content_description">Back</string>
     <string name="accounts_filter_category">Category</string>

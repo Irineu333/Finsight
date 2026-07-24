@@ -62,4 +62,11 @@
 
 - [x] 9.1 `openspec validate unarchive-accounts --strict`.
 - [x] 9.2 `./gradlew :app:shared:testDebugUnitTest` verde (inclui os 7 fakes patchados de 3.4, 4 fora de accounts).
-- [ ] 9.3 Conferir na tela: eleger outra padrão → arquivar a antiga → some da tela ativa → overflow "Arquivadas" → abrir conta → Desarquivar → reaparece nas contas e nos seletores; a padrão vigente não oferece retirar (mostra orientação), e o domínio recusaria com `CANNOT_ARCHIVE_DEFAULT`.
+- [ ] 9.3 Conferir na tela: eleger outra padrão → arquivar a antiga → some da tela ativa → overflow "Arquivadas" → abrir conta → Desarquivar → reaparece nas contas e nos seletores; a padrão vigente não oferece retirar (botão desabilitado), e o domínio recusaria com `CANNOT_ARCHIVE_DEFAULT`.
+
+## 10. Ajuste pós-implementação (UX da conta padrão)
+
+- [x] 10.1 Feedback do usuário: o parágrafo de orientação (`retire_action_unavailable_default`) embaixo do card, na conta padrão inicialmente selecionada, ficou mal posicionado. Voltar ao padrão anterior: **exibir o botão de retirar desabilitado** (como o antigo `enabled = !isDefault`), em vez do texto de orientação.
+- [x] 10.2 `AccountRetireOffer.UnavailableDefault` passa a carregar a `RetireAction` (rótulo/ícone para o botão desabilitado); `RetireAction`/`retireActionOf` e as telas de cartão/categoria seguem intocados. `AccountActions` volta ao `Row` de dois botões `weight(1f)`, com o retirar `enabled = retireOffer is Retire`.
+- [x] 10.3 Remover a string órfã `retire_action_unavailable_default` (pt/en) e o import. Atualizar `AccountRetireOfferTest`. `:core:ui:jvmTest` e `:feature:accounts:impl:jvmTest` verdes; `:feature:accounts:impl:compileDebugKotlinAndroid` ok.
+- Nota: a orientação proativa na tela sai; a proteção segue no domínio (`CANNOT_ARCHIVE_DEFAULT`) e o status é comunicado pelo badge "Padrão" + botão desabilitado. A frase do spec sobre "apresentar a orientação" pode ser suavizada antes de arquivar (pendente de decisão).

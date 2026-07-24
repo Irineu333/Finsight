@@ -17,6 +17,8 @@ data class AccountUi(
     // Whether the account has any ledger movement. The ledger decides whether it
     // can be removed; this is only the fact the screen needs to name the action.
     val hasMovement: Boolean = false,
+    // The default account cannot be retired at all — a third case of the offer.
+    val isDefault: Boolean = false,
 ) {
-    val retireAction: RetireAction get() = retireActionOf(hasMovement)
+    val retireOffer: AccountRetireOffer get() = accountRetireOfferOf(hasMovement, isDefault)
 }

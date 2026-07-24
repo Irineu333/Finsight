@@ -14,6 +14,7 @@
     <string name="account_error_has_balance">This account still has a balance. Transfer, spend or adjust it before archiving the account.</string>
     <string name="account_error_has_recurring">Recurring entries depend on this. Point them elsewhere or stop them before deleting.</string>
     <string name="account_error_has_budget">This category is in a budget. Remove it from the budget before deleting.</string>
+    <string name="account_error_cannot_archive_default">The default account cannot be archived. Choose another account as the default first.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">Category name cannot be empty.</string>
@@ -224,6 +225,16 @@
     <string name="error_modal_dismiss">Got it</string>
     <string name="accounts_edit">Edit</string>
     <string name="accounts_transfer">Transfer</string>
+    <!-- Archived accounts -->
+    <string name="accounts_view_archived">Archived</string>
+    <string name="accounts_archived_title">Archived accounts</string>
+    <string name="accounts_archived_empty">No archived accounts</string>
+    <string name="account_unarchive">Unarchive</string>
+    <string name="account_archived">Archived</string>
+    <!-- Reads as guidance, not a button label. -->
+    <string name="retire_action_unavailable_default">This is the default account. Choose another account as the default before archiving or deleting it.</string>
+    <string name="accounts_more_options_content_description">More options</string>
+    <string name="accounts_navigate_back_content_description">Back</string>
     <string name="accounts_filter_category">Category</string>
     <string name="accounts_filter_category_all">All</string>
     <string name="accounts_filter_type">Type</string>

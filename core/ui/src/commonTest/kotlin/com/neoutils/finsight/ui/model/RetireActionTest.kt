@@ -23,7 +23,9 @@ class RetireActionTest {
             id = 1, openingBalance = 0.0, balance = 0.0, income = 0.0,
             expense = 0.0, adjustment = 0.0, settlement = 0.0, hasMovement = true,
         )
-        assertEquals(RetireAction.ARCHIVE, moved.retireAction)
-        assertEquals(RetireAction.DELETE, moved.copy(hasMovement = false).retireAction)
+        // A non-default account still exposes the shared archive-vs-delete rule, now
+        // wrapped in AccountRetireOffer.Retire (see AccountRetireOfferTest).
+        assertEquals(AccountRetireOffer.Retire(RetireAction.ARCHIVE), moved.retireOffer)
+        assertEquals(AccountRetireOffer.Retire(RetireAction.DELETE), moved.copy(hasMovement = false).retireOffer)
     }
 }

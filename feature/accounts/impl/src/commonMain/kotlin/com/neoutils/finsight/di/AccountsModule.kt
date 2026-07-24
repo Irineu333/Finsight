@@ -16,6 +16,7 @@ import com.neoutils.finsight.domain.usecase.DeleteAccountUseCaseImpl
 import com.neoutils.finsight.domain.usecase.EnsureDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.SetDefaultAccountUseCase
 import com.neoutils.finsight.domain.usecase.TransferBetweenAccountsUseCase
+import com.neoutils.finsight.domain.usecase.UnarchiveAccountUseCase
 import com.neoutils.finsight.domain.usecase.UpdateAccountUseCase
 import com.neoutils.finsight.domain.usecase.ValidateAccountNameUseCase
 import com.neoutils.finsight.extension.toYearMonth
@@ -26,7 +27,9 @@ import com.neoutils.finsight.ui.modal.archiveAccount.ArchiveAccountViewModel
 import com.neoutils.finsight.ui.modal.deleteAccount.DeleteAccountViewModel
 import com.neoutils.finsight.ui.modal.editAccountBalance.EditAccountBalanceViewModel
 import com.neoutils.finsight.ui.modal.transferBetweenAccounts.TransferBetweenAccountsViewModel
+import com.neoutils.finsight.ui.modal.viewAccount.ViewAccountViewModel
 import com.neoutils.finsight.ui.screen.accounts.AccountsViewModel
+import com.neoutils.finsight.ui.screen.archived.ArchivedAccountsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import kotlin.time.Clock
@@ -71,6 +74,7 @@ val accountsModule = module {
             recurringRepository = get(),
         )
     }
+    factory { UnarchiveAccountUseCase(repository = get()) }
     factory {
         AdjustBalanceUseCase(
             transactionRepository = get(),
@@ -143,6 +147,19 @@ val accountsModule = module {
             modalManager = get(),
             analytics = get(),
             crashlytics = get(),
+        )
+    }
+    viewModel {
+        ViewAccountViewModel(
+            accountId = it.get(),
+            accountRepository = get(),
+            unarchiveAccount = get(),
+            crashlytics = get(),
+        )
+    }
+    viewModel {
+        ArchivedAccountsViewModel(
+            accountRepository = get(),
         )
     }
     viewModel {

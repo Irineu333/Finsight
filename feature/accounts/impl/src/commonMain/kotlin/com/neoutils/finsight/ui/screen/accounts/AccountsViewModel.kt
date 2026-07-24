@@ -101,6 +101,7 @@ class AccountsViewModel(
                 adjustment = flows.adjustment,
                 settlement = flows.settlement,
                 hasMovement = entryRepository.hasEntries(account.id),
+                isDefault = account.isDefault,
             )
         }
     }

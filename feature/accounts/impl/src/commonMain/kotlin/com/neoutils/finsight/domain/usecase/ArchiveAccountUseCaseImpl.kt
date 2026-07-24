@@ -15,6 +15,15 @@ class ArchiveAccountUseCaseImpl(
 ) : ArchiveAccountUseCase {
 
     override suspend fun invoke(account: Account): Either<Throwable, Unit> {
+        // The default account must never be retired: the app must always have one, and
+        // archiving it would leave none. The user resolves the *role* first, electing
+        // another default (`SetDefaultAccountUseCase`), just as they resolve the balance
+        // before archiving. Mirrors the identical guard in `DeleteAccountUseCaseImpl`.
+        // Account-only: a card's LIABILITY account is never `isDefault`, so this shared
+        // use case never refuses a card here.
+        if (account.isDefault) {
+            return AccountException(AccountError.CANNOT_ARCHIVE_DEFAULT).left()
+        }
         // Only a *permanent* account can hold money that archiving would strand, and
         // archiving does not invent a write-off to zero it: that would put a movement
         // the user never made into their history, replacing the one fact only they

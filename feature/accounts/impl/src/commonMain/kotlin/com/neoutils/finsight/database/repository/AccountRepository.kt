@@ -69,4 +69,6 @@ class AccountRepository(
     override suspend fun delete(account: Account) {
         dao.delete(mapper.toEntity(account))
     }
+
+    override suspend fun reopen(accountId: Long) = dao.reopen(accountId)
 }

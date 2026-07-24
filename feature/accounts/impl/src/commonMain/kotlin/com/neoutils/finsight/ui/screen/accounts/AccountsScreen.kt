@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.rounded.ModeEdit
 import androidx.compose.material3.*
@@ -48,8 +49,11 @@ import com.neoutils.finsight.domain.model.TransactionType
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
 import com.neoutils.finsight.ui.component.AccountCard
 import com.neoutils.finsight.ui.component.AccountCardVariant
+import com.neoutils.finsight.navigation.LocalNavController
+import com.neoutils.finsight.ui.model.AccountRetireOffer
 import com.neoutils.finsight.ui.model.AccountUi
 import com.neoutils.finsight.ui.model.TransactionPerspective
+import com.neoutils.finsight.ui.navigation.ArchivedAccountsRoute
 import com.neoutils.finsight.ui.component.LocalDetailPaneController
 import com.neoutils.finsight.ui.component.LocalModalManager
 import com.neoutils.finsight.feature.transactions.api.TransactionsEntry
@@ -76,8 +80,11 @@ import com.neoutils.finsight.resources.accounts_filter_type_adjustment
 import com.neoutils.finsight.resources.accounts_filter_type_all
 import com.neoutils.finsight.resources.accounts_filter_type_expense
 import com.neoutils.finsight.resources.accounts_filter_type_income
+import com.neoutils.finsight.resources.accounts_more_options_content_description
 import com.neoutils.finsight.resources.accounts_title
 import com.neoutils.finsight.resources.accounts_transfer
+import com.neoutils.finsight.resources.accounts_view_archived
+import com.neoutils.finsight.resources.retire_action_unavailable_default
 import com.neoutils.finsight.resources.transactions_filter_recurring
 import com.neoutils.finsight.ui.theme.Expense
 import org.jetbrains.compose.resources.stringResource
@@ -148,6 +155,32 @@ private fun AccountsContent(
                             onAction(AccountsAction.SelectMonth(selected))
                         }
                     )
+
+                    // The MonthSelector already owns the actions slot, so archived
+                    // accounts are reached from an overflow menu beside it — mirroring
+                    // the credit cards screen's gesture (design D6).
+                    val navController = LocalNavController.current
+                    var expanded by remember { mutableStateOf(false) }
+
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(Res.string.accounts_more_options_content_description),
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.accounts_view_archived)) },
+                            onClick = {
+                                expanded = false
+                                navController.navigate(ArchivedAccountsRoute)
+                            }
+                        )
+                    }
                 }
             )
         },
@@ -229,7 +262,7 @@ private fun AccountsContent(
                     ) {
                         AccountActions(
                             account = uiState.domainAccounts[uiState.selectedAccountIndex],
-                            retireAction = uiState.accounts[uiState.selectedAccountIndex].retireAction,
+                            retireOffer = uiState.accounts[uiState.selectedAccountIndex].retireOffer,
                             canTransfer = uiState.accounts.size > 1,
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
@@ -348,47 +381,66 @@ private fun AccountPager(
 @Composable
 private fun AccountActions(
     account: Account,
-    retireAction: RetireAction,
+    retireOffer: AccountRetireOffer,
     canTransfer: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val modalManager = LocalModalManager.current
 
+    val editButton = @Composable { buttonModifier: Modifier ->
+        OutlinedActionButton(
+            label = stringResource(Res.string.accounts_edit),
+            icon = Icons.Default.Edit,
+            contentColor = Info,
+            onClick = {
+                modalManager.show(AccountFormModal(account))
+            },
+            modifier = buttonModifier,
+        )
+    }
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Which of the two is offered is a presentation rule (`retireActionOf`);
-            // which one actually happens is the ledger's, in ArchiveAccountUseCase.
-            OutlinedActionButton(
-                label = stringResource(retireAction.label),
-                icon = retireAction.icon,
-                contentColor = Expense,
-                enabled = !account.isDefault,
-                onClick = {
-                    modalManager.show(
-                        when (retireAction) {
-                            RetireAction.DELETE -> DeleteAccountModal(account)
-                            RetireAction.ARCHIVE -> ArchiveAccountModal(account)
-                        }
-                    )
-                },
-                modifier = Modifier.weight(1f),
-            )
+        // The default account offers no retire at all — the third case owned by
+        // `accountRetireOfferOf`. The domain refuses it too (CANNOT_ARCHIVE_DEFAULT);
+        // here we replace the button with guidance to elect another default first,
+        // and the edit button takes the full width the retire button vacated.
+        when (retireOffer) {
+            is AccountRetireOffer.Retire -> Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Which of the two is offered is a presentation rule (`retireActionOf`);
+                // which one actually happens is the ledger's, in ArchiveAccountUseCase.
+                OutlinedActionButton(
+                    label = stringResource(retireOffer.action.label),
+                    icon = retireOffer.action.icon,
+                    contentColor = Expense,
+                    onClick = {
+                        modalManager.show(
+                            when (retireOffer.action) {
+                                RetireAction.DELETE -> DeleteAccountModal(account)
+                                RetireAction.ARCHIVE -> ArchiveAccountModal(account)
+                            }
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                )
 
-            OutlinedActionButton(
-                label = stringResource(Res.string.accounts_edit),
-                icon = Icons.Default.Edit,
-                contentColor = Info,
-                onClick = {
-                    modalManager.show(AccountFormModal(account))
-                },
-                modifier = Modifier.weight(1f),
-            )
+                editButton(Modifier.weight(1f))
+            }
+
+            AccountRetireOffer.UnavailableDefault -> {
+                editButton(Modifier.fillMaxWidth())
+                Text(
+                    text = stringResource(Res.string.retire_action_unavailable_default),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         if (canTransfer) {

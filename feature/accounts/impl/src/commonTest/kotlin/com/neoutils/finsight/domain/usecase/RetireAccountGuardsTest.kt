@@ -65,6 +65,18 @@ class RetireAccountGuardsTest {
     }
 
     @Test
+    fun `archiving the default account is refused before anything else`() = runTest {
+        val ledger = FakeEntries(hasEntries = false, balance = 0.0)
+        val dao = RecordingAccountDao()
+        val useCase = ArchiveAccountUseCaseImpl(accountDao = dao, entryRepository = ledger)
+
+        val error = assertIs<AccountException>(useCase(account.copy(isDefault = true)).leftOrNull())
+
+        assertEquals(AccountError.CANNOT_ARCHIVE_DEFAULT, error.error)
+        assertTrue(dao.closed.isEmpty(), "the default account must stay open")
+    }
+
+    @Test
     fun `closing an account with a balance is refused and nothing is written`() = runTest {
         val ledger = FakeEntries(hasEntries = true, balance = 100.0)
         val dao = RecordingAccountDao()
@@ -167,7 +179,9 @@ private class FakeRecurring(private val hasRecurring: Boolean = false) : IRecurr
 
 private class RecordingAccountRepository : IAccountRepository {
     val deleted = mutableListOf<Long>()
+    val reopened = mutableListOf<Long>()
     override suspend fun delete(account: Account) { deleted += account.id }
+    override suspend fun reopen(accountId: Long) { reopened += accountId }
     override fun observeAllAccounts(): Flow<List<Account>> = flowOf(emptyList())
     override suspend fun getAllAccounts(): List<Account> = emptyList()
     override suspend fun getAllAccountsIncludingClosed(): List<Account> = emptyList()

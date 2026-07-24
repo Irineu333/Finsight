@@ -15,6 +15,7 @@
     <!-- Neutral wording: the same guard refuses deleting an account and a card. -->
     <string name="account_error_has_recurring">Há recorrências que dependem disto. Aponte-as para outro destino ou encerre-as antes de excluir.</string>
     <string name="account_error_has_budget">Esta categoria está em um orçamento. Remova-a do orçamento antes de excluir.</string>
+    <string name="account_error_cannot_archive_default">Não é possível arquivar a conta padrão. Escolha outra conta como padrão antes.</string>
 
     <!-- Category errors -->
     <string name="category_error_empty_name">O nome da categoria não pode ser vazio.</string>
@@ -228,6 +229,16 @@
     <string name="error_modal_dismiss">Entendi</string>
     <string name="accounts_edit">Editar</string>
     <string name="accounts_transfer">Transferir</string>
+    <!-- Archived accounts -->
+    <string name="accounts_view_archived">Arquivadas</string>
+    <string name="accounts_archived_title">Contas arquivadas</string>
+    <string name="accounts_archived_empty">Nenhuma conta arquivada</string>
+    <string name="account_unarchive">Desarquivar</string>
+    <string name="account_archived">Arquivada</string>
+    <!-- Reads as guidance, not a button label. -->
+    <string name="retire_action_unavailable_default">Esta é a conta padrão. Escolha outra conta como padrão antes de arquivá-la ou excluí-la.</string>
+    <string name="accounts_more_options_content_description">Mais opções</string>
+    <string name="accounts_navigate_back_content_description">Voltar</string>
     <string name="accounts_filter_category">Categoria</string>
     <string name="accounts_filter_category_all">Todas</string>
     <string name="accounts_filter_type">Tipo</string>

@@ -32,4 +32,11 @@ interface IAccountRepository {
     suspend fun insert(account: Account): Long
     suspend fun update(account: Account)
     suspend fun delete(account: Account)
+
+    /**
+     * The inverse of closing an account: flips the `isArchived` flag back off and
+     * touches nothing else — no entry. Safe by invariant, since archiving already
+     * required a zero balance.
+     */
+    suspend fun reopen(accountId: Long)
 }

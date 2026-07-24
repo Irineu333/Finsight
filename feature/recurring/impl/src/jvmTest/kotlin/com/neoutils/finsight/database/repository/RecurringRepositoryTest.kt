@@ -71,6 +71,7 @@ class RecurringRepositoryTest {
         override suspend fun insert(account: Account): Long = throw NotImplementedError()
         override suspend fun update(account: Account) = throw NotImplementedError()
         override suspend fun delete(account: Account) = throw NotImplementedError()
+        override suspend fun reopen(accountId: Long) = throw NotImplementedError()
     }
 
     private val creditCardRepository = object : ICreditCardRepository {

@@ -2,6 +2,7 @@ package com.neoutils.finsight.database.repository
 
 import com.neoutils.finsight.database.dao.EntryDao
 import com.neoutils.finsight.database.entity.EntryEntity
+import com.neoutils.finsight.domain.model.AccountType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -15,6 +16,18 @@ class EntryRepositoryTest {
     fun `given account entries when balanceUpTo then cents are converted to reais`() = runTest {
         val repository = EntryRepository(FakeReadEntryDao(balanceUpTo = -12000))
         assertEquals(-120.0, repository.balanceUpTo(YearMonth(2026, 1), accountId = 1))
+    }
+
+    @Test
+    fun `given no account when balanceUpTo then it reads the ASSET nature, one path only`() = runTest {
+        val repository = EntryRepository(FakeReadEntryDao(byType = mapOf("ASSET" to 8_200)))
+        assertEquals(82.0, repository.balanceUpTo(YearMonth(2026, 2)))
+    }
+
+    @Test
+    fun `given liabilities when naturalBalanceUpTo then the same mechanism serves them`() = runTest {
+        val repository = EntryRepository(FakeReadEntryDao(byType = mapOf("LIABILITY" to -4_500)))
+        assertEquals(-45.0, repository.naturalBalanceUpTo(YearMonth(2026, 3), AccountType.LIABILITY))
     }
 
     @Test
@@ -34,13 +47,13 @@ class EntryRepositoryTest {
 
 private class FakeReadEntryDao(
     private val balanceUpTo: Long = 0,
-    private val assets: Long = 0,
+    private val byType: Map<String, Long> = emptyMap(),
     private val inMonth: Long = 0,
     private val invoice: Long = 0,
     private val netWorth: Long = 0,
 ) : EntryDao {
     override suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long = balanceUpTo
-    override suspend fun assetsBalanceUpToMonth(yearMonth: String): Long = assets
+    override suspend fun balanceUpToMonthByType(type: String, yearMonth: String): Long = byType.getValue(type)
     override suspend fun dimensionBalanceInMonth(dimensionId: Long, yearMonth: String): Long = inMonth
     override suspend fun dimensionNaturalBalance(dimensionId: Long): Long = invoice
     override suspend fun naturalBalanceByDimension(dimensionIds: List<Long>): List<com.neoutils.finsight.database.dao.DimensionTotal> =

@@ -129,6 +129,7 @@ class FakeTransactionRepository(private val ledger: LedgerStore) : ITransactionR
 
 class FakeEntryRepository(private val ledger: LedgerStore) : IEntryRepository {
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = ledger.accountBalance()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
 
     override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()

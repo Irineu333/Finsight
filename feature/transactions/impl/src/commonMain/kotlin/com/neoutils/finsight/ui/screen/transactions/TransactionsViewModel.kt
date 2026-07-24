@@ -12,7 +12,6 @@ import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import com.neoutils.finsight.ui.model.TransactionFacadeLookup
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +19,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.datetime.minusMonth
-import kotlinx.datetime.plusMonth
 import kotlinx.datetime.yearMonth
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -34,10 +31,15 @@ class TransactionsViewModel(
     private val categoryRepository: ICategoryRepository,
     private val installmentRepository: IInstallmentRepository,
     private val entryRepository: IEntryRepository,
-    private val calculateBalanceUseCase: CalculateBalanceUseCase,
 ) : ViewModel() {
 
     private val selectedYearMonth = MutableStateFlow(Clock.System.now().toYearMonth())
+
+    /**
+     * The screen opens on the whole of the user's money, so the list stays exactly what
+     * it was before the scope existed and the summary is what changes to explain it.
+     */
+    private val selectedScope = MutableStateFlow(TransactionScope.ALL)
 
     private val filters = MutableStateFlow(
         TransactionsFilters(
@@ -54,29 +56,25 @@ class TransactionsViewModel(
         // data, not a selector for a new transaction (which stays open-only).
         categoryRepository.observeAllCategoriesIncludingClosed(),
         installmentRepository.observeAllInstallments(),
-        selectedYearMonth,
+        combine(selectedYearMonth, selectedScope, ::Pair),
         filters
-    ) { transactions, categories, installments, yearMonth, filters ->
-        // Month-wide income/expense/adjustment across the user's ASSET accounts, from
-        // the ledger — transfers and card payments are excluded there, not re-derived
-        // over the loaded list (spec `ledger-reporting`). Reactive because
-        // observeAllTransactions() re-runs this block on every ledger write.
-        val stats = entryRepository.assetMonthFlows(yearMonth)
+    ) { transactions, categories, installments, (yearMonth, scope), filters ->
+        // Every figure comes from the ledger, per scope — never summed over the loaded
+        // list (spec `ledger-reporting`). Reactive because observeAllTransactions()
+        // re-runs this block on every ledger write, and on scope or month change.
+        val balanceOverview = entryRepository.balanceOverview(scope, yearMonth)
+
+        // The scope decides between account and card; offering the chip as well would
+        // be the same decision twice, able to contradict itself.
+        val target = filters.target.takeIf { scope == TransactionScope.ALL }
+
+        // Same rule for instalments, which only exist on a card: a filter the scope no
+        // longer offers must stop narrowing too, or it would go on cutting invisibly.
+        val installmentOnly = filters.installmentOnly && scope != TransactionScope.ACCOUNTS
 
         TransactionsUiState(
-            balanceOverview = TransactionsUiState.BalanceOverview(
-                income = stats.income,
-                expense = stats.expense,
-                adjustment = stats.adjustment,
-                // Month-wide card payments from the ledger (D12), not summed from the
-                // loaded list. Reactive because observeAllTransactions() above re-runs
-                // this block on every ledger write, and on month change.
-                payment = entryRepository.liabilityMonthFlows(yearMonth).payment,
-                // Opening/final balances from the ledger (task 4.11): Σ entries of all
-                // ASSET accounts up to the previous / selected month.
-                openingBalance = calculateBalanceUseCase(target = yearMonth.minusMonth()),
-                finalBalance = calculateBalanceUseCase(target = yearMonth),
-            ),
+            balanceOverview = balanceOverview,
+            selectedScope = scope,
             selectedYearMonth = yearMonth,
             categories = categories,
             // The list still shows a category icon and an installment badge; the
@@ -84,15 +82,18 @@ class TransactionsViewModel(
             facadeLookup = TransactionFacadeLookup.of(categories, installments),
             selectedCategory = filters.category,
             selectedLabel = filters.label,
-            selectedTarget = filters.target,
+            selectedTarget = target,
             showRecurringOnly = filters.recurringOnly,
-            showInstallmentOnly = filters.installmentOnly,
+            showInstallmentOnly = installmentOnly,
             transactions = transactions
                 .filter(filters.recurringOnly)
-                .filterInstallment(filters.installmentOnly)
+                .filterInstallment(installmentOnly)
                 .filter(filters.category)
                 .filter(filters.label)
-                .filter(filters.target)
+                .filter(target)
+                // The scope narrows the list to the transactions touching its perimeter,
+                // so summary and list always answer for the same set of accounts.
+                .filter { scope.contains(it) }
                 .filter { it.date.yearMonth == yearMonth }
                 .sortedByDescending { it.date }
                 .groupBy { it.date },
@@ -105,16 +106,12 @@ class TransactionsViewModel(
 
     fun onAction(action: TransactionsAction) = viewModelScope.launch {
         when (action) {
-            TransactionsAction.NextMonth -> {
-                selectedYearMonth.value = selectedYearMonth.value.plusMonth()
-            }
-
-            TransactionsAction.PreviousMonth -> {
-                selectedYearMonth.value = selectedYearMonth.value.minusMonth()
-            }
-
             is TransactionsAction.SelectMonth -> {
                 selectedYearMonth.value = action.yearMonth
+            }
+
+            is TransactionsAction.SelectScope -> {
+                selectedScope.value = action.scope
             }
 
             is TransactionsAction.SelectCategory -> {

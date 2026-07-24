@@ -120,6 +120,7 @@ class ViewBudgetViewModelTest {
         override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
         override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
         override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+        override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
         override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
         override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
         override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()

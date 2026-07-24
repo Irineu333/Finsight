@@ -7,9 +7,9 @@ import kotlinx.datetime.YearMonth
 
 sealed class TransactionsAction {
 
-    data object PreviousMonth : TransactionsAction()
-    data object NextMonth : TransactionsAction()
     data class SelectMonth(val yearMonth: YearMonth) : TransactionsAction()
+
+    data class SelectScope(val scope: TransactionScope) : TransactionsAction()
 
     data class SelectCategory(val category: Category?) : TransactionsAction()
     data class SelectLabel(val label: TransactionLabel?) : TransactionsAction()

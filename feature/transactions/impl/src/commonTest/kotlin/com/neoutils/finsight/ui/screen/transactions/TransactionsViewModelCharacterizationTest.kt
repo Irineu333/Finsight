@@ -10,14 +10,11 @@ import com.neoutils.finsight.domain.model.Transaction
 import com.neoutils.finsight.domain.model.TransactionIntent
 import com.neoutils.finsight.domain.model.ContraLeg
 import com.neoutils.finsight.domain.model.TransactionLeg
-import com.neoutils.finsight.domain.repository.AccountFlows
 import com.neoutils.finsight.domain.repository.ICategoryRepository
 import com.neoutils.finsight.domain.model.Installment
-import com.neoutils.finsight.domain.repository.IEntryRepository
 import com.neoutils.finsight.domain.repository.IInstallmentRepository
 import com.neoutils.finsight.domain.repository.ITransactionRepository
 import com.neoutils.finsight.domain.model.Entry
-import com.neoutils.finsight.domain.usecase.CalculateBalanceUseCase
 import com.neoutils.finsight.extension.toYearMonth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,10 +35,10 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 /**
- * Characterizes the balance overview of [TransactionsViewModel] (sites :55,56,70,72):
- * income/expense/adjustment via the stats use case, the PAYMENT-label month sum, and
- * the opening/final balances. Task 4.11 flips these to the ledger; the numbers must
- * survive.
+ * Characterizes the balance overview [TransactionsViewModel] showed before the scope
+ * axis existed — income/expense/adjustment, the month-wide card payment, and the
+ * opening/final balances. That summary is now the *accounts* scope, and it must survive
+ * value for value: this is the change's safety net, not one of its casualties.
  */
 class TransactionsViewModelCharacterizationTest {
 
@@ -65,7 +62,7 @@ class TransactionsViewModelCharacterizationTest {
         Transaction(id = id, title = null, date = date(day), entries = entries)
 
     @Test
-    fun `balance overview characterizes stats payment and balances`() = runTest(dispatcher) {
+    fun `the accounts scope still characterizes stats payment and balances`() = runTest(dispatcher) {
         val transactions = listOf(
             op(1, day = 5, listOf(entry(account, 100.0), entry(incomeAcc, -100.0))),
             op(2, day = 10, listOf(entry(account, -30.0), entry(expenseAcc, 30.0))),
@@ -76,29 +73,28 @@ class TransactionsViewModelCharacterizationTest {
 
         // Ledger opening/final balance: 0 up to the previous month, 30 up to the month
         // (Σ the account's signed legs 100 − 30 + 40 − 80). Month-wide card payment = 80.
-        // Month-wide asset flows come from the ledger now (spec `ledger-reporting`):
-        // income 100, expense 30, adjustment 40 — the figures the stats use case derived.
-        val ledger = LedgerBalance(
-            month = month, balance = 30.0, payment = 80.0,
-            income = 100.0, expense = 30.0, adjustment = 40.0,
-        )
+        // Month-wide asset flows: income 100, expense 30, adjustment 40.
         val vm = TransactionsViewModel(
             filterLabel = null, category = null, filterTarget = null,
             transactionRepository = FakeTransactionRepository(transactions),
             categoryRepository = FakeCategoryRepository(),
             installmentRepository = NoInstallments,
-            entryRepository = ledger,
-            calculateBalanceUseCase = CalculateBalanceUseCase(ledger),
+            entryRepository = FakeLedger(transactions),
         )
 
         vm.uiState.test {
             // Skip the empty initialValue of stateIn; assert on the computed state.
-            var overview = awaitItem().balanceOverview
-            while (overview.income == 0.0) overview = awaitItem().balanceOverview
+            var state = awaitItem()
+            while (state.transactions.isEmpty()) state = awaitItem()
+
+            vm.onAction(TransactionsAction.SelectScope(TransactionScope.ACCOUNTS))
+            while (state.selectedScope != TransactionScope.ACCOUNTS) state = awaitItem()
+
+            val overview = state.balanceOverview as TransactionsUiState.BalanceOverview.Accounts
             assertEquals(100.0, overview.income)
             assertEquals(30.0, overview.expense)
             assertEquals(40.0, overview.adjustment)
-            assertEquals(80.0, overview.payment, "month-wide card payment from the ledger")
+            assertEquals(80.0, overview.invoicePayment, "month-wide card payment from the ledger")
             assertEquals(0.0, overview.openingBalance)
             assertEquals(30.0, overview.finalBalance, "Σ signed account legs up to the month")
             cancelAndIgnoreRemainingEvents()
@@ -138,58 +134,6 @@ internal class FakeCategoryRepository : ICategoryRepository {
     override suspend fun insertAll(categories: List<Category>) = throw NotImplementedError()
     override suspend fun update(category: Category) = throw NotImplementedError()
     override suspend fun delete(category: Category) = throw NotImplementedError()
-}
-
-internal class LedgerBalance(
-    private val month: YearMonth,
-    private val balance: Double,
-    private val payment: Double = 0.0,
-    private val income: Double = 0.0,
-    private val expense: Double = 0.0,
-    private val adjustment: Double = 0.0,
-) : IEntryRepository {
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = if (target == month) balance else 0.0
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
-    override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun hasEntries(accountId: Long): Boolean = false
-    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
-        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 0.0, payment = if (month == this.month) payment else 0.0)
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =
-        if (month == this.month) com.neoutils.finsight.domain.repository.AssetMonthFlows(income = income, expense = expense, adjustment = adjustment)
-        else com.neoutils.finsight.domain.repository.AssetMonthFlows(income = 0.0, expense = 0.0, adjustment = 0.0)
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
-}
-
-private object ThrowingEntryRepository : IEntryRepository {
-    override suspend fun hasEntries(accountId: Long): Boolean = false
-    override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
-    override suspend fun getEntriesByTransaction(transactionId: Long): List<Entry> = throw NotImplementedError()
-    override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
-    override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
-    override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
-    override suspend fun balance(accountId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
-    override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()
-    override suspend fun dimensionOwed(dimensionId: Long): Double = throw NotImplementedError()
-    override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
-    override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows = throw NotImplementedError()
-    override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows = throw NotImplementedError()
-    override suspend fun netWorth(): Double = throw NotImplementedError()
-    override suspend fun totalsByDimension(nominalType: AccountType, startDate: LocalDate, endDate: LocalDate, siblingAccountIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun totalsByDimensionInScope(nominalType: AccountType, scopeDimensionIds: List<Long>): Map<Long?, Double> = throw NotImplementedError()
-    override suspend fun scopeStats(scopeAccountIds: List<Long>, startDate: LocalDate, endDate: LocalDate): com.neoutils.finsight.domain.repository.ScopeStats = throw NotImplementedError()
 }
 
 /** No installment badge is under test here; the list only needs the read to answer. */

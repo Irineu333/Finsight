@@ -63,7 +63,6 @@ val transactionsModule = module {
             categoryRepository = get(),
             installmentRepository = get(),
             entryRepository = get(),
-            calculateBalanceUseCase = get(),
         )
     }
     viewModel {

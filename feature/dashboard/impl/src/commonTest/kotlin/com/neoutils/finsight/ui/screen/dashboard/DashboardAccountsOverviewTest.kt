@@ -201,6 +201,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     // All-time per-account balance the accounts-overview reads (task 4.5): account 1 =
     // 100 − 30 = 70, account 2 = 50 − 20 = 30 — the figures the screen showed before.
     override suspend fun balance(accountId: Long): Double = mapOf(1L to 70.0, 2L to 30.0).getValue(accountId)
@@ -213,7 +214,7 @@ private object ThrowingEntryRepository : IEntryRepository {
     override suspend fun dimensionFlows(dimensionId: Long): com.neoutils.finsight.domain.repository.DimensionFlows = throw NotImplementedError()
     // Month-wide card stats the credit-card balance widget reads (task 4.11): expense 60, payment 25.
     override suspend fun liabilityMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.LiabilityMonthFlows =
-        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0)
+        com.neoutils.finsight.domain.repository.LiabilityMonthFlows(expense = 60.0, payment = 25.0, adjustment = 0.0)
     // Month-wide asset income/expense the concrete-balance widget reads (spec `ledger-reporting`):
     // March holds income 100, expense 30; other months are empty.
     override suspend fun assetMonthFlows(month: YearMonth): com.neoutils.finsight.domain.repository.AssetMonthFlows =

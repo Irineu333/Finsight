@@ -163,6 +163,7 @@ class FakeEntryRepository(private val ledger: InvoiceLedgerStore) : IEntryReposi
     override suspend fun hasEntries(accountId: Long): Boolean = false
     override suspend fun hasEntriesForDimension(dimensionId: Long): Boolean = false
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()

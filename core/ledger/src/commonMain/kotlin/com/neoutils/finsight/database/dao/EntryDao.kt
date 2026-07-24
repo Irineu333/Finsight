@@ -57,10 +57,14 @@ data class DimensionPeriodTotalsRow(
     val adjustment: Long,
 )
 
-/** Month-wide card [expense]/[payment] (cents), both positive magnitudes. */
+/**
+ * Month-wide card [expense]/[payment] (cents), both positive magnitudes, plus the
+ * signed [adjustment] — the EQUITY counter-leg — in symmetry with [AssetMonthTotals].
+ */
 data class LiabilityMonthTotals(
     val expense: Long,
     val payment: Long,
+    val adjustment: Long,
 )
 
 /**
@@ -166,14 +170,19 @@ interface EntryDao {
     )
     suspend fun balanceUpToMonth(accountId: Long, yearMonth: String): Long
 
-    /** Combined natural balance of every ASSET account up to and including the month. */
+    /**
+     * Combined natural balance of every account of one nature up to and including the
+     * month. The nature is a parameter, not a literal, so the same aggregate serves
+     * ASSET and LIABILITY — and their consolidated figure is the sum of two calls,
+     * since liabilities are stored in credit.
+     */
     @Query(
         "SELECT COALESCE(SUM(e.amount), 0) FROM entries e " +
             "JOIN transactions o ON o.id = e.transactionId " +
             "JOIN accounts a ON a.id = e.accountId " +
-            "WHERE a.type = 'ASSET' AND substr(o.date, 1, 7) <= :yearMonth"
+            "WHERE a.type = :type AND substr(o.date, 1, 7) <= :yearMonth"
     )
-    suspend fun assetsBalanceUpToMonth(yearMonth: String): Long
+    suspend fun balanceUpToMonthByType(type: String, yearMonth: String): Long
 
     /** Natural balance of a dimension within a single month (yyyy-MM). */
     @Query(
@@ -268,14 +277,18 @@ interface EntryDao {
     suspend fun periodTotalsByDimension(dimensionIds: List<Long>): List<DimensionPeriodTotalsRow>
 
     /**
-     * Month-wide card expense/advance-payment across every LIABILITY (card) account
-     * (yyyy-MM), classified by sign and EQUITY presence. Both positive magnitudes.
+     * Month-wide card expense/advance-payment/adjustment across every LIABILITY (card)
+     * account (yyyy-MM), classified by sign and EQUITY presence. Expense and payment are
+     * positive magnitudes; adjustment is signed, exactly as in [assetMonthTotals] — an
+     * invoice adjustment is neither a purchase nor a payment, and without a class of its
+     * own it would simply vanish from the report.
      */
     @Query(
         """
         SELECT
           COALESCE(SUM(CASE WHEN eq = 0 AND amount < 0 THEN -amount ELSE 0 END), 0) AS expense,
-          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment
+          COALESCE(SUM(CASE WHEN eq = 0 AND amount > 0 THEN amount ELSE 0 END), 0) AS payment,
+          COALESCE(SUM(CASE WHEN eq = 1 THEN amount ELSE 0 END), 0) AS adjustment
         FROM (
           SELECT e.amount AS amount,
             EXISTS(SELECT 1 FROM entries x JOIN accounts a2 ON a2.id = x.accountId WHERE x.transactionId = e.transactionId AND a2.type = 'EQUITY') AS eq

@@ -58,13 +58,14 @@ class EntryRepository(
         entryDao.hasEntriesForDimension(dimensionId)
 
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double {
-        val cents = if (accountId == null) {
-            entryDao.assetsBalanceUpToMonth(target.toString())
-        } else {
-            entryDao.balanceUpToMonth(accountId, target.toString())
-        }
-        return cents / CENTS_PER_UNIT
+        // No account named means "every ASSET account" — the same read by nature,
+        // so the accumulated balance has one path, not two.
+        if (accountId == null) return naturalBalanceUpTo(target, AccountType.ASSET)
+        return entryDao.balanceUpToMonth(accountId, target.toString()) / CENTS_PER_UNIT
     }
+
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: AccountType): Double =
+        entryDao.balanceUpToMonthByType(type.name, target.toString()) / CENTS_PER_UNIT
 
     override suspend fun balance(accountId: Long): Double {
         return entryDao.balanceOf(accountId) / CENTS_PER_UNIT
@@ -126,6 +127,7 @@ class EntryRepository(
         return LiabilityMonthFlows(
             expense = totals.expense / CENTS_PER_UNIT,
             payment = totals.payment / CENTS_PER_UNIT,
+            adjustment = totals.adjustment / CENTS_PER_UNIT,
         )
     }
 

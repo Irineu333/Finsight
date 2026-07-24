@@ -24,12 +24,16 @@ class BalanceUpToMonthQueryTest {
         account(1, AccountEntity.Type.ASSET)
         account(2, AccountEntity.Type.ASSET)
         account(3, AccountEntity.Type.EXPENSE)
+        account(4, AccountEntity.Type.LIABILITY)
 
         transaction("2026-01-31", 1L posts 10_000)
         // A category leg, which must never count towards an asset balance.
         transaction("2026-02-01", 1L posts -2_500, 3L posts 2_500)
         transaction("2026-02-28", 2L posts 700)
+        // A card purchase: the liability leg is stored in credit.
+        transaction("2026-02-10", 4L posts -3_000, 3L posts 3_000)
         transaction("2026-03-01", 1L posts -100)
+        transaction("2026-03-04", 4L posts -1_500, 3L posts 1_500)
     }
 
     @Test
@@ -61,6 +65,25 @@ class BalanceUpToMonthQueryTest {
         seed()
 
         // 7500 on account 1 plus 700 on account 2; the EXPENSE leg is not an asset.
-        assertEquals(8_200L, entryDao.assetsBalanceUpToMonth("2026-02"))
+        assertEquals(8_200L, entryDao.balanceUpToMonthByType("ASSET", "2026-02"))
+    }
+
+    @Test
+    fun `liabilities accumulate by the same mechanism, in credit`() = runTest {
+        seed()
+
+        assertEquals(-3_000L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-02"))
+        assertEquals(-4_500L, entryDao.balanceUpToMonthByType("LIABILITY", "2026-03"))
+    }
+
+    @Test
+    fun `the consolidated figure is the sum of the two natures`() = runTest {
+        seed()
+
+        val assets = entryDao.balanceUpToMonthByType("ASSET", "2026-03")
+        val liabilities = entryDao.balanceUpToMonthByType("LIABILITY", "2026-03")
+
+        // 8100 held minus 4500 owed — no aggregate of its own and no sign rule of its own.
+        assertEquals(3_600L, assets + liabilities)
     }
 }

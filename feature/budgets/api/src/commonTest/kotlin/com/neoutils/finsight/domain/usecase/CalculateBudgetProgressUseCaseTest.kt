@@ -131,6 +131,7 @@ private class MonthBalances(
     override fun observeEntriesByTransaction(transactionId: Long) = throw NotImplementedError()
     override fun observeLedgerChanges() = throw NotImplementedError()
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?) = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun hasEntries(accountId: Long) = throw NotImplementedError()
     override suspend fun hasEntriesForDimension(dimensionId: Long) = throw NotImplementedError()
     override suspend fun balance(accountId: Long) = throw NotImplementedError()

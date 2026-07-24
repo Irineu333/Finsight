@@ -209,6 +209,7 @@ private class FakeEntries(
     override fun observeEntriesByTransaction(transactionId: Long): Flow<List<Entry>> = throw NotImplementedError()
     override fun observeLedgerChanges(): Flow<Unit> = flowOf(Unit)
     override suspend fun balanceUpTo(target: YearMonth, accountId: Long?): Double = throw NotImplementedError()
+    override suspend fun naturalBalanceUpTo(target: YearMonth, type: com.neoutils.finsight.domain.model.AccountType): Double = throw NotImplementedError()
     override suspend fun dimensionBalanceInMonth(month: YearMonth, dimensionId: Long): Double = throw NotImplementedError()
     override suspend fun accountFlows(month: YearMonth, accountId: Long): AccountFlows = throw NotImplementedError()
     override suspend fun dimensionEntryCountInMonth(month: YearMonth, dimensionId: Long): Int = throw NotImplementedError()

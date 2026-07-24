@@ -53,5 +53,5 @@
 
 - [x] 7.1 `./gradlew :app:shared:testDebugUnitTest` (o rename atravessa `transactions` e `dashboard`; ambos precisam compilar).
 - [x] 7.2 `./gradlew allTests`. — falha só no link do binário de teste iOS (`ld: framework FirebaseCore not found`, `iosApp/Pods` ausente no ambiente); validado via `jvmTest` + `:app:shared:testDebugUnitTest`.
-- [ ] 7.3 Conferência manual na tela: sem filtro lista as 5 naturezas; "Despesa" não traz transferência nem pagamento; as 5 cores aparecem no chip; o roxo do chip "Pagamento" é o mesmo da linha "Pagamento" do `SummaryCard`.
-- [ ] 7.4 `openspec archive fix-transaction-nature-filter`.
+- [x] 7.3 Conferência manual na tela: sem filtro lista as 5 naturezas; "Despesa" não traz transferência nem pagamento; as 5 cores aparecem no chip; o roxo do chip "Pagamento" é o mesmo da linha "Pagamento" do `SummaryCard`.
+- [x] 7.4 `openspec archive fix-transaction-nature-filter`.

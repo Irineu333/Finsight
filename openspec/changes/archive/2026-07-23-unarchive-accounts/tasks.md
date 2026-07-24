@@ -62,7 +62,7 @@
 
 - [x] 9.1 `openspec validate unarchive-accounts --strict`.
 - [x] 9.2 `./gradlew :app:shared:testDebugUnitTest` verde (inclui os 7 fakes patchados de 3.4, 4 fora de accounts).
-- [ ] 9.3 Conferir na tela: eleger outra padrão → arquivar a antiga → some da tela ativa → overflow "Arquivadas" → abrir conta → Desarquivar → reaparece nas contas e nos seletores; a padrão vigente não oferece retirar (botão desabilitado), e o domínio recusaria com `CANNOT_ARCHIVE_DEFAULT`.
+- [x] 9.3 Conferir na tela: eleger outra padrão → arquivar a antiga → some da tela ativa → overflow "Arquivadas" → abrir conta → Desarquivar → reaparece nas contas e nos seletores; a padrão vigente não oferece retirar (botão desabilitado), e o domínio recusaria com `CANNOT_ARCHIVE_DEFAULT`.
 
 ## 10. Ajuste pós-implementação (UX da conta padrão)
 

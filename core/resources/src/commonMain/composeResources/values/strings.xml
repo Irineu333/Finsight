@@ -521,7 +521,6 @@
     <string name="summary_card_opening_balance">Saldo Inicial</string>
     <string name="summary_card_income">Entradas</string>
     <string name="summary_card_outgoing">Saídas</string>
-    <string name="summary_card_invoices">Faturas</string>
     <string name="summary_card_adjustments">Ajustes</string>
     <string name="summary_card_current_balance">Saldo Atual</string>
     <string name="summary_card_final_balance">Saldo Final</string>

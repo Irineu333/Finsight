@@ -68,6 +68,10 @@ class TransactionsViewModel(
         // be the same decision twice, able to contradict itself.
         val target = filters.target.takeIf { scope == TransactionScope.ALL }
 
+        // Same rule for instalments, which only exist on a card: a filter the scope no
+        // longer offers must stop narrowing too, or it would go on cutting invisibly.
+        val installmentOnly = filters.installmentOnly && scope != TransactionScope.ACCOUNTS
+
         TransactionsUiState(
             balanceOverview = balanceOverview,
             selectedScope = scope,
@@ -80,10 +84,10 @@ class TransactionsViewModel(
             selectedLabel = filters.label,
             selectedTarget = target,
             showRecurringOnly = filters.recurringOnly,
-            showInstallmentOnly = filters.installmentOnly,
+            showInstallmentOnly = installmentOnly,
             transactions = transactions
                 .filter(filters.recurringOnly)
-                .filterInstallment(filters.installmentOnly)
+                .filterInstallment(installmentOnly)
                 .filter(filters.category)
                 .filter(filters.label)
                 .filter(target)

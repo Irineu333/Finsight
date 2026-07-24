@@ -36,14 +36,14 @@ internal suspend fun IEntryRepository.balanceOverview(
 
         TransactionScope.CARDS -> {
             val flows = liabilityMonthFlows(month)
+            // The ledger's own sign, so the column reads like a statement and still
+            // closes: opening − spending + payments + adjustment.
             BalanceOverview.Cards(
-                openingDebt = naturalBalanceUpTo(previous, AccountType.LIABILITY).asDebt(),
+                openingBalance = naturalBalanceUpTo(previous, AccountType.LIABILITY),
                 expense = flows.expense,
                 payment = flows.payment.orNullIfZero(),
-                // Debt reads in the opposite direction to the ledger's natural sign, so
-                // the adjustment turns with the rest of the column.
-                adjustment = flows.adjustment.asDebt().orNullIfZero(),
-                finalDebt = naturalBalanceUpTo(month, AccountType.LIABILITY).asDebt(),
+                adjustment = flows.adjustment.orNullIfZero(),
+                finalBalance = naturalBalanceUpTo(month, AccountType.LIABILITY),
             )
         }
 
@@ -73,9 +73,6 @@ internal suspend fun IEntryRepository.balanceOverview(
  */
 private suspend fun IEntryRepository.netBalanceUpTo(month: YearMonth): Double =
     naturalBalanceUpTo(month, AccountType.ASSET) + naturalBalanceUpTo(month, AccountType.LIABILITY)
-
-/** The liability's display sign — owed reads positive. The `+ 0.0` kills a signed zero. */
-private fun Double.asDebt(): Double = -this + 0.0
 
 /** A flow the month does not have is an absent line, not a zero the card must hide. */
 private fun Double.orNullIfZero(): Double? = takeIf { it != 0.0 }

@@ -36,7 +36,9 @@ Sendo `P` o perímetro do escopo, SHALL valer:
 saldo(P, mês) = saldo(P, mês anterior) + Σ entries de P no mês
 ```
 
-As linhas de fluxo exibidas SHALL **particionar** `Σ entries de P no mês`: toda entry do perímetro no período pertence a exatamente uma linha exibida, ou a um lançamento interno ao perímetro. A abertura e o fechamento SHALL ser exibidos no sinal de exibição da natureza do perímetro — para `LIABILITY`, dívida positiva.
+As linhas de fluxo exibidas SHALL **particionar** `Σ entries de P no mês`: toda entry do perímetro no período pertence a exatamente uma linha exibida, ou a um lançamento interno ao perímetro.
+
+Cada escopo SHALL exibir a coluna inteira — abertura, fluxos e fechamento — em **um único sentido de sinal**, o do razão: o que aumenta o saldo do perímetro é positivo e o que o diminui é negativo, qualquer que seja a natureza. Um perímetro de `LIABILITY` em que se deve tem, portanto, saldo negativo, o gasto é negativo e o pagamento é positivo. MUST NOT ocorrer de os fluxos correrem em um sentido e o total no outro — é o que aconteceria ao exibir dívida positiva sobre fluxos de caixa, e a coluna deixaria de fechar aos olhos de quem a lê.
 
 Uma linha exibida fora dessa soma SHALL ser identificável como informativa — sem sinal — e MUST NOT participar do fechamento.
 
@@ -46,7 +48,11 @@ Uma linha exibida fora dessa soma SHALL ser identificável como informativa — 
 
 #### Scenario: Escopo de cartões fecha, inclusive com ajuste de fatura
 - **WHEN** o resumo do escopo "cartões" é exibido em um mês que contém ajuste de fatura
-- **THEN** a dívida final é igual à dívida inicial somados os gastos, subtraídos os pagamentos e aplicados os ajustes
+- **THEN** o saldo final é igual ao saldo inicial subtraídos os gastos, somados os pagamentos e aplicados os ajustes
+
+#### Scenario: A coluna do cartão corre no mesmo sentido da conta
+- **WHEN** o resumo do escopo "cartões" é exibido
+- **THEN** o gasto aparece negativo e o pagamento positivo, como em qualquer extrato, e o total abaixo deles está no mesmo sentido
 
 #### Scenario: Escopo geral fecha
 - **WHEN** o resumo do escopo geral é exibido
@@ -74,7 +80,7 @@ Um movimento interno SHALL poder ser **exibido** como linha informativa, sem sin
 
 #### Scenario: Pagamento de fatura abate a dívida no escopo de cartões
 - **WHEN** existe um pagamento de fatura no mês e o escopo é "cartões"
-- **THEN** ele é reportado como pagamento e reduz a dívida final, porque o dinheiro veio de fora do perímetro
+- **THEN** ele é reportado como pagamento e leva o saldo do perímetro na direção do crédito, abatendo o que se deve, porque o dinheiro veio de fora do perímetro
 
 #### Scenario: Pagamento de fatura é neutro no escopo geral
 - **WHEN** existe um pagamento de fatura no mês e o escopo é o geral
@@ -95,7 +101,9 @@ A tela SHALL distinguir dois alcances de controle pela posição:
 - O **escopo** e o **período** SHALL governar resumo e lista, e SHALL ser apresentados no topo do card de resumo.
 - Os demais **filtros** SHALL governar apenas a lista, e SHALL ser apresentados abaixo do card.
 
-Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo. O filtro que seleciona entre conta e cartão MUST NOT ser oferecido nos escopos que já o decidem.
+Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo.
+
+Um filtro cuja decisão o escopo já tomou, ou que não tem o que recortar dentro do perímetro, MUST NOT ser oferecido nesse escopo — é o caso do que seleciona entre conta e cartão, e do de parcelamento, que só existe em cartão. Um filtro que não é oferecido MUST NOT continuar recortando a lista: um recorte invisível é indistinguível de uma lista incompleta.
 
 #### Scenario: Filtro de categoria não move o resumo
 - **WHEN** o usuário filtra a lista por uma categoria
@@ -104,6 +112,14 @@ Um filtro que governe apenas a lista MUST NOT alterar nenhuma linha do resumo. O
 #### Scenario: Filtro redundante é suprimido
 - **WHEN** o escopo selecionado é "contas" ou "cartões"
 - **THEN** o filtro que seleciona entre conta e cartão não é oferecido, porque o escopo já o decidiu
+
+#### Scenario: Filtro sem objeto é suprimido
+- **WHEN** o escopo selecionado é "contas"
+- **THEN** o filtro de parcelamento não é oferecido, porque parcelamento é arranjo de cartão
+
+#### Scenario: Filtro suprimido para de recortar
+- **WHEN** um filtro está ativo e o usuário troca para um escopo que não o oferece
+- **THEN** a lista deixa de ser recortada por ele, em vez de continuar filtrada por um controle que sumiu
 
 #### Scenario: Filtro de recorte no escopo geral
 - **WHEN** o escopo é o geral e o usuário filtra a lista por cartão

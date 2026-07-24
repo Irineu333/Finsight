@@ -39,6 +39,9 @@ data class TransactionsUiState(
      */
     val mustShowTargetFilter = selectedScope == TransactionScope.ALL
 
+    /** An instalment is a card arrangement, so the filter has nothing to narrow without one. */
+    val mustShowInstallmentFilter = selectedScope != TransactionScope.ACCOUNTS
+
     /**
      * The summary of one scope — opening, flows, closing — in three shapes rather than
      * one shape with fields that only apply in one mode. Which lines exist is decided
@@ -64,18 +67,19 @@ data class TransactionsUiState(
         ) : BalanceOverview
 
         /**
-         * The `LIABILITY` perimeter, shown in the nature's display sign: debt reads
-         * positive. [adjustment] is likewise expressed as debt, so every line adds up
-         * in the same direction as the total above it.
+         * The `LIABILITY` perimeter, in the ledger's own sign — a card you owe on has a
+         * negative balance, spending takes it down and a payment brings it up, exactly
+         * as in [Accounts]. Presenting it as positive debt would invert every flow and
+         * make spending read `+90`.
          *
-         * `finalDebt = openingDebt + expense − payment + adjustment`
+         * `finalBalance = openingBalance − expense + payment + adjustment`
          */
         data class Cards(
-            val openingDebt: Double = 0.0,
+            val openingBalance: Double = 0.0,
             val expense: Double = 0.0,
             val payment: Double? = null,
             val adjustment: Double? = null,
-            val finalDebt: Double = 0.0,
+            val finalBalance: Double = 0.0,
         ) : BalanceOverview
 
         /**

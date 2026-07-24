@@ -512,7 +512,6 @@
     <string name="summary_card_opening_balance">Initial Balance</string>
     <string name="summary_card_income">Income</string>
     <string name="summary_card_outgoing">Outgoing</string>
-    <string name="summary_card_invoices">Invoices</string>
     <string name="summary_card_adjustments">Adjustments</string>
     <string name="summary_card_current_balance">Current Balance</string>
     <string name="summary_card_final_balance">Final Balance</string>

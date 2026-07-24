@@ -212,14 +212,16 @@ private fun FiltersRow(
             }
         }
 
-        item(
-            key = "installment_filter"
-        ) {
-            Box {
-                InstallmentFilterChip(
-                    enabled = uiState.showInstallmentOnly,
-                    onAction = onAction,
-                )
+        if (uiState.mustShowInstallmentFilter) {
+            item(
+                key = "installment_filter"
+            ) {
+                Box {
+                    InstallmentFilterChip(
+                        enabled = uiState.showInstallmentOnly,
+                        onAction = onAction,
+                    )
+                }
             }
         }
     }

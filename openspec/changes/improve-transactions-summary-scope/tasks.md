@@ -42,5 +42,15 @@
 
 ## 5. Fechamento
 
-- [ ] 5.1 Verificar a tela no app (Android ou Desktop) nos três escopos, conferindo a aritmética de cada card contra a lista
+- [x] 5.1 Verificar a tela no app (Android ou Desktop) nos três escopos, conferindo a aritmética de cada card contra a lista
 - [x] 5.2 Decidir Q1 (o escopo persiste entre visitas?) e Q2 (rótulo do escopo geral) e registrar o resultado no `design.md`
+
+## 6. Correções do teste manual
+
+- [x] 6.1 O chip inteiro é o alvo do toque, não só o rótulo — os dois chips passam a nascer de um primitivo comum (`Surface(onClick)` + rótulo + `▾`), com o `MonthPickerDropdownMenu` direto no de período
+- [x] 6.2 Reverter o modo sem setas do `MonthSelector` (`showStepArrows`/`textStyle`): com o chip construído do picker, a opção ficaria sem leitor — 3.1 deixa de ser necessária
+- [x] 6.3 A linha informativa do escopo geral usa a cor de pagamento, não o tom secundário; segue sem sinal e fora da soma (decisão de D1 reconfirmada com o usuário)
+- [x] 6.4 A linha de pagamento no escopo contas passa a se chamar "Pagamentos", não "Faturas" — `summary_card_invoices` fica sem leitor e é removida
+- [x] 6.5 O escopo cartões passa a ser exibido **inteiro** no sinal do razão — gastos negativos, pagamentos positivos, abertura e fechamento negativos quando se deve —, revertendo a decisão de dívida positiva de D2 (ver 6.6)
+- [x] 6.6 Ajustar `BalanceOverview.Cards`, o `SummaryCard`, o `design.md` (D2) e a spec `transaction-scope` ao sinal do razão
+- [x] 6.7 O filtro de parcelas não é oferecido no escopo contas, e deixa de recortar a lista quando não é oferecido — a mesma regra do filtro de alvo, generalizada na spec

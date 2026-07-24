@@ -70,22 +70,41 @@ Para todo escopo, sendo `P` o perímetro de contas:
 saldoNatural(P, m) = saldoNatural(P, m−1) + Σ entries de P no mês m
 ```
 
-As linhas de fluxo exibidas **particionam** `Σ entries de P no mês`. Lançamentos internos contribuem zero por construção, não por exclusão. Abertura e fechamento são exibidos com o sinal de exibição da natureza — para `LIABILITY`, dívida positiva (`AccountType.displaySign`).
+As linhas de fluxo exibidas **particionam** `Σ entries de P no mês`. Lançamentos internos contribuem zero por construção, não por exclusão.
 
 Instanciando:
 
 ```
 Contas    Σ ASSET      = income − expense + adj − pagamento
-                         ↑ as quatro linhas: Entradas, Saídas, Ajustes, Faturas
+                         ↑ as quatro linhas: Entradas, Saídas, Ajustes, Pagamentos
 
 Cartões   Σ LIABILITY  = −gastos + pagamentos + adj
-          exibido       devido(m) = devido(m−1) + gastos − pagamentos − adj
 
 Geral     Σ ambos      = income − (expenseA + expenseL) + (adjA + adjL)
                          ↑ o pagamento cancela entre as duas pernas
 ```
 
-**Uma versão anterior deste documento escrevia a identidade em vocabulário de UI** (`fechamento = abertura + entradas − saídas + ajustes`) e estava errada: faltava o termo do pagamento no escopo Contas e o sinal invertia em Cartões. A formulação acima é a correta, e é dela que o teste de cada escopo deriva.
+**Uma versão anterior deste documento escrevia a identidade em vocabulário de UI**
+(`fechamento = abertura + entradas − saídas + ajustes`) e estava errada: faltava o termo
+do pagamento no escopo Contas e o sinal invertia em Cartões. A formulação acima é a
+correta, e é dela que o teste de cada escopo deriva.
+
+**Exibição — revisto após o teste manual.** A versão anterior exibia o escopo Cartões com
+**dívida positiva** (`AccountType.displaySign`), o que obrigava gasto a aparecer `+90` e
+pagamento `−120`: os fluxos corriam num sentido e o total no outro, e ninguém lê um
+extrato assim. A coluna passa a ser exibida **inteira no sinal do razão**, como a de
+Contas — um cartão em que se deve tem saldo negativo, o gasto é negativo, o pagamento é
+positivo — e continua fechando:
+
+```
+Cartões   saldo(m) = saldo(m−1) − gastos + pagamentos + adj
+          −75      = −120       − 90     + 120        + 15
+```
+
+O ganho não é só de leitura: com um único sentido de sinal por coluna, a identidade que a
+tela promete é a mesma que o usuário consegue conferir de cabeça. `displaySign` continua
+sendo a regra do razão para uma figura isolada; o que ela não é é a regra de uma coluna
+que soma.
 
 ### D3 — `LiabilityMonthFlows` ganha `adjustment`, por simetria e por necessidade
 
@@ -132,7 +151,12 @@ Nascer em `ACCOUNTS` preservaria o resumo atual, mas **esconderia as compras de 
 
 `TransactionTarget` como chip sobrevive só em Geral, onde ainda tem trabalho a fazer (recortar a lista sem reconciliar o total). Em Contas/Cartões ele seria a mesma decisão em dois controles, com estados contraditórios possíveis. A regra que o justifica é a mesma que governa o layout: **o escopo reconcilia, o filtro apenas recorta.**
 
-Como o chip permanece, `TransactionsRoute.filterTarget` continua tendo sentido e **não é tocado**. O escopo é estado de tela, não parâmetro de rota — nenhuma navegação de origem muda.
+A mesma regra alcança o filtro de **parcelamento**, que o teste manual pegou: parcelamento
+é arranjo de cartão, então no escopo Contas ele não tem o que recortar. E um filtro que
+some SHALL parar de recortar junto — mantê-lo ativo por trás produziria uma lista
+filtrada sem nada na tela dizendo por quê, que é o defeito desta change em outra roupa.
+
+Como o chip de alvo permanece em Geral, `TransactionsRoute.filterTarget` continua tendo sentido e **não é tocado**. O escopo é estado de tela, não parâmetro de rota — nenhuma navegação de origem muda.
 
 ### D8 — Alcance é posicional, e por isso os controles moram no card
 
@@ -151,9 +175,20 @@ A tela passa a ter duas classes de controle, distinguidas por onde estão:
 
 A moldura do card passa a significar "isto vale para tudo daqui para baixo".
 
-**Atenção de implementação:** o `MonthSelector` atual **não tem** modo sem setas — `‹` e `›` são `IconButton` incondicionais (`MonthSelector.kt:52-57,98-103`), e `showPickerChevron` controla o `▾`, não elas. A tela já passa `showPickerChevron = false` hoje (`TransactionsScreen.kt:78`). O chip de período precisa do **inverso disso**: sem setas, **com** `▾` — que é o que dá simetria com o chip de escopo. Ou o componente ganha o modo, ou o chip é componente próprio.
+**Implementação — revisto após o teste manual.** A primeira tentativa deu ao `MonthSelector`
+um modo sem setas e usou o componente dentro do chip. Não presta: o `MonthSelector` põe o
+`clickable` no texto e no `▾`, então o chip reagia ao rótulo e ficava inerte no resto da
+própria superfície — parecia botão e se comportava como palavra.
 
-Os dois chips SHALL ter a mesma interação (ambos abrem menu ao toque); dois chips gêmeos com afordâncias diferentes quebram a simetria tanto quanto formas diferentes.
+Os dois chips nascem de **um primitivo comum** — `Surface(onClick)` com rótulo e `▾`,
+sendo a superfície inteira o alvo do toque —, variando só o menu que abrem: o
+`MonthPickerDropdownMenu` de `:core:designsystem` num, a lista dos três escopos no outro.
+Com isso o modo sem setas do `MonthSelector` ficaria sem leitor e foi revertido: o
+componente volta a ter uma forma só.
+
+Os dois chips SHALL ter a mesma interação (ambos abrem menu ao toque, no chip inteiro);
+dois chips gêmeos com afordâncias diferentes quebram a simetria tanto quanto formas
+diferentes.
 
 Alternativa descartada: **segmented button de três posições** para o escopo. Torna os três modos descobríveis de imediato e custa um toque, mas quebra a simetria visual com o chip de período ao lado. Decisão de produto do usuário: simetria.
 

@@ -76,7 +76,7 @@ Com os controles dentro do card, que é `item` da `LazyColumn`, escopo e mês **
 
 - **`core/ledger`** — `LiabilityMonthFlows` ganha `adjustment` e a query de `liabilityMonthTotals` ganha o ramo `eq = 1` (`EntryDao.kt:275-289`); `assetsBalanceUpToMonth` é generalizada para receber o tipo de conta e `IEntryRepository` expõe a leitura por natureza. Nenhuma escrita muda, nenhum valor existente muda. Acrescentar método à interface exige acompanhar os fakes de `IEntryRepository` nos testes de `creditcards`, `dashboard` e `transactions`.
 - **`core/ui`** — nada.
-- **`core/designsystem`** — o `MonthSelector` ganha um modo sem as setas `‹ ›` (hoje são `IconButton` incondicionais, `MonthSelector.kt:52-57,98-103`; `showPickerChevron` controla o `▾`, não elas).
+- **`core/designsystem`** — nada. O chip de período nasce do `MonthPickerDropdownMenu` que já existe, e não do `MonthSelector` (ver D8): dar ao `MonthSelector` um modo sem setas deixava o toque preso ao rótulo, e o modo ficaria sem leitor.
 - **`core/resources`** — strings novas (× idiomas): rótulos dos três escopos, `Dívida inicial`, `Dívida final`, `Gastos`, `Pagamentos`, `Líquido inicial`, `Líquido`.
 - **`feature/transactions/api`** — nada.
 - **`feature/transactions/impl`** — novo `TransactionScope` (três valores) como estado de tela; `TransactionsAction.SelectScope`; `TransactionsUiState.BalanceOverview` deixa de ser um shape único e passa a variar por escopo; `SummaryCard` recebe os dois chips no topo e o corpo por escopo; `TransactionsScreen` perde o `topBar`; `TargetFilterChip` passa a ser condicional; `CreditCardOverview` removido.

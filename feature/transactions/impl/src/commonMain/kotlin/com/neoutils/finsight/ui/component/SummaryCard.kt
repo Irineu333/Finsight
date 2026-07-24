@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neoutils.finsight.extension.LocalCurrencyFormatter
+import com.neoutils.finsight.util.LocalDateFormats
 import com.neoutils.finsight.ui.screen.transactions.TransactionScope
 import com.neoutils.finsight.ui.screen.transactions.TransactionsUiState.BalanceOverview
 import com.neoutils.finsight.ui.theme.Adjustment
@@ -45,7 +46,6 @@ import com.neoutils.finsight.resources.summary_card_net
 import com.neoutils.finsight.resources.summary_card_opening_balance
 import com.neoutils.finsight.resources.summary_card_opening_debt
 import com.neoutils.finsight.resources.summary_card_opening_net
-import com.neoutils.finsight.resources.summary_card_invoices
 import com.neoutils.finsight.resources.summary_card_outgoing
 import com.neoutils.finsight.resources.summary_card_payments
 import com.neoutils.finsight.resources.summary_card_scope_accounts
@@ -168,7 +168,7 @@ private fun ColumnScope.AccountsBody(
     // it is a signed flow here and merely informative in the overall scope.
     overview.invoicePayment?.let { payment ->
         SummaryRow(
-            label = stringResource(Res.string.summary_card_invoices),
+            label = stringResource(Res.string.summary_card_payments),
             amount = payment,
             color = InvoicePayment,
             onNavigateClick = onInvoiceClick,
@@ -202,11 +202,13 @@ private fun ColumnScope.AccountsBody(
 
 @Composable
 private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
-    // Debt reads positive here, so spending adds and payments subtract — the column
-    // runs in the liability's display sign from the opening line to the total.
+    // The column runs in the ledger's own sign, like the accounts one: spending takes
+    // the balance down, a payment brings it up, and a card you owe on simply has a
+    // negative balance. Reading the card's book the other way round — debt positive —
+    // would make spending read `+90`, which is not how anyone reads a statement.
     SummaryRow(
         label = stringResource(Res.string.summary_card_opening_debt),
-        amount = overview.openingDebt,
+        amount = overview.openingBalance,
         color = colorScheme.onSurface,
         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
     )
@@ -215,7 +217,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
         label = stringResource(Res.string.summary_card_card_expenses),
         amount = overview.expense,
         color = Expense,
-        signDisplay = SignDisplay.ALWAYS_POSITIVE
+        signDisplay = SignDisplay.ALWAYS_NEGATIVE
     )
 
     overview.payment?.let { payment ->
@@ -223,7 +225,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
             color = InvoicePayment,
-            signDisplay = SignDisplay.ALWAYS_NEGATIVE
+            signDisplay = SignDisplay.ALWAYS_POSITIVE
         )
     }
 
@@ -240,7 +242,7 @@ private fun ColumnScope.CardsBody(overview: BalanceOverview.Cards) {
 
     SummaryRow(
         label = stringResource(Res.string.summary_card_final_debt),
-        amount = overview.finalDebt,
+        amount = overview.finalBalance,
         color = colorScheme.onSurface,
         config = SummaryRowConfig.Total,
         signDisplay = SignDisplay.SHOW_ONLY_NEGATIVE
@@ -276,7 +278,7 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
         SummaryRow(
             label = stringResource(Res.string.summary_card_payments),
             amount = payment,
-            color = colorScheme.onSurfaceVariant,
+            color = InvoicePayment,
             signDisplay = SignDisplay.NONE
         )
     }
@@ -301,53 +303,29 @@ private fun ColumnScope.OverallBody(overview: BalanceOverview.Overall) {
     )
 }
 
-/** The two chips are twins: same shape, same tone, and both open a menu on tap. */
+/**
+ * The two chips are twins: same shape, same tone, same affordance, and the *whole*
+ * chip is the tap target — a chip whose label alone reacted would look like a button
+ * and behave like a word.
+ */
 @Composable
 private fun SummaryChip(
+    label: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) = Surface(
-    modifier = modifier,
-    shape = RoundedCornerShape(8.dp),
-    color = colorScheme.surfaceContainerHighest,
-    contentColor = colorScheme.onSurface,
-) {
-    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
-        content()
-    }
-}
-
-@Composable
-private fun PeriodChip(
-    selectedYearMonth: YearMonth,
-    onMonthSelected: (YearMonth) -> Unit,
-) = SummaryChip {
-    // No step arrows: at chip size, stepping and picking would be two ways to do the
-    // same thing. The chevron is what both chips share as an affordance.
-    MonthSelector(
-        selectedYearMonth = selectedYearMonth,
-        onPreviousMonth = {},
-        onNextMonth = {},
-        onMonthSelected = onMonthSelected,
-        showPickerChevron = true,
-        showStepArrows = false,
-        textStyle = chipTextStyle,
-    )
-}
-
-@Composable
-private fun ScopeChip(
-    selectedScope: TransactionScope,
-    onScopeSelected: (TransactionScope) -> Unit,
-) = SummaryChip {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
+    menu: @Composable () -> Unit,
+) = Box(modifier = modifier) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(8.dp),
+        color = colorScheme.surfaceContainerHighest,
+        contentColor = colorScheme.onSurface,
+    ) {
         Row(
-            modifier = Modifier.clickable { expanded = true },
+            modifier = Modifier.padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = scopeName(selectedScope), style = chipTextStyle)
+            Text(text = label, style = chipTextStyle)
 
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -355,7 +333,45 @@ private fun ScopeChip(
                 modifier = Modifier.padding(top = 1.dp)
             )
         }
+    }
 
+    menu()
+}
+
+@Composable
+private fun PeriodChip(
+    selectedYearMonth: YearMonth,
+    onMonthSelected: (YearMonth) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    SummaryChip(
+        label = LocalDateFormats.current.yearMonth.format(selectedYearMonth),
+        onClick = { expanded = true },
+    ) {
+        MonthPickerDropdownMenu(
+            expanded = expanded,
+            selectedYearMonth = selectedYearMonth,
+            onDismissRequest = { expanded = false },
+            onMonthSelected = { selected ->
+                onMonthSelected(selected)
+                expanded = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun ScopeChip(
+    selectedScope: TransactionScope,
+    onScopeSelected: (TransactionScope) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    SummaryChip(
+        label = scopeName(selectedScope),
+        onClick = { expanded = true },
+    ) {
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }

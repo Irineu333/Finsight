@@ -145,20 +145,20 @@ class TransactionScopeTest {
     }
 
     @Test
-    fun `the cards scope closes, in debt sign, with the invoice adjustment in it`() = runTest(dispatcher) {
+    fun `the cards scope closes, in the ledger's sign, with the invoice adjustment in it`() = runTest(dispatcher) {
         val overview = stateUnder(TransactionScope.CARDS).balanceOverview as BalanceOverview.Cards
 
-        // Opening debt 120. Flows: +90 spent, −120 paid, −15 adjusted (a credit on the
-        // card lowers the debt), so the closing debt is 75.
-        assertEquals(120.0, overview.openingDebt)
+        // Owing 120 at the start. Flows: 90 spent takes it down, 120 paid brings it up,
+        // 15 adjusted brings it up too, leaving 75 owed.
+        assertEquals(-120.0, overview.openingBalance)
         assertEquals(90.0, overview.expense)
         assertEquals(120.0, overview.payment)
-        assertEquals(-15.0, overview.adjustment)
-        assertEquals(75.0, overview.finalDebt)
+        assertEquals(15.0, overview.adjustment)
+        assertEquals(-75.0, overview.finalBalance)
 
         assertEquals(
-            overview.finalDebt,
-            overview.openingDebt + overview.expense - overview.payment!! + overview.adjustment!!,
+            overview.finalBalance,
+            overview.openingBalance - overview.expense + overview.payment!! + overview.adjustment!!,
         )
     }
 
@@ -250,7 +250,7 @@ class TransactionScopeTest {
         val overview = stateUnder(TransactionScope.CARDS).balanceOverview as BalanceOverview.Cards
 
         assertEquals(90.0, overview.expense, "only this month's purchase")
-        assertEquals(120.0, overview.openingDebt, "last month's purchase is the opening debt")
+        assertEquals(-120.0, overview.openingBalance, "last month's purchase is the opening debt")
         assertEquals(
             setOf(cardPurchase, invoicePayment, invoiceAdjustment),
             stateUnder(TransactionScope.CARDS).listed.toSet(),
